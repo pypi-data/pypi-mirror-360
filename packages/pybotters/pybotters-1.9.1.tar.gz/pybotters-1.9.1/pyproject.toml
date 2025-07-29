@@ -1,0 +1,92 @@
+[build-system]
+requires = ["hatchling", "hatch-fancy-pypi-readme", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pybotters"
+dynamic = ["version", "readme"]
+description = "An advanced API client for python crypto bot traders"
+requires-python = ">=3.9"
+license = "MIT"
+keywords = ["aiohttp", "crypto", "exchange", "trading"]
+authors = [
+    { name = "MtkN1", email = "51289448+MtkN1@users.noreply.github.com" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Framework :: AsyncIO",
+    "Framework :: aiohttp",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Operating System :: POSIX",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Natural Language :: Japanese",
+    "Typing :: Typed",
+]
+dependencies = [
+    "aiohttp>=3.7",
+    "typing-extensions>=3.10 ; python_version < \"3.10\"",
+]
+
+[project.urls]
+Documentation = "https://pybotters.readthedocs.io/ja/stable/"
+Repository = "https://github.com/pybotters/pybotters"
+
+[tool.uv.sources]
+pybotters = { workspace = true }
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+version_scheme = "python-simplified-semver"
+local_scheme = "no-local-version"
+
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/markdown"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+path = "README.md"
+
+[tool.coverage.run]
+source_pkgs = ["pybotters", "tests"]
+parallel = true
+omit = [
+    "pybotters/models/*",
+    "pybotters/_static_dependencies/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "no cov",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+fail_under = 100.0
+
+[tool.ruff]
+line-length = 88
+include = ["pyproject.toml", "pybotters/**/*.py", "tests/**/*.py"]
+extend-exclude = ["pybotters/_static_dependencies"]
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "TC"]
+ignore = ["E501"]
+
+[tool.mypy]
+packages = ["pybotters", "tests"]
+exclude = ["pybotters/_static_dependencies"]
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"

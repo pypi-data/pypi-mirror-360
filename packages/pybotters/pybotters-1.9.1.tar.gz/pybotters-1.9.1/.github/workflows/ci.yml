@@ -1,0 +1,141 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - run: ./scripts/lint
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - run: uv build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+  typing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - run: ./scripts/typing
+
+  set-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      python-version: ${{ steps.set-matrix.outputs.python-version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: set-matrix
+        run: |
+          python_version=$(./scripts/python-version)
+          echo "python-version=$python_version" | tee -a "$GITHUB_OUTPUT"
+
+  test:
+    runs-on: ubuntu-latest
+    needs: set-matrix
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ${{ fromJSON(needs.set-matrix.outputs.python-version) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - run: ./scripts/test
+        env:
+          UV_PYTHON: ${{ matrix.python-version }}
+
+      - name: Disambiguate coverage filename
+        run: mv .coverage ".coverage.${{ matrix.python-version }}"
+
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: .coverage.${{ matrix.python-version }}
+          include-hidden-files: true
+
+  report:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Download coverage data
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          merge-multiple: true
+
+      - name: Report coverage results
+        run: |
+          uv run \
+              --with-editable . \
+              --with-requirements requirements/test.txt \
+              --isolated \
+              --no-project \
+              coverage combine
+
+          set +e
+
+          uv run \
+              --with-editable . \
+              --with-requirements requirements/test.txt \
+              --isolated \
+              --no-project \
+              coverage report --format=markdown -m | tee -a "$GITHUB_STEP_SUMMARY"
+
+          uv run \
+              --with-editable . \
+              --with-requirements requirements/test.txt \
+              --isolated \
+              --no-project \
+              coverage html
+
+          set -e
+
+          uv run \
+              --with-editable . \
+              --with-requirements requirements/test.txt \
+              --isolated \
+              --no-project \
+              coverage report -m
+
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: htmlcov
+          path: htmlcov
