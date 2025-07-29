@@ -1,0 +1,118 @@
+Metadata-Version: 2.3
+Name: fastfsx
+Version: 1.0.5
+Summary: Filesystem-based router for FastAPI, inspired by Next.js `pages/`
+License: MIT
+Keywords: fastapi,router,filesystem,nextjs,pages
+Author: LordCode
+Author-email: 9999269010dddd@gmail.com
+Requires-Python: >=3.11,<4.0
+Classifier: Development Status :: 3 - Alpha
+Classifier: Framework :: FastAPI
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Internet :: WWW/HTTP
+Classifier: Topic :: Software Development :: Libraries
+Requires-Dist: fastapi (>=0.115.0,<0.116.0)
+Project-URL: Homepage, https://github.com/lordcod/fastfsx
+Project-URL: Repository, https://github.com/lordcod/fastfsx
+Description-Content-Type: text/markdown
+
+# 🚀 FastFSX
+
+📁 **Роутинг FastAPI на основе структуры файловой системы**  
+Вдохновлён подходом [Next.js](https://nextjs.org/docs/routing) — вы описываете маршруты через структуру папок и файлы `route.py`, а `fastfsx` автоматически подключает их в ваше FastAPI-приложение.
+
+---
+
+## 🔧 Установка
+
+С помощью pip:
+
+```bash
+pip install fastfsx
+````
+
+Или через Poetry:
+
+```bash
+poetry add fastfsx
+```
+
+---
+
+## ⚙️ Использование
+
+```python
+from fastapi import FastAPI
+from fastfsx import FileRouter
+
+app = FastAPI()
+app.include_router(FileRouter("pages").build())
+```
+
+---
+
+## 📁 Пример структуры папок
+
+```text
+pages/
+├── users/
+│   ├── [id]/              # динамический маршрут: /users/{id}
+│   │   └── route.py
+│   └── route.py           # маршрут: /users
+├── (admin)/               # группирующая папка, игнорируется в маршруте
+│   └── dashboard/
+│       └── route.py       # маршрут: /dashboard
+└── route.py               # корневой маршрут: /
+```
+
+Каждый файл `route.py` должен экспортировать FastAPI `APIRouter`:
+
+```python
+# pages/users/route.py
+
+from fastapi import APIRouter
+
+router = APIRouter()
+
+@router.get("/")
+async def list_users():
+    return [{"id": 1, "name": "Alice"}]
+```
+
+---
+
+## ✨ Возможности
+
+* 📁 Построение маршрутов на основе структуры папок
+* 📌 Поддержка динамических сегментов маршрута (`[id]` → `{id}`)
+* 🚫 Игнорирование группирующих папок (`(admin)`)
+* 🔀 Глубоко вложенные маршруты
+* ✅ Минимум конфигурации, максимум гибкости
+
+---
+
+## 📦 Устройство
+
+Функциональность обернута в класс `FileRouter`, который строит дерево маршрутов и возвращает `APIRouter`, готовый для подключения к приложению FastAPI.
+
+---
+
+## 🛠 В планах
+
+* Поддержка маршрутов `[[...slug]]` → `{slug:path}`
+* Хуки и расширения
+* Поддержка префиксов и middlewares на уровне папок
+
+---
+
+## 📄 Лицензия
+
+Проект распространяется под лицензией MIT.
+
