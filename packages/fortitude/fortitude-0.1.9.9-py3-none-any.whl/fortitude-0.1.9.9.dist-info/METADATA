@@ -1,0 +1,95 @@
+Metadata-Version: 2.4
+Name: fortitude
+Version: 0.1.9.9
+Summary: Smart Odoo Loadbalancer
+License: GPL V3
+Description-Content-Type: text/markdown
+Requires-Dist: websocket-client==1.7.0
+Requires-Dist: requests==2.31.0
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: license
+Dynamic: requires-dist
+Dynamic: summary
+
+# Fortitude
+
+### Loadbalancer pour Odoo
+
+methodes de répartition R/W :
+* **random** ->répartition aléatoire
+* **robin** -> appels séquentiels aux serveurs
+* **session** -> le user est affecté à un serveur
+* **availability** -> utilise le serveur avec le moins de connexions actives
+
+lister de préférence des serveurs du moins puissant au plus puissant 
+
+
+
+### Fichier de configuration json :
+>{
+>
+>"http_port" : 443,
+>
+>"http_bind" : "0.0.0.0",
+>
+>"secure" : true,
+>
+>"secure_cert" : "/etc/letsencrypt/live/XXXXX.XXX/cert.pem",
+>
+>"secure_key" : "/etc/letsencrypt/live/XXXXX.XXX/privkey.pem",
+>
+>"write_srv" : [
+>
+>    {"host" : "localhost", "port" : 8081},
+>
+>    {"host" : "localhost", "port" : 8082}
+>
+>],
+>
+>"read_srv" : [
+>
+>    {"host" : "localhost", "port" : 8082}
+>
+>],
+>
+>"ws_srv" : {"host" : "localhost", "port" : 8071},       
+>
+>"distribution" : "robin", 
+>
+>"read_rules" :[
+>
+>    "^/(.\*)/static/(.\*)",
+>
+>    "^/web/image\\\\?(.\*)",
+>
+>    "^/web/dataset/call_kw/(.\*)/get_views",
+>
+>    "^/web/dataset/call_kw/(.\*)/web_search_read",
+>
+>    "^/web/dataset/call_kw/(.\*)/has_group",
+>
+>    "^/web/dataset/call_kw/(.\*)/web_read",
+>
+>    "^/web/dataset/call_kw/(.\*)/name_search",
+>
+>    "^/web/dataset/call_kw/(.\*)/retrieve_dashboard",
+>
+>    "^/web/assets/(.\*)/(.\*)\\\\.js",
+>
+>    "^/web/assets/(.\*)/(.\*)\\\\.css",
+>
+>    "^/web/webclient/load_menus/(.\*)",
+>
+>    "^/web/webclient/translations/(.\*)",
+>
+>    "^/mail/thread/data",
+>
+>    "^/mail/thread/messages",
+>
+>   "^/web/action/load"
+>
+>   ]
+>
+>}
+
