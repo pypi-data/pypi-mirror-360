@@ -1,0 +1,97 @@
+[tool.irt]
+release-type = "continuous"
+postgres_version = 16
+
+[tool.irt.version-bump]
+tool = "bumpversion"
+
+[tool.irt.dependencies]
+core-component = "https://github.com/inmanta/inmanta-core"
+
+[tool.irt.documentation]
+documentation_base_repo = "https://github.com/inmanta/inmanta-core.git"
+documentation_repo = "https://github.com/inmanta/inmanta.git"
+module_set_path = "sets/public-docs.yml"
+
+[tool.irt.module_set]
+repository = "https://github.com/inmanta/irt.git"
+path = "sets/public.yml"
+
+[tool.irt.build.python]
+dists = [ "sdist", "wheel",]
+
+[tool.irt.build.rpm]
+centos_versions = [ 9, 8,]
+python_version = "python3.12"
+
+[tool.irt.build.native_docker_image]
+build_context_path = "docker/native_image/"
+dockerfile_path = "Dockerfile"
+product_package_venv = "/opt/inmanta/"
+
+[tool.irt.publish.python]
+public = true
+
+[tool.irt.publish.rpm]
+rpm_repo_name_prefix = "inmanta/oss"
+
+[tool.irt.dependencies.additional-python-dependencies]
+
+[tool.irt.dependencies.extensions]
+inmanta-ui = "https://github.com/inmanta/inmanta-ui"
+
+[tool.irt.documentation.publish]
+username = "docs"
+hostname = "devil.inmanta.com"
+dev_release_path = "/srv/www/docs/community/dev"
+stable_release_path = "/srv/www/docs/community/latest"
+post_publish_hook_remote = "~/post_publish_hook.py"
+s3_endpoint = "https://464c2d3b8466e783f2618e96f4c43843.r2.cloudflarestorage.com"
+s3_access_key_id_env = "AWS_ACCESS_KEY"
+s3_secret_access_key_env = "AWS_SECRET_KEY"
+s3_provider = "Cloudflare"
+s3_bucket_name = "docs"
+
+[tool.irt.additional-lock-files.inmanta-core]
+repo = "https://github.com/inmanta/inmanta-core"
+files = [ "requirements.txt",]
+
+[tool.irt.build.python.env]
+
+[tool.irt.build.python.hooks]
+
+[tool.irt.build.python.subprojects]
+
+[tool.irt.build.rpm.enable_repo]
+el8 = []
+
+[tool.irt.publish.native_docker_image.dev]
+image_registry = "code.inmanta.com:4567"
+image_repository = "solutions/containers"
+image_name = "orchestrator"
+image_tags = [ "dev-ng", "dev",]
+add_dev_tag_on_builds_from_master = false
+registry_username_env = "GITLAB_REGISTRY_USERNAME"
+registry_password_env = "GITLAB_REGISTRY_PASSWORD"
+
+[tool.irt.publish.native_docker_image.next]
+image_registry = "ghcr.io"
+image_repository = "inmanta"
+image_name = "orchestrator"
+image_tags = [ "{version}-rc",]
+add_dev_tag_on_builds_from_master = false
+registry_username_env = "GITHUB_REGISTRY_USERNAME"
+registry_password_env = "GITHUB_REGISTRY_PASSWORD"
+
+[tool.irt.publish.native_docker_image.stable]
+image_registry = "ghcr.io"
+image_repository = "inmanta"
+image_name = "orchestrator"
+image_tags = [ "latest", "{version}",]
+add_dev_tag_on_builds_from_master = false
+registry_username_env = "GITHUB_REGISTRY_USERNAME"
+registry_password_env = "GITHUB_REGISTRY_PASSWORD"
+
+[tool.irt.dependencies.npm.web-console]
+repo = "https://github.com/inmanta/web-console"
+version = "==3.0.0"
