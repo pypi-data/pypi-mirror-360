@@ -1,0 +1,1 @@
+mkfifo -m 0666 /tmp/namedPipe 
