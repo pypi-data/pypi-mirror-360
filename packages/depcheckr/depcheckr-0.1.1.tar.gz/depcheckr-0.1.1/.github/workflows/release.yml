@@ -1,0 +1,126 @@
+name: Release to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 0.1.1)'
+        required: true
+  push:
+    branches: [main]
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  update-version:
+    if: github.event_name == 'workflow_dispatch'
+    name: Bump Version in pyproject.toml
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Bump version in pyproject.toml
+        run: |
+          sed -i "s/^[[:space:]]*version = .*/version = \"${{ github.event.inputs.version }}\"/" pyproject.toml
+
+      - name: Commit and push version bump
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -am "chore: bump version to ${{ github.event.inputs.version }}"
+          git push
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Set up virtual environment and install dev deps
+        run: |
+          uv venv
+          uv pip install -e .
+          uv pip install pytest
+
+      - name: Run tests
+        run: uv run pytest
+
+  build-publish:
+    needs: [tag-and-release, test]
+    name: Build and Publish to PyPI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          uv pip install --system setuptools wheel twine
+          npm install -g conventional-changelog-cli
+
+      - name: Build package
+        run: |
+          git pull
+          uv build --sdist --wheel
+
+      - name: Generate CHANGELOG.md
+        run: |
+          npx conventional-changelog -p angular -i CHANGELOG.md -s -r 1
+
+      - name: Commit changelog
+        run: |
+          git pull
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add CHANGELOG.md
+          git commit -m "docs: update CHANGELOG for v${{ github.event.inputs.version }}"
+          git push
+
+      - name: Publish to PyPI
+        run: uv publish
+
+  tag-and-release:
+    needs: [update-version]
+    name: Tag & Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create tag
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git tag v${{ github.event.inputs.version }}
+          git push origin v${{ github.event.inputs.version }}
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: depcheckr v${{ github.event.inputs.version }}
+          generate_release_notes: true
