@@ -1,0 +1,111 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*" # Matches tags like v1.0.0, v2.1.3, etc.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g., 1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write # Needed to create releases and tags
+  packages: write # Needed to publish to GitHub Packages (if used)
+  id-token: write # Needed for OIDC authentication
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Needed for the changelog generation
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Get version
+        id: version
+        run: |
+          if [[ -n "${{ github.event.inputs.version }}" ]]; then
+            # Manual trigger with version input
+            VERSION="${{ github.event.inputs.version }}"
+            # Ensure version doesn't start with 'v' for consistency
+            VERSION=${VERSION#v}
+            echo "version=${VERSION}" >> $GITHUB_OUTPUT
+            echo "VERSION=${VERSION}" >> $GITHUB_ENV
+            echo "TAG_NAME=v${VERSION}" >> $GITHUB_ENV
+            echo "MANUAL_RELEASE=true" >> $GITHUB_ENV
+          else
+            # Automatic trigger from tag
+            VERSION=${GITHUB_REF#refs/tags/v}
+            echo "version=${VERSION}" >> $GITHUB_OUTPUT
+            echo "VERSION=${VERSION}" >> $GITHUB_ENV
+            echo "TAG_NAME=v${VERSION}" >> $GITHUB_ENV
+            echo "MANUAL_RELEASE=false" >> $GITHUB_ENV
+          fi
+
+          echo "Using version: ${VERSION}"
+          echo "Tag name: v${VERSION}"
+
+      - name: Extract release notes from CHANGELOG.md
+        id: changelog
+        run: |
+          # Extract the section for the current version from CHANGELOG.md
+          # This assumes changelog sections start with '## [version]' (e.g., ## [1.0.0])
+          SECTION=$(awk -v ver="## \\[${VERSION}\\]" '/^## \[[0-9]+\.[0-9]+\.[0-9]+\]/ {if (flag) {exit}; if ($0 ~ ver) {flag=1; next}} flag' CHANGELOG.md)
+          
+          if [ -z "$SECTION" ]; then
+            echo "::warning::No changelog section found for version ${VERSION}"
+            SECTION="No changelog entry found for version ${VERSION}"
+          fi
+          
+          # Escaping for GitHub Actions output
+          SECTION="${SECTION//'%'/'%25'}"
+          SECTION="${SECTION//$'\n'/'%0A'}"
+          SECTION="${SECTION//$'\r'/'%0D'}"
+          
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$SECTION" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create or update tag
+        if: ${{ env.MANUAL_RELEASE == 'true' }}
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -f "${{ env.TAG_NAME }}" -m "Release ${{ env.VERSION }}"
+          git push -f origin "${{ env.TAG_NAME }}"
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine
+
+      - name: Build package
+        run: python -m build
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: Release ${{ env.VERSION }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            dist/*
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
