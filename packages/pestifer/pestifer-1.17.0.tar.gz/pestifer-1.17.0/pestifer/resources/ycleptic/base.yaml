@@ -1,0 +1,1326 @@
+# Pestifer
+# (c) 2023-2025 Cameron F. Abrams, cfa22@drexel.edu
+#
+# Ycleptic-format specification for a user's YAML-format pestifer configuration file
+#
+# The "name" of any directive may appear as a key whose value is specified by "type"
+# and any dependent "directives".  Values with scalar types should only appear
+# once in any directive set.  Values with list types may have multiple instances
+# of each dependent directive.
+#
+# use "required: True" for scalar values that have no defaults but must be specified
+# use "required: False" for any values that should not be assigned defaults
+#
+docs:
+  title: Configuration File Reference
+  text: |
+    Pestifer uses YAML-format configuration input for executing a build.  These pages document all YAML directives 
+    that can be included in a config file.  You can also use the ``pestifer config-help`` subcommand to step through
+    this documentation on interactively on the command line.
+
+    Each item below is a top-level directive in a pestifer configuration file.
+directives:
+  - name: charmmff
+    type: dict
+    text: Specifications for charmm force-field parameter and topology files
+    required: True
+    docs:
+      text: |
+        The ``charmff`` directive informs pestifer which CHARMM force-field parameter and topology files are to be 
+        used for all psfgen/namd3 executions.  ``standard`` refers to files that are found in the official CHARMMFF 
+        release, and are referred to by their base filenames, regardless of whether they live in the topmost ``toppar`` 
+        directory or one of the stream subdirectories.  ``custom`` refers to files that are not part of the official CHARMMFF release.
+    directives:
+      - name: tarball
+        type: str
+        text: Path to a tarball containing the charmmff files; this is used to override the default set of charmmff files
+      - name: standard
+        type: dict
+        text: Standard charmmff files under the standard ``toppar/`` directory
+        required: True
+        docs:
+          text: |
+            These are the standard CHARMM force-field files that pestifer will use for all psfgen/namd3 executions.  
+            These files are included in the pestifer distribution, and are not expected to be modified by the user.  
+            They are always referred to by their base filenames, regardless of whether they live in the topmost ``toppar`` 
+            directory or one of the stream subdirectories.  The default set is useful for most non-membrane systems.
+        directives:
+          - name: topologies
+            type: list
+            text: Standard charmmff topologies
+            required: True
+            default:
+              - top_all36_prot.rtf
+              - top_all35_ethers.rtf
+              - top_all36_cgenff.rtf
+              - top_all36_lipid.rtf
+              - top_all36_carb.rtf
+              - top_all36_na.rtf
+              - toppar_water_ions.str
+              - toppar_all36_carb_glycopeptide.str
+              - toppar_all36_prot_modify_res.str
+          - name: parameters
+            type: list
+            text: Standard charmmff parameter files
+            required: True
+            default:
+              - par_all36m_prot.prm
+              - par_all36_lipid.prm
+              - par_all36_carb.prm
+              - par_all36_na.prm
+              - par_all36_cgenff.prm
+              - toppar_water_ions.str
+              - toppar_all36_carb_glycopeptide.str
+              - toppar_all36_prot_modify_res.str
+      - name: custom
+        type: dict
+        text: Custom charmmff files provided as part of pestifer
+        required: True 
+        directives:
+          - name: topologies
+            type: list
+            text: Custom charmmff topology files
+            default:
+              - toppar_all36_moreions.str
+          - name: parameters
+            type: list
+            text: Custom charmmff parameter files
+            default:
+              - toppar_all36_moreions.str
+      - name: pdbcollections
+        type: list
+        text: Paths to local collections of PDB files for custom lipids or ligands
+        docs:
+          text: | 
+            Here you can list one or more paths to PDB collections that you have built using the ``make-pdb-collection`` subcommand.  
+            These collections can be used to provide custom lipids or ligands for your simulations.  
+            The paths should point to directories that contain subdirectories for each RESI in the collection, 
+            each of which contains PDB files for that RESI.
+          example: 
+            charmff:
+              pdbcollections:
+                - /path/to/my/custom/lipid/collection/
+                - /path/to/my/custom/ligand/collection/
+        default: []
+      - name: resi-fullnames
+        type: dict
+        text: Full names for RESI's that are missing full names in the standard CHARMMFF files
+        docs:
+          text: |
+            This directive allows you to specify full names for RESI names that lack full names in the CHARMMFF files.
+        default:
+          DIPA: di-alpha-linoleoyl phosphatidic acid
+          DTPA: di-hexadecatrienoyl phosphatidic acid
+          TIPA: di-palmitoleoyl-2-linoleoyl phosphatidic acid
+  - name: psfgen
+    type: dict
+    text: Specifications for the psfgen plugin of VMD
+    docs:
+      text: This directive defines common settings for the ``psfgen`` VMD plugin, including standard atom and residue aliases.
+    required: True
+    directives:
+      - name: segtypes
+        type: dict
+        text: Dictionary for holding segment types as keys and lists of residue names as values
+        docs:
+          text: |
+            This is a dictionary that holds segment types as keys and lists of residue names as values.  The segment types are used to define the segments in the PSF file, and the residue names are used to define the residues in each segment.
+            The segment types are defined in the ``pestifer/core/labels.py`` file, and can be modified/appended to by the user using this directive.
+      - name: aliases
+        type: dict
+        text: additional atom and residue aliases for psfgen not already defined in pestifer/core/labels.py
+        required: True 
+        docs:
+          text: |
+            Add any residue or atom aliases needed; this is often done to make sure you have a 4-byte resname for any residue.  These are input as a list of strings, where each string is the full psfgen alias command
+          example:
+            aliases:
+              atom:
+                - ILE CD1 CD
+              residue:
+                - HIS HSD
+        directives:
+          - name: atom
+            type: list
+            text: List of atom aliases to add to psfgen
+            default: []
+            docs:
+              text: |
+                This is a list of atom aliases to add to psfgen.  Each alias should be a string in the format "ATOM_NAME ALIAS_NAME", where ATOM_NAME is the name of the atom in the PDB file and ALIAS_NAME is the name you want to use in the PSF file.
+          - name: residue
+            type: list
+            text: List of residue aliases to add to psfgen
+            default: []
+            docs:
+              text: |
+                This is a list of residue aliases to add to psfgen.  Each alias should be a string in the format "RESNAME ALIAS_NAME", where RESNAME is the name of the residue in the PDB file and ALIAS_NAME is the name you want to use in the PSF file.
+        default:
+          atom: []
+          residue: []
+  - name: namd
+    type: dict
+    text: NAMD specifications
+    docs:
+      text: These are specifications for NAMD3, including default input configuration parameters for various classes of simulations.
+    directives:
+      - name: namd-version
+        text: version of NAMD to run
+        type: int
+        choices: [2, 3]
+        default: 3
+      - name: processor-type
+        text: which processor type to use (cpu or gpu)
+        type: str
+        choices: [cpu, gpu]
+        default: cpu
+      - name: gpu-resident
+        type: dict
+        text: Configuration parameter(s) required for GPU-resident NAMD3
+        default:
+          GPUResident: on
+          margin: 4
+      - name: deprecated3
+        type: dict
+        text: Deprecated namd2 configuration parameters and their namd3 counterparts
+        default:
+          1-4scaling: oneFourScaling
+      - name: generic
+        type: dict
+        text: Generic NAMD configuration parameters
+        default:
+          paraTypeCharmm: on
+          exclude: scaled1-4
+          1-4scaling: 1.0
+          cutoff: 10.0
+          switching: on
+          switchdist: 9.0
+          pairlistdist: 11.5
+          outputenergies: 100
+      - name: vacuum
+        type: dict
+        text: NAMD parameters for vacuum simulations
+        default:
+          nonbondedFreq: 1
+          fullElectFrequency: 2
+          stepspercycle: 4
+          dielectric: 80
+          timestep: 1.0
+          rigidbonds: none
+      - name: solvated
+        type: dict
+        text: NAMD parameters for solvated simulations
+        default:
+          timestep: 2.0
+          rigidbonds: all
+          nonbondedFreq: 1
+          fullElectFrequency: 2
+          stepspercycle: 10
+          PME: on 
+          pmegridspacing: 1.0
+          wrapAll: on
+      - name: thermostat
+        type: dict
+        text: NAMD thermostat parameters
+        default:
+          langevin: on 
+          langevinDamping: 5
+          langevinTemp: $temperature
+          langevinHydrogen: no 
+      - name: barostat
+        type: dict
+        text: NAMD barostat parameters
+        default:
+          langevinpiston: on 
+          langevinpistontarget: $pressure
+          langevinpistonperiod: 200
+          langevinpistondecay: 100
+          langevinpistontemp: $temperature
+          usegrouppressure: yes
+          useflexiblecell: no
+      - name: harmonic
+        type: dict
+        text: parameters governing harmonic constraints; not necessarily NAMD-compatible keywords
+        default:
+          spring_constant: 200
+  - name: title
+    type: str
+    text: Meaningful title
+    default: Pestifer
+    docs:
+      text: |
+        A meaningful title for the run.  This is optional, but can be useful for identifying runs in the output files.
+        If not specified, the default is "Pestifer".
+  - name: paths
+    type: dict
+    text: Allows user to specify paths for certain resources, including external applications
+    docs:
+      text: |
+        Allows user to specify paths for certain resources, including external applications.  By default, ``pestifer``
+        expects that all external applications are already in the user's PATH.  If not, this directive should be used
+        to specify the paths to these applications.
+    directives:
+      - name: namd2
+        type: str
+        text: Path for namd2 executable
+        default: namd2
+      - name: namd3
+        type: str
+        text: Path for namd3 executable, CPU version
+        default: namd3
+      - name: namd3gpu
+        type: str
+        text: Path for namd3 executable, GPU version; this must be different from the path for the CPU version if both are to be used in a single Pestifer build
+        default: namd3gpu
+      - name: charmrun
+        type: str
+        text: Path for charmrun executable
+        default: charmrun
+      - name: vmd
+        type: str
+        text: Path for vmd executable
+        default: vmd
+      - name: packmol
+        type: str
+        text: Path to packmol executable
+        default: packmol
+      - name: catdcd
+        type: str
+        text: Path to catdcd executable
+        default: catdcd
+  - name: tasks
+    type: list
+    text: Specifies the tasks to be performed serially in a pestifer run
+    docs:
+      text: These are the types of tasks that can be chained together into a run.
+    directives:
+      - name: restart
+        text: Restart from specified pdb, psf, and (optionally) xsc files without any further modifications (suitable for directly feeding to md tasks)
+        type: dict
+        directives:
+          - name: psf
+            text: name of psf file (w/optional psf extension)
+            type: str
+          - name: pdb
+            text: name of pdb file (w/optional pdb extension)
+            type: str
+          - name: xsc
+            text: name of xsc file (w/optional xsc extension)
+            type: str
+          - name: index
+            text: first task index in the restart
+            type: int
+            default: 0
+      - name: psfgen
+        text: Parameters controlling a specific psfgen run on an input molecule
+        type: dict
+        directives:
+          - name: source
+            text: Specifies the source of the initial coordinate file
+            type: dict
+            directives:
+              - name: prebuilt
+                text: PSF and PDB file of a previously built system
+                type: dict
+                directives:
+                  - name: psf
+                    text: name of psf file (includes psf extension)
+                    type: str
+                  - name: pdb
+                    text: name of pdb file (includes pdb extension)
+                    type: str
+                  - name: xsc
+                    text: name of xsc file (includes xsc extension)
+                    type: str
+              - name: id 
+                text: The 4-character PDB ID of the source or the basename of a local coordinate file (PDB or mmCIF format); pestifer will download from the RCSB if a file is not found
+                type: str
+              - name: alphafold
+                type: str
+                text: If set, its value signifies an accession code used to download a model from the AlphaFold database. If either prebuilt or id are set, this directive is ignored
+              - name: biological_assembly 
+                text: integer index of the biological assembly to construct; default is 0, signifying that the asymmetric unit is to be used
+                type: int
+                default: 0
+              - name: transform_reserves
+                type: dict
+                text: dictionary keyed by chain IDs in the asymmetric unit with values that are lists of chain ID's for symmetry-related chains in other units of the biological assembly
+              - name: remap_chainIDs
+                type: dict
+                text: dictionary mapping of chainIDs in structure input to new chainIDs
+              - name: reserialize
+                type: bool
+                text: If true, resets the serial numbers of all atoms based on their order in the input structure file -- use with caution!!
+                default: False
+              - name: model
+                text: model number to use if there are multiple models in the file
+                type: int
+              - name: file_format
+                text: either PDB or mmCIF; some entries do not have a PDB-format file.  The main advantage of PDB is that it uses the author-designations for chains by default.  mmCIF is the new "default" format of the PDB.
+                type: str
+                choices: [PDB, mmCIF]
+                default: PDB
+              - name: cif_residue_map_file
+                text: name of output file to write a mapping of CIF chain-residue number to author chain-residue number-insertion
+                type: str
+              - name: exclude
+                text: Specifies any residues or atoms present in the PDB source to exclude from the system
+                type: dict
+                directives:
+                  - name: chains
+                    text: Specify list of chain IDs to ignore; in PDB-format input, these are typically author-generated, while in mmCIF they are not.  You must use chain IDs that reference your chosen coordinate file input format.
+                    type: list
+                    required: False
+                  - name: resnames
+                    text: Specify list of resnames to ignore; good for excluding waters or ions or small molecules.  Resnames must reference your chosen coordinate input file.
+                    type: list
+                    required: False
+                  - name: resseqnums
+                    text: Specify list of resseqnums to ignore
+                    type: list
+                    required: False
+                  - name: altlocs
+                    text: Specify list of altlocs to ignore; good for excluding alternate conformations
+                    type: list
+                    required: False
+              - name: sequence
+                text: Parameters controlling sequence modifications based on specifications in the PDB source
+                type: dict
+                directives:
+                  - name: include_terminal_loops
+                    text: Specifies whether or not N- and C- terminal loops (if unresolved) are built in
+                    type: bool
+                    default: False
+                  - name: build_zero_occupancy_C_termini
+                    text: List of chain identifiers for which you would like zero-occupancy residues at the C-terminus built in
+                    type: list
+                    default: []
+                  - name: build_zero_occupancy_N_termini
+                    text: List of chain identifiers for which you would like zero-occupancy residues at the N-terminus built in
+                    type: list
+                    default: []
+                  - name: fix_engineered_mutations
+                    text: Specifies whether or not sequence differences w.r.t. a sequence database and which are labeled as "engineered mutation"s are reverted to their database values
+                    type: bool
+                    default: True 
+                  - name: fix_conflicts 
+                    text: Specifies whether or not sequence differences w.r.t. a sequence database and which are labeled as "conflicts"s are reverted to their database values
+                    type: bool
+                    default: True          
+                  - name: loops
+                    text: Parameters controlling model-built loops during psfgen
+                    type: dict
+                    directives:
+                      - name: sac_res_name 
+                        text: 3-letter code of residue appended to any sufficiently long model-built 
+                        type: str
+                        default: GLY
+                      - name: min_loop_length
+                        text: Minimum length of model-built loop that triggers the ligation algorithm
+                        type: int
+                        default: 4
+                      - name: declash
+                        text: Specifies how model-built residues are moved to avoid steric clashes
+                        type: dict
+                        directives:
+                          - name: maxcycles
+                            text: Maximum number of Metropolis cycles
+                            type: int
+                            default: 20
+                          - name: include_C_termini
+                            text: Flag to indicate if model-built C-terminal loops should be declashed
+                            type: bool
+                            default: True
+                          - name: clashdist
+                            text: interatomic distance threshold for clashes in Angstroms
+                            type: float
+                            default: 1.5
+                  - name: glycans
+                    text: parameters controlling how model-built glycans are adjusted, if present
+                    type: dict
+                    directives:
+                      - name: declash
+                        text: Specifies how glycan residues are moved to avoid steric clashes
+                        type: dict
+                        directives:
+                          - name: maxcycles
+                            text: Maximum number of Metropolis cycles
+                            type: int
+                            default: 20
+                          - name: clashdist
+                            text: interatomic distance threshold for clashes in Angstroms
+                            type: float
+                            default: 1.5
+          - name: mods
+            text: Specifies modifications to the sequence or structure in the PDB file
+            type: dict
+            directives:
+              - name: mutations
+                text: Single-residue mutations, expressed as shortcodes (e.g., C:F32A to mutate residue 32 of chain C from PHE to ALA); note that the residue must be present in the PDB source file, and that the mutation will not be made if the residue is not present
+                type: list
+                docs:
+                  example:
+                      mutations:
+                        - C:F32A
+                        - A:TRP100ARG
+                        - B:K50M
+              - name: ssbonds
+                text: additional ssbonds, expressed as shortcodes; e.g., C_154-A_298 to add an ssbond between resids 154 of chain C and 298 of chain A.  Note that the indicated residues must by CYS's.  If they are not, you should include each in a mutation shortcode in the mutations list
+                type: list
+                docs:
+                  example:
+                      ssbonds:
+                        - C_154-A_298
+                        - A_100-B_200
+              - name: ssbondsdelete
+                text: existing ssbonds to break, expressed as shortcodes; e.g., C_154-A_298 will break the existing ssbond between resids 154 of chain C and 298 of chain A so that each is a reduced CYS.
+                type: list
+                docs:
+                  example:
+                      ssbondsdelete:
+                        - C_154-A_298
+                        - A_100-B_200
+              - name: links
+                text: additional generic bonds, expressed as shortcodes; e.g., C_154_N-A_298_M to add a link between atom N of resid 154 of chain C and atom M of resid 298 of chain A.
+                type: list
+                docs:
+                  example:
+                      links:
+                        - C_154_N-A_298_M
+                        - A_100_CA-B_200_O
+              - name: deletions
+                text: residue ranges to delete, expressed as shortcodes; e.g., C:99-101 deletes residues 99 to 101 (inclusive) of chain C
+                type: list
+                docs:
+                  example:
+                      deletions:
+                        - C:99-101
+                        - A:50-60
+              - name: substitutions
+                text: residue ranges to replace with a new sequence; e.g., C:99-101,GG replaces residues 99, 100, and 101 of chain C with two glycines
+                type: list
+                docs:
+                  example:
+                      substitutions:
+                        - C:99-101,GG
+                        - A:50-60,GGG
+              - name: insertions
+                text: sequence of residues to insert C-terminal to a specified residue in a specified chain; e.g., C,123,GRETA inserts the residues Gly123A, Arg123B, Glu123C, Thr123D, and Ala123E immediately C-terminal to residue 123 of chain C; if the resid includes a terminal "+", then inserted resids are incremented as integers
+                type: list
+                docs:
+                  example:
+                      insertions:
+                        - C,123,GRETA
+                        - A,50,GGG+
+              - name: patches
+                text: CHARMM36-style patches to apply to the system
+                type: list
+                docs:
+                  text: |
+                    Patches are specified as a colon-separated list of patch name, chain ID, and residue number.
+                    For example, ASPP:C:199 applies the ASPP (protonated aspartate) patch to residue 199 of chain C.
+                    If the patch is not applicable to the specified residue, it will be skipped.
+                  example:
+                      patches:
+                        - ASPP:C:199
+              - name: crotations
+                text: dihedral angle rotations
+                type: list
+                docs:
+                  text: |
+                    crotations are a set of dihedral angle rotations.  Allowable crotations are PHI, PSI, OMEGA for backbones, CHI1 and CHI2 for sidechains, ANGLEIJK for generic angles, and ALPHA for folding backbones into alpha helices.
+                  example:
+                    crotations:
+                      - psi,E,661,693,60
+                      - phi,E,662,693,60
+                      - alpha,B,33,52
+                      - alpha,B,144,153
+                      - alpha,D,32,52
+                      - alpha,D,144,153
+              - name: transrot
+                text: global translations and rotations
+                type: list
+              - name: Cfusions
+                text: fuse residues from named residue range of named protein chain of named input PDB coordinate file to C-terminus of named segment of base molecule
+                type: list
+              - name: grafts
+                text: graft residues from named residue range of named chain of named input PDB coordinate file onto target residue of base molecule
+                type: list
+                docs:
+                  text: |
+                    Grafts are specified as a colon-separated list of source chain ID, source PDB ID, and target chain ID and residue number.
+                    For example, A_1304:4b7i,C_1-8 grafts residues 1 to 8 of chain C of PDB entry 4b7i onto residue 1304 of chain A.
+                    If the source PDB does not contain the specified residues, they will be skipped.
+
+                    In the example below, the first graft can be interpreted as, "Take resids 1 to 8 of chain C of PDB 4b7i and graft them onto resid 1304 of chain A of the main molecule."  This will compute positions of the 8 residues by aligning the graft's resid 1 onto the main molecule's resid 1304 of chain A, and then replacing the coordinates of resid 1304 with that of resid 1 of the graft, and inserting the remaining 7 glycan residues into the main molecule topology.
+                  example:
+                      grafts:
+                        - A_1304:4b7i,C_1-8
+                        - B_1304:4b7i,C_1-8
+                        - C_1304:4b7i,C_1-8
+                        - A_1305:4b7i,C_1-8
+                        - B_1305:4b7i,C_1-8
+                        - C_1305:4b7i,C_1-8
+      - name: ligate
+        text: Specifies how C-termini of modeled loops are connected back to the protein
+        type: dict
+        docs:
+          text: |
+            During a psfgen task, pestifer can be configured to "cap" the ends of interior gaps in protein backbones, or it can model-in the missing residues by growing them in from the C-terminus of the resolved protein before the gap.  Ligation refers to forming the bond between the C-terminus of the modeled-in residues and the first resolved residue after the gap.  This is done by "steering" the C-terminus toward the first resolved residue after the gap and then patching the bond in using the CHARMMFF LINK patch.
+        directives:
+          - name: steer
+            text: Specifies parameters for steered MD to bring C-termini close to their connection points
+            type: dict
+            directives:
+              - name: cpu-override
+                text: Override namd3 processor type since GPUresident namd3 cannot handle restraints (yet)
+                type: bool
+                default: True
+              - name: ensemble
+                text: Name of ensemble to run in; note that NPT can only be performed on a solvated system
+                type: str
+                case_sensitive: False
+                choices: [minimize, NVT, NPT]
+                default: NVT
+              - name: force_constant
+                text: force constant (kcal/mol/Angstrom^2)
+                type: float
+                default: 20
+              - name: target_distance
+                text: distance (Angstrom) between carbonyl carbon of loop C-terminus and amide nitrogen of connecting residue that steered MD drives to
+                type: float
+                default: 2
+              - name: nsteps
+                text: number of MD time steps for steeering
+                type: int
+                default: 1000
+              - name: dcdfreq
+                text: number of time steps between configuration output to DCD file
+                type: int
+                default: 100
+              - name: xstfreq
+                text: number of time steps between cell size output to DCD file (only used if ensemble is NPT)
+                type: int
+                default: 100
+              - name: temperature
+                text: Temperature used in steered MD run
+                type: float
+                default: 300
+              - name: pressure
+                text: Pressure used in steered MD run (only used if ensemble is NPT)
+                type: float
+                default: 1
+              - name: receiver_flexible_zone_radius
+                text: size of zone around receiver N-terminal N in which CA's are not fixed during steered MD
+                type: float
+                default: 0.0 # all fixed by default
+              - name: constraints
+                text: Parameters controlling position constraints
+                type: dict
+                directives:
+                  - name: atoms
+                    text: Atoms to be position-constrained expressed as a VMD atomselection string
+                    type: string
+                  - name: k
+                    text: Restraint spring constant in kcal/mol/A^2
+                    type: float
+                  - name: consfile
+                    text: Name of constraints PDB file to generate (defaults to basename-constraints.pdb)
+                    type: string
+          - name: connect
+            text: Specifies parameters of the psfgen run that patches in the new backbone bonds
+            type: dict
+            directives:
+              - name: cleanup
+                text: Specifies whether or not to clean up temporary files
+                type: bool
+                default: True
+      - name: pdb2pqr
+        text: Parameters controlling a PDB2PQR run on an input molecule
+        type: dict
+        directives:
+          - name: pH 
+            text: pH at which to calculate the protonation states of titratable residues
+            type: float
+            default: 7.0
+      - name: mdplot
+        text: Generate plot(s) from md tasks
+        type: dict
+        docs:
+          text: |
+            This task generates plots from the output of MD tasks.  It can plot energy-like quantities vs time, and profile quantities vs distance along the z-axis. The plots are generated using matplotlib, and are saved as image files. This task can be part of a standard build, or it can be used via the command line (``pestifer mdplot``) to generate plots from existing NAMD logs and xst files.
+        directives:
+          - name: existing-logs
+            type: list
+            text: list of existing namd logs, in chronological order, from which data to be plotted is to be extracted
+            default: []
+          - name: existing-xsts
+            type: list
+            text: list of existing namd xst files, in chronological order, from which data to be plotted is to be extracted
+            default: []
+          - name: figsize
+            type: list
+            text: size of matplotlib figure
+            default: [9,6]
+          - name: traces
+            type: list
+            text: List of energy-like quantities to plot vs timestep
+            default:
+              - density
+            docs:
+              text: |
+                The list of energy-like quantities to plot vs timestep.  These quantities are extracted from the NAMD log files and plotted against timestep.  To combine traces onto a single plot, the list element itself can be a list. The default is to plot density, but you can specify any quantity in an ENERGY: output line or an XST file, including:
+                - density (not included in ENERGY:, but computed)
+                - a_x (cell size along x direction)
+                - b_y (cell size along y direction)
+                - c_z (cell size along z direction)
+                - pressure
+                - temperature
+          - name: profiles
+            type: list
+            text: List of profile quantities to plot vs distance along z-axis
+          - name: units
+            type: dict
+            text: user-specified units for plots
+            default:
+              density: g/cc
+              a_x: Å
+              b_y: Å
+              c_z: Å
+              pressure: bar
+              temperature: K
+          - name: legend
+            text: include a legend
+            type: bool
+            default: True
+          - name: grid
+            text: include a grid
+            type: bool
+            default: False
+          - name: basename
+            type: str
+            text: Baseame of image/CSV file(s) to generate
+            default: myplot
+      - name: cleave
+        text: Parameters controlling cleavage of one or more protein chains
+        type: dict
+        directives:
+          - name: sites
+            type: list
+            text: List of site shortcodes in form C:R1-R2 where C is chain ID, R1 is resid+ins of residue N-terminal to cleavage site, R2 is residue C-terminal to cleavage site
+      - name: domainswap
+        text: Parameters controlling a domain swap TMD simulation
+        type: dict
+        directives:
+          - name: cpu-override
+            text: revert to cpu version of namd3 since GPUresident namd3 cannot handle restraints (yet)
+            type: bool
+            default: True
+          - name: swap_domain_def
+            type: str
+            text: VMD atomselect string for the domain; will be appended with "and chain X" for each chain
+          - name: anchor_domain_def
+            type: str
+            text: VMD atomselect string for the anchor domains; will be appended with "and chain X" for each chain
+          - name: chain_directional_swaps
+            type: list
+            text: list of pairs of directional swaps of chainIDs [[A,B], [B,A]] swaps A and B
+          - name: force_constant
+            type: float
+            text: force constant used in biases for domain-swap CV MD simulation (200)
+            default: 200.0
+          - name: target_numsteps
+            type: int
+            text: number of timesteps to run the biased MD simulation
+            default: 10000
+          - name: nsteps
+            type: int
+            text: number of timesteps to run the biased MD simulation
+            default: 10000
+          - name: dcdfreq
+            type: int
+            text: number of timesteps between dcd output
+            default: 100
+          - name: xstfreq
+            text: number of time steps between cell size output to DCD file
+            type: int
+            default: 100
+          - name: temperature
+            type: float
+            text: temperature of thermostat in MD run
+            default: 300
+          - name: ensemble
+            type: str
+            text: ensemble in which MD is run [NVT]
+            case_sensitive: False
+            choices: [minimize, NVT, NPT]
+            default: NVT
+      - name: solvate
+        text: Parameters controlling solvation and ionization
+        type: dict
+        directives:
+          - name: pad
+            text: padding value for determining the overall simulation box size (in Angstroms)
+            type: float
+            default: 10
+          - name: salt_con
+            text: salt concentration (M); argument for -sc for autoionize
+            type: float
+          - name: cation
+            text: name of cation
+            type: string
+            options: [SOD, MG, POT, CES, CAL, ZN2]
+          - name: anion
+            text: name of anion
+            type: string
+            options: [CLA]
+      - name: desolvate
+        type: dict
+        text: single-shot desolvation (no inheritance)
+        directives:
+          - name: psf
+            type: str
+            text: name of input PSF file
+          - name: keepatselstr
+            type: str
+            text: VMD atomselect string for atoms you want to keep
+            default: protein or lipid or glycan
+          - name: idx_outfile
+            type: str
+            text: name of output index file for catdcd
+            default: dry.idx
+          - name: psf_oufile
+            type: str
+            text: name of output PSF file
+            default: dry.psf
+          - name: dcd_outfile
+            type: str
+            text: name of output DCD file
+            default: dry.dcd
+          - name: dcd_infiles
+            type: list
+            text: ordered list of names of input DCD files
+      - name: ring_check
+        text: Parameters controlling pierced-ring checks
+        type: dict
+        directives:
+          - name: delete
+            text: which of the piercer or piercee to delete; if none, no deletions are performed
+            type: string
+            default: piercee
+            options: ['piercee','piercer','none']
+          - name: cutoff
+            text: distance cutoff between bond and ring COM's for checking, Angstroms
+            type: float
+            default: 10.0
+          - name: segtypes
+            text: list of segment types to include in the ring-pierce check
+            type: list
+            default: ['lipid']
+      - name: make_membrane_system
+        text: Parameters controlling packmol to generate a membrane system with an embedded protein
+        type: dict
+        directives:
+          - name: bilayer
+            text: Parameters controlling bilayer generation
+            type: dict
+            directives:
+              - name: prebuilt
+                text: PSF and PDB file of a previously built system membrane system
+                type: dict
+                directives:
+                  - name: psf
+                    text: name of psf file (includes psf extension)
+                    type: str
+                  - name: pdb
+                    text: name of pdb file (includes pdb extension)
+                    type: str
+                  - name: xsc
+                    text: name of xsc file (includes xsc extension)
+                    type: str
+              - name: lipids
+                text: declaration of lipids in each leaflet in memgen format LIP1[:LIP2][//LIP3] where ":" is an intra-leaflet separator and "//" is an inter-leaflet separator
+                type: str
+                default: POPC
+              - name: lipid_conformers
+                text: declaration of which conformer index to use for each lipid in memgen format C1:C2//C3 (defaults to 0); must be congruent with the lipids directive
+                type: str
+                default: '0'
+              - name: mole_fractions
+                text: declaration of mole fractions of each lipid in each leaflet in memgen format R1:R2//R3; must be congruent with the lipids directive
+                type: str
+                default: '1.0'
+              - name: patch_nlipids
+                type: dict
+                text: number of lipids per leaflet when building initial bilayer patches
+                directives:
+                  - name: upper
+                    type: int
+                    text: number of lipids in the upper leaflet
+                    default: 100
+                  - name: lower
+                    type: int
+                    text: number of lipids in the lower leaflet
+                    default: 100
+              - name: composition
+                type: dict
+                text: Alternate way of expressing bilayer composition; supercedes memgen-format 'lipids', 'mole_fractions', and 'lipid_conformers'
+                directives:
+                  - name: upper_leaflet
+                    type: list
+                    text: List of dicts with keys 'name', 'frac', and 'conf' for each lipid species
+                  - name: lower_leaflet
+                    type: list
+                    text: List of dicts with keys 'name', 'frac', and 'conf' for each lipid species
+              - name: half_mid_zgap
+                text: extra gap between hydrophobic tails in bilayer during packing, Angstroms
+                type: float
+                default: 1.0
+              - name: solvents
+                text: string in memgen format SOL1:SOL2:...
+                type: str
+                default: TIP3
+              - name: solvent_mole_fractions
+                text: string in memgen format x_1:x_2:...
+                type: str
+                default: '1.0'
+              - name: solvent_to_lipid_ratio
+                text: ratio of solvent molecules to lipids in each leaflet; must be specified if solvents are present
+                type: float
+                default: 32.0
+              - name: SAPL
+                text: estimate of surface area per lipid (Å²) for building initial patches
+                type: float
+                default: 75.0
+              - name: dims
+                text: box dimensions in x, y, and z in Å; must be specified for a bilayer-only system
+                type: list
+              - name: npatch
+                text: box dimensions in number of patches in x and y
+                type: list
+              - name: solution_gcc
+                text: solution density in g/cc
+                type: float
+                default: 1.0
+              - name: cation
+                text: name of salt cation
+                type: str
+                default: POT
+              - name: anion
+                text: name of salt anion
+                type: str
+                default: CLA
+              - name: salt_con
+                text: salt concentration in M
+                type: float
+              - name: nloop
+                text: number of packmol GENCAN loops for every component
+                type: int
+              - name: nloop_all
+                text: number of packmol GENCAN loops for altogether packing
+                type: int
+              - name: tolerance
+                text: clash detection tolerance for packmol
+                type: float
+              - name: seed
+                text: RNG seed (optional)
+                type: int
+              - name: relaxation_protocols
+                text: relaxation protocols for the patch and the quilt
+                type: dict
+                directives:
+                  - name: patch
+                    text: patch-specific relaxation protocol
+                    type: list
+                    default:
+                      - md:
+                          ensemble: minimize
+                          nsteps: 1000
+                      - md:
+                          ensemble: NVT
+                          nsteps: 1000
+                          temperature: 300
+                          other_parameters:
+                            useflexiblecell: True
+                            useconstantratio: True
+                      - md:
+                          ensemble: NPT
+                          nsteps: 200
+                          temperature: 300
+                          pressure: 10
+                          other_parameters:
+                            useflexiblecell: True
+                            useconstantratio: True
+                      - md:
+                          ensemble: NPT
+                          nsteps: 200
+                          temperature: 300
+                          pressure: 10
+                          other_parameters:
+                            useflexiblecell: True
+                            useconstantratio: True
+                      - md:
+                          ensemble: NPT
+                          nsteps: 400
+                          temperature: 300
+                          pressure: 10
+                          other_parameters:
+                            useflexiblecell: True
+                            useconstantratio: True
+                      - md:
+                          ensemble: NPT
+                          nsteps: 800
+                          temperature: 300
+                          pressure: 10
+                          other_parameters:
+                            useflexiblecell: True
+                            useconstantratio: True
+                      - md:
+                          ensemble: NPT
+                          nsteps: 1600
+                          temperature: 300
+                          pressure: 10
+                          other_parameters:
+                            useflexiblecell: True
+                            useconstantratio: True
+                      - md:
+                          ensemble: NPT
+                          nsteps: 3200
+                          temperature: 300
+                          pressure: 10
+                          other_parameters:
+                            useflexiblecell: True
+                            useconstantratio: True
+                      - md:
+                          ensemble: NPT
+                          nsteps: 6400
+                          temperature: 300
+                          pressure: 10
+                          other_parameters:
+                            useflexiblecell: True
+                            useconstantratio: True
+                      - md:
+                          ensemble: NPT
+                          nsteps: 12800
+                          temperature: 300
+                          pressure: 10
+                          other_parameters:
+                            useflexiblecell: True
+                            useconstantratio: True
+                      - md:
+                          ensemble: NPT
+                          nsteps: 25600
+                          temperature: 300
+                          pressure: 1
+                          other_parameters:
+                            useflexiblecell: True
+                            useconstantratio: True
+                    directives:
+                      - name: md
+                        text: md task for bilayer relaxation
+                        type: dict
+                        directives:
+                          - name: ensemble
+                            text: Name of ensemble to run in; note that NPT can only be performed on a solvated system
+                            type: str
+                            case_sensitive: False
+                            choices: [minimize, NVT, NPT]
+                            default: minimize
+                          - name: nsteps
+                            text: Number of MD time steps (or minimization steps if 'ensemble' is 'minimize')
+                            type: int
+                            default: 1000
+                          - name: temperature
+                            text: Temperature (K) for NVT or NPT
+                            type: float
+                            default: 300
+                          - name: pressure
+                            text: Pressure (bar) for NPT; note that NPT can only be performed on a solvated system
+                            type: float
+                            default: 1
+                          - name: addl_paramfiles
+                            type: list
+                            text: list of additional parameter files to be included in the NAMD run
+                            default: []
+                          - name: other_parameters 
+                            type: dict
+                            text: key:value pairs for other namd3 configuration file statements
+                            directives:
+                              - name: useflexiblecell
+                                text: flexible cell flag for NPT
+                                type: bool
+                                default: True
+                              - name: useconstantratio
+                                text: constant X:Y ratio for NPT
+                                type: bool
+                                default: True
+                              - name: pressureProfile
+                                text: turn on NAMD's on-the-fly pressure profile calculation 
+                                type: bool
+                              - name: pressureProfileSlabs
+                                text: number of slabs along z for NAMD's on-the-fly pressure profile calculation 
+                                type: int
+                              - name: pressureProfileFreq
+                                text: frequency of pressure profile calculation in time steps
+                                type: int
+                  - name: quilt
+                    text: quilt-specific relaxation protocol; if patch is well-equilibrated and any lipids deleted due to asymmetry are small in number, this is usually much shorter
+                    type: list
+                    default:
+                      - md:
+                          ensemble: minimize
+                          nsteps: 1000
+                      - md:
+                          ensemble: NVT
+                          nsteps: 1000
+                          temperature: 300
+                          other_parameters:
+                            useflexiblecell: True
+                            useconstantratio: True
+                      - md:
+                          ensemble: NPT
+                          nsteps: 25600
+                          temperature: 300
+                          pressure: 1
+                          other_parameters:
+                            useflexiblecell: True
+                            useconstantratio: True
+                    directives:
+                      - name: md
+                        text: md task for bilayer relaxation
+                        type: dict
+                        directives:
+                          - name: ensemble
+                            text: Name of ensemble to run in; note that NPT can only be performed on a solvated system
+                            type: str
+                            choices: [minimize, NVT, NPT]
+                            default: minimize
+                          - name: nsteps
+                            text: Number of MD time steps (or minimization steps if 'ensemble' is 'minimize')
+                            type: int
+                            default: 1000
+                          - name: temperature
+                            text: Temperature (K) for NVT or NPT
+                            type: float
+                            default: 300
+                          - name: pressure
+                            text: Pressure (bar) for NPT; note that NPT can only be performed on a solvated system
+                            type: float
+                            default: 1
+                          - name: addl_paramfiles
+                            type: list
+                            text: list of additional parameter files to be included in the NAMD run
+                            default: []
+                          - name: other_parameters 
+                            type: dict
+                            text: key:value pairs for other namd3 configuration file statements
+                            directives:
+                              - name: useflexiblecell
+                                text: flexible cell flag for NPT
+                                type: bool
+                                default: True
+                              - name: useconstantratio
+                                text: constant X:Y ratio for NPT
+                                type: bool
+                                default: True
+          - name: embed
+            text: parameters controlling protein embedding
+            type: dict
+            directives:
+              - name: no_orient
+                text: if true, do not alter orientation of protein; z-axis of protein coordinate system is assumed to be membrane normal
+                type: bool
+                default: False
+              - name: q_tolerance
+                text: tolerance for net charge neutralization
+                type: float
+                default: 1.e-4
+              - name: xydist
+                text: distance from perimeter of protein to box edge in x and y (Å)
+                type: float
+                default: 15
+              - name: zdist
+                text: distance from perimeter of protein to box edge in z (Å)
+                type: float
+                default: 20
+              - name: margin
+                text: distance from any protein atom in which no lipid atoms are permitted when embedding (Å)
+                type: float
+                default: 2.4
+              - name: z_head_group
+                text: VMD atomselect string defining head-group of z-axis
+                type: str
+              - name: z_tail_group
+                text: VMD atomselect string defining tail-group of z-axis
+                type: str
+              - name: z_ref_group
+                text: VMD atomselect string defining a center of mass at a specific z
+                type: dict
+                directive:
+                  - name: z_value
+                    type: float
+                    text: value of z at COM of this group relative to apparent bilayer midplane z-value (Å) (default 0)
+                    default: 0.0
+                  - name: text
+                    text: the atomselect text
+                    type: str
+      - name: md
+        text: Parameters controlling a NAMD run
+        type: dict
+        directives:
+          - name: cpu-override
+            text: revert to cpu version of namd3
+            type: bool
+            default: False
+          - name: vacuum
+            text: if true, namd will run on a single node even if multiple nodes are allocated
+            type: boolean
+            default: False
+          - name: ensemble
+            text: Name of ensemble to run in; note that NPT can only be performed on a solvated system
+            type: str
+            choices: [minimize, NVT, NPT]
+            default: NVT
+            case_sensitive: False
+          - name: minimize
+            text: Number of minimization steps; ignored if ensemble is not 'minimize' (used with the 'minimize' command)
+            type: int
+            default: 1000
+          - name: nsteps
+            text: Number of MD time steps; ingored if ensemble is 'minimize' (used with the 'run' command)
+            type: int
+            default: 2000
+          - name: dcdfreq
+            text: number of time steps between configuration output to DCD file
+            type: int
+            default: 100
+          - name: xstfreq
+            text: number of time steps between cell size output to DCD file
+            type: int
+            default: 100
+          - name: temperature
+            text: Temperature (K) for NVT or NPT
+            type: float
+            default: 300
+          - name: pressure
+            text: Pressure (bar) for NPT; note that NPT can only be performed on a solvated system
+            type: float
+            default: 1
+          - name: addl_paramfiles
+            type: list
+            text: list of additional parameter files to be included in the NAMD run
+            default: []
+          - name: other_parameters
+            text: key:value pairs for other namd2 configuration file statements
+            type: dict
+          - name: constraints
+            text: Parameters controlling position constraints
+            type: dict
+            directives:
+              - name: atoms
+                text: Atoms to be position-constrained expressed as a VMD atomselection
+                type: string
+              - name: k
+                text: Restraint spring constant in kcal/mol/A^2
+                type: float
+              - name: consfile
+                text: Name of constraints PDB file (defaults to basename-constraints.pdb)
+                type: string
+      - name: manipulate
+        text: Direct manipulation of atom positions
+        type: dict
+        directives:
+          - name: mods
+            text: Specifies modifications to the sequence or structure in the current structure
+            type: dict
+            directives:
+              - name: crotations
+                text: dihedral angle rotations to reposition residues
+                type: list
+              - name: transrot
+                text: global translations and rotations
+                type: list
+      - name: terminate
+        text: Task that signals end of task list
+        type: dict
+        directives:
+          - name: basename
+            text: Desired basename for final psf/pdb files
+            type: str
+            default: my_system
+          - name: chainmapfile
+            text: Desired name of the file describing all chain mapping
+            type: str
+            default: chainmaps.yaml
+          - name: statefile
+            text: Desired name of the file describing the current state
+            type: str
+            default: states.yaml
+          - name: package
+            text: Task that packages all CHARMM parameter files and pdb/psf/coor/vel/xsc files for a production run
+            type: dict
+            required: False
+            directives:
+              - name: basename
+                text: Desired basename for final tarball
+                type: str
+                default: my_system
+              - name: ensemble
+                text: Name of ensemble to run in; note that NPT can only be performed on a solvated system
+                type: str
+                case_sensitive: False
+                choices: [NVT, NPT]
+                default: NVT
+              - name: nminsteps
+                text: Number of minimization steps
+                type: int
+                default: 0
+              - name: nsteps
+                text: Number of MD time steps
+                type: int
+                default: 1000000
+              - name: firsttimestep
+                text: First timestep to use in the run (if unset, inherits from last MD task)
+                type: int
+              - name: dcdfreq
+                text: number of time steps between configuration output to DCD file
+                type: int
+                default: 10000
+              - name: xstfreq
+                text: number of time steps between cell size output to DCD file
+                type: int
+                default: 10000
+              - name: restartfreq
+                text: number of timesteps between restart checkpoints
+                type: int
+                default: 10000
+              - name: temperature
+                text: Temperature (K) for NVT or NPT
+                type: float
+                default: 300
+              - name: pressure
+                text: Pressure (bar) for NPT; note that NPT can only be performed on a solvated system
+                type: float
+                default: 1
+              - name: outputenergies
+                type: int
+                text: timesteps between outputting energies to the log file
+              - name: other_parameters
+                text: key:value pairs for other namd3 configuration file statements
+                type: dict
+              - name: topogromacs
+                text: Set to True if you want to use topogromacs to generate Gromacs-compatible PDB and TOP files
+                type: bool
+                default: False
+              - name: constraints
+                text: Parameters controlling position constraints
+                type: dict
+                directives:
+                  - name: atoms
+                    text: Atoms to be position-constrained expressed as a VMD atomselection
+                    type: string
+                  - name: k
+                    text: Restraint spring constant in kcal/mol/A^2
+                    type: float
+                  - name: consfile
+                    text: Name of constraints PDB file (defaults to basename-constraints.pdb)
+                    type: string
