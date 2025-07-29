@@ -1,0 +1,79 @@
+<hr class="p-0 m-0">
+
+<footer>
+  <div class="footer-top">
+    <!-- About -->
+    <div class="footer-about">
+      <a class="footer-icon" href="{{ theme_footer_about.href }}">
+        <img src="{{ theme_footer_about.icon }}" alt="{{ theme_footer_about.title }}" height="40px" width="40px">
+      </a>
+      <p class="footer-description">
+        {{ theme_footer_about.description }}
+      </p>
+    </div>
+
+    <div class="footer-social-icons-and-taglines">
+      <!-- Social Icons -->
+      <div class="footer-social-icons">
+        {% for link in theme_footer_social_icons %}
+          <a href="{{ link.href }}" aria-label="{{ link.name }}">
+            <i class="{{ link.icon }}"></i>
+          </a>
+        {% endfor %}
+      </div>
+
+      <!-- Taglines -->
+      {% for tagline in theme_footer_taglines %}
+      <a class="footer-tagline" href="{{ tagline.href }}">
+        {{ tagline.text }}
+      </a>
+      {% endfor %}
+    </div>
+
+    <!-- Links -->
+    <div class="footer-links">
+      {% for column in theme_footer_links %}
+      <div class="footer-link-column">
+        <p class="footer-link-heading">{{ column.title }}</p>
+        {% for link in column.links %}
+          <a class="footer-link-item" href="{{ link.href }}">{{ link.name }}</a>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <hr class="footer-separator">
+
+  <div class="footer-bottom">
+    <!-- Copyright -->
+    <div class="footer-copyrights">
+      {%- if show_copyright %}
+        <p class="footer-copyright-item">
+          {%- if hasdoc('copyright') %}
+            {% trans path=pathto('copyright'), copyright=copyright|e %}<a href="{{ path }}">Copyright</a> &copy; {{ copyright }}{% endtrans %}
+          {%- else %}
+            {% trans copyright=copyright|e %}Copyright &copy; {{ copyright }}{% endtrans %}
+          {%- endif %}
+        </p>
+      {%- endif %}
+      {% for copyright in theme_extra_copyrights %}
+        <p class="footer-copyright-item">
+          {{ copyright }}
+        </p>
+      {% endfor %}
+    </div>
+
+    <!-- Policies -->
+    <div class="footer-policies">
+      {% if theme_footer_policies %}
+        <a class="footer-policy-item" href="{{ theme_footer_policies[0].href }}"><u>{{ theme_footer_policies[0].text }}</u></a>
+        {% for legal in theme_footer_policies[1:] %}
+          <div class="footer-policy-border"></div>
+          <a class="footer-policy-item" href="{{ legal.href }}"><u>{{ legal.text }}</u></a>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+
+</footer>
