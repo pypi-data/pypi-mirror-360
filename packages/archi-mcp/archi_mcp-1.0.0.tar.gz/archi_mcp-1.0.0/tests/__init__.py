@@ -1,0 +1,1 @@
+"""Tests for ArchiMate MCP Server."""
