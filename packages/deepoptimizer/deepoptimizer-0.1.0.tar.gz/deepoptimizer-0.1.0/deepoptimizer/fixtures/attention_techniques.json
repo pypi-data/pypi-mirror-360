@@ -1,0 +1,128 @@
+[
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "PagedAttention",
+      "category": "attention",
+      "description": "Manages attention key-value cache with paging, inspired by OS virtual memory. Reduces memory waste from 60-80% to <4% in LLM serving.",
+      "implementation_code": "# Using vLLM\nfrom vllm import LLM, SamplingParams\n\n# PagedAttention is automatically used\nllm = LLM(\n    model=\"meta-llama/Llama-2-7b-hf\",\n    tensor_parallel_size=1,\n    # PagedAttention config\n    block_size=16,  # Number of tokens per block\n    gpu_memory_utilization=0.9,\n    swap_space=4  # CPU swap space in GB\n)\n\n# Efficient batched inference\noutputs = llm.generate(prompts, sampling_params)",
+      "expected_benefits": "95% memory utilization, 2-4x throughput improvement for serving",
+      "compatibility_notes": "Inference only. Not compatible with training. May conflict with custom attention implementations.",
+      "research_reference": "Kwon et al. (2023) - Efficient Memory Management for Large Language Model Serving with PagedAttention",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": 0.0,
+      "speed_impact": 100.0,
+      "memory_impact": 60.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Sliding Window Attention",
+      "category": "attention",
+      "description": "Limits attention to a local window of tokens, enabling processing of very long sequences with linear memory complexity.",
+      "implementation_code": "class SlidingWindowAttention(nn.Module):\n    def __init__(self, d_model, n_heads, window_size=512):\n        super().__init__()\n        self.window_size = window_size\n        self.attention = nn.MultiheadAttention(d_model, n_heads)\n        \n    def forward(self, x):\n        seq_len = x.size(0)\n        # Create sliding window mask\n        mask = torch.ones(seq_len, seq_len).triu(1 - self.window_size)\n        mask = mask.masked_fill(mask == 1, float('-inf'))\n        \n        attn_output, _ = self.attention(x, x, x, attn_mask=mask)\n        return attn_output",
+      "expected_benefits": "O(n) memory instead of O(n²), enables 32K+ context lengths",
+      "compatibility_notes": "Loses global context. May conflict with tasks requiring full attention.",
+      "research_reference": "Beltagy et al. (2020) - Longformer: The Long-Document Transformer",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": -2.0,
+      "speed_impact": 200.0,
+      "memory_impact": 80.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Linear Attention",
+      "category": "attention",
+      "description": "Approximates softmax attention with linear complexity using kernel methods or other linearization techniques.",
+      "implementation_code": "# Using Performer-style linear attention\nimport torch.nn.functional as F\n\nclass LinearAttention(nn.Module):\n    def __init__(self, d_model, n_heads, feature_map='elu'):\n        super().__init__()\n        self.d_head = d_model // n_heads\n        self.qkv = nn.Linear(d_model, 3 * d_model)\n        self.out = nn.Linear(d_model, d_model)\n        \n    def forward(self, x):\n        B, N, C = x.shape\n        qkv = self.qkv(x).reshape(B, N, 3, self.n_heads, self.d_head)\n        q, k, v = qkv.unbind(2)\n        \n        # Apply feature map (e.g., elu + 1)\n        q = F.elu(q) + 1\n        k = F.elu(k) + 1\n        \n        # Linear attention: (Q @ K.T) @ V = Q @ (K.T @ V)\n        kv = torch.einsum('bnd,bne->bde', k, v)\n        out = torch.einsum('bnd,bde->bne', q, kv)\n        out = out / torch.einsum('bnd->bn', q).unsqueeze(-1)\n        \n        return self.out(out.reshape(B, N, C))",
+      "expected_benefits": "O(n) complexity, enables very long sequences",
+      "compatibility_notes": "May have accuracy degradation. Not compatible with pre-trained models expecting softmax attention.",
+      "research_reference": "Choromanski et al. (2020) - Rethinking Attention with Performers",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "jax"],
+      "is_active": true,
+      "accuracy_impact": -5.0,
+      "speed_impact": 300.0,
+      "memory_impact": 85.0,
+      "implementation_difficulty": "hard",
+      "maturity_level": "experimental"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Sparse Attention",
+      "category": "attention",
+      "description": "Computes attention only on a sparse subset of positions using various patterns (strided, local, global tokens).",
+      "implementation_code": "from transformers.models.bigbird.modeling_bigbird import BigBirdBlockSparseAttention\n\n# BigBird-style sparse attention\nattention = BigBirdBlockSparseAttention(\n    config,\n    attention_type=\"block_sparse\",\n    block_size=64,\n    num_random_blocks=3,\n    num_global_blocks=2\n)\n\n# Or custom sparse pattern\nclass SparseAttention(nn.Module):\n    def __init__(self, d_model, n_heads, sparsity_pattern='strided'):\n        super().__init__()\n        self.attention = nn.MultiheadAttention(d_model, n_heads)\n        self.pattern = sparsity_pattern\n        \n    def create_sparse_mask(self, seq_len):\n        if self.pattern == 'strided':\n            # Attend to every k-th position\n            mask = torch.zeros(seq_len, seq_len)\n            for i in range(seq_len):\n                mask[i, ::8] = 1  # stride of 8\n        return mask",
+      "expected_benefits": "10-100x memory reduction for long sequences",
+      "compatibility_notes": "Pattern must be chosen carefully for task. May miss important dependencies.",
+      "research_reference": "Zaheer et al. (2020) - Big Bird: Transformers for Longer Sequences",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": -3.0,
+      "speed_impact": 150.0,
+      "memory_impact": 70.0,
+      "implementation_difficulty": "hard",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Cross-layer Parameter Sharing (ALBERT)",
+      "category": "attention",
+      "description": "Shares parameters across transformer layers, dramatically reducing model size while maintaining performance.",
+      "implementation_code": "class ALBERTModel(nn.Module):\n    def __init__(self, config):\n        super().__init__()\n        # Single transformer layer shared across all layers\n        self.shared_layer = TransformerLayer(config)\n        self.n_layers = config.num_hidden_layers\n        \n    def forward(self, hidden_states):\n        # Reuse same layer multiple times\n        for _ in range(self.n_layers):\n            hidden_states = self.shared_layer(hidden_states)\n        return hidden_states",
+      "expected_benefits": "90% parameter reduction, similar performance to BERT",
+      "compatibility_notes": "Inference is not faster despite fewer parameters. May conflict with layer-specific optimizations.",
+      "research_reference": "Lan et al. (2019) - ALBERT: A Lite BERT for Self-supervised Learning",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": -1.0,
+      "speed_impact": 0.0,
+      "memory_impact": 80.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Memory-Efficient Attention",
+      "category": "attention",
+      "description": "Computes attention without materializing the full attention matrix, using chunking and recomputation.",
+      "implementation_code": "# Using xFormers memory-efficient attention\nimport xformers.ops as xops\n\nclass MemoryEfficientAttention(nn.Module):\n    def __init__(self, d_model, n_heads):\n        super().__init__()\n        self.d_head = d_model // n_heads\n        self.n_heads = n_heads\n        self.qkv = nn.Linear(d_model, 3 * d_model)\n        self.out = nn.Linear(d_model, d_model)\n        \n    def forward(self, x):\n        B, N, C = x.shape\n        qkv = self.qkv(x).reshape(B, N, 3, self.n_heads, self.d_head)\n        q, k, v = qkv.unbind(2)\n        \n        # Memory-efficient attention from xFormers\n        out = xops.memory_efficient_attention(\n            q, k, v,\n            attn_bias=None,\n            op=None  # Let xFormers choose best kernel\n        )\n        \n        return self.out(out.reshape(B, N, C))",
+      "expected_benefits": "50-90% memory reduction during training, enables larger batch sizes",
+      "compatibility_notes": "May be slower than FlashAttention on some hardware. Gradients computed differently.",
+      "research_reference": "Rabe & Staats (2021) - Self-attention Does Not Need O(n²) Memory",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": 0.0,
+      "speed_impact": -10.0,
+      "memory_impact": 60.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "stable"
+    }
+  }
+]
