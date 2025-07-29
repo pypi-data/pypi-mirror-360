@@ -1,0 +1,232 @@
+Metadata-Version: 2.4
+Name: openconvert
+Version: 0.1.0
+Summary: A versatile file and data conversion library
+Home-page: https://github.com/openconvert/openconvert
+Author: OpenConvert Team
+Author-email: info@openconvert.org
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+Requires-Dist: pillow
+Requires-Dist: reportlab
+Requires-Dist: python-docx
+Requires-Dist: PyPDF2
+Requires-Dist: pandas
+Requires-Dist: pyyaml
+Requires-Dist: dicttoxml
+Requires-Dist: xmltodict
+Requires-Dist: markdown
+Requires-Dist: beautifulsoup4
+Requires-Dist: html2text
+Provides-Extra: image
+Requires-Dist: cairosvg; extra == "image"
+Provides-Extra: audio
+Requires-Dist: pydub; extra == "audio"
+Requires-Dist: SpeechRecognition; extra == "audio"
+Provides-Extra: video
+Requires-Dist: moviepy; extra == "video"
+Provides-Extra: document
+Requires-Dist: pdf2image; extra == "document"
+Provides-Extra: archive
+Requires-Dist: py7zr; extra == "archive"
+Requires-Dist: rarfile; extra == "archive"
+Provides-Extra: model
+Requires-Dist: trimesh; extra == "model"
+Requires-Dist: numpy; extra == "model"
+Requires-Dist: scipy; extra == "model"
+Provides-Extra: all
+Requires-Dist: cairosvg; extra == "all"
+Requires-Dist: pydub; extra == "all"
+Requires-Dist: SpeechRecognition; extra == "all"
+Requires-Dist: moviepy; extra == "all"
+Requires-Dist: pdf2image; extra == "all"
+Requires-Dist: py7zr; extra == "all"
+Requires-Dist: rarfile; extra == "all"
+Requires-Dist: trimesh; extra == "all"
+Requires-Dist: numpy; extra == "all"
+Requires-Dist: scipy; extra == "all"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# AGConvert
+
+AGConvert is a versatile file conversion library that supports a wide range of file formats across different categories including images, documents, audio, video, 3D models, code, and archives.
+
+## Features
+
+- **Image Conversion**: Convert between PNG, JPG, BMP, GIF, TIFF, WebP, SVG, and PDF
+- **Document Conversion**: Convert between TXT, PDF, DOCX, HTML, MD, RTF, CSV, XLSX, JSON, XML, and YAML
+- **Audio Conversion**: Convert between MP3, WAV, OGG, FLAC, AAC, and M4A
+- **Video Conversion**: Convert between MP4, AVI, MKV, MOV, WMV, and WebM
+- **3D Model Conversion**: Convert between OBJ, STL, PLY, and GLTF
+- **Code Conversion**: Convert between JSON, XML, YAML, and CSV
+- **Archive Conversion**: Convert between ZIP, TAR, GZ, BZ2, and 7Z
+
+## Installation
+
+### Quick Installation
+
+To install all dependencies:
+
+```bash
+./scripts/install.sh
+```
+
+### Specific Installation
+
+To install dependencies for specific conversion types:
+
+```bash
+./scripts/install_specific.sh --image --document
+```
+
+Available options:
+- `--all`: Install all dependencies
+- `--core`: Install core dependencies
+- `--image`: Install image conversion dependencies
+- `--document`: Install document conversion dependencies
+- `--audio`: Install audio conversion dependencies
+- `--video`: Install video conversion dependencies
+- `--model`: Install 3D model conversion dependencies
+- `--archive`: Install archive conversion dependencies
+
+## Usage
+
+### Python API
+
+```python
+from agconvert import open_convert
+
+# Basic conversion
+open_convert('input.png', 'output.jpg')
+
+# Conversion with options
+open_convert('input.png', 'output.jpg', quality=85, resize=(800, 600))
+```
+
+### Command Line Interface
+
+```bash
+# Basic conversion
+agconvert input.png output.jpg
+
+# Conversion with options
+agconvert input.png output.jpg --quality 85 --resize 800x600
+```
+
+## Supported Conversion Options
+
+### Image Options
+- `quality`: Set the quality for lossy formats (1-100)
+- `resize`: Resize the image (width, height)
+- `grayscale`: Convert to grayscale
+- `rotate`: Rotate the image by degrees
+
+### Document Options
+- `template`: Specify a template for document conversion
+- `metadata`: Add metadata to the document
+- `toc`: Include table of contents
+
+### Audio Options
+- `bitrate`: Set the bitrate for audio conversion
+- `sample_rate`: Set the sample rate
+- `channels`: Set the number of channels
+
+### Video Options
+- `resolution`: Set the video resolution
+- `fps`: Set the frames per second
+- `codec`: Specify the codec to use
+
+## Examples
+
+### Converting an Image
+
+```python
+from agconvert import open_convert
+
+# Convert PNG to JPG
+open_convert('image.png', 'image.jpg')
+
+# Convert PNG to JPG with options
+open_convert('image.png', 'image.jpg', quality=85, resize=(800, 600))
+```
+
+### Converting a Document
+
+```python
+from agconvert import open_convert
+
+# Convert Markdown to HTML
+open_convert('document.md', 'document.html')
+
+# Convert CSV to Excel
+open_convert('data.csv', 'data.xlsx')
+```
+
+### Converting Audio
+
+```python
+from agconvert import open_convert
+
+# Convert WAV to MP3
+open_convert('audio.wav', 'audio.mp3')
+
+# Convert WAV to MP3 with options
+open_convert('audio.wav', 'audio.mp3', bitrate='320k')
+```
+
+## Running Tests
+
+To run all tests:
+
+```bash
+python run_tests.py
+```
+
+To run specific test categories:
+
+```bash
+python run_tests.py -k image
+python run_tests.py -k document
+```
+
+## Dependencies
+
+AGConvert relies on several libraries for different conversion types:
+
+- **Image**: Pillow, CairoSVG
+- **Document**: Pandas, OpenPyXL, python-docx, pdfkit, markdown
+- **Audio**: PyDub, SpeechRecognition
+- **Video**: MoviePy
+- **3D Model**: Trimesh, NumPy
+- **Archive**: py7zr, patool
+
+System dependencies:
+- FFmpeg (for audio and video)
+- Pandoc (for document conversion)
+- Cairo (for SVG conversion)
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request 
