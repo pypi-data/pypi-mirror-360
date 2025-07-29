@@ -1,0 +1,58 @@
+<odoo>
+  <record id="base.main_company" model="res.company">
+    <field name="name">Platform Company</field>
+    <field name="hierarchy_level">instance</field>
+    <field name="email">somcomunitats@fake.com</field>
+  </record>
+
+  <record id="coordinator_company_1" model="res.company">
+    <field name="name">Coordinator company 1</field>
+    <field name="hierarchy_level">coordinator</field>
+    <field name="parent_id" ref="base.main_company" />
+    <field name="email">oecoop@fake.com</field>
+  </record>
+
+  <function name="try_loading" model="account.chart.template">
+    <value eval="[ref('l10n_es.account_chart_template_pymes')]" />
+    <value eval="obj(ref('coordinator_company_1'))" model="res.company" />
+  </function>
+
+  <record
+    id="energy_community_company_1_wizard"
+    model="account.multicompany.easy.creation.wiz"
+  >
+    <field name="name">Community 1</field>
+    <field name="legal_name">Community 1</field>
+    <field name="email">cesants@bar.fake</field>
+    <field name="parent_id" ref="coordinator_company_1" />
+    <field
+      name="chart_template_id"
+      ref="l10n_es.account_chart_template_pymes"
+    />
+    <field name="hook_cron">False</field>
+  </record>
+
+  <record
+    id="energy_community_company_2_wizard"
+    model="account.multicompany.easy.creation.wiz"
+  >
+    <field name="name">Community 2</field>
+    <field name="legal_name">Community 2</field>
+    <field name="email">cevillanoveta@foo.fake</field>
+    <field name="parent_id" ref="coordinator_company_1" />
+    <field
+      name="chart_template_id"
+      ref="l10n_es.account_chart_template_pymes"
+    />
+    <field name="hook_cron">False</field>
+  </record>
+
+  <record id="l10n_es.demo_company_es" model="res.company">
+    <field
+      name="active"
+      eval="False"
+    />
+  </record>
+
+</odoo>
+
