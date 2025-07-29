@@ -1,0 +1,165 @@
+site_name: Inflow code documentation
+site_url: 'https://haisslab.pages.pasteur.fr/analysis-packages/Inflow/'
+site_author: 'Timothe'
+
+repo_name: 'Inflow'
+repo_url: 'https://gitlab.pasteur.fr/haisslab/analysis-packages/Inflow'
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+          python:
+            paths: [.]
+            options:
+              show_category_heading : false
+              show_source: false
+              show_if_no_docstring : true
+              show_signature_annotations : true
+              #show_root_heading : false
+              heading_level : 2
+              #docstring_style: google  # this is the default
+              #docstring_options:
+                #replace_admonitions: yes 
+              filters:
+                - "!^_"  # exlude all members starting with _
+                - "^__init__$"  # but always include __init__ modules and methods
+                - '!^"""Boilerplate:$'
+                - "!^@property"
+
+theme:
+  name: material
+  palette:
+    primary: 'green'
+    accent: 'light-green'
+  features:
+    - navigation.tabs
+    - navigation.instant
+    - navigation.top
+  highlightjs : true
+  hljs_languages :
+    - python
+    
+markdown_extensions:
+  - footnotes
+  - meta
+  - admonition
+  - codehilite
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.tasklist
+  - pymdownx.highlight
+  - pymdownx.emoji
+  
+docs_dir : 'docs'
+site_dir : 'public'
+  
+nav :
+    - Home: index.md
+    - bins: 
+        - content: 
+            - 'Reader': 'bins/content/Reader.md'
+    - core: 
+        - config: 
+            - 'TwoLayerDict': 'core/config/TwoLayerDict.md'
+            - 'ConfigFile': 'core/config/ConfigFile.md'
+        - decorators: 
+            - 'SignatureEditer': 'core/decorators/SignatureEditer.md'
+            - 'hide_unused_kwargs': 'core/decorators/hide_unused_kwargs.md'
+            - 'copy_doc_and_signature_from': 'core/decorators/copy_doc_and_signature_from.md'
+            - 'append_doc_and_signature_from': 'core/decorators/append_doc_and_signature_from.md'
+            - 'session_to_path_argument': 'core/decorators/session_to_path_argument.md'
+            - 'recurse': 'core/decorators/recurse.md'
+        - logging: 
+            - 'FileFormatter': 'core/logging/FileFormatter.md'
+            - 'ConsoleFormatter': 'core/logging/ConsoleFormatter.md'
+            - 'get_local_logger': 'core/logging/get_local_logger.md'
+            - 'enable_logging': 'core/logging/enable_logging.md'
+            - 'add_all_custom_headers': 'core/logging/add_all_custom_headers.md'
+            - 'addLoggingLevel': 'core/logging/addLoggingLevel.md'
+        - optimization: 
+            - 'parallel_process': 'core/optimization/parallel_process.md'
+            - 'serial_process': 'core/optimization/serial_process.md'
+        - pipelining: 
+            - '_alf_identifier_from_func_name': 'core/pipelining/_alf_identifier_from_func_name.md'
+            - 'enforce_session_details': 'core/pipelining/enforce_session_details.md'
+            - 'load_preprocessing': 'core/pipelining/load_preprocessing.md'
+            - 'save_preprocessing': 'core/pipelining/save_preprocessing.md'
+        - special_types: 
+            - 'AttrDict': 'core/special_types/AttrDict.md'
+            - 'IndexableList': 'core/special_types/IndexableList.md'
+        - time: 
+            - 'TimelinedArray': 'core/time/TimelinedArray.md'
+    - ios: 
+        - helpers: 
+            - 'get_suite2p_path': 'ios/helpers/get_suite2p_path.md'
+            - 'get_suite2p_binpath': 'ios/helpers/get_suite2p_binpath.md'
+            - 'get_preprocessed_filename': 'ios/helpers/get_preprocessed_filename.md'
+            - 'get_endresults_filenames': 'ios/helpers/get_endresults_filenames.md'
+            - 'get_multi_session_df': 'ios/helpers/get_multi_session_df.md'
+        - load: 
+            - 'preprocessed_data': 'ios/load/preprocessed_data.md'
+            - 'suite2p_metadata': 'ios/load/suite2p_metadata.md'
+            - 'suite2p_files': 'ios/load/suite2p_files.md'
+            - 'mask': 'ios/load/mask.md'
+            - 'npy_file': 'ios/load/npy_file.md'
+            - 'mat_file': 'ios/load/mat_file.md'
+            - 'pipeline_end_result': 'ios/load/pipeline_end_result.md'
+        - save: 
+            - 'pipeline_end_result': 'ios/save/pipeline_end_result.md'
+            - 'preprocessed_data': 'ios/save/preprocessed_data.md'
+            - 'mask': 'ios/save/mask.md'
+    - path: 
+        - extract: 
+            - 'relative_path': 'path/extract/relative_path.md'
+            - 'component': 'path/extract/component.md'
+            - 'qregexp': 'path/extract/qregexp.md'
+        - find: 
+            - 'files': 'path/find/files.md'
+        - one_alf: 
+            - 'apply_name_change': 'path/one_alf/apply_name_change.md'
+            - 'append_extra': 'path/one_alf/append_extra.md'
+            - 'extract_extra_from_non_alfpath': 'path/one_alf/extract_extra_from_non_alfpath.md'
+            - 'file_to_alf': 'path/one_alf/file_to_alf.md'
+            - 'path_to_alf': 'path/one_alf/path_to_alf.md'
+    - plots: 
+        - artists: 
+            - 'DottedYLine': 'plots/artists/DottedYLine.md'
+            - 'DelayedYTickAdder': 'plots/artists/DelayedYTickAdder.md'
+        - colors: 
+            - 'cbar': 'plots/colors/cbar.md'
+            - 'alter_color': 'plots/colors/alter_color.md'
+        - custom: 
+            - 'scale_bar': 'plots/custom/scale_bar.md'
+            - 'colored_boxplot': 'plots/custom/colored_boxplot.md'
+        - utils: 
+            - 'AnchoredScaleBar': 'plots/utils/AnchoredScaleBar.md'
+            - 'add_scalebar': 'plots/utils/add_scalebar.md'
+            - 'add_ticklabel_to_axis': 'plots/utils/add_ticklabel_to_axis.md'
+            - 'legend_unique_items': 'plots/utils/legend_unique_items.md'
+            - 'clarify_plot_ax': 'plots/utils/clarify_plot_ax.md'
+            - 'clarify_image_ax': 'plots/utils/clarify_image_ax.md'
+            - 'fig_pixel_sized': 'plots/utils/fig_pixel_sized.md'
+            - 'fig_as_array': 'plots/utils/fig_as_array.md'
+            - 'save_session_fig': 'plots/utils/save_session_fig.md'
+    - signal: 
+        - filters: 
+            - 'gaussian': 'signal/filters/gaussian.md'
+        - fits: 
+            - 'function_gauss_2d': 'signal/fits/function_gauss_2d.md'
+            - 'fit_gauss_2d': 'signal/fits/fit_gauss_2d.md'
+            - 'fit_gauss_2d_guess_params': 'signal/fits/fit_gauss_2d_guess_params.md'
+            - 'array_2d_to_xyz': 'signal/fits/array_2d_to_xyz.md'
+        - fluo: 
+            - 'non_zero_raw_fluorescence': 'signal/fluo/non_zero_raw_fluorescence.md'
+            - 'delta_over_F': 'signal/fluo/delta_over_F.md'
+    - tdms: 
+        - content: 
+            - 'Reader': 'tdms/content/Reader.md'
+            - 'read': 'tdms/content/read.md'
+    - tiff: 
+        - content: 
+            - 'Reader': 'tiff/content/Reader.md'
+            - 'multi_read': 'tiff/content/multi_read.md'
+            - 'read': 'tiff/content/read.md'
+            - '_compile_patterns': 'tiff/content/_compile_patterns.md'
