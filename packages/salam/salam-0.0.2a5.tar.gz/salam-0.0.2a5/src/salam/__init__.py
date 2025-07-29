@@ -1,0 +1,20 @@
+__all__ = ["module_MD"]
+def main():
+    """Entry point for the application script"""
+    #print("Call your main application code here.")
+    print("The typical use of salam:")
+    print("-"*30)
+    print("#1. Uncompress the source tarbal salam-0-0-2.tar.gz to a dir e.g. salam-0-0-2/ ;")
+    print("#2. cd salam-0-0-2/ ;")
+    print("#3. Using venv to create a virtual environment with your python intepreter. preferably, python3.8 ;")
+    print(" python3   -m  venv    ./ ; ")
+    print("#4. Activate it ;")
+    print(" source  ./bin/activate ;")
+    print("#5. Install dependency pakages ;")
+    print(" pip install rdkit ; preferably, rdkit==2024.3.2")
+    print(" pip install salam; that will install most of the dependency packages, e.g., numpy, scipy, pandas, etc;")
+    print(" or pip install --upgrade salam ;")
+    print("#6. Verify if the installation is correct or not? ;")
+    print(" ipython ")
+    print(" import salam")
+    print(" Alternatively, cp tests/ to ./, and run the test scripts.")
