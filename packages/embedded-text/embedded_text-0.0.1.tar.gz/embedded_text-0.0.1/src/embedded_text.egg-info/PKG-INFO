@@ -1,0 +1,134 @@
+Metadata-Version: 2.4
+Name: embedded-text
+Version: 0.0.1
+Summary: Tool for extracting embedded text data in python script.
+Author-email: Nanigashi Uji <53845049+nanigashi-uji@users.noreply.github.com>, Nanigashi Uji <4423013-nanigashi_uji@users.noreply.gitlab.com>
+Maintainer-email: Nanigashi Uji <53845049+nanigashi-uji@users.noreply.github.com>, Nanigashi Uji <4423013-nanigashi_uji@users.noreply.gitlab.com>
+License: BSD 3-Clause License
+        
+        Copyright (c) 2025, Nanigashi Uji
+        
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+        
+        1. Redistributions of source code must retain the above copyright notice, this
+           list of conditions and the following disclaimer.
+        
+        2. Redistributions in binary form must reproduce the above copyright notice,
+           this list of conditions and the following disclaimer in the documentation
+           and/or other materials provided with the distribution.
+        
+        3. Neither the name of the copyright holder nor the names of its
+           contributors may be used to endorse or promote products derived from
+           this software without specific prior written permission.
+        
+        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+        AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+        FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+        DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+        SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+        CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+        OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+        OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+        
+Project-URL: Homepage, https://github.com/nanigashi-uji/embedded-text
+Keywords: template,development
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Software Development
+Classifier: Topic :: Utilities
+Requires-Python: >=3.9
+Description-Content-Type: text/x-rst
+License-File: LICENSE
+Dynamic: license-file
+
+embedded-text
+=============
+
+Tool for extracting embedded text data in python script.
+
+Requirement
+-----------
+
+- Python >= 3.9
+- pip3
+
+Usage
+-----
+
+1. Install
+
+::
+
+   ```
+   % pip install embedded-text
+   ```
+
+2. import in your script
+
+   ::
+
+      import embedded_text
+
+3. Embeddig text data at the end of your script with head/tail lines
+
+::
+
+   ```
+   if False:
+       ############# Embedded Code Start #######################
+
+       #!/usr/bin/env python3
+
+       def main():
+           print ('This is the sample : ____OUTPUT_WORDS____')
+           
+           if __name__ == '__main__':
+               main()
+           
+       ############# Embedded Code End #######################
+   ``` 
+
+4. Initialize class with regular expression of head/tail lines
+
+::
+
+    ```
+        s_pttrn = r'\s*#{5,}\s*Embedded\s+Code\s+Start\s*#{5,}',
+        e_pttrn = r'\s*#{5,}\s*Embedded\s+Code\s+End\s*#{5,}'},
+        extractor = EmbeddedText(s_marker=s_pttrn,
+                                 e_marker=e_pttrn, ...)
+    ```
+
+5. You can do iterator access by EmbeddedText.lines()
+
+   ::
+
+            for line in extractor.lines(input_path=None):
+                sys.stdout.write(line)
+
+6. You can save to other file by EmbeddedText.dump()
+
+   ::
+
+            extractor.dump(output_path, input_path=None)
+
+::
+
+    It is possible to apply the keyword replacement and text filtering. You can see the example in "main()" function in "embedded_text.py"
+
+Author
+------
+
+::
+
+   Nanigashi Uji (53845049+nanigashi-uji@users.noreply.github.com)
+   Nanigashi Uji (4423013-nanigashi_uji@users.noreply.gitlab.com)
