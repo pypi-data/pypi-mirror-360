@@ -1,0 +1,204 @@
+# ES2InfluxDB Configuration
+# Environment variables for sensitive data - set these before running:
+# 
+# Required:
+# export ES2INFLUX_INFLUX_TOKEN="your-influxdb-token"
+# export ES2INFLUX_INFLUX_ORG="your-org"
+# export ES2INFLUX_INFLUX_BUCKET="your-bucket"
+# 
+# Optional (with defaults):
+# export ES2INFLUX_ES_URL="http://localhost:9200"
+# export ES2INFLUX_ES_INDEX="logs-*"
+# export ES2INFLUX_INFLUX_URL="http://localhost:8086"
+# export ES2INFLUX_MEASUREMENT="logs"
+# 
+# For authentication (if needed):
+# export ES2INFLUX_ES_AUTH_USER="your-username"
+# export ES2INFLUX_ES_AUTH_PASSWORD="your-password"
+
+# Example ES2InfluxDB Configuration
+# Copy this file and modify it for your specific use case
+
+# IMPORTANT: InfluxDB Line Protocol Requirements
+# - Tags cannot have empty values (will cause "missing tag value" errors)
+# - Fields can have empty values
+# - Always provide default_value for tag fields to handle missing/empty source data
+
+elasticsearch:
+  url: "${ES2INFLUX_ES_URL:-http://localhost:9200}"
+  index: "${ES2INFLUX_ES_INDEX:-logs-*}"
+  scroll_size: 1000
+  scroll_timeout: "10m"
+  concurrency: 4        # Number of concurrent connections (improves performance)
+  throttle: 100         # Delay in ms between requests (prevents overwhelming ES)
+  
+  # Optional: Authentication - uncomment if needed
+  # auth_user: "${ES2INFLUX_ES_AUTH_USER}"
+  # auth_password: "${ES2INFLUX_ES_AUTH_PASSWORD}"
+  
+  # Optional: Custom query
+  query:
+    query:
+      range:
+        "@timestamp":
+          gte: "now-1d"
+
+influxdb:
+  url: "${ES2INFLUX_INFLUX_URL:-http://localhost:8086}"
+  token: "${ES2INFLUX_INFLUX_TOKEN}"
+  org: "${ES2INFLUX_INFLUX_ORG}"
+  bucket: "${ES2INFLUX_INFLUX_BUCKET}"
+  measurement: "${ES2INFLUX_MEASUREMENT:-logs}"
+  batch_size: 5000                   # Number of points per batch
+
+# Chunked migration settings for large datasets
+chunked_migration:
+  enabled: false
+  chunk_size: "1h"
+  start_time: "now-7d"
+  end_time: "now"
+  state_file: "migration_state.json"
+  max_retries: 3
+  retry_delay: 60
+  parallel_chunks: 1
+
+# The field that contains the timestamp
+timestamp_field: "@timestamp"
+
+# Field validation options
+validation:
+  # How to handle empty/null values in source data
+  empty_tag_handling: "use_default"  # Options: "use_default", "skip_record", "convert_to_field"
+  empty_field_handling: "allow_empty"  # Options: "allow_empty", "use_default", "skip_field"
+  
+  # Global default values for different data types when source is empty
+  default_values:
+    string: "unknown"
+    int: 0
+    float: 0.0
+    bool: false
+
+# Field mappings - defines how ES fields map to InfluxDB
+field_mappings:
+  # Timestamp field (required - exactly one)
+  - es_field: "@timestamp"
+    influx_field: "time"
+    field_type: "timestamp"
+    data_type: "timestamp"
+  
+ # Required: tags cannot be empty
+    
+  - es_field: "host.name"
+    influx_field: "host"
+    field_type: "tag"
+    data_type: "string"
+  
+  - es_field: "service.name"
+    influx_field: "service"
+    field_type: "tag"
+    data_type: "string"
+  
+  - es_field: "message"
+    influx_field: "message"
+    field_type: "field"
+    data_type: "string"
+  
+  - es_field: "http.response.status_code"
+    influx_field: "status_code"
+    field_type: "field"
+    data_type: "int"
+  
+  - es_field: "http.response.body.bytes"
+    influx_field: "response_bytes"
+    field_type: "field"
+    data_type: "int"
+  
+
+
+regex_mappings:
+  # SOLUTION: Priority-based matching - only first matching regex is applied
+  # Prevents duplicate tags by ensuring only one SDK pattern matches per document
+  # 
+  # How it works:
+  # 1. For each source field (userAgent), patterns are sorted by priority (lower = higher priority)
+  # 2. Patterns are tested in priority order
+  # 3. First matching pattern is applied, remaining patterns are skipped
+  # 4. This ensures no duplicate tags (sdk_language, sdk_version, etc.)
+  # Priority 1: Parse Speakeasy SDK user agent strings (checked first)
+  - es_field: "userAgent"
+    regex_pattern: "speakeasy-sdk/(?P<Language>\\w+)\\s+(?P<SDKVersion>[\\d\\.]+)\\s+(?P<GenVersion>[\\d\\.]+)\\s+(?P<DocVersion>[\\d\\.]+)\\s+(?P<PackageName>[\\w\\.-]+)"
+    priority: 1
+    groups:
+      - name: "Language"
+        influx_field: "sdk_language"
+        field_type: "tag"
+        data_type: "string"
+      - name: "SDKVersion"
+        influx_field: "sdk_version"
+        field_type: "tag"
+        data_type: "string"
+
+        
+  # Priority 2: Parse legacy Apideck SDK (only if Speakeasy didn't match)
+  - es_field: "userAgent"
+    regex_pattern: "^Apideck-(?P<Language>\\w+)-sdk(?:/(?P<Version>[\\d\\.]+))?"
+    priority: 2
+    groups:
+      - name: "Language"
+        influx_field: "sdk_language"
+        field_type: "tag"
+        data_type: "string"
+      - name: "Version"
+        influx_field: "sdk_version"
+        field_type: "tag"
+        data_type: "string"
+
+# Custom computed fields - these are derived from other fields or logic
+computed_fields:
+  # Determine if request is from an SDK based on user agent patterns
+  - name: "is_sdk"
+    influx_field: "is_sdk"
+    field_type: "tag"
+    data_type: "bool"
+    logic: "regex_match"
+    source_field: "userAgent"
+    patterns:
+      - "^speakeasy-sdk/"
+      - "^Apideck-\\w+-sdk"
+    default_value: false
+    
+  # Determine SDK type based on user agent patterns  
+  - name: "sdk_type"
+    influx_field: "sdk_type"
+    field_type: "tag"
+    data_type: "string"
+    logic: "conditional_regex"
+    source_field: "userAgent"
+    conditions:
+      - pattern: "^speakeasy-sdk/"
+        value: "speakeasy"
+      - pattern: "^Apideck-\\w+-sdk"
+        value: "apideck"
+    default_value: "none"
+    
+  # Determine if request was successful based on status code
+  - name: "is_success"
+    influx_field: "is_success"
+    field_type: "tag"
+    data_type: "bool"
+    logic: "numeric_comparison"
+    source_field: "statusCode"
+    operator: "lt"
+    threshold: 400
+    default_value: false
+    
+  # Add a count field for aggregation (always 1 for each request)
+  - name: "count"
+    influx_field: "count"
+    field_type: "field"
+    data_type: "int"
+    logic: "static_value"
+    value: 1
+
+# Optional: Save line protocol to file for debugging
+# output_file: "debug-output.lp" 
