@@ -1,0 +1,162 @@
+Metadata-Version: 2.4
+Name: telegrinder
+Version: 0.5.0
+Summary: Modern visionary telegram bot framework.
+Project-URL: Source, https://github.com/timoniq/telegrinder
+Project-URL: Bug Tracker, https://github.com/timoniq/telegrinder/issues
+Project-URL: Documentation, https://github.com/timoniq/telegrinder/blob/dev/docs/index.md
+Author-email: timoniq <tesseradecades@mail.ru>
+Maintainer-email: luwqz1 <howluwqz1@gmail.com>
+License: MIT License
+        
+        Copyright (c) 2022 timoniq
+        Copyright (c) 2024 luwqz1
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+License-File: LICENSE
+Keywords: api schema,async,asyncio,bot api,bot building,custom rules,framework,middleware,nodes,telegram,telegram bot api framework,telegrinder,telegrinder framework,waiter machine
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Software Development :: Quality Assurance
+Classifier: Typing :: Typed
+Requires-Python: <4.0,>=3.12
+Requires-Dist: aiodns<4.0.0,>=3.5.0
+Requires-Dist: aiohttp<4.0.0,>=3.12.13
+Requires-Dist: certifi<2026.0.0,>=2025.6.15
+Requires-Dist: choicelib<0.2.0,>=0.1.5
+Requires-Dist: colorama<0.5.0,>=0.4.6
+Requires-Dist: envparse<0.3.0,>=0.2.0
+Requires-Dist: fntypes
+Requires-Dist: msgspec<0.20.0,>=0.19.0
+Requires-Dist: typing-extensions<5.0.0,>=4.14.1
+Requires-Dist: vbml<2.0,>=1.1.post1
+Provides-Extra: brotli
+Requires-Dist: brotli; extra == 'brotli'
+Provides-Extra: loguru
+Requires-Dist: loguru; extra == 'loguru'
+Provides-Extra: socks
+Requires-Dist: aiohttp-socks; extra == 'socks'
+Provides-Extra: structlog
+Requires-Dist: structlog; extra == 'structlog'
+Provides-Extra: uvloop
+Requires-Dist: uvloop; (sys_platform == 'darwin' or sys_platform == 'linux') and extra == 'uvloop'
+Requires-Dist: winloop; (sys_platform == 'cli' or sys_platform == 'cygwin' or sys_platform == 'win32') and extra == 'uvloop'
+Description-Content-Type: text/markdown
+
+<p>
+  <a href="https://github.com/timoniq/telegrinder">
+    <img width="200px" height="145px" alt="Telegrinder" src="https://github.com/timoniq/telegrinder/blob/main/docs/logo.jpg">
+  </a>
+</p>
+
+</p>
+<h1>
+  telegrinder
+</h1>
+
+<p>
+— effective and reliable telegram bot building.
+</p>
+
+<p>
+  <a href="#contributors"><img alt="Still in development" src="https://img.shields.io/badge/Still_in_development-E3956B?logo=textpattern&logoColor=fff&style=flat-square&color=black"></img></a>
+  <a href="#license"><img alt="GitHub License" src="https://img.shields.io/github/license/timoniq/telegrinder.svg?color=lightGreen&labelColor=black&style=flat-square"></img></a>
+  <a href="https://docs.astral.sh/ruff/"><img alt="Code Style" src="https://img.shields.io/badge/code_style-Ruff-D7FF64?logo=ruff&logoColor=fff&style=flat-square&labelColor=black"></img></a>
+  <a href="https://docs.basedpyright.com/latest/"><img alt="Type Checker" src="https://img.shields.io/badge/types-basedpyright-black?logo=python&color=%23FBCA04&logoColor=edb641&labelColor=black&style=flat-square"></img></a>
+  <a href="https://pypi.org/project/telegrinder/"><img alt="Python versions" src="https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Ftimoniq%2Ftelegrinder%2Frefs%2Fheads%2Fmain%2Fpyproject.toml&style=flat-square&logo=python&logoColor=fff&labelColor=black"></img></a>
+  <a href="https://core.telegram.org/bots/api"><img alt="Telegram Bot API Version" src="https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Ftimoniq%2Ftelegrinder%2Frefs%2Fheads%2Fmain%2Ftypegen%2Fconfig.toml&query=%24.telegram-bot-api.version&style=flat-square&logo=telegram&label=Telegram%20API&labelColor=black&color=%23FBCA04"></img></a>
+</p>
+
+
+* Type hinted
+* Customizable and extensible
+* Ready to use scenarios and rules
+* Fast models built on [msgspec](https://github.com/jcrist/msgspec)
+* Both low-level and high-level API
+
+
+Basic example:
+
+```python
+from telegrinder import API, Message, Telegrinder, Token
+from telegrinder.modules import logger
+from telegrinder.rules import Text
+
+logger.set_level("INFO")
+api = API(token=Token("123:token"))
+bot = Telegrinder(api)
+
+
+@bot.on.message(Text("/start"))
+async def start(message: Message) -> None:
+    me = (await api.get_me()).unwrap()
+    await message.answer(f"Hello, {message.from_user.full_name}! I'm {me.full_name}.")
+
+
+bot.run_forever()
+```
+
+# Getting started
+
+Install using pip, uv or poetry:
+
+  <a href="https://pypi.org/project/telegrinder/"><img alt="PyPI Version" src="https://img.shields.io/pypi/v/telegrinder.svg?labelColor=black&style=flat-square&logo=pypi"></img></a>
+
+```console
+uv add telegrinder
+poetry add telegrinder
+pip install telegrinder
+```
+
+Or install from source (unstable):
+
+  <a href="https://github.com/timoniq/telegrinder/actions/workflows/push.yml"><img alt="GitHub CI" src="https://img.shields.io/github/actions/workflow/status/timoniq/telegrinder/push.yml?branch=main&style=flat-square&labelColor=black&label=CI&logo=github"></img></a>
+
+```console
+uv add "telegrinder @ git+https://github.com/timoniq/telegrinder@dev"
+poetry add git+https://github.com/timoniq/telegrinder.git#dev
+pip install git+https://github.com/timoniq/telegrinder/archive/dev.zip
+```
+
+# Documentation
+
+[Tutorial](/docs/tutorial/en/0_tutorial.md)
+
+# Community
+
+Join our [telegram forum](https://t.me/botoforum).
+
+# License
+
+Telegrinder is [MIT licensed](./LICENSE)\
+Copyright © 2022 [timoniq](https://github.com/timoniq)\
+Copyright © 2024 [luwqz1](https://github.com/luwqz1)
+
+# Contributors
+
+[How to contribute](https://github.com/timoniq/telegrinder/blob/main/contributing.md)
+
+
+<a href="https://github.com/timoniq/telegrinder/graphs/contributors">
+ <img src="https://contributors-img.web.app/image?repo=timoniq/telegrinder" />
+</a>
