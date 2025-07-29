@@ -1,0 +1,421 @@
+/* VeriDoc Layout - Simple Working Version */
+
+.app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Header - Fixed at top */
+.header {
+    height: 48px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 var(--spacing-md) 0 0;
+    gap: var(--spacing-md);
+    flex-shrink: 0;
+    z-index: 100;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-left: var(--spacing-xs);
+}
+
+.header-icon {
+    font-size: var(--font-size-lg);
+}
+
+.header-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+}
+
+.header-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text-accent);
+}
+
+.header-subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.header-center {
+    flex: 1;
+    max-width: 400px;
+}
+
+.search-container {
+    position: relative;
+    width: 100%;
+}
+
+.header-search {
+    width: 100%;
+    height: 32px;
+    padding-right: 32px;
+}
+
+.search-clear {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    font-size: var(--font-size-lg);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.search-container:hover .search-clear,
+.header-search:focus + .search-clear {
+    opacity: 0.7;
+}
+
+.search-clear:hover {
+    opacity: 1;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.header-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: var(--font-size-base);
+}
+
+/* Main content - Fill remaining space */
+.main-content {
+    height: calc(100vh - 48px);
+    display: flex;
+    width: 100%;
+}
+
+/* File tree panel */
+.file-tree-panel {
+    width: 280px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    transition: width var(--transition-base), min-width var(--transition-base);
+}
+
+.file-tree-panel.collapsed {
+    width: 40px; /* Keep small width for the toggle button */
+    min-width: 40px;
+    overflow: visible;
+    border-right: 1px solid var(--border);
+}
+
+.file-tree-panel.collapsed .file-tree-container {
+    display: none;
+}
+
+.file-tree-panel.collapsed .panel-title {
+    display: none;
+}
+
+.file-tree-panel.collapsed .panel-header {
+    justify-content: center;
+}
+
+.file-tree-panel.collapsed .panel-controls {
+    justify-content: center;
+}
+
+.file-tree-panel.collapsed #refresh-btn {
+    display: none;
+}
+
+.file-tree-panel.collapsed + .resize-handle {
+    display: none;
+}
+
+/* Content panel */
+.content-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Content area - contains viewer and terminal side by side */
+.content-area {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+}
+
+/* Panel headers */
+.panel-header {
+    height: 36px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--spacing-sm);
+    flex-shrink: 0;
+}
+
+.panel-title {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.panel-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    font-size: var(--font-size-sm);
+}
+
+.panel-btn.active {
+    background: var(--accent-blue);
+    color: white;
+}
+
+.panel-btn.active:hover {
+    background: var(--accent-blue);
+    opacity: 0.9;
+}
+
+.panel-controls {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+/* Breadcrumb */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.breadcrumb-separator {
+    color: var(--text-primary);
+}
+
+/* Content controls */
+.content-controls {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+/* SCROLL CONTAINERS - These are the key elements */
+.file-tree-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 var(--spacing-sm) var(--spacing-sm) var(--spacing-sm);
+    min-height: 0;
+}
+
+.content-viewer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.content-display, .content-markdown {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: var(--spacing-lg);
+    box-sizing: border-box;
+}
+
+/* Welcome screen */
+.welcome-screen {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.welcome-content {
+    max-width: 500px;
+    padding: var(--spacing-xl);
+}
+
+.welcome-content h2 {
+    margin-bottom: var(--spacing-md);
+    color: var(--accent-blue);
+}
+
+.welcome-content p {
+    margin-bottom: var(--spacing-lg);
+    color: var(--text-secondary);
+}
+
+.welcome-features {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+}
+
+.feature-icon {
+    font-size: var(--font-size-lg);
+}
+
+.welcome-instruction {
+    font-style: italic;
+    color: var(--text-secondary);
+}
+
+/* Resize handle */
+.resize-handle {
+    width: 4px;
+    background: var(--border);
+    cursor: col-resize;
+    transition: background-color var(--transition-fast);
+}
+
+.resize-handle:hover {
+    background: var(--accent-blue);
+}
+
+.resize-handle.resizing {
+    background: var(--accent-blue);
+}
+
+/* Terminal resize handle */
+.terminal-resize-handle {
+    width: 4px;
+    background: var(--border);
+    cursor: col-resize;
+    transition: background-color var(--transition-fast);
+}
+
+.terminal-resize-handle:hover {
+    background: var(--accent-blue);
+}
+
+.terminal-resize-handle.resizing {
+    background: var(--accent-blue);
+}
+
+/* Terminal panel - side by side with content viewer */
+.terminal-panel {
+    width: 400px;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    max-width: 800px;
+}
+
+.terminal-container {
+    flex: 1;
+}
+
+/* Loading overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border);
+    border-top: 4px solid var(--accent-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: var(--spacing-md);
+}
+
+.loading-text {
+    color: var(--text-accent);
+    font-size: var(--font-size-lg);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .header {
+        padding: 0 var(--spacing-sm);
+        gap: var(--spacing-sm);
+    }
+    
+    .header-center {
+        max-width: 200px;
+    }
+    
+    .file-tree-panel {
+        position: absolute;
+        left: -280px;
+        width: 280px;
+        height: 100%;
+        z-index: 50;
+        transition: left var(--transition-base);
+    }
+    
+    .file-tree-panel.open {
+        left: 0;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .content-panel {
+        width: 100%;
+    }
+    
+    .resize-handle {
+        display: none;
+    }
+    
+    .welcome-features {
+        grid-template-columns: 1fr;
+    }
+}
