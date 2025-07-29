@@ -1,0 +1,59 @@
+name: Publish to PyPI
+
+on:
+  release: 
+    types: [released]  # Trigger on release published event
+
+
+permissions:
+  contents: read  # Required for reading the repository contents
+  id-token: write  # Required for trusted publishing
+
+jobs:
+  build_dist:
+    name: Build distribution
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"  # Specify the Python version you want to use
+      
+      - name: Build source distribution
+        run: |
+          python3 -m pip install --upgrade build
+          python3 -m build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          path: dist/  # Upload the source distribution
+
+  pypi-release:
+    needs: [build_dist]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/autoXAS 
+    permissions:
+      id-token: write  # Mandatory for trusted publishing
+    steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"  # Specify the Python version you want to use
+
+    - name: Get build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        merge-multiple: true  
+        path: dist/  
+
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        skip-existing: true
+        verbose: true
