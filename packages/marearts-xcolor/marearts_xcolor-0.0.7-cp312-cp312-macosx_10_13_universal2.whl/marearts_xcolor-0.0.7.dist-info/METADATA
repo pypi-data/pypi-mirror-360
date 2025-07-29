@@ -1,0 +1,368 @@
+Metadata-Version: 2.4
+Name: marearts-xcolor
+Version: 0.0.7
+Summary: Advanced color extraction and similarity analysis toolkit
+Home-page: https://github.com/marearts/marearts-xcolor
+Author: MareArts
+Author-email: MareArts <contact@marearts.com>
+License: MIT License
+        
+        Copyright (c) 2024 MareArts
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+Project-URL: Homepage, https://github.com/marearts/marearts-xcolor
+Project-URL: Bug Reports, https://github.com/marearts/marearts-xcolor/issues
+Project-URL: Source, https://github.com/marearts/marearts-xcolor
+Keywords: color extraction,color analysis,computer vision,image processing
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy==1.23.5; python_version < "3.12"
+Requires-Dist: numpy==1.26.0; python_version >= "3.12"
+Requires-Dist: opencv-python==4.10.0.84
+Requires-Dist: scikit-learn>=1.0.0
+Requires-Dist: pillow>=8.0.0
+Requires-Dist: matplotlib>=3.5.0
+Requires-Dist: scipy>=1.7.0
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# MareArts XColor
+
+A robust, modern color extraction library for extracting dominant colors from images with support for mask-based region selection, advanced preprocessing, and color similarity analysis.
+
+## Features
+
+✨ **Modern Algorithms**: K-means and DBSCAN clustering with LAB color space  
+🔍 **Color Similarity Analysis**: Find how much specific colors appear in images  
+🎭 **Mask Support**: Extract colors from specific regions using mask images  
+🚀 **Fast Performance**: Optimized for speed with configurable preprocessing  
+🎨 **Accurate Results**: Perceptual LAB color space for better color accuracy  
+⚡ **Easy API**: Simple functions for common use cases  
+
+## Quick Start
+
+### Installation
+
+```bash
+pip install marearts-xcolor
+```
+
+### Basic Usage
+
+```python
+from marearts_xcolor import ColorExtractor
+
+# Extract dominant colors
+extractor = ColorExtractor(n_colors=5)
+colors = extractor.extract_colors('image.jpg')
+
+print(colors)
+# Output: [{'color': (255, 128, 64), 'percentage': 35.2}, ...]
+
+# Check version
+import marearts_xcolor
+print(f"Version: {marearts_xcolor.__version__}")
+```
+
+### Color Similarity Analysis
+
+```python
+# Define colors you want to find
+target_colors = {
+    'red': (255, 0, 0),
+    'white': (255, 255, 255),
+    'blue': (0, 0, 255)
+}
+
+# Find how much each color appears in the image
+results = extractor.analyze_color_similarity('image.jpg', target_colors)
+
+print(results)
+# Output: {'red': {'percentage': 20.5, 'similarity': 95.0}, ...}
+```
+
+## Usage Examples
+
+### 1. Basic Color Extraction
+
+```python
+from marearts_xcolor import ColorExtractor
+
+# Create extractor
+extractor = ColorExtractor(n_colors=5)
+
+# From file path
+colors = extractor.extract_colors('image.jpg')
+
+# From OpenCV image
+import cv2
+image = cv2.imread('image.jpg')
+colors = extractor.extract_colors(image)
+
+# From PIL image
+from PIL import Image
+import numpy as np
+pil_image = Image.open('image.jpg')
+image_array = np.array(pil_image)
+colors = extractor.extract_colors(image_array)
+```
+
+### 2. With Mask (Region Selection)
+
+```python
+# Extract colors only from white areas of mask
+colors = extractor.extract_colors('image.jpg', 'mask.jpg')
+
+# Create circular mask
+mask = np.zeros((height, width), dtype=np.uint8)
+cv2.circle(mask, (center_x, center_y), radius, 255, -1)
+colors = extractor.extract_colors(image, mask)
+```
+
+### 3. Color Similarity Analysis
+
+```python
+# Brand color analysis
+brand_colors = {
+    'brand_blue': (0, 123, 255),
+    'brand_red': (220, 53, 69),
+    'brand_green': (40, 167, 69)
+}
+
+results = extractor.analyze_color_similarity('product.jpg', brand_colors)
+
+for color_name, result in results.items():
+    print(f"{color_name}: {result['percentage']:.1f}% "
+          f"(similarity: {result['similarity']:.1f}%)")
+```
+
+### 4. Advanced Configuration
+
+```python
+# Robust extraction (best quality)
+extractor = ColorExtractor(
+    n_colors=8,
+    algorithm='kmeans',
+    preprocessing=True,  # Enable noise reduction
+    lab_space=True       # Use LAB color space
+)
+
+# Fast extraction (best speed)
+extractor = ColorExtractor(
+    n_colors=3,
+    algorithm='kmeans',
+    preprocessing=False,  # Skip preprocessing
+    lab_space=False       # Use RGB
+)
+```
+
+## API Reference
+
+### ColorExtractor Class
+
+```python
+ColorExtractor(n_colors=5, algorithm='kmeans', preprocessing=True, lab_space=True)
+```
+
+**Parameters:**
+- `n_colors`: Number of dominant colors to extract (default: 5)
+- `algorithm`: 'kmeans' or 'dbscan' (default: 'kmeans')
+- `preprocessing`: Enable noise reduction and lighting normalization (default: True)
+- `lab_space`: Use LAB color space for accuracy (default: True)
+
+### Methods
+
+#### `extract_colors(image, mask=None)`
+Extract dominant colors from image.
+
+**Parameters:**
+- `image`: Image file path or numpy array
+- `mask`: Optional mask image (white areas = extraction regions)
+
+**Returns:** List of `{'color': (R,G,B), 'percentage': float}`
+
+#### `analyze_color_similarity(image, target_colors, mask=None)`
+Analyze how much each target color appears in the image.
+
+**Parameters:**
+- `image`: Image file path or numpy array
+- `target_colors`: Dict of `{'color_name': (R,G,B)}`
+- `mask`: Optional mask image
+
+**Returns:** Dict with similarity analysis for each target color
+
+#### `find_color_matches(image, target_colors, mask=None)`
+Detailed pixel-level color matching analysis.
+
+**Parameters:**
+- `image`: Image file path or numpy array
+- `target_colors`: Dict of `{'color_name': (R,G,B)}`
+- `mask`: Optional mask image
+
+**Returns:** Detailed matching results with multiple similarity thresholds
+
+## Command Line Interface
+
+```bash
+# Basic extraction
+marearts-xcolor image.jpg --colors 5
+
+# With mask and visualization
+marearts-xcolor image.jpg --mask mask.jpg --colors 8 --visualize output.png
+
+# Fast mode
+marearts-xcolor image.jpg --fast --colors 3
+
+# Different algorithm
+marearts-xcolor image.jpg --algorithm dbscan --colors 5
+
+# Alternative command
+xcolor image.jpg --colors 5
+```
+
+## Examples and Demo
+
+### Try It Out
+```python
+# Quick test
+from marearts_xcolor import ColorExtractor
+
+# Create a simple test
+import numpy as np
+test_image = np.zeros((100, 100, 3), dtype=np.uint8)
+test_image[:50, :50] = [255, 0, 0]  # Red square
+test_image[:50, 50:] = [0, 255, 0]  # Green square
+test_image[50:, :] = [0, 0, 255]    # Blue bottom
+
+extractor = ColorExtractor(n_colors=3)
+colors = extractor.extract_colors(test_image)
+print(colors)
+```
+
+### Example Output
+
+**Color Extraction:**
+```json
+[
+  {"color": [255, 128, 64], "percentage": 35.2},
+  {"color": [120, 200, 150], "percentage": 28.7},
+  {"color": [80, 80, 80], "percentage": 20.1}
+]
+```
+
+**Color Similarity Analysis:**
+```json
+{
+  "red": {
+    "percentage": 20.5,
+    "similarity": 95.0,
+    "closest_color": [248, 12, 8],
+    "distance": 3.2,
+    "found_directly": true
+  },
+  "white": {
+    "percentage": 15.3,
+    "similarity": 88.2,
+    "closest_color": [245, 245, 250],
+    "distance": 8.1,
+    "found_directly": true
+  }
+}
+```
+
+## Use Cases
+
+🛍️ **E-commerce**: Extract product colors for filtering and search  
+🎨 **Design Tools**: Generate color palettes from images  
+🏭 **Quality Control**: Automated color consistency checking  
+📊 **Brand Analysis**: Measure brand color presence in marketing materials  
+🖼️ **Art Analysis**: Extract dominant colors from artwork  
+📱 **Mobile Apps**: Real-time color detection from camera  
+
+## Technical Details
+
+### Algorithms
+- **K-means**: Fast and reliable, good for most images
+- **DBSCAN**: Better for noisy data, handles outliers automatically
+- **LAB Color Space**: Perceptually uniform for accurate color representation
+
+### Preprocessing Pipeline
+1. **CLAHE**: Contrast Limited Adaptive Histogram Equalization
+2. **Bilateral Filter**: Noise reduction while preserving edges
+3. **Color Space Conversion**: RGB → LAB for perceptual accuracy
+
+### Color Similarity
+- Uses perceptual LAB color space distances
+- Multiple similarity thresholds (very close, close, somewhat close)
+- Handles cases where exact colors aren't present
+
+## Performance
+
+- **Small images (500x500)**: ~100ms
+- **Large images (2000x2000)**: ~500ms
+- **Memory usage**: <100MB for any image size
+
+## Requirements
+
+- Python 3.9, 3.10, 3.11, 3.12
+- opencv-python==4.10.0.84
+- scikit-learn>=1.0.0
+- numpy>=1.21.0 (numpy==1.23.5 for Python < 3.12, numpy==1.26.0 for Python >= 3.12)
+- matplotlib>=3.5.0
+- pillow>=8.0.0
+- scipy>=1.7.0
+
+## Files Structure
+
+```
+marearts-xcolor/
+├── color_extractor.py           # Main ColorExtractor class
+├── api.py                      # Simple API and CLI
+├── demo.py                     # Basic demo
+├── color_similarity_demo.py    # Color similarity demo
+├── examples.py                 # Various input examples
+├── requirements.txt            # Dependencies
+├── README.md                   # This file
+└── DEVELOPMENT.md             # Development guide
+```
+
+## Contributing
+
+We welcome contributions! Please see our development guide for details on:
+- Setting up the development environment
+- Running tests
+- Submitting pull requests
+
+## Repository
+
+- GitHub: [https://github.com/marearts/marearts-xcolor](https://github.com/marearts/marearts-xcolor)
+- PyPI: [https://pypi.org/project/marearts-xcolor](https://pypi.org/project/marearts-xcolor)
+
+## License
+
+MIT License - Feel free to use in commercial and personal projects.
