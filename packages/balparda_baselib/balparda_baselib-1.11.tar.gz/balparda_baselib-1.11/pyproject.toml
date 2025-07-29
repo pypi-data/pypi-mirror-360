@@ -1,0 +1,66 @@
+# pyproject.toml  (preferred for new projects, PEP 621)
+# Copyright 2025 Daniel Balparda (balparda@github.com)
+# Apache-2.0 license
+
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "balparda_baselib"
+version = "1.11"
+description = "A base library for various utilities, by balparda@github.com"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [
+  { name = "Daniel Balparda", email = "balparda@github.com" }
+]
+requires-python = ">=3.11.13"  # if version changes, remember to change README.md
+classifiers = [  # see: https://pypi.org/classifiers/
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Operating System :: OS Independent",
+  "Topic :: Utilities",
+  "Topic :: Security :: Cryptography"
+]
+dependencies = [
+  "cryptography>=41.0.7",
+  "Pillow>=10.2"
+]
+
+[project.urls]
+Homepage = "https://github.com/balparda/baselib"
+PyPI = "https://pypi.org/project/balparda_baselib/"
+
+[tool.setuptools]
+package-dir = {"" = "src"}   # root package namespace lives in src/
+
+[tool.setuptools.packages.find]
+where   = ["src"]                # auto-discover every importable package inside src/
+include = ["balparda_baselib*"]  # avoid picking up stuff not in "balparda_baselib"
+
+[tool.setuptools.package-data]
+"balparda_baselib" = ["py.typed"]
+
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
+
+[tool.poetry.group.dev.dependencies]
+pylint = "~3.3"
+flake8 = "~7.2"
+pyright = "~1.1"
+pytest = "^8.4"
+pytest-pythonpath = "^0.7"
+coverage = "^7.9"
+tomli = "^2.2.1"
+
+[pytest]
+pythonpath = ["src"]
+
+# test with:
+# $ python3
+# >>> import sys, tomli, pathlib
+# >>> tomli.loads(pathlib.Path('pyproject.toml').read_text())
