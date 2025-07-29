@@ -1,0 +1,102 @@
+# inspect4j
+### Student’s Name: Liru Qu
+### EPCC Supervisor’s Name: Steven Carlysle-Davies
+### Overview
+Inspect4j is a static code analysis framework designed to automatically extract the main features, metadata, and documentation of Java code repositories. The project builds upon a prototype model (java_inspector.py) that uses javalang to parse and analyze Java source files. While the current implementation offers basic functionality, further enhancements include support for Javadoc extraction, method call lists, requirements detection, license identification, repository hierarchy generation, and GitHub metadata retrieval.
+
+This README outlines how to install and run the tool, clarifies the code structure, and provides tips on handling output directories.
+
+### Repository Structure
+```
+inspect4j/
+│
+├── Test/
+│   ├── java_inspector.py   <-- Prototype model for Java inspection
+│   ├── ClassTest.java       <-- Sample Java class file for testing
+│   └── InterfaceTest.java   <-- Sample Java interface file for testing
+│   └── output_dir/          <-- Default folder for storing output (auto-created if not present)
+│       └── json_files/          <-- JSON analysis results
+│          ├── ClassTest.json          <-- JSON analysis result for display
+│          └── InterfaceTest.json      <-- JSON analysis result for display
+├── README.md                <-- This file
+├── .gitignore               <-- Ignore output directory
+└── requirements.txt         <-- Contains required Python packages
+```
+### Inspect4j vs. Inspect4py
+Inspect4py is a static code analysis framework that enables users to inspect a Python software project and extract the most relevant information. Inspect4j (our tool) takes inspiration from Inspect4py’s overall structure and workflow：particularly the command-line interface design, CLI parameter names, and overall file/analysis pipeline.
+However, the implementation details differ under the hood:
+1. Language Differences: Inspect4py uses Python’s native ast library, while Inspect4j relies on the javalang parser to handle Java source code.
+2. Methodology: Certain methods may mimic Inspect4py’s approach to extracting dependencies or method information, but the underlying logic (e.g., node traversal, AST properties) needed substantial rewriting to accommodate Java’s language features.
+3. Current vs. Future Features: Some CLI parameters match Inspect4py exactly but remain inactive in Inspect4j because their functionality (for example, generate call lists or directory_tree) is still under development. Keeping them in place from the start paves the way for smoother integration and expansion later on.
+
+In short, Inspect4j adopts the high-level structure of Inspect4py, making it easy to see how the two tools could eventually be integrated. This approach ensures consistency across both tools’ architectures and provides a clearer roadmap for future development.
+
+### Requirements
+1. Python: Recommended Python 3.8+ (other versions might work, but have not been thoroughly tested).
+2. Dependencies: See requirements.txt for exact package versions
+You can install these with:
+```
+pip install -r requirements.txt
+```
+3. Local Java Files: Ensure your Java files are on your local computer before running the tool.
+
+
+### Installation
+1. Clone the repository:
+```
+git clone https://git.ecdf.ed.ac.uk/msc-24-25/inspect4j.git
+cd inspect4j
+```
+2. Install required Python packages:
+```
+pip install -r requirements.txt
+```
+
+### Usage
+1. Navigate to the Test directory:
+```
+cd Test
+```
+Currently, most of the Java analysis and testing is located here.
+
+2. Run the java_inspector.py script:
+```
+python java_inspector.py -i ClassTest.java
+```
+Optional flags include:
+-i, --input_path "input_file_path" to specify a file to inspect. Noted that the file should be on your local computer.
+-o, --output_path "output_directory_path" to specify a custom output directory. If omitted, a default output_dir (with json_files inside) will be created.
+--help to view all possible options (as powered by click).
+
+3. View the output:
+By default, JSON results are saved in output_dir/json_files under the current working directory. However, you may prefer to keep these generated JSON files outside your repository by using -o/--output_path flag.
+
+<!-- This project builds a static code analysis framework designed to automatically extract the main features, metadata and documentation of Java code repositories.
+
+Given a folder with code, inspect4j ideally will:
+
+  *   Extract all imported modules and how each module is imported as (i.e., whether they are internal or external).
+  *   Extract all functions in the code, including  documentation, parameters, arguments, ast tree (if possible), and call list.
+  *   Extract all classes in the code, with all their methods (code, documentation, parameters, arguments, ast tree (if possible) and call list) and respective documentation
+  *   Extract all the readmes of a repository - it can be more than one
+  *   Extract the hierarchy of directories and files: We record how different files have been grouped and organized in a software repository.
+  *   Extract the requirements used in the software project.
+  *   Extract the license
+  *   Extract the Github metadata: tags, about , etc...
+
+The repository now has a 'Test' dir, which contains a prototype model java_inspector.py based on javalang, which can be viewed as an early proof-of-concept for Inspect4j. ClassTest.java and InterfaceTest.java are two java files used for testing whether java_inspector.py can extract Java code features correctly. After executing, the output goes to output_dir.
+
+This model can:
+1. Classes: The prototype identifies the class name and its relevant modifiers (e.g., public, protected), as well as extension, implementation, begin line, and end line.
+2. Fields: All declared fields are recognized, including their data types, initial values, and access levels.
+3. Methods: The prototype retrieves method names, parameter lists, return types, modifiers, begin and end lines.
+4. Constructors: Identified in a manner similar to methods, preserving parameters and modifiers.
+5. Dependencies: The prototype can detect import statements, capturing the module's name and type.
+
+To run the code:
+1. clone the repo
+2. pip install javalang
+3. python java_inspector.py -i "The path of the Java file that you want to analyze"
+Noted that the Java file needs to be on your local computer, and you can name a output directory to store the result by -o "output_path". If the directory doesn't exist, the tool will create a default one (output_dir)
+
+Weekly meetings can be viewed in 'Wiki' section. -->
