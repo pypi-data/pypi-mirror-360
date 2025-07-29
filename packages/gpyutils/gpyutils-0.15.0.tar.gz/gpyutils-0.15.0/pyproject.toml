@@ -1,0 +1,104 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "gpyutils"
+authors = [{name = "Michał Górny", email = "mgorny@gentoo.org"}]
+readme = "README.rst"
+dynamic = ["version", "description"]
+license = {text = "GPL-2.0-or-later"}
+requires-python = ">=3.11"
+dependencies = [
+    "gentoopm",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+    "Operating System :: POSIX",
+    "Programming Language :: Python",
+    "Topic :: System :: Installation/Setup",
+]
+
+[project.optional-dependencies]
+depgraph-nx = [
+    "networkx",
+]
+release-feed-opml = [
+    "lxml",
+]
+test = [
+    "lxml",
+    "packaging",
+    "pytest",
+]
+verify-deps = [
+    "packaging",
+]
+
+[project.scripts]
+gpy-depgraph = "gpyutils.scripts.depgraph:entry_point"
+gpy-drop-dead-impls = "gpyutils.scripts.drop_dead_impls:entry_point"
+gpy-impl = "gpyutils.scripts.impl:entry_point"
+gpy-junit2deselect = "gpyutils.scripts.junit2deselect:entry_point"
+gpy-list-pkg-impls = "gpyutils.scripts.list_pkg_impls:entry_point"
+gpy-pkgs-with-newest-stable = "gpyutils.scripts.pkgs_with_newest_stable:entry_point"
+gpy-release-feed-opml = "gpyutils.scripts.release_feed_opml:entry_point"
+gpy-showimpls = "gpyutils.scripts.showimpls:entry_point"
+gpy-to-pypi-eclass = "gpyutils.scripts.to_pypi_eclass:entry_point"
+gpy-upgrade-impl = "gpyutils.scripts.upgrade_impl:entry_point"
+gpy-verify-deps = "gpyutils.scripts.verify_deps:entry_point"
+
+[project.urls]
+Homepage = "https://github.com/mgorny/gpyutils/"
+
+[tool.flit.sdist]
+include = [
+    "COPYING",
+    "tox.ini",
+]
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules"
+testpaths = ["gpyutils"]
+
+[tool.ruff]
+line-length = 80
+
+[tool.ruff.lint]
+extend-select = [
+    "E",
+    "N",
+    "W",
+    "I",
+#   "UP",
+#   "ANN",
+#   "B",
+    "A",
+    "COM",
+    "CPY",
+    "C4",
+    "EXE",
+    "ISC",
+    "PIE",
+    "PT",
+    "Q",
+    "RSE",
+#   "RET",
+#   "SLOT",
+#   "SIM",
+    "TCH",
+#   "ARG",
+#   "ERA",
+    "PGH",
+#   "PL",
+#   "PERF",
+#   "FURB",
+#   "RUF",
+]
+
+[tool.ruff.lint.flake8-copyright]
+min-file-size = 1
+notice-rgx = "\\(c\\) \\d{4}(-\\d{4})?"
