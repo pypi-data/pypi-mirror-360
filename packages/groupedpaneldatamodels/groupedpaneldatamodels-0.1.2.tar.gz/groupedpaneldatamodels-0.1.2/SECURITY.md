@@ -1,0 +1,1 @@
+Please report all security issues to micha [at] michadenheijer.com

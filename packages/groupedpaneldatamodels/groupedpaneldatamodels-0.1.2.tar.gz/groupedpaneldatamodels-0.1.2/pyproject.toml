@@ -1,0 +1,78 @@
+[build-system]
+requires = ["flit_core >=2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "groupedpaneldatamodels"
+authors = [{ name = "Micha den Heijer", email = "micha@michadenheijer.com" }]
+description = "A Simple Python library that implements the most commonly used Grouped Panel Data Models"
+readme = "README.md"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Cython",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
+]
+requires-python = ">=3.11" # Chosen somewhat randomly
+dynamic = ["version"]
+dependencies = [
+    "numpy>=2.0.0,<3.0.0",
+    "scipy>=1.15.0,<2.0.0",
+    "scikit-learn>=1.6.0,<2.0.0",
+    "skglm~=0.4",
+    "numba>=0.61.0,<1.0.0",
+    "statsmodels>=0.14.0,<1.0.0",
+    "tqdm>=4.0.0,<5.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["black", "pytest", "coverage", "mypy"]
+
+[project.urls]
+Documentation = "https://groupedpaneldatamodels.michadenheijer.com"
+Source = "https://github.com/michadenheijer/groupedpaneldatamodels"
+Tracker = "https://github.com/michadenheijer/groupedpaneldatamodels/issues"
+
+[tool.flit.module]
+name = "groupedpaneldatamodels"
+directory = "src"
+
+[tool.flit.sdist]
+exclude = ["docs/", "scripts/", "tests/", "*.ipynb", "estimates/"]
+
+[tool.black]
+line-length = 120
+fast = true
+
+[tool.coverage.run]
+branch = true
+
+# [tool.coverage.report]
+# # TODO right now too lazy to implement this, but may have to do this in the future
+# fail_under = 80
+
+
+[tool.pyright]
+include = ["src"]
+exclude = ["**/node_modules", "**/__pycache__"]
+venv = "env37"
+
+reportMissingImports = true
+reportMissingTypeStubs = false
+
+pythonVersion = "3.12"
+pythonPlatform = "Linux"
+
+executionEnvironments = [{ root = "src" }]
+
+[tool.pytest.ini_options]
+addopts = "--cov=src"
+testpaths = ["tests"]
