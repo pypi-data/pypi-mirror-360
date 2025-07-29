@@ -1,0 +1,63 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+from ayugespidertools.items import AyuItem
+from ayugespidertools.spiders import AyuSpider
+from ayugespidertools.utils.database import MysqlAsyncPortal
+from scrapy.http import Request
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from aiomysql import Pool
+    from scrapy.http.response import Response
+
+
+class $classname(AyuSpider):
+    mysql_conn_pool: Pool
+
+    name = "$name"
+    allowed_domains = ["$domain"]
+    start_urls = ["$url"]
+    custom_settings = {
+        "ITEM_PIPELINES": {
+            "ayugespidertools.pipelines.AyuAsyncMysqlPipeline": 300,
+            "ayugespidertools.pipelines.AyuAsyncMongoPipeline": 301,
+        },
+    }
+
+    async def start(self) -> AsyncIterator[Any]:
+        self.mysql_conn_pool = await MysqlAsyncPortal(db_conf=self.mysql_conf).connect()
+        yield Request(
+            url="https://ayugespidertools.readthedocs.io/en/latest/",
+            callback=self.parse_first,
+            dont_filter=True,
+        )
+
+    async def parse_first(self, response: Response) -> Any:
+        _save_table = "_octree_info"
+        li_list = response.xpath('//div[@aria-label="Navigation menu"]/ul/li')
+        for curr_li in li_list:
+            octree_text = curr_li.xpath("a/text()").get()
+            octree_href = curr_li.xpath("a/@href").get()
+
+            octree_item = AyuItem(
+                octree_text=octree_text,
+                octree_href=octree_href,
+                _table=_save_table,
+                # 可选参数：这里表示 MongoDB 存储场景以 octree_text 为去重规则，若存在则更新，不存在则新增
+                _mongo_update_rule={"octree_text": octree_text},
+            )
+            self.slog.info(f"octree_item: {octree_item}")
+
+            # 数据入库前去重逻辑: 使用此方法时需要提前建库建表
+            async with self.mysql_conn_pool.acquire() as conn:
+                async with conn.cursor() as cursor:
+                    exists = await cursor.execute(
+                        f"SELECT `id` from `{_save_table}` where `octree_text` = {octree_text!r} limit 1"
+                    )
+                    if not exists:
+                        yield octree_item
+                    else:
+                        self.slog.debug(f'标题为 "{octree_text}" 的数据已存在')
