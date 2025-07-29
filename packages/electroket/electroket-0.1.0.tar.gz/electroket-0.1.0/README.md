@@ -1,0 +1,89 @@
+
+# electroket
+<p align="center">
+  <img src="docs/assets/electroket_logo.png"
+       alt="Electroket – electronic-structure library with neural wave functions"
+       width="300">
+</p>  
+electroket is an experimental extension of
+[NetKet](https://www.netket.org/) that adds utilities for solving continuous
+space problems with a focus on electronic structure calculations.  It reexports
+NetKet so it can be used as a drop‑in replacement while providing additional
+modules tailored for continuous degrees of freedom.
+
+## Installation
+
+```bash
+pip install electroket
+```
+
+## Usage
+
+```python
+import electroket as ek
+
+print(ek.show_version())  # prints electroket's version
+```
+
+## Library contents
+
+electroket exposes several modules aimed at working with particles in continuous
+space:
+
+- **`hilbert`** – Hilbert spaces for particles and spinful particles in boxes or
+  free space.
+- **`geometry`** – simulation cells supporting periodic and open boundary
+  conditions.
+- **`molecule`** – helpers to define molecules and atomic properties including
+  a small periodic table.
+- **`operator`** – kinetic, potential and interaction operators for continuous
+  systems.
+- **`models`** – simple variational ansätze like Gaussian or Slater wave
+  functions.
+- **`sampler`** – Metropolis samplers with rules suitable for continuous
+  variables.
+- **`random`** – routines to generate random particle configurations.
+- **`pyscf_utils`** – utilities to interface with PySCF and obtain SCF
+  orbitals.
+
+These modules are imported in ``electroket.__init__`` so they can be accessed directly
+from the top-level package.
+## Examples
+
+Below is a minimal SR-VMC calculation for the H$_2$ molecule extracted from the
+[Examples](Examples) directory.
+
+```python
+import netket as nk
+import electroket as ek
+from electroket.models import MolecularSlater
+
+h2 = ek.Molecule(
+    atoms=[
+        ("H", [0.0, 0.0, -0.35]),
+        ("H", [0.0, 0.0, 0.35]),
+    ],
+    units="angstrom",
+)
+
+ham = ek.operator.KineticEnergy(h2) + ek.operator.CoulombInteraction(h2)
+model = MolecularSlater(h2)
+sampler = ek.sampler.MetropolisSampler(
+    h2,
+    ek.sampler.GaussianRule(sigma=0.1),
+)
+
+vstate = nk.vqs.MCState(sampler, model, n_samples=500)
+
+sr = nk.optimizer.SR(diag_shift=0.05)
+opt = nk.optimizer.Sgd(learning_rate=0.01)
+
+driver = nk.driver.VMC(
+    hamiltonian=ham,
+    optimizer=opt,
+    variational_state=vstate,
+    preconditioner=sr,
+)
+
+driver.run(n_iter=1000)
+```
