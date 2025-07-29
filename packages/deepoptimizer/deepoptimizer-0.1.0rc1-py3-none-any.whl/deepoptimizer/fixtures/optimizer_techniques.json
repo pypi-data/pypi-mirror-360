@@ -1,0 +1,128 @@
+[
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "SGD with Momentum",
+      "category": "optimization",
+      "description": "Stochastic Gradient Descent with momentum accumulation. Fundamental optimizer that adds velocity to gradients for faster convergence and better navigation of loss landscapes.",
+      "implementation_code": "optimizer = torch.optim.SGD(\n    model.parameters(),\n    lr=0.1,  # Typically higher than Adam\n    momentum=0.9,\n    weight_decay=5e-4,\n    nesterov=True  # Nesterov momentum often better\n)",
+      "expected_benefits": "More stable than Adam for large batch training, better generalization",
+      "compatibility_notes": "Requires learning rate scheduling. Often needs warmup for large models.",
+      "research_reference": "Sutskever et al. (2013) - On the importance of initialization and momentum",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow", "jax"],
+      "is_active": true,
+      "accuracy_impact": 1.0,
+      "speed_impact": 0.0,
+      "memory_impact": 50.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "mature"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Adafactor",
+      "category": "optimization",
+      "description": "Memory-efficient Adam variant that uses factored second moments and removes momentum. Designed for training large models with limited memory.",
+      "implementation_code": "from transformers import Adafactor\n\noptimizer = Adafactor(\n    model.parameters(),\n    lr=1e-3,\n    scale_parameter=True,\n    relative_step=True,\n    warmup_init=True,\n    clip_threshold=1.0\n)",
+      "expected_benefits": "50-75% memory reduction vs Adam, maintains similar convergence",
+      "compatibility_notes": "May converge slower than Adam. Works best with gradient clipping.",
+      "research_reference": "Shazeer & Stern (2018) - Adafactor: Adaptive Learning Rates with Sublinear Memory Cost",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": -1.0,
+      "speed_impact": -5.0,
+      "memory_impact": 60.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "RAdam (Rectified Adam)",
+      "category": "optimization",
+      "description": "Fixes Adam's convergence issues in early training by rectifying the variance of adaptive learning rate. Eliminates need for warmup in many cases.",
+      "implementation_code": "from torch.optim import RAdam\n\noptimizer = RAdam(\n    model.parameters(),\n    lr=1e-3,\n    betas=(0.9, 0.999),\n    weight_decay=0.0,\n    decoupled_weight_decay=True\n)",
+      "expected_benefits": "More stable early training, often eliminates need for warmup",
+      "compatibility_notes": "Slightly slower than Adam due to rectification computation.",
+      "research_reference": "Liu et al. (2019) - On the Variance of the Adaptive Learning Rate and Beyond",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": 1.0,
+      "speed_impact": -3.0,
+      "memory_impact": -5.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "LARS (Layer-wise Adaptive Rate Scaling)",
+      "category": "optimization",
+      "description": "Optimizer designed for large batch training. Adapts learning rate for each layer based on the ratio of weight norm to gradient norm.",
+      "implementation_code": "from torch.optim import LARS\n\nbase_optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)\noptimizer = LARS(\n    base_optimizer,\n    eps=1e-8,\n    trust_coef=0.001,\n    clip=True\n)",
+      "expected_benefits": "Enables batch sizes up to 32K without accuracy loss",
+      "compatibility_notes": "Primarily useful for very large batch training. Can conflict with other adaptive methods.",
+      "research_reference": "You et al. (2017) - Large Batch Training of Convolutional Networks",
+      "hardware_requirements": ["multi_gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": 0.0,
+      "speed_impact": 20.0,
+      "memory_impact": 0.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Lookahead Optimizer",
+      "category": "optimization",
+      "description": "Meta-optimizer that maintains slow and fast weights, periodically updating slow weights by looking ahead at fast weight trajectory.",
+      "implementation_code": "from ranger_adabelief import Lookahead\n\n# Wrap any optimizer\nbase_optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)\noptimizer = Lookahead(\n    base_optimizer,\n    k=5,  # Update slow weights every k steps\n    alpha=0.5  # Interpolation factor\n)",
+      "expected_benefits": "Improved stability and convergence, reduced variance",
+      "compatibility_notes": "Adds memory overhead for slow weights. May conflict with momentum-based schedules.",
+      "research_reference": "Zhang et al. (2019) - Lookahead Optimizer: k steps forward, 1 step back",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": 2.0,
+      "speed_impact": -10.0,
+      "memory_impact": -100.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "experimental"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Shampoo",
+      "category": "optimization",
+      "description": "Second-order optimizer that uses full-matrix preconditioning. More powerful but computationally expensive compared to diagonal methods like Adam.",
+      "implementation_code": "from shampoo import Shampoo\n\noptimizer = Shampoo(\n    model.parameters(),\n    lr=1e-3,\n    eps=1e-10,\n    weight_decay=0.0,\n    max_preconditioner_dim=8192,\n    precondition_frequency=100\n)",
+      "expected_benefits": "Faster convergence in terms of iterations, better final accuracy",
+      "compatibility_notes": "High memory and compute cost. Not suitable for very large models without approximations.",
+      "research_reference": "Gupta et al. (2018) - Shampoo: Preconditioned Stochastic Tensor Optimization",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 8000,
+      "frameworks": ["pytorch", "jax"],
+      "is_active": true,
+      "accuracy_impact": 3.0,
+      "speed_impact": -50.0,
+      "memory_impact": -200.0,
+      "implementation_difficulty": "hard",
+      "maturity_level": "experimental"
+    }
+  }
+]

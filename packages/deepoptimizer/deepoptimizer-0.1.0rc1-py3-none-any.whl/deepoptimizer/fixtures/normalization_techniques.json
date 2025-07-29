@@ -1,0 +1,128 @@
+[
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Batch Normalization",
+      "category": "normalization",
+      "description": "Normalizes inputs across the batch dimension, reducing internal covariate shift and enabling higher learning rates.",
+      "implementation_code": "# Basic usage\nclass ConvBNReLU(nn.Module):\n    def __init__(self, in_channels, out_channels, kernel_size=3):\n        super().__init__()\n        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, \n                             padding=kernel_size//2, bias=False)\n        self.bn = nn.BatchNorm2d(out_channels)\n        self.relu = nn.ReLU(inplace=True)\n        \n    def forward(self, x):\n        return self.relu(self.bn(self.conv(x)))\n\n# Best practices:\n# 1. No bias in conv when followed by BN\n# 2. BN before activation\n# 3. Different behavior in train/eval mode\nmodel.train()  # Uses batch statistics\nmodel.eval()   # Uses running statistics\n\n# For small batch sizes, use Ghost BatchNorm\nclass GhostBatchNorm(nn.BatchNorm2d):\n    def __init__(self, num_features, num_splits=2, **kwargs):\n        super().__init__(num_features, **kwargs)\n        self.num_splits = num_splits\n        \n    def forward(self, x):\n        splits = x.chunk(self.num_splits, 0)\n        processed = [super().forward(s) for s in splits]\n        return torch.cat(processed, 0)",
+      "expected_benefits": "10-100x faster training, better generalization, enables larger learning rates",
+      "compatibility_notes": "Fails with batch_size=1. Different behavior train/eval. May conflict with some regularization.",
+      "research_reference": "Ioffe & Szegedy (2015) - Batch Normalization: Accelerating Deep Network Training",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow", "jax"],
+      "is_active": true,
+      "accuracy_impact": 3.0,
+      "speed_impact": 50.0,
+      "memory_impact": -5.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "mature"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Group Normalization",
+      "category": "normalization",
+      "description": "Divides channels into groups and normalizes within each group. Works well with small batch sizes.",
+      "implementation_code": "# Replace BatchNorm with GroupNorm for small batches\nclass ConvGNReLU(nn.Module):\n    def __init__(self, in_channels, out_channels, num_groups=32):\n        super().__init__()\n        self.conv = nn.Conv2d(in_channels, out_channels, 3, padding=1)\n        # GroupNorm with 32 groups (standard choice)\n        self.gn = nn.GroupNorm(num_groups, out_channels)\n        self.relu = nn.ReLU(inplace=True)\n        \n    def forward(self, x):\n        return self.relu(self.gn(self.conv(x)))\n\n# Choosing number of groups:\n# - num_groups=32 is standard for large channels\n# - num_groups=num_channels for Instance Norm behavior\n# - num_groups=1 for Layer Norm behavior\n# - Ensure num_channels % num_groups == 0\n\n# For very small batch sizes (1-4)\nmodel = nn.Sequential(\n    nn.Conv2d(3, 64, 3, padding=1),\n    nn.GroupNorm(32, 64),  # Works with ANY batch size\n    nn.ReLU(),\n)",
+      "expected_benefits": "Stable training with batch_size=1, consistent train/eval behavior",
+      "compatibility_notes": "Slightly worse than BN for large batches. Groups must divide channels evenly.",
+      "research_reference": "Wu & He (2018) - Group Normalization",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 1.0,
+      "speed_impact": -5.0,
+      "memory_impact": 0.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Weight Standardization",
+      "category": "normalization",
+      "description": "Normalizes weight matrices in convolutional layers, improving performance when combined with Group Normalization.",
+      "implementation_code": "class WeightStandardizedConv2d(nn.Conv2d):\n    \"\"\"Conv2d with Weight Standardization\"\"\"\n    def forward(self, x):\n        # Standardize weights\n        weight = self.weight\n        weight_mean = weight.mean(dim=(1, 2, 3), keepdim=True)\n        weight_std = weight.std(dim=(1, 2, 3), keepdim=True) + 1e-5\n        weight = (weight - weight_mean) / weight_std\n        \n        # Standard convolution with standardized weights\n        return F.conv2d(\n            x, weight, self.bias, self.stride,\n            self.padding, self.dilation, self.groups\n        )\n\n# Best used with GroupNorm\nclass WSConvGN(nn.Module):\n    def __init__(self, in_channels, out_channels):\n        super().__init__()\n        self.conv = WeightStandardizedConv2d(\n            in_channels, out_channels, 3, padding=1\n        )\n        self.norm = nn.GroupNorm(32, out_channels)\n        self.relu = nn.ReLU()\n        \n    def forward(self, x):\n        return self.relu(self.norm(self.conv(x)))\n\n# Improves batch-size 1 training significantly",
+      "expected_benefits": "Enables batch_size=1 training to match large batch performance",
+      "compatibility_notes": "Small computational overhead. Best combined with GroupNorm, not BatchNorm.",
+      "research_reference": "Qiao et al. (2019) - Weight Standardization",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 2.0,
+      "speed_impact": -3.0,
+      "memory_impact": 0.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "LayerScale",
+      "category": "normalization",
+      "description": "Learnable per-channel scaling applied after residual blocks, improving training stability for deep networks.",
+      "implementation_code": "class LayerScale(nn.Module):\n    def __init__(self, dim, init_values=1e-4):\n        super().__init__()\n        self.gamma = nn.Parameter(init_values * torch.ones(dim))\n        \n    def forward(self, x):\n        return x * self.gamma\n\n# Use in Vision Transformer blocks\nclass TransformerBlock(nn.Module):\n    def __init__(self, dim, num_heads, mlp_ratio=4., init_values=1e-4):\n        super().__init__()\n        self.norm1 = nn.LayerNorm(dim)\n        self.attn = Attention(dim, num_heads)\n        self.ls1 = LayerScale(dim, init_values)\n        \n        self.norm2 = nn.LayerNorm(dim)\n        self.mlp = MLP(dim, int(dim * mlp_ratio))\n        self.ls2 = LayerScale(dim, init_values)\n        \n    def forward(self, x):\n        # LayerScale after each sub-block\n        x = x + self.ls1(self.attn(self.norm1(x)))\n        x = x + self.ls2(self.mlp(self.norm2(x)))\n        return x\n\n# Also useful for CNNs\nclass ResBlockWithLayerScale(nn.Module):\n    def __init__(self, channels, init_values=1e-4):\n        super().__init__()\n        self.conv1 = nn.Conv2d(channels, channels, 3, padding=1)\n        self.conv2 = nn.Conv2d(channels, channels, 3, padding=1)\n        self.layer_scale = LayerScale(channels, init_values)\n        \n    def forward(self, x):\n        residual = F.relu(self.conv1(x))\n        residual = self.conv2(residual)\n        return x + self.layer_scale(residual)",
+      "expected_benefits": "Enables training deeper networks (1000+ layers), better convergence",
+      "compatibility_notes": "Small init values crucial. May slow early training.",
+      "research_reference": "Touvron et al. (2021) - Going deeper with Image Transformers",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 1.0,
+      "speed_impact": -2.0,
+      "memory_impact": -1.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Spectral Normalization",
+      "category": "normalization",
+      "description": "Constrains the spectral norm of weight matrices, stabilizing training for GANs and improving generalization.",
+      "implementation_code": "# PyTorch has built-in spectral normalization\nfrom torch.nn.utils import spectral_norm\n\n# For GAN discriminator\nclass Discriminator(nn.Module):\n    def __init__(self):\n        super().__init__()\n        # Apply spectral norm to all layers\n        self.conv1 = spectral_norm(nn.Conv2d(3, 64, 4, 2, 1))\n        self.conv2 = spectral_norm(nn.Conv2d(64, 128, 4, 2, 1))\n        self.conv3 = spectral_norm(nn.Conv2d(128, 256, 4, 2, 1))\n        self.fc = spectral_norm(nn.Linear(256 * 4 * 4, 1))\n        \n    def forward(self, x):\n        x = F.leaky_relu(self.conv1(x), 0.2)\n        x = F.leaky_relu(self.conv2(x), 0.2)\n        x = F.leaky_relu(self.conv3(x), 0.2)\n        x = x.view(x.size(0), -1)\n        return self.fc(x)\n\n# Custom implementation for understanding\nclass SpectralNorm(nn.Module):\n    def __init__(self, module, power_iterations=1):\n        super().__init__()\n        self.module = module\n        self.power_iterations = power_iterations\n        \n        # Initialize u and v\n        weight = module.weight\n        h, w = weight.size(0), weight.view(weight.size(0), -1).size(1)\n        self.u = nn.Parameter(torch.randn(h, 1), requires_grad=False)\n        self.v = nn.Parameter(torch.randn(w, 1), requires_grad=False)\n        \n    def forward(self, x):\n        weight = self.module.weight\n        weight_mat = weight.view(weight.size(0), -1)\n        \n        # Power iteration\n        for _ in range(self.power_iterations):\n            self.v = F.normalize(torch.mv(weight_mat.t(), self.u), dim=0)\n            self.u = F.normalize(torch.mv(weight_mat, self.v), dim=0)\n            \n        # Spectral norm\n        sigma = torch.dot(self.u, torch.mv(weight_mat, self.v))\n        \n        # Normalize weight\n        self.module.weight = weight / sigma\n        \n        return self.module(x)",
+      "expected_benefits": "Stable GAN training, improved generalization in classifiers",
+      "compatibility_notes": "Computational overhead from power iteration. May limit model capacity.",
+      "research_reference": "Miyato et al. (2018) - Spectral Normalization for GANs",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 1.0,
+      "speed_impact": -5.0,
+      "memory_impact": -2.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Instance Normalization",
+      "category": "normalization",
+      "description": "Normalizes each sample independently across spatial dimensions. Essential for style transfer and image-to-image tasks.",
+      "implementation_code": "# Standard Instance Normalization\nclass StyleTransferNet(nn.Module):\n    def __init__(self):\n        super().__init__()\n        # Instance norm is standard for style transfer\n        self.conv1 = nn.Conv2d(3, 64, 7, padding=3)\n        self.in1 = nn.InstanceNorm2d(64)\n        self.conv2 = nn.Conv2d(64, 128, 3, stride=2, padding=1)\n        self.in2 = nn.InstanceNorm2d(128)\n        \n    def forward(self, x):\n        x = F.relu(self.in1(self.conv1(x)))\n        x = F.relu(self.in2(self.conv2(x)))\n        return x\n\n# Conditional Instance Normalization for multiple styles\nclass ConditionalInstanceNorm2d(nn.Module):\n    def __init__(self, num_features, num_styles):\n        super().__init__()\n        self.num_features = num_features\n        self.in_norm = nn.InstanceNorm2d(num_features, affine=False)\n        \n        # Learnable parameters for each style\n        self.gamma = nn.Parameter(torch.randn(num_styles, num_features))\n        self.beta = nn.Parameter(torch.zeros(num_styles, num_features))\n        \n    def forward(self, x, style_id):\n        out = self.in_norm(x)\n        gamma = self.gamma[style_id].view(-1, self.num_features, 1, 1)\n        beta = self.beta[style_id].view(-1, self.num_features, 1, 1)\n        return out * gamma + beta\n\n# Adaptive Instance Normalization (AdaIN) for style transfer\ndef adaptive_instance_norm(content_feat, style_feat):\n    size = content_feat.size()\n    style_mean, style_std = calc_mean_std(style_feat)\n    content_mean, content_std = calc_mean_std(content_feat)\n    \n    normalized_feat = (content_feat - content_mean) / content_std\n    return normalized_feat * style_std + style_mean",
+      "expected_benefits": "Essential for style transfer, removes instance-specific contrast information",
+      "compatibility_notes": "Not suitable for recognition tasks. Removes important discriminative information.",
+      "research_reference": "Ulyanov et al. (2016) - Instance Normalization: The Missing Ingredient for Fast Stylization",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": -5.0,
+      "speed_impact": 0.0,
+      "memory_impact": 0.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "mature"
+    }
+  }
+]

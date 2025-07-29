@@ -1,0 +1,149 @@
+[
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "ZeRO-1 (Optimizer State Sharding)",
+      "category": "distributed",
+      "description": "First stage of ZeRO (Zero Redundancy Optimizer) that shards optimizer states across GPUs, reducing memory by 4x for Adam-like optimizers.",
+      "implementation_code": "from deepspeed.runtime.zero import ZeroStageEnum\nimport deepspeed\n\nds_config = {\n    \"zero_optimization\": {\n        \"stage\": 1,\n        \"offload_optimizer\": {\n            \"device\": \"cpu\",\n            \"pin_memory\": True\n        }\n    }\n}\n\nmodel_engine, optimizer, _, _ = deepspeed.initialize(\n    model=model,\n    optimizer=optimizer,\n    config=ds_config\n)",
+      "expected_benefits": "4x memory reduction for optimizer states with minimal communication overhead",
+      "compatibility_notes": "Compatible with DDP. May conflict with manual gradient accumulation.",
+      "research_reference": "Rajbhandari et al. (2020) - ZeRO: Memory Optimizations Toward Training Trillion Parameter Models",
+      "hardware_requirements": ["multi_gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": 0.0,
+      "speed_impact": -5.0,
+      "memory_impact": 40.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "ZeRO-2 (Gradient Sharding)",
+      "category": "distributed",
+      "description": "Second stage of ZeRO that additionally shards gradients across GPUs, providing 8x total memory reduction for training states.",
+      "implementation_code": "ds_config = {\n    \"zero_optimization\": {\n        \"stage\": 2,\n        \"contiguous_gradients\": True,\n        \"overlap_comm\": True,\n        \"reduce_scatter\": True,\n        \"reduce_bucket_size\": 5e7,\n        \"allgather_bucket_size\": 5e7\n    }\n}",
+      "expected_benefits": "8x memory reduction with moderate communication overhead",
+      "compatibility_notes": "Increased communication vs ZeRO-1. May conflict with gradient clipping strategies.",
+      "research_reference": "Rajbhandari et al. (2020) - ZeRO: Memory Optimizations",
+      "hardware_requirements": ["multi_gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": 0.0,
+      "speed_impact": -15.0,
+      "memory_impact": 60.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "ZeRO-3 (Parameter Sharding)",
+      "category": "distributed",
+      "description": "Final stage of ZeRO that shards model parameters across GPUs, enabling training of models that don't fit on a single GPU.",
+      "implementation_code": "ds_config = {\n    \"zero_optimization\": {\n        \"stage\": 3,\n        \"offload_param\": {\n            \"device\": \"cpu\",\n            \"pin_memory\": True\n        },\n        \"offload_optimizer\": {\n            \"device\": \"cpu\",\n            \"pin_memory\": True\n        },\n        \"sub_group_size\": 1e9,\n        \"stage3_prefetch_bucket_size\": 5e7,\n        \"stage3_param_persistence_threshold\": 1e5\n    }\n}",
+      "expected_benefits": "Linear memory scaling with GPUs, enables training models 10x larger",
+      "compatibility_notes": "High communication overhead. Conflicts with parameter-efficient methods like LoRA.",
+      "research_reference": "Rajbhandari et al. (2020) - ZeRO: Memory Optimizations",
+      "hardware_requirements": ["multi_gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": 0.0,
+      "speed_impact": -30.0,
+      "memory_impact": 80.0,
+      "implementation_difficulty": "hard",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "DDP (Distributed Data Parallel)",
+      "category": "distributed",
+      "description": "PyTorch's native distributed training that replicates model on each GPU and synchronizes gradients. Simple but effective for data parallelism.",
+      "implementation_code": "import torch.distributed as dist\nfrom torch.nn.parallel import DistributedDataParallel as DDP\n\n# Initialize process group\ndist.init_process_group(backend='nccl')\n\n# Wrap model\nmodel = model.to(device)\nmodel = DDP(model, device_ids=[local_rank], output_device=local_rank)\n\n# Use DistributedSampler\ntrain_sampler = torch.utils.data.distributed.DistributedSampler(dataset)",
+      "expected_benefits": "Near-linear scaling up to 8 GPUs, simple to implement",
+      "compatibility_notes": "Requires careful handling of batch norm. May conflict with model parallel approaches.",
+      "research_reference": "Li et al. (2020) - PyTorch Distributed: Experiences on Accelerating Data Parallel Training",
+      "hardware_requirements": ["multi_gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": 0.0,
+      "speed_impact": 80.0,
+      "memory_impact": 0.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "mature"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Tensor Parallelism",
+      "category": "distributed",
+      "description": "Splits individual layers across GPUs by partitioning weight matrices. Enables training of models with very large layers.",
+      "implementation_code": "# Megatron-LM style tensor parallelism\nfrom megatron.core import tensor_parallel\n\n# Column parallel linear\nself.dense_h_to_4h = tensor_parallel.ColumnParallelLinear(\n    hidden_size,\n    ffn_hidden_size,\n    bias=True,\n    gather_output=False\n)\n\n# Row parallel linear  \nself.dense_4h_to_h = tensor_parallel.RowParallelLinear(\n    ffn_hidden_size,\n    hidden_size,\n    bias=True,\n    input_is_parallel=True\n)",
+      "expected_benefits": "Enables training models with layers too large for single GPU",
+      "compatibility_notes": "High communication overhead. Conflicts with data parallelism on same GPU group.",
+      "research_reference": "Shoeybi et al. (2019) - Megatron-LM: Training Multi-Billion Parameter Language Models",
+      "hardware_requirements": ["multi_gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": 0.0,
+      "speed_impact": -20.0,
+      "memory_impact": 70.0,
+      "implementation_difficulty": "hard",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Pipeline Parallelism",
+      "category": "distributed",
+      "description": "Splits model layers across GPUs and pipelines micro-batches through stages. Reduces memory per GPU while maintaining efficiency.",
+      "implementation_code": "from torch.distributed.pipeline.sync import Pipe\n\n# Split model into stages\nclass Stage1(nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.layers = nn.Sequential(*model.layers[:n//2])\n\nclass Stage2(nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.layers = nn.Sequential(*model.layers[n//2:])\n\n# Create pipeline\nmodel = Pipe(\n    nn.Sequential(Stage1().cuda(0), Stage2().cuda(1)),\n    balance=[1, 1],\n    devices=[0, 1],\n    chunks=8  # Number of micro-batches\n)",
+      "expected_benefits": "Memory reduction proportional to pipeline stages, good GPU utilization",
+      "compatibility_notes": "Requires careful stage balancing. Conflicts with dynamic graphs. Bubble overhead.",
+      "research_reference": "Huang et al. (2019) - GPipe: Efficient Training of Giant Neural Networks",
+      "hardware_requirements": ["multi_gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": 0.0,
+      "speed_impact": -10.0,
+      "memory_impact": 60.0,
+      "implementation_difficulty": "hard",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Gradient Compression",
+      "category": "distributed",
+      "description": "Reduces communication overhead in distributed training by compressing gradients before all-reduce operations.",
+      "implementation_code": "from torch.distributed.algorithms.ddp_comm_hooks import default as comm_hooks\n\n# Power SGD compression\nstate = comm_hooks.PowerSGDState(\n    process_group=None,\n    matrix_approximation_rank=2,\n    start_powerSGD_iter=1000\n)\n\nmodel.register_comm_hook(state, comm_hooks.powerSGD_hook)\n\n# Or simple quantization\nmodel.register_comm_hook(None, comm_hooks.quantization_hooks.quantize_hook)",
+      "expected_benefits": "50-100x gradient compression, faster training on slow networks",
+      "compatibility_notes": "May reduce convergence speed. Conflicts with gradient clipping.",
+      "research_reference": "Vogels et al. (2019) - PowerSGD: Practical Low-Rank Gradient Compression",
+      "hardware_requirements": ["multi_gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": -1.0,
+      "speed_impact": 30.0,
+      "memory_impact": 0.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "stable"
+    }
+  }
+]
