@@ -1,0 +1,291 @@
+name: Performance Monitoring
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "latest"
+
+    - name: Set up Python
+      run: uv python install 3.9
+
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+        uv add pytest-benchmark pytest-codspeed
+
+    - name: Create benchmark tests
+      run: |
+        mkdir -p tests/benchmarks
+        cat > tests/benchmarks/test_performance.py << 'EOF'
+        """Performance benchmarks for covmapy."""
+        import tempfile
+        import xml.etree.ElementTree as ET
+        from pathlib import Path
+        from typing import List
+
+        import pytest
+
+        from covmapy.models import FileCoverage
+        from covmapy.parser import XMLCoverageParser
+        from covmapy.core import PlotlyCoveragePlotter
+        from covmapy.plotly_treemap import PlotlyTreemapLayout
+
+
+        def generate_large_coverage_xml(num_files: int = 100) -> str:
+            """Generate a large coverage.xml file for benchmarking."""
+            root = ET.Element("coverage", {
+                "line-rate": "0.85",
+                "branch-rate": "0.80",
+                "lines-covered": str(num_files * 80),
+                "lines-valid": str(num_files * 100),
+                "branches-covered": str(num_files * 40),
+                "branches-valid": str(num_files * 50),
+                "complexity": "0",
+                "version": "1.0",
+                "timestamp": "1234567890"
+            })
+
+            sources = ET.SubElement(root, "sources")
+            ET.SubElement(sources, "source").text = "/project"
+
+            packages = ET.SubElement(root, "packages")
+
+            for pkg_idx in range(max(1, num_files // 10)):
+                package = ET.SubElement(packages, "package", {
+                    "name": f"package{pkg_idx}",
+                    "line-rate": "0.85",
+                    "branch-rate": "0.80",
+                    "complexity": "0"
+                })
+
+                classes = ET.SubElement(package, "classes")
+
+                files_in_package = min(10, num_files - pkg_idx * 10)
+                for file_idx in range(files_in_package):
+                    class_elem = ET.SubElement(classes, "class", {
+                        "name": f"package{pkg_idx}.module{file_idx}",
+                        "filename": f"package{pkg_idx}/module{file_idx}.py",
+                        "line-rate": "0.85",
+                        "branch-rate": "0.80",
+                        "complexity": "0"
+                    })
+
+                    methods = ET.SubElement(class_elem, "methods")
+                    lines = ET.SubElement(class_elem, "lines")
+
+                    # Add lines
+                    for line_num in range(1, 101):
+                        line_attr = {
+                            "number": str(line_num),
+                            "hits": str(1 if line_num <= 85 else 0)
+                        }
+                        if line_num % 10 == 0:  # Branch lines
+                            line_attr["branch"] = "true"
+                            line_attr["condition-coverage"] = "80% (4/5)"
+                        ET.SubElement(lines, "line", line_attr)
+
+            return ET.tostring(root, encoding='unicode')
+
+
+        @pytest.fixture
+        def small_coverage_xml():
+            """Small coverage XML for quick tests."""
+            return generate_large_coverage_xml(10)
+
+
+        @pytest.fixture
+        def medium_coverage_xml():
+            """Medium coverage XML for moderate tests."""
+            return generate_large_coverage_xml(50)
+
+
+        @pytest.fixture
+        def large_coverage_xml():
+            """Large coverage XML for stress tests."""
+            return generate_large_coverage_xml(200)
+
+
+        class TestParsingPerformance:
+            """Test parsing performance with different file sizes."""
+
+            def test_parse_small_xml(self, benchmark, small_coverage_xml):
+                """Benchmark parsing small XML files."""
+                parser = XMLCoverageParser()
+
+                def parse_xml():
+                    return parser.parse(small_coverage_xml)
+
+                result = benchmark(parse_xml)
+                assert len(result.files) == 10
+
+            def test_parse_medium_xml(self, benchmark, medium_coverage_xml):
+                """Benchmark parsing medium XML files."""
+                parser = XMLCoverageParser()
+
+                def parse_xml():
+                    return parser.parse(medium_coverage_xml)
+
+                result = benchmark(parse_xml)
+                assert len(result.files) == 50
+
+            def test_parse_large_xml(self, benchmark, large_coverage_xml):
+                """Benchmark parsing large XML files."""
+                parser = XMLCoverageParser()
+
+                def parse_xml():
+                    return parser.parse(large_coverage_xml)
+
+                result = benchmark(parse_xml)
+                assert len(result.files) == 200
+
+
+        class TestVisualizationPerformance:
+            """Test visualization performance with different data sizes."""
+
+            def test_treemap_generation_small(self, benchmark, small_coverage_xml):
+                """Benchmark treemap generation for small datasets."""
+                parser = XMLCoverageParser()
+                layout = PlotlyTreemapLayout()
+
+                def generate_treemap():
+                    hierarchical_report = parser.parse_hierarchical(small_coverage_xml)
+                    return layout.generate_figure(hierarchical_report, 800, 600)
+
+                fig = benchmark(generate_treemap)
+                assert fig is not None
+
+            def test_treemap_generation_medium(self, benchmark, medium_coverage_xml):
+                """Benchmark treemap generation for medium datasets."""
+                parser = XMLCoverageParser()
+                layout = PlotlyTreemapLayout()
+
+                def generate_treemap():
+                    hierarchical_report = parser.parse_hierarchical(medium_coverage_xml)
+                    return layout.generate_figure(hierarchical_report, 800, 600)
+
+                fig = benchmark(generate_treemap)
+                assert fig is not None
+
+            def test_treemap_generation_large(self, benchmark, large_coverage_xml):
+                """Benchmark treemap generation for large datasets."""
+                parser = XMLCoverageParser()
+                layout = PlotlyTreemapLayout()
+
+                def generate_treemap():
+                    hierarchical_report = parser.parse_hierarchical(large_coverage_xml)
+                    return layout.generate_figure(hierarchical_report, 800, 600)
+
+                fig = benchmark(generate_treemap)
+                assert fig is not None
+
+
+        class TestEndToEndPerformance:
+            """Test end-to-end performance."""
+
+            def test_full_pipeline_small(self, benchmark, small_coverage_xml):
+                """Benchmark full pipeline for small datasets."""
+                def full_pipeline():
+                    with tempfile.NamedTemporaryFile(mode='w', suffix='.xml', delete=False) as input_file:
+                        input_file.write(small_coverage_xml)
+                        input_file.flush()
+
+                        with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as output_file:
+                            parser = XMLCoverageParser()
+                            layout = PlotlyTreemapLayout()
+                            plotter = PlotlyCoveragePlotter(parser, layout)
+                            plotter.plot_from_file(
+                                coverage_file=Path(input_file.name),
+                                output_path=output_file.name,
+                                width=800,
+                                height=600
+                            )
+                            return Path(output_file.name)
+
+                result = benchmark(full_pipeline)
+                assert result.exists()
+
+            def test_full_pipeline_medium(self, benchmark, medium_coverage_xml):
+                """Benchmark full pipeline for medium datasets."""
+                def full_pipeline():
+                    with tempfile.NamedTemporaryFile(mode='w', suffix='.xml', delete=False) as input_file:
+                        input_file.write(medium_coverage_xml)
+                        input_file.flush()
+
+                        with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as output_file:
+                            parser = XMLCoverageParser()
+                            layout = PlotlyTreemapLayout()
+                            plotter = PlotlyCoveragePlotter(parser, layout)
+                            plotter.plot_from_file(
+                                coverage_file=Path(input_file.name),
+                                output_path=output_file.name,
+                                width=800,
+                                height=600
+                            )
+                            return Path(output_file.name)
+
+                result = benchmark(full_pipeline)
+                assert result.exists()
+        EOF
+
+    - name: Run benchmarks
+      run: |
+        uv run pytest tests/benchmarks/ \
+          --benchmark-json=benchmark_results.json \
+          --benchmark-min-rounds=3 \
+          --benchmark-disable-gc \
+          --benchmark-warmup=on \
+          --benchmark-sort=mean \
+          -v
+
+    - name: CodSpeed benchmark
+      uses: CodSpeedHQ/action@v3
+      with:
+        run: uv run pytest tests/benchmarks/ --codspeed
+        token: ${{ secrets.CODSPEED_TOKEN }}
+
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: benchmark-results
+        path: benchmark_results.json
+
+    - name: Performance Summary
+      if: always()
+      run: |
+        echo "## 🚀 Performance Benchmark Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        if [ -f "benchmark_results.json" ]; then
+          echo "### 📊 Benchmark Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Extract key metrics using jq if available
+          if command -v jq &> /dev/null; then
+            echo "| Test | Mean Time | Min Time | Max Time |" >> $GITHUB_STEP_SUMMARY
+            echo "|------|-----------|----------|----------|" >> $GITHUB_STEP_SUMMARY
+
+            jq -r '.benchmarks[] | "\(.name) | \(.stats.mean | (. * 1000 | floor) / 1000)ms | \(.stats.min | (. * 1000 | floor) / 1000)ms | \(.stats.max | (. * 1000 | floor) / 1000)ms"' benchmark_results.json >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Benchmark tests completed successfully" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📈 **CodSpeed:** Continuous performance monitoring enabled" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 **View Details:** Check the benchmark results artifact for full data" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Benchmark results not found" >> $GITHUB_STEP_SUMMARY
+        fi

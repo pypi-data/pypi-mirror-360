@@ -1,0 +1,179 @@
+[project]
+name = "covmapy"
+version = "0.2.0"
+description = "Coverage visualization tool that generates interactive treemaps"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = []
+dependencies = [
+    "click>=8.0,<9.0",
+    "plotly>=5.0,<8.0",
+]
+
+
+[project.scripts]
+covmapy = "covmapy.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = [
+    "-v",
+    "--cov=covmapy",
+    "--cov-branch",
+    "--cov-report=term-missing",
+    "--cov-report=html:test_outputs/htmlcov",
+    "--cov-report=xml:test_outputs/coverage.xml"
+]
+
+[tool.coverage.run]
+source = ["src/covmapy"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.mypy]
+exclude = ["build", "dist", ".*/__pycache__/.*"]
+mypy_path = ["src"]
+explicit_package_bases = true
+python_version = "3.9"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+allow_redefinition = false
+allow_untyped_globals = false
+implicit_reexport = false
+strict_optional = true
+strict_equality = true
+extra_checks = true
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+show_error_codes = true
+show_column_numbers = true
+color_output = true
+error_summary = true
+pretty = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.16.1",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "pytest-mock>=3.14.1",
+    "ruff>=0.12.1",
+    "pre-commit>=4.2.0",
+    "tox>=4.0.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/covmapy"]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py39, py310, py311, py312, py313, lint, lint-py39, lint-py310, lint-py311, lint-py312, lint-py313
+isolated_build = true
+
+[testenv]
+deps =
+    pytest>=8.4.1
+    pytest-cov>=6.2.1
+    pytest-mock>=3.14.1
+commands = pytest
+
+[testenv:py39]
+basepython = python3.9
+
+[testenv:py310]
+basepython = python3.10
+
+[testenv:py311]
+basepython = python3.11
+
+[testenv:py312]
+basepython = python3.12
+
+[testenv:py313]
+basepython = python3.13
+
+[testenv:lint]
+deps =
+    mypy>=1.16.1
+    ruff>=0.12.1
+commands =
+    ruff check src tests
+    ruff format --check src tests
+    mypy src
+
+[testenv:lint-py39]
+basepython = python3.9
+deps =
+    mypy>=1.16.1
+    ruff>=0.12.1
+commands =
+    ruff check src tests
+    ruff format --check src tests
+    mypy src
+
+[testenv:lint-py310]
+basepython = python3.10
+deps =
+    mypy>=1.16.1
+    ruff>=0.12.1
+commands =
+    ruff check src tests
+    ruff format --check src tests
+    mypy src
+
+[testenv:lint-py311]
+basepython = python3.11
+deps =
+    mypy>=1.16.1
+    ruff>=0.12.1
+commands =
+    ruff check src tests
+    ruff format --check src tests
+    mypy src
+
+[testenv:lint-py312]
+basepython = python3.12
+deps =
+    mypy>=1.16.1
+    ruff>=0.12.1
+commands =
+    ruff check src tests
+    ruff format --check src tests
+    mypy src
+
+[testenv:lint-py313]
+basepython = python3.13
+deps =
+    mypy>=1.16.1
+    ruff>=0.12.1
+commands =
+    ruff check src tests
+    ruff format --check src tests
+    mypy src
+"""

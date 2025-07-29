@@ -1,0 +1,220 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+        type: string
+
+# Restrict to repository owners only
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  validate-permissions:
+    runs-on: ubuntu-latest
+    if: github.repository_owner == github.actor || github.event_name == 'push'
+    steps:
+      - name: Validate repository owner
+        run: |
+          echo "Repository owner: ${{ github.repository_owner }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Event: ${{ github.event_name }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.repository_owner }}" != "${{ github.actor }}" ]; then
+            echo "❌ Only repository owners can manually trigger releases"
+            exit 1
+          fi
+          echo "✅ Permission validated"
+
+  test:
+    needs: validate-permissions
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "latest"
+
+    - name: Set up Python ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: uv sync --dev
+
+    - name: Run tests
+      run: |
+        export PATH="$(uv python find ${{ matrix.python-version }} | xargs dirname):$PATH"
+        uv run tox -e py$(echo ${{ matrix.python-version }} | tr -d '.')
+      shell: bash
+
+  lint:
+    needs: validate-permissions
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "latest"
+
+    - name: Set up Python
+      run: uv python install 3.9
+
+    - name: Install dependencies
+      run: uv sync --dev
+
+    - name: Run lint
+      run: uv run tox -e lint
+
+  security-scan:
+    needs: validate-permissions
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "latest"
+
+    - name: Set up Python
+      run: uv python install 3.9
+
+    - name: Install dependencies
+      run: uv sync
+
+    - name: Run security scan
+      run: |
+        uv run ruff check --select=S --output-format=github
+        uvx pip-audit --format=json --output=security-audit.json || true
+
+  build:
+    needs: [test, lint, security-scan]
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "latest"
+
+    - name: Set up Python
+      run: uv python install 3.9
+
+    - name: Install dependencies
+      run: uv sync --dev
+
+    - name: Build package
+      run: uv build
+
+    - name: Verify package
+      run: |
+        uv pip install dist/*.whl
+        uv run covmapy --help
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: release
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist/
+
+    - name: Get version from tag or input
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "push" ]; then
+          VERSION="${{ github.ref_name }}"
+        else
+          VERSION="${{ github.event.inputs.version }}"
+        fi
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "Version: ${VERSION}"
+
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        PREV_TAG=$(git tag --sort=-version:refname | grep -A1 "${VERSION}" | tail -1 || echo "")
+
+        echo "## 🚀 Release ${VERSION}" > release_notes.md
+        echo "" >> release_notes.md
+
+        if [ -n "$PREV_TAG" ] && [ "$PREV_TAG" != "$VERSION" ]; then
+          echo "### Changes since ${PREV_TAG}" >> release_notes.md
+          echo "" >> release_notes.md
+          git log --pretty=format:"- %s (%h)" "${PREV_TAG}..HEAD" >> release_notes.md
+        else
+          echo "### Changes" >> release_notes.md
+          echo "" >> release_notes.md
+          git log --pretty=format:"- %s (%h)" --max-count=20 >> release_notes.md
+        fi
+
+        echo "" >> release_notes.md
+        echo "### 📦 Installation" >> release_notes.md
+        echo "" >> release_notes.md
+        echo '```bash' >> release_notes.md
+        echo "pip install covmapy==${VERSION#v}" >> release_notes.md
+        echo '```' >> release_notes.md
+
+        cat release_notes.md
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        name: Release ${{ steps.version.outputs.version }}
+        body_path: release_notes.md
+        files: dist/*
+        draft: false
+        prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        attestations: true
+        verbose: true
+
+    - name: Release Summary
+      run: |
+        echo "## 🎉 Release Complete!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "**PyPI:** https://pypi.org/project/covmapy/${{ steps.version.outputs.version }}/" >> $GITHUB_STEP_SUMMARY
+        echo "**GitHub:** ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 Installation" >> $GITHUB_STEP_SUMMARY
+        echo '```bash' >> $GITHUB_STEP_SUMMARY
+        echo "pip install covmapy==${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
