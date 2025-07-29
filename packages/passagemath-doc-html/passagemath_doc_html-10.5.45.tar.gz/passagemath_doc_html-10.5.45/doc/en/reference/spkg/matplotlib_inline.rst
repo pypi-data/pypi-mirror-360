@@ -1,0 +1,82 @@
+.. _spkg_matplotlib_inline:
+
+matplotlib_inline: Inline Matplotlib backend for Jupyter
+==================================================================
+
+Description
+-----------
+
+Inline Matplotlib backend for Jupyter
+
+License
+-------
+
+BSD 3-Clause
+
+Upstream Contact
+----------------
+
+https://pypi.org/project/matplotlib-inline/
+
+
+Type
+----
+
+standard
+
+
+Dependencies
+------------
+
+- $(PYTHON)
+- $(PYTHON_TOOLCHAIN)
+- :ref:`spkg_traitlets`
+
+Version Information
+-------------------
+
+package-version.txt::
+
+    0.1.6
+
+version_requirements.txt::
+
+    matplotlib-inline
+
+
+Equivalent System Packages
+--------------------------
+
+.. tab:: conda-forge
+
+   .. CODE-BLOCK:: bash
+
+       $ conda install matplotlib-inline 
+
+
+.. tab:: Fedora/Redhat/CentOS
+
+   .. CODE-BLOCK:: bash
+
+       $ sudo yum install python3-matplotlib-inline 
+
+
+.. tab:: Gentoo Linux
+
+   .. CODE-BLOCK:: bash
+
+       $ sudo emerge dev-python/matplotlib-inline 
+
+
+.. tab:: Void Linux
+
+   .. CODE-BLOCK:: bash
+
+       $ sudo xbps-install python3-matplotlib-inline 
+
+
+
+If the system package is installed and if the (experimental) option
+``--enable-system-site-packages`` is passed to ``./configure``, then ``./configure``
+will check if the system package can be used.
+
