@@ -1,0 +1,491 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opti-extensions"
+description = """\
+    A collection of custom data structures and user-friendly functions for mathematical \
+    optimization modeling with docplex, gurobipy, and xpress.\
+"""
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Samarth Mistry", email = "samarth.mistry@gmail.com" }]
+dynamic = ["version"]
+requires-python = ">=3.10"
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
+dependencies = ["typing_extensions>=4.10.0"]
+
+[project.optional-dependencies]
+solver-apis = [
+    "cplex>=20.1.0.4",
+    "docplex>=2.25.236",
+    "gurobipy>=11.0.0",
+    "xpress>=9.4.0",
+]
+tests = [
+    "pytest>=8.1.1",
+    "coverage>=7.4.4",
+    "pytest-cov>=4.1.0",
+    "pytest-randomly>=3.15.0",
+    "mypy[faster-cache]>=1.13.0,<=1.15.0",
+    "pandas>=1.5.0",                       # for pandas accessor
+    "pandas-stubs>=1.5.0",                 # for pandas accessor
+]
+docs = [
+    "Sphinx==8.1.3",
+    "sphinx-autosummary-accessors==2025.3.1",
+    "ansys-sphinx-theme==1.4.5",
+    "sphinx_design==0.6.1",
+    "sphinx_gallery==0.19.0",
+    "sphinx-copybutton==0.5.2",
+    "sphinx-notfound-page==1.1.0",
+    "matplotlib==3.10.3",                     # for sphinx_gallery to run py fies
+    "numpy<2.0",                              # for compatibility with matplotlib
+    "pandas>=1.5.0",                          # for pandas accessor
+    "pandas-stubs>=1.5.0",                    # for pandas accessor
+    "numpydoc==1.8.0",
+]
+dev = [
+    "ruff>=0.7.0",
+    "pre-commit>=3.8.0",
+    "tox>=4.14.1",
+    "opti-extensions[tests]",
+    "opti-extensions[docs]",
+]
+
+[project.urls]
+Documentation = "https://opti-extensions.readthedocs.io/en/stable"
+"Source code" = "https://github.com/samarthmistry/opti-extensions"
+Changelog = "https://github.com/samarthmistry/opti-extensions/releases"
+
+[tool.setuptools.dynamic]
+version = { attr = "opti_extensions.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+opti_extensions = ["py.typed"]
+
+###### ruff ######
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I", "D", "B", "UP", "FA"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F403", "D212"]
+"setup.py" = ["D100"]
+"examples/*" = ["I001", "E501"]
+"{docs,examples}/*" = ["E402"]
+"{docs,tests,examples}/**" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.format]
+quote-style = "single"
+docstring-code-format = true
+
+###### codespell ######
+
+[tool.codespell]
+ignore-words-list = "ElemT,VarT,sav"
+
+###### numpydoc ######
+
+[tool.numpydoc_validation]
+checks = [
+    "all",  # All checks except those below:
+    "GL01", # Summary should start in the line immediately
+    "ES01", # Extended summary not found
+    "SA01", # 'See Also' section not found
+    "EX01", # 'Examples' section not found
+    "PR07", # Parameter has no description
+    "RT03", # Return value has no description
+]
+exclude = [
+    "\\.__",             # Dunder methods
+    "._create",          # Dunder method impl
+    "._setitem_idx",     # Dunder method impl
+    "._setitem_slice",   # Dunder method impl
+    "._get_repr_header", # repr
+    "._repr_pretty_",    # repr
+    "SupportsGetItem",   # Protocol
+    "_RAISE_KEYERROR",   # Dummy
+    ".name",             # property
+    ".names",            # property
+    ".key_name",         # property
+    ".key_names",        # property
+    ".value_name",       # property
+]
+override_PR01 = [
+    "^Not supported by ", # _param_dicts.ParamDictBase.update, .fromkeys
+    #                     # _var_dicts.VarDictBase.pop, setdefault, .update, .fromkeys
+    "^Solve a DOcplex model ", # _model_funcs.solve
+]
+override_PR02 = [
+    "^Not supported by ", # _param_dicts.ParamDictBase.update, .fromkeys
+    #                     # _var_dicts.VarDictBase.pop, setdefault, .update, .fromkeys
+    "^Solve a DOcplex model ", # _model_funcs.solve
+]
+override_SS05 = [
+    "^Preprocess ", # _var_funcs._preprocess_bound
+]
+
+###### mypy ######
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+follow_imports = "normal"
+show_error_codes = true
+show_error_context = true
+pretty = true
+
+[[tool.mypy.overrides]]
+module = ["docplex.mp.*", "xpress.*"]
+ignore_missing_imports = true
+
+###### pytest ######
+
+[tool.pytest.ini_options]
+addopts = """
+    --doctest-modules
+    --doctest-continue-on-failure
+    --cov=opti_extensions
+    --cov-report term-missing
+    --randomly-seed=27
+"""
+doctest_optionflags = "NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL"
+testpaths = [
+    "src",                    # doctests in source code
+    "tests/unit_tests",
+    "tests/functional_tests",
+]
+filterwarnings = [
+    "ignore::FutureWarning", # for functionality to be phased out of pandas 1.5.0
+]
+
+
+###### Coverage.py ######
+
+[tool.coverage.report]
+exclude_also = [
+    "find_spec",            # untestable
+    "def _get_repr_header", # repr
+    "def __repr__",         # repr
+    "def _repr_pretty_",    # repr
+    "if TYPE_CHECKING",     # typing
+    "@overload",            # typing
+    "except ImportError",   # optional dependency
+]
+
+###### tox ######
+
+[tool.tox]
+min_version = "4.0"
+env_list = [
+    "py310",
+    "py311",
+    "py312",
+    "py313",
+    "mypy",
+    "pd15",
+    "pd20",
+    "pdX",
+    "cpx2010",
+    "cpx2210",
+    "cpx2211",
+    "cpx2212",
+    "grb11",
+    "grb12",
+    "xprs94",
+    "xprs95",
+    "xprs96",
+]
+
+[tool.tox.gh.python]
+"3.10" = [
+    "py310",
+    "mypy",
+    "pd15",
+    "pd20",
+    "pdX",
+    "cpx2010",
+    "cpx2210",
+    "cpx2211",
+    "cpx2212",
+    "grb11",
+    "grb12",
+    "xprs94",
+    "xprs95",
+    "xprs96",
+]
+"3.11" = ["py311"]
+"3.12" = ["py312"]
+"3.13" = ["py313"]
+
+[tool.tox.env_run_base]
+description = "Run doctests, unit tests, and functional tests"
+set_env = { PY_IGNORE_IMPORTMISMATCH = "1" }
+extras = ["tests", "solver-apis"]
+package = "wheel"
+wheel_build_env = ".pkg"
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        { replace = "posargs", extend = true },
+    ],
+]
+
+[tool.tox.env.py313]
+# Since CPLEX runtime is not supported beyond python 3.12, we skip all runtime-based tests
+# i.e., anything that invokes solve
+description = "Run doctests, unit tests ex. model functions, and typing tests"
+deps = ["docplex>=2.25.236", "gurobipy>=11.0.0", "xpress>=9.2.0"]
+extras = ["tests"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--ignore=src{/}opti_extensions{/}docplex{/}_model_funcs.py",
+        "--ignore=tests{/}unit_tests{/}docplex_model_funcs{/}",
+        "--ignore-glob=tests{/}functional_tests{/}docplex_*.py",
+        { replace = "posargs", extend = true },
+    ],
+]
+
+[tool.tox.env.mypy]
+description = "Run static type checks and typing tests"
+base_python = ["3.10"]
+commands = [["mypy", "src"], ["mypy", "tests{/}typing_tests"]]
+
+[tool.tox.env.pd15]
+description = "Run unit tests and doctests for pandas accessors against pandas 1.5"
+base_python = ["3.10"]
+deps = ["pandas==1.5.0", "numpy<2.0"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--no-cov",
+        "src{/}opti_extensions{/}_pandas_accessors.py",
+        "tests{/}unit_tests{/}pandas_accessors{/}",
+        "tests{/}functional_tests{/}docplex_multicommodity_test.py",
+        "tests{/}functional_tests{/}gurobipy_multicommodity_test.py",
+        "tests{/}functional_tests{/}xpress_multicommodity_test.py",
+        { replace = "posargs", extend = true },
+    ],
+]
+
+[tool.tox.env.pd20]
+description = "Run unit tests and doctests for pandas accessors against pandas 2.0"
+base_python = ["3.10"]
+deps = ["pandas==2.0.0", "numpy<2.0"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--no-cov",
+        "src{/}opti_extensions{/}_pandas_accessors.py",
+        "tests{/}unit_tests{/}pandas_accessors{/}",
+        "tests{/}functional_tests{/}docplex_multicommodity_test.py",
+        "tests{/}functional_tests{/}gurobipy_multicommodity_test.py",
+        "tests{/}functional_tests{/}xpress_multicommodity_test.py",
+        { replace = "posargs", extend = true },
+    ],
+]
+
+[tool.tox.env.pdX]
+description = "Run unit tests and doctests for pandas accessors against pandas latest"
+base_python = ["3.10"]
+deps = ["pandas"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--no-cov",
+        "src{/}opti_extensions{/}_pandas_accessors.py",
+        "tests{/}unit_tests{/}pandas_accessors{/}",
+        "tests{/}functional_tests{/}docplex_multicommodity_test.py",
+        "tests{/}functional_tests{/}gurobipy_multicommodity_test.py",
+        "tests{/}functional_tests{/}xpress_multicommodity_test.py",
+        { replace = "posargs", extend = true },
+    ],
+]
+
+[tool.tox.env.cpx2010]
+description = "Run unit tests for model functions against CPLEX 20.1.0"
+base_python = ["3.10"]
+deps = ["cplex>=20.1.0,<22.1.0", "docplex>=2.25.236"]
+extras = ["tests"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--no-cov",
+        "tests{/}unit_tests{/}docplex_model_funcs{/}",
+        "tests{/}unit_tests{/}docplex_var_dicts_funcs{/}",
+        "tests{/}functional_tests{/}docplex_diet_test.py",
+        "tests{/}functional_tests{/}docplex_multicommodity_test.py",
+        { replace = "posargs", extend = true },
+    ],
+]
+
+[tool.tox.env.cpx2210]
+description = "Run unit tests for model functions against CPLEX 22.1.0"
+base_python = ["3.10"]
+deps = ["cplex>=22.1.0,<22.1.1", "docplex>=2.25.236"]
+extras = ["tests"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--no-cov",
+        "tests{/}unit_tests{/}docplex_model_funcs{/}",
+        "tests{/}unit_tests{/}docplex_var_dicts_funcs{/}",
+        "tests{/}functional_tests{/}docplex_diet_test.py",
+        "tests{/}functional_tests{/}docplex_multicommodity_test.py",
+        { replace = "posargs", extend = true },
+    ],
+]
+
+[tool.tox.env.cpx2211]
+description = "Run unit tests for model functions against CPLEX 22.1.1"
+base_python = ["3.10"]
+deps = ["cplex>=22.1.1,<22.1.2", "docplex>=2.25.236"]
+extras = ["tests"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--no-cov",
+        "tests{/}unit_tests{/}docplex_model_funcs{/}",
+        "tests{/}unit_tests{/}docplex_var_dicts_funcs{/}",
+        "tests{/}functional_tests{/}docplex_diet_test.py",
+        "tests{/}functional_tests{/}docplex_multicommodity_test.py",
+        { replace = "posargs", extend = true },
+    ],
+]
+
+[tool.tox.env.cpx2212]
+description = "Run unit tests for model functions against CPLEX 22.1.2"
+base_python = ["3.10"]
+deps = ["cplex>=22.1.2,<22.1.3", "docplex>=2.25.236"]
+extras = ["tests"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--no-cov",
+        "tests{/}unit_tests{/}docplex_model_funcs{/}",
+        "tests{/}unit_tests{/}docplex_var_dicts_funcs{/}",
+        "tests{/}functional_tests{/}docplex_diet_test.py",
+        "tests{/}functional_tests{/}docplex_multicommodity_test.py",
+        { replace = "posargs", extend = true },
+    ],
+]
+
+[tool.tox.env.grb11]
+description = "Run unit tests for model functions against Gurobi 11"
+base_python = ["3.10"]
+deps = ["gurobipy>=11,<12"]
+extras = ["tests"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--no-cov",
+        "tests{/}unit_tests{/}gurobipy_var_dicts_funcs{/}",
+        "tests{/}functional_tests{/}gurobipy_diet_test.py",
+        "tests{/}functional_tests{/}gurobipy_multicommodity_test.py",
+        { replace = "posargs", extend = true },
+    ],
+]
+
+[tool.tox.env.grb12]
+description = "Run unit tests for model functions against Gurobi 12"
+base_python = ["3.10"]
+deps = ["gurobipy>=12,<13"]
+extras = ["tests"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--no-cov",
+        "tests{/}unit_tests{/}gurobipy_var_dicts_funcs{/}",
+        "tests{/}functional_tests{/}gurobipy_diet_test.py",
+        "tests{/}functional_tests{/}gurobipy_multicommodity_test.py",
+        { replace = "posargs", extend = true },
+    ],
+]
+
+[tool.tox.env.xprs94]
+description = "Run unit tests for model functions against Xpress 9.4"
+base_python = ["3.10"]
+deps = ["xpress>=9.4,<9.5"]
+extras = ["tests"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--no-cov",
+        "tests{/}unit_tests{/}xpress_var_dicts_funcs{/}",
+        "tests{/}functional_tests{/}xpress_diet_test.py",
+        "tests{/}functional_tests{/}xpress_multicommodity_test.py",
+        { replace = "posargs", extend = true },
+    ],
+]
+
+[tool.tox.env.xprs95]
+description = "Run unit tests for model functions against Xpress 9.5"
+base_python = ["3.10"]
+deps = ["xpress>=9.5,<9.6"]
+extras = ["tests"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--no-cov",
+        "tests{/}unit_tests{/}xpress_var_dicts_funcs{/}",
+        "tests{/}functional_tests{/}xpress_diet_test.py",
+        "tests{/}functional_tests{/}xpress_multicommodity_test.py",
+        { replace = "posargs", extend = true },
+    ],
+]
+
+[tool.tox.env.xprs96]
+description = "Run unit tests for model functions against Xpress 9.6"
+base_python = ["3.10"]
+deps = ["xpress>=9.6,<9.7"]
+extras = ["tests"]
+commands = [
+    [
+        "pytest",
+        "--basetemp={env_tmp_dir}",
+        "--no-cov",
+        "tests{/}unit_tests{/}xpress_var_dicts_funcs{/}",
+        "tests{/}functional_tests{/}xpress_diet_test.py",
+        "tests{/}functional_tests{/}xpress_multicommodity_test.py",
+        { replace = "posargs", extend = true },
+    ],
+]
