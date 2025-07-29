@@ -1,0 +1,34 @@
+# -*- coding: utf-8 -*-
+from setuptools import setup
+
+packages = \
+['chatty_shell']
+
+package_data = \
+{'': ['*']}
+
+install_requires = \
+['langchain-community>=0.3.27,<0.4.0',
+ 'langchain-openai>=0.3.27,<0.4.0',
+ 'langchain>=0.3.26,<0.4.0',
+ 'langgraph>=0.5.1,<0.6.0',
+ 'openai>=1.93.0,<2.0.0']
+
+setup_kwargs = {
+    'name': 'chatty-shell',
+    'version': '0.1.1',
+    'description': '',
+    'long_description': None,
+    'author': 'Artur Dernst',
+    'author_email': 'artur@dernst.me',
+    'maintainer': None,
+    'maintainer_email': None,
+    'url': None,
+    'packages': packages,
+    'package_data': package_data,
+    'install_requires': install_requires,
+    'python_requires': '>=3.10,<4.0',
+}
+
+
+setup(**setup_kwargs)
