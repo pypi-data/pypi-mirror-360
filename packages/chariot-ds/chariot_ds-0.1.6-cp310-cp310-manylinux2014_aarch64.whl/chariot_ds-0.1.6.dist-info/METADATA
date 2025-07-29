@@ -1,0 +1,216 @@
+Metadata-Version: 2.4
+Name: chariot-ds
+Version: 0.1.6
+Summary: chariot-ds is a distributed heterogeneous cache system that supports pooled caching across HBM, DDR, and SSD, along with asynchronous, high-efficiency data transmission for NPUs.
+Home-page: https://gitee.com/mindspore/chariot-ds
+Author: chariot-ds Team
+License: Apache 2.0
+Keywords: mindspore chariot-ds datasystem
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: C++
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Software Development
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Dynamic: author
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: requires-python
+Dynamic: summary
+
+
+
+<!-- TOC -->
+
+- [What Is chariot-ds](#what-is-chariot-ds)
+- [Architecture](#architecture)
+- [Show Cases](#show-cases)
+    - [Transferring Data Between Cards Using Heterogeneous Object Interfaces (Guide)](#transferring-data-between-cards-using-heterogeneous-object-interfaces-guide)
+      - [Highlights](#highlights)
+      - [Performance](#performance)
+    - [Building a Distributed KVCache Using Multi-Level Cache (Guide)](#building-a-distributed-kvcache-using-multi-level-cache-guide)
+      - [Highlights](#highlights-1)
+      - [Performance](#performance-1)
+- [Quick Start](#quick-start)
+    - [Install using pip](#install-using-pip)
+    - [Process deployment](#process-deployment)
+      - [1. Deploy etcd](#1-deploy-etcd)
+      - [2. Use dscli to deploy the worker process on the node](#2-use-dscli-to-deploy-the-worker-process-on-the-node)
+      - [3. Quick verification](#3-quick-verification)
+- [Development Guide](#development-guide)
+- [Docs](#docs)
+- [License](#license)
+
+<!-- /TOC -->
+
+## What Is chariot-ds
+
+chariot-datasystem is a distributed heterogeneous cache system designed for AI training and promotion scenarios. HBM/DDR/SSD heterogeneous media pooling cache and asynchronous concurrent and efficient data transmission between NPUs are supported. It is used in scenarios such as distributed KVCache cache, model parameter cache, and high-performance replaybuffer.
+
+The chariot-datasystem has the following features:
+
+- **High-performance distributed multi-level cache**: supports DRAM/SSD distributed multi-level cache. Data is automatically replaced between DRAM and SSD. Hot data is stored in DRAM and cold data is stored in SSD. Supports high-performance H2D(host to device)/D2H(device to host) interfaces to implement fast swap between HBMs and DRAMs.
+- **Efficient data transmission between NPUs**: Distributed heterogeneous objects support direct data transmission between NPUs, automatically coordinate the HCCL sending and receiving sequence between NPUs, and simplify programming. Supports the P2P transmission load balancing policy to fully utilize the inter-card link bandwidth.
+- **Flexible lifecycle management**: Multiple lifecycle management policies, such as TTL, LRU cache elimination, and delete interface, can be set. The data lifecycle can be managed by the data system or upper-layer applications, providing higher flexibility.
+- **Multi-copy of hotspot data**: When data is read across nodes, copies are automatically stored locally, enabling efficient access to hotspot data. Local copies are automatically evicted using the LRU policy.
+- **Multiple data reliability policies**: Multiple persistence policies write_through, wirte_back, and none are supported to meet data reliability requirements in different scenarios.
+- **Data consistency**: supports two data consistency models: Causal and PRAM. Users can select a data consistency model as required to balance performance and data consistency.
+- **Data release and subscription**: Data subscription and release are supported. Data producers (publishers) and consumers (subscribers) are decoupled to implement asynchronous data transmission and sharing.
+- **High reliability and high availability**: supports distributed metadata management and implements horizontal linear system expansion. Supports metadata reliability and dynamic resource scaling and automatic data migration, achieving high system availability.
+
+## Architecture
+
+![](./docs/source_en/getting-started/image/architecture.png)
+
+The chariot-datasystem consists of three parts:
+
+- **SDK**: Python/C++ SDKs are supported. The SDK is integrated into the user process and communicates with the worker on the same node. The SDK provides two types of interfaces:
+  - **Heterogeneous object**: Heterogeneous object interfaces are provided to manage the HBMs of Ascend NPUs, implementing high-speed straight-through data transmission between NPUs. It also provides the H2D (host to device) / D2H (device to host) high-speed migration interface to implement fast data swap between the DRAM and HBM.
+  - **KV**: provides KV interfaces to read and write DRAM/SSD data. The SDK and workers use shared memory to implement copy-free data access. Provides data reliability semantics by interconnecting with external components.
+
+- **worker**: allocates and manages DRAM/SSD resources and metadata, and provides distributed multi-level cache capabilities.
+  - The worker process must be deployed on each node and registered with ETCD.
+  - Metadata is managed in a distributed manner and hashed to each worker to implement linear metadata expansion. During cluster autoscaling, metadata can be automatically migrated.
+  - Data can be automatically pulled between workers and transmitted using TCP/RDMA. (The current version supports only TCP, and later versions support RDMA.)
+  - Workers connect to the L2 cache to implement data reliability and capacity expansion.
+
+- **Cluster management**: Depends on ETCD, implements node discovery and health check, and supports worker fault recovery and online scaling.
+
+## Show Cases
+
+#### Transferring Data Between Cards Using Heterogeneous Object Interfaces ([Guide](./docs/source_zh_cn/development-guide/hetero.md))
+
+The heterogeneous object interface of chariot-ds supports direct transmission of HBM data between cards, implementing fast data transfer between cards. It can be used for fast scaling and fault recovery of model inference instances, fast KVCache transfer in P/D separation scenarios, and fast parameter rearrangement transfer between training and inference instances in reinforcement learning scenarios.
+
+##### Highlights
+
+- **Automatically coordinate the HCCL sending and receiving sequence**: When the HCCL is used to send and receive data, multiple runtimes dynamically initiate communication. Pay attention to the delivery sequence of communication operators, which may cause deadlocks. Heterogeneous objects support automatic coordination of data sending and receiving sequences. Users only need to use object read and write interfaces to implement parallel data transmission between cards.
+- **Dynamic link establishment**: Quick dynamic link establishment is supported when the NPU is faulty or elastic.
+- **P2P load balancing policy**: During large-scale data replication, the P2P transmission load balancing policy is implemented. The data receiver is used as the new data provider to fully utilize the inter-card link bandwidth.
+
+##### Performance
+
+Based on the DeepSeek-V3 (671B) model test, the inference instance scales from 1 to 10 scenarios. Compared with loading model parameters from SFS, the model loading time is reduced from 30 minutes to 10 seconds after the chariot-ds is used to transfer model parameters between heterogeneous object cards.
+
+#### Building a Distributed KVCache Using Multi-Level Cache ([Guide](./docs/source_zh_cn/development-guide/hetero.md))
+
+Chariot-ds can use cluster DRAM/SSD to build distributed multi-level cache, which can be used for LLM inference cache KVCache.
+
+##### Highlights
+
+- **Copy-free read/write of shared memory on the same node**: Data is cached in workers and provided for inference instances through shared memory. Multiple instances on the same node use shared memory copy-free access.
+- **Multi-copy of hotspot data**: When data is read across nodes, copies are automatically stored locally and LRUs are automatically eliminated, achieving efficient access to hotspot data.
+- **High-performance H2D/D2H interface**: Provides high-performance H2D/D2H interfaces and uses page-locked memory to accelerate data copy throughput. Multiple fragments of the HBM can be combined and cached in the DRAM. When the fragments are read to the HBM, the fragments can be automatically restored, reducing the metadata management overhead.
+- **Complete reliability and availability capabilities**: supports distributed metadata management, metadata reliability, and automatic data/metadata migration in autoscaling scenarios.
+
+##### Performance
+
+In the Atlas 900 A3 supernode environment, when hugepage memory is enabled, the swapout/swapin throughput from the HBM to the DRAM through the D2H/H2D interface of the chariot-ds reaches 37 GB/s.
+
+| Model | Data Size | D2H Throughput (MB/s) | H2D Throughput (MB/s) |
+|------------- | ---------- | -------------- | ------------- |
+| DeepSeek V3  | 72KB * 62  |  8234.92       | 7693.94       |
+| Qwen2.5      | 1MB * 28   |  17324.88      | 37490.03      |
+
+## Quick Start
+
+#### Install using pip
+
+The easiest way to install is to install the version on PyPI:
+```bash
+pip install chariot-ds
+```
+
+Description:
+> Before installing chariot-ds, you need to install CANN. For details, see [Installing CANN](./docs/source_zh_cn/getting-started/install.md#安装cann).
+
+For details about how to install a customized version or source code, see the [Installing chariot-ds](./docs/source_zh_cn/getting-started/install.md).
+
+#### Process deployment
+
+The chariot-ds can be quickly deployed using the dscli tool. The steps are as follows:
+
+##### 1. Deploy etcd
+
+For example, to deploy a single-node ETCD whose port number is 2379, run the following command:
+
+```bash
+etcd \
+  --name etcd-single \
+  --data-dir /tmp/etcd-data \
+  --listen-client-urls http://0.0.0.0:2379 \
+  --advertise-client-urls http://0.0.0.0:2379 \
+  --listen-peer-urls http://0.0.0.0:2380 \
+  --initial-advertise-peer-urls http://0.0.0.0:2380 \
+  --initial-cluster etcd-single=http://0.0.0.0:2380
+```
+
+Parameter description:
+- --name: node name. You can name a single-node system randomly.
+- --data-dir: indicates the data storage directory.
+- --listen-client-urls: IP address for listening on client requests (0.0.0.0 allows access from all IP addresses).
+- --advertise-client-urls: client access address exposed externally.
+- --listen-peer-urls: URL for listening on communication between other etcd nodes (internal port in the cluster).
+- --initial-advertise-peer-urls: access address announced to other nodes (internal communication address of the cluster).
+- --initial-cluster: indicates the initial cluster member list (format: node name=node peerURL).
+
+After the deployment is complete, run the `etcdctl` command to access the ETCD cluster.
+
+```bash
+etcdctl --endpoints "127.0.0.1:2379" put key "value"
+etcdctl --endpoints "127.0.0.1:2379" get key
+```
+
+If data can be written to or read from the command line, etcd is successfully deployed.
+
+##### 2. Use dscli to deploy the worker process on the node
+
+```bash
+dscli start -w --worker_address "127.0.0.1:31501" --etcd_address "127.0.0.1:2379"
+# [INFO] [  OK  ] Start worker service @ 127.0.0.1:31501 success, PID: 38100
+```
+
+If OK is displayed, the deployment is successful.
+
+##### 3. Quick verification
+
+Quick verification using Python scripts:
+
+```python
+from datasystem.ds_client import DsClient
+
+client = DsClient("127.0.0.1", 31501)
+client.init()
+```
+
+If no exception occurs during script execution, the chariot-ds client can connect to the worker process on the current node and the deployment is successful.
+
+If you need to deploy a cluster or deploy it through Kubernetes, see the document [Deploying chariot-ds](./docs/source_zh_cn/getting-started/deploy.md).
+
+## Development Guide
+
+For details about how to develop heterogeneous objects and KV interfaces, see the following documents:
+- [Heterogeneous Object Interface Development Guide](./docs/source_zh_cn/development-guide/hetero.md)
+- [KV Interface Development Guide](./docs/source_zh_cn/development-guide/kv.md)
+
+## Docs
+
+More details about installation guide, tutorials and APIs, please see the [User Documentation](docs).
+
+## License
+
+[Apache License 2.0](LICENSE)
