@@ -1,0 +1,96 @@
+[project]
+name = "linerate"
+description = "Library for computing line ampacity ratings for overhead lines"
+authors = [
+  {name="Statnett Datascience", email="Datascience.Drift@Statnett.no"},
+  {name="Yngve Mardal Moe", email="yngve.m.moe@gmail.com"},
+]
+readme = "README.md"
+requires-python = ">=3.9"
+dynamic = ["version"]
+
+dependencies = [
+  "numpy",
+  "scipy",
+  "numba>=0.56.4",
+  "pygeodesy",
+]
+
+[dependency-groups]
+dev = [
+  "coverage[toml]",
+  "hypothesis>=6.56.2",
+  "pre-commit",
+  "pytest==8.3.5",
+  "pytest-cov==6.1.1",
+  "pytest-randomly==3.16.0",
+]
+docs = [
+  "sphinx",
+  "sphinxcontrib-bibtex",
+  "sphinx-gallery",
+  "pydata-sphinx-theme",
+  "matplotlib",
+  "setuptools",
+]
+
+[tool.setuptools_scm]
+version_scheme="release-branch-semver"
+local_scheme = "no-local-version"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+# extend-select = ["ALL"]  # Un-comment to enable all rules
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".eggs",
+    ".git",
+    ".ruff_cache",
+    ".venv",
+    "__pypackages__",
+    "build",
+    "dist",
+    "venv",
+]
+
+[tool.coverage.report]
+# Regexes for lines to exclude from consideration
+exclude_lines = [
+              "pragma: no cover",
+              "raise AssertionError",
+              "raise NotImplementedError",
+              "if verbose:",
+              "if 0:",
+              "if False:",
+              ]
+skip_covered = true
+show_missing = true
+precision = 2
+
+[tool.coverage.run]
+branch = true
+source = ["linerate"]
+
+[tool.pytest.ini_options]
+log_file = "pytest.log"
+log_level = "DEBUG"
+log_file_format = "%(asctime)s - %(name)s - %(levelname)s: %(message)s"
+norecursedirs = "_build tmp*  __pycache__ src prof wheel_files"
+markers = [
+  "integration: Mark test as an integration test",
+]
+filterwarnings = [
+  "ignore:PyArray_GetNumericOps.*",
+  "ignore:PyArray_SetNumericOps.*",
+]
+
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
