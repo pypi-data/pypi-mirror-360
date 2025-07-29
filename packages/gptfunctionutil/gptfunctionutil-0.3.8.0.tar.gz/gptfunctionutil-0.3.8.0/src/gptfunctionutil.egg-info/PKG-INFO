@@ -1,0 +1,140 @@
+Metadata-Version: 2.4
+Name: gptfunctionutil
+Version: 0.3.8.0
+Summary: A simple package for the purpose of providing a set of utilities that make it easier to invoke python functions and coroutines using OpenAI's GPT models.
+Author-email: Crosswave Omega <xtream2pro@gmail.com>
+License: MIT License
+        
+        Copyright (c) 2023 CrosswaveOmega
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/CrosswaveOmega/GPT-Function-Calling-Utility
+Keywords: OpenAI,Function Calling API,GPT,asyncio
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: openai>=1.93.0
+Requires-Dist: ollama>=0.5.1
+Requires-Dist: sympy>=1.14.0
+Requires-Dist: pydantic>=2.0.0
+Provides-Extra: discord
+Requires-Dist: discord>=2.3.2; extra == "discord"
+Provides-Extra: spark
+Requires-Dist: pyspark>=4.0.0; extra == "spark"
+Provides-Extra: test
+Requires-Dist: bandit[toml]==1.8.5; extra == "test"
+Requires-Dist: black==25.1.0; extra == "test"
+Requires-Dist: check-manifest==0.50; extra == "test"
+Requires-Dist: flake8-bugbear==24.12.12; extra == "test"
+Requires-Dist: flake8-docstrings; extra == "test"
+Requires-Dist: flake8-formatter_junit_xml; extra == "test"
+Requires-Dist: flake8; extra == "test"
+Requires-Dist: flake8-pyproject; extra == "test"
+Requires-Dist: pre-commit==4.2.0; extra == "test"
+Requires-Dist: pylint==3.3.7; extra == "test"
+Requires-Dist: pylint_junit; extra == "test"
+Requires-Dist: pytest-cov==6.2.1; extra == "test"
+Requires-Dist: pytest-mock<3.10.1; extra == "test"
+Requires-Dist: pytest-runner; extra == "test"
+Requires-Dist: pytest==8.4.1; extra == "test"
+Requires-Dist: pytest-github-actions-annotate-failures; extra == "test"
+Requires-Dist: shellcheck-py==0.10.0.1; extra == "test"
+Dynamic: license-file
+
+# GPT Function Calling Utility
+
+The GPT Function Calling Utility is a Python package designed to streamline the process of calling Python methods using OpenAI's Function Calling API, without wrapping around the OpenAI library.
+
+Please note that GPT Function Calling Utility does not directly make calls to OpenAI's API, but rather helps with function modeling and invocation when given a function_call field.
+
+It also works with Ollama's Python Library.
+
+## Installation
+```
+python -m pip install -U gptfunctionutil
+
+```
+## Key Features
+
+- **Simplified Function Modeling Via Inheritance**: This package utilizes subclasses decended from the `GPTFunctionLibrary` class that allows you to define sets of callable methods to be sent to OpenAI's Chat Completion endpoint.  `GPTFunctionLibrary` contains methods to create a json schema describing your functions, and to invoke said functions using the Function Call field returned with a call to chat/completions.
+
+- **Decorate Invokable Functions, and Coroutines**: OpenAI's Function Calling Feature needs JSON schema to outline the name, description, and parameters of each invokable function.  This utility uses two decorators, (`@AILibFunction`) and (`@LibParam`), as well as type annotation to create this schema for functions you want to use with the API.
+  + set a display name and description with (`@AILibFunction`).  You can also specify required parameters with this decorator, but it's not required.
+  + apply small descriptions to arguments with (`@LibParam`), to inform the API on what it does.
+  + (`@LibParamSpec`) can apply additional keywords depending on the type. (see https://json-schema.org/understanding-json-schema/index.html for details.)
+  + You can decorate coroutines as well.
+
+
+- **Parameter Typing and Descriptions:** To ensure clarity and facilitate proper function formatting, GPT Function Calling Utility requires that all parameters intended to be passed into the AI have an applied type;  strings, integers, floats, and bools.  The library utilizes a collection of converter objects to generate schema for each parameter based on type annotations.
+
+- **Convert into complex types:** The utility is capable of converting some more complex data types into a json schema, such as datetimes and Literals.
+   + Define Custom Converters to automatically use response arguments to initalize objects.
+     +  (see examples/custom_converters.py for an example.)
+
+
+- **Schema Generation for API Calls**: Before making a call to the OpenAI chat/completion endpoint, the utility has a `get_schema()` method to extract the formatted functions as a list of dictionaries. This schema is then passed as the `functions` field in the ChatCompletion call. If the AI determines that it should invoke a function call, you can pass the returned `function_call` field into the `call_by_dict(function_call)`(or `call_by_dict_async` if you're trying to call a decorated coroutine) method to call the corresponding function with the provided arguments.
+   + The method also checks if there is a function by that name, falling back to a default response if something goes wrong.
+   + Schema can also validate and convert responses returned from the chat/completions endpoint.
+
+- **Integration with Discord.py**: This utility was intended to be used with life as a discord.py utility, and can be easily integrated with discord.py bots.
+   + Simply import `gptfunctionutil` into your Discord bot project, and decorate your commands with `@LibParam` and `@AILibFunction`.  After passing the Commands into a GPTFunctionLibrary subclass with  `add_in_commands(your_bot_object_here)`, your bot commands will become invokable in the same way as a decorated GPTFunctionLibrary coroutine, provided you use the `call_by_dict_ctx` method.
+     + (see examples/discord_bot.py for an example.)
+
+
+## Usage Example
+
+Using GPT Function Calling Utility with OpenAI to get the current time:
+
+```python
+
+from gptfunctionutil import GPTFunctionLibrary, AILibFunction, LibParam, LibParamSpec
+from datetime import datetime
+import openai
+class MyLib(GPTFunctionLibrary):
+    #Define methods here.
+    @AILibFunction(name='get_time', description='Get the current time and day in UTC.')
+    @LibParam(comment='An interesting, amusing remark.')
+    def get_time(self, comment: str):
+        # get the current time, with a small remark.
+        return f"{comment}\n{str(datetime.now())}"
+
+# Initialize the subclass somewhere in your code
+mylib = MyLib()
+client = openai.Client()
+
+completion = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        #This message will invoke get_time
+        {"role": "user", "content": "Hello, get me the current time in UTC."}
+    ],
+    "tools"=: mylib.get_tool_schema(),
+    "tool_choice"= 'auto',
+)
+message=completion.choices[0]['message']
+if message.tool_calls:
+    for tool in message.tool_calls:
+        output = mylib.call_by_tool(tool)
+        print(tool.name,output)
+else:
+    print(completion.choices[0].message.content)
+```
+
