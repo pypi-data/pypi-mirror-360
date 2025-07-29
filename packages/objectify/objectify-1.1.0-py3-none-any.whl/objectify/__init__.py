@@ -1,0 +1,1 @@
+from .converter import dict_to_object
