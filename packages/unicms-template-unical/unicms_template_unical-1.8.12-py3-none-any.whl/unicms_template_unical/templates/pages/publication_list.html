@@ -1,0 +1,334 @@
+{% extends this_string_will_be_replaced %}
+
+{% load i18n %}
+{% load static %}
+
+<!-- load custom template tags -->
+{% load unicms_carousels %}
+{% load unicms_contexts %}
+{% load unicms_menus %}
+{% load unicms_templates %}
+{% load unicms_pages %}
+{% load unicms_publications %}
+
+
+{% block container %}
+
+{% get_current_language as LANGUAGE_CODE %}
+{% settings_value "CMS_PUBLICATION_LIST_PREFIX_PATH" as publication_list_prefix %}
+{% settings_value "CMS_PUBLICATION_RSS_PREFIX_PATH" as publication_rss_prefix %}
+{% settings_value "FACEBOOK_ENDPOINT" as facebook_share %}
+{% settings_value "INSTAGRAM_ENDPOINT" as instagram_share %}
+{% settings_value "TWITTER_ENDPOINT" as twitter_share %}
+{% settings_value "WHATSAPP_ENDPOINT" as whatsapp_share %}
+{% settings_value "LINKEDIN_ENDPOINT" as linkedin_share %}
+{% settings_value "MAIL_ENDPOINT" as mail_share %}
+
+{% breadcrumbs webpath=webpath leaf=handler %}
+
+<div class="container py-5">
+    <!--
+        <br>
+        <div class="col-12 mb-4">
+            <div class="pt-2 pb-3 ps-3 background-yellow">
+                <h2 class="m-0 p-0">
+                    <span style="font-weight: 500">unical</span>
+                    <span class="super-bold">world</span>
+                </h2>
+            </div>
+        </div>
+    -->
+
+    <div class="row">
+        <div class="col">
+            <h1 class="mb-4 lighter">
+                {% if category_name %}{{ category_name }}{% else %}News{% endif %}
+                <a href="{{ webpath.get_full_path }}{{ publication_rss_prefix }}?{{ request.GET.urlencode }}" class="no-color">
+                    <svg class="icon me-3 icon-secondary icon" aria-labelledby="rss_svg">
+                        <title id="rss_svg">RSS Feed</title>
+                        <use xlink:href="{% static '/svg/sprites.svg' %}#it-rss-square"></use>
+                    </svg>
+                </a>
+            </h1>
+
+            {% if category_name %}
+            <div class="mb-4">
+                <a href="{{ webpath.get_full_path }}{{ publication_list_prefix }}" class="no-color">
+                    <span class="text-black fw-bold">
+                        <svg class="icon me-2">
+                            <use xlink:href="{% static '/svg/sprites.svg' %}#it-arrow-right-circle"></use>
+                        </svg>
+                        {% trans "Back to all news" %}
+                    </span>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row" id="news"></div>
+</div>
+<script>
+Vue.component('list-panel', {
+    props: {
+        data: Array,
+    },
+    template: `
+
+        <div class="card-wrapper card-space">
+            <div class="card card-bg no-after">
+              <div class="card-body py-1">
+
+                <div class="row">
+                    <div class="col w-50" v-if="data.total_pages > 1">
+                        <span style="color:#050b12;">
+                            <b>[[ data.count || 0]] {% trans "results" %}</b> in <b>[[ data.total_pages || 0 ]] {% trans "pages" %}</b>
+                        </span>
+                    </div>
+                    <div class="col w-50" v-else>
+                        <span style="color:#050b12;">
+                            <b>[[ data.count || 0]] {% trans "results" %}
+                        </span>
+                    </div>
+
+                    <div class="col w-50" v-if="data.total_pages > 1">
+                        <div class="float-end">
+                            <span>
+                                <a style="color:#050b12;" @click="news.callURL( [[ data.previous]] )" v-if="data.previous">
+                                    <span class="visually-hidden"> {% trans "Page" %} </span> &lt; {% trans "Previous" %}
+                                </a>
+                            </span>
+
+                            <span class="me-2 ms-2" >[[ data.page ]] / <b>[[ data.total_pages ]]</b></span>
+                            <a style="color:#050b12;" @click="news.callURL( [[ data.next ]] )"  v-if="data.next">
+                                <span class="visually-hidden">{% trans "Page" %} </span>{% trans "Next" %} &gt;
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+              </div>
+            </div>
+        </div>
+    `
+})
+
+
+var news = new Vue({
+  el: '#news',
+  template: `
+    <div v-if="!newsLoaded">
+        <div>
+            <div class="progress progress-indeterminate my-3">
+                <span class="visually-hidden">{% trans "Loading data" %}</span>
+                <div class="progress-bar" role="progressbar"></div>
+            </div>
+        </div>
+    </div>
+    <div v-else>
+
+        <div class="form-group">
+            <div class="input-group">
+                <label for="news_search"></label>
+                <input type="text"
+                       id="news_search"
+                       class="form-control"
+                       name="news_search"
+                       v-model="selected_search"
+                       v-on:keyup.enter="search()">
+                <div class="input-group-append">
+                    {% comment %}
+                    <div class="input-group-text">
+                        <svg class="icon icon-sm icon-muted">
+                            <use xlink:href="{% static 'svg/sprites.svg' %}#it-search"></use>
+                        </svg>
+                    </div>
+                    {% endcomment %}
+                    <button class="btn btn-primary"
+                            type="button"
+                            id="search-button"
+                            @click="search()">
+                        {% trans "Search" %}
+                    </button>
+
+
+                </div>
+            </div>
+        </div>
+
+        <list-panel v-bind:data="items"></list-panel>
+
+        <div v-if="items">
+            <div class="row">
+                <div class="col-12 col-lg-4 " v-for="item in items.results" :key="item.id">
+                    <!--start card-->
+                    <div class="card-wrapper card-space">
+                        <div class="card card-bg no-after">
+                            <div class="card-body">
+                                {% if not category_name %}
+                                <div class="etichetta">
+                                    <span v-for="(cat, index) in item.publication.category_data"
+                                        class="badge rounded-pill badge-grey-unical my-1 py-2 px-4 me-1">
+                                        <a class="no-color" :href="'?category_name=' + cat.name">
+                                            <b>[[ cat.name ]]</b>
+                                        </a>
+                                    </span>
+                                </div>
+                                {% endif %}
+                                <div class="img-responsive-wrapper mx-n4 mb-3 {% if category_name %}mt-n4{% endif %}" v-if="item.publication.image">
+                                    <div class="img-responsive img-responsive-panoramic">
+                                        <figure class="img-wrapper">
+                                          <a :href="item.path">
+                                            <img :src="item.publication.image"
+                                                 :title="item.publication.preview_image.title"
+                                                 :alt="item.publication.preview_image.description"
+                                                 v-if="item.publication.preview_image"/>
+                                            <img :src="item.publication.image"
+                                                 :title="item.publication.presentation_image.title"
+                                                 :alt="item.publication.presentation_image.description"
+                                                 v-else-if="item.publication.presentation_image"/>
+                                          </a>
+                                        </figure>
+                                    </div>
+                                </div>
+                                <div class="category-top">
+                                    <span>{% trans "Published" %}: [[ new Date(item.date_start).toLocaleString("{{ LANGUAGE_CODE }}",
+                                                                                                                {day: '2-digit',
+                                                                                                                 month: '2-digit',
+                                                                                                                 year: 'numeric',
+                                                                                                                 hour: '2-digit',
+                                                                                                                 minute:'2-digit'}) ]]</span>
+                                    {% if request.user.is_authenticated %}
+                                    {% settings_value "EDITORIAL_BOARD_NEWS_EDIT_URL_JS" as editorial_board_url %}
+                                    <span class="float-end">
+                                        <a :href="{{ editorial_board_url|safe }}" target="_blank" title="{% trans 'Edit' %}">
+                                            <svg class="icon icon-xs">
+                                                <use xlink:href="{% static '/svg/sprites.svg' %}#it-settings"></use>
+                                            </svg>
+                                        </a>
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <h4 class="card-title mt-3">
+                                    <a style="text-decoration: none; color: var(--dark_grey_unical);" v-bind:href="[[ item.path ]]">
+                                        [[ item.publication.title ]]
+                                    </a>
+                                </h4>
+                                <p v-if="item.publication.subheading">
+                                    [[ item.publication.subheading ]]
+                                </p>
+
+                                <div>
+                                    <!-- Facebook -->
+                                    <span
+                                        :onclick="'javascript:window.open(&quot;{{ facebook_share }}{{ request.get_host }}' + item.path +'&quot;, &quot;&quot;, &quot;menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=300,width=600&quot;);return false;'"
+                                        title="{% trans 'Share on' %} Facebook"
+                                        style="text-decoration: none; cursor: pointer">
+                                        <svg class="icon icon-sm icon-secondary align-top">
+                                            <use xlink:href="{% static 'svg/sprites.svg' %}#it-facebook-square"></use>
+                                        </svg>
+                                        <span class="visually-hidden">{% trans 'Share on' %} Facebook</span>
+                                    </span>
+
+                                    <!-- Instagram -->
+                                    <span
+                                        :onclick="'javascript:window.open(&quot;{{ instagram_share }}{{ request.get_host }}' + item.path +'&quot;, &quot;&quot;, &quot;menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=300,width=600&quot;);return false;'"
+                                        title="{% trans 'Share on' %} Instagram"
+                                        style="text-decoration: none; cursor: pointer">
+                                        <svg class="icon icon-sm icon-secondary align-top">
+                                            <use xlink:href="{% static 'svg/sprites.svg' %}#it-instagram"></use>
+                                        </svg>
+                                        <span class="visually-hidden">{% trans 'Share on' %} Instagram</span>
+                                    </span>
+
+                                    <!-- X -->
+                                    <span
+                                        :onclick="'javascript:window.open(&quot;{{ twitter_share }}{{ request.get_host }}' + item.path +'&quot;, &quot;&quot;, &quot;menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=300,width=600&quot;);return false;'"
+                                        title="{% trans 'Share on' %} X"
+                                        style="text-decoration: none; cursor: pointer">
+                                        <svg class="icon icon-sm icon-secondary align-top">
+                                            <use xlink:href="{% static 'svg/sprites.svg' %}#it-twitter"></use>
+                                        </svg>
+                                        <span class="visually-hidden">{% trans 'Share on' %} X</span>
+                                    </span>
+
+                                    <!-- Whatsapp -->
+                                    <span
+                                        :onclick="'javascript:window.open(&quot;{{ whatsapp_share }}{{ request.get_host }}' + item.path +'&quot;, &quot;&quot;, &quot;menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=300,width=600&quot;);return false;'"
+                                        title="{% trans 'Share on' %} Whatsapp"
+                                        style="cursor: pointer">
+                                        <svg class="icon icon-sm icon-secondary align-top">
+                                            <use xlink:href="{% static 'svg/sprites.svg' %}#it-whatsapp"></use>
+                                        </svg>
+                                        <span class="visually-hidden">{% trans 'Share on' %} Whatsapp</span>
+                                    </span>
+
+                                    <!-- Linkedin -->
+                                    <span
+                                        :onclick="'javascript:window.open(&quot;{{ linkedin_share }}{{ request.get_host }}' + item.path +'&quot;, &quot;&quot;, &quot;menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=300,width=600&quot;);return false;'"
+                                        title="{% trans 'Share on' %} Linkedin"
+                                        style="cursor: pointer">
+                                        <svg class="icon icon-sm icon-secondary align-top">
+                                            <use xlink:href="{% static 'svg/sprites.svg' %}#it-linkedin-square"></use>
+                                        </svg>
+                                        <span class="visually-hidden">{% trans 'Share on' %} Linkedin</span>
+                                    </span>
+
+                                    <!-- Email -->
+                                    <span
+                                        :onclick="'javascript:window.open(&quot;{{ mail_share }}{{ request.get_host }}' + item.path +'&quot;, &quot;&quot;, &quot;menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=300,width=600&quot;);return false;'"
+                                        title="{% trans 'Share on' %} Email"
+                                        style="cursor: pointer">
+                                        <svg class="icon icon-sm icon-secondary align-top">
+                                            <use xlink:href="{% static 'svg/sprites.svg' %}#it-mail"></use>
+                                        </svg>
+                                        <span class="visually-hidden">{% trans 'Share on' %} Email</span>
+                                    </span>
+
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <!--end card-->
+                </div>
+            </div>
+        </div>
+
+        <list-panel v-bind:data="items"></list-panel>
+    </div>
+    `,
+    data () {
+        return {
+            items: [],
+            newsLoaded: false,
+            selected_search: '',
+            url: '{{ url|safe }}&lang={{ LANGUAGE_CODE }}'
+        }
+    },
+    mounted(){
+        this.callURL(this.url)
+    },
+    methods: {
+        callURL (url) {
+            axios
+                .get( url )
+                .then(response => {
+                    this.items = response.data
+                    this.newsLoaded = true
+                    this.scrollToTop()
+                })
+        },
+        search() {
+            this.parameters = '&search=' + this.selected_search
+            this.newsLoaded = false
+            this.callURL(this.url + this.parameters);
+        },
+        scrollToTop () {
+            // faulty on mobile ...
+            window.scrollTo({top:100, left:0, behavior: 'smooth'});
+        }
+    }
+})
+</script>
+{% endblock container %}

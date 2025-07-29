@@ -1,0 +1,53 @@
+{% extends "blocks/unical_publications_cards_carousel.html" %}
+
+{% load i18n %}
+{% load static %}
+
+{% load unicms_templates %}
+
+{% settings_value "CMS_PUBLICATION_LIST_PREFIX_PATH" as page_news_suffix %}
+
+
+{% block desktop_item_body %}
+<div class="category-top">
+    <span>{% trans "Published" %}: {{ pub.date_start|date:"d/m/Y, H:i" }}</span>
+</div>
+<h5 class="card-title">
+    <a href="{{ pub.url }}" class="no-color" title="{{ pub.publication.title }}">
+        {{ pub.publication.title|truncatechars:120 }}
+    </a>
+</h5>
+<p class="card-text">
+    {{ pub.publication.subheading|truncatechars:135 }}
+</p>
+{% include "includes/social_share.html" with share_title=item.publication.title share_url=request.get_host|add:pub.url %}
+{% endblock desktop_item_body %}
+
+{% block mobile_item_body %}
+<div class="category-top">
+    <span>{% trans "Published" %}: {{ pub.date_start|date:"d/m/Y, H:i" }}</span>
+    {% include "includes/edit_news.html" with item=pub %}
+</div>
+<h5 class="card-title">
+    <a href="{{ pub.url }}" class="no-color" title="{{ pub.publication.title }}">
+        {{ pub.publication.title|truncatechars:120 }}
+    </a>
+</h5>
+<p class="card-text">
+    {{ pub.publication.subheading|truncatechars:135 }}
+</p>
+{% include "includes/social_share.html" with share_title=item.publication.title share_url=request.get_host|add:pub.url %}
+{% endblock mobile_item_body %}
+
+{% block all_items_link %}
+<p class="mt-3 ms-2">
+    <a href="{{ page_news_suffix }}?category_name=avvisi" class="no-color">
+        <span class="text-black fw-bold">
+            <svg class="icon me-2">
+                <use xlink:href="{% static '/svg/sprites.svg' %}#it-arrow-right-circle"></use>
+            </svg>
+            {% trans "Go to all notices" %}
+        </span>
+    </a>
+</p>
+{% endblock all_items_link %}

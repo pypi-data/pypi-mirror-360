@@ -1,0 +1,61 @@
+{% load i18n %}
+{% load static %}
+
+<div class="mb-3">
+    <div class="row">
+        {% if contact.image %}
+        <div class="col-2">
+            <img src="{{ contact.image.get_media_path }}"
+                 alt="{{ contact.image.description }}"
+                 title="{{ contact.image.description }}"
+                 class="w-100"
+                 loading="lazy">
+
+        </div>
+        {% endif %}
+        <div class="col-10">
+            <b>{{ contact.name }}</b>
+            {% if contact_infos %}
+            <div class="mt-2">
+                {% for info in contact_infos %}
+                <div class="row">
+                    <div class="col-2">
+                        <span>
+                            <svg class="icon icon-sm icon-muted">
+                                {% if info.info_type == 'email' %}
+                                <use xlink:href="{% static 'svg/sprites.svg' %}#it-mail"></use>
+                                {% elif info.info_type == 'hours' %}
+                                <use xlink:href="{% static 'svg/sprites.svg' %}#it-clock"></use>
+                                {% elif info.info_type == 'location' %}
+                                <use xlink:href="{% static 'svg/sprites.svg' %}#it-map-marker"></use>
+                                {% elif info.info_type == 'website' %}
+                                <use xlink:href="{% static 'svg/sprites.svg' %}#it-link"></use>
+                                {% elif info.info_type == 'phone' %}
+                                <use xlink:href="{% static 'svg/sprites.svg' %}#it-telephone"></use>
+                                {% elif info.info_type == 'other' %}
+                                <use xlink:href="{% static 'svg/sprites.svg' %}#it-chevron-right"></use>
+                                {% endif %}
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="col-10">
+                        {% if info.info_type == 'website' %}
+                            {% if info.label %}
+                                <a href="{{ info.value }}">{{ info.label }}</a>
+                            {% else %}
+                                <a href="{{ info.value }}">{{ info.value }}</a>
+                            {% endif %}
+                        {% else %}
+                            {% if info.label %}
+                                {{ info.label }}:
+                            {% endif %}
+                            {{ info.value }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>

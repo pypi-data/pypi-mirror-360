@@ -1,0 +1,86 @@
+{% extends "bases/unicms_unical.html" %}
+
+{% load i18n %}
+{% load static %}
+
+<!-- load custom template tags -->
+{% load unicms_carousels %}
+{% load unicms_contexts %}
+{% load unicms_menus %}
+{% load unicms_templates %}
+{% load unicms_pages %}
+{% load unicms_publications %}
+
+
+{% block header_slim_wrapper %}
+{% settings_value "MAIN_DOMAIN" as cms_main_domain %}
+<div class="it-header-slim-wrapper">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="it-header-slim-wrapper-content">
+                    <a target="_blank" href="//{{ cms_main_domain }}" title="UniCal.it" alt="UniCal.it">
+                        <b>UniCal.it</b>
+                    </a>
+                    {% if request.user.is_authenticated %}
+                    {% include "components/italia_editorialboard_frontend_menu.html" %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<a href="/" aria-label="{% trans 'University of Calabria' %}">
+    <div class="it-header-center-wrapper d-lg-none h-auto pt-4">
+        {% block unical_mobile_logo %}
+            {{ block.super }}
+        {% endblock unical_mobile_logo %}
+    </div>
+</a>
+{% endblock header_slim_wrapper %}
+
+
+{% block main_menu %}
+<div style="background: #c2dfee">
+    <div class="container py-3">
+        <h4 class="ps-1 text-center text-lg-start" style="color: #383838">
+            OpenData
+        </h4>
+    </div>
+</div>
+{% endblock main_menu %}
+
+{% block header_center_wrapper_columns %}
+col-auto m-auto col-lg-12
+{% endblock header_center_wrapper_columns %}
+
+{% block header_center_right_zone %}
+<div class="it-right-zone col-12 col-lg-auto">
+    <div class="row w-100">
+        <div class="col-2 col-md-2 text-center">
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle p-0 text-center"
+                   href="#"
+                   data-bs-toggle="dropdown"
+                   aria-expanded="false">
+                    <span>{{ request.LANGUAGE_CODE }}</span>
+                </a>
+                <div class="dropdown-menu">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="link-list-wrapper">
+                                <ul class="link-list">
+                                    {% language_menu as language_urls %}
+                                    {% for lang,url in language_urls.items %}
+                                    <li><a class="list-item" href="{{ url }}"><span>{{ lang }}</span></a></li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock header_center_right_zone %}
