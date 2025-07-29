@@ -1,0 +1,280 @@
+# MCP Server Development Rules for Cursor
+
+This file provides Cursor IDE with essential context for developing the MCP Server repository.
+
+## Project Context
+
+This is a **Model Context Protocol (MCP) WebSocket Server** that enables multi-user access to Tallyfy workflow automation. The repository solves MCP's fundamental limitation of not supporting multi-user scenarios by implementing a session-based proxy layer.
+
+### Core Architecture
+- **MCP Server** (`/server`): FastMCP 2.9.0-based server with 40+ tools
+- **WebSocket Host** (`/host`): Multi-user session management
+- **Tallyfy SDK** (`/tallyfy`): Workflow automation integration
+
+## Coding Standards
+
+### Python Style Guide
+- **Formatting**: Use Black with 88-character line length
+- **Type Hints**: Required for all functions (Python 3.7+ compatibility)
+- **Docstrings**: NumPy style for all public functions
+- **Imports**: Group by standard library, third-party, local imports
+
+### Tool Development Pattern
+```python
+@mcp.tool()
+async def tool_name(api_key: str, org_id: str, other_params...):
+    """
+    Tool description following NumPy convention.
+    
+    Parameters
+    ----------
+    api_key : str
+        Tallyfy API key for authentication
+    org_id : str
+        Organization identifier
+        
+    Returns
+    -------
+    dict
+        Tool operation result
+        
+    Raises
+    ------
+    TallyfyError
+        When API operation fails
+    """
+    try:
+        with TallyfySDK(api_key=api_key) as sdk:
+            result = sdk.method(org_id, other_params)
+            return result
+    except TallyfyError as e:
+        logger.error(f"Tallyfy API error: {e}")
+        raise
+```
+
+### Session Management Patterns
+```python
+# Always validate credentials before storing
+def set_credentials(self, session_id: str, api_key: str, org_id: str) -> bool:
+    try:
+        sdk = TallyfySDK(api_key)
+        user_info = sdk.users.get_current_user_info(org_id)
+        if user_info:
+            # Store credentials only after verification
+            session.api_key = api_key
+            session.org_id = org_id
+            return True
+    except TallyfyError:
+        return False
+    finally:
+        if sdk:
+            sdk.close()
+```
+
+## Dependencies & Imports
+
+### Required Headers for Tallyfy API
+```python
+headers = {
+    "Authorization": f"Bearer {api_key}",
+    "X-Tallyfy-Client": "APIClient",  # MANDATORY
+    "Content-Type": "application/json"
+}
+```
+
+### Core Dependencies
+- `fastmcp==2.9.0`: MCP server framework
+- `anthropic==0.52.2`: Claude API integration  
+- `websockets==11.0.3`: Real-time communication
+- `tallyfy==1.0.3`: Workflow automation SDK
+- `PyJWT>=2.8.0`: JWT token handling
+
+## Error Handling Requirements
+
+### Tallyfy API Errors
+```python
+try:
+    # API operation
+    pass
+except TallyfyError as e:
+    logger.error(f"Tallyfy API error: {e}")
+    raise TallyfyError(f"Operation failed: {e}")
+except Exception as e:
+    logger.error(f"Unexpected error: {e}")
+    raise Exception(f"Unexpected error: {e}")
+```
+
+### WebSocket Error Handling
+- Always gracefully handle connection cleanup
+- Preserve session state on temporary disconnections
+- Log errors with appropriate context
+- Use structured error responses
+
+## Security Requirements
+
+### Critical Security Patterns
+1. **Credential Isolation**: Never share credentials between sessions
+2. **Input Validation**: Sanitize all user inputs before processing
+3. **Session Security**: Use UUID-based session IDs (not in URLs)
+4. **Memory-Only Storage**: No persistent credential storage
+
+### MCP Security Vulnerabilities to Avoid
+- **Prompt Injection**: Validate all tool invocations with user approval
+- **Tool Poisoning**: Monitor for changes in tool definitions
+- **Command Injection**: Sanitize all inputs passed to system commands
+- **Cross-Session Leakage**: Ensure session isolation
+
+## File Structure & Organization
+
+### Tool Categories
+- `user_management.py`: Organization members, invitations, permissions
+- `task_management.py`: Task operations, NLP date extraction
+- `process_management.py`: Workflow instance management
+- `template_management.py`: Blueprint operations, health analysis
+- `form_fields.py`: Dynamic field creation and validation
+- `search.py`: Universal search with filtering
+- `automation.py`: Conditional rules and optimization
+
+### Key Configuration Files
+- `server/requirements.txt`: MCP server dependencies
+- `host/requirements.txt`: WebSocket server dependencies
+- `pyproject.toml`: Package configuration and metadata
+- `.github/workflows/`: Deployment automation
+
+## Development Workflow
+
+### Running the System
+```bash
+# Start MCP server (port 9000)
+python -m server.server
+
+# Start WebSocket server (port 8765) 
+python run_websocket_server.py --debug
+```
+
+### Code Quality Checks
+```bash
+# Format code
+black . --line-length 88
+
+# Type checking
+mypy . --python-version 3.7
+
+# Linting
+flake8 .
+```
+
+### Environment Setup
+```bash
+# Required environment variables
+export ANTHROPIC_API_KEY="sk-ant-api03-..."
+export TALLYFY_API_KEY="fallback-key"
+export TALLYFY_ORG_ID="fallback-org"
+```
+
+## Common Patterns
+
+### Date Extraction
+```python
+from tools.date_utils import DateExtractor
+
+date_extractor = DateExtractor()
+extracted_info = date_extractor.extract_task_info(user_text)
+```
+
+### User Resolution
+```python
+def resolve_user_ids(org_id: str, api_key: str, user_names: List[str]) -> List[int]:
+    with TallyfySDK(api_key=api_key) as sdk:
+        users = sdk.get_organization_users_list(org_id)
+        # Resolution logic
+        return resolved_ids
+```
+
+### WebSocket Message Handling
+```python
+async def handle_message(self, websocket: WebSocketServerProtocol, message: str):
+    try:
+        data = json.loads(message)
+        message_type = data.get("type", "query")
+        
+        if message_type == "auth":
+            await self.handle_auth_message(websocket, session_id, data)
+        elif message_type == "query":
+            await self.handle_query_message(websocket, session_id, data.get("content"))
+    except Exception as e:
+        await self.send_error_response(websocket, str(e))
+```
+
+## Performance Considerations
+
+### Connection Management
+- Implement heartbeat with 30s ping interval, 10s timeout
+- Clean up inactive sessions every 5 minutes
+- Use connection pooling for Tallyfy SDK instances
+
+### Memory Management
+- Scope conversation history to sessions
+- Implement periodic cleanup of abandoned sessions
+- Use efficient JSON parsing and response caching
+
+## Testing Guidelines
+
+### Integration Testing
+- Test WebSocket connection lifecycle
+- Validate session management and isolation
+- Verify Tallyfy API integration
+- Test error handling scenarios
+
+### Manual Testing
+```bash
+# Test WebSocket connection
+# Open ui/index.html in browser
+# Connect to ws://localhost:8765
+# Authenticate with valid Tallyfy credentials
+```
+
+## Deployment Context
+
+### Production Environment
+- **Target**: DigitalOcean droplet (143.198.69.152)
+- **Ports**: 9000 (MCP), 8765 (WebSocket)
+- **Transport**: HTTP-SSE and stdio support
+- **Deployment**: GitHub Actions automated pipeline
+
+### Repository Relationships
+This repository is part of Tallyfy's ecosystem:
+- `api-v2/`: Laravel-based main API
+- `client/`: Angular frontend application
+- `documentation/`: User documentation
+- `cloudflare-workers/`: Edge computing services
+
+## Common Issues & Solutions
+
+### Multi-User MCP Challenge
+Problem: MCP doesn't support multi-user by default
+Solution: Session-based proxy layer with credential isolation
+
+### Authentication Failures
+- Verify `X-Tallyfy-Client` header is included
+- Check API key validity with Tallyfy API
+- Ensure org_id is accessible to the user
+
+### Session Management Issues
+- Monitor session timeout (60 minutes)
+- Check for proper credential cleanup
+- Verify session ID uniqueness
+
+### WebSocket Connection Problems
+- Check port availability (8765)
+- Verify MCP server is running (port 9000)
+- Monitor connection health with ping/pong
+
+## Documentation References
+
+- FastMCP: https://gofastmcp.com/
+- MCP Specification: https://modelcontextprotocol.io/
+- Tallyfy API: https://go.tallyfy.com/api
+- Repository Issues: 3 tracked issues in GitHub
+
+Remember: This codebase implements a critical solution to MCP's multi-user limitation through sophisticated session management and security isolation.

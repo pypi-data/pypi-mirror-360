@@ -1,0 +1,678 @@
+Metadata-Version: 2.4
+Name: tallyfy
+Version: 1.0.3
+Summary: A comprehensive Python SDK for interacting with the Tallyfy API
+Home-page: https://github.com/tallyfy/tallyfy-sdk
+Author: Tallyfy
+Author-email: Tallyfy <support@tallyfy.com>
+Maintainer-email: Tallyfy <support@tallyfy.com>
+License: MIT
+Project-URL: Documentation, https://tallyfy.com/products/
+Project-URL: Repository, https://github.com/tallyfy/tallyfy-sdk
+Project-URL: Bug Tracker, https://github.com/tallyfy/tallyfy-sdk/issues
+Project-URL: Changelog, https://github.com/tallyfy/tallyfy-sdk/blob/main/CHANGELOG.md
+Keywords: tallyfy,api,sdk,workflow,automation,task,management
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Office/Business :: Scheduling
+Classifier: Topic :: Internet :: WWW/HTTP :: Dynamic Content
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: requests>=2.25.0
+Requires-Dist: typing-extensions>=4.0.0; python_version < "3.8"
+Provides-Extra: dev
+Requires-Dist: pytest>=6.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=2.10.0; extra == "dev"
+Requires-Dist: black>=21.0.1; extra == "dev"
+Requires-Dist: flake8>=3.8.0; extra == "dev"
+Requires-Dist: mypy>=0.800; extra == "dev"
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# Tallyfy SDK
+
+A comprehensive Python SDK for interacting with the Tallyfy API. This SDK provides a clean, modular interface for managing users, tasks, templates, and form fields in your Tallyfy organization.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Architecture](#architecture)
+- [Core Features](#core-features)
+- [API Reference](#api-reference)
+- [Data Models](#data-models)
+- [Error Handling](#error-handling)
+- [Examples](#examples)
+- [Advanced Usage](#advanced-usage)
+- [Contributing](#contributing)
+
+## Installation
+
+```bash
+pip install -r requirements.txt
+```
+
+**Dependencies:**
+- `requests` - HTTP client library
+- `typing` - Type hints support (Python 3.5+)
+
+## Quick Start
+
+```python
+from tallyfy import TallyfySDK
+
+# Initialize the SDK
+sdk = TallyfySDK(
+    api_key="your_api_key_here"
+)
+
+# Get organization users
+users = sdk.users.get_organization_users(org_id="your_org_id")
+
+# Get current user's tasks
+my_tasks = sdk.tasks.get_my_tasks(org_id="your_org_id")
+
+# Search for templates
+templates = sdk.search(org_id="your_org_id", search_query="onboarding", search_type="blueprint")
+
+# Get a specific template
+template = sdk.templates.get_template(org_id="your_org_id", template_name="Employee Onboarding")
+```
+
+## Architecture
+
+The Tallyfy SDK follows a modular architecture with specialized management classes and comprehensive data models:
+
+### Core Components
+
+- **`TallyfySDK`** - Main SDK class that orchestrates all operations with backward compatibility methods
+- **`BaseSDK`** - Base class with HTTP request handling, retry logic, and connection pooling
+- **Management Modules:**
+  - `UserManagement` - User and guest operations with full profile support
+  - `TaskManagement` - Task and process operations with natural language processing
+  - `TemplateManagement` - Template/checklist operations with automation analysis
+  - `FormFieldManagement` - Form field operations with AI-powered suggestions
+- **Utility Modules:**
+  - `DateExtractor` - Natural language date parsing and task extraction
+  - `TallyfyError` - Custom exception handling with status codes and response data
+
+### File Structure
+
+```
+tallyfy/
+├── __init__.py                        # SDK exports and version
+├── core.py                            # BaseSDK and TallyfySDK classes
+├── models.py                          # Data models and types
+├── user_management.py                 # User and guest management
+├── task_management.py                 # Task and process management
+├── template_management.py             # Template management
+├── form_fields_management.py          # Form field management
+└── README.md                          # This documentation
+```
+
+## Core Features
+
+### 🔐 Authentication & Security
+- Bearer token authentication with session management
+- Configurable request timeouts and connection pooling
+- Automatic retry logic for transient failures (5xx errors)
+- No retry for client errors (4xx) to prevent API abuse
+- Comprehensive error handling with detailed error information
+
+### 👥 User Management
+- Get organization members with full profile data (country, timezone, job details)
+- Get minimal user lists for performance-critical operations
+- Manage guests and external users with guest-specific features
+- Invite new users to organization with role assignment
+- Support for user groups and permissions
+
+### ✅ Task Management  
+- Get tasks for specific users or processes with filtering
+- Create standalone tasks with rich assignment options
+- **Natural language task creation** with automatic date/time extraction
+- Search processes by name with fuzzy matching
+- Advanced filtering for organization runs (status, owners, tags, etc.)
+- Universal search across processes, templates, and tasks
+
+### 📋 Template Management
+- Get templates with full metadata and step details
+- Search templates by name with exact and fuzzy matching
+- Update template properties and metadata
+- Duplicate templates with permission copying options
+- **Automation management** - Create, update, and analyze conditional rules
+- **Step dependency analysis** - Understand step visibility conditions
+- **AI-powered deadline suggestions** for individual steps
+- **Template health assessment** - Comprehensive analysis of template quality
+- **Automation consolidation** - Optimize and merge redundant rules
+- Add assignees and edit step descriptions
+- Kickoff field management for template launch forms
+
+### 📝 Form Field Management
+- Add form fields to template steps with comprehensive validation
+- Support for text, dropdown, date, file upload, WYSIWYG editor fields
+- Update field properties, validation rules, and positioning
+- Move fields between steps with automatic reordering
+- **AI-powered field suggestions** based on step analysis
+- Manage dropdown options with bulk updates
+- **Smart field recommendations** with confidence scoring
+- Field dependency management and conditional logic
+
+### 🔍 Search & Discovery
+- Universal search across processes, templates, and tasks
+- Exact and fuzzy matching with relevance scoring
+- Pagination support with configurable page sizes
+- Rich search results with metadata and context
+- **Natural language date extraction** from search queries
+- Process and template name-based search with suggestions
+
+### 🤖 Natural Language Processing
+- **Task creation from natural language** with automatic parsing
+- **Date extraction** supporting various formats ("next Monday at 12PM", "tomorrow morning")
+- **User/guest resolution** from names and emails
+- **Smart task parsing** extracting titles, descriptions, and deadlines
+- **Fuzzy matching** for user names and process titles
+
+## API Reference
+
+### SDK Initialization
+
+```python
+TallyfySDK(
+    api_key: str,
+    timeout: int = 30,
+    max_retries: int = 3,
+    retry_delay: float = 1.0
+)
+```
+
+### User Management
+
+```python
+# Get all organization users
+users = sdk.users.get_organization_users(org_id, with_groups=False)
+
+# Get minimal user list
+users_list = sdk.users.get_organization_users_list(org_id)
+
+# Get organization guests  
+guests = sdk.users.get_organization_guests(org_id, with_stats=False)
+
+# Invite user to organization
+user = sdk.users.invite_user_to_organization(
+    org_id, email, first_name, last_name, 
+    role="light", message=None
+)
+```
+
+### Task Management
+
+```python
+# Get current user's tasks
+my_tasks = sdk.tasks.get_my_tasks(org_id)
+
+# Get specific user's tasks
+user_tasks = sdk.tasks.get_user_tasks(org_id, user_id)
+
+# Get tasks for a process
+process_tasks = sdk.tasks.get_tasks_for_process(org_id, process_id=None, process_name="My Process")
+
+# Get organization processes with filtering
+runs = sdk.tasks.get_organization_runs(
+    org_id, 
+    status="active",
+    owners="123,456", 
+    checklist_id="template_id"
+)
+
+# Create standalone task
+task = sdk.tasks.create_task(
+    org_id, title="Review Document", 
+    deadline="2024-12-31T23:59:59Z",
+    description="Please review the attached document"
+)
+
+# Create task from natural language (via MCP Server)
+task_result = create_task_from_text(
+    org_id,
+    "Create a task called Review Document with description Review the quarterly report the deadline is next Monday at 12PM",
+    user_emails=["john@company.com"],
+    max_assignable=2
+)
+
+# Search processes, templates, or tasks
+results = sdk.tasks.search(org_id, "onboarding", search_type="process")
+
+# Search for specific entity types
+templates = sdk.tasks.search(org_id, "employee onboarding", search_type="blueprint")
+tasks = sdk.tasks.search(org_id, "review", search_type="task")
+```
+
+### Template Management
+
+```python
+# Get template by ID or name
+template = sdk.templates.get_template(org_id, template_id=None, template_name="Onboarding")
+
+# Get template with full step details
+template_data = sdk.templates.get_template_with_steps(org_id, template_id)
+
+# Update template metadata
+updated = sdk.templates.update_template_metadata(
+    org_id, template_id,
+    title="New Title",
+    summary="Updated summary",
+    guidance="New guidance text"
+)
+
+# Get template steps
+steps = sdk.templates.get_template_steps(org_id, template_id)
+
+# Analyze step dependencies  
+dependencies = sdk.templates.get_step_dependencies(org_id, template_id, step_id)
+
+# Get deadline suggestions
+deadline_suggestion = sdk.templates.suggest_step_deadline(org_id, template_id, step_id)
+
+# Advanced template operations
+duplicated = sdk.templates.duplicate_template(org_id, template_id, "New Template Name", copy_permissions=True)
+
+# Automation management
+automation_data = {
+    "automated_alias": "Auto-assign reviewer",
+    "conditions": [{"field_id": "department", "operator": "equals", "value": "Engineering"}],
+    "actions": [{"type": "assign_step", "step_id": "review_step", "assignee_type": "user", "assignee_id": "123"}]
+}
+automation = sdk.templates.create_automation_rule(org_id, template_id, automation_data)
+
+# Analyze automation conflicts and redundancies
+analysis = sdk.templates.analyze_template_automations(org_id, template_id)
+
+# Get consolidation suggestions
+suggestions = sdk.templates.suggest_automation_consolidation(org_id, template_id)
+
+# Assess overall template health
+health_report = sdk.templates.assess_template_health(org_id, template_id)
+
+# Add kickoff fields
+kickoff_data = {
+    "field_type": "text",
+    "label": "Project Name",
+    "required": True,
+    "validation_rules": {"min_length": 3}
+}
+kickoff_field = sdk.templates.add_kickoff_field(org_id, template_id, kickoff_data)
+
+# Add assignees to step
+assignees = {"users": [123, 456], "groups": ["managers"], "guests": ["contractor@company.com"]}
+sdk.templates.add_assignees_to_step(org_id, template_id, step_id, assignees)
+
+# Edit step description
+sdk.templates.edit_description_on_step(org_id, template_id, step_id, "Updated step description with detailed instructions")
+
+# Add new step to template
+step_data = {
+    "title": "Quality Review",
+    "description": "Perform final quality check",
+    "position": 5,
+    "assignees": {"users": [789]}
+}
+new_step = sdk.templates.add_step_to_template(org_id, template_id, step_data)
+```
+
+### Form Field Management
+
+```python
+# Add form field to step
+field_data = {
+    "field_type": "text",
+    "label": "Customer Name", 
+    "required": True,
+    "position": 1
+}
+field = sdk.form_fields.add_form_field_to_step(org_id, template_id, step_id, field_data)
+
+# Update form field
+updated_field = sdk.form_fields.update_form_field(
+    org_id, template_id, step_id, field_id,
+    label="Updated Label",
+    required=False
+)
+
+# Move field between steps
+success = sdk.form_fields.move_form_field(
+    org_id, template_id, from_step, field_id, to_step, position=2
+)
+
+# Delete form field
+success = sdk.form_fields.delete_form_field(org_id, template_id, step_id, field_id)
+
+# Get dropdown options
+options = sdk.form_fields.get_dropdown_options(org_id, template_id, step_id, field_id)
+
+# Update dropdown options
+success = sdk.form_fields.update_dropdown_options(
+    org_id, template_id, step_id, field_id, 
+    ["Option 1", "Option 2", "Option 3"]
+)
+
+# Get AI-powered field suggestions
+suggestions = sdk.form_fields.suggest_form_fields_for_step(org_id, template_id, step_id)
+```
+
+## Data Models
+
+The SDK provides comprehensive dataclasses for type safety and easy data access:
+
+### Core Models
+
+- **`User`** - Organization member with full profile data (country, timezone, job details)
+- **`Guest`** - External user with limited access and guest-specific details
+- **`GuestDetails`** - Extended guest information and statistics
+- **`Task`** - Individual work item with owners, deadlines, and process linkage
+- **`Run`** - Process instance (workflow execution) with progress tracking
+- **`Template`** - Complete template/checklist definition with automation rules
+- **`Step`** - Individual step within a template with conditions and assignments
+
+### Assignment and Ownership Models
+
+- **`TaskOwners`** - Task assignment information supporting users, guests, and groups
+- **`RunProgress`** - Process completion tracking with step-level progress
+- **`Country`** - Geographic data for user profiles
+- **`Folder`** - Organizational folder structure for templates and processes
+
+### Template and Automation Models
+
+- **`Tag`** - Industry and topic classification tags
+- **`PrerunField`** - Form fields for template kickoff with validation rules
+- **`AutomationCondition`** - Conditional logic for workflow automation
+- **`AutomationAction`** - Actions triggered by automation rules
+- **`AutomatedAction`** - Complete automation rule with conditions and actions
+- **`AutomationDeadline`** - Deadline configuration for automated actions
+- **`AutomationAssignees`** - Assignee configuration for automated actions
+
+### Step and Form Models
+
+- **`Capture`** - Form fields within steps with validation and positioning
+- **`StepStartDate`** - Start date configuration for steps
+- **`StepDeadline`** - Deadline configuration for individual steps
+- **`StepBpToLaunch`** - Sub-process launch configuration
+
+### Search and Utility Models
+
+- **`SearchResult`** - Unified search results for templates, processes, and tasks
+- **`TallyfyError`** - Custom exception with status codes and response data
+
+### Model Features
+
+- **Automatic parsing** from API responses via `from_dict()` class methods
+- **Type safety** with comprehensive type hints
+- **Nested object support** for complex data structures
+- **Default value handling** for optional fields
+
+Example model usage:
+
+```python
+# Models automatically parse API responses
+users = sdk.users.get_organization_users(org_id)
+for user in users:
+    print(f"{user.full_name} ({user.email})")
+    if user.country:
+        print(f"Country: {user.country.name}")
+
+# Access nested data safely
+template = sdk.templates.get_template(org_id, template_name="Onboarding")
+if template.automated_actions:
+    for automation in template.automated_actions:
+        print(f"Automation: {automation.automated_alias}")
+        for condition in automation.conditions:
+            print(f"  Condition: {condition.statement}")
+```
+
+## Error Handling
+
+The SDK provides comprehensive error handling through the `TallyfyError` class:
+
+```python
+from tallyfy import TallyfyError
+
+try:
+    users = sdk.users.get_organization_users("invalid_org_id")
+except TallyfyError as e:
+    print(f"API Error: {e}")
+    print(f"Status Code: {e.status_code}")
+    print(f"Response Data: {e.response_data}")
+except ValueError as e:
+    print(f"Validation Error: {e}")
+```
+
+### Error Types
+
+- **`TallyfyError`** - API-specific errors with status codes and response data
+- **`ValueError`** - Input validation errors for required parameters
+- **`RequestException`** - Network and connection errors (automatically retried)
+
+### Retry Logic
+
+The SDK automatically retries failed requests with configurable settings:
+
+- **Server errors (5xx)** - Automatically retried up to `max_retries` times
+- **Client errors (4xx)** - Not retried (indicates user/input error)
+- **Network errors** - Retried with exponential backoff
+- **Timeout errors** - Retried with configurable delay
+
+## Examples
+
+### Complete User Onboarding Workflow
+
+```python
+from tallyfy import TallyfySDK, TaskOwners
+
+sdk = TallyfySDK(api_key="your_api_key")
+org_id = "your_org_id"
+
+# 1. Invite new user
+new_user = sdk.users.invite_user_to_organization(
+    org_id, 
+    email="new.hire@company.com",
+    first_name="John", 
+    last_name="Doe",
+    role="standard",
+    message="Welcome to the team! Please complete your onboarding."
+)
+
+# 2. Create onboarding task
+if new_user:
+    owners = TaskOwners(users=[new_user.id])
+    onboarding_task = sdk.tasks.create_task(
+        org_id,
+        title="Complete Employee Onboarding",
+        deadline="2025-12-31 17:00:00",
+        description="Please complete all onboarding steps including HR paperwork and IT setup.",
+        owners=owners
+    )
+    print(f"Created onboarding task: {onboarding_task.id}")
+```
+
+### Template Analysis and Enhancement
+
+```python
+# Get template with full details
+template_data = sdk.templates.get_template_with_steps(org_id, template_name="Project Kickoff")
+
+if template_data:
+    template = template_data['template']
+    print(f"Template: {template.title}")
+    print(f"Steps: {template_data['step_count']}")
+    print(f"Automations: {template_data['automation_count']}")
+    
+    # Analyze each step for improvements
+    for step_data in template_data['steps']:
+        step_id = step_data['id']
+        
+        # Get dependency analysis
+        dependencies = sdk.templates.get_step_dependencies(org_id, template.id, step_id)
+        if dependencies['has_conditional_visibility']:
+            print(f"Step '{step_data['title']}' has conditional logic")
+        
+        # Get deadline suggestions
+        deadline_suggestion = sdk.templates.suggest_step_deadline(org_id, template.id, step_id)
+        print(f"Suggested deadline: {deadline_suggestion['suggested_deadline']}")
+        
+        # Get form field suggestions
+        field_suggestions = sdk.form_fields.suggest_form_fields_for_step(org_id, template.id, step_id)
+        for suggestion in field_suggestions[:2]:  # Top 2 suggestions
+            if suggestion['confidence'] > 0.7:
+                print(f"High-confidence field suggestion: {suggestion['field_config']['label']}")
+```
+
+### Advanced Process Management
+
+```python
+# Get all active processes with comprehensive filtering
+active_runs = sdk.tasks.get_organization_runs(
+    org_id,
+    status="active",
+    with_data="checklist,tasks,assets,tags",
+    form_fields_values=True,
+    starred=True
+)
+
+# Group by template
+template_usage = {}
+for run in active_runs:
+    template_id = run.checklist_id
+    if template_id not in template_usage:
+        template_usage[template_id] = {
+            'template_name': run.checklist_title,
+            'active_count': 0,
+            'runs': []
+        }
+    template_usage[template_id]['active_count'] += 1
+    template_usage[template_id]['runs'].append(run)
+
+# Show most used templates
+sorted_templates = sorted(template_usage.items(), key=lambda x: x[1]['active_count'], reverse=True)
+for template_id, data in sorted_templates[:5]:
+    print(f"{data['template_name']}: {data['active_count']} active processes")
+```
+
+## Advanced Usage
+
+### Custom Request Configuration
+
+```python
+# SDK with custom configuration
+sdk = TallyfySDK(
+    api_key="your_api_key",
+    base_url="https://api.tallyfy.com",
+    timeout=60,  # 60 second timeout
+    max_retries=5,  # Retry up to 5 times
+    retry_delay=2.0  # 2 second delay between retries
+)
+```
+
+### Accessing Raw API Responses
+
+```python
+# For advanced users who need raw API data
+template_data = sdk.templates.get_template_with_steps(org_id, template_id)
+raw_api_response = template_data['raw_data']
+
+# Access nested API data not exposed in models
+custom_fields = raw_api_response.get('custom_metadata', {})
+```
+
+### Batch Operations
+
+```python
+# Efficiently process multiple operations
+org_users = sdk.users.get_organization_users(org_id)
+user_tasks = {}
+
+for user in org_users[:10]:  # Process first 10 users
+    try:
+        tasks = sdk.tasks.get_user_tasks(org_id, user.id)
+        user_tasks[user.id] = tasks
+        print(f"{user.full_name}: {len(tasks)} tasks")
+    except TallyfyError as e:
+        print(f"Failed to get tasks for {user.full_name}: {e}")
+```
+
+### Form Field Automation
+
+```python
+# Automatically enhance templates with smart form fields
+def enhance_template_with_smart_fields(org_id, template_id):
+    steps = sdk.templates.get_template_steps(org_id, template_id)
+    
+    for step in steps:
+        # Get AI suggestions for each step
+        suggestions = sdk.form_fields.suggest_form_fields_for_step(org_id, template_id, step.id)
+        
+        # Implement high-confidence suggestions
+        for suggestion in suggestions:
+            if suggestion['confidence'] > 0.8 and suggestion['priority'] == 'high':
+                field_data = suggestion['field_config']
+                try:
+                    new_field = sdk.form_fields.add_form_field_to_step(
+                        org_id, template_id, step.id, field_data
+                    )
+                    print(f"Added field '{field_data['label']}' to step '{step.title}'")
+                except TallyfyError as e:
+                    print(f"Failed to add field: {e}")
+
+# Use the enhancement function
+enhance_template_with_smart_fields(org_id, "your_template_id")
+```
+
+## Contributing
+
+### Development Setup
+
+1. Clone the repository
+2. Install dependencies: `pip install -r requirements.txt`
+3. Set up environment variables in `.env`
+4. Run tests: `python -m pytest tests/`
+
+### Code Style
+
+- Follow PEP 8 style guidelines
+- Use type hints for all functions and methods
+- Add comprehensive docstrings for public APIs
+- Include error handling for all external API calls
+
+### Adding New Features
+
+1. Add methods to appropriate management class
+2. Create or update data models in `models.py`
+3. Add comprehensive docstrings and type hints
+4. Include error handling and logging
+5. Update this README with usage examples
+
+## License
+
+This SDK is part of the Tallyfy MCP project. See the main project repository for license information.
+
+## Support
+
+For bugs, feature requests, or questions:
+
+1. Check existing issues in the project repository
+2. Contact us at: support@tallyfy.com
+---
+
+**Version:** 1.0.3
+**Last Updated:** 2025
