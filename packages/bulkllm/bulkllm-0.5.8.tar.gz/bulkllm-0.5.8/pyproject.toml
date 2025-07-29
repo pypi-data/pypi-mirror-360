@@ -1,0 +1,98 @@
+[project]
+name = "bulkllm"
+authors = [
+    {name = "Bryce Drennan"},
+]
+description = ""
+readme = "README.md"
+requires-python = ">=3.12"
+dynamic = ["version"]
+dependencies = [
+    "anyio>=4.9.0",
+    "diskcache>=5.6.3",
+    "litellm>=1.70.0",
+    "pydantic>=2.11.4",
+    "tenacity>=9.1.2",
+    "typer>=0.15.4",
+]
+license = "MIT"
+
+[project.scripts]
+bulkllm = "bulkllm.cli:app"
+
+[dependency-groups]
+dev = [
+    "ty",
+    "pytest",
+    "pytest-randomly",
+    "pytest-sugar",
+    "ruff",
+    "wheel",
+    "twine",
+    "build",
+    "pytest-asyncio>=0.26.0",
+    "coverage>=7.8.0",
+    "typer>=0.12.3",
+    "pyjson5>=1.6.9",
+    "patchright>=1.52.4",
+]
+
+[project.urls]
+Documentation = "https://github.com/brycedrennan/bulkllm"
+Source = "https://github.com/brycedrennan/bulkllm"
+
+[build-system]
+requires = ["setuptools>=76", "setuptools_scm[toml]>=8.1"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["bulkllm"]
+
+[tool.setuptools.package-data]
+"bulkllm.model_registration" = ["data/*.json"]
+
+[tool.setuptools_scm]
+write_to = "bulkllm/_version.py"
+
+[tool.ruff]
+extend-exclude = []
+line-length = 120
+output-format = "concise"
+
+[tool.ruff.lint]
+extend-ignore = [
+    "E501", "G004", "ISC001",  "PT011", "RET504", "SIM114", 
+    "TC003",
+    "TRY003", "TRY400", "TRY401", "RUF012", "RUF100"
+]
+extend-select = [
+    "I", "E", "W", "UP", "ASYNC", "BLE", "A001", "A002",
+    "C4", "DTZ", "T10", "EM", "ISC", "ICN", "G", "PIE", "PT",
+    "Q", "SIM", "TID", "TCH", "PLC", "PLE", "TRY", "RUF"
+]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+
+[tool.ruff.lint.flake8-errmsg]
+max-string-length = 50
+
+[tool.pytest.ini_options]
+addopts = "-s --tb=native -v --durations=10"
+norecursedirs = ["build", "dist"]
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.coverage.run]
+source = ["bulkllm"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.ty.terminal]
+output-format = "concise"
+
+[tool.ty.rules]
+missing-argument = "ignore"
+# buggy with nonlocal
+unresolved-reference = "ignore"
