@@ -1,0 +1,181 @@
+Metadata-Version: 2.4
+Name: smoothiepy
+Version: 0.1.1
+Summary: Smooth real-time data streams like eye tracking or sensor input with this lightweight package.
+Keywords: smoothing,data-smoothing,signal-filter,signal-processing,noise-reduction,real-time,low-latency,live-data,online-processing,streaming-data,data-cleaning,data-filtering,preprocessing,adaptive-filter,ema,moving-average,median-filter,gaussian-smoothing,time-series,trend-analysis,rolling-average,forecasting,financial-data,stock-market,price-smoothing,volatility-reduction,algorithmic-trading,market-data,quantitative-analysis,data-denoising,eye-tracking,gaze-tracking,gaze-analysis,saccade-filtering,fixation-detection,attention-analysis,input-smoothing,cursor-smoothing,head-tracking,sensor-data,tracking-noise,motion-smoothing,imu-data,robotics,embedded-systems,wearable-sensors,biosignal-processing,hci,bci,gesture-recognition,computer-vision,biometrics,machine-learning,feature-extraction,data-preparation,computational-neuroscience,neurotechnology,psychophysics,real-time-processing,live-inference,python,smoothiepy,signal-analysis,time-series-preprocessing
+Author-Email: Timo Seyfarth <timo@seyfarth.dev>
+License-Expression: LGPL-3.0-or-later
+License-File: LICENSE
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Operating System :: OS Independent
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Education
+Classifier: Natural Language :: English
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Human Machine Interfaces
+Classifier: Topic :: Scientific/Engineering :: Information Analysis
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Project-URL: Homepage, https://github.com/timoseyfarth/smoothiepy
+Project-URL: Documentation, https://github.com/timoseyfarth/smoothiepy/wiki
+Project-URL: Issues, https://github.com/timoseyfarth/smoothiepy/issues
+Requires-Python: >=3.10.0
+Requires-Dist: numpy>=2.1.0
+Provides-Extra: dev
+Requires-Dist: pytest~=8.3.5; extra == "dev"
+Requires-Dist: pylint>=3.3.7; extra == "dev"
+Description-Content-Type: text/markdown
+
+<img src="https://github.com/user-attachments/assets/74e96edd-efe9-4a76-9f13-499c7f5ea551" alt="Logo SmoothiePy" width="400"/>
+
+[![Status](https://img.shields.io/badge/status-alpha-lightblue)]()
+[![PyPI version](https://img.shields.io/pypi/v/smoothiepy)](https://pypi.org/project/smoothiepy/)
+[![Python versions](https://img.shields.io/pypi/pyversions/smoothiepy)](https://pypi.org/project/smoothiepy/)
+[![Downloads](https://img.shields.io/pypi/dm/smoothiepy)](https://pypi.org/project/smoothiepy/)
+[![License](https://img.shields.io/github/license/timoseyfarth/smoothiepy)](https://github.com/timoseyfarth/smoothiepy/blob/main/LICENSE)
+[![Last Commit](https://img.shields.io/github/last-commit/timoseyfarth/smoothiepy)](https://github.com/timoseyfarth/smoothiepy/commits/main)
+[![Repo Size](https://img.shields.io/github/repo-size/timoseyfarth/smoothiepy)](https://github.com/timoseyfarth/smoothiepy)
+
+Smooth real-time data streams like eye tracking or sensor input with this lightweight package.
+
+## 📋 Overview
+
+SmoothiePy is a Python library designed for smoothing real-time data streams with minimal latency. 
+It provides a collection of filters and smoothers that can be applied to one-dimensional and two-dimensional data, 
+making it ideal for applications such as:
+
+- Eye tracking and gaze analysis
+- Sensor data processing
+- Motion tracking
+- Financial data analysis
+- Time series preprocessing
+- Signal processing
+
+The library is built with a focus on flexibility, performance, and ease of use, allowing you to quickly implement sophisticated data smoothing pipelines.
+
+## 🚀 Installation
+
+```bash
+pip install smoothiepy
+```
+
+SmoothiePy requires Python 3.10 or later.
+
+## 🏁 Quick Start
+
+Here's a simple example of how to use SmoothiePy to smooth a data stream:
+
+```python
+from smoothiepy import SmootherBuilder, ExponentialMovingAverageFilter1D
+
+# Create a smoother with an exponential moving average filter
+smoother = (
+  SmootherBuilder()
+  .one_dimensional()
+  .continuous()
+  .attach_filter(ExponentialMovingAverageFilter1D(alpha=0.2))
+  .build()
+)
+
+# Process data points
+smoother.add(20.0)
+print(f"Smoothed value: {smoother.get()}")
+
+smoother.add(60.0)
+print(f"Smoothed value: {smoother.get()}")
+
+# Alternatively, use add_and_get to add a value and get the result in one step
+smoothed_value = smoother.add_and_get(3.0)
+print(f"Smoothed value: {smoothed_value}")
+```
+
+## ✨ Features
+
+### Available Filters
+
+SmoothiePy provides a variety of filters:
+
+#### One-Dimensional Filters
+
+- **Offset Filter**: Adds a constant offset to the data
+- **Simple Moving Average**: Computes the arithmetic mean over a window
+- **Weighted Moving Average**: Applies linearly decreasing weights
+- **Gaussian Average**: Applies a Gaussian weighting function
+- **Median Average**: Computes the median of values in a window
+- **Exponential Moving Average**: Applies exponential weighting
+- **Cumulative Moving Average**: Computes the cumulative average
+- **Fixation Smooth Filter**: Sort of Deadband filter. Specialized for fixation-like data (e.g., eye tracking)
+- **Multi-Pass Moving Average**: Applies multiple passes of a specified moving average type
+
+#### Two-Dimensional Filters
+
+Each 1D filter is also available in a 2D version, allowing you to smooth data in two dimensions (e.g., x-y coordinates).
+
+Many more filters are work in progress, including advanced filters like Kalman filters and more complex multidimensional filters.
+
+### Builder Pattern
+
+SmoothiePy uses a builder pattern to create smoothers, making it easy to configure and chain multiple filters:
+
+```python
+from smoothiepy import SmootherBuilder, SimpleMovingAverageFilter1D, GaussianAverageFilter1D
+
+# Create a smoother with multiple filters
+smoother = (
+  SmootherBuilder()
+  .one_dimensional()
+  .continuous()
+  .attach_filter(SimpleMovingAverageFilter1D(window_size=5))
+  .attach_filter(GaussianAverageFilter1D(window_size=3, std_dev=1.0))
+  .build()
+)
+```
+
+## 📚 Documentation
+
+For detailed documentation, visit the [GitHub Wiki](https://github.com/timoseyfarth/smoothiepy/wiki).
+Work in progress...
+
+### API Reference
+
+#### 1D Filters
+
+- `OffsetFilter1D`: Adds a constant offset
+- `SimpleMovingAverageFilter1D`: Simple arithmetic mean
+- `WeightedMovingAverageFilter1D`: Linearly decreasing weights
+- `GaussianAverageFilter1D`: Gaussian weighting function
+- `MedianAverageFilter1D`: Median of values
+- `ExponentialMovingAverageFilter1D`: Exponential weighting
+- `CumulativeMovingAverageFilter1D`: Cumulative average
+- `FixationSmoothFilter1D`: For fixation-like data
+- `MultiPassMovingAverage1D`: Multiple passes of a specified filter
+
+#### 2D Filters
+
+- `OffsetFilter2D`: Adds a constant offset in 2D
+- `SimpleMovingAverageFilter2D`: Simple arithmetic mean in 2D
+- `WeightedMovingAverageFilter2D`: Linearly decreasing weights in 2D
+- `GaussianAverageFilter2D`: Gaussian weighting function in 2D
+- `MedianAverageFilter2D`: Median of values in 2D
+- `ExponentialMovingAverageFilter2D`: Exponential weighting in 2D
+- `CumulativeMovingAverageFilter2D`: Cumulative average in 2D
+- `FixationSmoothFilter2D`: For fixation-like data in 2D
+- `MultiPassMovingAverage2D`: Multiple passes of a specified filter in 2D
+
+#### Builder
+
+- `SmootherBuilder`: Entry point for creating smoothers
+
+## 📄 License
+
+This project is licensed under the GNU Lesser General Public License v3.0 (LGPL-3.0) — see the LICENSE file in the git repo for details.
+
+## 📬 Contact
+
+Timo Seyfarth - timo@seyfarth.dev
