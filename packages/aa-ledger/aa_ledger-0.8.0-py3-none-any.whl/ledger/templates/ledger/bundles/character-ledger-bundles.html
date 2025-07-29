@@ -1,0 +1,51 @@
+{% load sri %}
+{% load i18n %}
+{% load static %}
+
+<script type="application/javascript">
+    // Extract the 'main' parameter from the current URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const mainParam = urlParams.get('single');
+
+    let singleViewParam = false;
+    if (mainParam) {
+        singleViewParam = true;
+    }
+
+    let ledgersettings = {
+		csrfToken: '{% csrf_token %}',
+        entity_pk: {{ entity_pk }},
+        entity_type: "{{ entity_type }}",
+        altShow: singleViewParam,
+        overviewText: '{% translate "Overview" %}',
+        planetaryText: '{% translate "Show Planetary Interaction" %}',
+        planetaryUrl: "{% url 'ledger:planetary_ledger' character_id=1337 %}",
+        characterUrl: "{% url 'ledger:character_ledger' character_id=1337 %}",
+    };
+</script>
+
+<script>
+    // Embed translations in a global JavaScript object
+    window.translations = {
+        months: [
+            "{% trans 'January' %}", "{% trans 'February' %}", "{% trans 'March' %}", "{% trans 'April' %}",
+            "{% trans 'May' %}", "{% trans 'June' %}", "{% trans 'July' %}", "{% trans 'August' %}",
+            "{% trans 'September' %}", "{% trans 'October' %}", "{% trans 'November' %}", "{% trans 'December' %}"
+        ],
+        dayText: "{% trans 'Day' %}",
+        monthText: "{% trans 'Month' %}"
+    };
+</script>
+
+<!-- Chart Resources -->
+{% sri_static 'ledger/assets/index.js' %}
+{% sri_static 'ledger/assets/xy.js' %}
+{% sri_static 'ledger/assets/percent.js' %}
+{% sri_static 'ledger/assets/flow.js' %}
+{% sri_static 'ledger/assets/Animated.js' %}
+{% sri_static 'ledger/assets/Dark.js' %}
+
+<!-- Ledger Resources -->
+{% sri_static 'ledger/js/charts.js' %}
+{% sri_static 'ledger/js/ledger-common.js' %}
+{% sri_static 'ledger/js/character.js' %}
