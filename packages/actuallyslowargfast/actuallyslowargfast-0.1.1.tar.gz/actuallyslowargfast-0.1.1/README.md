@@ -1,0 +1,121 @@
+# ActuallySlowArgFast
+
+A really slow CLI tool for testing tab completion with fastargsnap (fast version).
+
+This project is designed to compare the performance of tab completion between:
+- **actuallyslowarg**: Uses only argcomplete (slow version)
+- **actuallyslowargfast**: Uses fastargsnap + argcomplete (fast version - this project)
+
+## Installation
+
+```bash
+pip install actuallyslowargfast
+```
+
+## Usage
+
+```bash
+reallyslowarg <command> [options]
+```
+
+### Commands
+
+- `foo` - Run foo command
+  - `--bar` - Bar value (integer)
+  - `--baz` - Baz option (choices: a, b, c)
+  - `--option0` through `--option4` - Additional options
+  - `--validate` - Validation field
+
+- `data` - Run data command
+  - `--file` - Input file (string)
+  - `--mode` - Mode (choices: fast, slow)
+  - `--param0` through `--param2` - Parameters
+  - `--format` - Output format (dynamic choices)
+
+- `process` - Process data
+  - `--input` - Input file
+  - `--output` - Output file
+  - `--algorithm` - Algorithm (dynamic choices)
+  - `batch` - Batch processing subcommand
+    - `--size` - Batch size
+    - `--workers` - Number of workers
+  - `stream` - Stream processing subcommand
+    - `--buffer` - Buffer size
+    - `--timeout` - Timeout
+
+- `analyze` - Analyze data
+  - `--method` - Analysis method (choices: statistical, ml, deep)
+  - `--metrics` - Metrics to compute
+  - `--config0` through `--config3` - Configuration options
+
+### Global Options
+
+- `--config` - Configuration file
+- `--verbose`, `-v` - Verbose output
+- `--debug` - Debug mode
+- `--dynamic` - Dynamic choices (expensive computation)
+- `--file` - File selection (file system operations)
+- `--api` - API selection (network operations)
+
+## Performance Testing
+
+This tool is designed to test the performance improvement of fastargsnap over argcomplete alone.
+
+The tool includes:
+- Heavy imports (matplotlib, numpy, pandas, sklearn, requests, click)
+- 5-second sleep to simulate slow startup
+- Early completion detection to avoid heavy imports during completion
+- **fastargsnap for fast completions** (this is the key difference!)
+
+## Performance Results
+
+### Completion Speed (Tab Completion)
+
+| Tool | Method | Completion Time | Performance |
+|------|--------|----------------|-------------|
+| **actuallyslowargfast** | fastargsnap + argcomplete | **~0.08s** | ⚡ **13.7x faster** |
+| **actuallyslowarg** | argcomplete only | **~1.11s** | 🐌 **Baseline** |
+
+### Command Execution Speed
+
+| Tool | Method | Time | Performance |
+|------|--------|------|-------------|
+| **actuallyslowargfast** | fastargsnap + argcomplete | **~16s** | Same |
+| **actuallyslowarg** | argcomplete only | **~16s** | Same |
+
+## Key Benefits
+
+- **13.7x faster completions** using fastargsnap
+- **Same complex parser structure** as the slow version
+- **Same heavy imports and operations** during execution
+- **Fast completions** without sacrificing functionality
+
+## How It Works
+
+1. **Snapshot Generation**: The complex parser structure is captured in a JSON snapshot
+2. **Fast Completions**: During tab completion, fastargsnap reads the JSON instead of recreating the parser
+3. **Fallback Support**: Falls back to regular argcomplete if fastargsnap is unavailable
+4. **Same Execution**: Command execution still uses the full parser with all heavy operations
+
+## Development
+
+```bash
+# Install in development mode
+pip install -e .
+
+# Generate snapshot
+python -m reallyslowarg.main --generate-snapshot
+
+# Run tests
+pytest
+
+# Format code
+black .
+
+# Lint code
+flake8
+```
+
+## License
+
+MIT License
