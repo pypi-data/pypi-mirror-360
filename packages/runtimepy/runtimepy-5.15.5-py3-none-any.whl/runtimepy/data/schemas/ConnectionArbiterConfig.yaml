@@ -1,0 +1,118 @@
+---
+includes:
+  - has_config.yaml
+
+type: object
+additionalProperties: false
+
+properties:
+  clients:
+    type: array
+    items:
+      $ref: package://runtimepy/schemas/ClientConnectionConfig.yaml
+
+  processes:
+    type: array
+    items:
+      $ref: package://runtimepy/schemas/PeerProcessConfig.yaml
+
+  servers:
+    type: array
+    items:
+      $ref: package://runtimepy/schemas/ServerConnectionConfig.yaml
+
+  structs:
+    type: array
+    items:
+      $ref: package://runtimepy/schemas/StructConfig.yaml
+
+  commands:
+    $ref: package://runtimepy/schemas/TwoTupleArray.yaml
+
+  tasks:
+    type: array
+    items:
+      $ref: package://runtimepy/schemas/TaskConfig.yaml
+
+  # Runtime application or applications.
+  # defaults to: "runtimepy.net.apps.init_only"
+  app: &applike
+    oneOf:
+      - type: string
+      - type: array
+        items:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+
+  # Initialization methods.
+  init: *applike
+
+  config_builders:
+    type: array
+    items:
+      type: string
+
+  # A 'site' directory to add for discovering modules that may appear in other
+  # parts of the configuration. If this isn't specified, the current directory
+  # is used.
+  directory:
+    type: string
+
+  factories:
+    type: array
+    items:
+      type: object
+      required: [name]
+      additionalProperties: false
+
+      properties:
+        name:
+          type: string
+        namespaces:
+          type: array
+          items:
+            type: string
+        kwargs:
+          type: object
+
+  port_overrides:
+    type: object
+    required: []
+    additionalProperties: false
+    patternProperties:
+      "^.*$":
+        type: integer
+        minimum: 1
+        maximum: 65535
+
+  ports:
+    type: array
+    items:
+      type: object
+      required: [name, type]
+      additionalProperties: false
+
+      properties:
+        name:
+          type: string
+
+        type:
+          enum:
+            - udp
+            - tcp
+
+        host:
+          type: string
+          default: ""
+
+        port:
+          type: integer
+          minimum: 0
+          maximum: 65535
+          default: 0
+
+  websocket_hostname:
+    type: string
