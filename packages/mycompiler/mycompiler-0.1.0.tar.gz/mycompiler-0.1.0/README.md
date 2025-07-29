@@ -1,0 +1,30 @@
+# 🐍 Driizzyy's Python Compiler
+
+**Driizzyy's Python Compiler** is a powerful, beginner-friendly Python GUI tool that lets you convert `.py` scripts into standalone `.exe` applications with just a few clicks — no coding required.
+
+---
+
+## 🔥 Features
+
+- ✅ Add `.py` source files via GUI
+- ✅ Bundle into single `.exe` (PyInstaller `--onefile`)
+- ✅ Hide console window (for GUI apps)
+- ✅ Choose custom output directory
+- ✅ Set custom `.exe` name
+- ✅ Set custom icon (`.ico`)
+- ✅ Real-time build log viewer
+- ✅ No command line needed
+
+---
+
+## 🖥️ GUI Preview
+
+> 🖼️ *(Add screenshot here after first build, optional)*
+
+---
+
+## 🚀 Installation
+
+```bash
+pip install driizzyy-compiler
+```
