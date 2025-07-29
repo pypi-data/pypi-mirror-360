@@ -1,0 +1,31 @@
+<table>
+{% if table.title -%}<caption>{{ table.title }}</caption>{%- endif %}
+{% if table.header -%}
+<thead>
+    <tr>
+        {%- for h in table.header %}
+        <th scope="col">{{ h.get_text(sep="<br>") | safe }}</th>
+        {%- endfor %}
+    </tr>
+</thead>
+{%- endif %}
+<tbody>
+    {%- for r in table.rows %}
+    <tr>
+        {%- for cell in r %}
+        {%- set msg = cell.metadata.get("message") %}
+        <td>{% if cell.text %}<span{% if msg %} title="{{ msg }}"{% endif %} class="{% if cell.style -%} {{ cell.style }}{% endif %}{% if msg %} titled{% endif %}">{{cell.text}}</span>{% endif %}</td>
+        {%- endfor %}
+    </tr>
+    {%- endfor %}
+</tbody>
+{% if table.footer -%}
+<tfoot>
+    <tr>
+        {%- for f in table.footer %}
+        <th scope="col">{{ f.get_text(sep="<br>") | safe }}</th>
+        {%- endfor %}
+    </tr>
+</tfoot>
+{%- endif %}
+</table>
