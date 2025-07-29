@@ -1,0 +1,2 @@
+import version_inc
+version_inc.command_entry_point()
