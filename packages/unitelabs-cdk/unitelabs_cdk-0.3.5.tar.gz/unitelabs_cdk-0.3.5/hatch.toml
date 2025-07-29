@@ -1,0 +1,31 @@
+[envs.hatch-static-analysis]
+dependencies = ["ruff==0.11.2"]
+config-path = "none"
+
+[envs.default]
+installer = "uv"
+features = ["dev"]
+
+[envs.default.scripts]
+lint-extreme = "ruff check src --extend-select ERA,FIX,T201,S101"
+lint-ci = "lint-extreme --output-format=gitlab > code-quality-report.json"
+
+[envs.dev]
+dev-mode = true
+features = ["dev", "test", "docs"]
+
+[envs.docs]
+dev-mode = true
+features = ["docs"]
+
+[envs.docs.scripts]
+run = "jdoc unitelabs.cdk"
+
+[envs.hatch-test]
+dev-mode = true
+features = ["test", "dev"]
+parallel = true
+randomize = true
+
+[[envs.hatch-test.matrix]]
+python = ["3.9", "3.13"]
