@@ -1,0 +1,139 @@
+Metadata-Version: 2.4
+Name: deepsentinel-sdk
+Version: 0.1.0
+Summary: DeepSentinel SDK - AI compliance middleware for safe LLM interactions
+Project-URL: Homepage, https://github.com/deepsentinel/deepsentinel-sdk
+Project-URL: Documentation, https://docs.deepsentinel.ai
+Project-URL: Repository, https://github.com/deepsentinel/deepsentinel-sdk
+Project-URL: Issues, https://github.com/deepsentinel/deepsentinel-sdk/issues
+Project-URL: Changelog, https://github.com/deepsentinel/deepsentinel-sdk/blob/main/CHANGELOG.md
+Author-email: DeepSentinel Team <dev@deepsentinel.ai>
+License: MIT
+Keywords: ai,audit,compliance,llm,middleware,openai,phi,pii,security
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Security
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.8
+Requires-Dist: anthropic>=0.25.0
+Requires-Dist: asyncio-mqtt>=0.13.0
+Requires-Dist: click>=8.0.0
+Requires-Dist: httpx>=0.24.0
+Requires-Dist: openai>=1.0.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: structlog>=23.0.0
+Requires-Dist: tenacity>=8.0.0
+Requires-Dist: typing-extensions>=4.0.0
+Provides-Extra: dev
+Requires-Dist: black>=23.0.0; extra == 'dev'
+Requires-Dist: build>=0.10.0; extra == 'dev'
+Requires-Dist: flake8>=6.0.0; extra == 'dev'
+Requires-Dist: isort>=5.12.0; extra == 'dev'
+Requires-Dist: mypy>=1.0.0; extra == 'dev'
+Requires-Dist: pre-commit>=3.0.0; extra == 'dev'
+Requires-Dist: pytest-asyncio>=0.21.0; extra == 'dev'
+Requires-Dist: pytest-cov>=4.0.0; extra == 'dev'
+Requires-Dist: pytest-mock>=3.10.0; extra == 'dev'
+Requires-Dist: pytest>=7.0.0; extra == 'dev'
+Requires-Dist: twine>=4.0.0; extra == 'dev'
+Provides-Extra: docs
+Requires-Dist: mkdocs-gen-files>=0.5.0; extra == 'docs'
+Requires-Dist: mkdocs-literate-nav>=0.6.0; extra == 'docs'
+Requires-Dist: mkdocs-material>=9.0.0; extra == 'docs'
+Requires-Dist: mkdocs-section-index>=0.3.0; extra == 'docs'
+Requires-Dist: mkdocs>=1.5.0; extra == 'docs'
+Requires-Dist: mkdocstrings[python]>=0.22.0; extra == 'docs'
+Provides-Extra: test
+Requires-Dist: httpx-mock>=0.10.0; extra == 'test'
+Requires-Dist: pytest-asyncio>=0.21.0; extra == 'test'
+Requires-Dist: pytest-cov>=4.0.0; extra == 'test'
+Requires-Dist: pytest-mock>=3.10.0; extra == 'test'
+Requires-Dist: pytest>=7.0.0; extra == 'test'
+Requires-Dist: responses>=0.23.0; extra == 'test'
+Description-Content-Type: text/markdown
+
+# DeepSentinel Python SDK
+
+The official Python SDK for DeepSentinel - AI compliance middleware for safe LLM interactions.
+
+## Installation
+
+```bash
+pip install deepsentinel
+```
+
+## Quick Start
+
+```python
+from deepsentinel import SentinelClient
+
+# Initialize the client
+client = SentinelClient(
+    sentinel_api_key="YOUR_DEEPSENTINEL_API_KEY",
+    openai_api_key="YOUR_OPENAI_API_KEY"
+)
+
+# Send a compliant request
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Hello, world!"}]
+)
+
+print(response.choices[0].message.content)
+```
+
+## Features
+
+- **🛡️ Compliance Checking**: Automatic detection of PII, PHI, and regulatory violations
+- **🔄 Multiple Providers**: Support for OpenAI, Anthropic, and other LLM providers
+- **📊 Audit Logging**: Comprehensive activity logging for compliance
+- **⚡ Performance**: Local detection with smart caching
+- **🔌 MCP Support**: Integration with Model Context Protocol
+- **🌐 Streaming**: Full support for streaming responses
+
+## Documentation
+
+- [Developer Guide](../docs/developer-guide.md)
+- [API Reference](https://docs.deepsentinel.ai/python)
+- [Examples](../examples/python/)
+
+## Requirements
+
+- Python 3.8+
+- API key from DeepSentinel
+- API keys from supported LLM providers
+
+## Development
+
+To set up for development:
+
+```bash
+# Clone the repository
+git clone https://github.com/deepsentinel/deepsentinel-sdk
+cd deepsentinel-sdk/python
+
+# Install in development mode
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Run linting
+black .
+isort .
+flake8 .
+mypy .
+```
+
+## License
+
+MIT License - see [LICENSE](../LICENSE) for details.
