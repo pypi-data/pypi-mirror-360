@@ -1,0 +1,45 @@
+name: Generate stub file
+
+on:
+    workflow_run:
+      workflows: ["Run Tests"]
+      types: 
+        - completed
+
+jobs:
+  run_stub_gen:
+    name: Run stub_gen
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+        contents: write # Required to push changes to the repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        # Fetch full history to detect changes
+        with:
+          fetch-depth: 0
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run stub_gen
+        run: cargo run --bin stub_gen --features stubgen
+      - name: Check for changes and commit
+        id: check_changes
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "::warning title=Changes Detected::Changes detected in rpg_map.pyi"
+            git config --local user.name "GitHub Actions"
+            git config --local user.email "actions@github.com"
+            git add rpg_map.pyi
+            git commit -m "Update rpg_map.pyi"
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Push changes
+        if: steps.check_changes.outputs.changed == 'true'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
