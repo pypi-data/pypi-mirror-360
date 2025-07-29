@@ -1,0 +1,77 @@
+# ChromaDB Configuration
+chromadb:
+  # Server settings
+  host: localhost
+  port: 8000
+  ssl: false
+  api_key: ""
+
+  # Collection settings
+  collection_name: ai_prishtina_collection
+  persist_directory: ./data
+  allow_reset: true
+  anonymized_telemetry: false
+
+  # Embedding settings
+  embedding_function: default
+  embedding_model: all-MiniLM-L6-v2
+  embedding_dimension: 384
+  index_type: hnsw
+
+  # Performance settings
+  batch_size: 100
+  cache_size: 1000
+  max_retries: 3
+  timeout: 30
+
+# Docker Configuration
+docker:
+  # Container settings
+  container_name: ai-prishtina-chroma
+  image: chromadb/chroma:latest
+  restart_policy: unless-stopped
+  memory_limit: 4g
+  cpu_limit: 2
+
+  # Volume settings
+  data_volume: ai-prishtina-chroma-data
+  config_volume: ai-prishtina-chroma-config
+
+  # Network settings
+  network_name: ai-prishtina-network
+  exposed_port: 8000
+
+# Security Configuration
+security:
+  # Authentication settings
+  auth_enabled: false
+  auth_credentials_file: ./auth/credentials.json
+  jwt_secret: ""
+  token_expiry: 3600
+
+  # SSL/TLS settings
+  ssl_enabled: false
+  ssl_cert_file: ./ssl/cert.pem
+  ssl_key_file: ./ssl/key.pem
+
+# Logging Configuration
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: ./logs/ai_prishtina.log
+  max_size: 10485760
+  backup_count: 5
+
+# Monitoring Configuration
+monitoring:
+  metrics_enabled: true
+  prometheus_port: 9090
+  health_check_interval: 30
+  alert_threshold: 0.8
+
+# Cache Configuration
+cache:
+  enabled: true
+  cache_dir: ./cache
+  max_size: 1000
+  ttl: 3600 
