@@ -1,0 +1,33 @@
+class {{ class_name }}(GeneratedTextParser):
+
+    def __init__(self, text_stream: io.TextIOBase, parent: GeneratedTextParser = None, encoding: str = None):
+        super().__init__(text_stream, parent, encoding)
+        {% include 'step_lookup.j2' %}
+        {% include 'step_defaults.j2' %}
+        self._read()
+
+    def _read(self):
+        {%- for step, raw_step in zip(rendered_steps, steps) -%}
+        {% if raw_step.if_ is not none -%}
+        if {{ raw_step.if_ }}:
+            {{ step | indent(12) }}
+        {% else %}
+        {{ step | indent(8) }}
+        {% endif %}
+        {%- else -%}
+        pass
+        {% endfor %}
+
+    {% for rendered_instance, instance in zip(rendered_instances, instances) -%}
+    {% if instance.type.root == 'substream' or instance.io is not none %}@cached_property{% else %}@property{% endif%}
+    def {{ instance.id }}(self):
+        {% if instance.value is defined and instance.value is not none %}return {{ instance.value }}{% else -%}
+        {{ rendered_instance | indent(8) }}
+        return {{ instance.id }}
+        {% endif %}
+
+    {% endfor %}
+
+    {% for inner in inners -%}
+    {{ inner | indent(4) }}
+    {% endfor %}
