@@ -1,0 +1,23 @@
+stages:
+  - deploy
+
+deploy_to_pypi:
+  stage: deploy
+  image: python:3.9
+  tags:
+    - docker
+  script:
+    # 1. 安装依赖工具
+    - pip install --upgrade setuptools wheel setuptools_scm twine -i https://repo.huaweicloud.com/repository/pypi/simple
+    # 2. 清理旧的构建文件（可选）
+    - rm -rf build/ dist/ *.egg-info/
+    # 3. 构建源码包和 Wheel 包
+    - python setup.py sdist bdist_wheel
+    # 4. 上传到 PyPI
+    - twine upload
+        --username __token__
+        --password "$PYPI_API_TOKEN"
+        --repository-url https://upload.pypi.org/legacy/
+        dist/*
+  rules:
+    - when: always
