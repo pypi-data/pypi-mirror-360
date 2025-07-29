@@ -1,0 +1,39 @@
+syntax = "proto3";
+package tech.brainco.treadmill;
+
+enum AbnormalGait {
+  ABNORMAL_GAIT_UNSPECIFIED = 0;  // Default value per Protobuf convention
+  NO_LOAD = 1;                    // No load detected
+  HANDRAIL_SUPPORTED = 2;         // Support phase detected
+  UNILATERAL_DRAGGING = 3;        // Unilateral dragging detected
+}
+message DebugInfo {
+  float current_range = 1;
+  float acc_range = 2;
+  float gyro_range = 3;
+}
+
+message GaitAnalysisResult {
+    enum FootStrike {
+    FOOT_STRIKE_UNSPECIFIED = 0;
+    LEFT_FOOT = 1;
+    RIGHT_FOOT = 2;
+  }
+
+  enum GaitPattern {
+    GAIT_PATTERN_UNSPECIFIED  = 0;
+    WALK = 1;
+    RUN = 2;
+  }
+
+  uint32 msg_id = 1;
+  uint32 timestamp = 2;
+  FootStrike foot = 3;
+  GaitPattern pattern = 4;
+  uint32 gait_duration = 5;
+  uint32 sport_id = 6;
+  DebugInfo dbg_data = 7;
+  uint32 sport_runtime = 8;
+  float  step_load = 9;
+  AbnormalGait abnormal_gait = 10;
+}

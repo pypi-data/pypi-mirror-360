@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package tech.brainco.treadmill;
+
+// Represents information about the treadmill device
+message DeviceInfo {
+  // Unique serial number of the device
+  string serial_number = 1;
+
+  // Firmware version of the device
+  string firmware_revision = 2;
+}
+
+// 设备端主动上报的事件
+enum DeviceEvent {
+  EVENT_UNSPECIFIED = 0;
+
+  HARDWARE_ERR = 1;   // 硬件错误
+  CALIBRATE_IMU_OK = 2;
+  CALIBRATE_IMU_FAIL = 3;
+}
+
+enum ImuSampleRate {
+  IMU_SR_UNSPECIFIED = 0;
+  IMU_SR_OFF    = 1;  //IMU关闭采样
+  IMU_SR_25     = 2;  //IMU订阅采样率25HZ
+  IMU_SR_50     = 3;  //IMU订阅采样率50HZ
+  IMU_SR_100    = 4;  //IMU订阅采样率100HZ
+  IMU_SR_90     = 5;  //IMU订阅采样率90HZ
+  IMU_SR_200    = 6;  //IMU订阅采样率200HZ
+  IMU_SR_400    = 7;  //IMU订阅采样率400HZ
+}
+/* 通用传感器采样订阅 */
+enum SamplingRate { // CommonSampleRate
+  SAMPLING_RATE_NONE = 0;// 无采样
+  SAMPLING_RATE_OFF = 1; // 关闭采样
+  SAMPLING_RATE_25 = 2;  //  25 Hz 采样率
+  SAMPLING_RATE_50 = 3;  //  50 Hz 采样率
+  SAMPLING_RATE_100 = 4; // 100 Hz 采样率
+  SAMPLING_RATE_200 = 5; // 200 Hz 采样率
+  SAMPLING_RATE_270 = 6; // 270 Hz 采样率
+};
+enum ConfigReqType {
+  REQ_NONE     = 0;
+  GET_DEVICE_INFO  = 1;   // 请求设备信息， 设备端上报：DeviceInfo
+  SET_DEVICE_INFO  = 2;   // 设置设备信息
+  GET_SENSOR_CONFIG = 4;  // 读取所有sensor config
+  START_DATA_STREAM = 6;  // 按默认配置一键订阅传感器数据
+  STOP_DATA_STREAM  = 7;  // 停止全部订阅数据流
+  START_EVORUN      = 8;
+  STOP_EVORUN       = 9;
+  CALIBRATE_IMU     = 10;
+}
+
+// APP发起OTA
+// 固件进入OTA模式后，开始请求文件
+// APP和固件交互传输升级包
+// 固件接收完成后,自动重启
+// 重启后，会擦写Flash
+// 操作Flash完成后，新固件运行，上报OTA完成状态。
+message OtaConfig {
+  enum CMD {
+    NONE = 0;
+    OTA_START = 1; // 前台传输MCU升级文件
+    OTA_REBOOT = 2; // 重启升级MCU
+  }
+
+  CMD cmd = 1;
+  OTAData ota_data = 2;
+
+  // START 命令，带新固件信息
+  uint32 file_size = 3;
+  string file_md5 = 4;
+  string file_sha256 = 5;
+}
+
+message OtaConfigResp {
+  enum State {
+    NONE = 0;
+    DOWNLOADING = 1; // entry为true，返回状态为Downloading
+    DOWNLOAD_FINISHED = 2;  // 接收到最后一包数据，返回FINISHED
+    REBOOTING = 3;   // 如果收到reboot，返回该状态后，再重启
+    REBOOTED = 4;    // 重新运行会发送该状态
+	ABORT = 5;       // 设备端状态异常，终止本次OTA
+  }
+  State state = 1; // 如果没有错误，恢复空OtaConfigResp
+  uint32 offset = 2; // 镜像的offset
+}
+
+// APP发送OTA文件数据
+message OTAData {
+  uint32 offset = 1;
+  bytes data = 2;  
+  bool finished = 3;   //结束标志
+}

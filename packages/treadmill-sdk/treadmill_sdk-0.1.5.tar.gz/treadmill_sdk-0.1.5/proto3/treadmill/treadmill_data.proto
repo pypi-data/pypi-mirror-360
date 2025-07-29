@@ -1,0 +1,78 @@
+syntax = "proto3";
+import "treadmill_common.proto";
+
+package tech.brainco.treadmill;
+
+enum ConfigRespError {
+  CONFIG_ERR_SUCCESS   = 0;
+  CONFIG_ERR_HARDWARE  = 1;  // 硬件错误
+  CONFIG_ERR_PARAMETER = 2;  // 参数错误
+  CONFIG_ERR_UNKNOWN   = 3;  // 未知错误
+}
+
+message TreadmillData {
+  enum Status{
+      ST_INVALID = 0;
+      ST_STOP    = 1;
+      ST_RUN     = 2;
+      ST_DECAY   = 3;
+  }
+  uint32 msg_id = 1;
+  Status st = 2;
+  uint32 target_speed = 3;
+  uint32 real_speed = 4;
+  int32 gradient = 5;
+}
+
+message AmpsData {
+  ConfigRespError error = 1;
+  uint32 seq_num = 2;
+  repeated bytes amps_value = 4;
+}
+
+message ImuConfig {
+  enum ImuMode {
+    NOT_SET    = 0;
+    ACC        = 1;
+    GYRO       = 2;
+    ACC_GYRO   = 3;
+    EULER      = 4;
+  }
+
+  ImuMode imu_mode = 1;
+  ImuSampleRate imu_sr = 2;
+}
+
+// flexible sensor configure
+message FlexConfig {
+  SamplingRate sample_rate = 1;
+}
+
+message ImuConfResp {
+  ConfigRespError error = 1;
+  ImuConfig config = 3;
+  float acc_coefficient = 4;  // coefficient for calculating acceleration, eg. acc value on the X-axis = RAW_ADC_x * acc_coefficient
+  float gyro_coefficient = 5;  // coefficient for calculating Gyroscope, eg. Gyro value on the X-axis = RAW_ADC_x * gyro_coefficient
+}
+
+message FlexConfResp {
+  ConfigRespError error = 1;
+  FlexConfig config = 2;
+}
+
+message ImuData {
+  uint32 seq_num = 1;
+  bytes acc_raw_data = 4;  // 16-bit precision, sequence as x-y-z, little endian
+  bytes gyro_raw_data = 6;  // 16-bit precision, sequence as x-y-z, little endian
+  repeated float eular_raw_data = 7;  // valid range is (-180, +180), sequence as yaw-pitch-roll
+  repeated float acc_correction_data = 9;  // sequence as x-y-z , unit(g)
+  repeated float gyro_correction_data = 10; // sequence as x-y-z , unit(dps)
+}
+
+// flexible sensor data
+message FlexData {
+  ConfigRespError error = 1;
+  uint32 seq_num = 2;
+  repeated bytes channel_adc_value = 4;  // 12 bytes for one group, <int16><little endian>, 6 channels in one group
+}
+
