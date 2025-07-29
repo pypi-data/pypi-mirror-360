@@ -1,0 +1,84 @@
+Metadata-Version: 2.1
+Name: icpquery
+Version: 1.2.1
+Summary: A CLI tool for query keyword in China MIIT ICP Website to get ICP Record
+Keywords: MIIT,ICP
+Author-Email: SocialSisterYi <1440239038@qq.com>
+License: MIT
+Project-URL: repository, https://github.com/SocialSisterYi/ICPQuery
+Requires-Python: >=3.11
+Requires-Dist: rich>=13.0
+Requires-Dist: typer>=0.15.0
+Requires-Dist: numpy>=2.3.0
+Requires-Dist: pydantic>=2.11
+Requires-Dist: pycryptodome>=3.23
+Requires-Dist: opencv-python>=4.10
+Requires-Dist: onnxruntime>=1.21
+Requires-Dist: httpx>=0.28
+Description-Content-Type: text/markdown
+
+# ICPQuery
+
+ICPQuery is a CLI tool for query keyword in [**China MIIT ICP Website**](https://beian.miit.gov.cn) to get ICP Record.
+
+It is also Python library that can be invoked by single async function.
+
+## Feature
+
+- The ICP record types can be queried are `domain`、`APP`、`FastAPP`、`MiniAPP`.
+- **Keyword** to be querying what can be domain name / APP name / natural name.
+- Automatically passing click seqence CAPTCHA, based on OpenCV and trained DNN model.
+- Terminal-UI for show querying progress and record data tables.
+
+## Installation
+
+### Install via pypi
+
+The release of `icpquery` is distributed on PyPi(Python Version >= 3.11).
+
+```bash
+pip install icpquery
+```
+
+### Install from source (whl package)
+
+1. Make sure your system already installed **Python >= 3.11** and **pdm**
+
+2. Download package or clone this repository
+
+3. build and install
+
+```bash
+cd ICPQuery
+pdm install
+pdm build
+pip install dist/icpquery-xxx.whl
+```
+
+## Usage
+
+To show results list with TUI use:
+
+```bash
+icpquery 'baidu.com'
+```
+
+To output json/plain to stdo use:
+
+```bash
+icpquery -f json 'baidu.com'
+```
+
+As a library:
+
+```python
+from icpquery import icp_query, SearchType
+import asyncio
+
+async def main():
+    results = await icp_query('baidu.com', search_type=SearchType.DOMAIN)
+    print(results.to_text())
+
+asyncio.run(main())
+
+```
