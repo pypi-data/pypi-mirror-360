@@ -1,0 +1,87 @@
+[project]
+name = "should-color"
+description = "Determine if terminal output should be colored, respecting environment variables"
+authors = [{ name = "Techcable" }]
+license = "MIT OR APACHE-2.0"
+keywords = ["ansi", "color", "clicolor", "no-color", "terminal"]
+readme = "README.md"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: Unix",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Topic :: Terminals",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
+requires-python = ">=3.8"
+dependencies = []
+dynamic = ["version"]
+
+[project.optional-dependencies]
+# support ANSI escape codes on windows
+# this does nothing if not on windows
+colorama = [
+    # version 0.4.6 adds `just_fix_windows_console
+    "colorama>=0.4.6; sys_platform == 'win32' or sys_platform == 'cygwin'",
+]
+
+[dependency-groups]
+mypy = ["mypy~=1.0", { include-group = "typing" }]
+test = ["pytest~=8.3", "pytest-sugar~=1.0"]
+lint = [
+    "ruff~=0.12",
+    "taplo~=0.9",
+    # pin minor version, since adding new lints triggers failes
+    "typos~=1.34.0",
+]
+typing = [
+    "typing-extensions~=4.12",
+    "types-colorama~=0.4.15",
+    "should-color[colorama]",
+]
+dev = [
+    { include-group = "mypy" },
+    { include-group = "test" },
+    { include-group = "lint" },
+]
+
+[project.urls]
+Source = "https://github.com/Techcable/should-color.py"
+
+[build-system]
+requires = [
+    "hatchling",
+    "hatch-vcs",
+]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# needed to actually include the sources in the wheel
+only-include = ["src"]
+sources = ["src"]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.envs.hatch-test]
+# use uv instead of venv/pip
+installer = "uv"
+# Keep in sync with dependency-groups until hatch supports PEP 754
+# See pypa/hatch#1852
+dependencies = [
+    "pytest~=8.3",
+    "pytest-sugar~=1.0",
+]
+extra-dependencies = ["colorama"]
+
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+
+[tool.hatch.build.hooks.vcs]
+# NOTE: Using a version file avoids some overhead
+#
+# This file is explicitly ignored by version control.
+version-file = "src/should_color/_version.py"
