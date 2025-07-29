@@ -1,0 +1,146 @@
+action: "create" # destroy, can passed also to CLI with --action
+registry_config_file: !ENV "${HOME}/registry-config.json"
+parallel: True
+clusters_install_data_directory: "/tmp/clusters-data"
+s3_bucket_name: "openshift-cli-installer"
+s3_bucket_path: "openshift-ci"
+ocm_token: !ENV "${OCM_TOKEN}"
+ssh_key_file: !ENV "${HOME}/.ssh/id_rsa.pub"
+docker_config_file: !ENV "${HOME}/.docker/config.json"
+aws_access_key_id: !ENV "${AWS_ACCESS_KEY}"
+aws_secret_access_key: !ENV "${AWS_SECRET_ACCESS_KEY}"
+aws_account_id: !ENV "${AWS_ACCOUNT_ID}"
+gcp_service_account_file: !ENV "${HOME}/gcp-service-account.json"
+must_gather_output_dir: null
+
+clusters:
+# AWS OSD cluster
+- name: aws-osd-c1  # name-prefix can be passed instead of name
+  platform: aws-osd
+  region: us-east-2
+  version: "4.13"
+  channel-group: stable
+  compute-machine-type: m5.4xlarge
+  timeout: 90m
+  replicas: 2
+  fips: True
+  ocm-env: stage
+  expiration-time: 4h
+
+# AWS OSD cluster with auto-region option
+- name: aws-osd-c2
+  platform: aws-osd
+  auto-region: True
+  version: "4.13"
+  channel-group: stable
+  compute-machine-type: m5.4xlarge
+  timeout: 90m
+  replicas: 2
+  fips: True
+  ocm-env: stage
+  expiration-time: 4h
+
+# GCP OSD cluster
+- name: gcp-osd-c1
+  platform: gcp-osd
+  region: us-east1
+  version: "4.13"
+  channel-group: stable
+  compute-machine-type: custom-4-16384
+  timeout: 90m
+  replicas: 2
+  fips: True
+  ocm-env: stage
+  expiration-time: 4h
+  acm-observability: True
+  acm-observability-storage-type: s3
+  acm-observability-s3-access-key-id: !ENV "${AWS_ACCESS_KEY_ID}"
+  acm-observability-s3-secret-access-key: !ENV "${AWS_SECRET_ACCESS_KEY}"
+  acm-observability-s3-region: us-east-1
+
+# Rosa cluster with ACM and observability deployed and attach `rosa-c2` cluster to the ACM hub
+- name: rosa-c1
+  platform: rosa
+  region: us-east-2
+  version: "4.13"
+  channel-group: stable
+  compute-machine-type: m5.4xlarge
+  timeout: 90m
+  replicas: 2
+  fips: True
+  ocm-env: stage
+  acm: True
+  acm-observability: True
+  acm-observability-storage-type: s3
+  acm-clusters:
+    - rosa-c2
+
+# Rosa cluster (Will be attahced to `rosa-c1` ACM hub)
+- name: rosa-c2
+  platform: rosa
+  region: us-east-2
+  version: "4.13"
+  channel-group: stable
+  compute-machine-type: m5.4xlarge
+  timeout: 90m
+  replicas: 2
+  fips: True
+  ocm-env: stage
+
+# Hypershift cluster
+- name: hyper-c1
+  platform: hypershift
+  region: us-west-2
+  version: "4.13"
+  channel-group: stable
+  compute-machine-type: m5.4xlarge
+  timeout: 90m
+  replicas: 2
+  ocm-env: stage
+  expiration-time: 4h
+  private-subnets:
+    - 10.0.1.0/24
+    - 10.0.2.0/24
+  public-subnets:
+    - 10.0.101.0/24
+    - 10.0.102.0/24
+  cidr: 10.0.0.0/16
+
+# AWS IPI cluster
+- name: aws-ipi-c1
+  base-domain: aws.domain.example.com
+  platform: aws
+  region: us-east-2
+  version: "4.13"
+  stream: stable
+  timeout: 4h
+  worker-replicas: 2
+  worker-flavor: m5.4xlarge
+  worker-root-disk-size: 128
+  log_level: info # optional, default: "error", supported options are debug, info, warn, error
+
+# GCP IPI cluster
+- name: gcp-ipi-c1
+  base-domain: gcp.domain.example.com
+  platform: gcp
+  region: us-east1
+  version: "4.13"
+  stream: stable
+  timeout: 4h
+  worker-replicas: 2
+  worker-flavor: custom-4-16384
+  worker-root-disk-size: 128
+  log_level: info # optional, default: "error", supported options are debug, info, warn, error
+
+# AWS IPI cluster with auto-region option
+- name: aws-ipi-c2
+  base-domain: aws.domain.example.com
+  platform: aws
+  auto-region: True
+  version: "4.13"
+  stream: stable
+  timeout: 4h
+  worker-replicas: 2
+  worker-flavor: m5.4xlarge
+  worker-root-disk-size: 128
+  log_level: info # optional, default: "error", supported options are debug, info, warn, error
