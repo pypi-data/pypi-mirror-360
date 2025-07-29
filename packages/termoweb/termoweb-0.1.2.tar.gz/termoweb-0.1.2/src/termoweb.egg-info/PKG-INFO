@@ -1,0 +1,91 @@
+Metadata-Version: 2.4
+Name: termoweb
+Version: 0.1.2
+Summary: Python client library for controlling Termo thermostats via web interface
+Author-email: Dan Faudemer <dan.faudemer@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/dan/termoweb
+Project-URL: Repository, https://github.com/dan/termoweb
+Project-URL: Issues, https://github.com/dan/termoweb/issues
+Keywords: thermostat,termo,home-automation,temperature-control
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Home Automation
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: httpx>=0.28.1
+Dynamic: license-file
+
+# Termoweb
+
+Python client library for controlling Termo thermostats via web interface.
+
+## Installation
+
+```bash
+pip install termoweb
+```
+
+## Usage
+
+```python
+from termoweb import Termoweb
+
+# Initialize client with your credentials
+client = Termoweb(email="your_email@example.com", password="your_password")
+
+# Connect to the service
+client.connect()
+
+# Get all heaters/radiators
+heaters = client.get_devices()
+print(heaters)
+
+# Set heater temperature and mode
+client.set_heater(heater_id=1, mode="heat", target_temp=21.5)
+```
+
+## API Reference
+
+### `Termoweb(email, password)`
+Initialize the client with your Termoweb credentials.
+
+### `connect()`
+Authenticate and establish connection to the Termoweb service.
+
+### `get_devices()`
+Returns a dictionary of all connected heaters with their current settings:
+```python
+{
+    1: {
+        "name": "Living Room",
+        "mode": "heat",
+        "target_temp": 21.0,
+        "room_temp": 20.5
+    }
+}
+```
+
+### `set_heater(heater_id, mode, target_temp)`
+Set the mode and target temperature for a specific heater.
+
+## Exception Handling
+
+The library includes custom exceptions:
+- `TermowebError`: Base exception
+- `AuthenticationError`: Authentication failures
+- `APIError`: API request failures
+
+## Supported Devices
+
+| Device Type       | Supported |
+|-------------------|-----------|
+| Heaters/Radiators | ✅        |
+| Thermostats       | ❌        |
+| Power Monitors    | ❌        |
