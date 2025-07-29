@@ -1,0 +1,1 @@
+from .lps22hh import LPS22HH
