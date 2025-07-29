@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=77.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+dynamic = ["dependencies"]
+
+name        = "kgrok"
+description = "forward local processes into k8s cluster"
+
+# TODO: use dynamic version
+#   dynamic = ["version"]
+# https://packaging.python.org/en/latest/guides/single-sourcing-package-version/#single-sourcing-the-version
+version     = "0.1.5"
+
+requires-python = ">=3.12"
+authors     = [
+  {name = "Daniel Golding"}
+]
+
+readme = {file = "README.md", content-type = "text/markdown" }
+keywords      = ["kubernetes", "proxy"]
+license       = "MIT"
+license-files = ["LICENSE.txt"]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Topic :: Internet :: Proxy Servers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Homepage  = "https://github.com/cakemanny/kgrok"
+Repository  = "https://github.com/cakemanny/kgrok.git"
+
+[project.scripts]
+kgrok        = "kgrok.local:main"
+kgrok-remote = "kgrok.remote:main"
+
+[tool.setuptools.data-files]
+"share/man/man1" = [
+  "man/kgrok.1",
+]
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = [
+  "tests",
+]
+trio_mode = true
+
+[tool.ruff]
+src = ["src", "test"]
+target-version = "py312"
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = [
+  "E4", "E7", "E9", "F",  # defaults
+  "ASYNC",
+  "TRIO",
+]
+
+[tool.pyright]
+
+# due to way lightkube exports stuff
+reportPrivateImportUsage = false
