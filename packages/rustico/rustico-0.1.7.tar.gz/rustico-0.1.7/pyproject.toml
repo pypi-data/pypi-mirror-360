@@ -1,0 +1,192 @@
+[project]
+name = "rustico"
+version = "0.1.7"
+description = "A Rust-inspired, ergonomic Result type for Python with first-class async support, pattern matching, and a clean API."
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    { name = "Simon Waiblinger", email = "16225108+simwai@users.noreply.github.com" },
+]
+keywords = [
+    "result",
+    "rust",
+    "error-handling",
+    "async",
+    "pattern-matching",
+    "monad",
+    "decorator",
+    "type-safety",
+    "python",
+    "functional-programming",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = []
+
+[project.license]
+text = "MIT"
+
+[project.urls]
+Homepage = "https://github.com/simwai/rustico"
+Documentation = "https://github.com/simwai/rustico#readme"
+Source = "https://github.com/simwai/rustico"
+Tracker = "https://github.com/simwai/rustico/issues"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.1",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.24.0",
+    "pre-commit>=3.5.0",
+    "twine>=6.1.0",
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.15",
+    "lazydocs>=0.4.8",
+]
+
+[tool.ruff]
+exclude = [
+    ".git",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "__pypackages__",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "*.json",
+]
+line-length = 120
+indent-width = 2
+target-version = "py38"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "W",
+    "F",
+    "I",
+    "B",
+    "C4",
+    "UP",
+    "RUF",
+    "E501",
+]
+ignore = [
+    "B008",
+    "C901",
+    "RUF012",
+    "W293",
+]
+fixable = [
+    "ALL",
+]
+unfixable = []
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.per-file-ignores]
+"src/**/__init__.py" = [
+    "F401",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "src",
+]
+force-single-line = false
+combine-as-imports = true
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false
+docstring-code-line-length = "dynamic"
+
+[tool.pdm.scripts]
+start = "python -m src.rustico"
+format = "ruff format src/"
+test = "pytest"
+lazydocs-build = "lazydocs --output-path=./docs/api src/"
+mkdocs-build = "mkdocs build"
+mkdocs-serve = "mkdocs serve"
+upload-testpypi = "twine upload -r testpypi dist/* --skip-existing --config ./.pypirc"
+upload-pypi = "twine upload -r pypi dist/* --skip-existing --config ./.pypirc"
+
+[tool.pdm.scripts.docs]
+composite = [
+    "pdm lazydocs-build",
+    "pdm mkdocs-build",
+]
+
+[tool.pdm.scripts.test-publish]
+composite = [
+    "pdm build",
+    "pdm upload-testpypi",
+]
+
+[tool.pdm.scripts.normal-publish]
+composite = [
+    "pdm build",
+    "pdm upload-pypi",
+]
+
+[tool.pdm.build]
+includes = [
+    "src",
+]
+package-dir = "src"
+
+[tool.pyright]
+include = [
+    "src/**",
+]
+exclude = [
+    "**/__pycache__/**",
+    ".ruff_cache/**",
+    "**/pdm/python/**",
+]
+pythonPlatform = "All"
+pythonVersion = "3.8"
+typeCheckingMode = "off"
+reportArgumentType = false
+reportAssignmentType = false
+reportAttributeAccessIssue = false
+reportCallIssue = false
+reportGeneralTypeIssues = false
+reportIncompatibleMethodOverride = false
+reportIncompatibleVariableOverride = false
+reportIndexIssue = false
+reportMissingImports = false
+reportOperatorIssue = false
+reportOptionalMemberAccess = false
+reportOptionalOperand = false
+reportPossiblyUnboundVariable = false
+reportPrivateImportUsage = false
+reportRedeclaration = false
+reportReturnType = false
+reportTypedDictNotRequiredAccess = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
+
+[build-system]
+requires = [
+    "pdm-backend",
+]
+build-backend = "pdm.backend"
