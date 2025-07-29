@@ -1,0 +1,484 @@
+Metadata-Version: 2.1
+Name: marearts-xcolor
+Version: 0.0.6
+Summary: Advanced color extraction and similarity analysis toolkit
+Home-page: https://github.com/marearts/marearts-xcolor
+Author: MareArts
+Author-email: MareArts <contact@marearts.com>
+License: MIT License
+        
+        Copyright (c) 2024 MareArts
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+Project-URL: Homepage, https://github.com/marearts/marearts-xcolor
+Project-URL: Bug Reports, https://github.com/marearts/marearts-xcolor/issues
+Project-URL: Source, https://github.com/marearts/marearts-xcolor
+Keywords: color extraction,color analysis,computer vision,image processing
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: opencv-python==4.10.0.84
+Requires-Dist: scikit-learn>=1.0.0
+Requires-Dist: pillow>=8.0.0
+Requires-Dist: matplotlib>=3.5.0
+Requires-Dist: scipy>=1.7.0
+Requires-Dist: numpy==1.23.5; python_version < "3.12"
+Requires-Dist: numpy==1.26.0; python_version >= "3.12"
+Provides-Extra: all
+Requires-Dist: cupy-cuda12x>=12.0.0; sys_platform == "linux" and extra == "all"
+Requires-Dist: cupy-cuda11x>=11.0.0; sys_platform == "linux" and extra == "all"
+Requires-Dist: cuml>=22.12.0; sys_platform == "linux" and extra == "all"
+Provides-Extra: gpu
+Requires-Dist: cupy-cuda12x>=12.0.0; sys_platform == "linux" and extra == "gpu"
+Requires-Dist: cupy-cuda11x>=11.0.0; sys_platform == "linux" and extra == "gpu"
+Requires-Dist: cuml>=22.12.0; sys_platform == "linux" and extra == "gpu"
+
+# MareArts XColor
+
+[![PyPI version](https://badge.fury.io/py/marearts-xcolor.svg)](https://badge.fury.io/py/marearts-xcolor)
+[![Python](https://img.shields.io/pypi/pyversions/marearts-xcolor.svg)](https://pypi.org/project/marearts-xcolor/)
+[![Downloads](https://pepy.tech/badge/marearts-xcolor)](https://pepy.tech/project/marearts-xcolor)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A robust, modern color extraction library for extracting dominant colors from images with **optional GPU acceleration**, mask-based region selection, advanced preprocessing, and color similarity analysis. Optimized with Cython for high performance and cross-platform compatibility.
+
+**Version 0.0.5** - Enhanced build system with ARM64 support, improved performance, and optional GPU acceleration.
+
+## ✨ Features
+
+🚀 **Dual Performance Modes**: CPU-only for compatibility, optional GPU acceleration for speed  
+🔍 **Color Similarity Analysis**: Find how much specific colors appear in images  
+🎭 **Mask Support**: Extract colors from specific regions using mask images  
+⚡ **Modern Algorithms**: K-means and DBSCAN clustering with LAB color space  
+🎨 **Accurate Results**: Perceptual LAB color space for better color accuracy  
+🏗️ **Cross-Platform**: Pre-built wheels for Linux (x86_64, ARM64), macOS, Windows  
+📦 **Easy Installation**: Works out-of-the-box with optional GPU dependencies  
+🔧 **Developer Friendly**: Dual Python/Cython implementation for easy contribution  
+
+## 📦 Installation
+
+### For CPU Users (Recommended - Works Everywhere)
+```bash
+pip install marearts-xcolor
+```
+Perfect for most users. Installs quickly with no GPU dependencies.
+
+### For GPU Users (Optional Acceleration)
+```bash
+# For CUDA 12.x users
+pip install marearts-xcolor[gpu]
+
+# For CUDA 11.x users
+pip install marearts-xcolor cupy-cuda11x cuml
+
+# Check your CUDA version first
+nvidia-smi
+```
+
+> 💡 **Smart Fallback**: Even GPU installations work on CPU-only systems with automatic fallback.
+
+### Check Your Installation
+```python
+from marearts_xcolor.gpu_utils import print_gpu_info
+print_gpu_info()
+```
+
+## 🚀 Quick Start
+
+### Basic Usage (Works for Everyone)
+```python
+from marearts_xcolor import ColorExtractor
+
+# Auto mode - uses GPU if available, CPU otherwise
+extractor = ColorExtractor(n_colors=5, use_gpu='auto')
+colors = extractor.extract_colors('image.jpg')
+
+print(colors)
+# Output: [{'color': (255, 128, 64), 'percentage': 35.2}, ...]
+```
+
+### GPU Mode Examples
+```python
+# Recommended: Auto mode (best of both worlds)
+extractor = ColorExtractor(use_gpu='auto')
+
+# CPU only (guaranteed compatibility)
+extractor = ColorExtractor(use_gpu='never')
+
+# GPU required (only if you need guaranteed acceleration)
+extractor = ColorExtractor(use_gpu='force')
+```
+
+## 📚 Usage Examples
+
+### 1. Basic Color Extraction
+
+```python
+from marearts_xcolor import ColorExtractor
+
+# Create extractor with auto GPU detection
+extractor = ColorExtractor(n_colors=5, use_gpu='auto')
+
+# From file path
+colors = extractor.extract_colors('image.jpg')
+
+# From OpenCV image
+import cv2
+image = cv2.imread('image.jpg')
+colors = extractor.extract_colors(image)
+
+# From PIL image
+from PIL import Image
+import numpy as np
+pil_image = Image.open('image.jpg')
+image_array = np.array(pil_image)
+colors = extractor.extract_colors(image_array)
+```
+
+### 2. Performance Comparison (CPU vs GPU)
+
+```python
+import time
+import numpy as np
+
+# Create large test image
+large_image = np.random.randint(0, 255, (2000, 2000, 3), dtype=np.uint8)
+
+# Test CPU performance
+extractor_cpu = ColorExtractor(n_colors=8, use_gpu='never')
+start = time.time()
+colors_cpu = extractor_cpu.extract_colors(large_image)
+cpu_time = time.time() - start
+
+# Test GPU performance (automatically falls back to CPU if unavailable)
+extractor_gpu = ColorExtractor(n_colors=8, use_gpu='auto')
+start = time.time()
+colors_gpu = extractor_gpu.extract_colors(large_image)
+gpu_time = time.time() - start
+
+print(f"CPU time: {cpu_time:.2f}s")
+print(f"GPU time: {gpu_time:.2f}s")
+if gpu_time < cpu_time:
+    print(f"GPU speedup: {cpu_time/gpu_time:.1f}x faster!")
+```
+
+### 3. With Mask (Region Selection)
+
+```python
+# Extract colors only from white areas of mask
+colors = extractor.extract_colors('image.jpg', 'mask.jpg')
+
+# Create circular mask
+import numpy as np
+import cv2
+
+height, width = 500, 500
+mask = np.zeros((height, width), dtype=np.uint8)
+cv2.circle(mask, (250, 250), 200, 255, -1)
+colors = extractor.extract_colors(image, mask)
+```
+
+### 4. Color Similarity Analysis
+
+```python
+# Define colors you want to find
+target_colors = {
+    'red': (255, 0, 0),
+    'white': (255, 255, 255),
+    'blue': (0, 0, 255)
+}
+
+# Find how much each color appears in the image
+results = extractor.analyze_color_similarity('image.jpg', target_colors)
+
+for color_name, result in results.items():
+    print(f"{color_name}: {result['percentage']:.1f}% "
+          f"(similarity: {result['similarity']:.1f}%)")
+```
+
+### 5. Brand Color Analysis
+
+```python
+# Check brand color presence
+brand_colors = {
+    'brand_blue': (0, 123, 255),
+    'brand_red': (220, 53, 69),
+    'brand_green': (40, 167, 69)
+}
+
+results = extractor.analyze_color_similarity('product.jpg', brand_colors)
+```
+
+### 6. Performance Optimization Settings
+
+```python
+# Fast mode - best for real-time processing
+fast_extractor = ColorExtractor(
+    n_colors=3,
+    algorithm='kmeans',
+    preprocessing=False,  # Skip preprocessing
+    lab_space=False,      # Use RGB
+    use_gpu='auto'        # Use GPU if available
+)
+
+# Accurate mode - best for detailed analysis
+accurate_extractor = ColorExtractor(
+    n_colors=8,
+    algorithm='kmeans',
+    preprocessing=True,   # Enable preprocessing
+    lab_space=True,       # Use LAB color space
+    use_gpu='auto'        # Use GPU if available
+)
+
+# CPU-only mode - guaranteed compatibility
+cpu_extractor = ColorExtractor(
+    n_colors=5,
+    use_gpu='never'       # Force CPU mode
+)
+```
+
+## 🖥️ Command Line Interface
+
+```bash
+# Basic extraction
+marearts-xcolor image.jpg --colors 5
+
+# With mask and visualization
+marearts-xcolor image.jpg --mask mask.jpg --colors 8 --visualize output.png
+
+# Fast mode
+marearts-xcolor image.jpg --fast --colors 3
+
+# Different algorithm
+marearts-xcolor image.jpg --algorithm dbscan --colors 5
+
+# Check version and GPU status
+marearts-xcolor --version
+```
+
+## 📖 API Reference
+
+### ColorExtractor Class
+
+```python
+ColorExtractor(n_colors=5, algorithm='kmeans', preprocessing=True, lab_space=True, use_gpu='auto')
+```
+
+**Parameters:**
+- `n_colors`: Number of dominant colors to extract (default: 5)
+- `algorithm`: 'kmeans' or 'dbscan' (default: 'kmeans')
+- `preprocessing`: Enable noise reduction and lighting normalization (default: True)
+- `lab_space`: Use LAB color space for accuracy (default: True)
+- `use_gpu`: GPU usage mode - 'auto', 'never', or 'force' (default: 'auto')
+
+### GPU Modes Explained
+
+| Mode | Behavior | Use Case |
+|------|----------|----------|
+| `'auto'` | Uses GPU if available, falls back to CPU | **Recommended** - Best performance with compatibility |
+| `'never'` | Always uses CPU | Guaranteed compatibility, consistent performance |
+| `'force'` | Requires GPU, fails if unavailable | Only when GPU acceleration is mandatory |
+
+### Methods
+
+#### `extract_colors(image, mask=None)`
+Extract dominant colors from image.
+
+**Returns:** List of `{'color': (R,G,B), 'percentage': float}`
+
+#### `analyze_color_similarity(image, target_colors, mask=None)`
+Analyze how much each target color appears in the image.
+
+**Returns:** Dict with similarity analysis for each target color
+
+### GPU Utilities
+
+```python
+from marearts_xcolor.gpu_utils import print_gpu_info, print_installation_guide
+
+# Check GPU status and get installation instructions
+print_gpu_info()
+
+# Show complete installation guide
+print_installation_guide()
+```
+
+## 📊 Example Output
+
+**Color Extraction:**
+```json
+[
+  {"color": [255, 128, 64], "percentage": 35.2},
+  {"color": [120, 200, 150], "percentage": 28.7},
+  {"color": [80, 80, 80], "percentage": 20.1}
+]
+```
+
+**Color Similarity Analysis:**
+```json
+{
+  "red": {
+    "percentage": 20.5,
+    "similarity": 95.0,
+    "closest_color": [248, 12, 8]
+  },
+  "blue": {
+    "percentage": 15.3,
+    "similarity": 88.2,
+    "closest_color": [10, 50, 200]
+  }
+}
+```
+
+## ⚡ Performance Guide
+
+### When GPU Acceleration Helps
+- ✅ Large images (>1000x1000 pixels)
+- ✅ Many colors requested (>10)
+- ✅ Batch processing multiple images
+- ✅ DBSCAN algorithm on large datasets
+
+### When CPU is Sufficient
+- ✅ Small to medium images (<500x500 pixels)
+- ✅ Few colors requested (<5)
+- ✅ Single image processing
+- ✅ K-means algorithm
+
+### Benchmark Your System
+```python
+from marearts_xcolor.gpu_utils import print_gpu_info
+
+# Check your GPU status
+print_gpu_info()
+
+# Run the performance comparison example above
+```
+
+## 🔧 Installation Troubleshooting
+
+### Common Issues & Solutions
+
+#### GPU Libraries Not Found
+```
+Error: GPU forced but not available
+```
+**Solution:**
+```bash
+# Install GPU dependencies
+pip install marearts-xcolor[gpu]
+
+# Or manually
+pip install cupy-cuda12x cuml  # for CUDA 12.x
+pip install cupy-cuda11x cuml  # for CUDA 11.x
+```
+
+#### Check Your CUDA Version
+```bash
+nvidia-smi
+```
+
+#### CuPy Installation Issues
+```bash
+# For conda users
+conda install cupy
+
+# For pip users, check CUDA version and install matching CuPy
+pip install cupy-cuda12x  # for CUDA 12.x
+pip install cupy-cuda11x  # for CUDA 11.x
+```
+
+#### Still Having Issues?
+```python
+# Use CPU-only mode (always works)
+extractor = ColorExtractor(use_gpu='never')
+```
+
+### Platform-Specific Notes
+
+- **Linux**: Full GPU support with CUDA
+- **Windows**: CuPy support available, cuML support limited
+- **macOS**: CPU-only recommended (no CUDA support)
+
+## 📋 Requirements
+
+### Core Dependencies (Always Installed)
+- Python 3.9, 3.10, 3.11, 3.12
+- opencv-python==4.10.0.84
+- scikit-learn>=1.0.0
+- numpy (version-specific: 1.23.5 for Python <3.12, 1.26.0 for Python ≥3.12)
+- matplotlib>=3.5.0
+- pillow>=8.0.0
+- scipy>=1.7.0
+
+### Optional GPU Dependencies
+- cupy-cuda12x (for CUDA 12.x) or cupy-cuda11x (for CUDA 11.x)
+- cuml>=22.12.0 (RAPIDS cuML for GPU-accelerated clustering)
+
+## 🌍 Platform Support
+
+- **Linux**: x86_64 and ARM64 (manylinux2014) with optional GPU acceleration
+- **macOS**: Intel (x86_64) and Apple Silicon (arm64) - CPU only
+- **Windows**: AMD64 and ARM64 with optional GPU acceleration
+
+## 💡 Best Practices
+
+### For Most Users
+```python
+# Recommended approach - works everywhere, fast when possible
+extractor = ColorExtractor(use_gpu='auto')
+```
+
+### For Production/CI
+```python
+import os
+# Force CPU mode in CI environments for consistency
+gpu_mode = 'never' if os.getenv('CI') else 'auto'
+extractor = ColorExtractor(use_gpu=gpu_mode)
+```
+
+### For GPU-Intensive Applications
+```python
+# Only use 'force' mode if GPU acceleration is critical
+try:
+    extractor = ColorExtractor(use_gpu='force')
+except RuntimeError:
+    print("GPU required but not available. Please install GPU dependencies.")
+    sys.exit(1)
+```
+
+## 🔗 Links
+
+- **GitHub**: [https://github.com/MareArts/marearts-xcolor](https://github.com/MareArts/marearts-xcolor)
+- **PyPI**: [https://pypi.org/project/marearts-xcolor/](https://pypi.org/project/marearts-xcolor/)
+- **Documentation**: [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)
+- **Issues**: [GitHub Issues](https://github.com/MareArts/marearts-xcolor/issues)
+
+## 📄 License
+
+MIT License
+
+---
+
+**Made with ❤️ by MareArts** - Bringing GPU acceleration to color extraction without the complexity!
