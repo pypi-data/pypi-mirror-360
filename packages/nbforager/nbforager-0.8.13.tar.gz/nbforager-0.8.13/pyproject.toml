@@ -1,0 +1,134 @@
+[tool.poetry]
+name = "nbforager"
+version = "0.8.13"
+description = "Python package designed to assist in working with the Netbox REST API. The filter parameters are identical to those in the Web UI filter form. It replaces brief data with full information, and Netbox objects are represented as a recursive multidimensional dictionary."
+authors = ["Vladimirs Prusakovs <vladimir.prusakovs@gmail.com>"]
+readme = "README.rst"
+package-mode = true
+license = "Apache-2.0"
+keywords = ["netbox"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.11",
+    "Natural Language :: English",
+]
+
+[tool.poetry.urls]
+homepage = "https://github.com/vladimirs-git/nbforager"
+repository = "https://github.com/vladimirs-git/nbforager"
+"Bug Tracker" = "https://github.com/vladimirs-git/nbforager/issues"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+#python = "^3.11"
+#
+netports = ">=1.1"
+pydantic = "^2"
+requests = "^2"
+tabulate = "^0.9"
+vhelpers = ">=0.5"
+
+[tool.poetry.group.test.dependencies]
+dictdiffer = "^0.9.0"
+pytest = "^8.3.5"
+pytest-mock = "^3.14.0"
+requests-mock = "^1.12.1"
+
+[tool.poetry.group.docs.dependencies]
+readthedocs-sphinx-search = "^0.3.1"
+sphinx = "7.1.2"
+sphinx-rtd-theme = "^1.3.0"
+sphinxnotes-strike = "^1.2"
+
+[tool.poetry.group.dev.dependencies]
+poetry = "^2.1.2"
+#
+mypy = "^1.15.0"
+pygments = "^2.19.1"  # rst-lint
+pylint = "^3.3.6"
+pytest-cov = "^6.1.1"
+restructuredtext-lint = "^1.4.0"
+ruff = "^0.11.4"
+twine = "^6.1.0"
+#types-pyyaml = "^6.0.12.12"
+types-requests = "^2.32.0.20250328"
+types-tabulate = "^0.9.0.20241207"
+typing-extensions = "^4.9.0"
+
+[tool.poetry.extras]
+test = ["pytest"]
+
+[tool.pylint]
+#disable = "fixme"
+max-args = 10
+max-attributes = 10
+max-bool-expr = 10
+max-line-length = 100
+max-locals = 20
+max-nested-blocks = 6
+
+[tool.pylint.message_control]
+enable = ["too-many-arguments"]
+max-args = 10
+
+[tool.pylint."tests.*"]
+disable = [
+    "assigning-non-slot",
+    "duplicate-code",
+    "no-member",
+    "protected-access",
+    "redefined-builtin",
+    "redefined-outer-name",
+    "too-many-positional-arguments",
+    "too-many-statements",
+    "unused-import",
+    "use-dict-literal",
+]
+
+[tool.mypy]
+python_version = "3.11"
+exclude = ["_notes"]
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+
+[tool.ruff]
+exclude = [
+    ".git",
+    ".idea",
+    ".mypy_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".venv",
+    "_notes",
+    "dist",
+    "examples",
+    "sdist",
+    "temp",
+    "tmp",
+    "venv",
+]
+line-length = 100
+indent-width = 4
+target-version = "py311"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+    "F401",  # imported but unused
+    "F811",  # Redefinition of unused
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false  # arguments on separate lines
+line-ending = "auto"
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"  # docstring style
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
