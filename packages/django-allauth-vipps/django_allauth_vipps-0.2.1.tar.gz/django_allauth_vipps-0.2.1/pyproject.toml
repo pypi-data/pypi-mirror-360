@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "django-allauth-vipps"
+version = "0.2.1"
+description = "A configurable Django Allauth provider for Vipps Login."
+authors = ["Daniel Persen <danpe_jobo@hotmail.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/danpejobo/django-allauth-vipps" # Update with your repo URL
+keywords = ["django", "allauth", "vipps", "authentication", "login"]
+packages = [{include = "vipps_auth"}]
+classifiers = [
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 5.1",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.11",
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+django = ">=4.2"
+django-allauth = {extras = ["socialaccount"], version = "^65.9.0"}
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-django = "^4.8.0"
+requests-mock = "^1.12.0" # For mocking HTTP requests in tests
+djangorestframework-simplejwt = "^5.5.0"
+dj-rest-auth = {extras = ["with-social"], version = "^7.0.1"}
+djangorestframework = "^3.16.0"
+
+
+[tool.poetry.group.deployment.dependencies]
+gunicorn = "^23.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# Configuration for pytest
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.settings"
+pythonpath = ["."]
+python_files = "test_*.py"
