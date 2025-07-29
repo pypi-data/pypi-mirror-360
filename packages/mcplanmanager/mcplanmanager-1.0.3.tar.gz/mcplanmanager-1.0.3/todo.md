@@ -1,0 +1,1 @@
+- [ ] 将 `MCPlanManager` 发布到 TestPyPI 并使用 `uvx` 进行测试
