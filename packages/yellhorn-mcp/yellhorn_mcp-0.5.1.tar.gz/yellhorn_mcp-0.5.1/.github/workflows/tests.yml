@@ -1,0 +1,48 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install .[dev]
+    - name: Format check with black
+      run: |
+        black --check yellhorn_mcp tests
+    - name: Import sort check with isort
+      run: |
+        isort --check yellhorn_mcp tests
+    - name: Test with pytest (coverage)
+      run: |
+        pytest --cov=yellhorn_mcp --cov=examples --cov-report=xml --cov-report=term
+    - name: Fail if coverage below threshold
+      run: |
+        python - <<'PY'
+        import xml.etree.ElementTree as ET, sys
+        tree = ET.parse('coverage.xml')
+        root = tree.getroot()
+        total = root.attrib.get('line-rate')
+        if float(total) < 0.70:
+            print(f"::error::Coverage too low: {float(total)*100:.2f}% (required 70%)")
+            sys.exit(1)
+        else:
+            print(f"Coverage passed: {float(total)*100:.2f}% (required ≥70%)")
+        PY
