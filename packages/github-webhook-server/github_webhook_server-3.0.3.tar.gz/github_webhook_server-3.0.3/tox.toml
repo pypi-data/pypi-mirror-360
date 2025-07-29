@@ -1,0 +1,28 @@
+skipsdist = true
+
+envlist = ["unused-code", "unittests"]
+
+[env.unused-code]
+deps = ["python-utility-scripts"]
+commands = [
+  [
+    "pyutils-unusedcode",
+    "--exclude-function-prefixes",
+    "'process_webhook','validate_config_file'",
+  ],
+]
+
+[env.unittests]
+deps = ["uv"]
+commands = [
+  [
+    "uv",
+    "run",
+    "--extra",
+    "tests",
+    "pytest",
+    "-n",
+    "auto",
+    "webhook_server/tests",
+  ],
+]
