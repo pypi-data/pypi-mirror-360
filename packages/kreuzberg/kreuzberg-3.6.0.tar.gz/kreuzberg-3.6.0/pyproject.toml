@@ -1,0 +1,247 @@
+[build-system]
+build-backend = "hatchling.build"
+
+requires = [ "hatchling" ]
+
+[project]
+name = "kreuzberg"
+version = "3.6.0"
+description = "A text extraction library supporting PDFs, images, office documents and more"
+readme = "README.md"
+keywords = [
+  "document-processing",
+  "entity-extraction",
+  "image-to-text",
+  "keyword-extraction",
+  "named-entity-recognition",
+  "ner",
+  "ocr",
+  "pandoc",
+  "pdf-extraction",
+  "rag",
+  "spacy",
+  "table-extraction",
+  "tesseract",
+  "text-extraction",
+  "text-processing",
+]
+license = { text = "MIT" }
+authors = [ { name = "Na'aman Hirschfeld", email = "nhirschfed@gmail.com" } ]
+requires-python = ">=3.10"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Text Processing :: General",
+  "Topic :: Utilities",
+  "Typing :: Typed",
+]
+
+dependencies = [
+  "anyio>=4.9.0",
+  "charset-normalizer>=3.4.2",
+  "exceptiongroup>=1.2.2; python_version<'3.11'",
+  "html-to-markdown>=1.4.0",
+  "msgspec>=0.18.0",
+  "playa-pdf>=0.6.1",                                 # pinned due to breaking changes in 0.5.0
+  "psutil>=7.0.0",
+  "pypdfium2==4.30.0",                                # pinned due to bug in 4.30.1, until v5 is stable
+  "python-calamine>=0.3.2",
+  "python-pptx>=1.0.2",
+  "typing-extensions>=4.14.0; python_version<'3.12'",
+]
+
+optional-dependencies.all = [
+  "kreuzberg[api,chunking,cli,easyocr,entity-extraction,gmft,langdetect,paddleocr]",
+]
+optional-dependencies.api = [
+  "litestar[standard,structlog,opentelemetry]>=2.16.0",
+]
+
+optional-dependencies.chunking = [ "semantic-text-splitter>=0.27.0" ]
+optional-dependencies.cli = [
+  "click>=8.2.1",
+  "rich>=14.0.0",
+  "tomli>=2.0.0; python_version<'3.11'",
+]
+optional-dependencies.easyocr = [ "easyocr>=1.7.2" ]
+optional-dependencies.entity-extraction = [ "keybert>=0.9.0", "spacy>=3.8.7" ]
+optional-dependencies.gmft = [ "gmft>=0.4.2" ]
+optional-dependencies.langdetect = [ "fast-langdetect>=0.3.2" ]
+optional-dependencies.paddleocr = [
+  "paddleocr>=3.1.0",
+  "paddlepaddle>=3.1.0",
+  "setuptools>=80.9.0",
+]
+urls.homepage = "https://github.com/Goldziher/kreuzberg"
+
+scripts.kreuzberg = "kreuzberg.cli:cli"
+
+[dependency-groups]
+dev = [
+  "covdefaults>=2.3.0",
+  "mypy>=1.16.1",
+  "pre-commit>=4.2.0",
+  "pytest>=8.4.1",
+  "pytest-cov>=6.2.1",
+  "pytest-mock>=3.14.0",
+  "pytest-timeout>=2.4.0",
+  "ruff>=0.12.1",
+  "trio>=0.30.0",
+  "uv-bump",
+]
+doc = [
+  "mkdocs>=1.6.1",
+  "mkdocs-git-revision-date-localized-plugin>=1.4.5",
+  "mkdocs-material[imaging]>=9.6.9",
+  "mkdocs-minify-plugin>=0.8.0",
+  "mkdocstrings[python]>=0.29.0",
+]
+
+[tool.setuptools]
+packages = [ "kreuzberg" ]
+
+[tool.setuptools.package-data]
+kreuzberg = [ "py.typed" ]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+src = [ "kreuzberg", "tests" ]
+format.docstring-code-line-length = 120
+format.docstring-code-format = true
+lint.select = [ "ALL" ]
+lint.ignore = [
+  "ANN401",  # Dynamically typed ANY for kwargs
+  "COM812",  # Conflicts with formatter
+  "D100",    # Missing docstring in public module
+  "D104",    # Missing docstring in public package
+  "D107",    # Missing docstring in __init__
+  "D205",    # 1 blank line required between summary line and description
+  "E501",    # Line too long, handled by ruff format
+  "EM",      # Exception messages,
+  "FBT",     # Boolean-typed positional argument in function definition
+  "FIX",     # We allow todo and fixme comments
+  "ISC001",  # Conflicts with formatter
+  "PLC0415", # Import should be at top-level (we use conditional imports)
+  "PLW0603", # Using global statement is discouraged
+  "S110",    # try-except-pass detected
+  "S603",    # subprocess-without-shell-equals-true
+  "TD",      # We allow todo and fixme comments
+  "TRY",     # Try except block, rules are too strict
+]
+lint.per-file-ignores."tests/**/*.*" = [
+  "A005",    # Module shadows standard library
+  "ANN",     # Disable all annotation rules for tests
+  "ARG001",
+  "ARG002",  # Unused method argument
+  "BLE001",  # Disable blind exception catching for tests
+  "D",
+  "N806",    # Variable naming in tests
+  "N815",
+  "PD",
+  "PGH003",
+  "PLC",     # Disable all PLC rules for tests
+  "PLR0915",
+  "PLR2004",
+  "PT006",
+  "PT007",
+  "PT013",
+  "PT017",   # Assertion on exception in except block
+  "PT031",   # pytest.warns block should contain single statement
+  "RUF012",
+  "S",
+  "SIM117",  # Combine with statements
+  "SLF001",
+]
+lint.isort.known-first-party = [ "kreuzberg", "tests" ]
+lint.mccabe.max-complexity = 15
+lint.pydocstyle.convention = "google"
+lint.pylint.max-args = 10
+lint.pylint.max-branches = 15
+lint.pylint.max-returns = 10
+
+[tool.codespell]
+ignore-words-list = "inh,te,tha,vie"
+
+[tool.pyproject-fmt]
+keep_full_version = true
+max_supported_python = "3.13"
+
+[tool.pytest.ini_options]
+timeout = 300
+filterwarnings = [
+  "ignore:Exception ignored in:pytest.PytestUnraisableExceptionWarning",
+  "ignore:pkg_resources is deprecated as an API:DeprecationWarning",
+  "ignore:ast.Num is deprecated and will be removed in Python 3.14:DeprecationWarning",
+  "ignore:datetime.datetime.utcfromtimestamp() is deprecated:DeprecationWarning",
+  "ignore:Deprecated call to `pkg_resources.declare_namespace('google')`:DeprecationWarning",
+]
+
+[tool.coverage.run]
+omit = [ "tests/*", "scripts/*" ]
+plugins = [ "covdefaults" ]
+source = [ "kreuzberg" ]
+
+[tool.coverage.report]
+exclude_lines = [ 'if TYPE_CHECKING:', "except ImportError:" ]
+fail_under = 95
+
+[tool.mypy]
+packages = [ "kreuzberg", "tests", "benchmarks.src.kreuzberg_benchmarks" ]
+python_version = "3.10"
+disable_error_code = 'import-untyped'
+implicit_reexport = false
+show_error_codes = true
+strict = true
+
+[[tool.mypy.overrides]]
+module = [
+  "rich.*",
+  "typer.*",
+  "matplotlib.*",
+  "memory_profiler.*",
+  "py_spy.*",
+  "litestar.*",
+  "structlog.*",
+  "opentelemetry.*",
+  "fast_langdetect.*",
+  "numpy.*",
+  "torch.*",
+  "easyocr.*",
+  "paddleocr.*",
+  "gmft.*",
+  "semantic_text_splitter.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "benchmarks.src.kreuzberg_benchmarks.*"
+disable_error_code = [ "misc" ]
+
+[[tool.mypy.overrides]]
+module = "kreuzberg.docker.main"
+disable_error_code = [ "misc" ]
+
+[[tool.mypy.overrides]]
+module = [ "kreuzberg._gmft", "kreuzberg._multiprocessing.gmft_isolated" ]
+disable_error_code = [ "unused-ignore" ]
+
+[[tool.mypy.overrides]]
+module = "kreuzberg._api.main"
+disable_error_code = [ "misc" ]
+
+[tool.uv.sources]
+uv-bump = { git = "https://github.com/Goldziher/uv-bump" }
+kreuzberg-benchmarks = { workspace = true }
+
+[tool.uv.workspace]
+members = [ ".", "benchmarks" ]
