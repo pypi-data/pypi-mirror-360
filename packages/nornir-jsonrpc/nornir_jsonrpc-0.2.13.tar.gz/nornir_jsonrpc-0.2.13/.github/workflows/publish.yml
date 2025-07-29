@@ -1,0 +1,42 @@
+name: Release and Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # To create releases and push tags
+      issues: write # To create release notes
+      pull-requests: write # To create release notes
+      id-token: write # to access pypi token
+    environment:
+      name: pypi
+      url: https://pypi.org/p/nornir-jsonrpc
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required by semantic-release to get all commits
+
+      - name: Python Semantic Release
+        uses: "python-semantic-release/python-semantic-release@v10.2.0"
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          changelog: true
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Build
+        run: uv build
+
+      - name: Publish
+        run: uv publish --trusted-publishing always
