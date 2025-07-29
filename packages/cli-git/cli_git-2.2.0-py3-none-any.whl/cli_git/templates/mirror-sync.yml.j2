@@ -1,0 +1,244 @@
+{% raw %}name: Mirror Sync
+'on':
+  schedule:
+    - cron: '{% endraw %}{{ schedule }}{% raw %}'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    outputs:
+      has_conflicts: ${{ steps.sync.outputs.has_conflicts }}
+      pr_url: ${{ steps.pr.outputs.pr_url }}
+
+    steps:
+      - name: Checkout mirror repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "Mirror Bot"
+          git config user.email "mirror-bot@users.noreply.github.com"
+
+      - name: Sync with reset
+        id: sync
+        env:
+          UPSTREAM_URL: ${{ secrets.UPSTREAM_URL }}
+          UPSTREAM_DEFAULT_BRANCH: ${{ secrets.UPSTREAM_DEFAULT_BRANCH }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          echo "Adding upstream remote..."
+          git remote add upstream $UPSTREAM_URL || git remote set-url upstream $UPSTREAM_URL
+
+          echo "Fetching from upstream..."
+          git fetch upstream
+
+          # Get upstream default branch - prefer dynamic detection
+          DETECTED_BRANCH=$(git ls-remote --symref upstream HEAD | awk '/^ref:/ {sub(/refs\/heads\//, "", $2); print $2}')
+
+          if [ -n "$DETECTED_BRANCH" ]; then
+            DEFAULT_BRANCH="$DETECTED_BRANCH"
+            echo "Detected upstream branch: $DEFAULT_BRANCH"
+          elif [ -n "$UPSTREAM_DEFAULT_BRANCH" ]; then
+            DEFAULT_BRANCH="$UPSTREAM_DEFAULT_BRANCH"
+            echo "Using configured upstream branch: $DEFAULT_BRANCH"
+          else
+            echo "ERROR: Could not determine upstream default branch"
+            exit 1
+          fi
+
+          # Get current branch
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+          # Save original directory
+          ORIGINAL_DIR=$(pwd)
+
+          # Create backup directory
+          if [ -n "${{ runner.temp }}" ]; then
+            BACKUP_DIR=$(mktemp -d -p "${{ runner.temp }}" github-backup-XXXXXX)
+          else
+            BACKUP_DIR=$(mktemp -d /tmp/github-backup-XXXXXX)
+          fi
+          echo "Backup directory: $BACKUP_DIR"
+
+          # Check for .mirrorkeep file
+          if [ ! -f .mirrorkeep ]; then
+            echo "WARNING: .mirrorkeep not found, creating default..."
+            cat > .mirrorkeep << 'EOF'
+          # .mirrorkeep - Files to preserve during mirror sync
+          .github/workflows/mirror-sync.yml
+          .mirrorkeep
+          EOF
+          fi
+
+          # Backup files based on .mirrorkeep patterns
+          echo "Backing up files from .mirrorkeep patterns..."
+          if [ -f .mirrorkeep ]; then
+            # Parse patterns and backup files
+            grep -v '^#' .mirrorkeep | grep -v '^$' | grep -v '^!' | while read -r pattern; do
+              # Handle directory patterns (ending with /)
+              if [ "${pattern: -1}" = "/" ]; then
+                # Remove trailing slash for find command
+                dir_pattern="${pattern%/}"
+                # Find the directory and all files within it recursively
+                find . -path "./$dir_pattern" -type d 2>/dev/null | while read -r dir; do
+                  find "$dir" -type f 2>/dev/null | while read -r file; do
+                    rel_path="${file#./}"
+                    mkdir -p "$BACKUP_DIR/$(dirname "$rel_path")"
+                    cp "$file" "$BACKUP_DIR/$rel_path"
+                    echo "Backed up: $rel_path"
+                  done
+                done
+              else
+                # Handle file patterns
+                find . -path "./$pattern" -type f 2>/dev/null | while read -r file; do
+                  rel_path="${file#./}"
+                  mkdir -p "$BACKUP_DIR/$(dirname "$rel_path")"
+                  cp "$file" "$BACKUP_DIR/$rel_path"
+                  echo "Backed up: $rel_path"
+                done
+              fi
+            done
+          fi
+
+          echo "Syncing with upstream using reset..."
+          git reset --hard upstream/$DEFAULT_BRANCH
+          echo "✅ Reset to upstream successful"
+
+          # Clean .github directory
+          echo "Cleaning .github directory..."
+          rm -rf .github
+
+          # Restore backed up files
+          echo "Restoring files from backup..."
+          cd "$BACKUP_DIR"
+          if [ -n "$(find . -type f 2>/dev/null)" ]; then
+            find . -type f | while read -r file; do
+              # Remove leading ./
+              file="${file#./}"
+              # Create directory structure
+              mkdir -p "$ORIGINAL_DIR/$(dirname "$file")"
+              # Copy file
+              cp "$file" "$ORIGINAL_DIR/$file"
+              echo "Restored: $file"
+            done
+
+            cd "$ORIGINAL_DIR"
+            git add -A
+            git commit -m "Restore files from .mirrorkeep" || echo "No changes to commit"
+          else
+            cd "$ORIGINAL_DIR"
+            echo "WARNING: No files to restore from backup"
+          fi
+
+          # Cleanup backup
+          rm -rf "$BACKUP_DIR"
+
+          git push origin $CURRENT_BRANCH --force
+          echo "has_conflicts=false" >> $GITHUB_OUTPUT
+
+
+      - name: Sync tags
+        if: steps.sync.outputs.has_conflicts == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          echo "Syncing tags..."
+
+          # Configure git to use GH_TOKEN if available
+          if [ -n "$GH_TOKEN" ]; then
+            echo "Using GH_TOKEN for authentication"
+            # 더 명시적으로 origin remote URL을 GH_TOKEN을 사용하도록 설정
+            git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}
+          else
+            echo "Warning: GH_TOKEN not found. Tag sync may fail if tags contain workflow files."
+          fi
+
+          git fetch upstream --tags
+          git push origin --tags --force
+
+  notify-slack-failure:
+    needs: sync
+    if: failure()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check for Slack webhook
+        id: check_webhook
+        run: |
+          if [[ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]]; then
+            echo "has_webhook=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_webhook=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Slack notification for failure
+        if: steps.check_webhook.outputs.has_webhook == 'true'
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "❌ Workflow Failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "❌ *Workflow Failed*"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Workflow:*\nMirror Sync"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Actor:*\n${{ github.actor }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:*\n${{ github.ref_name }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Workflow URL:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Failed Workflow>"
+                  }
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "Click the link above to view the failed workflow details"
+                    }
+                  ]
+                }
+              ]
+            }
+
+{% endraw %}
