@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>{{ title }}</title>
+    {% from 'components/session_nav.html' import render_session_nav %}
+    <style>
+{% include 'components/global_styles.css' %}
+{% include 'components/session_nav_styles.css' %}
+{% include 'components/project_card_styles.css' %}
+
+        /* Session navigation overrides for better text readability */
+        .project-sessions .session-link {
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>{{ title }}</h1>
+
+    <div class='summary'>
+        <div class='summary-stats'>
+            <div style="display: flex; gap: 3em;">
+                <div class='summary-stat'>
+                    <div class='number'>{{ summary.total_projects }}</div>
+                    <div class='label'>Projects</div>
+                </div>
+                <div class='summary-stat'>
+                    <div class='number'>{{ summary.total_jsonl }}</div>
+                    <div class='label'>Transcript Files</div>
+                </div>
+                <div class='summary-stat'>
+                    <div class='number'>{{ summary.total_messages }}</div>
+                    <div class='label'>Messages</div>
+                </div>
+            </div>
+            {% if summary.token_summary %}
+            <div class='summary-stat'>
+                <div class='number'>💸</div>
+                <div class='label'>{{ summary.token_summary }}</div>
+            </div>
+            {% endif %}
+            {% if summary.formatted_time_range %}
+            <div class='summary-stat'>
+                <div class='number'>🕐</div>
+                <div class='label'>{{ summary.formatted_time_range }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class='project-list'>
+        {% for project in projects %}
+        <div class='project-card'>
+            <div class='project-name'>
+                <a href='{{ project.html_file }}'>{{ project.display_name }}</a>
+                <span style="font-size: 0.6em; color:#666;">(← open combined transcript)</span>
+            </div>
+            <div class='project-stats'>
+                <div class='stat'>📁 {{ project.jsonl_count }} transcript files</div>
+                <div class='stat'>💬 {{ project.message_count }} messages</div>
+                {% if project.formatted_time_range %}
+                <div class='stat'>🕒 {{ project.formatted_time_range }}</div>
+                {% else %}
+                <div class='stat'>🕒 {{ project.formatted_date }}</div>
+                {% endif %}
+                {% if project.token_summary %}
+                <div class='stat'>🪙 {{ project.token_summary }}</div>
+                {% endif %}
+            </div>
+
+            {% if project.sessions and project.sessions|length > 0 %}
+            <div class='project-sessions'>
+                <details>
+                    <summary>Sessions ({{ project.sessions|length }})</summary>
+                    {{ render_session_nav(project.sessions, "expandable", project.name + "/") }}
+                </details>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</body>
+
+</html>

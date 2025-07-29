@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>{{ title }}</title>
+    {% from 'components/session_nav.html' import render_session_nav %}
+    <style>
+{% include 'components/global_styles.css' %}
+{% include 'components/message_styles.css' %}
+{% include 'components/session_nav_styles.css' %}
+{% include 'components/filter_styles.css' %}
+{% include 'components/todo_styles.css' %}
+{% include 'components/timeline_styles.css' %}
+    </style>
+</head>
+
+<body>
+    <h1 id="title">{{ title }}</h1>
+
+    <!-- Timeline Component -->
+    {% include 'components/timeline.html' %}
+
+    <!-- Filter Toolbar -->
+    <div class="filter-toolbar">
+        <div class="filter-label">
+            <h3>Filter:</h3>
+        </div>
+        <div class="filter-toggles">
+            <button class="filter-toggle active" data-type="user">🤷 User <span class="count">(0)</span></button>
+            <button class="filter-toggle active" data-type="assistant">🤖 Assistant <span
+                    class="count">(0)</span></button>
+            <button class="filter-toggle active" data-type="sidechain">🔗 Sub-assistant <span
+                    class="count">(0)</span></button>
+            <button class="filter-toggle active" data-type="system">⚙️ System <span class="count">(0)</span></button>
+            <button class="filter-toggle active" data-type="tool_use">🛠️ Tool Use <span
+                    class="count">(0)</span></button>
+            <button class="filter-toggle active" data-type="tool_result">🧰 Tool Results <span
+                    class="count">(0)</span></button>
+            <button class="filter-toggle active" data-type="thinking">💭 Thinking <span
+                    class="count">(0)</span></button>
+            <button class="filter-toggle active" data-type="image">🖼️ Images <span class="count">(0)</span></button>
+        </div>
+        <div class="filter-actions">
+            <button class="filter-action-btn" id="selectAll">All</button>
+            <button class="filter-action-btn" id="selectNone">None</button>
+            <button class="filter-action-btn" id="closeFilters" title="Close filters">✕</button>
+        </div>
+    </div>
+
+    {% if sessions and sessions|length > 1 %}
+    {{ render_session_nav(sessions, "toc") }}
+    {% endif %}
+
+    {% for message in messages %}
+    {% if message.is_session_header %}
+    <div class="session-divider"></div>
+    <div id='session-{{ message.session_id }}' class='message session-header'>
+        <div class='header'>Session: {{ message.content_html }}</div>
+        {% if message.session_subtitle %}
+        <div class='session-subtitle' style='font-size: 0.9em; color: #666; margin-top: 4px;'>{{
+            message.session_subtitle }} ({{message.session_subtitle.session_id}})</div>
+        {% endif %}
+
+    </div>
+    {% else %}
+    <div class='message {{ message.css_class }}'>
+        <div class='header'>
+            <span>{% if message.css_class == 'user' %}🤷 {% elif message.css_class == 'assistant' %}🤖 {% elif
+                message.css_class == 'system' %}⚙️ {% elif message.css_class == 'tool_use' %}🛠️ {% elif
+                message.css_class == 'tool_result' %}🧰 {% elif message.css_class == 'thinking' %}💭 {% elif
+                message.css_class == 'image' %}🖼️ {% endif %}{{ message.display_type }}</span>
+            <div style='display: flex; flex-direction: column; align-items: flex-end; gap: 2px;'>
+                <span class='timestamp'>{{ message.formatted_timestamp }}</span>
+                {% if message.token_usage %}
+                <span class='token-usage' style='font-size: 0.75em; color: #888;'>{{ message.token_usage }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class='content'>{{ message.content_html | safe }}</div>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    <button class="timeline-toggle floating-btn" id="toggleTimeline" title="Show timeline">📆</button>
+    <button class="filter-messages floating-btn" id="filterMessages" title="Toggle filters">🔍</button>
+    <button class="toggle-details floating-btn" id="toggleDetails" title="Toggle all details">📋</button>
+    <a class="scroll-top floating-btn" title="Scroll to top" href="#title">🔝</a>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggleButton = document.getElementById('toggleDetails');
+            const timelineButton = document.getElementById('toggleTimeline');
+            const filterButton = document.getElementById('filterMessages');
+            const filterToolbar = document.querySelector('.filter-toolbar');
+            const selectAllButton = document.getElementById('selectAll');
+            const selectNoneButton = document.getElementById('selectNone');
+            const closeFiltersButton = document.getElementById('closeFilters');
+            const filterToggles = document.querySelectorAll('.filter-toggle');
+
+            // Timeline toggle functionality
+            if (timelineButton) {
+                timelineButton.addEventListener('click', function () {
+                    if (window.toggleTimeline) {
+                        window.toggleTimeline();
+                    }
+                });
+            }
+
+            // Toggle details functionality
+            function updateToggleButton() {
+                const allDetails = document.querySelectorAll('details.collapsible-details');
+                const openCount = document.querySelectorAll('details[open].collapsible-details').length;
+                const totalCount = allDetails.length;
+
+                if (totalCount === 0) {
+                    toggleButton.style.display = 'none';
+                    return;
+                }
+
+                // If more than half are open, show "close all" state, otherwise show "open all"
+                const mostlyOpen = openCount > totalCount / 2;
+                toggleButton.textContent = mostlyOpen ? '📦' : '🗃️';
+                toggleButton.title = mostlyOpen ? 'Close all details' : 'Open all details';
+            }
+
+            function toggleAllDetails() {
+                const allDetails = document.querySelectorAll('details.collapsible-details');
+                const openCount = document.querySelectorAll('details[open].collapsible-details').length;
+                const shouldOpen = openCount <= allDetails.length / 2;
+
+                allDetails.forEach(details => {
+                    if (shouldOpen) {
+                        details.setAttribute('open', '');
+                    } else {
+                        details.removeAttribute('open');
+                    }
+                });
+
+                updateToggleButton();
+            }
+
+            toggleButton.addEventListener('click', toggleAllDetails);
+
+            // Filter toolbar toggle functionality
+            function toggleFilterToolbar() {
+                const isVisible = filterToolbar.classList.contains('visible');
+                if (isVisible) {
+                    filterToolbar.classList.remove('visible');
+                    filterButton.classList.remove('active');
+                    filterButton.title = 'Show filters';
+                } else {
+                    filterToolbar.classList.add('visible');
+                    filterButton.classList.add('active');
+                    filterButton.title = 'Hide filters';
+                }
+            }
+
+            filterButton.addEventListener('click', toggleFilterToolbar);
+            closeFiltersButton.addEventListener('click', toggleFilterToolbar);
+
+            // Count messages by type and update button labels
+            function updateMessageCounts() {
+                const messageTypes = ['user', 'assistant', 'sidechain', 'system', 'tool_use', 'tool_result', 'thinking', 'image'];
+
+                messageTypes.forEach(type => {
+                    const messages = document.querySelectorAll(`.message.${type}:not(.session-header)`);
+                    const count = messages.length;
+                    const toggle = document.querySelector(`[data-type="${type}"]`);
+                    const countSpan = toggle.querySelector('.count');
+
+                    if (countSpan) {
+                        countSpan.textContent = `(${count})`;
+
+                        // Hide toggles for message types with 0 count
+                        if (count === 0) {
+                            toggle.style.display = 'none';
+                        } else {
+                            toggle.style.display = 'flex';
+                        }
+                    }
+                });
+            }
+
+            // Filter functionality
+            function applyFilter() {
+                const activeTypes = Array.from(filterToggles)
+                    .filter(toggle => toggle.classList.contains('active'))
+                    .map(toggle => toggle.dataset.type);
+
+                // Show/hide messages based on active toggle buttons
+                const allMessages = document.querySelectorAll('.message:not(.session-header)');
+                allMessages.forEach(message => {
+                    let shouldShow = false;
+                    
+                    // Special handling for sidechain messages
+                    if (message.classList.contains('sidechain')) {
+                        // For sidechain messages, show if both sidechain filter is active AND their message type filter is active
+                        const sidechainActive = activeTypes.includes('sidechain');
+                        const messageTypeActive = activeTypes.some(type => 
+                            type !== 'sidechain' && message.classList.contains(type)
+                        );
+                        shouldShow = sidechainActive && messageTypeActive;
+                    } else {
+                        // For non-sidechain messages, show if any of their types are active
+                        shouldShow = activeTypes.some(type => message.classList.contains(type));
+                    }
+                    
+                    if (shouldShow) {
+                        message.classList.remove('filtered-hidden');
+                    } else {
+                        message.classList.add('filtered-hidden');
+                    }
+                });
+
+                // Update visible counts in real-time
+                updateVisibleCounts();
+
+                // Update filter button appearance based on whether all types are selected
+                const allTypesSelected = activeTypes.length === filterToggles.length;
+                if (!allTypesSelected && filterToolbar.classList.contains('visible')) {
+                    filterButton.classList.add('active');
+                } else if (allTypesSelected && filterToolbar.classList.contains('visible')) {
+                    filterButton.classList.add('active');
+                }
+            }
+
+            function updateVisibleCounts() {
+                const messageTypes = ['user', 'assistant', 'sidechain', 'system', 'tool_use', 'tool_result', 'thinking', 'image'];
+
+                messageTypes.forEach(type => {
+                    const visibleMessages = document.querySelectorAll(`.message.${type}:not(.session-header):not(.filtered-hidden)`);
+                    const totalMessages = document.querySelectorAll(`.message.${type}:not(.session-header)`);
+                    const visibleCount = visibleMessages.length;
+                    const totalCount = totalMessages.length;
+
+                    const toggle = document.querySelector(`[data-type="${type}"]`);
+                    const countSpan = toggle.querySelector('.count');
+
+                    if (countSpan && totalCount > 0) {
+                        // Show "visible/total" format when filtering is active
+                        const activeTypes = Array.from(filterToggles)
+                            .filter(toggle => toggle.classList.contains('active'))
+                            .map(toggle => toggle.dataset.type);
+
+                        const isFiltering = activeTypes.length < filterToggles.length;
+
+                        if (isFiltering && visibleCount !== totalCount) {
+                            countSpan.textContent = `(${visibleCount}/${totalCount})`;
+                        } else {
+                            countSpan.textContent = `(${totalCount})`;
+                        }
+                    }
+                });
+            }
+
+            function toggleFilter(button) {
+                button.classList.toggle('active');
+                applyFilter();
+            }
+
+            function selectAllTypes() {
+                filterToggles.forEach(toggle => {
+                    toggle.classList.add('active');
+                });
+                applyFilter();
+            }
+
+            function selectNoTypes() {
+                filterToggles.forEach(toggle => {
+                    toggle.classList.remove('active');
+                });
+                applyFilter();
+            }
+
+            // Event listeners for filter toggles
+            filterToggles.forEach(toggle => {
+                toggle.addEventListener('click', () => toggleFilter(toggle));
+            });
+
+            selectAllButton.addEventListener('click', selectAllTypes);
+            selectNoneButton.addEventListener('click', selectNoTypes);
+
+            // Initialize button state and message counts
+            updateToggleButton();
+            updateMessageCounts();
+        });
+    </script>
+</body>
+
+</html>
