@@ -1,0 +1,350 @@
+{% extends 'dj_backup/base/base_template.html' %}
+
+{% block Title %}
+    File list
+{% endblock %}
+
+{% block BodyClass %}
+    has-rtl nk-body npc-apps apps-only has-apps-sidebar npc-apps-files
+{% endblock %}
+
+{% block Content %}
+    <div class="nk-app-root">
+    <!-- main @s -->
+    <div class="nk-main">
+        <!-- wrap @s -->
+        <div class="nk-wrap">
+            <!-- main header @s -->
+            {% include 'dj_backup/base/header.html' %}
+            <!-- main header @e -->
+            <!-- content @s -->
+            <div class="nk-content p-0">
+                <div class="nk-content-inner">
+                    <div class="nk-content-body">
+                        <div class="nk-fmg">
+                            {% include 'dj_backup/base/menu-aside.html' %}
+                            <!-- .nk-fmg-aside -->
+                            <div class="nk-fmg-body">
+
+
+                                <div class="nk-fmg-body-content">
+                                    <div class="nk-block-head nk-block-head-sm">
+                                        <div class="nk-block-between position-relative">
+                                            <div class="nk-block-head-content">
+                                                <h3 class="nk-block-title page-title">Files</h3>
+                                            </div>
+                                        </div>
+                                        <!-- .nk-block-head -->
+                                        <div class="nk-fmg-listing nk-block">
+                                            <div class="col-12 text-end">
+
+                                                <a href="#file-backup" class="btn btn-success mb-3 my-2"
+                                                   id="btn-file-backup"
+                                                   data-bs-toggle="modal"><em class="icon ni ni-upload-cloud"></em>
+                                                    <span>Backup</span></a>
+
+                                            </div>
+                                            <div class="nk-files nk-files-view-list">
+
+                                                <div class="nk-files-head">
+                                                    <div class="nk-file-item">
+                                                        <div class="nk-file-info">
+                                                            <div class="tb-head dropdown-toggle"
+                                                                 data-bs-toggle="dropdown">name
+                                                            </div>
+                                                        </div>
+                                                        <div class="nk-file-meta">
+                                                            <div class="dropdown">
+                                                                <div class="tb-head dropdown-toggle"
+                                                                     data-bs-toggle="dropdown">size
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="nk-file-actions d-none">
+                                                            <a
+                                                                    class="btn btn-sm btn-icon btn-trigger"><em
+                                                                    class="icon ni ni-more-h"></em></a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!-- .nk-files-head -->
+                                                <div class="nk-files-list">
+                                                    {% for files in files_iter %}
+                                                        {% for file in files %}
+                                                            <div class="nk-file-item nk-file">
+                                                                <div class="nk-file-info">
+                                                                    <div class="nk-file-title">
+                                                                        <div class="custom-control custom-control-sm custom-checkbox notext">
+                                                                            <input type="checkbox"
+                                                                                   class="custom-control-input"
+                                                                                   data-file-extension="{{ file.suffix }}"
+                                                                                   data-file-location="{{ file.resolve }}"
+                                                                                   data-file-name="{{ file.name }}"
+                                                                                   id="file-check-n{{ forloop.counter }}"/>
+                                                                            <label class="custom-control-label"
+                                                                                   for="file-check-n{{ forloop.counter }}"></label>
+                                                                        </div>
+                                                                        <div class="nk-file-icon">
+                                                                        <span class="nk-file-icon-type icon-by-extension"
+                                                                              extension="{{ file.suffix }}">
+                                                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                                                 x="0px" y="0px" viewBox="0 0 72 72">
+                                                                                <path
+                                                                                        fill="#6C87FE"
+                                                                                        d="M57.5,31h-23c-1.4,0-2.5-1.1-2.5-2.5v-10c0-1.4,1.1-2.5,2.5-2.5h23c1.4,0,2.5,1.1,2.5,2.5v10
+	C60,29.9,58.9,31,57.5,31z"
+                                                                                />
+                                                                                <path
+                                                                                        fill="#8AA3FF"
+                                                                                        d="M59.8,61H12.2C8.8,61,6,58,6,54.4V17.6C6,14,8.8,11,12.2,11h18.5c1.7,0,3.3,1,4.1,2.6L38,24h21.8
+	c3.4,0,6.2,2.4,6.2,6v24.4C66,58,63.2,61,59.8,61z"
+                                                                                />
+                                                                                <path
+                                                                                        display="none"
+                                                                                        fill="#8AA3FF"
+                                                                                        d="M62.1,61H9.9C7.8,61,6,59.2,6,57c0,0,0-31.5,0-42c0-2.2,1.8-4,3.9-4h19.3
+	c1.6,0,3.2,0.2,3.9,2.3l2.7,6.8c0.5,1.1,1.6,1.9,2.8,1.9h23.5c2.2,0,3.9,1.8,3.9,4v31C66,59.2,64.2,61,62.1,61z"
+                                                                                />
+                                                                                <path fill="#798BFF"
+                                                                                      d="M7.7,59c2.2,2.4,4.7,2,6.3,2h45c1.1,0,3.2,0.1,5.3-2H7.7z"/>
+                                                                            </svg>
+                                                                        </span>
+                                                                        </div>
+                                                                        <div class="nk-file-name">
+                                                                            <div class="nk-file-name-text">
+                                                                                {% if not file.is_file %}
+                                                                                    <a href="{% url 'dj_backup:file__list' %}?dir={{ file.resolve }}"
+                                                                                       class="title">{{ file.name }}</a>
+                                                                                {% else %}
+                                                                                    <span class="title">{{ file.name }}</span>
+                                                                                {% endif %}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="nk-file-meta">
+                                                                    <div class="tb-lead file-size-convert"
+                                                                         data-size="{{ file.stat.st_size }}">{{ file.stat.st_size }}</div>
+                                                                </div>
+                                                                <div class="nk-file-actions">
+                                                                    <div class="dropdown d-none">
+                                                                        <a href=""
+                                                                           class="dropdown-toggle btn btn-sm btn-icon btn-trigger"
+                                                                           data-bs-toggle="dropdown"><em
+                                                                                class="icon ni ni-more-h"></em></a>
+                                                                        <div class="dropdown-menu dropdown-menu-end">
+                                                                            <ul class="link-list-plain no-bdr">
+                                                                                <li>
+                                                                                    <a href="#file-details"
+                                                                                       data-bs-toggle="modal"><em
+                                                                                            class="icon ni ni-eye"></em><span>detail</span></a>
+                                                                                </li>
+                                                                                <li>
+                                                                                    <a href="#file-share"
+                                                                                       data-bs-toggle="modal"><em
+                                                                                            class="icon ni ni-share"></em><span>share</span></a>
+                                                                                </li>
+                                                                                <li>
+                                                                                    <a href="#file-copy"
+                                                                                       data-bs-toggle="modal"><em
+                                                                                            class="icon ni ni-copy"></em><span>copy</span></a>
+                                                                                </li>
+                                                                                <li>
+                                                                                    <a href="#file-move"
+                                                                                       data-bs-toggle="modal"><em
+                                                                                            class="icon ni ni-forward-arrow"></em><span>transfer</span></a>
+                                                                                </li>
+                                                                                <li>
+                                                                                    <a href="#"
+                                                                                       class="file-dl-toast"><em
+                                                                                            class="icon ni ni-download"></em><span>download</span></a>
+                                                                                </li>
+                                                                                <li>
+                                                                                    <a href="#"><em
+                                                                                            class="icon ni ni-pen"></em><span>change name</span></a>
+                                                                                </li>
+                                                                                <li>
+                                                                                    <a href="#"><em
+                                                                                            class="icon ni ni-trash"></em><span>delete</span></a>
+                                                                                </li>
+                                                                            </ul>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        {% empty %}
+                                                            <div class="text-center p-4">
+                                                                <h5 class="text-warning">No results found</h5>
+                                                            </div>
+                                                        {% endfor %}
+                                                        <!-- .nk-file -->
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            <!-- .nk-files -->
+                                        </div>
+                                        <!-- .nk-block -->
+                                    </div>
+                                    <!-- .nk-fmg-body-content -->
+                                </div>
+                                <!-- .nk-fmg-body -->
+                            </div>
+                            <!-- .nk-fmg -->
+                        </div>
+                    </div>
+                </div>
+                <!-- content @e -->
+            </div>
+            <!-- wrap @e -->
+        </div>
+        <!-- main @e -->
+    </div>
+    <!-- app-root @e -->
+
+    <div class="modal fade" tabindex="-1" role="dialog" id="file-backup">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <a href="#" class="close" data-bs-dismiss="modal"><em class="icon ni ni-cross-sm"></em></a>
+                <form action="{% url 'dj_backup:file_backup__add' %}" class="form-validate is-alter" method="post">
+                    {% csrf_token %}
+                    <div class="modal-body modal-body-md">
+                        <div class="nk-upload-form">
+                            <h4 class="title mb-4">File backup</h4>
+                            <div>
+                                <h6 class="title">Settings</h6>
+                                <div class="form-group">
+                                    <label class="form-label" for="name">Name</label>
+                                    <div class="form-control-wrap">
+                                        <input type="text" maxlength="100" class="form-control" id="name"
+                                               placeholder="name" required name="name">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="note">Note</label>
+                                    <div class="form-control-wrap">
+                                        <textarea type="text" class="form-control" id="note"
+                                                  placeholder="note" name="note"></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="backup-time">Timing</label>
+                                    <div class="form-control-wrap">
+                                        <div class="form-text-hint">
+                                               <p class="overline-title d-inline-block" >every</p>
+                                        <input type="number" class="form-control" id="interval-time"
+                                               placeholder="backup timing" required name="interval">
+                                            <select name="unit" required class="js-select2 overline-title">
+                                                <option value="minutes">minute</option>
+                                                <option value="hours">hour</option>
+                                                <option value="days">day</option>
+                                                <option value="weeks">week</option>
+                                            </select>
+                                        </div>
+                                    </div>
+{#                                    <div class="form-note">Interval for backups</div>#}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="repeats">Number of backups</label>
+                                    <div class="form-control-wrap">
+                                        <input type="number" class="form-control" id="repeats"
+                                               placeholder="-1" value="-1" required name="repeats">
+                                    </div>
+                                    <div class="form-note">Enter '-1' for permanent backup</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Store in </label>
+                                    <div class="form-control-wrap">
+                                        <select name="storages" class="form-select js-select2" multiple required>
+                                            {% for storage in storages %}
+                                                {% if storage.is_available %}
+                                                    <option value="{{ storage.id }}"
+                                                            selected>{{ storage.display_name }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Keep temporary files</label>
+                                    <div class="form-control-wrap">
+                                        <select name="has_temp" class="form-select js-select2"
+                                                required>
+                                            <option value="true" selected>
+                                                Yes
+                                            </option>
+                                            <option value="false">
+                                                No
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="form-note">
+                                        To enable quick and easy access to backups, activate this option.
+                                        Note:
+                                        <b>Be aware that enabling file retention will increase disk space usage.</b>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="nk-upload-list">
+                            <h6 class="title">Selected files</h6>
+                            <div id="form-file-backup-files"></div>
+                        </div>
+                        <div class="nk-modal-action justify-end">
+                            <ul class="btn-toolbar g-4 align-center">
+                                <li><a href="#" data-bs-dismiss="modal" class="link link-primary">cancel</a></li>
+                                <li>
+                                    <button class="btn btn-primary">Create backup</button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <!-- .modal-content -->
+        </div>
+        <!-- .modla-dialog -->
+    </div>
+{% endblock %}
+
+{% block Script %}
+    <script>
+
+        // btn file backup
+        document.getElementById('btn-file-backup').addEventListener('click', function () {
+            let files_selected = document.querySelectorAll('.custom-control-input:checked')
+            let form_file_files = document.getElementById('form-file-backup-files')
+            form_file_files.innerHTML = ''
+            for (let file of files_selected) {
+                let file_name = file.getAttribute('data-file-name')
+                let file_extension = file.getAttribute('data-file-extension')
+                let file_location = file.getAttribute('data-file-location')
+                let file_id = getRandomString()
+                form_file_files.innerHTML += `
+                    <div class="nk-upload-item" id="file-${file_id}">
+                        <input type="hidden" name="file_dirs" value="${file_location}">
+                        <div class="nk-upload-icon icon-by-extension" extension="${file_extension}">
+
+                        </div>
+                        <div class="nk-upload-info">
+                            <div class="nk-upload-title"><span class="title">${file_name}</span></div>
+                        </div>
+                        <div class="nk-upload-action">
+                            <button type="button" class="btn btn-icon btn-trigger btn-delete-file-item" file-id="file-${file_id}"><em class="icon ni ni-trash"></em></button>
+                        </div>
+                    </div>
+                `
+            }
+
+            document.querySelectorAll('.btn-delete-file-item').forEach(function (el) {
+                el.addEventListener('click', function (e) {
+                    let element = e.currentTarget
+                    let file_id = element.getAttribute('file-id')
+                    document.getElementById(file_id).remove()
+                })
+            })
+            setFileIcons()
+        })
+
+
+    </script>
+{% endblock %}
