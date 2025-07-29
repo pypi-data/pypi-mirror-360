@@ -1,0 +1,117 @@
+---
+alwaysApply: true
+---
+# Pytest Execution Protocol for This Repository
+
+## 1. Core Directives
+
+-   **Objective**: Maximum speed and reliability.
+-   **Test Scope**: 100% Unit Tests.
+-   **Execution Time Target**: `< 5s` for the entire suite (`pytest`).
+-   **Isolation Level**: Absolute. No shared state, no I/O.
+-   **Primary Rule**: If it touches a network, a database, or a real filesystem, it is **not** a unit test and is **prohibited**.
+
+---
+
+## 2. Test Specification: Pure Unit Tests
+
+### Constraint: No I/O Operations
+
+-   All external interactions **MUST** be mocked.
+-   **Affected components**: `database`, `filesystem`, `network API`, `external services`.
+-   **Tooling**: Use `unittest.mock.patch` or equivalent.
+-   **Exception**: `pytest`'s `tmp_path` fixture is permitted for testing functions that manipulate file paths, as it is an isolated in-memory construct.
+
+### Protocol: Aggressive Mocking
+
+Mocking is not optional. It is the default for all dependencies that perform I/O.
+
+**Canonical Example:**
+
+```python
+from unittest.mock import patch, MagicMock
+import pytest
+
+# System Under Test (SUT)
+from myapp.logic import process_data
+from myapp.services import ExternalApiClient
+
+# Test Definition
+@patch('myapp.services.ExternalApiClient')
+def test_data_processing_logic(MockApiClient):
+    """
+    SPEC: Verifies core logic of process_data by mocking the API client dependency.
+    """
+    # ARRANGE: Configure the mock object.
+    mock_instance = MockApiClient.return_value
+    mock_instance.fetch_remote_data.return_value = {'id': 1, 'value': 'test'}
+
+    # ACT: Execute the function.
+    result = process_data(user_id=1)
+
+    # ASSERT: Verify the logic's output.
+    assert result == "processed:test"
+    
+    # ASSERT: Verify the interaction with the mock.
+    mock_instance.fetch_remote_data.assert_called_once_with(1)
+```
+
+---
+
+## 3. Prohibited Test Categories
+
+The following test types are **explicitly forbidden** in this repository to maintain speed and focus. Their presence constitutes a test suite failure.
+
+-   **Integration Tests**:
+    -   **Definition**: Any test that connects to a real service, even a local or in-memory one (e.g., `sqlite:///:memory:`, local Redis).
+    -   **Status**: Prohibited.
+-   **End-to-End (E2E) Tests**:
+    -   **Definition**: Any test that runs against a fully deployed stack.
+    -   **Status**: Prohibited.
+-   **External API Tests**:
+    -   **Definition**: Any test that makes a real network call to a third-party service.
+    -   **Status**: Prohibited.
+
+**Reasoning**: These test types belong in a separate, dedicated CI/CD pipeline, not in the developer's core, high-frequency test loop.
+
+---
+
+## 4. State Management & Fixture Protocol
+
+### Rule: Fixture Scope
+
+-   **Default Scope**: `function`. This is mandatory for 99% of fixtures to ensure test isolation.
+-   **Prohibited Scope**: `session`. Session-scoped fixtures create shared state and are disallowed.
+
+### Rule: Resource Management
+
+-   Fixtures that create resources **MUST** use the `yield` keyword to guarantee teardown.
+
+**Canonical Example:**
+
+```python
+@pytest.fixture(scope="function") # 'function' scope is required
+def memory_cache():
+    # SETUP
+    cache = InMemoryCache()
+    
+    yield cache # The test runs at this point
+    
+    # TEARDOWN
+    cache.flush() # Guarantees cleanup
+```
+
+---
+
+## 5. Concurrency Protocol (`pytest-xdist`)
+
+-   **Requirement**: All tests **MUST** be safe to run in parallel via `pytest -n auto`.
+-   **Constraint**: No test shall depend on or create global state (e.g., writing to a fixed file path, binding to a static network port).
+-   **Guidance**: If a test requires a unique directory, use the `tmp_path` and `worker_id` fixtures to create a worker-isolated path.
+
+---
+
+## 6. Execution Commands
+
+-   **Standard Execution**: `pytest`
+-   **Parallel Execution**: `pytest -n auto`
