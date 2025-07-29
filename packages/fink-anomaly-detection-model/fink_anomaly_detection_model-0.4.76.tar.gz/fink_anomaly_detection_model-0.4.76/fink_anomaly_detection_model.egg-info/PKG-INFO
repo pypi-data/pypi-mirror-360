@@ -1,0 +1,80 @@
+Metadata-Version: 2.4
+Name: fink_anomaly_detection_model
+Version: 0.4.76
+Summary: Fink SNAD Anomaly Detection Model
+Author-email: timofei.psheno@gmail.com
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: scikit-learn>=1.3.1
+Requires-Dist: numpy==1.26.4
+Requires-Dist: pandas==2.0.2
+Requires-Dist: tqdm>=4.65.0
+Requires-Dist: scipy>=1.10.1
+Requires-Dist: onnx==1.16.1
+Requires-Dist: skl2onnx==1.17.0
+Requires-Dist: pyarrow>=13.0.0
+Requires-Dist: coniferest<=0.0.14
+Requires-Dist: telethon
+Requires-Dist: slack_sdk
+Requires-Dist: config
+Requires-Dist: configparser
+Requires-Dist: fink_science==3.13.3
+Requires-Dist: pyspark==3.1.3
+Requires-Dist: light_curve
+Requires-Dist: psutil
+Requires-Dist: seaborn==0.13.2
+Requires-Dist: matplotlib==3.9.0
+Requires-Dist: optuna
+Requires-Dist: requests
+Dynamic: author-email
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# Fink anomaly detection model
+
+Здесь пока куча косяков, в обозримом будущем постараюсь их поправить
+
+A set of modules for training models for finding anomalies in photometric data. There are currently two entry points via the console: _fink_ad_model_train_ and _get_anomaly_reactions_.
+
+##  fink_ad_model_train
+
+The module trains the AADForest model using expert reactions from the C055ZJJ6N2AE channels in Slack and -1001898265997 in Telegram. It creates the following files:
+- _g_means.csv and _r_means.csv -- averages over the training dataset;
+- _reactions_g.csv and _reactions_r.csv -- training datasets for additional training of the AADForest algorithm, based on expert reactions from Slack and Telegram channels;
+- forest_g_AAD.onnx -- model for _g filter
+- forest_r_AAD.onnx -- model for _r filter
+
+**optional arguments:**
+
+  --dataset_dir DATASET_DIR
+                        Input dir for dataset (default: './lc_features_20210617_photometry_corrected.parquet')
+						
+  --n_jobs N_JOBS       
+						Number of threads (default: -1)
+
+
+**usage**: fink_ad_model_train [-h] [--dataset_dir DATASET_DIR] [--n_jobs N_JOBS]
+
+
+## get_anomaly_reactions
+
+
+
+Uploading anomaly reactions from messengers. It creates the following files:
+- _reactions_g.csv and _reactions_r.csv -- training datasets for additional training of the AADForest algorithm, based on expert reactions from Slack and Telegram channels;
+
+
+
+**optional arguments:**
+
+  --slack_channel SLACK_CHANNEL
+                        Slack Channel ID (default: 'C055ZJJ6N2AE')
+  
+  --tg_channel TG_CHANNEL
+                        Telegram Channel ID (default: -1001898265997)
+
+**usage**: get_anomaly_reactions [-h] [--slack_channel SLACK_CHANNEL]
+                             [--tg_channel TG_CHANNEL]
