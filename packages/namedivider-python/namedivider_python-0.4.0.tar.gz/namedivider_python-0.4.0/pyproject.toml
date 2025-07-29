@@ -1,0 +1,86 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "namedivider-python"
+dynamic = ["version"]
+description = "A tool that divides Japanese full names into family and given names."
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "rskmoi", email = "rei.sakamoto.92@gmail.com" },
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "lightgbm>=3.3",
+    "numpy",
+    "pandas",
+    "regex",
+    "typer>=0.3.2",
+]
+
+[project.scripts]
+nmdiv = "namedivider.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/rskmoi/namedivider-python"
+
+[tool.coverage.run]
+omit = [
+    "*/dist-packages/*",
+    "*/site-packages/*",
+]
+
+[tool.hatch.version]
+path = "namedivider/version.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/namedivider",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["namedivider"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"namedivider/assets/kanji.csv" = "namedivider/assets/kanji.csv"
+"namedivider/beta_bert_divider/config.json" = "namedivider/beta_bert_divider/config.json"
+"namedivider/beta_bert_divider/vocab.json" = "namedivider/beta_bert_divider/vocab.json"
+
+[tool.mypy]
+strict = true
+
+[[tool.mypy.overrides]]
+module = "namedivider"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "torch.*"
+ignore_missing_imports = true
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+    "B905"   # for compatibility with python 3.8 / 3.9
+]
+
+[tool.black]
+line-length = 120
