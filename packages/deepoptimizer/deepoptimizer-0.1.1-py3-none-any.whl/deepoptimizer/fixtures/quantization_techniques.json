@@ -1,0 +1,149 @@
+[
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "INT8 Quantization",
+      "category": "quantization",
+      "description": "Basic 8-bit integer quantization that converts FP16/32 weights and activations to INT8, providing 4x compression with hardware acceleration.",
+      "implementation_code": "import torch\n\n# Dynamic quantization (weights only)\nmodel_int8 = torch.quantization.quantize_dynamic(\n    model, \n    {torch.nn.Linear, torch.nn.Conv2d},\n    dtype=torch.qint8\n)\n\n# Static quantization (weights + activations)\nmodel.qconfig = torch.quantization.get_default_qconfig('fbgemm')\nmodel_prepared = torch.quantization.prepare(model, inplace=False)\n# Run calibration\nmodel_int8 = torch.quantization.convert(model_prepared, inplace=False)",
+      "expected_benefits": "4x model size reduction, 2-4x inference speedup on compatible hardware",
+      "compatibility_notes": "Requires calibration dataset. May conflict with other quantization methods. Not compatible with training.",
+      "research_reference": "Jacob et al. (2018) - Quantization and Training of Neural Networks for Efficient Integer-Arithmetic-Only Inference",
+      "hardware_requirements": ["cpu", "gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": -2.0,
+      "speed_impact": 200.0,
+      "memory_impact": 75.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "mature"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "FP8 Training",
+      "category": "quantization",
+      "description": "8-bit floating point training using E4M3 and E5M2 formats. Enables training with 2x memory reduction while maintaining accuracy.",
+      "implementation_code": "# Using Transformer Engine (NVIDIA)\nimport transformer_engine.pytorch as te\n\n# Replace layers with FP8 versions\nself.linear = te.Linear(\n    in_features, \n    out_features,\n    bias=True,\n    # FP8 configuration\n    fp8_format=te.recipe.Format.E4M3,\n    fp8_recipe=te.recipe.DelayedScaling(\n        fp8_format=te.recipe.Format.E4M3,\n        amax_history_len=1024,\n        amax_compute_algo=\"max\"\n    )\n)",
+      "expected_benefits": "2x memory reduction, 2x throughput on H100 GPUs",
+      "compatibility_notes": "Requires Hopper GPUs (H100). Conflicts with INT8 quantization and mixed precision.",
+      "research_reference": "Micikevicius et al. (2022) - FP8 Formats for Deep Learning",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 40000,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": -0.5,
+      "speed_impact": 100.0,
+      "memory_impact": 50.0,
+      "implementation_difficulty": "hard",
+      "maturity_level": "experimental"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "GGUF Quantization",
+      "category": "quantization",
+      "description": "Flexible quantization format supporting multiple bit widths (2-8 bits) per layer. Popular for running LLMs on consumer hardware.",
+      "implementation_code": "# Using llama.cpp quantization\n# First convert model to GGUF format\n# Then quantize with different methods:\n\n# Q4_K_M - 4-bit quantization, recommended\n./quantize model.gguf model-q4_k_m.gguf q4_k_m\n\n# Q5_K_S - 5-bit quantization, better quality\n./quantize model.gguf model-q5_k_s.gguf q5_k_s\n\n# Q8_0 - 8-bit quantization, near lossless\n./quantize model.gguf model-q8_0.gguf q8_0",
+      "expected_benefits": "4-16x compression, enables running 70B models on consumer GPUs",
+      "compatibility_notes": "Inference only. Not compatible with training or fine-tuning. Conflicts with other formats.",
+      "research_reference": "llama.cpp team - GGML/GGUF format specification",
+      "hardware_requirements": ["cpu", "gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["ggml"],
+      "is_active": true,
+      "accuracy_impact": -3.0,
+      "speed_impact": 50.0,
+      "memory_impact": 85.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "bitsandbytes 8-bit (LLM.int8())",
+      "category": "quantization",
+      "description": "Mixed-precision decomposition that handles outlier features separately, enabling 8-bit inference for large models without performance degradation.",
+      "implementation_code": "import bitsandbytes as bnb\nimport torch.nn as nn\n\n# Load model in 8-bit\nfrom transformers import AutoModelForCausalLM\n\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name,\n    load_in_8bit=True,\n    device_map='auto',\n    llm_int8_enable_fp32_cpu_offload=True\n)\n\n# Or convert existing model\nmodel = bnb.nn.Linear8bitLt(\n    input_features,\n    output_features,\n    bias=True,\n    has_fp16_weights=False\n)",
+      "expected_benefits": "50% memory reduction with <1% accuracy loss on large models",
+      "compatibility_notes": "Works best with models >1B parameters. May conflict with other quantization methods.",
+      "research_reference": "Dettmers et al. (2022) - LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": -1.0,
+      "speed_impact": 30.0,
+      "memory_impact": 50.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "bitsandbytes 4-bit (QLoRA base)",
+      "category": "quantization",
+      "description": "4-bit NormalFloat quantization with double quantization and paged optimizers. Enables fine-tuning of 65B models on single GPU.",
+      "implementation_code": "# 4-bit quantization config\nfrom transformers import BitsAndBytesConfig\n\nbnb_config = BitsAndBytesConfig(\n    load_in_4bit=True,\n    bnb_4bit_use_double_quant=True,\n    bnb_4bit_quant_type=\"nf4\",\n    bnb_4bit_compute_dtype=torch.bfloat16\n)\n\nmodel = AutoModelForCausalLM.from_pretrained(\n    model_name,\n    quantization_config=bnb_config,\n    device_map='auto'\n)",
+      "expected_benefits": "75% memory reduction, enables QLoRA fine-tuning",
+      "compatibility_notes": "Designed to work with LoRA. Conflicts with other quantization methods.",
+      "research_reference": "Dettmers et al. (2023) - QLoRA: Efficient Finetuning of Quantized LLMs",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": -2.0,
+      "speed_impact": 10.0,
+      "memory_impact": 75.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "SqueezeLLM",
+      "category": "quantization",
+      "description": "Dense-and-sparse quantization that achieves ultra-low bit precision (3-4 bits) through non-uniform quantization and sparse decomposition.",
+      "implementation_code": "from squeezellm import SqueezeLLMQuantizer\n\n# Quantize model to 3-bit\nquantizer = SqueezeLLMQuantizer(\n    model,\n    wbits=3,\n    sparse_threshold=0.05,\n    blocksize=128\n)\n\nmodel_quantized = quantizer.quantize_model(\n    calibration_data=train_loader,\n    num_samples=128\n)",
+      "expected_benefits": "Up to 6x compression with minimal accuracy loss",
+      "compatibility_notes": "Requires careful calibration. Not compatible with dynamic shapes.",
+      "research_reference": "Kim et al. (2023) - SqueezeLLM: Dense-and-Sparse Quantization",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": -3.0,
+      "speed_impact": 150.0,
+      "memory_impact": 83.0,
+      "implementation_difficulty": "hard",
+      "maturity_level": "experimental"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Activation-aware Weight Quantization (AWQ)",
+      "category": "quantization",
+      "description": "Protects salient weights by observing activation patterns, achieving better accuracy than round-to-nearest quantization at same bit width.",
+      "implementation_code": "from awq import AutoAWQForCausalLM\n\n# Load and quantize model\nmodel = AutoAWQForCausalLM.from_pretrained(model_path)\nquant_config = {\n    \"zero_point\": True,\n    \"q_group_size\": 128,\n    \"w_bit\": 4,\n    \"version\": \"GEMM\"\n}\n\nmodel.quantize(\n    tokenizer,\n    quant_config=quant_config,\n    calib_data=calibration_dataset\n)",
+      "expected_benefits": "Superior accuracy vs other 4-bit methods, 3x speedup",
+      "compatibility_notes": "Calibration dependent. May conflict with GPTQ.",
+      "research_reference": "Lin et al. (2023) - AWQ: Activation-aware Weight Quantization",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": -1.5,
+      "speed_impact": 200.0,
+      "memory_impact": 75.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "stable"
+    }
+  }
+]
