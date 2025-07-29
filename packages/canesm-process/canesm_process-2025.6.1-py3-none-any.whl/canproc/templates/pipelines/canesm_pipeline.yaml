@@ -1,0 +1,45 @@
+# what options should be specified at the top level vs. on each pipeline?
+# maybe both and highest level takes precedent?
+setup:
+
+  # defines where the output files for each stage will be written too.
+  # This is relative to the "output_directory" parameter in `canesm_pipeline`
+  output_directories:
+    monthly: "diags/monthly"
+    daily: "diags/daily"
+    rtd: "diags/rtd"
+    variability: "diags/landon"
+
+  # general options that may affect how we process yaml->dag
+  # e.g. I set this to "5.2" and "ccc" and (very slowly) processed a `gs` file.
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+  encoding:
+    dtype: float32
+    _FillValue: 1.0e20
+
+# current problems:
+# reuse variable lacks pipeline granularity
+# probably need a "persist"/"compute" to actually get reuse
+
+# list of pipelines that will be ran. 
+# NOTES:
+# Merging Pipeplines
+# ------------------
+# Overlap between pipelines will be removed. e.g. if both `cmip/core/core.yaml` and 
+# `custom/rlr001/variability.yaml` were to contain monthly averaged `GT`, only one 
+# would be ran. This is easier to administer on the backend but if they use different 
+# options we should check for that and run both.
+#
+# Nested Pipelines
+# ----------------
+# Pipelines can be nested, e.g., `cmip/core/core.yaml` is simply list of more pipelines
+# to run for the core CMIP diagnostics, broken down by domain.
+#
+# Custom Pipelines
+# ----------------
+# Pipelines can define their own stages and dags to be ran.
+pipelines:
+  - cmip/core/core.yaml
+  - rtd/core.yaml
+  - custom/rlr001/variability.yaml
