@@ -1,0 +1,176 @@
+#########################################################################################################################
+# Results as pandas DataFrame
+#########################################################################################################################
+def _index_dataframe(model: "N2PModelContent", component: "N2PComponent", sections, aveSections, cornerData, aveNodes,
+                     variation, realPolar, coordsys, v1, v2) -> pd.Index:
+    """ Function that returns the proper index for each component asked
+    """
+    # It is look if there is one part or several's:
+    parts = len(model.Parts) - (model.Solver == "Abaqus")
+
+    # Then the result array and where there results are placed is obtained
+    on_items = component.get_result_ndarray(sections, aveSections, cornerData, aveNodes,
+                                            variation, realPolar, coordsys, v1, v2)[1]
+
+    # The ids and the index are selected. It takes into account where the results are and the number of parts
+    if on_items == "NODES":
+        nodes = model.get_nodes()
+        ids = [(nodo.PartID, nodo.ID) if parts > 1 else nodo.ID for nodo in nodes]
+        indexname = ["Part", "Grid"] if parts > 1 else ["Grid"]
+
+    elif on_items == "ELEMENTS":
+        elements = model.get_elements()
+        connectors = model.get_connectors()
+        ids = [(element.PartID, element.ID) if parts > 1 else element.ID for element in elements] + \
+              [(co.PartID, co.ID) if parts > 1 else co.ID for con in connectors for co in (con if isinstance(con, list) else [con])]
+        indexname = ["Part", "Element"] if parts > 1 else ["Element"]
+
+    elif on_items == "ELEMENT NODAL":
+        ids = model.elementnodal().values()
+        indexname = ["Part", "Grid", "Element"]
+
+    else:
+        return None
+
+    # If there are several parts, or it is corner data, MultiIndex is used:
+    if isinstance(ids[0], tuple):
+        index = pd.MultiIndex.from_tuples(ids, names=indexname)
+    else:
+        index = ids
+
+    return index
+
+
+def dataframe_result(model: "N2PModelContent", component: "N2PComponent",sections=None, aveSections=-1, cornerData=False,
+                     aveNodes=-1, variation=100, realPolar=0, coordsys: int = -1000,
+                     v1: tuple = (1,0,0), v2: tuple = (0,1,0)) -> pd.DataFrame:
+    """ Function that returns as a dataframe of pandas the result array of a component
+        Args:
+            model: N2PModelContent
+
+            component: N2PComponent
+
+            sections: list[str] | list[N2PSection] -> Optional. Sections which operations are done.
+                None (Default) = All Sections
+
+            aveSections: int -> Optional. Operation Among Sections.
+                -1 : Maximum (Default),
+                -2 : Minimum,
+                -3 : Average,
+                -4 : Extreme,
+                -6 : Difference.
+
+            cornerData: bool -> Optional. Flag to get results in element nodal.
+                True : Results in Element-Nodal,
+                False : Results in centroid (Default).
+
+            aveNodes: int -> Optional. Operation among nodes when cornerData is selected.
+                0 : None,
+                -1 : Maximum (Default),
+                -2 : Minimum,
+                -3 : Average,
+                -5 : Average with variation parameter,
+                -6 : Difference.
+
+            variation: int -> Optional. Integer between 0 & 100 to select.
+                0 : No average between nodes,
+                100 : Total average between nodes (Default).
+
+            realPolar: int -> Optional. Data type when complex result.
+                1 : Real / Imaginary,
+                2 : Magnitude / Phase.
+
+            coordsys: int -> Optional. Coordinate System where the result_array will be represented.
+                0   : Global,
+                -1  : Material Coordinate System,
+                -10 : User defined,
+                -20 : Element/Node User Defined,
+                >0  : Solver ID of the Predefined Coordinate System.
+
+            v1: tuple -> Optional.
+
+            v2: tuple -> Optional. Directions vectors that generate the coordinate system axis:
+                x=v1,
+                z=v1^v2,
+                y=z^x.
+
+        Returns:
+            DataFrame
+    """
+
+    # DataFrame generation
+    return pd.DataFrame(data={component.Name:
+                              component.get_result_ndarray(sections, aveSections, cornerData, aveNodes, variation,
+                                                           realPolar, coordsys, v1, v2)[0]},
+                        index=_index_dataframe(model, component, sections, aveSections, cornerData, aveNodes, variation,
+                                               realPolar, coordsys, v1, v2),
+                        columns=[component.Name])
+
+
+def dataframe_results(model: "N2PModelContent", result: "N2PResult", sections=None, aveSections=-1, cornerData=False,
+                     aveNodes=-1, variation=100, realPolar=0, coordsys: int = -1000,
+                     v1: tuple = (1,0,0), v2: tuple = (0,1,0)) -> pd.DataFrame:
+    """Function that generates a DataFrame of pandas with all the components of a result. It uses dataframe_result.
+    It uses sequential computing.
+
+    Args:
+        model: N2PModelContent
+
+        component: N2PComponent
+
+        sections: list[str] | list[N2PSection] -> Optional. Sections which operations are done.
+            None (Default) = All Sections
+
+        aveSections: int -> Optional. Operation Among Sections.
+            -1 : Maximum (Default),
+            -2 : Minimum,
+            -3 : Average,
+            -4 : Extreme,
+            -6 : Difference.
+
+        cornerData: bool -> Optional. Flag to get results in element nodal.
+            True : Results in Element-Nodal,
+            False : Results in centroid (Default).
+
+        aveNodes: int -> Optional. Operation among nodes when cornerData is selected.
+            0 : None,
+            -1 : Maximum (Default),
+            -2 : Minimum,
+            -3 : Average,
+            -5 : Average with variation parameter,
+            -6 : Difference.
+
+        variation: int -> Optional. Integer between 0 & 100 to select.
+            0 : No average between nodes,
+            100 : Total average between nodes (Default).
+
+        realPolar: int -> Optional. Data type when complex result.
+            1 : Real / Imaginary,
+            2 : Magnitude / Phase.
+
+        coordsys: int -> Optional. Coordinate System where the result_array will be represented.
+            0   : Global,
+            -1  : Material Coordinate System,
+            -10 : User defined,
+                -20 : Element/Node User Defined,
+            >0  : Solver ID of the Predefined Coordinate System.
+
+        v1: tuple -> Optional.
+
+        v2: tuple -> Optional. Directions vectors that generate the coordinate system axis:
+            x=v1,
+            z=v1^v2,
+            y=z^x.
+
+    Returns:
+        DataFrame
+    """
+    return pd.DataFrame(data={component.Name:
+                                  component.get_result_ndarray(sections, aveSections, cornerData, aveNodes, variation,
+                                                               realPolar, coordsys, v1, v2)[0]
+                                                               for component in result.Components.values()},
+                        index=_index_dataframe(model, next(iter(result.Components.values())), sections, aveSections,
+                                               cornerData, aveNodes, variation, realPolar, coordsys, v1, v2),
+                        columns=[component.Name for component in result.Components.values()])
+                        
+#########################################################################################################################
