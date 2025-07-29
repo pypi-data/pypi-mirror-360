@@ -1,0 +1,400 @@
+name: Release to PyPI
+
+on:
+  release:
+    types: [published]
+  push:
+    tags:
+      - "v*"
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ===============================
+  # Build Distribution Packages
+  # ===============================
+  build:
+    name: Build distribution 📦
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    # ===============================
+    # Clean build artifacts (FIX for license-file error)
+    # ===============================
+    - name: Clean build artifacts
+      run: |
+        echo "🧹 Cleaning previous build artifacts..."
+        rm -rf dist/ build/ *.egg-info
+        find . -type d -name "__pycache__" -exec rm -rf {} +
+        find . -type d -name "*.egg-info" -exec rm -rf {} +
+        find . -type f -name "*.pyc" -delete
+        find . -type f -name "*.pyo" -delete
+        echo "✅ Cleanup completed"
+        
+        # Verify clean state
+        echo "📂 Verifying clean state:"
+        ls -la
+        [ ! -d "dist" ] && echo "✓ dist/ directory removed"
+        [ ! -d "build" ] && echo "✓ build/ directory removed"
+        find . -name "*.egg-info" -type d | wc -l | grep -q "^0$" && echo "✓ All .egg-info directories removed"
+
+    - name: Debug environment and project structure
+      run: |
+        echo "🔍 Environment Debug Information"
+        echo "Current working directory: $(pwd)"
+        echo "Python version: $(python --version)"
+        echo "Python executable: $(which python)"
+        echo ""
+        echo "📁 Project structure:"
+        find . -type f -name "*.py" | head -20
+        echo ""
+        echo "📋 pyproject.toml exists: $(test -f pyproject.toml && echo 'Yes' || echo 'No')"
+        echo "📋 setup.py exists: $(test -f setup.py && echo 'Yes' || echo 'No')"
+        echo ""
+        echo "🗂️ sphinxcontrib directory structure:"
+        if [ -d "sphinxcontrib" ]; then
+          find sphinxcontrib -type f -name "*.py" | sort
+        else
+          echo "❌ sphinxcontrib directory not found"
+        fi
+
+    # ===============================
+    # Install build dependencies (FIX: twine removed)
+    # ===============================
+    - name: Install build dependencies
+      run: |
+        echo "📦 Installing build dependencies..."
+        python -m pip install --upgrade pip
+        # Install specific versions to ensure compatibility (twine removed)
+        python -m pip install "setuptools>=77.0.0" "wheel>=0.44.0" "build>=1.2.2"
+        echo "✅ Build dependencies installed"
+        echo ""
+        echo "🔍 Verifying tool versions:"
+        python -c "import setuptools; print(f'setuptools: {setuptools.__version__}')"
+        python -c "import wheel; print(f'wheel: {wheel.__version__}')"
+        pip show build | grep Version
+
+    - name: Install package dependencies
+      run: |
+        echo "📦 Installing Sphinx and package dependencies..."
+        python -m pip install sphinx>=3.0 docutils>=0.18
+        echo "✅ Package dependencies installed"
+        echo "🔍 Checking installed packages:"
+        pip list | grep -E "(sphinx|docutils)" || echo "No sphinx/docutils found"
+
+    - name: Verify project structure before installation
+      run: |
+        echo "🔍 Pre-installation verification:"
+        echo "Current directory: $(pwd)"
+        echo "pyproject.toml content (first 50 lines):"
+        head -50 pyproject.toml
+        echo ""
+        echo "📂 Directory listing:"
+        ls -la
+        echo ""
+        echo "🐍 Python path:"
+        python -c "import sys; [print(p) for p in sys.path]"
+
+    - name: Install package in editable mode with verbose output
+      run: |
+        echo "🔧 Installing package in editable mode..."
+        echo "Command: pip install -e ."
+        python -m pip install -e . -v
+        echo "✅ Package installation completed"
+
+    - name: Verify package installation
+      run: |
+        echo "🔍 Post-installation verification:"
+        echo "📦 Installed packages:"
+        pip list | grep sphinxcontrib || echo "No sphinxcontrib packages found"
+        echo ""
+        echo "🐍 Python package discovery:"
+        python << 'EOF'
+        import sys, pkgutil
+        print('Python path:')
+        for path in sys.path:
+            print(f'  {path}')
+        print()
+        print('Checking for sphinxcontrib namespace:')
+        try:
+            import sphinxcontrib
+            print(f"✅ sphinxcontrib found at: {sphinxcontrib.__path__}")
+            for finder, name, ispkg in pkgutil.iter_modules(sphinxcontrib.__path__, "sphinxcontrib."):
+                print(f"  📦 {name} (package: {ispkg})")
+        except ImportError as e:
+            print(f"❌ sphinxcontrib import failed: {e}")
+        EOF
+
+    - name: Test package import
+      run: |
+        echo "🧪 Testing package import..."
+        python << 'EOF'
+        try:
+            import sphinxcontrib.jsontable
+            print("✅ Package imported successfully")
+            print(f"📦 Version: {sphinxcontrib.jsontable.__version__}")
+            print(f"📂 Package location: {sphinxcontrib.jsontable.__file__}")
+        except ImportError as e:
+            print(f"❌ Package import failed: {e}")
+            import sys
+            print(f"Python version: {sys.version}")
+            print(f"Python executable: {sys.executable}")
+            print("Available modules in sphinxcontrib:")
+            try:
+                import sphinxcontrib, pkgutil
+                for finder, name, ispkg in pkgutil.iter_modules(sphinxcontrib.__path__):
+                    print(f"  - {name}")
+            except Exception as debug_e:
+                print(f"Could not list sphinxcontrib modules: {debug_e}")
+            raise
+        EOF
+
+    - name: Verify Sphinx integration
+      run: |
+        echo "🔧 Testing Sphinx integration..."
+        python << 'EOF'
+        try:
+            from sphinxcontrib.jsontable.directives import JsonTableDirective
+            print("✅ Directive import successful")
+            from sphinxcontrib.jsontable import setup
+            print("✅ Setup function available")
+            print("🎉 Sphinx integration verified")
+        except ImportError as e:
+            print(f"❌ Sphinx integration failed: {e}")
+            raise
+        EOF
+
+    - name: Run basic functionality test
+      run: |
+        echo "🧪 Running functionality test..."
+        python << 'EOF'
+        import tempfile, os, json
+
+        test_data_dict = {"name": "test", "value": 123}
+        test_data = json.dumps(test_data_dict)
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            f.write(test_data)
+            test_file = f.name
+
+        try:
+            from sphinxcontrib.jsontable.directives import JsonDataLoader, TableConverter, TableBuilder
+            
+            loader = JsonDataLoader()
+            data = loader.parse_inline([test_data])
+            print("✅ JSON loading successful")
+            
+            converter = TableConverter()
+            table_data = converter.convert(data, include_header=True)
+            print("✅ Table conversion successful")
+            
+            builder = TableBuilder()
+            table_node = builder.build(table_data, has_header=True)
+            print("✅ Table building successful")
+            
+            print("🎉 All functionality tests passed!")
+            
+        finally:
+            os.unlink(test_file)
+        EOF
+
+    # ===============================
+    # Extra cleanup before build (FIX for license-file error)
+    # ===============================
+    - name: Final cleanup before build
+      run: |
+        echo "🧹 Final cleanup before build..."
+        rm -rf dist/ build/ *.egg-info
+        find . -type d -name "*.egg-info" -exec rm -rf {} +
+        echo "✅ Final cleanup completed"
+
+    - name: Build source distribution and wheel
+      run: |
+        echo "🔨 Building package distributions..."
+        python -m build --verbose
+        echo "✅ Build completed successfully"
+
+    # ===============================
+    # Basic verification without twine
+    # ===============================
+    - name: Verify distributions
+      run: |
+        echo "🔍 Verifying built distributions..."
+        echo "📋 Distribution files:"
+        ls -la dist/
+        echo "📊 Distribution details:"
+        for file in dist/*; do
+          echo "  📦 $file: $(wc -c < "$file") bytes"
+        done
+        echo ""
+        echo "🔍 Checking wheel metadata structure:"
+        python << 'EOF'
+        import zipfile
+        import glob
+        
+        wheel_files = glob.glob("dist/*.whl")
+        if wheel_files:
+            wheel_file = wheel_files[0]
+            print(f"Checking {wheel_file}")
+            with zipfile.ZipFile(wheel_file, 'r') as zf:
+                # List all files in wheel
+                print("Files in wheel:")
+                for f in sorted(zf.namelist())[:10]:  # Show first 10 files
+                    print(f"  - {f}")
+                
+                # Check for METADATA file
+                metadata_files = [f for f in zf.namelist() if f.endswith('METADATA')]
+                if metadata_files:
+                    print(f"\n✅ Found METADATA file: {metadata_files[0]}")
+                    metadata_content = zf.read(metadata_files[0]).decode('utf-8')
+                    
+                    # Check metadata version
+                    for line in metadata_content.split('\n')[:5]:  # Show first 5 lines
+                        print(f"  {line}")
+                else:
+                    print("❌ No METADATA file found in wheel")
+        
+        # Check source distribution
+        tar_files = glob.glob("dist/*.tar.gz")
+        if tar_files:
+            print(f"\n✅ Found source distribution: {tar_files[0]}")
+        EOF
+
+    - name: Test wheel installation in clean environment
+      run: |
+        echo "🧪 Testing wheel installation in clean environment..."
+        python -m venv test_env
+        echo "📦 Installing dependencies in test environment..."
+        test_env/bin/python -m pip install sphinx>=3.0 docutils>=0.18
+        echo "📦 Installing our wheel..."
+        test_env/bin/python -m pip install dist/*.whl
+        echo "🧪 Testing import in clean environment..."
+        test_env/bin/python -c "import sphinxcontrib.jsontable; print(f'✅ Wheel installation test passed: v{sphinxcontrib.jsontable.__version__}'); print(f'📂 Package location: {sphinxcontrib.jsontable.__file__}')"
+        echo "🧹 Cleaning up test environment..."
+        rm -rf test_env
+
+    - name: Store distribution packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+        retention-days: 30
+
+  # ===============================
+  # Publish to PyPI (Production)
+  # ===============================
+  publish-to-pypi:
+    name: Publish to PyPI 🚀
+    if: github.event_name == 'release' && github.event.action == 'published'
+    needs: [build]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/sphinxcontrib-jsontable
+    permissions:
+      id-token: write # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - name: Download distribution packages
+      uses: actions/download-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+
+    # ===============================
+    # Basic verification before PyPI upload
+    # ===============================
+    - name: Verify distributions before upload
+      run: |
+        echo "📋 Files to be uploaded to PyPI:"
+        ls -la dist/
+        echo "📊 Total files: $(ls -1 dist/ | wc -l)"
+        echo ""
+        echo "🔍 Checking distribution files exist:"
+        [ -f dist/*.whl ] && echo "✅ Wheel file found" || echo "❌ No wheel file found"
+        [ -f dist/*.tar.gz ] && echo "✅ Source distribution found" || echo "❌ No source distribution found"
+        echo ""
+        echo "✅ Ready for PyPI upload"
+
+    # pypa/gh-action-pypi-publish will automatically run twine check internally
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        verbose: true
+        print-hash: true
+
+    - name: Post-upload verification and summary
+      run: |
+        echo "🎉 Successfully published to PyPI!"
+        echo ""
+        echo "📦 Package Information:"
+        echo "  Name: sphinxcontrib-jsontable"
+        echo "  Version: ${{ github.ref_name }}"
+        echo "  PyPI URL: https://pypi.org/project/sphinxcontrib-jsontable/"
+        echo ""
+        echo "📥 Installation command:"
+        echo "  pip install sphinxcontrib-jsontable"
+        echo ""
+        echo "📚 Documentation:"
+        echo "  https://github.com/sasakama-code/sphinxcontrib-jsontable"
+
+  # ===============================
+  # Post-Release Tasks
+  # ===============================
+  notify-success:
+    name: Notify successful release 📢
+    if: github.event_name == 'release'
+    needs: [publish-to-pypi]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Create comprehensive success notification
+      run: |
+        echo "🎊 RELEASE SUCCESSFUL! 🎊"
+        echo ""
+        echo "📦 Package: sphinxcontrib-jsontable"
+        echo "🏷️  Version: ${{ github.ref_name }}"
+        echo "🔗 PyPI: https://pypi.org/project/sphinxcontrib-jsontable/"
+        echo "📚 GitHub: https://github.com/sasakama-code/sphinxcontrib-jsontable"
+        echo ""
+        echo "🚀 Ready for installation:"
+        echo "   pip install sphinxcontrib-jsontable"
+        echo ""
+        echo "✨ Thank you for using sphinxcontrib-jsontable!"
+
+  # ===============================
+  # Handle failures
+  # ===============================
+  notify-failure:
+    name: Handle release failure 🚨
+    if: failure()
+    needs: [build, publish-to-pypi]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Report failure details
+      run: |
+        echo "❌ RELEASE FAILED"
+        echo ""
+        echo "🔍 Please check the following:"
+        echo "  1. Build logs for compilation errors"
+        echo "  2. PyPI Trusted Publishing configuration"
+        echo "  3. Package dependencies and metadata"
+        echo "  4. GitHub environment permissions"
+        echo ""
+        echo "📞 For support, please check:"
+        echo "  - GitHub Actions logs"
+        echo "  - PyPI publishing status"
+        echo "  - Repository issues"

@@ -1,0 +1,461 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop, 'feature/*' ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  # Use consistent Python version across jobs
+  PYTHON_VERSION: '3.11'
+  # Add cache versioning for better invalidation
+  CACHE_VERSION: v1
+
+jobs:
+  # Code Quality Check
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-quality-${{ env.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-quality-${{ env.CACHE_VERSION }}-
+          ${{ runner.os }}-pip-quality-
+
+    - name: Install uv (Unix)
+      if: runner.os != 'Windows'
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    - name: Install uv (Windows)
+      if: runner.os == 'Windows'
+      run: powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+    - name: Install dependencies (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        source $HOME/.cargo/env
+        uv venv
+        source .venv/bin/activate
+        uv pip install -e .[dev]
+
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        uv venv
+        .venv\Scripts\activate
+        uv pip install -e .[dev]
+
+    - name: Verify installation (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        source $HOME/.cargo/env
+        source .venv/bin/activate
+        python -c "import sphinxcontrib.jsontable; print('Package installed successfully')"
+        python -c "from sphinxcontrib.jsontable import __version__; print(f'Version: {__version__}')"
+
+    - name: Verify installation (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\activate
+        python -c "import sphinxcontrib.jsontable; print('Package installed successfully')"
+        python -c "from sphinxcontrib.jsontable import __version__; print(f'Version: {__version__}')"
+
+    - name: Run ruff (linting) (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        source $HOME/.cargo/env
+        source .venv/bin/activate
+        echo "Running ruff linting..."
+        ruff check . --output-format=github
+
+    - name: Run ruff (linting) (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\activate
+        echo "Running ruff linting..."
+        ruff check . --output-format=github
+
+    - name: Run ruff (formatting) (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        source $HOME/.cargo/env
+        source .venv/bin/activate
+        echo "Running ruff formatting check..."
+        ruff format --check . --diff
+
+    - name: Run ruff (formatting) (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\activate
+        echo "Running ruff formatting check..."
+        ruff format --check . --diff
+
+    - name: Run mypy (type checking) (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        source $HOME/.cargo/env
+        source .venv/bin/activate
+        echo "Running mypy type checking..."
+        mypy . || echo "Mypy check completed with warnings (allowed during transition)"
+      # Allow mypy to fail for now as we're transitioning to strict typing
+      continue-on-error: true
+
+    - name: Run mypy (type checking) (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\activate
+        echo "Running mypy type checking..."
+        mypy . || echo "Mypy check completed with warnings (allowed during transition)"
+      # Allow mypy to fail for now as we're transitioning to strict typing
+      continue-on-error: true
+
+    - name: Security check with safety (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        source $HOME/.cargo/env
+        source .venv/bin/activate
+        echo "Running security check..."
+        uv pip install safety
+        safety check --json || echo "Safety check completed with warnings (allowed during transition)"
+      # Allow safety to fail for now to avoid blocking on dependency issues
+      continue-on-error: true
+
+    - name: Security check with safety (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\activate
+        echo "Running security check..."
+        uv pip install safety
+        safety check --json || echo "Safety check completed with warnings (allowed during transition)"
+      # Allow safety to fail for now to avoid blocking on dependency issues
+      continue-on-error: true
+
+  # Build and Package Test
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-build-${{ env.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-build-${{ env.CACHE_VERSION }}-
+          ${{ runner.os }}-pip-build-
+
+    - name: Install uv (Unix)
+      if: runner.os != 'Windows'
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    - name: Install uv (Windows)
+      if: runner.os == 'Windows'
+      run: powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+    - name: Install build dependencies (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        source $HOME/.cargo/env
+        uv venv
+        source .venv/bin/activate
+        uv pip install build twine
+
+    - name: Install build dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        uv venv
+        .venv\Scripts\activate
+        uv pip install build twine
+
+    - name: Build package (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        source $HOME/.cargo/env
+        source .venv/bin/activate
+        echo "Building package..."
+        python -m build
+
+    - name: Build package (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\activate
+        echo "Building package..."
+        python -m build
+
+    - name: Check package (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        source $HOME/.cargo/env
+        source .venv/bin/activate
+        echo "Checking package integrity..."
+        python -m twine check dist/*
+
+    - name: Check package (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\activate
+        echo "Checking package integrity..."
+        python -m twine check dist/*
+
+    - name: Test package installation (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        source $HOME/.cargo/env
+        source .venv/bin/activate
+        echo "Testing package installation..."
+        uv pip install dist/*.whl
+        python -c "import sphinxcontrib.jsontable; print('Package installed successfully')"
+        python -c "from sphinxcontrib.jsontable import __version__; print(f'Version: {__version__}')"
+
+    - name: Test package installation (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\activate
+        echo "Testing package installation..."
+        uv pip install dist/*.whl
+        python -c "import sphinxcontrib.jsontable; print('Package installed successfully')"
+        python -c "from sphinxcontrib.jsontable import __version__; print(f'Version: {__version__}')"
+
+  # Test Suite
+  test:
+    needs: [quality, build]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.10', '3.11', '3.12']
+
+    # CI環境変数を追加
+    env:
+      CI: true
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-test-${{ env.CACHE_VERSION }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-test-${{ env.CACHE_VERSION }}-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-test-${{ env.CACHE_VERSION }}-
+
+    - name: Install uv (Unix)
+      if: runner.os != 'Windows'
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    - name: Install uv (Windows)
+      if: runner.os == 'Windows'
+      run: powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+    - name: Install dependencies (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        source $HOME/.cargo/env
+        uv venv
+        source .venv/bin/activate
+        uv pip install -e .[excel,test]
+
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        uv venv
+        .venv\Scripts\activate
+        uv pip install -e .[excel,test]
+
+    - name: Verify test installation (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        source $HOME/.cargo/env
+        source .venv/bin/activate
+        python -c "import sphinxcontrib.jsontable; print('Package installed successfully')"
+        python -c "import pytest; print('Pytest installed successfully')"
+
+    - name: Verify test installation (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\activate
+        python -c "import sphinxcontrib.jsontable; print('Package installed successfully')"
+        python -c "import pytest; print('Pytest installed successfully')"
+
+    - name: Run tests (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        source $HOME/.cargo/env
+        source .venv/bin/activate
+        python -m pytest tests/ --cov=sphinxcontrib.jsontable --cov-report=xml --cov-report=term-missing --cov-fail-under=10 -v -m "not benchmark"
+
+    - name: Run tests (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\activate
+        python -m pytest tests/ --cov=sphinxcontrib.jsontable --cov-report=xml --cov-report=term-missing --cov-fail-under=10 -v -m "not benchmark"
+
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == '3.11' && matrix.os == 'ubuntu-latest'
+      uses: codecov/codecov-action@v5
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
+        verbose: true
+
+  # Performance and Benchmark Tests (Optional)
+  performance:
+    needs: [test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # パフォーマンステストはmainブランチとPR時のみ実行
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-perf-${{ env.CACHE_VERSION }}-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-perf-${{ env.CACHE_VERSION }}-
+          ${{ runner.os }}-pip-perf-
+
+    - name: Install uv
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    - name: Install dependencies
+      run: |
+        source $HOME/.cargo/env
+        uv venv
+        source .venv/bin/activate
+        uv pip install -e .[excel,test]
+
+    - name: Run benchmark tests (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        source $HOME/.cargo/env
+        source .venv/bin/activate
+        echo "=== ベンチマークテスト実行 ==="
+        echo "利用可能なベンチマークテスト数を確認中..."
+        BENCHMARK_COUNT=$(python -m pytest tests/ -m benchmark --collect-only -q 2>/dev/null | grep -c "test_" || echo "0")
+        echo "発見されたベンチマークテスト数: $BENCHMARK_COUNT"
+        if [ "$BENCHMARK_COUNT" -gt 0 ]; then
+          echo "ベンチマークテストを実行します..."
+          python -m pytest tests/ -m benchmark --benchmark-enable --benchmark-sort=mean --benchmark-json=benchmark.json -v --cov-fail-under=0 --tb=short
+        else
+          echo "⚠️ ベンチマークテストが見つかりませんでした。ベンチマーク実行をスキップします。"
+          echo "デバッグ情報："
+          python -m pytest tests/ -m benchmark --collect-only -v
+        fi
+      continue-on-error: true  # ベンチマークは失敗してもCI全体は通す
+
+    - name: Run benchmark tests (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        .venv\Scripts\activate
+        echo "=== ベンチマークテスト実行 ==="
+        echo "利用可能なベンチマークテスト数を確認中..."
+        python -m pytest tests/ -m benchmark --collect-only -q 2>nul | find /c "test_" > temp_count.txt || echo 0 > temp_count.txt
+        set /p BENCHMARK_COUNT=<temp_count.txt
+        del temp_count.txt
+        echo 発見されたベンチマークテスト数: %BENCHMARK_COUNT%
+        if %BENCHMARK_COUNT% gtr 0 (
+          echo ベンチマークテストを実行します...
+          python -m pytest tests/ -m benchmark --benchmark-enable --benchmark-sort=mean --benchmark-json=benchmark.json -v --cov-fail-under=0 --tb=short
+        ) else (
+          echo ⚠️ ベンチマークテストが見つかりませんでした。ベンチマーク実行をスキップします。
+          echo デバッグ情報：
+          python -m pytest tests/ -m benchmark --collect-only -v
+        )
+      continue-on-error: true  # ベンチマークは失敗してもCI全体は通す
+
+    - name: Run performance tests (CI-safe) (Unix)
+      if: runner.os != 'Windows'
+      env:
+        CI: true
+      run: |
+        source $HOME/.cargo/env
+        source .venv/bin/activate
+        echo "=== パフォーマンステスト実行 ==="
+        echo "利用可能なパフォーマンステスト数を確認中..."
+        PERFORMANCE_COUNT=$(python -m pytest tests/ -m performance --collect-only -q 2>/dev/null | grep -c "test_" || echo "0")
+        echo "発見されたパフォーマンステスト数: $PERFORMANCE_COUNT"
+        if [ "$PERFORMANCE_COUNT" -gt 0 ]; then
+          echo "パフォーマンステストを実行します..."
+          python -m pytest tests/ -m performance -v --override-ini addopts="" --tb=short
+        else
+          echo "❌ パフォーマンステストが見つかりませんでした。"
+          echo "パフォーマンステストの@pytest.mark.performanceマーカーを確認してください。"
+          echo "デバッグ情報："
+          python -m pytest tests/ -m performance --collect-only -v
+          exit 1
+        fi
+
+    - name: Run performance tests (CI-safe) (Windows)
+      if: runner.os == 'Windows'
+      env:
+        CI: true
+      run: |
+        .venv\Scripts\activate
+        echo "=== パフォーマンステスト実行 ==="
+        echo "利用可能なパフォーマンステスト数を確認中..."
+        python -m pytest tests/ -m performance --collect-only -q 2>nul | find /c "test_" > temp_count.txt || echo 0 > temp_count.txt
+        set /p PERFORMANCE_COUNT=<temp_count.txt
+        del temp_count.txt
+        echo 発見されたパフォーマンステスト数: %PERFORMANCE_COUNT%
+        if %PERFORMANCE_COUNT% gtr 0 (
+          echo パフォーマンステストを実行します...
+          python -m pytest tests/ -m performance -v --override-ini addopts="" --tb=short
+        ) else (
+          echo ❌ パフォーマンステストが見つかりませんでした。
+          echo パフォーマンステストの@pytest.mark.performanceマーカーを確認してください。
+          echo デバッグ情報：
+          python -m pytest tests/ -m performance --collect-only -v
+          exit 1
+        )
+
+    - name: Upload benchmark results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: benchmark.json
+        retention-days: 30
