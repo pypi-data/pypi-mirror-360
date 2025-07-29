@@ -1,0 +1,105 @@
+Metadata-Version: 2.4
+Name: dekeyrej-microservice
+Version: 0.9.0
+Summary: base class for microservices
+Author: J.DeKeyrel
+Author-email: "J. DeKeyrel" <noneyabusiness@notemail.com>
+License: MIT License
+        
+        Copyright (c) 2025 Joseph S. DeKeyrel
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: arrow
+Requires-Dist: dekeyrej-secretmanager
+Requires-Dist: requests
+Requires-Dist: redis
+Requires-Dist: python-dotenv
+Dynamic: author
+Dynamic: license-file
+
+# dekeyrej-microservice
+
+**Minimalist base class for microservice servers.**
+
+`dekeyrej-microservice` is a lightweight Python package that provides a superclass `MicroService`—designed to orchestrate real-time data collection and visual display in homelab environments. It’s built for clarity, composability, and just enough abstraction to stay out of your way.
+
+## ✨ Why dekeyrej-microservice?
+
+This project grew out of a desire to keep things simple—but not simplistic. In a homelab where services talk over Redis, update displays via RGB matrices, and pull secrets from Vault or Kubernetes, `dekeyrej-microservice` offers a clean interface for:
+
+- Scheduling periodic updates
+- Fetching and publishing data
+
+## 🧱 Core Components
+
+### `MicroService`
+
+A base class for microservices that:
+
+- Reads secrets from Vault, Kubernetes, or environment
+- Connects to Redis
+- Periodically fetches data from external APIs
+- Publishes updates via Redis pub/sub
+- Supports liveness probes and production/development modes
+
+<!-- ## 🌕 Example: Moon Phase Tracker
+
+The `examples/moon_clock/` directory (coming soon) includes:
+
+- `MoonServer`: Fetches sun/moon data from MET Norway’s API and publishes it
+- `MoonDisplay`: Renders current time, moon phase, and next moonrise/set on an RGB matrix
+- `clientdisplay.py`: Drives the LED panel and handles display cycling, pause/play, and override logic via Redis -->
+
+## 📦 Installation
+
+```bash
+pip install dekeyrej-microservice
+```
+
+## 🛠️ Usage
+
+```python
+from microservice import MicroService
+
+class MyServer(MicroService):
+    def update(self):
+        # Fetch data, publish to Redis
+        pass
+```
+
+## 🔐 Secrets & Config
+ServerPage supports multiple secret sources from `dekeyrej-secretmanager`:
+- KubeVault - encrypted Kubernetes Secrets with Vault Transit decrypt
+- Kubernetes Secrets
+- Vault static keys - coming soon!
+- Environment variables
+- Local JSON files
+
+## 🧪 Status
+This project is under active development. Expect updates, refinements, and the occasional moonbeam.
+
+## 📄 License
+MIT License. See LICENSE for details.
