@@ -1,0 +1,37 @@
+name: "CI"
+
+on:
+  push:
+
+jobs:
+  format:
+    name: "Format and lint"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up uv
+        id: setup-uv
+        uses: astral-sh/setup-uv@v3
+      - name: Format and lint
+        run: uvx hatch fmt --check
+      - name: Lint docstrings
+        if: always() # Run even if previous step fails
+        run: uvx pydocstringformatter --exit-code scripts tests visisipy
+
+  test:
+    name: "Test"
+
+    strategy:
+      matrix:
+        python-version: [ "3.9", "3.10", "3.11", "3.12", "3.13" ]
+        os: [ windows-latest, ubuntu-latest, macos-latest ]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up uv
+        id: setup-uv
+        uses: astral-sh/setup-uv@v3
+      - name: Run tests
+        run: uvx hatch test --python ${{ matrix.python-version }} ./tests --no-opticstudio

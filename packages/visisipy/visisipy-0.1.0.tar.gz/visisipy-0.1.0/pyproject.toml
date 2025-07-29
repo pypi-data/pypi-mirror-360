@@ -1,0 +1,128 @@
+[build-system]
+requires = ["hatchling", "versioningit"]
+build-backend = "hatchling.build"
+
+[project]
+name = "visisipy"
+description = "Accessible vision simulations in Python."
+readme = "README.md"
+authors = [
+    { name = "Corné Haasjes" },
+    { name = "Jan-Willem Beenakker" },
+]
+maintainers = [
+    { name = "MReye research group", email = "zospy@mreye.nl" }
+]
+dependencies = [
+    "matplotlib",
+    "numba>=0.60.0", # Required for Optiland. Maximum version still supporting Python 3.9.
+    "numpy",
+    "optiland>=0.5.1",
+    "scipy",
+    "typing-extensions>=4.12.2 ; python_full_version < '3.11'",
+    "zospy>=2.1.2; sys_platform == 'win32'",
+]
+requires-python = ">=3.9, <3.14"
+dynamic = ["version"]
+
+[project.optional-dependencies]
+torch = ["torch"]
+
+[tool.hatch.version]
+source = "versioningit"
+default-version = "0.0.0+unknown"
+
+[tool.hatch.envs.default]
+installer = "uv"
+python = "3.12"
+
+[tool.hatch.envs.default.scripts]
+# Format docstrings according to numpydoc
+format-docstrings = "{env:HATCH_UV:uv} tool run pydocstringformatter --write {args:scripts tests visisipy}"
+
+[tool.hatch.envs.docs]
+installer = "uv"
+python = "3.13"
+dependencies = [
+    "myst-nb",
+    "myst-parser",
+    "pydata-sphinx-theme",
+    "sphinx",
+    "sphinx-autoapi",
+    "sphinx-autobuild",
+    "sphinx-design",
+]
+
+[tool.hatch.envs.docs.scripts]
+build = "sphinx-build -M {args:html} docs docs/_build"
+preview = "sphinx-autobuild docs docs/_build/html --open-browser --ignore docs/api {args}"
+
+[tool.hatch.envs.hatch-static-analysis]
+config-path = "ruff_defaults.toml"
+dependencies = ["ruff==0.11.5"]
+
+[tool.hatch.envs.hatch-test]
+features = ["torch"]
+
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+[tool.pytest.ini_options]
+markers = [
+    "needs_opticstudio: test needs OpticStudio and will be skipped if it is not available",
+    "windows_only: test can only be run on Windows",
+]
+filterwarnings = [
+    "ignore:Header and row length mismatch",
+    "ignore:Only a single instance of ZOS can exist at any time",
+]
+
+[tool.coverage.report]
+omit = [
+    "tests/*",
+]
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError"
+]
+
+[tool.ruff]
+extend = "ruff_defaults.toml"
+line-length = 120
+
+[tool.ruff.lint]
+preview = true
+extend-ignore = [
+    "B028",
+    "TRY003", # Avoid specifying long messages outside the exception class
+    "EM101", # Exception must not use a string literal, assign to variable first
+    "EM102", # Exception must not use an f-string literal, assign to variable first
+]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"docs/*" = ["I002", "INP001", "T20"]
+"examples/*" = ["I002", "INP001", "T20"]
+"scripts/*" = ["S101"]
+"tests/*" = ["ARG001", "ARG002", "FBT001", "PLC2701"]
+"tests/opticstudio/*" = ["SLF001"]
+"tests/optiland/*" = ["SLF001"]
+
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-names-type = "csv"
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+
+
+[tool.pydocstringformatter]
+style = "numpydoc"
+max-line-length = 120
+max-summary-lines = 1
+summary-quotes-same-line = true
+linewrap-full-docstring = true
+
+[dependency-groups]
+dev = [
+    "jupyter>=1.1.1",
+    "pytest>=8.3.5",
+]
