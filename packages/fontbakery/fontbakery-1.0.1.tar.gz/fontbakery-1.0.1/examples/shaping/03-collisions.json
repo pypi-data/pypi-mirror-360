@@ -1,0 +1,49 @@
+{
+  "configuration": {
+    "collidoscope": {
+      "comment": "The parameters in this block are passed to the Python 'collidoscope' module.",
+      "comment2": "The set of parameters specified below should detect all collisions.",
+      "comment3": "If these are too strict for your needs, try changing or removing them.",
+      "area": 0,
+      "marks": true,
+      "faraway": true
+    },
+    "ingredients": {
+      "vowel": "[aeiou]",
+      "lowercase": "[a-z]",
+      "accented_glyph": "[\u00e0-\u017e]"
+    },
+    "defaults": {
+      "comment": "The contents of the 'defaults' block are added to all of the test blocks below",
+      "allowedcollisions": [
+        "medialYa-myanmar/aaSign-myanmar",
+        "medialWa-myanmar/medialYa-myanmar.bt1"
+      ]
+    }
+  },
+  "tests": [
+    {
+      "comment": "Again, tests with expectations are treated as (basic) regression tests.",
+      "input": "fi",
+      "expectation": "f_i"
+    },
+    {
+      "comment": "But tests (even without expectations) are now checked for collisions.",
+      "input": "ïï"
+    },
+    {
+      "comment": "If the value of 'input_type' is 'pattern', the input is interpreted as a set of 'ingredients'.",
+      "comment2": "This means that all possible inputs matching the pattern are then checked for collisions.",
+      "comment3": "In this case, 'aa', 'ae', 'ai', 'ao', 'ao', 'au', 'ea', ... will be shaped and checked.",
+      "input_type": "pattern",
+      "input": "vowel vowel"
+    },
+    {
+      "comment": "Ingredients are based on Python regular expressions.",
+      "comment2": "In this example all two- and three-character sequences of all accented glyphs will be checked.",
+      "comment3": "For more information see the Python 'stringbrewer' module.",
+      "input_type": "pattern",
+      "input": "accented_glyph{2,3}"
+    }
+  ]
+}
