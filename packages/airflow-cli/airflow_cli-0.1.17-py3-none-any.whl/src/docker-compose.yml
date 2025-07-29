@@ -1,0 +1,252 @@
+---
+x-airflow-common: &airflow-common
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres/airflow
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres/airflow
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://postgres:postgres@postgres/airflow
+    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
+    AIRFLOW_CONN_MONGO_DEFAULT: mongo://mongo:mongo@mongo:27017/?authSource=admin
+    AIRFLOW__CORE__FERNET_KEY: "pMrhjIcqUNHMYRk_ZOBmMptWR6o1DahCXCKn5lEMpzM="
+    AIRFLOW__API__SECRET_KEY: "891b3faded3f6bb751a452c8566b2b90becf3d"
+    AIRFLOW__API_AUTH__JWT_SECRET: "231b3f1ded3f1bb754a352c8166c2b90bqcf32"
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
+    AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth"
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: "http://airflow-apiserver:8080/execution/"
+    AIRFLOW_VAR_DATA_DIR: "/opt/airflow/data"
+    AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "true"
+    AIRFLOW__WEBSERVER__SIMPLE_AUTH_MANAGER_USERS: "airflow:admin"
+    DOCKER_INSECURE_NO_IPTABLES_RAW: "true"
+  volumes:
+    - ./dags:/opt/airflow/dags
+  user: "50000:0"
+  image: "harbor.lema.ufpb.br/public/airflow:v3.0.3rc3-python3.11-spark3.5.5"
+  depends_on: &airflow-common-depends-on
+    redis:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
+services:
+  redis:
+    image: redis:7.0.4-alpine
+    container_name: redis-container
+    hostname: redis
+    expose:
+      - 6379
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 30s
+      retries: 50
+    restart: unless-stopped
+    networks:
+      - dev
+  postgres:
+    container_name: postgres-container
+    hostname: postgres
+    image: postgres:16-alpine
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: airflow
+    volumes:
+      - postgresdb_data:/var/lib/postgresql/data"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - dev
+  mongo:
+    container_name: mongo-container
+    hostname: mongo
+    image: mongo:8.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: mongo
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    networks:
+      - dev
+  dbgate:
+    image: dbgate/dbgate:6.4.1-alpine
+    container_name: dbgate
+    hostname: dbgate-webserver
+    volumes:
+      - dbgate-data:/root/.dbgate
+    ports:
+      - 3100:3000
+    environment:
+      CONNECTIONS: con1,con2,con3
+      LABEL_con1: Postgres
+      SERVER_con1: postgres
+      USER_con1: postgres
+      PASSWORD_con1: postgres
+      PORT_con1: 5432
+      ENGINE_con1: postgres@dbgate-plugin-postgres
+      LABEL_con2: MongoDB
+      URL_con2: mongodb://mongo:mongo@mongo:27017
+      ENGINE_con2: mongo@dbgate-plugin-mongo
+    restart: unless-stopped
+    networks:
+      - dev
+
+  airflow-apiserver:
+    <<: *airflow-common
+    container_name: airflow-api-server-container
+    command: api-server
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    networks:
+      - dev
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: airflow-scheduler-container
+    command: scheduler
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    networks:
+      - dev
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    container_name: airflow-dag-processor-container
+    command: dag-processor
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    networks:
+      - dev
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-worker:
+    <<: *airflow-common
+    container_name: airflow-worker-container
+    command: celery worker
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - 'celery --app airflow.providers.celery.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}" || celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"'
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    environment:
+      <<: *airflow-common-env
+      DUMB_INIT_SETSID: "0"
+    restart: always
+    networks:
+      - dev
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-apiserver:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-triggerer:
+    <<: *airflow-common
+    container_name: airflow-triggerer-container
+    command: triggerer
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    networks:
+      - dev
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-init:
+    <<: *airflow-common
+    container_name: airflow-init
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        mkdir -p /sources/logs /sources/dags /sources/plugins
+        chown -R "50000:0" /sources/{logs,dags,plugins}
+        exec /entrypoint airflow version
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+    user: "0:0"
+    networks:
+      - dev
+
+  airflow-cli:
+    <<: *airflow-common
+    profiles:
+      - debug
+    environment:
+      <<: *airflow-common-env
+      CONNECTION_CHECK_MAX_COUNT: "0"
+    command:
+      - bash
+      - -c
+      - airflow
+    depends_on:
+      <<: *airflow-common-depends-on
+    networks:
+      - dev
+
+networks:
+  dev:
+volumes:
+  mongodb_data:
+  postgresdb_data:
+  dbgate-data:
