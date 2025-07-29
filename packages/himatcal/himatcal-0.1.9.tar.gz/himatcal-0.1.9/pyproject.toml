@@ -1,0 +1,133 @@
+[project]
+name = "himatcal"
+version = "0.1.9"
+description = "High throughput material calculation"
+authors = [{ name = "Congcong Sun", email = "suncongcong000@foxmail.com" }]
+license = { text = "BSD-3-Clause" }
+readme = "README.md"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+]
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "pandas>=2.2.3",
+    "quacc>=0.12.1",
+]
+
+[project.urls]
+repository = "https://github.com/CCSun21/himatcal"
+documentation = "https://CCSun21.github.io/himatcal/"
+changelog = "https://github.com/CCSun21/himatcal/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+molecule = [
+    "chemspipy>=2.0.0",
+    "goodvibes>=3.2",
+    "ipython>=8.32.0",
+    "rdkit>=2024.9.5",
+]
+dev = ["pytest-cov>=6.0.0", "ruff>=0.9.6"]
+md = [
+    "boltons>=25.0.0",
+    "ele>=0.2.0",
+    "foyer",
+    "gmso",
+    "importlib-resources>=6.5.2",
+    "lark>=1.2.2",
+    "lxml>=5.3.1",
+    "mbuild",
+    "mdtraj>=1.10.3",
+    "openmm>=8.2.0",
+    "parmed>=4.3.0",
+    "symengine>=0.14.0",
+    "treelib>=1.7.1",
+    "unyt>=3.0.4",
+]
+mlp = [
+    "mace>=1.1.2",
+]
+
+[project.scripts]
+himatcal = "himatcal._cli.cli:app"
+pubgrep = "himatcal.recipes.mol.pubgrep:cli"
+
+[tool.ruff]
+select = [
+    "A",     # flake8-builtins
+    "ARG",   # flake8-unused-arguments
+    "ASYNC", # flake8-async
+    "B",     # flake8-bugbear
+    "C4",    # flake8-comprehensions
+    "DTZ",   # flake8-datetimez
+    "E",     # pycodestyle error
+    "EXE",   # flake8-executable
+    "F",     # pyflakes
+    "FA",    # flake8-future-annotations
+    "FLY",   # flynt
+    "I",     # isort
+    "ICN",   # flake8-import-conventions
+    "INT",   # flake8-gettext
+    "ISC",   # flake8-implicit-str-concat
+    "LOG",   # flake8-logging
+    "NPY",   # numpy-specific rules
+    "PD",    # pandas-vet
+    "PERF",  # perflint
+    "PIE",   # flake8-pie
+    "PL",    # pylint
+    "PT",    # flake8-pytest-style
+    "PTH",   # flake8-use-pathlib
+    "PYI",   # flake8-pyi
+    "Q",     # flake8-quotes
+    "RET",   # flake8-return
+    "RSE",   # flake8-raise
+    "RUF",   # Ruff-specific rules
+    "SIM",   # flake8-simplify
+    "SLOT",  # flake8-slots
+    "T20",   # flake8-print
+    "TID",   # flake8-tidy-imports
+    "UP",    # pyupgrade
+    "W",     # pycodestyle warning
+    "YTT",   # flake8-2020
+]
+ignore = [
+    "E501",    # Line too long
+    "ISC001",  # single-line-implicit-string-concatenation
+    "PERF203", # try-except-in-loop
+    "PLR",     # Design related pylint codes
+    "PT011",   # pytest.raises
+    "PT012",   # pytest.raises
+    "RET505",  # Unnecessary `elif` after `return`
+]
+src = ["src"]
+lint.unfixable = [
+    "T20",  # Removes print statements
+    "F841", # Removes unused variables
+]
+lint.pydocstyle.convention = "numpy"
+lint.isort.known-first-party = ["himatcal"]
+lint.isort.required-imports = ["from __future__ import annotations"]
+extend-include = ["*.ipynb"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/**" = ["ANN", "ARG", "D", "E402", "PTH", "S101"]
+
+[tool.docformatter]
+pre-summary-newline = true
+black = true
+
+[tool.uv.sources]
+mbuild = { git = "https://github.com/mosdef-hub/mbuild.git" }
+gmso = { git = "https://github.com/mosdef-hub/gmso.git" }
+foyer = { git = "https://github.com/mosdef-hub/foyer.git" }
