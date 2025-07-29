@@ -1,0 +1,3 @@
+from tqdm.asyncio import tqdm_asyncio as _tqdm
+
+class tqdm[T](_tqdm[T]): ...
