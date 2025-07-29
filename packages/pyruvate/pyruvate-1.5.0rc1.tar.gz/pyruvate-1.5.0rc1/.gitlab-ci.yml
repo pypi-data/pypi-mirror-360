@@ -1,0 +1,190 @@
+image: 'rustlang/rust:nightly'
+
+stages:
+  - test
+  - build
+
+variables:
+  CARGO_HOME: $CI_PROJECT_DIR/cargo
+  APT_CACHE_DIR: $CI_PROJECT_DIR/apt
+
+before_script:
+  - apt-get update -yq
+  - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y python3-dev libcurl4-openssl-dev libelf-dev libdw-dev cmake gcc binutils-dev libiberty-dev
+
+test:
+  stage: test
+  script:
+    - rustc --version
+    - cargo --version
+    - python3 -V
+    - cargo install cargo2junit
+    - cargo test --no-default-features --verbose -- -Z unstable-options --nocapture --format json --report-time | ./cargo/bin/cargo2junit > results.xml
+  except:
+    - tags
+  artifacts:
+    when: always
+    paths:
+      - results.xml
+    reports:
+      junit: results.xml
+
+coverage:
+  stage: test
+  variables:
+    # Set an environment variable which causes LLVM to write coverage data to the specified location. This is arbitrary, but the path passed to grcov (the first argument) must contain these files or the coverage data won't be noticed.
+    LLVM_PROFILE_FILE: "target/coverage/%p-%m.profraw"
+    CARGO_INCREMENTAL: 0
+    RUSTFLAGS: "-Cinstrument-coverage"
+  script:
+    - rustup component add llvm-tools
+    - cargo install grcov
+    - rustc --version
+    - cargo --version
+    - python3 -V
+    - echo $PATH
+    - cargo test --no-default-features --workspace
+    - /builds/tschorr/pyruvate/cargo/bin/grcov target/coverage --binary-path target/debug -s . -o target/coverage --keep-only 'src/*' --excl-start '#\[pymodule\(name =' --output-types cobertura
+    - |
+      curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import &&
+      curl -Os https://uploader.codecov.io/latest/linux/codecov &&
+      curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM &&
+      curl -Os https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig &&
+      gpgv codecov.SHA256SUM.sig codecov.SHA256SUM &&
+      shasum -a 256 -c codecov.SHA256SUM &&
+      chmod +x codecov &&
+      ./codecov -t ${CODECOV_TOKEN} &&
+      echo "Uploaded code coverage"
+  allow_failure: true
+  except:
+    - tags
+  artifacts:
+    when: always
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: target/coverage/cobertura.xml
+
+lint:
+  stage: test
+  image: 'rustlang/rust:nightly'
+  script:
+    - rustc --version
+    - cargo --version
+    - rustup component add clippy rustfmt
+    - rustfmt --check src/*.rs
+    - cargo clippy
+  allow_failure: true
+  except:
+    - tags
+
+tox:
+  stage: test
+  image: 'ubuntu:noble'
+  before_script:
+    - apt-get update -y
+    - apt-get install -y software-properties-common
+    - add-apt-repository ppa:deadsnakes/ppa
+    - apt-get update -yq
+    - apt-get install -o dir::cache::archives="$APT_CACHE_DIR" -y python3-dev python3-pip python3-venv python3.9 python3.9-dev python3.9-venv python3.10 python3.10-dev python3.10-venv python3.11 python3.11-dev python3.11-venv python3.12 python3.12-dev python3.12-venv python3.13 python3.13-dev python3.13-venv gcc curl
+    - curl https://sh.rustup.rs -sSf | sh -s -- -y
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" rustup install nightly
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" rustup default nightly
+  script:
+    - python3.12 -m venv toxenv
+    - toxenv/bin/pip install setuptools-rust tox
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" toxenv/bin/tox
+  allow_failure: true
+  except:
+    - tags
+
+wheel_manylinux_2_28_x86_64:
+  stage: build
+  image: quay.io/pypa/manylinux_2_28_x86_64
+  before_script:
+    - curl https://sh.rustup.rs -sSf | sh -s -- -y
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" rustup install nightly
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" rustup default nightly
+  script:
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" /opt/python/cp39-cp39/bin/python -m venv py39
+    - PATH="/opt/python/cp39-cp39/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python
+    - PATH="/opt/python/cp39-cp39/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python3
+    - PATH="/opt/python/cp39-cp39/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py39/bin/pip install maturin
+    - PATH="/opt/python/cp39-cp39/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py39/bin/maturin build --compatibility manylinux_2_28 -r -o /builds/tschorr/pyruvate/dist
+    - rm -rf build pyruvate.egg-info
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" /opt/python/cp310-cp310/bin/python -m venv py310
+    - PATH="/opt/python/cp310-cp310/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python
+    - PATH="/opt/python/cp310-cp310/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python3
+    - PATH="/opt/python/cp310-cp310/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py310/bin/pip install maturin
+    - PATH="/opt/python/cp310-cp310/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py310/bin/maturin build --compatibility manylinux_2_28 -r -o /builds/tschorr/pyruvate/dist
+    - rm -rf build pyruvate.egg-info
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" /opt/python/cp311-cp311/bin/python -m venv py311
+    - PATH="/opt/python/cp311-cp311/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python
+    - PATH="/opt/python/cp311-cp311/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python3
+    - PATH="/opt/python/cp311-cp311/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py311/bin/pip install maturin
+    - PATH="/opt/python/cp311-cp311/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py311/bin/maturin build --compatibility manylinux_2_28 -r -o /builds/tschorr/pyruvate/dist
+    - rm -rf build pyruvate.egg-info
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" /opt/python/cp312-cp312/bin/python -m venv py312
+    - PATH="/opt/python/cp312-cp312/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python
+    - PATH="/opt/python/cp312-cp312/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python3
+    - PATH="/opt/python/cp312-cp312/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py312/bin/pip install maturin
+    - PATH="/opt/python/cp312-cp312/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py312/bin/maturin build --compatibility manylinux_2_28 -r -o /builds/tschorr/pyruvate/dist
+    - rm -rf build pyruvate.egg-info
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" /opt/python/cp313-cp313/bin/python -m venv py313
+    - PATH="/opt/python/cp313-cp313/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python
+    - PATH="/opt/python/cp313-cp313/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python3
+    - PATH="/opt/python/cp313-cp313/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py313/bin/pip install maturin
+    - PATH="/opt/python/cp313-cp313/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py313/bin/maturin build --compatibility manylinux_2_28 -r -o /builds/tschorr/pyruvate/dist
+    - PATH="/opt/python/cp312-cp312/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py312/bin/maturin sdist -o /builds/tschorr/pyruvate/dist
+  artifacts:
+    paths:
+      - /builds/tschorr/pyruvate/dist
+    expire_in: 10 days
+  allow_failure: true
+  except:
+    - tags
+
+wheel_musllinux_1_2_x86_64:
+  stage: build
+  image: quay.io/pypa/musllinux_1_2_x86_64
+  before_script:
+    - curl https://sh.rustup.rs -sSf | sh -s -- -y
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" rustup install nightly
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" rustup default nightly
+  script:
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" /opt/python/cp39-cp39/bin/python -m venv py39
+    - PATH="/opt/python/cp39-cp39/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python
+    - PATH="/opt/python/cp39-cp39/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python3
+    - PATH="/opt/python/cp39-cp39/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py39/bin/pip install maturin
+    - PATH="/opt/python/cp39-cp39/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py39/bin/maturin build --compatibility musllinux_1_2 -o /builds/tschorr/pyruvate/dist
+    - rm -rf build pyruvate.egg-info
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" /opt/python/cp310-cp310/bin/python -m venv py310
+    - PATH="/opt/python/cp310-cp310/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python
+    - PATH="/opt/python/cp310-cp310/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python3
+    - PATH="/opt/python/cp310-cp310/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py310/bin/pip install maturin
+    - PATH="/opt/python/cp310-cp310/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py310/bin/maturin build --compatibility musllinux_1_2 -o /builds/tschorr/pyruvate/dist
+    - rm -rf build pyruvate.egg-info
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" /opt/python/cp311-cp311/bin/python -m venv py311
+    - PATH="/opt/python/cp311-cp311/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python
+    - PATH="/opt/python/cp311-cp311/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python3
+    - PATH="/opt/python/cp311-cp311/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py311/bin/pip install maturin
+    - PATH="/opt/python/cp311-cp311/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py311/bin/maturin build --compatibility musllinux_1_2 -o /builds/tschorr/pyruvate/dist
+    - rm -rf build pyruvate.egg-info
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" /opt/python/cp312-cp312/bin/python -m venv py312
+    - PATH="/opt/python/cp312-cp312/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python
+    - PATH="/opt/python/cp312-cp312/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python3
+    - PATH="/opt/python/cp312-cp312/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py312/bin/pip install maturin
+    - PATH="/opt/python/cp312-cp312/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py312/bin/maturin build --compatibility musllinux_1_2 -o /builds/tschorr/pyruvate/dist
+    - rm -rf build pyruvate.egg-info
+    - PATH="/builds/tschorr/pyruvate/cargo/bin:$PATH" /opt/python/cp313-cp313/bin/python -m venv py313
+    - PATH="/opt/python/cp313-cp313/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python
+    - PATH="/opt/python/cp313-cp313/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" which python3
+    - PATH="/opt/python/cp313-cp313/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py313/bin/pip install maturin
+    - PATH="/opt/python/cp313-cp313/bin:/builds/tschorr/pyruvate/cargo/bin:$PATH" /builds/tschorr/pyruvate/py313/bin/maturin build --compatibility musllinux_1_2 -o /builds/tschorr/pyruvate/dist
+  artifacts:
+    paths:
+      - /builds/tschorr/pyruvate/dist
+    expire_in: 10 days
+  allow_failure: true
+  except:
+    - tags

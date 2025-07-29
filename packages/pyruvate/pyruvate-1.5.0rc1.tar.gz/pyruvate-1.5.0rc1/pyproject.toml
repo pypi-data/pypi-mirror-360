@@ -1,0 +1,40 @@
+[build-system]
+requires = ["maturin>=1,<2"]
+build-backend = "maturin"
+
+[tool.maturin]
+module-name = "pyruvate._pyruvate"
+features = ["pyo3/extension-module"]
+include = ["pyruvate/__init__.py", "LICENSE", "README.rst", "CHANGES.rst", "CONTRIBUTING.rst"]
+
+[project]
+name = "pyruvate"
+requires-python = ">=3.9"
+version = "1.5.0rc1"
+authors = [
+    {name = "Thomas Schorr", email = "t_schorr@gmx.de"},
+    ]
+description = "WSGI server implemented in Rust."
+keywords = ["WSGI"]
+readme = {file = "README.rst", content-type = "text/x-rst"}
+license = {file = "LICENSE"}
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+
+[project.entry-points."paste.server_runner"]
+main = "pyruvate:serve_paste"
+
+[project.urls]
+Repository = "https://gitlab.com/tschorr/pyruvate"
+Issues = "https://gitlab.com/tschorr/pyruvate/-/issues"
+Changelog = "https://gitlab.com/tschorr/pyruvate/-/blob/main/CHANGES.rst?ref_type=heads"
+
+[project.optional-dependencies]
+test = [
+    "aiohttp",
+    "pytest",
+    "pytest-asyncio",
+    "requests",
+]
