@@ -1,0 +1,128 @@
+Metadata-Version: 2.3
+Name: bauklotz
+Version: 0.5.0
+Summary: 
+License: BSD3
+Keywords: software-architecture,static-analysis,code-analysis,visualization,uml,class-diagram,pipeline,architecture-analysis,plugin-system,python-ast,graph-visualization,metrics,code-quality,documentation-generator,dependency-analysis
+Author: voidpointercast
+Author-email: voidpointercast@justmail.de
+Maintainer: voidpointercast
+Maintainer-email: voidpointercast@justmail.de
+Requires-Python: >=3.12,<4.0
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Information Technology
+Classifier: License :: OSI Approved :: BSD License
+Classifier: License :: Other/Proprietary License
+Classifier: Natural Language :: English
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Documentation
+Classifier: Topic :: Software Development :: Code Generators
+Classifier: Topic :: Software Development :: Documentation
+Classifier: Topic :: Software Development :: Libraries :: Application Frameworks
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Software Development :: Quality Assurance
+Classifier: Typing :: Typed
+Requires-Dist: asteval (>=1.0.6,<2.0.0)
+Requires-Dist: flatten-dict (>=0.4.2,<0.5.0)
+Requires-Dist: jinja2 (>=3.1.6,<4.0.0)
+Requires-Dist: lark (>=1.2.2,<2.0.0)
+Requires-Dist: loguru (>=0.7.3,<0.8.0)
+Requires-Dist: more-itertools (>=10.7.0,<11.0.0)
+Requires-Dist: networkx (>=3.4.2,<4.0.0)
+Requires-Dist: pyyaml (>=6.0.2,<7.0.0)
+Requires-Dist: stdlib-list (>=0.11.1,<0.12.0)
+Requires-Dist: tabulate (>=0.9.0,<0.10.0)
+Requires-Dist: toolz (>=1.0.0,<2.0.0)
+Project-URL: Documentation, https://bauklotz.readthedocs.io/
+Project-URL: Repository, https://gitlab.com/patrick.daniel.gress/bauklotz
+Description-Content-Type: text/markdown
+
+# Bauklotz
+
+A Python-based tool for software architecture analysis and visualization.
+
+## Overview
+
+Bauklotz is a framework for building and executing analysis pipelines that process software project structures. It is designed to help software architects analyze codebases through configurable filters and generate various reports and visualizations.
+
+## Features
+
+- Pipeline-based architecture analysis
+- Configurable filters for analyzing Python projects
+- Multiple report formats (CSV, YAML, UML diagrams)
+- Graph-based visualization of class hierarchies
+- Extensible filter and report system
+- Plugin system for custom filters and reports
+
+## Installation
+
+```bash
+pip install bauklotz
+```
+
+## Usage
+
+1. Create a configuration file describing your analysis pipeline:
+
+```
+channel input
+
+filter builtin.python.project:PythonProjectFilter project
+filter builtin.python.structure:PythonClassHierarchyFilter hierarchy
+    internal_modules: "your_module"
+
+# External filter example
+filter external.metrics:ComplexityFilter complexity
+    threshold: 10
+
+report builtin.writer.uml:ClassDiagramWriter classdiagram
+   path: "output/classdiagram.uml"
+
+input -> project -> hierarchy -> complexity -> classdiagram
+```
+
+2. Run the analysis:
+
+```bash
+bauklotz config.bauklotz <project_dir> input --extension external
+```
+
+## Configuration
+
+The pipeline is configured using a simple DSL that defines:
+- Input channels
+- Filters for processing (both built-in and external)
+- Reports for output generation
+- Connections between components
+
+### Plugin System
+
+Bauklotz supports external filters and reports through its plugin system. Custom filters can be added by:
+1. Creating a Python module with filter implementations
+2. Registering the module with Bauklotz
+3. Referencing the custom filters in your configuration using `external.module:FilterName` syntax
+
+## Core Components
+
+- **Pipe**: Base interface for pipeline construction and execution
+- **Filter**: Processes items in the pipeline
+- **Report**: Generates output in various formats
+
+## Output Formats
+
+- CSV reports
+- YAML summaries
+- UML class diagrams
+- Graph formats (GML)
+
+## Documentation
+
+For detailed documentation, please visit [documentation link]
+
+## License
+
+BSD3
