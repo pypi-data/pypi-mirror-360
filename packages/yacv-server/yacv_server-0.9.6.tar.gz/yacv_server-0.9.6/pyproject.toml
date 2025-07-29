@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "yacv-server"
+version = "0.9.6"
+description = "Yet Another CAD Viewer (server)"
+authors = ["Yeicor <4929005+Yeicor@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+include = [
+    { path = 'yacv_server/frontend/*', format = 'wheel' },
+    { path = 'yacv_server/frontend/*', format = 'sdist' },
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13" # Due to vtk transitive dependency of build123d -> cadquery-ocp -> vtk
+
+# CAD
+build123d = ">=0.9,<0.10"
+
+# Misc
+pygltflib = "^1.16.2"
+pillow = ">=10.2,<12.0"
+
+[tool.poetry.build]
+generate-setup-file = false
+script = "build.py"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
