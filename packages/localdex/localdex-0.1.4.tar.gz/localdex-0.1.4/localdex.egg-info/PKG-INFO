@@ -1,0 +1,400 @@
+Metadata-Version: 2.4
+Name: localdex
+Version: 0.1.4
+Summary: A local Pokemon data repository/Pokedex with fast offline access
+Home-page: https://github.com/yourusername/localdex
+Author: LocalDex Team
+Author-email: LocalDex Team <localdex@example.com>
+License: MIT
+Project-URL: Homepage, https://github.com/colefoster/localdex
+Project-URL: Documentation, https://localdex.readthedocs.io/
+Project-URL: Repository, https://github.com/colefoster/localdex
+Project-URL: Bug Tracker, https://github.com/colefoster/localdex/issues
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Games/Entertainment
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: requests
+Requires-Dist: typing-extensions
+Provides-Extra: core
+Provides-Extra: gen1
+Provides-Extra: gen2
+Provides-Extra: gen3
+Provides-Extra: gen4
+Provides-Extra: gen5
+Provides-Extra: gen6
+Provides-Extra: gen7
+Provides-Extra: gen8
+Provides-Extra: gen9
+Provides-Extra: sprites
+Provides-Extra: competitive
+Provides-Extra: learnsets
+Provides-Extra: items
+Provides-Extra: abilities
+Provides-Extra: full
+Requires-Dist: localdex[abilities,competitive,gen1,gen2,gen3,gen4,gen5,gen6,gen7,gen8,gen9,items,learnsets,sprites]; extra == "full"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: black>=22.0.0; extra == "dev"
+Requires-Dist: isort>=5.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Requires-Dist: flake8>=5.0.0; extra == "dev"
+Dynamic: author
+Dynamic: home-page
+Dynamic: requires-python
+
+# LocalDex
+
+A fast, offline-first Python library for Pokemon data access. LocalDex provides comprehensive Pokemon information without requiring network requests, making it perfect for applications that need reliable, fast access to Pokemon data.
+
+[![PyPI version](https://badge.fury.io/py/localdex.svg)](https://badge.fury.io/py/localdex)
+[![Python versions](https://img.shields.io/pypi/pyversions/localdex.svg)](https://pypi.org/project/localdex/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://github.com/yourusername/localdex/workflows/Test/badge.svg)](https://github.com/yourusername/localdex/actions)
+
+## Features
+
+- **100% Offline**: All data is stored locally - no network requests required
+- **Fast Access**: Optimized for quick lookups and searches
+- **Comprehensive Data**: Pokemon, moves, abilities, items, and more
+- **Flexible Installation**: Choose which data sets to include
+- **Type Hints**: Full type support for better development experience
+- **Multiple Generations**: Support for all Pokemon generations
+- **Competitive Data**: Includes battle sets and competitive information
+
+## Installation
+
+### Basic Installation
+
+```bash
+pip install localdex
+```
+
+### Selective Data Installation
+
+Install only the data you need to minimize package size:
+
+```bash
+# Core Pokemon data only
+pip install localdex[core]
+
+# Specific generation
+pip install localdex[gen1]  # Generation 1 only
+pip install localdex[gen9]  # Generation 9 only
+
+# Additional data sets
+pip install localdex[sprites]      # Pokemon sprites
+pip install localdex[competitive]  # Competitive battle data
+pip install localdex[learnsets]    # Detailed move learnsets
+pip install localdex[items]        # Item data
+pip install localdex[abilities]    # Ability data
+
+# Full installation with everything
+pip install localdex[full]
+```
+
+### Development Installation
+
+```bash
+git clone https://github.com/yourusername/localdex.git
+cd localdex
+pip install -e .[dev]
+```
+
+## Development & Automation
+
+This project uses GitHub Actions for automated testing, data updates, and PyPI releases. See [GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md) for detailed setup instructions.
+
+### Quick Setup for Contributors
+
+1. **Fork and clone** the repository
+2. **Install dependencies**: `pip install -e .[dev]`
+3. **Run tests**: `pytest`
+4. **Update data**: `python -m localdex.download_data`
+5. **Create pull request**
+
+### Automated Workflows
+
+- **Test**: Runs on every PR and push to main
+- **Data Updates**: Weekly automated Pokemon data updates
+- **Release**: Automated PyPI releases on version tags
+
+## Quick Start
+
+```python
+from localdex import LocalDex
+
+# Initialize the dex
+dex = LocalDex()
+
+# Get Pokemon by name
+pikachu = dex.get_pokemon("pikachu")
+print(f"{pikachu.name} - {pikachu.types}")
+
+# Get Pokemon by ID
+charizard = dex.get_pokemon_by_id(6)
+print(f"{charizard.name} - HP: {charizard.base_stats.hp}")
+
+# Search Pokemon
+fire_types = dex.search_pokemon(type="Fire")
+print(f"Fire type Pokemon: {[p.name for p in fire_types]}")
+
+# Get moves
+thunderbolt = dex.get_move("thunderbolt")
+print(f"{thunderbolt.name} - Power: {thunderbolt.base_power}")
+
+# Get abilities
+lightning_rod = dex.get_ability("lightningrod")
+print(f"{lightning_rod.name} - {lightning_rod.description}")
+```
+
+## API Reference
+
+### LocalDex Class
+
+The main class for accessing Pokemon data.
+
+#### Methods
+
+- `get_pokemon(name_or_id: Union[str, int]) -> Pokemon`: Get Pokemon by name or ID
+- `get_pokemon_by_id(id: int) -> Pokemon`: Get Pokemon by ID
+- `get_pokemon_by_name(name: str) -> Pokemon`: Get Pokemon by name
+- `search_pokemon(**filters) -> List[Pokemon]`: Search Pokemon with filters
+- `get_move(name: str) -> Move`: Get move by name
+- `get_ability(name: str) -> Ability`: Get ability by name
+- `get_item(name: str) -> Item`: Get item by name
+- `get_all_pokemon() -> List[Pokemon]`: Get all Pokemon
+- `get_all_moves() -> List[Move]`: Get all moves
+- `get_all_abilities() -> List[Ability]`: Get all abilities
+- `get_all_items() -> List[Item]`: Get all items
+
+#### Search Filters
+
+```python
+# Search by type
+fire_pokemon = dex.search_pokemon(type="Fire")
+
+# Search by generation
+gen1_pokemon = dex.search_pokemon(generation=1)
+
+# Search by multiple criteria
+legendary_fire = dex.search_pokemon(type="Fire", is_legendary=True)
+
+# Search by base stat range
+strong_pokemon = dex.search_pokemon(min_attack=100)
+```
+
+### Data Models
+
+#### Pokemon
+
+```python
+class Pokemon:
+    id: int
+    name: str
+    types: List[str]
+    base_stats: BaseStats
+    abilities: Dict[str, Ability]
+    moves: List[Move]
+    height: float
+    weight: float
+    description: str
+    # ... and more
+```
+
+#### Move
+
+```python
+class Move:
+    name: str
+    type: str
+    category: str
+    base_power: int
+    accuracy: int
+    pp: int
+    description: str
+    # ... and more
+```
+
+#### Ability
+
+```python
+class Ability:
+    name: str
+    description: str
+    short_description: str
+    # ... and more
+```
+
+## Data Sets
+
+LocalDex organizes data into logical sets that can be installed independently:
+
+### Core Data (`core`)
+- Basic Pokemon information (name, types, base stats)
+- Essential for most applications
+
+### Generation Data (`gen1`-`gen9`)
+- Pokemon data for specific generations
+- Useful for generation-specific applications
+
+### Additional Data Sets
+- **Sprites** (`sprites`): Pokemon images and sprites
+- **Competitive** (`competitive`): Battle sets and competitive data
+- **Learnsets** (`learnsets`): Detailed move learning information
+- **Items** (`items`): Item data and effects
+- **Abilities** (`abilities`): Detailed ability information
+
+## Examples
+
+### Pokemon Battle Simulator
+
+```python
+from localdex import LocalDex
+
+dex = LocalDex()
+
+def simulate_battle(pokemon1_name: str, pokemon2_name: str):
+    pokemon1 = dex.get_pokemon(pokemon1_name)
+    pokemon2 = dex.get_pokemon(pokemon2_name)
+    
+    print(f"{pokemon1.name} vs {pokemon2.name}")
+    print(f"{pokemon1.name} types: {pokemon1.types}")
+    print(f"{pokemon2.name} types: {pokemon2.types}")
+    
+    # Calculate type effectiveness
+    for move in pokemon1.moves[:4]:  # First 4 moves
+        effectiveness = calculate_effectiveness(move.type, pokemon2.types)
+        print(f"{move.name} effectiveness: {effectiveness}x")
+
+simulate_battle("pikachu", "charizard")
+```
+
+### Pokemon Team Builder
+
+```python
+from localdex import LocalDex
+
+dex = LocalDex()
+
+def build_balanced_team():
+    team = []
+    
+    # Get a water type
+    water_pokemon = dex.search_pokemon(type="Water", min_speed=80)
+    if water_pokemon:
+        team.append(water_pokemon[0])
+    
+    # Get a fire type
+    fire_pokemon = dex.search_pokemon(type="Fire", min_attack=100)
+    if fire_pokemon:
+        team.append(fire_pokemon[0])
+    
+    # Get a grass type
+    grass_pokemon = dex.search_pokemon(type="Grass", min_special_attack=90)
+    if grass_pokemon:
+        team.append(grass_pokemon[0])
+    
+    return team
+
+team = build_balanced_team()
+for pokemon in team:
+    print(f"{pokemon.name} - {pokemon.types}")
+```
+
+### Move Database
+
+```python
+from localdex import LocalDex
+
+dex = LocalDex()
+
+def analyze_moves():
+    # Get all moves
+    all_moves = dex.get_all_moves()
+    
+    # Find the strongest moves
+    strong_moves = [move for move in all_moves if move.base_power >= 120]
+    print(f"Strong moves (120+ power): {len(strong_moves)}")
+    
+    # Find status moves
+    status_moves = [move for move in all_moves if move.category == "Status"]
+    print(f"Status moves: {len(status_moves)}")
+    
+    # Find moves by type
+    fire_moves = [move for move in all_moves if move.type == "Fire"]
+    print(f"Fire moves: {len(fire_moves)}")
+
+analyze_moves()
+```
+
+## CLI Usage
+
+LocalDex includes a command-line interface for quick data access:
+
+```bash
+# Get Pokemon information
+localdex pokemon pikachu
+
+# Search Pokemon
+localdex search --type Fire --generation 1
+
+# Get move information
+localdex move thunderbolt
+
+# Get ability information
+localdex ability lightningrod
+
+# List all Pokemon
+localdex list-pokemon
+
+# Export data to JSON
+localdex export --format json --output pokemon_data.json
+```
+
+## Performance
+
+LocalDex is optimized for fast access:
+
+- **Memory Efficient**: Data is loaded on-demand
+- **Fast Lookups**: Optimized data structures for quick searches
+- **Caching**: Frequently accessed data is cached in memory
+- **Indexed Searches**: Pre-built indexes for common search patterns
+
+## Contributing
+
+Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development Setup
+
+```bash
+git clone https://github.com/yourusername/localdex.git
+cd localdex
+pip install -e .[dev]
+pytest  # Run tests
+black .  # Format code
+mypy .   # Type checking
+```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Data Sources
+
+LocalDex uses data from:
+- [Pokemon Showdown](https://github.com/smogon/pokemon-showdown)
+- [PokeAPI](https://pokeapi.co/) (for initial data collection)
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a list of changes and version history.
