@@ -1,0 +1,99 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/definitions/AuterionAppYml",
+    "definitions": {
+      "AuterionAppYml": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "auterion-api-version": {
+            "type": "integer",
+            "const": 1
+          },
+          "auterion-app-base": {
+            "type": "string",
+            "pattern": "^v\\d+|none$"
+          },
+          "app-name": {
+            "type": "string",
+            "pattern": "^[a-z0-9-_]+$"
+          },
+          "app-author": {
+            "type": "string",
+            "pattern": "^[a-z]+(\\.[a-z][a-z0-9-_]*)*$"
+          },
+          "app-version": {
+            "type": "string"
+          },
+          "target-platform": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/AuterionAppYmlTargetPlatform"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/AuterionAppYmlTargetPlatform"
+                }
+              }
+            ]
+          },
+          "services": {
+            "$ref": "#/definitions/AuterionAppYmlServices"
+          },
+          "compose-override": {
+            "$ref": "compose-spec.json"
+          }
+        },
+        "required": [
+          "app-author",
+          "app-name",
+          "app-version",
+          "auterion-api-version",
+          "auterion-app-base",
+          "services",
+          "target-platform"
+        ],
+        "title": "AuterionAppYml"
+      },
+      "AuterionAppYmlTargetPlatform": {
+        "type": "string"
+      },
+      "AuterionAppYmlServices": {
+        "type": "object",
+        "additionalProperties": false,
+        "patternProperties": {
+          "^[a-z0-9-_]+$": {
+            "$ref": "#/definitions/AuterionAppYmlService"
+          }
+        },
+        "title": "AuterionAppYmlServices",
+        "minProperties": 1
+      },
+      "AuterionAppYmlService": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "build": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "build"
+            ]
+          },
+          {
+            "required": [
+              "image"
+            ]
+          }
+        ],
+        "title": "AuterionAppYmlService"
+      }
+    }
+  }
