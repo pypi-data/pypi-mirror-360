@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyflowdiagnostics"
+description = "Flow Diagnostics Toolkit"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  {name = "Tsubasa Onishi", email = "onishi.tsubasa@eaps.ethz.ch"},
+]
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "h5py",
+    "pymatsolver",
+    "xlsxwriter",
+    "scooby",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+]
+dynamic = ["version"]
+
+[project.license]
+file = "LICENSE"
+
+[project.urls]
+Homepage = "https://github.com/GEG-ETHZ/pyflowdiagnostics"
+Documentation = "https://github.com/GEG-ETHZ/pyflowdiagnostics"
+Repository = "https://github.com/GEG-ETHZ/pyflowdiagnostics"
+
+[project.optional-dependencies]
+docs = [
+    "sphinx",
+    "sphinx_automodapi",
+    "pydata_sphinx_theme",
+]
+tests = [
+    "ruff",
+    "pytest",
+]
+all = [
+    "pyflowdiagnostics[docs]",
+    "pyflowdiagnostics[tests]",
+]
+build = [
+    "setuptools_scm>=8",
+    "setuptools>=64",
+]
+
+[project.scripts]
+pyflowdiagnostics = "pyflowdiagnostics.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["pyflowdiagnostics*"]
+
+[tool.setuptools_scm]
+version_file = "pyflowdiagnostics/version.py"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"well.py" = ["E741"]      # we should fix this
+"grid.py" = ["E741"]      # we should fix this
+"flow_diagnostics.py" = ["E722", "E741", "F841"]  # we should fix this
+"sr3_reader.py" = ["E722", "F841"]  # external library
+
+[tool.coverage.run]
+relative_files = true
