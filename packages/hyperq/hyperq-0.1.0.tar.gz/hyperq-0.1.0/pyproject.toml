@@ -1,0 +1,93 @@
+[build-system]
+requires = ["setuptools", "Cython"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hyperq"
+version = "0.1.0"
+description = "Hyper-fast queue for Python"
+authors = [
+    {name = "Martin Mkhitaryan", email = "mkhitaryan.martin@2000gmail.com"}
+]
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+keywords = [
+    "queue",
+    "hyper",
+    "hyper-queue",
+    "hyperqueue",
+    "high-performance",
+    "inter-process-communication",
+    "ipc",
+    "shared-memory",
+    "ring-buffer",
+    "multiprocessing",
+    "threading",
+    "cython",
+    "c++",
+    "python",
+    "fast",
+    "low-latency",
+    "concurrent",
+    "synchronization",
+    "posix",
+    "unix",
+    "linux",
+    "macos"
+]
+dependencies = [
+    "cython>=0.29.0",
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+Homepage = "https://github.com/martinmkhitaryan/hyperq"
+Repository = "https://github.com/martinmkhitaryan/hyperq"
+Documentation = "https://github.com/martinmkhitaryan/hyperq#readme"
+Discussions = "https://github.com/martinmkhitaryan/hyperq/discussions"
+"Bug Tracker" = "https://github.com/martinmkhitaryan/hyperq/issues"
+
+
+[project.optional-dependencies]
+test = [
+    "pytest~=8.0",
+    "pytest-cov~=6.0",
+    "faster-fifo~=1.0",
+    "tabulate2~=1.0",
+    "numpy~=1.0",
+]
+
+[tool.setuptools]
+zip-safe = false
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.cibuildwheel]
+build-verbosity = 1
+
+[tool.cibuildwheel.linux]
+before-all = "yum install -y gcc-c++ || apt-get update && apt-get install -y g++ || true"
+environment = { CXXFLAGS = "-std=c++20 -O3 -Wall -Wextra" }
+archs = ["x86_64", "i686"]
+build = "cp*-manylinux*"
+skip = "*-musllinux* pp*"
+
+[tool.cibuildwheel.macos]
+before-all = "brew install gcc || true"
+environment = { CXXFLAGS = "-std=c++20 -O3 -Wall -Wextra" }
+archs = ["x86_64", "arm64"]
+build = "cp*-macosx*"
+skip = "pp*"
