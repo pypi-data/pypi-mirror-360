@@ -1,0 +1,131 @@
+image: "python:slim"
+
+stages:
+  - pages
+  - build-package
+  - publish-package
+  - publish-docker
+
+variables:
+  PACKAGE_NAME: "heros"
+  PYPI_URL: "https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/packages/pypi"
+
+
+####################################
+# build script for docker images
+.build-docker-image:
+  image: quay.io/buildah/stable
+  variables:
+    IMAGE_TAG: "latest"
+    BUILDAH_FORMAT: docker
+    STORAGE_DRIVER: vfs
+  tags:
+    - docker
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | buildah login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+  script:
+    - cd "${CI_PROJECT_DIR}"
+    - buildah build --tag "${CI_REGISTRY_IMAGE}:${TAG_NAME}" .
+    - buildah tag "${CI_REGISTRY_IMAGE}:${TAG_NAME}" "${CI_REGISTRY_IMAGE}:latest"
+    - buildah push "${CI_REGISTRY_IMAGE}:${TAG_NAME}"
+    - buildah push "${CI_REGISTRY_IMAGE}:latest"
+
+.publish-package-to-repo:
+  stage: publish-package
+  tags:
+    - gitlab-org-docker
+  image: "quay.io/pypa/manylinux_2_28_x86_64"
+  needs: ["build-package"]  # Ensure package is built before publishing
+  before_script:
+    - pipx install twine
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: always
+    - when: manual
+
+
+####################################
+# build
+build-package:
+  stage: build-package
+  tags:
+    - gitlab-org-docker
+  parallel:
+    matrix:
+      - IMAGE: ["quay.io/pypa/manylinux_2_28_x86_64"]
+  image: $IMAGE
+  script:
+    - pipx install hatch
+    - hatch build  # Builds source tarball and wheel
+  artifacts:
+    paths:
+      - dist/
+  rules:
+    - when: always
+
+
+####################################
+# publish package
+publish-package-gitlab:
+  stage: publish-package
+  extends: .publish-package-to-repo
+  script:
+    - twine upload --skip-existing -r "$PYPI_URL" -u "gitlab-ci-token" -p "$CI_JOB_TOKEN" dist/*
+
+publish-package-pypi:
+  stage: publish-package
+  extends: .publish-package-to-repo
+  script:
+    - twine upload --skip-existing -p "$PYPI_API_TOKEN" dist/*
+  rules:
+    - when: manual
+
+publish-package-pypi-test:
+  stage: publish-package
+  extends: .publish-package-to-repo
+  script:
+    - twine upload --skip-existing --verbose -r testpypi -p "$PYPI_TEST_API_TOKEN" dist/*
+
+# publish docker image for tag
+build-docker-tag:
+  stage: publish-docker
+  extends: .build-docker-image
+  needs: ["publish-package-gitlab"]  # Ensure package is built before publishing
+  variables:
+    TAG_NAME: "$CI_COMMIT_TAG"
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: always
+    - when: manual
+
+# docker image git commit sha with last commit from master (not on tag)
+build-docker:
+  stage: publish-docker
+  extends: .build-docker-image
+  variables:
+    TAG_NAME: "$CI_COMMIT_SHORT_SHA"
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+      when: always
+    - when: manual
+
+
+####################################
+# publish pages
+pages:
+  stage: pages
+  tags:
+    - gitlab-org-docker
+  script:
+    - "apt-get update && apt-get install -y make"
+    - "pip install sphinx sphinx-argparse sphinx-autoapi sphinx-autodoc-typehints furo toml"
+    - "cd docs"
+    - "make clean && make html"
+    - "mkdir ../public"
+    - "mv build/html/* ../public"
+  artifacts:
+    paths:
+    - public
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  when: always
