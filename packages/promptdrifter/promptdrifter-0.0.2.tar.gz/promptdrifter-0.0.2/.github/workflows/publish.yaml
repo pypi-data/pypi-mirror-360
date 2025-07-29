@@ -1,0 +1,31 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (leave empty to use current version)'
+        required: false
+        type: string
+
+jobs:
+  build-and-test:
+    uses: ./.github/workflows/shared-build-and-test.yaml
+    with:
+      upload-artifacts: true
+      artifact-name: 'python-package-dist'
+      update-version-for-pr: false
+      run-integration-tests: true
+
+  publish-to-pypi:
+    needs: build-and-test
+    uses: ./.github/workflows/shared-publish-package.yaml
+    with:
+      is-test-pypi: false
+    secrets: inherit
+    permissions:
+      pull-requests: write
+
