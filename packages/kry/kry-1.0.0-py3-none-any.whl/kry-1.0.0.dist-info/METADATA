@@ -1,0 +1,100 @@
+Metadata-Version: 2.4
+Name: kry
+Version: 1.0.0
+Summary: Simple cryptography library
+Requires-Python: >=3.6
+Description-Content-Type: text/plain
+License-Expression: Unlicense OR 0BSD
+License-File: LICENSE
+Project-URL: Documentation, https://github.com/0b-0/kry
+
+Simple cryptography library
+
+> pip install kry
+
+BEWARE: This library (currently) is not optimized and is probably vulnerable to side channel attacks.
+
+Sections
+  1. Introduction
+  2. API reference
+    2.1 Hash functions
+  3. Examples
+  4. Changelog
+
+1. Introduction
+
+  Features
+  * Simple: one operation (e.g. SHA-256 hashing) is one function (e.g. kry.sha256("hello")).
+  * Data streaming using generator.
+  * Save/Restore state.
+    * Save: an empty yield returns the current state (as bytes).
+    * Restore: initial_state parameter.
+
+2. API reference
+
+  The library (currently) only implements hash functions (see section 2.1).
+
+  kry.__all__ is a tuple containing all public names in the library.
+
+2.1 Hash functions
+
+  md2, md4, md5, ripemd128, ripemd160, ripemd256, ripemd320, sha1, sha224, sha256, sha384, sha512,
+  sha512_224, sha512_256, sm3.
+
+  Return: Bytes.
+
+  Parameters: (data, initial_state=None)
+
+  * data: Data to be hashed. Must be string, bytes, iterable (of strings and/or bytes), .read()-able (of
+  strings and/or bytes) or pathlib.Path (to a file). Strings will be UTF-8-encoded.
+  * initial_state: Must be bytes or None. If data is a generator, an empty yield returns the current
+  state (as bytes).
+
+3. Examples
+
+  import kry
+
+  # string
+  kry.sha256("")       # b"\xda9\xa3\xee^kK\r2U\xbf...
+  kry.sha256("").hex() # "da39a3ee5e6b4b0d3255bf...
+  kry.sha256("abc")
+
+  # bytes
+  kry.sha256(b"\x00\x01\x02-hello\x03")
+  kry.sha256(kry.sha256("double hash"))
+
+  def gen(): # Python generator may be used for streaming data
+      yield "Red"
+      yield "Green"
+
+      # An empty yield returns the current state (as bytes)
+      state = yield
+      print(state) # Print SHA-256 state after "RedGreen" has been processed
+      kry.sha256("Yellow", initial_state=state) # Equivalent to kry.sha256("RedGreenYellow")
+
+      yield "Blue"
+
+  # iterable
+  kry.sha256(gen()) # Equivalent to kry.sha256("RedGreenBlue")
+  kry.sha256(["Red", b"Green", "Blue"]) # Equivalent to kry.sha256("RedGreenBlue")
+  kry.sha256(((i*i).to_bytes(1) for i in range(4))) # Equivalent to kry.sha256(b"\x00\x01\x04\x09")
+
+  # .read()-able
+  kry.sha256(open("red.txt"))
+  with open("blue.txt") as file:
+      kry.sha256(file)
+  kry.sha256(open("cat.png", "rb"))
+  import io
+  kry.sha256(io.BytesIO(b"12345"))
+
+  # pathlib.Path
+  from pathlib import Path
+  kry.sha256(Path("colors.txt"))
+  kry.sha256(Path("dog.gif"))
+
+4. Changelog
+
+  1.0.0
+  * Add md2, md4, md5, ripemd128, ripemd160, ripemd256, ripemd320, sha1, sha224, sha256, sha384,
+  sha512, sha512_224, sha512_256, sm3.
+
