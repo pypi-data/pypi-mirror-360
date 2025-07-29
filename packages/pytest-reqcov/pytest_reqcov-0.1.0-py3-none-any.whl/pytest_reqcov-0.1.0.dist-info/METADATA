@@ -1,0 +1,101 @@
+Metadata-Version: 2.4
+Name: pytest-reqcov
+Version: 0.1.0
+Summary: A pytest plugin for requirement coverage tracking
+Author-email: Miquel Garcia <miquel@mgfernan.com>
+Maintainer-email: Miquel Garcia <miquel@mgfernan.com>
+License: MIT
+Project-URL: Homepage, https://github.com/mgfernan/pytest_reqcov
+Project-URL: Repository, https://github.com/mgfernan/pytest_reqcov
+Project-URL: Issues, https://github.com/mgfernan/pytest_reqcov/issues
+Project-URL: Changelog, https://github.com/mgfernan/pytest_reqcov/blob/main/CHANGELOG.md
+Keywords: pytest,plugin,testing,coverage,requirements
+Classifier: Development Status :: 3 - Alpha
+Classifier: Framework :: Pytest
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Testing
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pytest>=6.0
+Requires-Dist: numpy
+Requires-Dist: pandas
+Provides-Extra: dev
+Requires-Dist: pytest>=6.0; extra == "dev"
+Requires-Dist: pytest-cov; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: flake8; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: pre-commit; extra == "dev"
+Requires-Dist: twine; extra == "dev"
+Requires-Dist: build; extra == "dev"
+Provides-Extra: test
+Requires-Dist: pytest>=6.0; extra == "test"
+Requires-Dist: pytest-cov; extra == "test"
+Dynamic: license-file
+
+# pytest-reqcov
+
+A pytest plugin for requirement coverage tracking.
+
+## Features
+
+- Track test coverage against requirements and products
+- Integrate with pytest workflow
+
+## Installation
+
+Install from PyPI:
+
+```bash
+pip install pytest-reqcov
+```
+
+## Usage
+
+Add requirement markers to your tests:
+
+```python
+import pytest
+
+@pytest.mark.req(id="REQ-001")
+def test_user_login():
+    """Test user login functionality."""
+    assert login_user("user", "password") == True
+
+@pytest.mark.product(id="ProductA")
+def test_user_logout():
+    """Test user logout functionality."""
+    assert logout_user() == True
+```
+
+Run pytest with requirement coverage:
+
+```bash
+pytest --reqcov-reqs=requirements.csv --reqcov-prods=products.csv  --reqcov-output=output.csv
+```
+
+## Configuration
+
+Add configuration to your `pytest.ini` or `pyproject.toml`:
+
+```ini
+[tool.pytest.ini_options]
+markers = [
+    "req: tests with associated requirements",
+    "product: tests with associated product",
+]
+```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
