@@ -1,0 +1,79 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://devmind.ai/schemas/observation/security",
+    "title": "Security Issue Observation Schema",
+    "description": "Schema for security vulnerability observations",
+    "allOf": [
+        {
+            "$ref": "base_schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "security_issue"
+                },
+                "data": {
+                    "type": "object",
+                    "required": ["issue_type", "description", "file"],
+                    "properties": {
+                        "issue_type": {
+                            "type": "string",
+                            "enum": [
+                                "sql_injection",
+                                "xss",
+                                "csrf",
+                                "hardcoded_secret",
+                                "weak_crypto",
+                                "path_traversal",
+                                "command_injection",
+                                "insecure_deserialization",
+                                "authentication_bypass",
+                                "authorization_flaw",
+                                "other"
+                            ]
+                        },
+                        "description": {
+                            "type": "string",
+                            "minLength": 10
+                        },
+                        "file": {
+                            "type": "string"
+                        },
+                        "line": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "code_snippet": {
+                            "type": "string"
+                        },
+                        "recommendation": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "metadata": {
+                    "type": "object",
+                    "required": ["severity"],
+                    "properties": {
+                        "severity": {
+                            "type": "string",
+                            "enum": ["low", "medium", "high", "critical"]
+                        },
+                        "cwe_id": {
+                            "type": "string",
+                            "pattern": "^CWE-[0-9]+$"
+                        },
+                        "owasp_category": {
+                            "type": "string"
+                        },
+                        "false_positive": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
