@@ -1,0 +1,82 @@
+# SAMBA Copyright (C) 2024 - Closed source
+
+
+#=======================================================
+# Diretório do ambiente virtual python -----------------
+dir_virtual_python = '/home/dlelis/codes/python_virtual'
+#=======================================================
+# Diretório de saída do WorkFlow -----------------------
+dir_o = 'WorkFlow_output'
+#=======================================================
+# informação a serem adicionadas ao banco de dados -----
+replace_type_pseudo = 'PAW_PBE'; replace_type_XC = 'GGA'
+#=======================================================
+
+
+#=======================================================
+type_lattice = 2                            # [1] Redes 1D (Periodico em X);  [2] Redes 2D (Periodico em XY);   [3] Redes 3D - Bulk
+#=======================================================
+tasks = ['relax', 'scf', 'bands', 'dos']    # tasks = ['z-scan', 'xy-scan', 'relax', 'scf', 'bands', 'dos', 'bader']
+type  = ['sem_SO','com_SO']                 # type  = ['sem_SO','com_SO']
+#=======================================================
+ispin = 2                 # 1 para cálculo não spin-polarizado;  2 para cálculo com polarização de spin
+#=======================================================
+dipol = 'none'            # Utilize as opções:  'none',  'center_cell'  or  'center_mass'
+#=======================================================
+magnet_mode = 'default'   # Utilize as opções:  'default',  'MAGMOM=0'  or  'NUPDOWN=0'
+#=======================================================
+U_correction = 0          # Correção de Hubbard (U): [0] para desativar, [1] para ativar
+#=======================================================
+vdW = 0               # Correção de van der Waals utilizada:  [0] desabilita a correção de van der Waals.
+                      # Correção aplicado em todos os cálculos (com e sem SO)
+#-------------------------------------------------------
+vdWDF = 'none'        # Funcional vdW_DF não-local utilizado: 'none' desabilita o funcional vdW_DF não-local.
+                      # Escolha: 'none', 'DF', 'DF2', 'optPBE', 'optB88', 'optB86b', 'rev-DF2', 'DF-cx', 'DF3-opt1', 'DF3-opt2', 'rVV10', 'SCAN+rVV10', 'r2SCAN+rVV10', 'PBE+rVV10L'
+                      # Funcional aplicado somente nos cálculos de otimização estrutural ('xyz-scan', 'xy-scan', 'z-scan', 'a-scan', 'relax')
+                      # Observação:  vdW != 0 irá se sobrepor a qualquer escolha de vdWDF
+#=======================================================
+ENCUT_min = 500       # Valor mínimo para a energia de corte em eV
+                      # Observação: Caso (ENCUT_min < ENCUT*fator_encut), então ENCUT_min = ENCUT*fator_encut
+                      #             ENCUT refere-se ao maior valor de energia de corte presente no arquivo POTCAR
+fator_encut = 1.3     # Fator de multiplicação para o critério da energia de corte utilizada
+#=======================================================
+type_k_dens  = 1      # [1] KPOINTS (Monkhorst-Pack);   [2] KPOINTS (Gamma);   [3] INCAR (KSPACING Monkhorst-Pack);   [4] INCAR (KSPACING Gamma)
+k_dens_relax = 12     # Cálculo de relaxação:            nº de pontos-k por Å^-1
+k_dens_scf   = 12     # Cálculo auto-consistente (scf):  nº de pontos-k por Å^-1
+k_dens_dos   = 12     # Cálculo da DOS:                  nº de pontos-k por Å^-1
+k_dens_bader = 12     # Cálculo da Carga de Bader:       nº de pontos-k por Å^-1
+n_kpoints    = 50     # Cálculo das bandas (nscf):       nº de pontos-k em cada trecho do plot da banda
+nions_split  = 100    # nº de ions no arquivo POSCAR, para que o cálculo da banda seja executado em etapas (splitado)
+vacuo        = 15.0   # Vacuo aplicado a Heteroestrutura
+NCORE        = 8      # Número de "cores" por "node" 
+
+
+#============================
+# Parâmetros a-scan =========
+# Funcional para bulk 3D ====
+#============================
+k_dens_a_scan = 6       # Cálculo do a-scan:  nº de pontos-k por Å-1
+factor_var    = 5       # Variação em % do parâmetro de rede (módulo do menor vetor de rede)
+
+
+#============================
+# Parâmetros z-scan =========
+#============================
+k_dens_z_scan = 6        # Cálculo do z-scan:  nº de pontos-k por Å-1
+
+
+#============================
+# Parâmetros xy-scan ========
+#============================
+k_dens_xy_scan = 6                                                                     # Cálculo do xy-scan:  nº de pontos-k por Å-1
+r_displacement_A1 = [0.0, (1/8), (1/6), (1/4), (1/3), (1/2), (2/3), (3/4), (5/6)]     # Deslocamentos na direção do vetor A1 (2º material)
+r_displacement_A2 = [0.0, (1/8), (1/6), (1/4), (1/3), (1/2), (2/3), (3/4), (5/6)]     # Deslocamentos na direção do vetor A2 (2º material)
+
+
+#============================
+# Parâmetros xyz-scan =======
+#============================
+k_dens_xyz_scan = 6                                       # Cálculo do xyz-scan:  nº de pontos-k por Å-1
+displacement_Z = [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5]      # Deslocamentos na direção do vetor A1 (2º material)
+displacement_xyz_A1 = [0.0, 0.2, 0.4, 0.6, 0.8]           # Deslocamentos na direção do vetor A1 (2º material)
+displacement_xyz_A2 = [0.0, 0.2, 0.4, 0.6, 0.8]           # Deslocamentos na direção do vetor A2 (2º material)
