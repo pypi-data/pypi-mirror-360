@@ -1,0 +1,1 @@
+"""Local detection system for sensitive data patterns."""
