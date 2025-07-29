@@ -1,0 +1,296 @@
+name: 🚀 Release to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: "Type of version bump"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      create_github_release:
+        description: "Create GitHub release"
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+      id-token: write # For PyPI trusted publishing
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: ⚡ Install UV
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: 📝 Calculate new version
+        id: version
+        run: |
+          BUMP_TYPE="${{ github.event.inputs.bump_type }}"
+          echo "Bump type: $BUMP_TYPE"
+
+          # Get current version from pyproject.toml
+          CURRENT_VERSION=$(grep "version = \".*\"" pyproject.toml | sed -n 's/version = "\(.*\)"/\1/p')
+          echo "Current version: $CURRENT_VERSION"
+
+          # Split version into components
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+
+          # Calculate new version based on bump type
+          case $BUMP_TYPE in
+            "major")
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            "minor")
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            "patch")
+              PATCH=$((PATCH + 1))
+              ;;
+            *)
+              echo "❌ Invalid bump type: $BUMP_TYPE"
+              exit 1
+              ;;
+          esac
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "New version will be: $NEW_VERSION"
+
+          # Store versions for later use
+          echo "CURRENT_VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: 📝 Update version in pyproject.toml (local only)
+        run: |
+          # Update version in pyproject.toml locally (don't commit yet)
+          sed -i "s/version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
+
+          # Verify the version was updated
+          grep "version = \"$NEW_VERSION\"" pyproject.toml || exit 1
+          echo "✅ Version updated locally from $CURRENT_VERSION to $NEW_VERSION"
+
+      - name: 🧹 Clean previous builds
+        run: |
+          rm -rf dist/
+          rm -rf build/
+          rm -rf *.egg-info/
+          echo "✅ Cleaned previous builds"
+
+      - name: 🔨 Build package
+        run: |
+          uv build
+          echo "✅ Package built successfully"
+
+          # List build artifacts
+          echo "📦 Build artifacts:"
+          ls -la dist/
+
+      - name: 🧪 Test build
+        run: |
+          echo "🧪 Testing package build..."
+
+          # Test that the package can be imported and help works
+          uv run fluidtop --help
+
+          # Verify the version in the built package
+          if ls dist/fluidtop-${NEW_VERSION}-*.whl 1> /dev/null 2>&1; then
+            echo "✅ Wheel file with correct version found"
+          else
+            echo "❌ Wheel file with version $NEW_VERSION not found"
+            ls dist/
+            exit 1
+          fi
+
+          if ls dist/fluidtop-${NEW_VERSION}.tar.gz 1> /dev/null 2>&1; then
+            echo "✅ Source distribution with correct version found"
+          else
+            echo "❌ Source distribution with version $NEW_VERSION not found"  
+            ls dist/
+            exit 1
+          fi
+
+      - name: 📦 Publish to PyPI
+        id: pypi_publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          print-hash: true
+          verbose: true
+
+      - name: ✅ Verify PyPI publication
+        id: verify_pypi
+        run: |
+          echo "⏳ Waiting for PyPI to update..."
+          sleep 30
+
+          # Check if package is available on PyPI
+          for i in {1..10}; do
+            if pip index versions fluidtop | grep -q "$NEW_VERSION"; then
+              echo "✅ Package version $NEW_VERSION found on PyPI"
+              echo "pypi_verified=true" >> $GITHUB_OUTPUT
+              break
+            else
+              echo "⏳ Attempt $i: Package not yet available, waiting..."
+              sleep 30
+            fi
+            
+            if [ $i -eq 10 ]; then
+              echo "❌ Package not found on PyPI after 5 minutes"
+              echo "pypi_verified=false" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+          done
+
+      - name: 🧪 Test PyPI installation
+        if: steps.verify_pypi.outputs.pypi_verified == 'true'
+        run: |
+          echo "🧪 Testing installation from PyPI..."
+
+          # Create a fresh virtual environment and test installation
+          python -m venv test_env
+          source test_env/bin/activate
+
+          # Install from PyPI
+          pip install "fluidtop==$NEW_VERSION"
+
+          # Test that it works
+          echo "Testing fluidtop --help (without sudo in CI)"
+          python -c "import fluidtop.fluidtop as ft; print('✅ Package imports successfully')"
+
+          # Clean up
+          deactivate
+          rm -rf test_env
+          echo "✅ PyPI installation test passed"
+
+      - name: 🏷️ Create and push git tag
+        if: steps.verify_pypi.outputs.pypi_verified == 'true'
+        id: git_tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Commit version change
+          git add pyproject.toml
+          git commit -m "🔖 Bump version to $NEW_VERSION"
+
+          # Create and push tag
+          git tag "v$NEW_VERSION"
+          git push origin main
+          git push origin "v$NEW_VERSION"
+          echo "✅ Git tag v$NEW_VERSION created and pushed"
+          echo "git_tagged=true" >> $GITHUB_OUTPUT
+
+      - name: 📋 Generate release notes
+        if: steps.git_tag.outputs.git_tagged == 'true'
+        run: |
+          cat > release_notes.md << EOF
+          # FluidTop v$NEW_VERSION
+
+          ## 🚀 What's New
+
+          This release includes improvements and updates to FluidTop.
+
+          ## 📦 Installation
+
+          \`\`\`bash
+          # Install or upgrade via pip
+          pip install fluidtop --upgrade
+
+          # Install or upgrade via UV  
+          uv add fluidtop
+
+          # Run directly with UV (on macOS, use sudo)
+          sudo uv run fluidtop
+          \`\`\`
+
+          ## 🔧 System Requirements
+
+          - **Hardware:** Apple Silicon Mac (M1, M2, M3, M4+)
+          - **OS:** macOS Monterey (12.0) or later
+          - **Python:** 3.8+ (automatically managed with UV)
+          - **Privileges:** Root access required for powermetrics
+
+          ## 🏷️ Package Information
+
+          - **PyPI:** https://pypi.org/project/fluidtop/$NEW_VERSION/
+          - **Wheel:** \`fluidtop-$NEW_VERSION-py3-none-any.whl\`
+          - **Source:** \`fluidtop-$NEW_VERSION.tar.gz\`
+
+          ---
+
+          **Full Changelog:** https://github.com/FluidInference/fluidtop/compare/v$(git describe --tags --abbrev=0 HEAD~1)...v$NEW_VERSION
+          EOF
+
+      - name: 🎉 Create GitHub Release
+        if: ${{ github.event.inputs.create_github_release == 'true' && steps.git_tag.outputs.git_tagged == 'true' }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.NEW_VERSION }}
+          name: "FluidTop v${{ env.NEW_VERSION }}"
+          body_path: release_notes.md
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🎊 Release Summary
+        if: steps.git_tag.outputs.git_tagged == 'true'
+        run: |
+          echo "## 🎉 Release v$NEW_VERSION Complete! " >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Completed Tasks" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Calculated new version ($NEW_VERSION) from ${{ github.event.inputs.bump_type }} bump" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Updated version in pyproject.toml" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Built distribution packages" >> $GITHUB_STEP_SUMMARY  
+          echo "- [x] Tested package build" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Published to PyPI" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Verified PyPI publication" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Tested PyPI installation" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Created and pushed git tag v$NEW_VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Created GitHub release" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Links" >> $GITHUB_STEP_SUMMARY
+          echo "- **PyPI Package:** https://pypi.org/project/fluidtop/$NEW_VERSION/" >> $GITHUB_STEP_SUMMARY
+          echo "- **GitHub Release:** https://github.com/FluidInference/fluidtop/releases/tag/v$NEW_VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- **Install Command:** \`pip install fluidtop==$NEW_VERSION\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: ❌ Failure Summary
+        if: failure()
+        run: |
+          echo "## ❌ Release v$NEW_VERSION Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The release process encountered an error. Check the logs above for details." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ steps.pypi_publish.outcome }}" == "success" ]]; then
+            echo "⚠️ **Note:** Package was successfully published to PyPI but git tagging failed." >> $GITHUB_STEP_SUMMARY
+            echo "You may need to manually create the git tag or handle the published package." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No changes were committed to git since PyPI publication failed." >> $GITHUB_STEP_SUMMARY
+          fi
