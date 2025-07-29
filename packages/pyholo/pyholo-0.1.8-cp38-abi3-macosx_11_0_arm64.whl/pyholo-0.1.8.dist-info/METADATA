@@ -1,0 +1,144 @@
+Metadata-Version: 2.4
+Name: pyholo
+Version: 0.1.8
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Rust
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Mathematics
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+License-File: LICENSE
+Summary: Multipurpose interpolation library focussing on RBF, written in rust.
+Keywords: interpolation,rbf,radial basis function,scientific computing,numerical methods,data science,machine learning
+Author-email: Aleksander Lovric <alexlovric@gmail.com>
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown; charset=UTF-8; variant=GFM
+
+# PyHolo
+[![Build & Test](https://github.com/alexlovric/hologram/actions/workflows/build&test.yml/badge.svg?branch=main)](https://github.com/alexlovric/hologram/actions/workflows/build&test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+Python bindings for flexible interpolation library featuring Radial Basis Function (RBF) written in rust. It features:
+- RBF interpolation with many kernels to choose from.
+- Flexible Data Types: Supports input and output datasets of type float, list[float], ndarray.
+
+## Installation
+
+```bash
+pip install pyholo
+```
+
+For optimal performance, it's recommended to use a virtual environment.
+
+## Quick Start
+
+### 1D Interpolation of a target function
+
+```python
+import numpy as np
+import pyholo as holo
+
+def target_function(pts):
+    return 10.0 + np.sum(
+        np.power(pts, 2) + 10.0 * np.cos(2.0 * np.pi * pts)
+    )
+
+# Get or set input/output data
+x_train = np.linspace(-5.0, 5.0, 50)
+y_train = np.array([target_function(x) for x in x_train])
+
+# Get predictions from each model
+pyholo_pred = holo.Rbf(x_train, y_train, "gaussian", 1.0)
+
+# Points to predict at
+x_new = np.linspace(-5.0, 5.0, 500)
+
+# Make predictions
+y_pred = pyholo_pred.predict(x_new)
+```
+
+Plotting against other Rbf implementations (scipy, numpy) and the expected values:
+<img src="https://github.com/alexlovric/hologram/blob/main/examples/example1.png?raw=true" width="99%"/>
+
+### 3D interpolation of data
+
+```python
+import numpy as np
+import pyholo as holo
+
+# Training data
+x_train = np.array([
+    0.000, 512.000, 1182.490, 1911.273, 2788.547, 
+    4227.750, 6481.706, 9609.367, 11773.210, 
+    13188.649, 14400.000
+])
+
+y_train = np.array([
+    [6950.000, 0.000, 0.000],
+    [5930.999, 4386.866, 974.859],
+    [2498.780, 8537.536, 1897.230],
+    [-1993.234, 10819.437, 2404.319],
+    [-7051.251, 11465.688, 2547.931],
+    [-13549.361, 9748.529, 2166.340],
+    [-19093.612, 3887.659, 863.924],
+    [-18104.032, -5716.279, -1270.284],
+    [-11425.229, -10664.783, -2369.952],
+    [-4206.775, -11312.308, -2513.846],
+    [3167.219, -7987.115, -1774.914],
+])
+
+# Create and fit RBF model
+rbf = holo.Rbf(x_train, y_train, kernel='thin_plate_spline', epsilon=1.0)
+
+# Predict on test points
+x_test = np.linspace(x_train.min(), x_train.max(), 200)
+y_pred = rbf.predict(x_test)
+```
+
+Plotting against the training data and expected values:
+<img src="https://github.com/alexlovric/hologram/blob/main/examples/example2.png?raw=true" width="99%"/>
+
+## Comparison with other Rbf implementations
+
+Using the hologram linear solver only, as haven't quite figured out how to configure Openblas or Mkl with Pyo3. Help here is appreciated. Simple 1d problem from before benchmarks quite well.
+<img src="https://github.com/alexlovric/hologram/blob/main/examples/comparison.png?raw=true" width="99%"/>
+
+
+## Build python from source
+These instructions assume that Python3 and Cargo are installed on your system. To set up this project, follow these steps:
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/alexlovric/gmac.git
+    cd gmac/gmac_py
+    ```
+2. Create a virtual environment and install build system:
+    ```bash
+    python3 -m venv .venv
+    source .venv/bin/activate # In windows /Scripts/activate
+    python3 -m pip install -r requirements.txt
+    ```
+3. Build the release binary:
+    ```bash
+    maturin develop --release
+    ```
+4. Build the python wheel:
+    ```bash
+    maturin build --release
+    ```
+5. Running benchmarks/examples:
+    ```bash
+    python3 -m pip install <path to wheel (target/wheels/*.whl)>
+    cd benches
+    python3 -m pip install -r requirements.txt
+    ```
+
+## License
+
+MIT License - See [LICENSE](LICENSE) for details.
+
