@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pyw-ai-core"
+dynamic = ["version"]
+description = "Meta-package for PythonWoods AI-powered tools"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+  { name = "PythonWoods", email = "gianluca.catalano@gmail.com" },
+]
+readme = "README.md"
+dependencies = []
+
+[project.optional-dependencies]
+autodocgen = ["pyw-autodocgen>=0.0.0"]
+
+[project.urls]
+Homepage = "https://github.com/PythonWoods/pyw-ai-core"
+
+[tool.hatch.version]
+path = "src/pyw/ai/__about__.py"
+attr = "__version__"
+
+[tool.hatch.envs.default]
+dependencies = [
+  "build",
+  "twine"
+]
+
+[tool.hatch.envs.default.scripts]
+clean = "rm -rf dist build *.egg-info"
+build = "python -m build"
+release = "twine upload dist/*"
+publish = [
+  "hatch run clean",
+  "hatch run build",
+  "hatch run release"
+]
+
+
+
+[tool.hatch.build]
+sources = ["src"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pyw"]
