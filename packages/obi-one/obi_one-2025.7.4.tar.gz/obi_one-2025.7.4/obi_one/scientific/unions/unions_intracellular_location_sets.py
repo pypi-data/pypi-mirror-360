@@ -1,0 +1,3 @@
+from obi_one.scientific.circuit.intracellular_location_sets import SectionIntracellularLocationSet
+
+IntracellularLocationSetUnion = SectionIntracellularLocationSet
