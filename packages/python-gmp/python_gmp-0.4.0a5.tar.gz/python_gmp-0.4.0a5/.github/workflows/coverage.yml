@@ -1,0 +1,69 @@
+name: Run coverage tests
+on:
+  workflow_call:
+jobs:
+  coverage:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.x", pypy3.11]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: |
+          sudo apt-get update
+          sudo apt-get install lcov
+      - run: bash scripts/cibw_before_all.sh
+      - run: pip install --upgrade pip 'setuptools<=79.0.1' setuptools_scm
+      - run: pip --verbose install --editable .[tests]
+      - name: Build and run coverage tests
+        run: |
+          python setup.py clean
+          python setup.py develop
+          pytest --hypothesis-profile=default --verbose
+          lcov --capture --directory . --no-external \
+              --output-file build/coverage-${{ matrix.python-version }}.info
+        env:
+          CFLAGS: -coverage
+          LD_LIBRARY_PATH: .local/lib/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: |
+            build/coverage-${{ matrix.python-version }}.info
+  merge-coverage:
+    runs-on: ubuntu-24.04
+    needs:
+      - coverage
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: |
+          sudo apt-get update
+          sudo apt-get install lcov
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          path: build/
+          merge-multiple: true
+      - run: |
+          genhtml build/coverage*.info --output-directory build/coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            build/coverage/
+            build/coverage*.info
+      - uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          gcov_ignore: pythoncapi_compat.h
+          gcov_include: src/main.c
+          gcov_args: --no-external
+          fail_ci_if_error: true
