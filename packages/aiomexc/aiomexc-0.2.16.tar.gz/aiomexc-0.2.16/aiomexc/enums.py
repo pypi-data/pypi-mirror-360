@@ -1,0 +1,23 @@
+from enum import StrEnum
+
+
+class OrderSide(StrEnum):
+    BUY = "BUY"
+    SELL = "SELL"
+
+
+class OrderType(StrEnum):
+    LIMIT = "LIMIT"
+    MARKET = "MARKET"
+    LIMIT_MAKER = "LIMIT_MAKER"
+    IMMEDIATE_OR_CANCEL = "IMMEDIATE_OR_CANCEL"
+    FILL_OR_KILL = "FILL_OR_KILL"
+    OCO_LIMIT_ORDER = "OCO_LIMIT_ORDER"
+
+
+class OrderStatus(StrEnum):
+    NEW = "NEW"
+    FILLED = "FILLED"
+    PARTIALLY_FILLED = "PARTIALLY_FILLED"
+    CANCELED = "CANCELED"
+    PARTIALLY_CANCELED = "PARTIALLY_CANCELED"
