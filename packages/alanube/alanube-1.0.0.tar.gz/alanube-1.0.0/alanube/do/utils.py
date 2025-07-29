@@ -1,0 +1,32 @@
+from ..utils import deprecated
+from .api import AlanubeAPI
+
+
+# TODO: Remove deprecated functions in the next major release
+create_company = deprecated("Use AlanubeAPI.create_company instead.")(AlanubeAPI.create_company)
+update_company = deprecated("Use AlanubeAPI.update_company instead.")(AlanubeAPI.update_company)
+get_company = deprecated("Use AlanubeAPI.get_company instead.")(AlanubeAPI.get_company)
+send_fiscal_invoice = deprecated("Use AlanubeAPI.send_fiscal_invoice instead.")(AlanubeAPI.send_fiscal_invoice)
+get_fiscal_invoice_status = deprecated("Use AlanubeAPI.get_fiscal_invoice instead.")(AlanubeAPI.get_fiscal_invoice)
+send_invoice = deprecated("Use AlanubeAPI.send_invoice instead.")(AlanubeAPI.send_invoice)
+get_invoice_status = deprecated("Use AlanubeAPI.get_invoice instead.")(AlanubeAPI.get_invoice)
+send_debit_note = deprecated("Use AlanubeAPI.send_debit_note instead.")(AlanubeAPI.send_debit_note)
+get_debit_note_status = deprecated("Use AlanubeAPI.get_debit_note instead.")(AlanubeAPI.get_debit_note)
+send_credit_note = deprecated("Use AlanubeAPI.send_credit_note instead.")(AlanubeAPI.send_credit_note)
+get_credit_note_status = deprecated("Use AlanubeAPI.get_credit_note instead.")(AlanubeAPI.get_credit_note)
+send_purchase = deprecated("Use AlanubeAPI.send_purchase instead.")(AlanubeAPI.send_purchase)
+get_purchase_status = deprecated("Use AlanubeAPI.get_purchase instead.")(AlanubeAPI.get_purchase)
+send_minor_expense = deprecated("Use AlanubeAPI.send_minor_expense instead.")(AlanubeAPI.send_minor_expense)
+get_minor_expense_status = deprecated("Use AlanubeAPI.get_minor_expense instead.")(AlanubeAPI.get_minor_expense)
+send_special_regime = deprecated("Use AlanubeAPI.send_special_regime instead.")(AlanubeAPI.send_special_regime)
+get_special_regime_status = deprecated("Use AlanubeAPI.get_special_regime instead.")(AlanubeAPI.get_special_regime)
+send_gubernamental = deprecated("Use AlanubeAPI.send_gubernamental instead.")(AlanubeAPI.send_gubernamental)
+get_gubernamental_status = deprecated("Use AlanubeAPI.get_gubernamental instead.")(AlanubeAPI.get_gubernamental)
+send_export_support = deprecated("Use AlanubeAPI.send_export_support instead.")(AlanubeAPI.send_export_support)
+get_export_support_status = deprecated("Use AlanubeAPI.get_export_support instead.")(AlanubeAPI.get_export_support)
+send_payment_abroad_support = deprecated("Use AlanubeAPI.send_payment_abroad_support instead.")(AlanubeAPI.send_payment_abroad_support)
+get_payment_abroad_support_status = deprecated("Use AlanubeAPI.get_payment_abroad_support instead.")(AlanubeAPI.get_payment_abroad_support)
+send_cancellation = deprecated("Use AlanubeAPI.send_cancellation instead.")(AlanubeAPI.send_cancellation)
+get_cancellation_status = deprecated("Use AlanubeAPI.get_cancellation instead.")(AlanubeAPI.get_cancellation)
+get_received_document = deprecated("Use AlanubeAPI.get_received_document instead.")(AlanubeAPI.get_received_document)
+get_received_documents = deprecated("Use AlanubeAPI.get_received_documents instead.")(AlanubeAPI.get_received_documents)
