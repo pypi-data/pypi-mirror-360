@@ -1,0 +1,332 @@
+[
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Mixup",
+      "technique_b": "Label Smoothing",
+      "relationship_type": "conflicts",
+      "evidence_description": "Both techniques smooth the training signal. Using both leads to over-regularization and underfitting.",
+      "impact_description": "2-3% accuracy degradation when combined",
+      "paper_reference": "Müller et al. (2019) - When Does Label Smoothing Help?"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "CutMix",
+      "technique_b": "Mixup",
+      "relationship_type": "synergizes",
+      "evidence_description": "CutMix and Mixup target different aspects of regularization and combine well.",
+      "impact_description": "Additional 1-2% accuracy improvement over either alone",
+      "paper_reference": "Yun et al. (2019) - CutMix: Regularization Strategy"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "FlashAttention",
+      "technique_b": "Multi-Query Attention",
+      "relationship_type": "requires",
+      "evidence_description": "MQA changes attention computation pattern, requiring modified FlashAttention kernels.",
+      "impact_description": "Standard FlashAttention incompatible, needs FlashAttention-2 with MQA support",
+      "paper_reference": "Dao (2023) - FlashAttention-2"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Mixed Precision Training",
+      "technique_b": "FP8 Training",
+      "relationship_type": "conflicts",
+      "evidence_description": "Both modify numerical precision. Using both causes numerical instability.",
+      "impact_description": "Training divergence or significant accuracy loss",
+      "paper_reference": "Micikevicius et al. (2022) - FP8 Formats for Deep Learning"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "GPTQ",
+      "technique_b": "AWQ",
+      "relationship_type": "conflicts",
+      "evidence_description": "Different quantization schemes that modify weights incompatibly.",
+      "impact_description": "Cannot apply both to same model",
+      "paper_reference": "Lin et al. (2023) - AWQ: Activation-aware Weight Quantization"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "ZeRO-3",
+      "technique_b": "LoRA",
+      "relationship_type": "conflicts",
+      "evidence_description": "ZeRO-3 shards parameters while LoRA requires full parameter access for adapter computation.",
+      "impact_description": "Significant performance overhead or implementation complexity",
+      "paper_reference": "Hu et al. (2021) - LoRA implementation notes"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Gradient Checkpointing",
+      "technique_b": "Reversible Residual Networks",
+      "relationship_type": "conflicts",
+      "evidence_description": "Both techniques manage activation memory differently and interfere with each other.",
+      "impact_description": "No additional memory savings, potential slowdown",
+      "paper_reference": "Gomez et al. (2017) - The Reversible Residual Network"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Batch Normalization",
+      "technique_b": "Weight Standardization",
+      "relationship_type": "conflicts",
+      "evidence_description": "Weight Standardization designed for GroupNorm, provides no benefit with BatchNorm.",
+      "impact_description": "Computational overhead with no accuracy improvement",
+      "paper_reference": "Qiao et al. (2019) - Weight Standardization"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Group Normalization",
+      "technique_b": "Weight Standardization",
+      "relationship_type": "synergizes",
+      "evidence_description": "Weight Standardization specifically designed to improve GroupNorm performance.",
+      "impact_description": "Enables batch_size=1 to match large batch performance",
+      "paper_reference": "Qiao et al. (2019) - Weight Standardization"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Lion Optimizer",
+      "technique_b": "Learning Rate Scheduling",
+      "relationship_type": "requires",
+      "evidence_description": "Lion requires different LR scaling than Adam/SGD, needs specific scheduling.",
+      "impact_description": "10x smaller learning rates required",
+      "paper_reference": "Chen et al. (2023) - Symbolic Discovery of Optimization Algorithms"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "LARS",
+      "technique_b": "Small Batch Training",
+      "relationship_type": "conflicts",
+      "evidence_description": "LARS designed specifically for large batch training, provides no benefit for small batches.",
+      "impact_description": "Overhead without benefit, potential instability",
+      "paper_reference": "You et al. (2017) - Large Batch Training of Convolutional Networks"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Pipeline Parallelism",
+      "technique_b": "Dynamic Graphs",
+      "relationship_type": "conflicts",
+      "evidence_description": "Pipeline parallelism requires static model partitioning incompatible with dynamic graphs.",
+      "impact_description": "Cannot use pipeline parallelism with dynamic architectures",
+      "paper_reference": "Huang et al. (2019) - GPipe"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Tensor Parallelism",
+      "technique_b": "Data Parallelism",
+      "relationship_type": "conflicts",
+      "evidence_description": "Using both on same GPU group causes excessive communication overhead.",
+      "impact_description": "Severe performance degradation",
+      "paper_reference": "Shoeybi et al. (2019) - Megatron-LM"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Shampoo",
+      "technique_b": "Memory-Efficient Training",
+      "relationship_type": "conflicts",
+      "evidence_description": "Shampoo's full-matrix preconditioning requires significant additional memory.",
+      "impact_description": "2-4x memory overhead defeats memory optimization purpose",
+      "paper_reference": "Gupta et al. (2018) - Shampoo"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Linear Attention",
+      "technique_b": "Pre-trained Models",
+      "relationship_type": "conflicts",
+      "evidence_description": "Linear attention fundamentally changes attention mechanism, incompatible with softmax-pretrained models.",
+      "impact_description": "Requires retraining from scratch",
+      "paper_reference": "Choromanski et al. (2020) - Rethinking Attention with Performers"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Instance Normalization",
+      "technique_b": "Recognition Tasks",
+      "relationship_type": "conflicts",
+      "evidence_description": "Instance norm removes discriminative instance-specific information needed for recognition.",
+      "impact_description": "Severe accuracy degradation on classification/detection",
+      "paper_reference": "Ulyanov et al. (2016) - Instance Normalization"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Progressive Resizing",
+      "technique_b": "Positional Embeddings",
+      "relationship_type": "conflicts",
+      "evidence_description": "Fixed positional embeddings incompatible with changing image sizes.",
+      "impact_description": "Position encoding errors, degraded performance",
+      "paper_reference": "Dosovitskiy et al. (2021) - Vision Transformer"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Test Time Augmentation",
+      "technique_b": "Real-time Inference",
+      "relationship_type": "conflicts",
+      "evidence_description": "TTA multiplies inference time by number of augmentations.",
+      "impact_description": "5-10x slower inference incompatible with real-time requirements",
+      "paper_reference": "Simonyan & Zisserman (2014) - Very Deep Convolutional Networks"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Gradient Compression",
+      "technique_b": "Gradient Clipping",
+      "relationship_type": "conflicts",
+      "evidence_description": "Compression changes gradient magnitudes interfering with clipping thresholds.",
+      "impact_description": "Incorrect clipping, potential training instability",
+      "paper_reference": "Vogels et al. (2019) - PowerSGD"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "FSDP",
+      "technique_b": "Mixed Precision Training",
+      "relationship_type": "synergizes",
+      "evidence_description": "FSDP's memory savings combine multiplicatively with mixed precision.",
+      "impact_description": "Enables training 2x larger models than either technique alone",
+      "paper_reference": "PyTorch (2021) - FSDP Documentation"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "AdamW",
+      "technique_b": "Large Batch Training",
+      "relationship_type": "requires",
+      "evidence_description": "AdamW needs learning rate scaling with batch size for optimal performance.",
+      "impact_description": "Linear LR scaling rule critical for convergence",
+      "paper_reference": "Loshchilov & Hutter (2019) - Decoupled Weight Decay"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Depthwise Separable Convolutions",
+      "technique_b": "Small Models",
+      "relationship_type": "synergizes",
+      "evidence_description": "Depthwise convolutions designed for and most effective in small models.",
+      "impact_description": "Up to 10x parameter reduction with minimal accuracy loss",
+      "paper_reference": "Howard et al. (2017) - MobileNets"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Sliding Window Attention",
+      "technique_b": "Global Context Tasks",
+      "relationship_type": "conflicts",
+      "evidence_description": "Local attention windows miss long-range dependencies needed for global understanding.",
+      "impact_description": "Task-dependent accuracy loss",
+      "paper_reference": "Beltagy et al. (2020) - Longformer"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Knowledge Distillation",
+      "technique_b": "Limited Data",
+      "relationship_type": "conflicts",
+      "evidence_description": "Distillation requires additional data for student training to avoid overfitting.",
+      "impact_description": "Poor student performance with small datasets",
+      "paper_reference": "Hinton et al. (2015) - Distilling the Knowledge"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Contrastive Learning",
+      "technique_b": "Small Batch Size",
+      "relationship_type": "conflicts",
+      "evidence_description": "Contrastive learning requires large batches (256+) for sufficient negative samples.",
+      "impact_description": "Convergence failure or poor representations",
+      "paper_reference": "Chen et al. (2020) - SimCLR"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Neural Architecture Search",
+      "technique_b": "Limited Compute",
+      "relationship_type": "conflicts",
+      "evidence_description": "NAS requires extensive computational resources for architecture search.",
+      "impact_description": "Impractical search time or suboptimal architectures",
+      "paper_reference": "Liu et al. (2019) - DARTS"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Spectral Normalization",
+      "technique_b": "High Learning Rates",
+      "relationship_type": "conflicts",
+      "evidence_description": "Spectral norm constrains model capacity, requiring careful LR tuning.",
+      "impact_description": "Training instability or slow convergence",
+      "paper_reference": "Miyato et al. (2018) - Spectral Normalization"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "QLoRA",
+      "technique_b": "bitsandbytes 4-bit",
+      "relationship_type": "requires",
+      "evidence_description": "QLoRA specifically designed to work with 4-bit base models.",
+      "impact_description": "Enables fine-tuning of 65B models on single GPU",
+      "paper_reference": "Dettmers et al. (2023) - QLoRA"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "PagedAttention",
+      "technique_b": "Training",
+      "relationship_type": "conflicts",
+      "evidence_description": "PagedAttention designed for inference only, incompatible with backpropagation.",
+      "impact_description": "Cannot use during training",
+      "paper_reference": "Kwon et al. (2023) - PagedAttention"
+    }
+  },
+  {
+    "model": "knowledge_base.techniquerelationship",
+    "fields": {
+      "technique_a": "Curriculum Learning",
+      "technique_b": "Random Sampling",
+      "relationship_type": "conflicts",
+      "evidence_description": "Curriculum learning's ordered presentation conflicts with randomness benefits.",
+      "impact_description": "May reduce generalization if not carefully balanced",
+      "paper_reference": "Bengio et al. (2009) - Curriculum Learning"
+    }
+  }
+]
