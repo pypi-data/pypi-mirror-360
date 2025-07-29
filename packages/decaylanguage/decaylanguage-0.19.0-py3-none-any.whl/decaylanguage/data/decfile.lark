@@ -1,0 +1,86 @@
+// Copyright (c) 2018-2025, Eduardo Rodrigues and Henry Schreiner.
+//
+// Distributed under the 3-clause BSD license, see accompanying file LICENSE
+// or https://github.com/scikit-hep/decaylanguage for details.
+
+start : _NEWLINE* (line _NEWLINE+)* ("End" _NEWLINE+)?
+?line : define | particle_def | pythia_def | jetset_def | ls_def | model_alias | alias | chargeconj | commands | decay | cdecay | copydecay | setlspw | setlsbw | changemasslimit | inc_factor
+
+pythia_def : LABEL_PYTHIA8_COMMANDS LABEL ":" LABEL "=" (LABEL | SIGNED_NUMBER)  // Pythia 8 commands
+LABEL_PYTHIA8_COMMANDS : "PythiaAliasParam" | "PythiaBothParam" | "PythiaGenericParam"
+
+jetset_def : "JetSetPar" LABEL "=" SIGNED_NUMBER  // Old Pythia 6 commands
+
+ls_def : LABEL_LINESHAPE LABEL // Choose a lineshape for a particle
+LABEL_LINESHAPE : "LSFLAT" | "LSNONRELBW" | "LSMANYDELTAFUNC" // Lineshape flat | non-relativistic BW, spikes
+
+inc_factor: LABEL_INCLUDE_FACTOR LABEL BOOLEAN_INCLUDE_FACTOR // Presence of the birth/decay momentum factor and form-factor
+LABEL_INCLUDE_FACTOR : "IncludeBirthFactor" | "IncludeDecayFactor"
+BOOLEAN_INCLUDE_FACTOR : "yes" | "no"
+
+setlsbw : "BlattWeisskopf" LABEL SIGNED_NUMBER // Set Blatt-Weisskopf barrier factor for a lineshape
+
+setlspw : "SetLineshapePW" LABEL LABEL LABEL INT // Redefine Partial Wave for label -> label label
+
+cdecay : "CDecay" LABEL
+
+define : "Define" LABEL SIGNED_NUMBER
+
+particle_def: "Particle" LABEL SIGNED_NUMBER SIGNED_NUMBER? // Set the mass and width (optional) of a particle (in GeV)
+
+alias : "Alias" LABEL LABEL
+
+chargeconj : "ChargeConj" LABEL LABEL
+
+changemasslimit : LABEL_CHANGE_MASS LABEL SIGNED_NUMBER // Set upper/lower mass cuts on a lineshape
+LABEL_CHANGE_MASS : "ChangeMassMin" | "ChangeMassMax"
+
+?commands : global_photos
+
+global_photos : boolean_photos
+
+boolean_photos : "yesPhotos" -> yes
+                | "noPhotos"  -> no
+
+decay : "Decay" particle _NEWLINE+ decayline* "Enddecay"
+decayline : value particle* photos? model _NEWLINE+
+value : SIGNED_NUMBER
+photos : "PHOTOS"
+
+copydecay : "CopyDecay" label label
+
+label : LABEL
+particle : LABEL // Add full particle parsing here
+model_label : LABEL
+
+model_alias : "ModelAlias" model_label model
+
+model : (model_label  | MODEL_NAME model_options?) _SEMICOLON+
+model_options : (value | LABEL | _NEWLINE | _COMMA)+
+
+// We must set priorities here to use lalr - match model name above label, and label above something else
+// This is supposed to be empty and will be filled via the `edit_terminals` functionality with a list of models
+MODEL_NAME.2 : "MODEL_NAME_PLACEHOLDER"/\b/
+
+
+// Terminal definitions
+// To use a fast parser, we need to avoid conflicts
+
+%import common.WS_INLINE
+%import common.INT
+%import common.SIGNED_NUMBER
+
+// Disregard comments, (multiple) newlines and whitespace in parser tree
+_NEWLINE: ( /\r?\n[\t ]*/ | COMMENT )
+_SEMICOLON: /;/
+_COMMA: /,/
+_WS: WS_INLINE
+
+LABEL : /[a-zA-Z0-9\/\-+*_().'~]+/
+COMMENT : /[#][^\n]*/
+
+// We should ignore comments
+%ignore COMMENT
+
+// Disregard spaces in text
+%ignore WS_INLINE
