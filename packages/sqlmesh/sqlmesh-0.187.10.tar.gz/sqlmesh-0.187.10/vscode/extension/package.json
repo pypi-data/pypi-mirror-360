@@ -1,0 +1,150 @@
+{
+  "name": "sqlmesh",
+  "displayName": "SQLMesh",
+  "description": "Official SQLMesh extension for VSCode",
+  "publisher": "tobikodata",
+  "version": "0.0.7",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tobikodata/sqlmesh"
+  },
+  "main": "./dist/extension.js",
+  "icon": "assets/logo.png",
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:sql",
+    "onLanguage:python"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "extensionDependencies": [
+    "ms-python.python"
+  ],
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "SQLMesh",
+      "properties": {
+        "sqlmesh.projectPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "The path to the SQLMesh project. If not set, the extension will try to find the project root automatically. If set, the extension will use the project root as the workspace path, e.g. it will run `sqlmesh` and `sqlmesh_lsp` in the project root. The path can be absolute `/Users/sqlmesh_user/sqlmesh_project/sushi` or relative `./project_folder/sushi` to the workspace root."
+        }
+      }
+    },
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "lineage_view",
+          "title": "Lineage",
+          "icon": "./assets/images/dag.svg"
+        }
+      ]
+    },
+    "views": {
+      "lineage_view": [
+        {
+          "id": "sqlmesh.lineage",
+          "name": "",
+          "type": "webview"
+        }
+      ]
+    },
+    "authentication": [
+      {
+        "id": "tobikodata",
+        "label": "Tobiko"
+      }
+    ],
+    "commands": [
+      {
+        "command": "sqlmesh.format",
+        "title": "Format SQLMesh Project",
+        "description": "SQLMesh"
+      },
+      {
+        "command": "sqlmesh.restart",
+        "title": "Restart SQLMesh Servers",
+        "description": "SQLMesh"
+      },
+      {
+        "command": "sqlmesh.signin",
+        "title": "Sign in to Tobiko Cloud",
+        "description": "SQLMesh"
+      },
+      {
+        "command": "sqlmesh.signinSpecifyFlow",
+        "title": "Sign in to Tobiko Cloud (Specify Auth Flow)",
+        "description": "SQLMesh"
+      },
+      {
+        "command": "sqlmesh.signout",
+        "title": "Sign out from Tobiko Cloud",
+        "description": "SQLMesh"
+      },
+      {
+        "command": "sqlmesh.renderModel",
+        "title": "Render Model",
+        "description": "Render the model in the current editor",
+        "icon": "$(open-preview)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "sqlmesh.renderModel",
+          "when": "resourceExtname == .sql",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "ci": "pnpm run lint && pnpm run compile",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "fetch-vscode": "tsx scripts/fetch-vscode.ts",
+    "compile": "pnpm run check-types && node esbuild.js",
+    "check-types": "tsc --noEmit",
+    "watch": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "vscode:package": "vsce package --no-dependencies",
+    "vscode:prepublish": "cp ../../LICENSE . && pnpm run package",
+    "package": "rm -rf ./src_react && mkdir -p ./src_react && cd ../react && pnpm run build && cd ../extension && cp -r ../react/dist/* ./src_react && pnpm run check-types && node esbuild.js --production"
+  },
+  "dependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@vscode/python-extension": "^1.0.5",
+    "fs-extra": "^11.3.0",
+    "vscode-jsonrpc": "^8.2.1",
+    "vscode-languageclient": "^9.0.1",
+    "zod": "^3.25.28"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.27.0",
+    "@playwright/test": "^1.52.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.11.25",
+    "@types/vscode": "1.96.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.4.2",
+    "esbuild": "^0.25.4",
+    "eslint": "^9.27.0",
+    "ts-loader": "^9.5.2",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.32.1"
+  }
+}
