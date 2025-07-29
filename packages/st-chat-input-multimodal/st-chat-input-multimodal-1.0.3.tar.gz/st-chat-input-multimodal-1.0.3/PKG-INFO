@@ -1,0 +1,182 @@
+Metadata-Version: 2.1
+Name: st-chat-input-multimodal
+Version: 1.0.3
+Summary: Streamlit multimodal chat input component with text, image, and voice support
+Home-page: https://github.com/tsuzukia21/st-chat-input-multimodal
+Author: tsuzukia21
+Keywords: streamlit,component,multimodal,chat,input,image,voice,audio
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: streamlit>=1.2
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0; extra == "dev"
+Requires-Dist: black>=22.0; extra == "dev"
+Requires-Dist: flake8>=5.0; extra == "dev"
+Requires-Dist: mypy>=1.0; extra == "dev"
+
+[English](README.md) | [日本語](README-ja_JP.md)
+
+# Demo
+
+![Demo](./demo.gif)
+
+# Streamlit Multimodal Chat Input
+
+A multimodal chat input component for Streamlit that supports text input, image upload, and voice input.
+
+> **Note**: Voice and image features require HTTPS or localhost environment to function properly.
+
+## Features
+
+- 📝 **Text Input**: Same usability as st.chat_input
+- 🖼️ **Image File Upload**: Supports jpg, png, gif, webp
+- 🎤 **Voice Input**: Web Speech API / OpenAI Whisper API support
+- 🎨 **Streamlit Standard Theme**: Fully compatible design
+- 🔄 **Drag & Drop**: File drag and drop support
+- ⌨️ **Ctrl+V**: Paste images from clipboard
+- ⚙️ **Customizable**: Rich configuration options
+
+## Installation
+
+```bash
+pip install st-chat-input-multimodal
+```
+
+## Basic Usage
+
+```python
+import streamlit as st
+from st_chat_input_multimodal import multimodal_chat_input
+
+# Basic usage
+result = multimodal_chat_input()
+
+if result:
+    # Display text
+    if result['text']:
+        st.write(f"Text: {result['text']}")
+    
+    # Display uploaded files
+    if result['files']:
+        for file in result['files']:
+            import base64
+            base64_data = file['data'].split(',')[1]
+            image_bytes = base64.b64decode(base64_data)
+            st.image(image_bytes, caption=file['name'])
+    
+    # Display voice input metadata
+    if result.get('audio_metadata'):
+        st.write(f"Voice input used: {result['audio_metadata']['used_voice_input']}")
+```
+
+## Advanced Usage
+
+### Voice Input Features
+
+```python
+# Enable voice input
+result = multimodal_chat_input(
+    enable_voice_input=True,
+    voice_recognition_method="web_speech",  # or "openai_whisper"
+    voice_language="ja-JP",
+    max_recording_time=60
+)
+
+# Using OpenAI Whisper API
+result = multimodal_chat_input(
+    enable_voice_input=True,
+    voice_recognition_method="openai_whisper",
+    openai_api_key="sk-your-api-key",
+    voice_language="ja-JP"
+)
+```
+
+### Custom Configuration
+
+```python
+result = multimodal_chat_input(
+    placeholder="Please enter your message...",
+    max_chars=500,
+    accepted_file_types=["jpg", "png", "gif", "webp"],
+    max_file_size_mb=10,
+    disabled=False,
+    key="custom_chat_input"
+)
+```
+
+### Chat Usage
+
+```python
+import streamlit as st
+import base64
+from st_chat_input_multimodal import multimodal_chat_input
+
+# Page configuration
+st.set_page_config(
+    page_title="Multimodal Chat Input Demo",
+    page_icon="💬",
+    layout="wide"
+)
+
+st.subheader("💭 Multimodal Chat Input Demo")
+st.markdown("Simulate a chat application with voice input and file upload.")
+
+# Manage history in session state
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+# Input for new messages
+chat_result = multimodal_chat_input(
+    placeholder="Enter chat message...",
+    enable_voice_input=True,  # Enable voice input for chat as well
+    key="chat_input"
+)
+if chat_result:
+    st.session_state.chat_history.append(chat_result)
+
+# Display chat history
+if st.session_state.chat_history:
+    for i, message in enumerate(st.session_state.chat_history):
+        with st.chat_message("user"):
+            if message.get("text"):
+                st.write(message["text"])
+            
+            if message.get("files"):
+                for file in message["files"]:
+                    try:
+                        base64_data = file['data'].split(',')[1] if ',' in file['data'] else file['data']
+                        image_bytes = base64.b64decode(base64_data)
+                        st.image(image_bytes, caption=file['name'], width=200)
+                    except:
+                        st.write(f"📎 {file['name']}")
+            
+            # Display voice input information
+            if message.get("audio_metadata") and message["audio_metadata"]["used_voice_input"]:
+                st.caption(f"🎤 Voice input ({message['audio_metadata']['transcription_method']})")
+
+
+# Clear history
+if st.button("Clear History"):
+    st.session_state.chat_history = []
+    st.rerun()
+
+```
+
+## License
+
+MIT License
+
+## Author
+
+tsuzukia21
