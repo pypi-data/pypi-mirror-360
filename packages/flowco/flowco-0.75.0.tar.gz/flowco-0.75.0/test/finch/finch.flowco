@@ -1,0 +1,510 @@
+{
+  "file_name": "finch.flowco",
+  "dfg": {
+    "version": 0,
+    "description": "",
+    "nodes": [
+      {
+        "id": "Step-1",
+        "kind": 0,
+        "pill": "Clean-Finch",
+        "label": "Clean finch data",
+        "geometry": {
+          "x": 282.25,
+          "y": 0.0,
+          "width": 120.0,
+          "height": 60.0
+        },
+        "output_geometry": {
+          "x": 450.0,
+          "y": 180.0,
+          "width": 400.0,
+          "height": 300.0
+        },
+        "is_locked": false,
+        "force_show_output": true,
+        "function_name": "clean_finch",
+        "function_result_var": "clean_finch",
+        "predecessors": [],
+        "phase": 0,
+        "function_parameters": null,
+        "preconditions": null,
+        "requirements": [
+          "`clean_finch` is a dataframe derived from the dataset obtained using the `finch_beaks_1975_table()` function.",
+          "`clean_finch` has the same columns as the original table, namely `species` (string type), `Beak length, mm` (float type), and `Beak depth, mm` (float type).",
+          "All NaN or missing values are removed from `clean_finch`.",
+          "All rows with values in `Beak length, mm` or `Beak depth, mm` that are non-positive are removed."
+        ],
+        "description": null,
+        "function_return_type": null,
+        "function_computed_value": null,
+        "algorithm": null,
+        "code": [
+          "import pandas as pd",
+          "",
+          "",
+          "def clean_finch() -> pd.DataFrame:",
+          "    data = finch_beaks_1975_table()",
+          "    clean_data = data.dropna()",
+          "    clean_data = clean_data[",
+          "        (clean_data[\"Beak length, mm\"] > 0)",
+          "        & (clean_data[\"Beak depth, mm\"] > 0)",
+          "    ]",
+          "    return clean_data",
+          ""
+        ],
+        "assertions": null,
+        "assertion_checks": {},
+        "assertion_outcomes": {
+          "outcomes": {},
+          "context": {}
+        },
+        "unit_tests": null,
+        "unit_test_checks": {},
+        "unit_test_outcomes": {
+          "outcomes": {},
+          "context": {}
+        },
+        "messages": [],
+        "build_status": null,
+        "result": null,
+        "cache": {
+          "caches": {}
+        }
+      },
+      {
+        "id": "Step-2",
+        "kind": 0,
+        "pill": "Display-Beak",
+        "label": "Display beak length histogram by species",
+        "geometry": {
+          "x": 207.25,
+          "y": 160.0,
+          "width": 120.0,
+          "height": 60.0
+        },
+        "output_geometry": {
+          "x": 125.5,
+          "y": 320.0,
+          "width": 279.0,
+          "height": 140.0
+        },
+        "is_locked": false,
+        "force_show_output": true,
+        "function_name": "display_beak",
+        "function_result_var": "display_beak",
+        "predecessors": [
+          "Step-1"
+        ],
+        "phase": 0,
+        "function_parameters": null,
+        "preconditions": null,
+        "requirements": [
+          "Generate a histogram displaying the distribution of the 'Beak length, mm' for each 'species' in the 'clean_finch' dataframe.",
+          "Ensure that the histogram plot has separate colors for each species and appropriate axis labels and a legend."
+        ],
+        "description": null,
+        "function_return_type": null,
+        "function_computed_value": null,
+        "algorithm": null,
+        "code": [
+          "import pandas as pd",
+          "import seaborn as sns",
+          "import matplotlib.pyplot as plt",
+          "",
+          "",
+          "def display_beak(clean_finch: pd.DataFrame) -> None:",
+          "    plt.figure(figsize=(10, 6))",
+          "    sns.histplot(",
+          "        data=clean_finch,",
+          "        x=\"Beak length, mm\",",
+          "        hue=\"species\",",
+          "        element=\"step\",",
+          "        stat=\"density\",",
+          "        common_norm=False,",
+          "    )",
+          "    plt.xlabel(\"Beak Length (mm)\")",
+          "    plt.ylabel(\"Density\")",
+          "    plt.title(\"Histogram of Beak Length by Species\")",
+          "    plt.legend(title=\"Species\")",
+          "    plt.show()",
+          ""
+        ],
+        "assertions": null,
+        "assertion_checks": {},
+        "assertion_outcomes": {
+          "outcomes": {},
+          "context": {}
+        },
+        "unit_tests": null,
+        "unit_test_checks": {},
+        "unit_test_outcomes": {
+          "outcomes": {},
+          "context": {}
+        },
+        "messages": [],
+        "build_status": null,
+        "result": null,
+        "cache": {
+          "caches": {}
+        }
+      },
+      {
+        "id": "Step-3",
+        "kind": 0,
+        "pill": "Select-Birds",
+        "label": "Select 'fortis' birds",
+        "geometry": {
+          "x": 358.375,
+          "y": 160.0,
+          "width": 120.0,
+          "height": 60.0
+        },
+        "output_geometry": {
+          "x": 540.0,
+          "y": 400.0,
+          "width": 400.0,
+          "height": 300.0
+        },
+        "is_locked": false,
+        "force_show_output": true,
+        "function_name": "select_birds",
+        "function_result_var": "select_birds",
+        "predecessors": [
+          "Step-1"
+        ],
+        "phase": 0,
+        "function_parameters": null,
+        "preconditions": null,
+        "requirements": [
+          "`select_birds` is a dataframe derived from `clean_finch`.",
+          "`select_birds` contains only rows where the `species` column has the value `'fortis'`.",
+          "The structure of `select_birds` mirrors that of `clean_finch`, with columns `species` (string type), `Beak length, mm` (float type), and `Beak depth, mm` (float type)."
+        ],
+        "description": null,
+        "function_return_type": null,
+        "function_computed_value": null,
+        "algorithm": null,
+        "code": [
+          "import pandas as pd",
+          "",
+          "",
+          "def select_birds(clean_finch: pd.DataFrame) -> pd.DataFrame:",
+          "    return clean_finch[clean_finch[\"species\"] == \"fortis\"]",
+          ""
+        ],
+        "assertions": null,
+        "assertion_checks": {},
+        "assertion_outcomes": {
+          "outcomes": {},
+          "context": {}
+        },
+        "unit_tests": null,
+        "unit_test_checks": {},
+        "unit_test_outcomes": {
+          "outcomes": {},
+          "context": {}
+        },
+        "messages": [],
+        "build_status": null,
+        "result": null,
+        "cache": {
+          "caches": {}
+        }
+      },
+      {
+        "id": "Step-4",
+        "kind": 0,
+        "pill": "Bootstrap-Beak",
+        "label": "Bootstrap mean beak length for any bird table",
+        "geometry": {
+          "x": 434.5,
+          "y": 360.0,
+          "width": 120.0,
+          "height": 60.0
+        },
+        "output_geometry": {
+          "x": 620.0,
+          "y": 590.0,
+          "width": 400.0,
+          "height": 300.0
+        },
+        "is_locked": true,
+        "force_show_output": true,
+        "function_name": "bootstrap_beak",
+        "function_result_var": "bootstrap_beak",
+        "predecessors": [
+          "Step-1",
+          "Step-3"
+        ],
+        "phase": 0,
+        "function_parameters": null,
+        "preconditions": null,
+        "requirements": [
+          "`bootstrap_beak` is a NumPy array containing the means of the bootstrap resampling of the 'Beak length, mm' values for the input bird dataframe.",
+          "The input is expected to be a valid Pandas DataFrame containing the column 'Beak length, mm' with non-negative float values.",
+          "The resampling process involves randomly selecting values with replacement multiple times from the 'Beak length, mm' column of the input dataframe.",
+          "The mean is computed for each resampling iteration, and the final `bootstrap_beak` value is an array of these computed means.",
+          "`bootstrap_beak` is stored as a value of type numpy.ndarray."
+        ],
+        "description": null,
+        "function_return_type": null,
+        "function_computed_value": null,
+        "algorithm": null,
+        "code": [
+          "# put all imports here",
+          "import pandas as pd",
+          "import numpy as np",
+          "",
+          "",
+          "def bootstrap_beak(",
+          "    clean_finch: pd.DataFrame, select_birds: pd.DataFrame",
+          ") -> np.ndarray:",
+          "    # Check if the dataframe and necessary column exist",
+          "    if (",
+          "        \"Beak length, mm\" not in clean_finch.columns",
+          "        or clean_finch[\"Beak length, mm\"].isna().all()",
+          "    ):",
+          "        return np.array([])",
+          "",
+          "    # Extract the 'Beak length, mm' column values from the dataframe",
+          "    beak_lengths = clean_finch[\"Beak length, mm\"].dropna()",
+          "",
+          "    # Perform bootstrap resampling",
+          "    bootstrap_means = np.array(",
+          "        [",
+          "            beak_lengths.sample(",
+          "                len(beak_lengths), replace=True",
+          "            ).mean()",
+          "            for _ in range(1000)",
+          "        ]",
+          "    )",
+          "",
+          "    # Return the array of bootstrap sample means",
+          "    return bootstrap_means",
+          ""
+        ],
+        "assertions": null,
+        "assertion_checks": {},
+        "assertion_outcomes": {
+          "outcomes": {},
+          "context": {}
+        },
+        "unit_tests": null,
+        "unit_test_checks": {},
+        "unit_test_outcomes": {
+          "outcomes": {},
+          "context": {}
+        },
+        "messages": [],
+        "build_status": null,
+        "result": null,
+        "cache": {
+          "caches": {}
+        }
+      },
+      {
+        "id": "Step-5",
+        "kind": 0,
+        "pill": "Plot-Boostrap",
+        "label": "Plot boostrap statistics",
+        "geometry": {
+          "x": 205.0,
+          "y": 560.0,
+          "width": 120.0,
+          "height": 60.0
+        },
+        "output_geometry": {
+          "x": 0.0,
+          "y": 720.0,
+          "width": 240.0,
+          "height": 130.0
+        },
+        "is_locked": true,
+        "force_show_output": true,
+        "function_name": "plot_boostrap",
+        "function_result_var": "plot_boostrap",
+        "predecessors": [
+          "Step-4",
+          "Step-1",
+          "Step-3"
+        ],
+        "phase": 0,
+        "function_parameters": null,
+        "preconditions": null,
+        "requirements": [
+          "Generate a histogram of the bootstrap means stored in the `bootstrap_beak` NumPy array.",
+          "Include a vertical line in the histogram marking the overall mean of the `bootstrap_beak` values.",
+          "Label the axes appropriately: 'Beak length, mm' on the x-axis and 'Frequency' on the y-axis.",
+          "Provide a clear and descriptive title for the histogram.",
+          "Ensure the inclusion of a legend in the plot to identify the significance of the vertical line.",
+          "The function does not return any value, as it is designed to display the generated plot as its output."
+        ],
+        "description": null,
+        "function_return_type": null,
+        "function_computed_value": null,
+        "algorithm": null,
+        "code": [
+          "import numpy as np",
+          "import pandas as pd",
+          "import matplotlib.pyplot as plt",
+          "import seaborn as sns",
+          "",
+          "",
+          "def plot_boostrap(",
+          "    bootstrap_beak: np.ndarray,",
+          "    clean_finch: pd.DataFrame,",
+          "    select_birds: pd.DataFrame,",
+          ") -> None:",
+          "",
+          "    mean_value = np.mean(bootstrap_beak)",
+          "",
+          "    plt.figure(figsize=(8, 6))",
+          "    sns.histplot(",
+          "        bootstrap_beak,",
+          "        bins=30,",
+          "        kde=False,",
+          "        color=\"blue\",",
+          "        edgecolor=\"black\",",
+          "    )",
+          "    plt.axvline(",
+          "        mean_value,",
+          "        color=\"red\",",
+          "        linestyle=\"--\",",
+          "        label=f\"Mean: {mean_value:.2f} mm\",",
+          "    )",
+          "",
+          "    plt.title(\"Histogram of Bootstrap Beak Length Means\")",
+          "    plt.xlabel(\"Beak length, mm\")",
+          "    plt.ylabel(\"Frequency\")",
+          "    plt.legend()",
+          "    plt.show()",
+          "    return",
+          ""
+        ],
+        "assertions": null,
+        "assertion_checks": {},
+        "assertion_outcomes": {
+          "outcomes": {},
+          "context": {}
+        },
+        "unit_tests": null,
+        "unit_test_checks": {},
+        "unit_test_outcomes": {
+          "outcomes": {},
+          "context": {}
+        },
+        "messages": [],
+        "build_status": null,
+        "result": null,
+        "cache": {
+          "caches": {}
+        }
+      },
+      {
+        "id": "Step-6",
+        "kind": 0,
+        "pill": "Computer-95",
+        "label": "Computer 95% CI",
+        "geometry": {
+          "x": 433.28125,
+          "y": 560.0,
+          "width": 120.0,
+          "height": 60.0
+        },
+        "output_geometry": {
+          "x": 288.28125,
+          "y": 760.0,
+          "width": 410.0,
+          "height": 50.0
+        },
+        "is_locked": true,
+        "force_show_output": true,
+        "function_name": "computer_95",
+        "function_result_var": "computer_95",
+        "predecessors": [
+          "Step-4",
+          "Step-1",
+          "Step-3"
+        ],
+        "phase": 0,
+        "function_parameters": null,
+        "preconditions": null,
+        "requirements": [
+          "Extract the 'Beak length, mm' column from the input bird dataframe, which is ensured to be non-empty and contains valid numeric values.",
+          "Perform bootstrap resampling on this series for the specified number of iterations (e.g., 10000), generating a set of bootstrap sample means.",
+          "Calculate the 95% confidence interval by determining the 2.5th and 97.5th percentiles of the bootstrap sample means using the computed set.",
+          "Validate that the resulting confidence interval is represented as a tuple of two float values sorted in ascending order.",
+          "Return this tuple, representing the confidence interval for the beak length means."
+        ],
+        "description": null,
+        "function_return_type": null,
+        "function_computed_value": null,
+        "algorithm": null,
+        "code": [
+          "# put all imports here",
+          "import numpy as np",
+          "from typing import Tuple",
+          "",
+          "",
+          "def computer_95(",
+          "    bootstrap_beak: np.ndarray,",
+          "    clean_finch: pd.DataFrame,",
+          "    select_birds: pd.DataFrame,",
+          ") -> Tuple[float, float]:",
+          "    lower_bound = np.percentile(bootstrap_beak, 2.5)",
+          "    upper_bound = np.percentile(bootstrap_beak, 97.5)",
+          "    return (lower_bound, upper_bound)",
+          ""
+        ],
+        "assertions": null,
+        "assertion_checks": {},
+        "assertion_outcomes": {
+          "outcomes": {},
+          "context": {}
+        },
+        "unit_tests": null,
+        "unit_test_checks": {},
+        "unit_test_outcomes": {
+          "outcomes": {},
+          "context": {}
+        },
+        "messages": [],
+        "build_status": null,
+        "result": null,
+        "cache": {
+          "caches": {}
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "2",
+        "src": "Step-1",
+        "dst": "Step-2"
+      },
+      {
+        "id": "3",
+        "src": "Step-1",
+        "dst": "Step-3"
+      },
+      {
+        "id": "4",
+        "src": "Step-3",
+        "dst": "Step-4"
+      },
+      {
+        "id": "5",
+        "src": "Step-4",
+        "dst": "Step-5"
+      },
+      {
+        "id": "6",
+        "src": "Step-4",
+        "dst": "Step-6"
+      }
+    ],
+    "groups": [],
+    "image": null
+  }
+}
