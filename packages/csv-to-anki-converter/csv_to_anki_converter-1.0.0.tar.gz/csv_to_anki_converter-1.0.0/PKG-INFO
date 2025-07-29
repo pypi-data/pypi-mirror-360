@@ -1,0 +1,309 @@
+Metadata-Version: 2.4
+Name: csv-to-anki-converter
+Version: 1.0.0
+Summary: Convert CSV files to Anki deck packages with ease
+Home-page: https://github.com/yourusername/csv-to-anki-converter
+Author: CSV to Anki Converter Team
+Author-email: CSV to Anki Converter Team <support@example.com>
+Maintainer-email: CSV to Anki Converter Team <support@example.com>
+License: MIT
+Project-URL: Homepage, https://github.com/yourusername/csv-to-anki-converter
+Project-URL: Documentation, https://github.com/yourusername/csv-to-anki-converter#readme
+Project-URL: Repository, https://github.com/yourusername/csv-to-anki-converter
+Project-URL: Bug Tracker, https://github.com/yourusername/csv-to-anki-converter/issues
+Project-URL: Changelog, https://github.com/yourusername/csv-to-anki-converter/blob/main/CHANGELOG.md
+Keywords: anki,flashcards,csv,converter,education,study
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: Topic :: Education
+Classifier: Topic :: Utilities
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pandas>=1.3.0
+Requires-Dist: genanki>=0.13.0
+Provides-Extra: dev
+Requires-Dist: pytest>=6.0; extra == "dev"
+Requires-Dist: pytest-cov>=2.0; extra == "dev"
+Requires-Dist: black>=21.0; extra == "dev"
+Requires-Dist: flake8>=3.8; extra == "dev"
+Requires-Dist: mypy>=0.800; extra == "dev"
+Requires-Dist: build>=0.8.0; extra == "dev"
+Requires-Dist: twine>=4.0.0; extra == "dev"
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# CSV to Anki Converter
+
+Convert CSV files to Anki deck packages (.apkg files) with ease! This project provides two Python scripts for different use cases: command-line conversion and automatic batch processing.
+
+## 🚀 Features
+
+- ✅ Convert CSV files with 'Front' and 'Back' columns to Anki decks
+- ✅ Support for HTML formatting in flashcards
+- ✅ Two conversion modes: command-line and automatic batch processing
+- ✅ Customizable deck names and output file paths
+- ✅ Input and output directory support
+- ✅ Proper error handling and validation
+- ✅ Batch processing of multiple CSV files
+- ✅ Cross-platform compatibility (Windows, macOS, Linux)
+
+## 📋 Requirements
+
+- Python 3.8 or higher
+- pip (Python package installer)
+
+## 🔧 Installation
+
+### Option 1: Install from PyPI (Recommended)
+
+```bash
+pip install csv-to-anki-converter
+```
+
+After installation, you can use the command-line tool:
+
+```bash
+# Convert a single file
+csv-to-anki your_file.csv
+
+# Batch convert all CSV files in a directory
+csv-to-anki --batch --input-dir ./csv_files --output-dir ./anki_decks
+```
+
+### Option 2: Install from Source
+
+1. **Clone or download this repository**
+   ```bash
+   git clone https://github.com/yourusername/csv-to-anki-converter.git
+   cd csv-to-anki-converter
+   ```
+
+2. **Install required dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## 📚 Usage
+
+### Using the Installed Package (Recommended)
+
+After installing via `pip install csv-to-anki-converter`, you can use the `csv-to-anki` command:
+
+#### Single File Conversion
+```bash
+# Basic usage
+csv-to-anki your_file.csv
+
+# With custom options
+csv-to-anki your_file.csv --deck-name "My Study Deck" --output my_deck.apkg
+```
+
+#### Batch Conversion
+```bash
+# Convert all CSV files in current directory
+csv-to-anki --batch
+
+# Convert from specific directories
+csv-to-anki --batch --input-dir ./csv_files --output-dir ./anki_decks
+```
+
+### Using the Standalone Scripts
+
+If you downloaded the source code, you can use the standalone Python scripts:
+
+### 1. Command Line Version (`csv_to_anki.py`)
+
+Perfect for converting specific CSV files with custom options.
+
+#### Basic Usage
+```bash
+python csv_to_anki.py your_file.csv
+```
+
+#### Advanced Usage
+```bash
+# Custom deck name
+python csv_to_anki.py your_file.csv --deck-name "My Study Deck"
+
+# Custom output file
+python csv_to_anki.py your_file.csv --output my_deck.apkg
+
+# Both custom name and output
+python csv_to_anki.py your_file.csv --deck-name "German Vocabulary" --output german.apkg
+
+# Verbose output
+python csv_to_anki.py your_file.csv --verbose
+```
+
+#### Options
+- `--deck-name, -n`: Custom name for the Anki deck
+- `--output, -o`: Custom output file path
+- `--verbose, -v`: Enable verbose output
+- `--help, -h`: Show help message
+
+### 2. Automatic Batch Converter (`auto_csv_to_anki.py`)
+
+Great for batch processing multiple CSV files.
+
+#### Basic Usage
+```bash
+# Convert all CSV files in current directory
+python auto_csv_to_anki.py
+
+# Use custom input directory
+python auto_csv_to_anki.py --input-dir ./csv_files
+
+# Use custom output directory
+python auto_csv_to_anki.py --output-dir ./anki_decks
+
+# Use both custom directories
+python auto_csv_to_anki.py --input-dir ./csv_files --output-dir ./anki_decks
+```
+
+#### Options
+- `--input-dir, -i`: Directory to search for CSV files (default: current directory)
+- `--output-dir, -o`: Directory to save .apkg files (default: current directory)
+- `--help, -h`: Show help message
+
+## 📄 CSV Format
+
+Your CSV file should have exactly two columns named 'Front' and 'Back':
+
+```csv
+Front,Back
+"What is the capital of France?","Paris"
+"What is 2+2?","4"
+"What is <b>HTML</b>?","<b>H</b>yper<b>T</b>ext <b>M</b>arkup <b>L</b>anguage"
+```
+
+### HTML Support
+
+The converter supports HTML formatting in both Front and Back fields:
+
+- `<b>text</b>` - Bold text
+- `<i>text</i>` - Italic text
+- `<u>text</u>` - Underlined text
+- `<br>` - Line break
+- `<sub>text</sub>` - Subscript
+- `<sup>text</sup>` - Superscript
+- And more standard HTML tags
+
+## 📁 Project Structure
+
+```
+csv-to-anki-converter/
+├── csv_to_anki.py          # Command line converter
+├── auto_csv_to_anki.py     # Automatic batch converter
+├── demo.py                 # Demo script
+├── requirements.txt        # Dependencies
+├── README.md              # This file
+├── LICENSE                # MIT License
+└── examples/              # Sample CSV files
+    ├── test.csv
+    ├── french.csv
+    ├── programming.csv
+    └── simple_programming.csv
+```
+
+## 🧪 Testing
+
+Run the demo script to test both converters:
+
+```bash
+python demo.py
+```
+
+This will:
+1. Test the command line converter with a sample file
+2. Test the automatic converter with default settings
+3. Test the automatic converter with custom directories
+
+## 📊 Examples
+
+### Example 1: Simple Vocabulary
+
+```csv
+Front,Back
+"Hello","Hola"
+"Goodbye","Adiós"
+"Please","Por favor"
+"Thank you","Gracias"
+```
+
+### Example 2: Programming Terms
+
+```csv
+Front,Back
+"What is Python?","A high-level programming language"
+"What is HTML?","HyperText Markup Language"
+"What is CSS?","Cascading Style Sheets"
+```
+
+### Example 3: Math with HTML Formatting
+
+```csv
+Front,Back
+"What is the formula for area of a circle?","A = π × r<sup>2</sup>"
+"What is <b>E=mc²</b>?","Einstein's mass-energy equivalence equation"
+"What is H<sub>2</sub>O?","Water molecule"
+```
+
+## 🤔 Which Script Should I Use?
+
+**Use `csv_to_anki.py` when:**
+- You want to convert a specific CSV file
+- You need custom deck names or output file names
+- You want to process files from different directories
+- You need verbose output for debugging
+
+**Use `auto_csv_to_anki.py` when:**
+- You have multiple CSV files to convert
+- You want automatic naming (file name becomes deck name)
+- You prefer a simple "run and done" approach
+- You want to batch process all CSV files in a directory
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+1. **"No module named 'pandas'" or "No module named 'genanki'"**
+   - Install dependencies: `pip install -r requirements.txt`
+
+2. **"CSV file must contain 'Front' and 'Back' columns"**
+   - Ensure your CSV has exactly these column names (case-sensitive)
+
+3. **"No CSV files found"**
+   - Check that your CSV files are in the correct directory
+   - Verify file extensions are `.csv`
+
+4. **HTML warnings**
+   - These are informational and don't affect functionality
+   - They appear when HTML tags are detected in your content
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📞 Support
+
+If you encounter any issues or have questions, please open an issue on GitHub.
+
+---
+
+**Happy studying with Anki! 🎓**
