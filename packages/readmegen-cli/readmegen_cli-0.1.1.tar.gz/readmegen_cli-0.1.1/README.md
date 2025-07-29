@@ -1,0 +1,63 @@
+# readmegen_cli: Effortless README Generation 📝
+
+## 🔐 Environment Setup
+
+Create a `.env` file in the root of your project with:
+
+
+You can get a Gemini API key from: [https://makersuite.google.com/app/apikey](https://makersuite.google.com/app/apikey)
+
+
+**Effortlessly generate professional README files for your projects.**  `readmegen_cli` is a command-line tool designed to streamline the process of creating comprehensive and well-structured README files.  Tired of manually writing and formatting READMEs? Let `readmegen_cli` automate the process, allowing you to focus on your code.  It intelligently analyzes your project structure and automatically populates key sections, saving you valuable time and effort.
+
+
+This tool leverages your project's existing files and structure to generate a README that includes essential details such as project description, features, installation instructions, and technology stack.  It’s perfect for both small personal projects and large collaborative endeavors.  `readmegen_cli` aims to improve consistency and reduce the cognitive load associated with README creation.
+
+
+By automating the tedious parts of README creation, `readmegen_cli` allows developers to focus on what truly matters: building great software. The generated README adheres to best practices, ensuring clarity and professionalism.
+
+
+## Features ✨
+
+* **Automated Generation:**  Creates a comprehensive README based on your project's structure.
+* **Intelligent Analysis:**  Automatically detects key project information.
+* **Customizable Output:** Easily adaptable to your specific project needs.
+* **Time-Saving:** Streamlines the README creation process.
+* **Consistent Formatting:** Ensures professional and well-structured READMEs.
+
+
+## Installation ⚙️
+
+Install `readmegen_cli` using pip:
+
+```bash
+pip install readmegen-cli
+```
+
+
+## Usage 💻
+
+Navigate to your project's root directory in your terminal and run:
+
+```bash
+readmegen
+```
+
+This will generate a `README.md` file in your project's root directory.  You can then customize the generated file to your liking.  For example, to generate a README with a specific title, you can use the `--title` option:
+
+```bash
+readmegen --title "My Awesome Project"
+```
+
+
+## Technologies 🛠️
+
+| Technology      | Version    |
+|-----------------|-------------|
+| Python          | 3.7+       |
+| Markup Language | Markdown (`.md`) |
+
+
+## License 📄
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.  (Note:  A LICENSE file should be created separately.)
