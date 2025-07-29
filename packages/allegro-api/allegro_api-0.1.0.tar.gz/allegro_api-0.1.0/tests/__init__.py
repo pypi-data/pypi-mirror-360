@@ -1,0 +1,1 @@
+# Tests for Allegro API Python library
