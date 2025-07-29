@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[tool.hatch.version]
+path = "main.py"
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+[project]
+name = "project_visualization_tool_GDeLuisi"
+version = "0.4.1"
+authors = [
+{ name="De Luisi Gerardo", email="deluisigerardo@gmail.com" },
+]
+description = "Visualization tool for git-managed projects"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+"Programming Language :: Python :: 3.10",
+"Programming Language :: Python :: 3.11",
+"Programming Language :: Python :: 3.12",
+"Programming Language :: Python :: 3.13",
+"License :: OSI Approved :: MIT License",
+"Operating System :: OS Independent",
+]
+keywords = ["git","projects","visualization-tool"]
+dependencies = [
+    "dash==3.1.0",
+    "dash-bootstrap-components==2.0.3",
+    "dash-ag-grid==31.3.1",
+    "pandas==2.3.0",
+    "truck-factor-gdeluisi>=1.2.1",
+    "repominer-GDeLuisi>=1.3.4",
+    "waitress==3.0.2"
+]
+[tool.pytest.ini_options]
+pythonpath = [
+  ".", "src","src/_internal"
+]
+testpaths = [
+  "tests"
+]
+[tool.coverage.run]
+omit = [
+  "src/utility/logs.py",
+  "main.py",
+  "tests.py",
+  "src/gui/*",
+  "src/app/app.py"
+]
+[project.optional-dependencies]
+# development dependency groups
+test = [
+    'pytest',
+    'pytest-cov',
+]
+[project.scripts]
+project-viewer = "src.app.cli:main"
+[project.urls]
+Homepage = "https://github.com/GDeLuisi/project_visualization_tool"
+Issues = "https://github.com/GDeLuisi/project_visualization_tool/issues"
+Repository = "https://github.com/GDeLuisi/project_visualization_tool"
