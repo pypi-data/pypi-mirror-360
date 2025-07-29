@@ -1,0 +1,75 @@
+Metadata-Version: 2.1
+Name: cheez_ppg_pico
+Version: 1.0.0
+Summary: SDK for CheezPico(PPG) USB/BLE Devices
+Author: vecang
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+
+
+# Cheez SDK
+
+## Installation
+
+```bash
+pip install cheez_semg_pico
+```
+
+## Quick Start
+
+```python
+from cheez_semg_pico import CheezPico   
+import asyncio  
+
+async def main():  
+    sEMG = CheezPico()  
+    device = None  
+    
+    try:  
+        print("Connecting to device...")  
+        device = sEMG.connect()                     # 连接设备  
+         
+        print("Configuring device...")  
+        await sEMG.set_device_id(1)                 # 设置设备ID:0~255  
+        await sEMG.set_sampling_rate("250 Hz")      # 配置采样率：100Hz,250Hz,500Hz (note the space)  
+        await sEMG.set_wear_detection(enable=False) # 设置是否开启佩戴检测  
+        await sEMG.set_filter_state(enable=True)    # 设置是否开启滤波  
+
+        print("Reading data (press Ctrl+C to exit)...")  
+        while True:  
+            data = await device.read_data()         # 读取设备  
+            print(data)  
+            await asyncio.sleep(0.01)               #小延迟，防止CPU过载
+
+    except ValueError as e:  
+        print(f"Configuration error: {e}")  
+    except asyncio.TimeoutError:  
+        print("Device communication timeout")  
+    except KeyboardInterrupt:  
+        print("\nUser interrupted. Exiting...")  
+    except Exception as e:  
+        print(f"Unexpected error: {type(e).__name__}: {e}")  
+    finally:   
+        if device is not None:  
+            print("Disconnecting device...")  
+            sEMG.disconnect()  
+            print("Device disconnected")  
+
+if __name__ == "__main__":  
+    asyncio.run(main())  
+```
+
+## Features
+
+- Easy device port discovery
+- Simple serial connection management
+- Async data reading
+- Configurable logging
+- Error handling and validation
+ 
