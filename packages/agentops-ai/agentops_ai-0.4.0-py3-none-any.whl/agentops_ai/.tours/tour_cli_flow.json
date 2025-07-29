@@ -1,0 +1,81 @@
+{
+  "title": "AgentOps CLI Flow Tour",
+  "description": "Follow the complete flow from CLI entry to test generation",
+  "steps": [
+    {
+      "file": "agentops_ai/agentops_cli/main.py",
+      "line": 56,
+      "description": "CLI entry point using Click framework. The `@click.group` decorator sets up the main command group with help options."
+    },
+    {
+      "file": "agentops_ai/agentops_cli/main.py",
+      "line": 115,
+      "description": "The `infer` command - the main entry point for requirements generation. Supports single file, --all for bulk processing, and --cli-approval for interactive mode."
+    },
+    {
+      "file": "agentops_ai/agentops_cli/main.py",
+      "line": 135,
+      "description": "CLI validation and initialization. Checks for .agentops directory and creates AgentOpsWorkflow instance."
+    },
+    {
+      "file": "agentops_ai/agentops_core/workflow.py",
+      "line": 29,
+      "description": "AgentOpsWorkflow constructor initializes all core components: requirement store, inference engine, test generator, and terminal UI."
+    },
+    {
+      "file": "agentops_ai/agentops_core/workflow.py",
+      "line": 94,
+      "description": "The `process_file_change` method orchestrates the entire inference workflow for a single file."
+    },
+    {
+      "file": "agentops_ai/agentops_core/requirement_inference.py",
+      "line": 50,
+      "description": "RequirementInferenceEngine uses LLM to extract requirements from code changes. This is where the AI magic happens!"
+    },
+    {
+      "file": "agentops_ai/agentops_core/requirement_store.py",
+      "line": 80,
+      "description": "RequirementStore saves inferred requirements to SQLite database with metadata like confidence scores and file paths."
+    },
+    {
+      "file": "agentops_ai/agentops_cli/main.py",
+      "line": 180,
+      "description": "Bulk export mode creates .agentops/requirements.gherkin file and opens it in the user's editor for manual review."
+    },
+    {
+      "file": "agentops_ai/agentops_cli/main.py",
+      "line": 350,
+      "description": "The `import-requirements` command parses the edited Gherkin file and runs LLM clarification workflow."
+    },
+    {
+      "file": "agentops_ai/agentops_core/workflow.py",
+      "line": 280,
+      "description": "`import_and_clarify_requirements` parses Gherkin format and runs clarification for each requirement."
+    },
+    {
+      "file": "agentops_ai/agentops_core/terminal_ui.py",
+      "line": 350,
+      "description": "TerminalUI shows clarification suggestions and gets user approval for LLM improvements."
+    },
+    {
+      "file": "agentops_ai/agentops_cli/main.py",
+      "line": 400,
+      "description": "The `generate-tests` command creates test files from approved requirements."
+    },
+    {
+      "file": "agentops_ai/agentops_core/services/test_generator.py",
+      "line": 50,
+      "description": "TestGenerator uses LLM to create comprehensive test cases from requirement specifications."
+    },
+    {
+      "file": "agentops_ai/agentops_core/workflow.py",
+      "line": 160,
+      "description": "`_generate_tests_from_requirement` orchestrates test generation and writes files to .agentops/tests/."
+    },
+    {
+      "file": "agentops_ai/agentops_cli/main.py",
+      "line": 300,
+      "description": "The `run` command executes generated tests with pytest and provides root cause analysis for failures."
+    }
+  ]
+} 

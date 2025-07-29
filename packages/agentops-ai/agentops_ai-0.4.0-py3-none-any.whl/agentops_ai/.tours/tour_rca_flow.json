@@ -1,0 +1,81 @@
+{
+  "title": "AgentOps Root Cause Analysis Flow",
+  "description": "Follow the flow from test failure to root cause analysis and decision making",
+  "steps": [
+    {
+      "file": "agentops_ai/agentops_cli/main.py",
+      "line": 300,
+      "description": "The `run` command entry point. Determines whether to run specific file tests or all tests based on CLI options."
+    },
+    {
+      "file": "agentops_ai/agentops_core/workflow.py",
+      "line": 225,
+      "description": "`run_tests_with_rca` method orchestrates test execution with pytest and captures detailed failure information."
+    },
+    {
+      "file": "agentops_ai/agentops_core/workflow.py",
+      "line": 240,
+      "description": "Test execution using pytest with JSON reporting. Captures stdout, stderr, and detailed test results for analysis."
+    },
+    {
+      "file": "agentops_ai/agentops_core/workflow.py",
+      "line": 250,
+      "description": "Parsing test results from JSON report. Extracts failure details including test names, error messages, and stack traces."
+    },
+    {
+      "file": "agentops_ai/agentops_core/workflow.py",
+      "line": 260,
+      "description": "Failure analysis loop. For each failed test, extracts failure information and prepares for root cause analysis."
+    },
+    {
+      "file": "agentops_ai/agentops_core/workflow.py",
+      "line": 270,
+      "description": "`_show_root_cause_analysis_for_failures` method is called when failures are detected. This is where RCA begins."
+    },
+    {
+      "file": "agentops_ai/agentops_core/workflow.py",
+      "line": 290,
+      "description": "For each failure, the system extracts the test file path and maps it back to the original source file."
+    },
+    {
+      "file": "agentops_ai/agentops_core/workflow.py",
+      "line": 300,
+      "description": "`_get_source_file_from_test` converts test file paths back to source file paths for requirement lookup."
+    },
+    {
+      "file": "agentops_ai/agentops_core/requirement_store.py",
+      "line": 150,
+      "description": "`get_requirements_for_file` retrieves approved requirements for the failing test's source file."
+    },
+    {
+      "file": "agentops_ai/agentops_core/workflow.py",
+      "line": 310,
+      "description": "If requirements are found, the system gets the most recent requirement for RCA analysis."
+    },
+    {
+      "file": "agentops_ai/agentops_core/terminal_ui.py",
+      "line": 200,
+      "description": "`show_root_cause_analysis` displays the requirement vs. failure comparison to help determine if it's a code bug or test issue."
+    },
+    {
+      "file": "agentops_ai/agentops_core/terminal_ui.py",
+      "line": 220,
+      "description": "The RCA display shows: 1) Original requirement, 2) Test failure details, 3) Analysis of the mismatch."
+    },
+    {
+      "file": "agentops_ai/agentops_core/terminal_ui.py",
+      "line": 240,
+      "description": "User is presented with decision options: Code Bug (fix implementation) vs Test Issue (fix test)."
+    },
+    {
+      "file": "agentops_ai/agentops_core/terminal_ui.py",
+      "line": 260,
+      "description": "Based on user choice, the system provides guidance on next steps: either fix the code or regenerate the test."
+    },
+    {
+      "file": "agentops_ai/agentops_cli/main.py",
+      "line": 320,
+      "description": "Final results display shows test summary with pass/fail counts and guidance for next actions."
+    }
+  ]
+} 
