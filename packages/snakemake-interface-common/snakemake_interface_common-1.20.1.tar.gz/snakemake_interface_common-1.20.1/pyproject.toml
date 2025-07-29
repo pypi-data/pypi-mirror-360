@@ -1,0 +1,93 @@
+[project]
+name = "snakemake-interface-common"
+version = "1.20.1"
+description = "Common functions and classes for Snakemake and its plugins"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = ["argparse-dataclass>=2.0.0", "ConfigArgParse>=1.7", "packaging >=24.0,<26.0"]
+
+[[project.authors]]
+name = "Johannes Koester"
+email = "johannes.koester@uni-due.de"
+
+[tool.coverage.run]
+omit = ["**/tests.py"]
+
+[tool.coverage.report]
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+snakemake_interface_common = ["py.typed"]
+
+[dependency-groups]
+dev = ["connection-pool>=0.0.3,<0.0.4", "snakemake>=9.6.0"]
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "linux-64"]
+
+[tool.pixi.pypi-dependencies]
+
+[tool.pixi.environments]
+dev = { features = ["dev"] }
+publish = { features = ["publish"] }
+
+[tool.pixi.feature.dev.dependencies]
+pytest = ">=8.3.5,<9"
+ruff = ">=0.10.0,<0.11"
+mypy = ">=1.15.0,<2"
+pytest-cov = ">=6.0.0,<7"
+
+[tool.pixi.feature.dev.pypi-dependencies]
+snakemake-interface-common = { path = ".", editable = true }
+
+[tool.ruff]
+lint.ignore = ["E721"]
+
+[tool.mypy]
+disallow_untyped_defs = true
+warn_no_return = true
+
+[[tool.mypy.overrides]]
+# TODO:: figure out expected types for the TestRegistryBase class
+module = "snakemake_interface_common.plugin_registry.tests"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "argparse_dataclass"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# TODO: remove once Snakemake is fully typed
+module = "snakemake"
+follow_untyped_imports = true
+
+[tool.pixi.feature.dev.tasks.test]
+cmd = [
+  "pytest",
+  "--cov=snakemake_interface_common",
+  "--cov-report=xml:coverage-report/coverage.xml",
+  "--cov-report=term-missing",
+  "tests/tests.py"
+]
+description = "Run tests and generate coverage report"
+
+[tool.pixi.feature.dev.tasks]
+format = "ruff format src"
+lint = "ruff check"
+type-check = "mypy src/"
+qc = { depends-on = ["format", "lint", "type-check"] }
+
+# Publish
+[tool.pixi.feature.publish.dependencies]
+twine = ">=6.1.0,<7"
+python-build = ">=1.2.2,<2"
+
+[tool.pixi.feature.publish.tasks]
+build = { cmd = "python -m build", description = "Build the package into the dist/ directory" }
+check-build = { cmd = "python -m twine check dist/*", depends-on = [
+  "build",
+], description = "Check that the package can be uploaded" }
