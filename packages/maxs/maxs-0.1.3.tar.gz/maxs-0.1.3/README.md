@@ -1,0 +1,154 @@
+# maxs
+
+minimalist ai agent
+
+## install
+
+```bash
+pipx install maxs
+maxs
+```
+
+## prerequisites
+
+choose your ai provider:
+
+**local (ollama)**
+```bash
+curl -fsSL https://ollama.ai/install.sh | sh
+ollama pull qwen3:4b
+```
+
+**cloud providers**
+- bedrock: aws credentials configured
+- anthropic: `ANTHROPIC_API_KEY` environment variable  
+- openai: `OPENAI_API_KEY` environment variable
+- github: `GITHUB_TOKEN` environment variable
+- litellm: `LITELLM_API_KEY` environment variable
+- llamaapi: `LLAMAAPI_API_KEY` environment variable
+- mistral: `MISTRAL_API_KEY` environment variable
+
+## usage
+
+```bash
+# basic (uses ollama by default)
+maxs
+
+# different providers
+MODEL_PROVIDER=bedrock maxs
+MODEL_PROVIDER=anthropic maxs  
+MODEL_PROVIDER=openai maxs
+MODEL_PROVIDER=mistral maxs
+
+# custom model
+MODEL_PROVIDER=ollama STRANDS_MODEL_ID=llama3.2:3b maxs
+
+# custom host
+OLLAMA_HOST=http://192.168.1.100:11434 maxs
+```
+
+## model providers
+
+| provider | models | setup |
+|----------|--------|-------|
+| ollama | qwen3:4b, llama3.2:3b, mistral:7b | `ollama pull model_name` |
+| bedrock | us.anthropic.claude-sonnet-4-20250514-v1:0, us.anthropic.claude-opus-4-20250514-v1:0 | aws configure |
+| anthropic | claude-sonnet-4-20250514, claude-opus-4-20250514 | `ANTHROPIC_API_KEY` |
+| openai | o4-mini, o4-mini | `OPENAI_API_KEY` |
+| github | openai/o4-mini, meta/llama3 | `GITHUB_TOKEN` |
+| litellm | anthropic/claude-sonnet-4-20250514 | `LITELLM_API_KEY` |
+| llamaapi | llama3.1-405b | `LLAMAAPI_API_KEY` |
+| mistral | mistral-large-latest, mistral-medium-latest | `MISTRAL_API_KEY` |
+
+## custom tools
+
+create python files in `./tools/`:
+
+```python
+# ./tools/tip.py
+from strands import tool
+
+@tool
+def calculate_tip(amount: float, percentage: float = 15.0) -> dict:
+    tip = amount * (percentage / 100)
+    return {
+        "status": "success",
+        "content": [{"text": f"tip: ${tip:.2f}, total: ${amount + tip:.2f}"}]
+    }
+```
+
+tools are immediately available.
+
+## built-in capabilities
+
+### use_agent tool
+dynamic model switching within conversations:
+
+```
+"use bedrock to analyze this complex data"
+"switch to anthropic for creative writing" 
+"use local ollama for quick calculations"
+```
+
+automatically chooses the best model for each task:
+- local models for quick operations
+- cloud models for complex analysis
+- specialized models for specific domains
+
+## configuration
+
+| variable | default | description |
+|----------|---------|-------------|
+| MODEL_PROVIDER | ollama | ai provider (ollama, bedrock, anthropic, openai, github, litellm, llamaapi, mistral) |
+| STRANDS_MODEL_ID | qwen3:4b | model identifier |
+| STRANDS_MAX_TOKENS | 1000 | max response tokens |
+| STRANDS_TEMPERATURE | 1 | response creativity (0-2) |
+| OLLAMA_HOST | http://localhost:11434 | ollama server url |
+| ANTHROPIC_API_KEY | - | anthropic api key |
+| OPENAI_API_KEY | - | openai api key |
+| GITHUB_TOKEN | - | github token for github models |
+| LITELLM_API_KEY | - | litellm api key |
+| LLAMAAPI_API_KEY | - | llamaapi api key |
+| MISTRAL_API_KEY | - | mistral api key |
+
+## advanced usage
+
+**multi-model workflows**
+```python
+# different models for different tasks
+from maxs import create_agent
+
+# fast local model for quick tasks
+quick_agent = create_agent("ollama")
+
+# powerful cloud model for complex analysis  
+analysis_agent = create_agent("bedrock")
+
+# multilingual tasks with mistral
+multilingual_agent = create_agent("mistral")
+```
+
+**environment switching**
+```bash
+# development with local models
+MODEL_PROVIDER=ollama maxs
+
+# production with cloud models
+MODEL_PROVIDER=bedrock STRANDS_MODEL_ID=us.anthropic.claude-sonnet-4-20250514-v1:0 maxs
+
+# multilingual production tasks
+MODEL_PROVIDER=mistral STRANDS_MODEL_ID=mistral-large-latest maxs
+```
+
+## build binary
+
+```bash
+pip install maxs[binary]
+pyinstaller --onefile --name maxs -m maxs.main
+```
+
+binary in `./dist/maxs`
+
+## license
+
+mit
