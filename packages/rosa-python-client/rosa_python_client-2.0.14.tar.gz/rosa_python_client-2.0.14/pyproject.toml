@@ -1,0 +1,65 @@
+[tool.coverage.run]
+omit = ["rosa/tests/*"]
+
+[tool.coverage.report]
+fail_under = 60
+skip_empty = true
+
+[tool.coverage.html]
+directory = ".tests_coverage"
+
+[tool.ruff]
+preview = true
+line-length = 120
+fix = true
+output-format = "grouped"
+
+[tool.ruff.format]
+exclude = [".git", ".venv", ".mypy_cache", ".tox", "__pycache__"]
+
+[tool.poetry]
+name = "rosa-python-client"
+version = "2.0.14"
+description = "Wrapper for rosa cli"
+authors = ["Meni Yakove <myakove@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "rosa" }]
+license = "Apache-2.0"
+homepage = "https://github.com/RedHatQE/rosa-python-client"
+documentation = "https://github.com/RedHatQE/rosa-python-client/blob/main/README.md"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+redhat-qe-cloud-tools = ">=1.0.19"
+python-simple-logger = ">=1.0.5"
+python-benedict = "==0.33.2"
+pytest-mock = "^3.14.0"
+pytest-cov = "^6.0.0"
+coverage = "^7.6.0"
+openshift-cluster-management-python-wrapper = "*"
+
+[tool.poetry.group.dev.dependencies]
+ipdb = "^0.13.13"
+ipython = "*"
+
+[tool.poetry.urls]
+Download = "https://pypi.org/project/rosa-python-client/"
+"Bug Tracker" = "https://github.com/RedHatQE/rosa-python-client/issues"
+
+[tool.poetry.group.tests.dependencies]
+pytest = "^8.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
+build-backend = "poetry_dynamic_versioning.backend"
+
+[tool.poetry-dynamic-versioning.substitution]
+files = ["VERSION"]
+
+[tool.poetry-dynamic-versioning]
+enable = false
+pattern = "((?P<epoch>\\d+)!)?(?P<base>\\d+(\\.\\d+)*)"
