@@ -1,0 +1,5776 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Tallyfy API - Organization - Guest - Member - Task - Activity Feed",
+    "version": "2.0.0",
+    "description": "Get object activities"
+  },
+  "host": "api.tallyfy.com",
+  "basePath": "/",
+  "schemes": [
+    "https"
+  ],
+  "definitions": {
+    "error": {
+      "description": "error message",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "error": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "Date": {
+      "type": "string",
+      "example": "YYYY-mm-ddTHH:ii:ssZ"
+    },
+    "RequestDate": {
+      "type": "string",
+      "example": "YYYY-mm-dd HH:ii:ss"
+    },
+    "Address": {
+      "properties": {
+        "address1": {
+          "type": "string"
+        },
+        "address2": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "zip": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        }
+      }
+    },
+    "loginInput": {
+      "required": [
+        "email",
+        "password"
+      ],
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "Pagination": {
+      "properties": {
+        "total": {
+          "type": "integer",
+          "example": 1
+        },
+        "count": {
+          "type": "integer",
+          "example": 1
+        },
+        "per_page": {
+          "type": "integer",
+          "example": 10
+        },
+        "current_page": {
+          "type": "integer",
+          "example": 1
+        },
+        "total_pages": {
+          "type": "integer",
+          "example": 1
+        },
+        "links": {
+          "example": {
+            "previous": "string",
+            "next": "string"
+          },
+          "$ref": "#/definitions/GenericObject"
+        }
+      }
+    },
+    "MetaListOnlyPagination": {
+      "properties": {
+        "Pagination": {
+          "$ref": "#/definitions/Pagination"
+        }
+      }
+    },
+    "CaptureOptions": {
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "text": {
+          "type": "string",
+          "example": "option 1"
+        }
+      }
+    },
+    "CaptureColumns": {
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "label": {
+          "type": "string",
+          "example": "column label"
+        }
+      }
+    },
+    "CaptureInput": {
+      "properties": {
+        "field_type": {
+          "type": "string",
+          "example": "text | textarea | dropdown | multiselect | radio | date | file | table"
+        },
+        "label": {
+          "type": "string"
+        },
+        "guidance": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CaptureOptions"
+          }
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CaptureColumns"
+          }
+        },
+        "default_value_enabled": {
+          "type": "boolean"
+        },
+        "default_value": {
+          "type": "string"
+        }
+      }
+    },
+    "CaptureResponse": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "step_id": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "field_type": {
+          "type": "string"
+        },
+        "guidance": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer",
+          "example": 1
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GenericObject"
+          }
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GenericObject"
+          }
+        },
+        "default_value_enabled": {
+          "type": "boolean"
+        },
+        "default_value": {
+          "type": "string"
+        },
+        "replaced_default_value": {
+          "type": "string"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "StepDeadlines": {
+      "properties": {
+        "step_id": {
+          "type": "string"
+        },
+        "deadline_time": {
+          "$ref": "#/definitions/RequestDate"
+        }
+      }
+    },
+    "StepStartDate": {
+      "properties": {
+        "start_date": {
+          "$ref": "#/definitions/RequestDate"
+        }
+      }
+    },
+    "EmptyData": {
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GenericObject"
+          }
+        }
+      }
+    },
+    "ExportPrerun": {
+      "properties": {
+        "checklist_id": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "field_type": {
+          "type": "string",
+          "example": "text"
+        },
+        "guidance": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer",
+          "example": 1
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GenericObject"
+          }
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/Date"
+        },
+        "oldID": {
+          "type": "string"
+        }
+      }
+    },
+    "File": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "extension": {
+          "type": "string"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "last_modified": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "ExportFile": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "<Export Id>"
+        },
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "example": 123
+        },
+        "starred": {
+          "type": "boolean"
+        },
+        "webhook": {
+          "type": "string"
+        },
+        "guidance": {
+          "type": "string"
+        },
+        "prerun": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ExportPrerun"
+          }
+        },
+        "steps": {
+          "$ref": "#/definitions/EmptyData"
+        }
+      }
+    },
+    "TemplatePrerun": {
+      "properties": {
+        "field_type": {
+          "type": "string",
+          "example": "text or textarea. (Only for creating new Kick-Off field)"
+        },
+        "id": {
+          "type": "string",
+          "example": "<Kick-Off Field ID>. (Only for existing Kick-Off fields)"
+        },
+        "name": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "guidance": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer",
+          "example": 1
+        },
+        "required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "GuestInput": {
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "checklist_id": {
+          "type": "string"
+        }
+      }
+    },
+    "GuestLink": {
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "link": {
+          "type": "string"
+        }
+      }
+    },
+    "smptconnectionInput": {
+      "properties": {
+        "host": {
+          "type": "string",
+          "example": "smtp.gmail.com"
+        },
+        "port": {
+          "type": "string",
+          "example": "587"
+        },
+        "username": {
+          "type": "string",
+          "example": "email@gmail.com"
+        },
+        "from_address": {
+          "type": "string",
+          "example": "email@gmail.com"
+        },
+        "from_name": {
+          "type": "string",
+          "example": "name"
+        },
+        "password": {
+          "type": "string",
+          "example": "password"
+        },
+        "encryption": {
+          "type": "string",
+          "example": "tls"
+        }
+      }
+    },
+    "PictureResponse": {
+      "properties": {
+        "user_id": {
+          "type": "integer",
+          "example": 12345
+        },
+        "profile_pic": {
+          "type": "string",
+          "example": "<url>"
+        }
+      }
+    },
+    "ProcessTasksInfo": {
+      "properties": {
+        "<Process id>": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "example": {
+              "id": "<Task id>",
+              "run_id": "<Process id>",
+              "run_name": "String",
+              "template_name": "String",
+              "name": "String",
+              "deadline": "YYYY-mm-ddTHH:ii:ssZ"
+            }
+          }
+        }
+      }
+    },
+    "ReassignmentInfo": {
+      "properties": {
+        "templates": {
+          "example": {
+            "<Template id>": "string"
+          },
+          "$ref": "#/definitions/GenericObject"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "example": {
+              "id": "<Step id>",
+              "title": "String",
+              "template_id": "<Template id>"
+            }
+          }
+        },
+        "process_tasks": {
+          "$ref": "#/definitions/ProcessTasksInfo"
+        },
+        "one_off_tasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "example": {
+              "id": "<task id>",
+              "name": "String",
+              "deadline": "YYYY-mm-ddTHH:ii:ssZ"
+            }
+          }
+        }
+      }
+    },
+    "organizationInput": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "Tallyfy 1"
+        },
+        "address1": {
+          "type": "string"
+        },
+        "address2": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string",
+          "example": "United States"
+        },
+        "state": {
+          "type": "string",
+          "example": "California"
+        },
+        "city": {
+          "type": "string",
+          "example": "Los Angeles"
+        },
+        "zipcode": {
+          "type": "string",
+          "example": "12345"
+        },
+        "auto_join_signups": {
+          "type": "boolean",
+          "example": true
+        },
+        "home_bg": {
+          "type": "string",
+          "example": "string"
+        },
+        "team_size_above": {
+          "type": "integer",
+          "example": 0
+        },
+        "signup_survey": {
+          "type": "string",
+          "example": ""
+        },
+        "plan_code": {
+          "type": "string",
+          "example": ""
+        },
+        "onboarding_snippet": {
+          "type": "integer"
+        },
+        "homepage_snippet": {
+          "type": "integer"
+        },
+        "light_role_error_snippet": {
+          "type": "integer"
+        },
+        "guest_onboarding_snippet": {
+          "type": "integer"
+        },
+        "allow_user_invite": {
+          "type": "boolean",
+          "example": true
+        },
+        "allow_manage_groups": {
+          "type": "boolean",
+          "example": true
+        },
+        "working_days": {
+          "type": "string",
+          "example": {
+            "Monday": {
+              "anytime": "true"
+            },
+            "Tuesday": {
+              "anytime": "true"
+            },
+            "Wednesday": {
+              "from": "08:00",
+              "to": "17:00",
+              "anytime": "false"
+            },
+            "Thursday": {
+              "from": "08:00",
+              "to": "17:00",
+              "anytime": "false"
+            },
+            "Friday": {
+              "from": "08:00",
+              "to": "17:00",
+              "anytime": "false"
+            },
+            "Saturday": {
+              "from": "08:00",
+              "to": "17:00",
+              "anytime": "false"
+            },
+            "Sunday": {
+              "from": "08:00",
+              "to": "17:00",
+              "anytime": "false"
+            }
+          }
+        },
+        "cadence_days": {
+          "type": "string",
+          "example": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+          ]
+        },
+        "guest_cadence_days": {
+          "type": "string",
+          "example": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+          ]
+        },
+        "deadline_setting": {
+          "type": "string",
+          "example": "after/before"
+        },
+        "wyiwyg": {
+          "type": "boolean"
+        },
+        "auto_archive": {
+          "type": "boolean"
+        },
+        "auto_archive_processes_after": {
+          "example": {
+            "value": 1,
+            "unit": "days | weeks"
+          },
+          "$ref": "#/definitions/GenericObject"
+        },
+        "auto_complete_tasks": {
+          "type": "boolean"
+        },
+        "auto_complete_task_months": {
+          "type": "integer",
+          "example": 10
+        },
+        "timezone": {
+          "type": "string",
+          "example": "UTC"
+        },
+        "mixpanel_token": {
+          "type": "string"
+        },
+        "default_deadline": {
+          "example": {
+            "value": 1,
+            "type": "minutes | hours | days | weeks | months"
+          },
+          "$ref": "#/definitions/GenericObject"
+        },
+        "azure_cognitive_service": {
+          "example": {
+            "key": "string",
+            "resource_name": "string",
+            "region": "string"
+          },
+          "$ref": "#/definitions/GenericObject"
+        },
+        "global_css": {
+          "type": "string",
+          "example": "string"
+        },
+        "purpose": {
+          "type": "string",
+          "example": "string"
+        },
+        "process_today": {
+          "type": "string",
+          "example": "string"
+        },
+        "restrict_blueprint_permissions": {
+          "type": "boolean"
+        }
+      }
+    },
+    "organizationSettings": {
+      "properties": {
+        "determine_deadline": {
+          "example": {
+            "workdays": 0,
+            "holidays": 1
+          },
+          "$ref": "#/definitions/GenericObject"
+        },
+        "workdays": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "Monday"
+          }
+        },
+        "holidays": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "01-01"
+          }
+        }
+      }
+    },
+    "billInput": {
+      "required": [
+        "token_id"
+      ],
+      "properties": {
+        "token_id": {
+          "type": "string"
+        }
+      }
+    },
+    "subscriptionInput": {
+      "properties": {
+        "plan_code": {
+          "type": "string"
+        },
+        "coupon_code": {
+          "type": "string"
+        }
+      }
+    },
+    "subscriptionDate": {
+      "properties": {
+        "date": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "timezone": {
+          "type": "string",
+          "example": "Z"
+        },
+        "timezone_type": {
+          "type": "integer",
+          "example": 2
+        }
+      }
+    },
+    "subscriptionResponse": {
+      "properties": {
+        "state": {
+          "type": "string",
+          "example": "active"
+        },
+        "plan_code": {
+          "type": "string"
+        },
+        "coupon_code": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "integer",
+          "example": 1
+        },
+        "activated_at": {
+          "$ref": "#/definitions/subscriptionDate"
+        },
+        "current_period_started_at": {
+          "$ref": "#/definitions/subscriptionDate"
+        },
+        "current_period_ends_at": {
+          "$ref": "#/definitions/subscriptionDate"
+        }
+      }
+    },
+    "accountInput": {
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "cc_emails": {
+          "type": "string"
+        },
+        "address": {
+          "$ref": "#/definitions/Address"
+        }
+      }
+    },
+    "accountResponse": {
+      "properties": {
+        "account_code": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "cc_emails": {
+          "type": "string"
+        },
+        "address": {
+          "$ref": "#/definitions/Address"
+        },
+        "company_name": {
+          "type": "string"
+        }
+      }
+    },
+    "RunView": {
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 12345
+        },
+        "name": {
+          "type": "string"
+        },
+        "filter_type": {
+          "type": "string"
+        },
+        "criteria": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "example": {
+              "field": "string",
+              "label": "string",
+              "value": "string",
+              "task": "string"
+            }
+          }
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "AllRunViews": {
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RunView"
+          }
+        },
+        "meta": {
+          "$ref": "#/definitions/MetaListOnlyPagination"
+        }
+      }
+    },
+    "runViewInput": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "my view"
+        },
+        "filter_type": {
+          "type": "string",
+          "example": "all | any"
+        },
+        "is_active": {
+          "type": "integer",
+          "example": "1"
+        },
+        "criteria": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "example": {
+              "field": "owners | tag | checklist_id | status",
+              "value": "<id> | <status>"
+            }
+          }
+        }
+      }
+    },
+    "preferenceInput": {
+      "properties": {
+        "slug": {
+          "type": "string",
+          "example": "home_count"
+        },
+        "value": {
+          "type": "string",
+          "example": "8"
+        },
+        "metadata": {
+          "example": {
+            "extra": "here"
+          },
+          "$ref": "#/definitions/GenericObject"
+        }
+      }
+    },
+    "accountsInput": {
+      "properties": {
+        "first_name": {
+          "type": "string"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "job_title": {
+          "type": "string"
+        },
+        "job_description": {
+          "type": "string"
+        },
+        "team": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string"
+        },
+        "country_id": {
+          "type": "integer"
+        },
+        "date_format": {
+          "type": "string"
+        }
+      }
+    },
+    "updatePasswordInput": {
+      "properties": {
+        "new_password": {
+          "type": "string"
+        },
+        "old_password": {
+          "type": "string"
+        }
+      }
+    },
+    "updateEmailInput": {
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "inviteInput": {
+      "properties": {
+        "first_name": {
+          "type": "string"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        }
+      }
+    },
+    "addTagResponse": {
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 12345
+        },
+        "tag_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        }
+      }
+    },
+    "addIntoFolderResponse": {
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 12345
+        },
+        "folder_id": {
+          "type": "string"
+        },
+        "folder_name": {
+          "type": "string"
+        },
+        "folder_position": {
+          "type": "integer"
+        },
+        "folder_parent_id": {
+          "type": "string"
+        },
+        "subject_id": {
+          "type": "string"
+        },
+        "subject_type": {
+          "type": "string"
+        }
+      }
+    },
+    "FormField": {
+      "properties": {
+        "form_value (if textfields)": {
+          "type": "string",
+          "example": "Text Field Value"
+        },
+        "form_value (if images)": {
+          "type": "string",
+          "example": {
+            "id": "<Id>",
+            "filename": "Image.png",
+            "version": 1,
+            "url": "tallyfy.com/example-image.png",
+            "uploaded_from": "ko_field",
+            "subject": {
+              "id": "<Subject Id>",
+              "type": "Checklist"
+            }
+          }
+        },
+        "form_value (if checklist)": {
+          "type": "string",
+          "example": [
+            {
+              "id": 1,
+              "text": "abc.",
+              "value": "null",
+              "selected": true
+            }
+          ]
+        },
+        "form_value (if dropdown)": {
+          "type": "string",
+          "example": {
+            "id": 1,
+            "text": "abc.",
+            "value": "null"
+          }
+        },
+        "form_value (if radio button)": {
+          "type": "string",
+          "example": "Radio Button Value"
+        },
+        "form_value (if date)": {
+          "type": "string",
+          "example": "YYYY-mm-ddTHH:ii:ssZ"
+        }
+      }
+    },
+    "AssetsController": {
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Asset"
+          }
+        }
+      }
+    },
+    "StandaloneTask": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "step_id": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "taskdata": {
+          "$ref": "#/definitions/GenericObject"
+        },
+        "owners": {
+          "$ref": "#/definitions/stepOwner"
+        },
+        "is_completable": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "example": "not-started | in-progress | completed | auto-skipped"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "started_at": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "deadline": {
+          "$ref": "#/definitions/Date"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/Date"
+        },
+        "archived_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "completed_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "starter_id": {
+          "type": "integer",
+          "example": 12345
+        },
+        "completer_id": {
+          "type": "integer",
+          "example": 12345
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "owner_id": {
+          "type": "integer"
+        },
+        "everyone_must_complete": {
+          "type": "boolean"
+        },
+        "is_approved": {
+          "type": "boolean"
+        },
+        "task_type": {
+          "type": "string"
+        },
+        "separate_task_for_each_assignee": {
+          "type": "boolean"
+        },
+        "max_assignable": {
+          "type": "integer",
+          "example": "1"
+        },
+        "prevent_guest_comment": {
+          "type": "boolean",
+          "example": "true | false"
+        }
+      }
+    },
+    "createStandaloneTaskInput": {
+      "properties": {
+        "owners": {
+          "$ref": "#/definitions/stepOwner"
+        },
+        "task_type": {
+          "type": "string"
+        },
+        "deadline": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "started_at": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "description": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "separate_task_for_each_assignee": {
+          "type": "boolean",
+          "example": true
+        },
+        "max_assignable": {
+          "type": "integer",
+          "example": "1"
+        },
+        "prevent_guest_comment": {
+          "type": "boolean",
+          "example": "true | false"
+        },
+        "tags": {
+          "description": "Array of tags associated to this template.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GenericObject"
+          },
+          "example": [
+            "<Tag Id>"
+          ]
+        }
+      }
+    },
+    "updateStandaloneTaskInput": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "task_type": {
+          "type": "string"
+        },
+        "started_at": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "deadline": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "owners": {
+          "$ref": "#/definitions/stepOwner"
+        },
+        "prevent_guest_comment": {
+          "type": "boolean",
+          "example": "true | false"
+        },
+        "webhook": {
+          "type": "string"
+        }
+      }
+    },
+    "RoleObject": {
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 12345
+        },
+        "org_role_id": {
+          "type": "string"
+        },
+        "subject_id": {
+          "type": "string"
+        },
+        "subject_type": {
+          "type": "string"
+        }
+      }
+    },
+    "TextTemplate": {
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "example_type"
+        }
+      },
+      "type": "object"
+    },
+    "checkUrlInput": {
+      "required": [
+        "url"
+      ],
+      "properties": {
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "Actor": {
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "profile_pic": {
+          "type": "string",
+          "example": "<url>"
+        }
+      }
+    },
+    "ActivityFeed": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "organization_id": {
+          "type": "string"
+        },
+        "verb": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "actor_type": {
+          "type": "string"
+        },
+        "actor_id": {
+          "type": "integer"
+        },
+        "auditable_type": {
+          "type": "string"
+        },
+        "auditable_id": {
+          "type": "integer"
+        },
+        "parentable_type": {
+          "type": "string"
+        },
+        "parentable_id": {
+          "type": "integer"
+        },
+        "description": {
+          "type": "string"
+        },
+        "audit": {
+          "type": "string",
+          "example": "Related audit Object"
+        },
+        "parent": {
+          "type": "string",
+          "example": "Related parent Object"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "actor": {
+          "$ref": "#/definitions/Actor"
+        }
+      }
+    },
+    "ActivityFeedOnlyPagination": {
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ActivityFeed"
+          }
+        },
+        "meta": {
+          "$ref": "#/definitions/MetaListOnlyPagination"
+        }
+      }
+    },
+    "AssetSubject": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    "Asset": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer"
+        },
+        "step_id": {
+          "type": "string"
+        },
+        "uploaded_from": {
+          "type": "string"
+        },
+        "uploaded_to_s3": {
+          "type": "boolean"
+        },
+        "subject": {
+          "$ref": "#/definitions/AssetSubject"
+        },
+        "uploaded_at": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "AutomationExecution": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "automated_action_id": {
+          "type": "integer"
+        },
+        "trigger_object_id": {
+          "type": "string"
+        },
+        "trigger_object_type": {
+          "type": "string"
+        },
+        "trigger_action": {
+          "type": "string",
+          "example": "task-completed"
+        },
+        "successful_actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Capture": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "increment_id": {
+          "type": "integer"
+        },
+        "step_id": {
+          "type": "integer"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "field_type": {
+          "type": "string"
+        },
+        "guidance": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "use_wysiwyg_editor": {
+          "type": "boolean"
+        },
+        "collect_time": {
+          "type": "boolean"
+        },
+        "options": {
+          "type": "string"
+        },
+        "field_validation": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "numeric"
+          }
+        },
+        "settings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "default_value_enabled": {
+          "type": "boolean"
+        },
+        "default_value": {
+          "type": "string"
+        },
+        "replaced_default_value": {
+          "type": "string"
+        },
+        "created_at": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "archived_at": {
+          "$ref": "#/definitions/RequestDate"
+        }
+      }
+    },
+    "brandingInput": {
+      "properties": {
+        "bg_color": {
+          "type": "string",
+          "example": "#ffffff"
+        },
+        "text_color": {
+          "type": "string",
+          "example": "#ffffff"
+        },
+        "alternate_color": {
+          "type": "string",
+          "example": "#ffffff"
+        },
+        "bright_shade": {
+          "type": "string",
+          "example": "#ffffff"
+        },
+        "dark_shade": {
+          "type": "string",
+          "example": "#ffffff"
+        }
+      }
+    },
+    "Branding": {
+      "properties": {
+        "bg_color": {
+          "type": "string",
+          "example": "#ffffff"
+        },
+        "text_color": {
+          "type": "string",
+          "example": "#ffffff"
+        },
+        "alternate_color": {
+          "type": "string",
+          "example": "#ffffff"
+        },
+        "bright_shade": {
+          "type": "string",
+          "example": "#ffffff"
+        },
+        "dark_shade": {
+          "type": "string",
+          "example": "#ffffff"
+        },
+        "updated_at": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "CountriesList": {
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Country"
+          }
+        }
+      }
+    },
+    "Country": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "21"
+        },
+        "name": {
+          "type": "string",
+          "example": "Belize"
+        },
+        "phone_code": {
+          "type": "string",
+          "example": "+501"
+        },
+        "iso2": {
+          "type": "string",
+          "example": "bz"
+        }
+      }
+    },
+    "Favorite": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "subject_id": {
+          "type": "string"
+        },
+        "subject_type": {
+          "type": "string"
+        }
+      }
+    },
+    "favoriteInput": {
+      "properties": {
+        "subject_id": {
+          "type": "string"
+        },
+        "subject_type": {
+          "type": "string",
+          "example": "Checklist | Run"
+        }
+      }
+    },
+    "bulkFavoriteInput": {
+      "properties": {
+        "subject_id": {
+          "type": "string"
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "subject_type": {
+          "type": "string",
+          "example": "Checklist"
+        }
+      }
+    },
+    "Folder": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "parent_id": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "total": {
+          "type": "integer"
+        }
+      }
+    },
+    "folderInput": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "position": {
+          "type": "string",
+          "example": "1"
+        },
+        "parent_id": {
+          "type": "string"
+        },
+        "folder_type": {
+          "type": "string",
+          "example": "checklist | run"
+        }
+      }
+    },
+    "addIntoFolderInput": {
+      "properties": {
+        "folder_id": {
+          "type": "string"
+        },
+        "subject_type": {
+          "type": "string",
+          "example": "Run | Task"
+        },
+        "subject_id": {
+          "type": "string",
+          "example": "<Run Id> | <Task Id>"
+        }
+      }
+    },
+    "createGroupInput": {
+      "properties": {
+        "name": {
+          "required": [
+            "name"
+          ],
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "guests": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "example@mail.com"
+          }
+        }
+      }
+    },
+    "Group": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "logo": {
+          "type": "string"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "guests": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "example@mail.com"
+          }
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "updated_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "deleted_at": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "TaskGuestDate": {
+      "properties": {
+        "date": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "timezone_type": {
+          "type": "integer",
+          "example": 3
+        },
+        "timezone": {
+          "type": "string",
+          "example": "UTC"
+        }
+      }
+    },
+    "DataObject": {
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/GenericObject"
+        }
+      }
+    },
+    "CreatorData": {
+      "properties": {
+        "data": {
+          "example": {
+            "email": "string",
+            "username": "string",
+            "first_name": "string",
+            "last_name": "string",
+            "full_name": "string",
+            "profile_pic": "string"
+          },
+          "$ref": "#/definitions/GenericObject"
+        }
+      }
+    },
+    "TaskGuest": {
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "taskdata": {
+          "$ref": "#/definitions/GenericObject"
+        },
+        "status": {
+          "type": "string"
+        },
+        "is_completable": {
+          "type": "boolean"
+        },
+        "deadline": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "created_at": {
+          "$ref": "#/definitions/TaskGuestDate"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/TaskGuestDate"
+        },
+        "completed_at": {
+          "$ref": "#/definitions/TaskGuestDate"
+        },
+        "guest_email": {
+          "type": "string"
+        },
+        "completer": {
+          "type": "string"
+        },
+        "completer_guest": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "organization": {
+          "example": {
+            "id": "string",
+            "name": "string",
+            "logo": "string"
+          },
+          "$ref": "#/definitions/GenericObject"
+        },
+        "run": {
+          "$ref": "#/definitions/DataObject"
+        },
+        "step": {
+          "$ref": "#/definitions/DataObject"
+        },
+        "creator": {
+          "$ref": "#/definitions/CreatorData"
+        }
+      }
+    },
+    "updateGuestsTasksInput": {
+      "properties": {
+        "taskdata": {
+          "$ref": "#/definitions/GenericObject"
+        },
+        "guests": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "guest_email@gmail.com"
+          }
+        }
+      }
+    },
+    "createGuestInput": {
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "phone_1": {
+          "type": "string"
+        },
+        "phone_2": {
+          "type": "string"
+        },
+        "image_url": {
+          "type": "string"
+        },
+        "contact_url": {
+          "type": "string"
+        },
+        "company_url": {
+          "type": "string"
+        },
+        "opportunity_url": {
+          "type": "string"
+        },
+        "company_name": {
+          "type": "string"
+        },
+        "opportunity_name": {
+          "type": "string"
+        },
+        "external_sync_source": {
+          "type": "string"
+        },
+        "external_date_creation": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string",
+          "example": "America/Chicago"
+        },
+        "associated_members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "example": 12345
+          }
+        }
+      }
+    },
+    "createGuestInBulk": {
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "phone_1": {
+          "type": "string"
+        },
+        "phone_2": {
+          "type": "string"
+        },
+        "external_sync_source": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string",
+          "example": "America/Chicago"
+        }
+      }
+    },
+    "Guest": {
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "last_accessed_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "last_known_ip": {
+          "type": "string"
+        },
+        "last_known_country": {
+          "type": "string"
+        },
+        "details": {
+          "$ref": "#/definitions/GuestDetails"
+        }
+      }
+    },
+    "GuestDetails": {
+      "properties": {
+        "first_name": {
+          "type": "string"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "phone_1": {
+          "type": "string"
+        },
+        "phone_2": {
+          "type": "string"
+        },
+        "image_url": {
+          "type": "string"
+        },
+        "contact_url": {
+          "type": "string"
+        },
+        "company_url": {
+          "type": "string"
+        },
+        "opportunity_url": {
+          "type": "string"
+        },
+        "company_name": {
+          "type": "string"
+        },
+        "opportunity_name": {
+          "type": "string"
+        },
+        "external_sync_source": {
+          "type": "string"
+        },
+        "external_date_creation": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string",
+          "example": "America/Chicago"
+        },
+        "reactivated_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "reactivated_by": {
+          "type": "integer",
+          "example": 12345
+        },
+        "disabled_on": {
+          "$ref": "#/definitions/Date"
+        },
+        "disabled_by": {
+          "type": "integer",
+          "example": 12345
+        }
+      }
+    },
+    "GuestPreference": {
+      "properties": {
+        "slug": {
+          "required": [
+            "slug"
+          ],
+          "type": "string"
+        },
+        "value": {
+          "required": [
+            "value"
+          ],
+          "type": "boolean"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "GuestPreferenceInput": {
+      "properties": {
+        "slug": {
+          "type": "string",
+          "example": "daily_digest | content_language | app_language"
+        },
+        "value": {
+          "type": "integer",
+          "example": "0/1"
+        },
+        "metadata": {
+          "type": "string",
+          "example": {
+            "extra": "here"
+          }
+        }
+      }
+    },
+    "createListInput": {
+      "properties": {
+        "title": {
+          "type": "string",
+          "example": "Tallyfy User Members List"
+        },
+        "type": {
+          "type": "string",
+          "example": "private | public | system"
+        },
+        "system_type": {
+          "type": "string",
+          "example": "members | guests"
+        }
+      }
+    },
+    "createListRowInput": {
+      "properties": {
+        "rows": {
+          "type": "array",
+          "items": {
+            "properties": {
+              "row_number": {
+                "type": "integer",
+                "example": 1
+              },
+              "values": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "example": "Number of values must be equal to number of columns"
+                }
+              }
+            },
+            "type": "object"
+          }
+        }
+      }
+    },
+    "createListColumnInput": {
+      "properties": {
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "example": {
+              "title": "<Column Title>",
+              "column_number": "integer"
+            }
+          }
+        }
+      }
+    },
+    "Lists": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ListColumns"
+          }
+        },
+        "system_type": {
+          "type": "string"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "updated_at": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "ListColumns": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "list_id": {
+          "type": "integer"
+        },
+        "user_id": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "column_number": {
+          "type": "integer"
+        }
+      }
+    },
+    "ListRows": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "list_id": {
+          "type": "integer"
+        },
+        "user_id": {
+          "type": "integer"
+        },
+        "value": {
+          "type": "string"
+        },
+        "row_number": {
+          "type": "integer"
+        }
+      }
+    },
+    "Domain": {
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 1
+        },
+        "name": {
+          "type": "string",
+          "example": "tallyfy.com"
+        },
+        "organization_id": {
+          "type": "string",
+          "example": "abc123"
+        },
+        "added_by": {
+          "type": "integer",
+          "example": "123"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "updated_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "warning": {
+          "type": "string",
+          "example": "For the domain tallyfy.com, we have detected 266 other organizations that have claimed this domain as their own - please contact support@tallyfy.com to resolve this issue."
+        },
+        "attached_organizations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "example": {
+              "id": "<Organization id>",
+              "name": "String"
+            }
+          }
+        }
+      }
+    },
+    "OrgRole": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "deleted_at": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "createOrgRoleInput": {
+      "properties": {
+        "title": {
+          "type": "string"
+        }
+      }
+    },
+    "Preference": {
+      "properties": {
+        "slug": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "metadata": {
+          "example": {
+            "extra": "here"
+          },
+          "$ref": "#/definitions/GenericObject"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "PublicKOForm": {
+      "properties": {
+        "checklist_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "integer"
+        },
+        "owner_id": {
+          "type": "integer"
+        },
+        "kickoff_title": {
+          "type": "string"
+        },
+        "kickoff_description": {
+          "type": "string"
+        },
+        "organization_id": {
+          "type": "string"
+        },
+        "organization_name": {
+          "type": "string"
+        },
+        "prerun": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ChecklistPrerun"
+          }
+        }
+      }
+    },
+    "createRecurringJobInput": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "Launch process"
+        },
+        "description": {
+          "type": "string",
+          "example": "Launch a process every Friday at 2pm CST"
+        },
+        "start_date": {
+          "type": "string",
+          "example": "2023-03-23"
+        },
+        "end_date": {
+          "type": "string",
+          "example": "2023-03-23"
+        },
+        "data": {
+          "description": "Recurring Job related data",
+          "items": {
+            "$ref": "#/definitions/GenericObject"
+          },
+          "example": {
+            "key": "value",
+            "deadline": "2016-01-01 00:00:00",
+            "max_assignable": 1
+          }
+        },
+        "max_occurrences": {
+          "type": "integer",
+          "example": "10"
+        },
+        "recurring_job_type_id": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string",
+          "example": "paused"
+        },
+        "schedule": {
+          "description": "Schdule related data",
+          "items": {
+            "$ref": "#/definitions/GenericObject"
+          },
+          "example": {
+            "recurring_type": "hourly",
+            "start_time": "12:00",
+            "interval": 1
+          }
+        }
+      }
+    },
+    "RecurringJob": {
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": "<Recurring Job id>"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "start_date": {
+          "type": "string"
+        },
+        "end_date": {
+          "type": "string"
+        },
+        "max_occurrences": {
+          "type": "integer"
+        },
+        "data": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "recurring_job_type_id": {
+          "type": "integer",
+          "example": "<Recurring Job Type id>"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "updated_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "schedule": {
+          "items": {
+            "$ref": "#/definitions/GenericObject"
+          },
+          "example": {
+            "id": "<Recurring Schedule id>",
+            "recurring_type": "hourly",
+            "interval": 1,
+            "adjust_to_nearest_date": false,
+            "start_time": "12:00",
+            "day_of_week": 1,
+            "week_of_month": 1,
+            "day_of_month": 1,
+            "month_of_year": 1
+          }
+        }
+      }
+    },
+    "RecurringJobType": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "job_key": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "validations": {
+          "items": {
+            "$ref": "#/definitions/GenericObject"
+          },
+          "example": {
+            "name": "string|max:300",
+            "order": "integer|min:1"
+          }
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "updated_at": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "RecurringSchedule": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "recurring_type": {
+          "type": "string"
+        },
+        "interval": {
+          "type": "integer"
+        },
+        "adjust_to_nearest_date": {
+          "type": "boolean"
+        },
+        "start_time": {
+          "type": "string"
+        },
+        "day_of_week": {
+          "type": "integer"
+        },
+        "week_of_month": {
+          "type": "integer"
+        },
+        "day_of_month": {
+          "type": "integer"
+        },
+        "month_of_year": {
+          "type": "string"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "updated_at": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "addRoleIntoStepInput": {
+      "properties": {
+        "org_role_id": {
+          "type": "string"
+        },
+        "subject_type": {
+          "type": "string",
+          "example": "Step | Task"
+        },
+        "subject_id": {
+          "type": "string",
+          "example": "<Step Id> | <Task Id>"
+        }
+      }
+    },
+    "addORDeleteRoleIntoStepInBulkInput": {
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "example": {
+              "org_role_id": "< array of role ids >",
+              "subject_type": "Step | Task",
+              "subject_id": "<Step Id> | <Task Id>"
+            }
+          }
+        }
+      }
+    },
+    "ownerInput": {
+      "properties": {
+        "owners": {
+          "example": {
+            "users": [
+              "<Member Id>"
+            ],
+            "guests": [
+              "<email address>"
+            ]
+          }
+        }
+      }
+    },
+    "taskSearchBody": {
+      "properties": {
+        "blueprint_id": {
+          "type": "string"
+        },
+        "step_id": {
+          "type": "string"
+        },
+        "selected_ko_field": {
+          "type": "string"
+        },
+        "search_query": {
+          "type": "string"
+        },
+        "search": {
+          "type": "string"
+        }
+      }
+    },
+    "taskSearchResponse": {
+      "properties": {
+        "run_id": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        }
+      }
+    },
+    "ShortRun": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "createRunInput": {
+      "required": [
+        "checklist_id"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "name of Process"
+        },
+        "checklist_id": {
+          "type": "string",
+          "example": "<Template Id>"
+        },
+        "summary": {
+          "type": "string",
+          "example": "Process summary"
+        },
+        "owner_id": {
+          "type": "integer"
+        },
+        "is_public": {
+          "type": "boolean",
+          "example": true
+        },
+        "assign_someone_else": {
+          "type": "boolean"
+        },
+        "publicly_hidden_fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/publiclyHiddenFields"
+          }
+        },
+        "tasks": {
+          "description": "Array of Tasks with the key is the ID of a Step's checklist, the value is the position and deadline of these steps. In case of missing this field, all Steps of the Process will be selected.<br> The deadline is the due time of a Task, if it is not specified, the default due time is 1 hour from run creation time ",
+          "items": {
+            "$ref": "#/definitions/GenericObject"
+          },
+          "example": {
+            "<Step ID>": {
+              "position": "<task position, start from 1>",
+              "deadline": "2016-01-01 00:00:00",
+              "max_assignable": 1
+            }
+          }
+        },
+        "prerun": {
+          "description": "Kickoff fields data structure is dependent on type of kickoff field. There are 7 kickoff field types including date, image, checklist, dropdown, radio buttons, small text fields and large text fields.",
+          "type": "string",
+          "example": [
+            {
+              "<prerun_id (if textfields)>": "Text Field Value"
+            },
+            {
+              "<prerun_id (if images)>": [
+                {
+                  "id": "<Id>",
+                  "filename": "Image.png",
+                  "version": 1,
+                  "url": "tallyfy.com/example-image.png",
+                  "uploaded_from": "ko_field",
+                  "subject": {
+                    "id": "<Subject Id>",
+                    "type": "Checklist"
+                  }
+                }
+              ]
+            },
+            {
+              "<prerun_id (if checklist)>": {
+                "id": 1,
+                "text": "abc.",
+                "value": "null",
+                "selected": true
+              }
+            },
+            {
+              "<prerun_id (if dropdown)>": {
+                "id": 1,
+                "text": "abc.",
+                "value": "null"
+              }
+            },
+            {
+              "<prerun_id (if radio button)>": "Radio Button Value"
+            },
+            {
+              "<prerun_id (if date)>": "2019-12-12T17:18:55.000Z"
+            }
+          ]
+        },
+        "tags": {
+          "description": "Array of tags associated to this template.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GenericObject"
+          },
+          "example": [
+            "<Tag Id>"
+          ]
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "9280653b36936b6f4f22f6622f766d6f"
+          }
+        },
+        "roles": {
+          "description": "roles object includes user IDs array, guest's emails array and group IDs array.",
+          "type": "string",
+          "example": [
+            {
+              "users": "[user ids]",
+              "guests": "[guest emails]",
+              "groups": "[group ids]"
+            }
+          ]
+        },
+        "folders": {
+          "description": "Array of process folders.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GenericObject"
+          },
+          "example": [
+            "<Folder Id>"
+          ]
+        },
+        "parent_id": {
+          "type": "string",
+          "example": "<Run Id>"
+        }
+      }
+    },
+    "PrerunData": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "<Kick Off Field id>"
+        },
+        "alias": {
+          "type": "string",
+          "example": "string"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "field_type": {
+          "type": "string",
+          "example": "text"
+        },
+        "label": {
+          "type": "string",
+          "example": "string"
+        },
+        "updated_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "options": {
+          "type": "string",
+          "example": "string"
+        },
+        "position": {
+          "type": "integer",
+          "example": 0
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": "string",
+          "example": "string"
+        }
+      }
+    },
+    "publiclyHiddenFields": {
+      "properties": {
+        "comments": {
+          "type": "string",
+          "example": "true/false"
+        },
+        "form_fields": {
+          "type": "string",
+          "example": "true/false"
+        },
+        "assignees": {
+          "type": "string",
+          "example": "true/false"
+        }
+      }
+    },
+    "AlertIssues": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "<comment id>"
+        },
+        "task_id": {
+          "type": "string",
+          "example": "<task id>"
+        },
+        "label": {
+          "type": "string",
+          "example": "comment"
+        },
+        "content": {
+          "type": "string",
+          "example": "string"
+        },
+        "sent_to": {
+          "$ref": "#/definitions/GenericObject"
+        },
+        "sent_by": {
+          "type": "integer",
+          "example": 12345
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "recent_updated_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "author": {
+          "example": {
+            "username": "string",
+            "first_name": "string",
+            "last_name": "string",
+            "full_name": "string",
+            "profile_pic": "<URL>"
+          },
+          "$ref": "#/definitions/GenericObject"
+        },
+        "resolve_id": {
+          "type": "integer",
+          "example": 12345
+        }
+      }
+    },
+    "Run": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "<Process id>"
+        },
+        "increment_id": {
+          "type": "integer"
+        },
+        "checklist_id": {
+          "type": "string",
+          "example": "<checklist id>"
+        },
+        "checklist_title": {
+          "type": "string",
+          "example": "<checklist title>"
+        },
+        "assign_someone_else": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string",
+          "example": "name of Process"
+        },
+        "summary": {
+          "type": "string",
+          "example": "Process summary"
+        },
+        "status": {
+          "type": "string",
+          "example": "active"
+        },
+        "progress": {
+          "example": {
+            "complete": 1,
+            "total": 4,
+            "percent": 25
+          },
+          "$ref": "#/definitions/GenericObject"
+        },
+        "whole_progress": {
+          "example": {
+            "complete": 1,
+            "total": 4,
+            "percent": 25
+          },
+          "$ref": "#/definitions/GenericObject"
+        },
+        "started_by": {
+          "type": "integer",
+          "example": 12345
+        },
+        "prerun": {
+          "type": "string",
+          "example": {
+            "<prerun_id (if textfields)>": "Text Field Value",
+            "<prerun_id (if images)>": {
+              "id": "<Id>",
+              "filename": "Image.png",
+              "version": 1,
+              "url": "tallyfy.com/example-image.png",
+              "uploaded_from": "ko_field",
+              "subject": {
+                "id": "<Subject Id>",
+                "type": "Checklist"
+              }
+            },
+            "<prerun_id (if checklist)>": {
+              "id": 1,
+              "text": "abc.",
+              "value": "null",
+              "selected": true
+            },
+            "<prerun_id (if dropdown)>": {
+              "id": 1,
+              "text": "abc.",
+              "value": "null"
+            },
+            "<prerun_id (if radio button)>": "Radio Button Value",
+            "<prerun_id (if date)>": "YYYY-mm-ddTHH:ii:ssZ"
+          }
+        },
+        "prerun_completed_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "prerun_completed_by": {
+          "type": "integer",
+          "example": 12345
+        },
+        "prerun_length": {
+          "type": "integer",
+          "example": 15
+        },
+        "starred": {
+          "type": "boolean",
+          "example": false
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "due_date": {
+          "$ref": "#/definitions/Date"
+        },
+        "owner_id": {
+          "type": "integer"
+        },
+        "started_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/Date"
+        },
+        "completed_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "late_tasks": {
+          "type": "integer"
+        },
+        "archived_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "due_date_passed": {
+          "type": "boolean",
+          "example": false
+        },
+        "collaborators": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "due_soon": {
+          "type": "boolean"
+        },
+        "max_task_deadline": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "SamlConfigInput": {
+      "properties": {
+        "provider": {
+          "type": "string",
+          "example": "okta"
+        }
+      }
+    },
+    "SamlConfig": {
+      "properties": {
+        "provider": {
+          "type": "string",
+          "example": "okta"
+        },
+        "updated_at": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "SignupQuestions": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "text": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "options": {
+          "$ref": "#/definitions/SignupQuestionOption"
+        }
+      }
+    },
+    "SignupQuestionOption": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "question_id": {
+          "type": "integer"
+        },
+        "option_text": {
+          "type": "string"
+        }
+      }
+    },
+    "SmtpConnection": {
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "from_address": {
+          "type": "string"
+        },
+        "from_name": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "encryption": {
+          "type": "string"
+        }
+      }
+    },
+    "Stage": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer",
+          "example": 1
+        }
+      }
+    },
+    "StageInput": {
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "subject_id": {
+          "type": "string"
+        },
+        "subject_type": {
+          "type": "string",
+          "example": "Run | Checklist"
+        },
+        "position": {
+          "type": "integer",
+          "example": 1
+        }
+      }
+    },
+    "Tag": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "template": {
+          "type": "integer",
+          "example": 2
+        },
+        "active_process": {
+          "type": "integer",
+          "example": 3
+        },
+        "auto_generated": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "deleted_at": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "createTagInput": {
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        }
+      }
+    },
+    "addTagInput": {
+      "properties": {
+        "tag_id": {
+          "type": "string"
+        },
+        "subject_type": {
+          "type": "string",
+          "example": "Checklist | Run | Task | Step"
+        },
+        "subject_id": {
+          "type": "string",
+          "example": "<Checklist Id> | <Run Id> | <Step Id> | <Task Id>"
+        },
+        "tag_type": {
+          "type": "string",
+          "example": "private | public"
+        }
+      }
+    },
+    "TagPublic": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "deleted_at": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "createTagPublicInput": {
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "example": "topic"
+        }
+      }
+    },
+    "tasks": {
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/createTasksInput"
+          }
+        }
+      }
+    },
+    "createTasksInput": {
+      "properties": {
+        "form_fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/StepCaptureInput"
+          }
+        },
+        "owners": {
+          "$ref": "#/definitions/stepOwner"
+        },
+        "title": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "started_at": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "deadline": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "task_type": {
+          "type": "string"
+        }
+      }
+    },
+    "updateTaskInput": {
+      "properties": {
+        "taskdata": {
+          "$ref": "#/definitions/GenericObject"
+        },
+        "owners": {
+          "$ref": "#/definitions/stepOwner"
+        },
+        "status": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "max_assignable": {
+          "type": "integer",
+          "example": "1"
+        },
+        "started_at": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "deadline": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "task_type": {
+          "type": "string"
+        }
+      }
+    },
+    "Task": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "increment_id": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "original_title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "original_summary": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "step_id": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "taskdata": {
+          "$ref": "#/definitions/GenericObject"
+        },
+        "owners": {
+          "$ref": "#/definitions/stepOwner"
+        },
+        "is_completable": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string"
+        },
+        "task_type": {
+          "type": "string"
+        },
+        "is_approved": {
+          "type": "boolean"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "started_at": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "deadline": {
+          "$ref": "#/definitions/Date"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/Date"
+        },
+        "archived_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "completed_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "starter_id": {
+          "type": "integer",
+          "example": 12345
+        },
+        "completer_id": {
+          "type": "integer",
+          "example": 12345
+        },
+        "run_status": {
+          "type": "string"
+        },
+        "max_assignable": {
+          "type": "integer",
+          "example": "1"
+        },
+        "prevent_guest_comment": {
+          "type": "boolean",
+          "example": "true | false"
+        },
+        "can_complete_only_assignees": {
+          "type": "boolean",
+          "example": "true | false"
+        },
+        "everyone_must_complete": {
+          "type": "boolean",
+          "example": "true | false"
+        },
+        "is_soft_start_date": {
+          "type": "boolean"
+        },
+        "checklist_id": {
+          "type": "string"
+        },
+        "linked_step_id": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "Project Manager"
+          }
+        }
+      }
+    },
+    "TasksListMeta": {
+      "properties": {
+        "overdue_tasks": {
+          "type": "integer"
+        },
+        "tasks_due_soon": {
+          "type": "integer"
+        },
+        "pagination": {
+          "$ref": "#/definitions/Pagination"
+        }
+      }
+    },
+    "TasksList": {
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Task"
+          }
+        },
+        "meta": {
+          "$ref": "#/definitions/TasksListMeta"
+        }
+      }
+    },
+    "TasksListOnlyPagination": {
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Task"
+          }
+        },
+        "meta": {
+          "$ref": "#/definitions/MetaListOnlyPagination"
+        }
+      }
+    },
+    "CompletedProcessTask": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "step_id": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "taskdata": {
+          "$ref": "#/definitions/GenericObject"
+        },
+        "owners": {
+          "$ref": "#/definitions/stepOwner"
+        },
+        "is_completable": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string"
+        },
+        "task_type": {
+          "type": "string"
+        },
+        "is_approved": {
+          "type": "boolean"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "started_at": {
+          "$ref": "#/definitions/RequestDate"
+        },
+        "deadline": {
+          "$ref": "#/definitions/Date"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/Date"
+        },
+        "archived_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "completed_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "starter_id": {
+          "type": "integer",
+          "example": 12345
+        },
+        "completer_id": {
+          "type": "integer",
+          "example": 12345
+        },
+        "run_status": {
+          "type": "string"
+        },
+        "tasks_changed_by_rules": {
+          "$ref": "#/definitions/GenericObject"
+        }
+      }
+    },
+    "linkTaskInput": {
+      "properties": {
+        "step_id": {
+          "type": "string"
+        }
+      }
+    },
+    "textTemplateInput": {
+      "properties": {
+        "title": {
+          "type": "string",
+          "example": "Text template title"
+        },
+        "template": {
+          "type": "string",
+          "example": "Text template message"
+        }
+      }
+    },
+    "textTemplate": {
+      "properties": {
+        "title": {
+          "type": "string",
+          "example": "Text template title"
+        },
+        "template": {
+          "type": "string",
+          "example": "Text template message"
+        }
+      }
+    },
+    "textTemplateExistenceInput": {
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 123
+          }
+        }
+      }
+    },
+    "UpdatedTextTemplateGuest": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "organization_id": {
+          "type": "string"
+        },
+        "text_template_id": {
+          "type": "integer"
+        },
+        "guest_id": {
+          "type": "integer"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "updated_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "deleted_at": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "UpdatedTextTemplateUser": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "organization_id": {
+          "type": "string"
+        },
+        "text_template_id": {
+          "type": "integer"
+        },
+        "user_id": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "string"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "updated_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "deleted_at": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "selectedTextThreadInput": {
+      "properties": {
+        "content": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "example": "hide-for-guests"
+        },
+        "label": {
+          "type": "string",
+          "example": "comment"
+        },
+        "parent_comment_id": {
+          "type": "string"
+        },
+        "text_id": {
+          "type": "string",
+          "example": "1"
+        },
+        "text_color": {
+          "type": "string",
+          "example": "#00000"
+        }
+      }
+    },
+    "descriptionSelectedTextThreadInput": {
+      "properties": {
+        "content": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "example": "hide-for-guests"
+        },
+        "label": {
+          "type": "string",
+          "example": "comment"
+        },
+        "text_id": {
+          "type": "string",
+          "example": "1"
+        },
+        "text_color": {
+          "type": "string",
+          "example": "#00000"
+        },
+        "class_id": {
+          "type": "string"
+        },
+        "class_type": {
+          "type": "string",
+          "example": "checklist | prerun | step | task | run"
+        }
+      }
+    },
+    "threadInput": {
+      "properties": {
+        "content": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "example": "open|hide-for-guests|collapsed"
+        },
+        "label": {
+          "type": "string",
+          "example": "comment|problem|resolve|improvement|advice"
+        }
+      }
+    },
+    "guestThreadInput": {
+      "properties": {
+        "content": {
+          "type": "string"
+        }
+      }
+    },
+    "threadResolveInput": {
+      "properties": {
+        "thread_id": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "example": "open|hide-for-guests|collapsed"
+        },
+        "label": {
+          "type": "string",
+          "example": "comment|problem|resolve|improvement|advice"
+        }
+      }
+    },
+    "guestThreadResolveInput": {
+      "properties": {
+        "thread_id": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        }
+      }
+    },
+    "Thread": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "<Comment Id>"
+        },
+        "task_id": {
+          "type": "string",
+          "example": "<Task Id>"
+        },
+        "label": {
+          "type": "string",
+          "example": "comment | problem | resolve | improvement | advice"
+        },
+        "content": {
+          "type": "string",
+          "example": "String"
+        },
+        "state": {
+          "type": "string",
+          "example": "open|hide-for-guests|collapsed"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "updated_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "archived_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "sent_to": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "resolve_id": {
+          "type": "string",
+          "example": "<Member Id>"
+        },
+        "author_id": {
+          "type": "integer",
+          "example": "12345"
+        },
+        "author_type": {
+          "type": "string",
+          "example": "bot/member/guest"
+        }
+      }
+    },
+    "threadReactionInput": {
+      "properties": {
+        "icon": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string",
+          "example": "Like|Dislike|Love|Rocket|Smile|Party"
+        }
+      }
+    },
+    "ThreadReaction": {
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": "<Reaction Id>"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string",
+          "example": "Like|Dislike|Love|Rocket|Smile|Party"
+        },
+        "user_id": {
+          "type": "integer"
+        },
+        "guest": {
+          "type": "string",
+          "example": "abc@example.com"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "UserChecklistView": {
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "is_org_level": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "filter_type": {
+          "type": "string"
+        },
+        "criteria": {
+          "type": "array",
+          "items": {
+            "properties": {
+              "field": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "example": [
+            {
+              "field": "type",
+              "value": "form"
+            },
+            {
+              "field": "status",
+              "value": "started"
+            },
+            {
+              "field": "tag_ids",
+              "value": "array list - [<Tag Id>, <Tag Id>]"
+            },
+            {
+              "field": "members",
+              "value": "array list - [<User Id>, <User Id>]"
+            },
+            {
+              "field": "groups",
+              "value": "array list - [<Group Id>, <Group Id>]"
+            },
+            {
+              "field": "folder",
+              "value": "<Folder Id>"
+            },
+            {
+              "field": "manual",
+              "value": "Search Text"
+            }
+          ]
+        }
+      }
+    },
+    "UserChecklistViewInput": {
+      "properties": {
+        "is_org_level": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "filter_type": {
+          "type": "string",
+          "example": "all | any"
+        },
+        "criteria": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "example": {
+              "field": "type      | folder      | members     | groups       | tag_ids    | status  | manual",
+              "value": "procedure | <Folder Id> | [<User Id>] | [<Group Id>] | [<Tag Id>] | started | Search Text"
+            }
+          }
+        }
+      }
+    },
+    "UserSignupAnswer": {
+      "properties": {
+        "answer_id": {
+          "type": "integer"
+        },
+        "question": {
+          "type": "string"
+        },
+        "answer": {
+          "type": "string"
+        }
+      }
+    },
+    "UserSignupAnswerInput": {
+      "properties": {
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "example": {
+              "id": "<Question ID>",
+              "options": "[<Array of Options IDs>]",
+              "notes": "Something else"
+            }
+          }
+        }
+      }
+    },
+    "watchObjectInput": {
+      "properties": {
+        "object_type": {
+          "type": "string",
+          "example": "Checklist | Run | Task | User"
+        },
+        "object_id": {
+          "type": "string",
+          "example": "<Checklist Id> | <Run Id> | <Task Id> | <User Id>"
+        },
+        "frequency": {
+          "type": "string",
+          "example": "electric | mindful | chilled"
+        },
+        "webhook": {
+          "type": "string",
+          "example": "https://example.com/"
+        },
+        "notification_type": {
+          "type": "string",
+          "example": "<email> | <webhook> | <chat>"
+        },
+        "is_system_watch": {
+          "type": "boolean"
+        }
+      }
+    },
+    "watchObjectInputForGuest": {
+      "properties": {
+        "object_type": {
+          "type": "string",
+          "example": "Run | Task"
+        },
+        "object_id": {
+          "type": "string",
+          "example": "<Run Id> | <Task Id>"
+        },
+        "frequency": {
+          "type": "string",
+          "example": "electric | mindful | chilled"
+        },
+        "webhook": {
+          "type": "string",
+          "example": "https://example.com/"
+        },
+        "notification_type": {
+          "type": "string",
+          "example": "<email> | <webhook> | <chat>"
+        },
+        "is_system_watch": {
+          "type": "boolean"
+        }
+      }
+    },
+    "updateWatchObjectInput": {
+      "properties": {
+        "frequency": {
+          "type": "string",
+          "example": "electric | mindful | chilled"
+        },
+        "webhook": {
+          "type": "string",
+          "example": "https://example.com/"
+        },
+        "notification_type": {
+          "type": "string",
+          "example": "<email> | <webhook> | <chat>"
+        }
+      }
+    },
+    "Watch": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "organization_id": {
+          "type": "string"
+        },
+        "user_id": {
+          "type": "string"
+        },
+        "guest_id": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "object_id": {
+          "type": "string"
+        },
+        "object_type": {
+          "type": "string"
+        },
+        "frequency": {
+          "type": "string"
+        },
+        "webhook": {
+          "type": "string"
+        },
+        "notification_type": {
+          "type": "string"
+        },
+        "is_system_watch": {
+          "type": "string"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "watcher": {
+          "$ref": "#/definitions/User"
+        },
+        "watching": {
+          "type": "string",
+          "example": "{object details of user, checklist, run or task}"
+        }
+      }
+    },
+    "dualVersionBody": {
+      "properties": {
+        "dual_version_enabled": {
+          "type": "boolean"
+        },
+        "replace_state_conditionally": {
+          "type": "boolean"
+        },
+        "bp_to_launch": {
+          "type": "string"
+        }
+      }
+    },
+    "checklistInput": {
+      "properties": {
+        "checklist": {
+          "$ref": "#/definitions/Checklist"
+        }
+      }
+    },
+    "ShortChecklist": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      }
+    },
+    "ChecklistPrerun": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "checklist_id": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "field_type": {
+          "type": "string",
+          "example": "text"
+        },
+        "guidance": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer",
+          "example": 1
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "use_wysiwyg_editor": {
+          "type": "boolean"
+        },
+        "collect_time": {
+          "type": "boolean"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GenericObject"
+          }
+        },
+        "field_validation": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "numeric"
+          }
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "createChecklistInput": {
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "owner_id": {
+          "type": "integer",
+          "example": 12345
+        },
+        "webhook": {
+          "type": "string"
+        },
+        "explanation_video": {
+          "type": "string"
+        },
+        "starred": {
+          "type": "boolean"
+        },
+        "guidance": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "is_public": {
+          "type": "boolean"
+        },
+        "is_featured": {
+          "type": "boolean"
+        },
+        "public_cover": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "default_process_name_format": {
+          "type": "string"
+        },
+        "is_public_kickoff": {
+          "type": "boolean"
+        },
+        "auto_naming": {
+          "type": "boolean"
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "9280653b36936b6f4f22f6622f766d6f"
+          }
+        },
+        "prerun": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TemplatePrerun"
+          }
+        },
+        "folderize_process": {
+          "type": "boolean"
+        },
+        "tag_process": {
+          "type": "boolean"
+        },
+        "allow_launcher_change_name": {
+          "type": "boolean"
+        },
+        "ko_form_blueprint_id": {
+          "type": "string"
+        },
+        "default_folder": {
+          "type": "string",
+          "example": "<Folder Id>"
+        },
+        "folder_changeable_by_launcher": {
+          "type": "boolean"
+        },
+        "kickoff_sharing_user_id": {
+          "type": "integer",
+          "example": 12345
+        }
+      }
+    },
+    "Checklist": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "starred": {
+          "type": "boolean"
+        },
+        "webhook": {
+          "type": "string"
+        },
+        "explanation_video": {
+          "type": "string"
+        },
+        "guidance": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "prerun": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ChecklistPrerun"
+          }
+        },
+        "automated_actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AutomatedAction"
+          }
+        },
+        "created_by": {
+          "type": "integer",
+          "example": 12345
+        },
+        "owner_id": {
+          "type": "integer",
+          "example": 12345
+        },
+        "started_processes": {
+          "type": "integer",
+          "example": 0
+        },
+        "kickoff_title": {
+          "type": "string"
+        },
+        "kickoff_description": {
+          "type": "string"
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/Date"
+        },
+        "archived_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "is_public": {
+          "type": "boolean"
+        },
+        "is_featured": {
+          "type": "boolean"
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "9280653b36936b6f4f22f6622f766d6f"
+          }
+        },
+        "public_cover": {
+          "type": "string"
+        },
+        "industry_tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TagPublic"
+          }
+        },
+        "topic_tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TagPublic"
+          }
+        },
+        "type": {
+          "type": "string"
+        },
+        "default_process_name_format": {
+          "type": "string"
+        },
+        "is_public_kickoff": {
+          "type": "boolean"
+        },
+        "dual_version_enabled": {
+          "type": "boolean"
+        },
+        "is_published_state": {
+          "type": "boolean"
+        },
+        "auto_naming": {
+          "type": "boolean"
+        },
+        "last_updated_by": {
+          "type": "integer",
+          "example": "12345"
+        },
+        "linked_tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Task"
+          }
+        },
+        "folderize_process": {
+          "type": "boolean"
+        },
+        "tag_process": {
+          "type": "boolean"
+        },
+        "allow_launcher_change_name": {
+          "type": "boolean"
+        },
+        "is_pinned": {
+          "type": "boolean"
+        },
+        "ko_form_blueprint_id": {
+          "type": "string"
+        },
+        "default_folder": {
+          "type": "string",
+          "example": "<Folder Id>"
+        },
+        "folder_changeable_by_launcher": {
+          "type": "boolean"
+        },
+        "kickoff_sharing_user_id": {
+          "type": "integer",
+          "example": 12345
+        }
+      }
+    },
+    "checklistExistenceInput": {
+      "properties": {
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "<Template ID>"
+          }
+        }
+      }
+    },
+    "createChecklistWithStepsInput": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/createChecklistInput"
+        },
+        {
+          "properties": {
+            "steps": {
+              "description": "Array of steps to create with the template",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/createStepInput"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ActionCondition": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "conditionable_id": {
+          "type": "string",
+          "example": "<id of rule target>"
+        },
+        "conditionable_type": {
+          "type": "string",
+          "example": "Step | Capture | Prerun"
+        },
+        "operation": {
+          "type": "string",
+          "example": "completed|contains|not_contains|equals|not_equals|equals_any|greater_than|is_empty|is_not_empty"
+        },
+        "statement": {
+          "type": "string",
+          "example": "any_time | <keyword to check>"
+        },
+        "logic": {
+          "type": "string",
+          "example": "and | or"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "column_contains_name": {
+          "type": "string"
+        }
+      }
+    },
+    "ThenAction": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "action_type": {
+          "type": "string",
+          "example": "visibility|deadline|assignment|status"
+        },
+        "action_verb": {
+          "type": "string",
+          "example": "show|hide|deadline|assign|assign_only|reopen"
+        },
+        "target_step_id": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "actionable_id": {
+          "type": "string"
+        },
+        "actionable_type": {
+          "type": "string",
+          "example": "Step | Capture | Prerun"
+        },
+        "deadline": {
+          "$ref": "#/definitions/stepStartDate"
+        },
+        "assignees": {
+          "$ref": "#/definitions/stepOwner"
+        }
+      }
+    },
+    "AutomatedAction": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "automated_alias": {
+          "type": "string"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ActionCondition"
+          }
+        },
+        "then_actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ThenAction"
+          }
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/Date"
+        },
+        "archived_at": {
+          "$ref": "#/definitions/Date"
+        }
+      }
+    },
+    "AutomatedActionInput": {
+      "properties": {
+        "automated_alias": {
+          "type": "string"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ActionCondition"
+          }
+        },
+        "then_actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ThenAction"
+          }
+        },
+        "deadline": {
+          "$ref": "#/definitions/stepStartDate"
+        },
+        "assignees": {
+          "$ref": "#/definitions/stepOwner"
+        }
+      }
+    },
+    "GuestOrganizationData": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "logo": {
+          "type": "string",
+          "example": "<url>"
+        },
+        "plan_code": {
+          "type": "string",
+          "example": "pro-annual"
+        },
+        "in_trial": {
+          "type": "boolean",
+          "example": "false"
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "full_name": {
+                "type": "string"
+              },
+              "profile_pic": {
+                "type": "string"
+              },
+              "resize_profile_pic": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "guest_onboarding_snippet": {
+          "type": "string"
+        },
+        "meta": {
+          "properties": {
+            "guest_email": {
+              "type": "string"
+            },
+            "guest_organizations": {
+              "type": "array",
+              "items": {
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "azure_cognitive_service": {
+                    "example": {
+                      "key": "string",
+                      "resource_name": "string",
+                      "region": "string"
+                    },
+                    "$ref": "#/definitions/GenericObject"
+                  },
+                  "payment_state": {
+                    "type": "string",
+                    "example": "active"
+                  },
+                  "pivot": {
+                    "properties": {
+                      "guest_id": {
+                        "type": "integer"
+                      },
+                      "organization_id": {
+                        "type": "string"
+                      },
+                      "created_at": {
+                        "$ref": "#/definitions/Date"
+                      },
+                      "updated_at": {
+                        "$ref": "#/definitions/Date"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "phone_1": {
+                        "type": "string"
+                      },
+                      "phone_2": {
+                        "type": "string"
+                      },
+                      "image_url": {
+                        "type": "string"
+                      },
+                      "timezone": {
+                        "type": "string",
+                        "example": "America/Chicago"
+                      },
+                      "contact_url": {
+                        "type": "string"
+                      },
+                      "company_url": {
+                        "type": "string"
+                      },
+                      "opportunity_url": {
+                        "type": "string"
+                      },
+                      "company_name": {
+                        "type": "string"
+                      },
+                      "opportunity_name": {
+                        "type": "string"
+                      },
+                      "external_sync_source": {
+                        "type": "string"
+                      },
+                      "external_date_creation": {
+                        "type": "string"
+                      },
+                      "cadence_days": {
+                        "type": "string",
+                        "example": [
+                          "Monday",
+                          "Tuesday",
+                          "Wednesday",
+                          "Thursday",
+                          "Friday",
+                          "Saturday",
+                          "Sunday"
+                        ]
+                      },
+                      "associated_members": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "example": 12345
+                        }
+                      },
+                      "last_active_at": {
+                        "$ref": "#/definitions/Date"
+                      },
+                      "disabled_at": {
+                        "$ref": "#/definitions/Date"
+                      },
+                      "disabled_by": {
+                        "type": "integer",
+                        "example": 12345
+                      },
+                      "reactivated_by": {
+                        "type": "integer",
+                        "example": 12345
+                      },
+                      "reactivated_at": {
+                        "$ref": "#/definitions/Date"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      }
+    },
+    "cadenceDays": {
+      "properties": {
+        "cadence_days": {
+          "type": "string",
+          "example": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+          ]
+        }
+      }
+    },
+    "GuestOrganization": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "org_logo": {
+          "type": "string",
+          "example": "<url>"
+        },
+        "plan_code": {
+          "type": "string",
+          "example": "pro-annual"
+        },
+        "in_trial": {
+          "type": "boolean",
+          "example": "false"
+        },
+        "guest_link": {
+          "type": "string",
+          "example": "<url>"
+        },
+        "users": {
+          "$ref": "#/definitions/GenericObject"
+        }
+      }
+    },
+    "Organization": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "address1": {
+          "type": "string"
+        },
+        "address2": {
+          "type": "string"
+        },
+        "created_on": {
+          "$ref": "#/definitions/Date"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/Date"
+        },
+        "live_support_enabled": {
+          "type": "integer"
+        },
+        "org_logo": {
+          "type": "string",
+          "example": "<url>"
+        },
+        "settings": {
+          "$ref": "#/definitions/GenericObject"
+        },
+        "country": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "zipcode": {
+          "type": "string"
+        },
+        "users_count": {
+          "type": "integer",
+          "example": 70
+        },
+        "payment_state": {
+          "type": "string",
+          "example": "active"
+        },
+        "team_size": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 50
+          }
+        },
+        "signup_survey": {
+          "type": "string"
+        },
+        "signup_params": {
+          "type": "string"
+        },
+        "free_trial_days": {
+          "type": "integer"
+        },
+        "preferred_trial_plan": {
+          "type": "string"
+        },
+        "saml_enabled": {
+          "type": "boolean"
+        },
+        "sso_default_role": {
+          "type": "string"
+        },
+        "google_analytics_id": {
+          "type": "string"
+        },
+        "mixpanel_token": {
+          "type": "string"
+        },
+        "analytics_enabled": {
+          "type": "boolean"
+        },
+        "onboarding_snippet": {
+          "type": "integer"
+        },
+        "homepage_snippet": {
+          "type": "integer"
+        },
+        "light_role_error_snippet": {
+          "type": "integer"
+        },
+        "guest_onboarding_snippet": {
+          "type": "integer"
+        },
+        "disabled_on": {
+          "$ref": "#/definitions/Date"
+        },
+        "last_accessed": {
+          "$ref": "#/definitions/Date"
+        },
+        "user_role": {
+          "type": "string",
+          "example": "Coworker"
+        },
+        "auto_join_signups": {
+          "type": "boolean",
+          "example": true
+        },
+        "maximum_group_assignment_limit": {
+          "type": "integer",
+          "example": 40
+        },
+        "allow_user_invite": {
+          "type": "boolean",
+          "example": true
+        },
+        "allow_manage_groups": {
+          "type": "boolean",
+          "example": true
+        },
+        "working_days": {
+          "type": "string",
+          "example": {
+            "Monday": {
+              "anytime": "true"
+            },
+            "Tuesday": {
+              "anytime": "true"
+            },
+            "Wednesday": {
+              "from": "08:00",
+              "to": "17:00",
+              "anytime": "false"
+            },
+            "Thursday": {
+              "from": "08:00",
+              "to": "17:00",
+              "anytime": "false"
+            },
+            "Friday": {
+              "from": "08:00",
+              "to": "17:00",
+              "anytime": "false"
+            },
+            "Saturday": {
+              "from": "08:00",
+              "to": "17:00",
+              "anytime": "false"
+            },
+            "Sunday": {
+              "from": "08:00",
+              "to": "17:00",
+              "anytime": "false"
+            }
+          }
+        },
+        "deadline_setting": {
+          "type": "string",
+          "example": "after/before"
+        },
+        "wyiwyg": {
+          "type": "boolean"
+        },
+        "auto_archive": {
+          "type": "boolean"
+        },
+        "auto_archive_processes_after": {
+          "example": {
+            "value": 1,
+            "unit": "days | weeks"
+          },
+          "$ref": "#/definitions/GenericObject"
+        },
+        "auto_complete_tasks": {
+          "type": "boolean"
+        },
+        "auto_complete_task_months": {
+          "type": "integer",
+          "example": 10
+        },
+        "timezone": {
+          "type": "string",
+          "example": "UTC"
+        },
+        "default_deadline": {
+          "example": {
+            "value": 1,
+            "type": "minutes | hours | days | weeks | months"
+          },
+          "$ref": "#/definitions/GenericObject"
+        },
+        "azure_cognitive_service": {
+          "example": {
+            "key": "string",
+            "resource_name": "string",
+            "region": "string"
+          },
+          "$ref": "#/definitions/GenericObject"
+        },
+        "global_css": {
+          "type": "string",
+          "example": "string"
+        },
+        "disable_min_members_billing": {
+          "type": "boolean"
+        },
+        "enable_light_users_billing": {
+          "type": "boolean"
+        },
+        "purpose": {
+          "type": "string"
+        },
+        "process_today": {
+          "type": "string"
+        },
+        "restrict_blueprint_permissions": {
+          "type": "boolean"
+        },
+        "enable_onboarding_template": {
+          "type": "boolean"
+        },
+        "onboarding_template_id": {
+          "type": "string"
+        }
+      }
+    },
+    "stepOwner": {
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "guests": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "example@mail.com"
+          }
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "c46406ccfb2c2dcdb31540212dfbdd51"
+          }
+        }
+      }
+    },
+    "stepStartDate": {
+      "properties": {
+        "value": {
+          "type": "integer",
+          "example": 5
+        },
+        "unit": {
+          "type": "string",
+          "example": "minutes | hours | days | weeks | months"
+        }
+      }
+    },
+    "stepDeadline": {
+      "properties": {
+        "value": {
+          "type": "integer",
+          "example": 5
+        },
+        "unit": {
+          "type": "string",
+          "example": "minutes | hours | days | weeks | months"
+        },
+        "option": {
+          "type": "string",
+          "example": "from | prior_to"
+        },
+        "step": {
+          "type": "string",
+          "example": "start_run | <step id>"
+        }
+      }
+    },
+    "stepBpToLaunch": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "<Template Id>"
+        },
+        "default_name_format": {
+          "type": "string"
+        },
+        "tasks_within_process": {
+          "type": "boolean",
+          "example": "true/false"
+        }
+      }
+    },
+    "StepCaptureInput": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "example": "<form id> (only for existing form)"
+        },
+        "field_type": {
+          "type": "string",
+          "example": "text | textarea | dropdown | multiselect | radio | date | file | table"
+        },
+        "label": {
+          "type": "string"
+        },
+        "guidance": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CaptureOptions"
+          }
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CaptureColumns"
+          }
+        },
+        "default_value_enabled": {
+          "type": "boolean"
+        },
+        "default_value": {
+          "type": "string"
+        }
+      }
+    },
+    "createStepRolesInput": {
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "Project Manager"
+          }
+        }
+      }
+    },
+    "stepRolesResponse": {
+      "properties": {
+        "step_id": {
+          "type": "string"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "Project Manager"
+          }
+        }
+      }
+    },
+    "createStepInput": {
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "checklist_id": {
+          "type": "string",
+          "example": "<checklist id>"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "step_type": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer",
+          "example": 1
+        },
+        "allow_guest_owners": {
+          "type": "boolean",
+          "example": "true | false"
+        },
+        "max_assignable": {
+          "type": "integer",
+          "example": "1"
+        },
+        "skip_start_process": {
+          "type": "boolean",
+          "example": "true | false"
+        },
+        "everyone_must_complete": {
+          "type": "boolean",
+          "example": "true | false"
+        },
+        "webhook": {
+          "type": "string",
+          "example": "<url>"
+        },
+        "assignees": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "c46406ccfb2c2dcdb31540212dfbdd51"
+          }
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "c46406ccfb2c2dcdb31540212dfbdd51"
+          }
+        },
+        "guests": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "example@mail.com"
+          }
+        },
+        "start_date": {
+          "$ref": "#/definitions/stepStartDate"
+        },
+        "is_soft_start_date": {
+          "type": "boolean"
+        },
+        "deadline": {
+          "$ref": "#/definitions/stepDeadline"
+        },
+        "bp_to_launch": {
+          "$ref": "#/definitions/stepBpToLaunch"
+        },
+        "prevent_guest_comment": {
+          "type": "boolean",
+          "example": "true | false"
+        },
+        "captures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/StepCaptureInput"
+          }
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "Project Manager"
+          }
+        },
+        "role_changes_every_time": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Step": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "checklist_id": {
+          "type": "string"
+        },
+        "alias": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "step_type": {
+          "type": "string"
+        },
+        "position": {
+          "type": "integer",
+          "example": 1
+        },
+        "allow_guest_owners": {
+          "type": "boolean",
+          "example": "true | false"
+        },
+        "max_assignable": {
+          "type": "integer",
+          "example": "1"
+        },
+        "skip_start_process": {
+          "type": "boolean",
+          "example": "true | false"
+        },
+        "can_complete_only_assignees": {
+          "type": "boolean",
+          "example": "true | false"
+        },
+        "everyone_must_complete": {
+          "type": "boolean",
+          "example": "true | false"
+        },
+        "webhook": {
+          "type": "string",
+          "example": "<url>"
+        },
+        "start_date": {
+          "$ref": "#/definitions/stepStartDate"
+        },
+        "deadline": {
+          "$ref": "#/definitions/stepDeadline"
+        },
+        "bp_to_launch": {
+          "$ref": "#/definitions/stepBpToLaunch"
+        },
+        "assignees": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "guests": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "example@mail.com"
+          }
+        },
+        "captures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CaptureResponse"
+          }
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/Date"
+        },
+        "archived_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "prevent_guest_comment": {
+          "type": "boolean",
+          "example": "true | false"
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "Project Manager"
+          }
+        },
+        "role_changes_every_time": {
+          "type": "boolean"
+        },
+        "is_soft_start_date": {
+          "type": "boolean"
+        }
+      }
+    },
+    "AccessToken": {
+      "properties": {
+        "token_type": {
+          "type": "string",
+          "example": "Bearer"
+        },
+        "refresh_token": {
+          "type": "string"
+        },
+        "access_token": {
+          "type": "string"
+        },
+        "expires_in": {
+          "type": "integer",
+          "example": 31622400
+        }
+      }
+    },
+    "GenericObject": {
+      "type": "object"
+    },
+    "ChecklistPermissionResponse": {
+      "properties": {
+        "checklist_edit": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "checklist_read": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "process_launch": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "process_read": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "checklist_duplicate": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        }
+      }
+    },
+    "RunPermissionResponse": {
+      "properties": {
+        "process_read": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        }
+      }
+    },
+    "RunPermissionBody": {
+      "properties": {
+        "process_read": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "process_read_group": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "12345"
+          }
+        }
+      }
+    },
+    "Client": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "redirect": {
+          "type": "string"
+        }
+      }
+    },
+    "ChecklistPermissionBody": {
+      "properties": {
+        "checklist_edit": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "checklist_read": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "process_launch": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "process_read": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "checklist_duplicate": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "example": 12345
+          }
+        },
+        "checklist_edit_group": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "12345"
+          }
+        },
+        "checklist_read_group": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "12345"
+          }
+        },
+        "process_launch_group": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "12345"
+          }
+        },
+        "process_read_group": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "12345"
+          }
+        },
+        "checklist_duplicate_group": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "12345"
+          }
+        },
+        "checklist_read_guest": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "12345"
+          }
+        },
+        "checklist_read_guest_group": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "example": "12345"
+          }
+        }
+      }
+    },
+    "MoveCaptureInput": {
+      "properties": {
+        "target_step_id": {
+          "description": "ID of the target step",
+          "type": "string"
+        },
+        "position": {
+          "description": "New position within the target step",
+          "type": "integer"
+        }
+      }
+    },
+    "UserPermissions": {
+      "properties": {
+        "create_templates": {
+          "type": "boolean",
+          "example": false
+        },
+        "delete_templates": {
+          "type": "boolean",
+          "example": false
+        }
+      }
+    },
+    "UserCountry": {
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 231
+        },
+        "name": {
+          "type": "string",
+          "example": "United States"
+        },
+        "phone_code": {
+          "type": "string",
+          "example": "+1"
+        },
+        "iso2": {
+          "type": "string",
+          "example": "us"
+        }
+      }
+    },
+    "User": {
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 12345
+        },
+        "email": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "profile_pic": {
+          "type": "string",
+          "example": "<url>"
+        },
+        "locale": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "is_suspended": {
+          "type": "boolean",
+          "example": false
+        },
+        "created_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "last_updated": {
+          "$ref": "#/definitions/Date"
+        },
+        "last_login_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "activated_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "support_user": {
+          "type": "boolean",
+          "example": false
+        },
+        "country": {
+          "$ref": "#/definitions/UserCountry"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "job_title": {
+          "type": "string"
+        },
+        "job_description": {
+          "type": "string"
+        },
+        "team": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string"
+        },
+        "UTC_offset": {
+          "type": "string"
+        },
+        "last_accessed_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "approved_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "invited_by": {
+          "type": "integer",
+          "example": 12345
+        },
+        "disabled_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "disabled_by": {
+          "type": "integer",
+          "example": 12345
+        },
+        "reactivated_at": {
+          "$ref": "#/definitions/Date"
+        },
+        "reactivated_by": {
+          "type": "integer",
+          "example": 12345
+        },
+        "status": {
+          "type": "string",
+          "example": "active"
+        },
+        "date_format": {
+          "type": "string",
+          "example": "mm/dd/yyyy"
+        },
+        "last_known_ip": {
+          "type": "string",
+          "example": "000.000.000.00"
+        },
+        "last_known_country": {
+          "type": "string",
+          "example": "AB"
+        }
+      }
+    }
+  },
+  "parameters": {
+    "org": {
+      "name": "org",
+      "in": "path",
+      "description": "Organization Id",
+      "required": true,
+      "type": "string"
+    }
+  },
+  "responses": {
+    "200": {
+      "description": "Success response",
+      "schema": {
+        "properties": {
+          "data": {
+            "$ref": "#/definitions/Branding"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Activity Feed",
+      "description": "Get object activities"
+    }
+  ],
+  "paths": {
+    "/organizations/{org}/activity-feeds": {
+      "get": {
+        "tags": [
+          "Activity Feed"
+        ],
+        "summary": "Get all ActivityFeeds in an organization",
+        "description": "Activity Feeds on All Objects",
+        "operationId": "getAllActivityFeeds",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "org",
+            "in": "path",
+            "description": "Organization ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Search ActivityFeed by Template/checklist or Process or Task or Step or comment",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "Comment",
+              "Task",
+              "Step",
+              "Process",
+              "Template",
+              "User",
+              "Organization",
+              "Group"
+            ]
+          },
+          {
+            "name": "actor_type",
+            "in": "query",
+            "description": "Search ActivityFeed by Actor",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "user",
+              "guest"
+            ]
+          },
+          {
+            "name": "actor_id",
+            "in": "query",
+            "description": "Selected actor Id",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "entity_type",
+            "in": "query",
+            "description": "Search ActivityFeed by Template/checklist or Process or Task or Step or comment",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "checklist",
+              "run",
+              "step",
+              "task",
+              "thread"
+            ]
+          },
+          {
+            "name": "entity_id",
+            "in": "query",
+            "description": "Selected Entity Id",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "verb",
+            "in": "query",
+            "description": "Search all ActivityFeed By verb",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "created",
+              "updated",
+              "owners-updated",
+              "completed",
+              "uploaded",
+              "uncompleted",
+              "deleted",
+              "re-ordered",
+              "commented",
+              "issue-reported",
+              "issue-resolved",
+              "archived",
+              "unarchived",
+              "emitted",
+              "enabled",
+              "disabled",
+              "comment-deleted",
+              "invited",
+              "invite-accepted",
+              "linked",
+              "unlinked"
+            ]
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "description": "Search all ActivityFeed By source",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "Member",
+              "Guest",
+              "Webhook"
+            ]
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Which results page to retrieve. Default is 1",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "How many Tasks per page. Default is 20",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success response",
+            "schema": {
+              "$ref": "#/definitions/ActivityFeedOnlyPagination"
+            }
+          }
+        }
+      }
+    },
+    "/organizations/{org}/activity-feed/{activity_feed_id}/undo": {
+      "put": {
+        "tags": [
+          "Activity Feed"
+        ],
+        "summary": "Undo Activity Feed",
+        "description": "Undo Activity Feed",
+        "operationId": "undoActivityFeed",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "org",
+            "in": "path",
+            "description": "Organization ID",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "activity_feed_id",
+            "in": "path",
+            "description": "ActivityFeed ID",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success response"
+          }
+        }
+      }
+    }
+  }
+}

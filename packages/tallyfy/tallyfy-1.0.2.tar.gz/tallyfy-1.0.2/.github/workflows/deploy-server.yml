@@ -1,0 +1,26 @@
+name: Build & Deploy to instance
+
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - .github/workflows/deploy-server.yml
+      - server/**
+
+jobs:
+  build-deploy-server:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: SSH config
+      uses: shimataro/ssh-key-action@v2.5.0
+      with:
+        key:  ${{ secrets.SSH_PRIVATE_KEY }}
+        known_hosts: ${{ secrets.SSH_HOST }}
+    - name: Deploy
+      run: |
+          scp -v -rp server/* root@143.198.69.152:/home/mcp-server
+    - name: Build
+      run: |
+          ssh root@143.198.69.152 "cd /home/mcp-server && docker compose build && docker compose down && docker compose up -d"
