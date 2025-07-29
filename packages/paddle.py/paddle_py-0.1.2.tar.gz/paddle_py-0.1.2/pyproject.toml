@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "paddle.py"
+dynamic = ["version"]
+description = "A modern Python API wrapper for Paddle's API with type hints and async support"
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    { name="CCXLV", email="mereba2627@gmail.com" }
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+keywords = ["paddle", "api", "wrapper", "async", "types"]
+dependencies = [
+    "httpx>=0.28.1",
+    "pydantic>=2.10.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "setuptools",
+    "black",
+    "ruff",
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "pytest-asyncio",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.black]
+line-length = 100
+include = '\.pyi?$'
+target-version = ['py38']
+preview = true
+
+[tool.ruff]
+lint.select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+]
+lint.ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # complexity,
+]
+exclude = [
+    ".git",
+    ".ruff_cache",
+    ".venv",
+    "examples",
+]
