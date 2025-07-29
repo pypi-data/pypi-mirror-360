@@ -1,0 +1,1 @@
+from .UzbekLemmatizer import Lemma
