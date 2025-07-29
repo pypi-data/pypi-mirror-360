@@ -1,0 +1,140 @@
+Metadata-Version: 2.4
+Name: jsrify
+Version: 0.1.0
+Summary: A plug-and-play tool to detect and rate hallucinations in ASR outputs.
+Home-page: https://github.com/yourusername/jsrify
+Author: Your Name
+Author-email: your@email.com
+License: MIT
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: openai-whisper
+Requires-Dist: soundfile
+Requires-Dist: numpy
+Requires-Dist: scipy
+Requires-Dist: jiwer
+Requires-Dist: librosa
+Requires-Dist: torch
+Requires-Dist: torchaudio
+Requires-Dist: matplotlib
+Requires-Dist: seaborn
+Dynamic: author
+Dynamic: author-email
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# JSRify - ASR Hallucination Detection Tool
+
+A comprehensive plug-and-play tool to detect and rate hallucinations in Automatic Speech Recognition (ASR) outputs. This library provides robust evaluation of ASR systems by introducing various types of noise and analyzing how they affect transcription accuracy and hallucination rates.
+
+## Features
+
+- **Multiple Noise Types**: Synthetic noise (Gaussian, impulse, frequency shift) and real-world noise from MUSAN dataset
+- **Comprehensive Metrics**: Binary and multi-class confusion matrices, WER components, confidence analysis
+- **Visualization**: Heatmaps and detailed analysis plots
+- **Flexible Evaluation**: Support for multiple SNR levels and noise categories
+- **Easy Integration**: Simple API for running complete evaluation pipelines
+- **Model Agnostic**: Use with any ASR model by providing your own transcription function
+
+## Installation
+
+```bash
+pip install -r requirements.txt
+```
+
+Or install the package:
+
+```bash
+pip install -e .
+```
+
+## Quick Start
+
+```python
+from jsrify import run_pipeline
+
+# Run the complete evaluation pipeline
+run_pipeline()
+```
+
+## Usage
+
+### Model-Agnostic Evaluation
+
+You can use **any ASR model** with this library! Simply provide a function that takes an audio path and returns a transcript string.
+
+#### Example: Using Your Own ASR Model
+
+```python
+from jsrify.usage import batch_process
+
+def my_asr_transcribe(audio_path):
+    # Your ASR model logic here
+    return "transcribed text"
+
+sample_files, all_binary_confusions, multiclass_counter = batch_process(
+    audio_dir='path/to/Audio',
+    transcript_dir='path/to/Transcripts',
+    output_folder='path/to/output',
+    transcribe_fn=my_asr_transcribe,   # Pass your own function here
+    sample_size=10,
+    png_output=True
+)
+```
+
+#### Example: Using Whisper (Convenience Wrapper)
+
+```python
+from jsrify.usage import batch_process, whisper_transcribe_fn_factory
+
+whisper_fn = whisper_transcribe_fn_factory(model_size='small')
+
+sample_files, all_binary_confusions, multiclass_counter = batch_process(
+    audio_dir='path/to/Audio',
+    transcript_dir='path/to/Transcripts',
+    output_folder='path/to/output',
+    transcribe_fn=whisper_fn,          # Use the provided Whisper wrapper
+    sample_size=10,
+    png_output=True
+)
+```
+
+### Basic Usage
+
+The library automatically:
+1. Loads random audio-transcript pairs from your dataset
+2. Applies various noise types and levels
+3. Runs ASR transcription using your provided function
+4. Calculates hallucination metrics
+5. Generates visualization reports (if requested)
+
+### Custom Configuration
+
+```python
+from jsrify.confusion_matrices import binary_confusion_matrix, multiclass_confusion_matrix
+
+ground_truth = "your ground truth text"
+hypothesis = my_asr_transcribe("path/to/audio.wav")
+confusion_matrix = binary_confusion_matrix(ground_truth, hypothesis)
+```
+
+### Advanced: Custom Usage Functions
+
+You can also use the importable usage functions for more control:
+
+```python
+from jsrify.usage import run_basic_example
+
+transcript, confusion_matrix = run_basic_example(
+    transcribe_fn=my_asr_transcribe,
+    audio_path='path/to/audio.wav',
+    ground_truth='your ground truth text'
+)
+```
