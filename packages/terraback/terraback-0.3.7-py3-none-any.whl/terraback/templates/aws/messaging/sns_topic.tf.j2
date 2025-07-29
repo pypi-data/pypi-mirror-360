@@ -1,0 +1,48 @@
+{% for topic in resources -%}
+resource "aws_sns_topic" "{{ topic.name_sanitized }}" {
+  name = "{{ topic.TopicName }}"
+
+  {%  if topic.display_name %}
+  display_name = "{{ topic.display_name | replace('"', '\\"') }}"
+  {%  endif -%}
+
+  {%  if topic.kms_master_key_id %}
+  kms_master_key_id = "{{ topic.kms_master_key_id }}"
+  {%  endif -%}
+
+  {%  if topic.is_fifo %}
+  fifo_topic = true
+  {%  if topic.content_based_deduplication is defined %}
+  content_based_deduplication = {{ topic.content_based_deduplication | lower }}
+  {%  endif -%}
+  {%  endif -%}
+
+  {%  if topic.delivery_policy %}
+  delivery_policy = jsonencode({{ topic.delivery_policy | tojson }})
+  {%  endif -%}
+
+  {%  if topic.policy %}
+  policy = jsonencode({{ topic.policy | tojson }})
+  {%  endif -%}
+
+  {%  if topic.signature_version and topic.signature_version != "1" %}
+  signature_version = {{ topic.signature_version }}
+  {%  endif -%}
+
+  {%  if topic.tracing_config and topic.tracing_config != "PassThrough" %}
+  tracing_config = "{{ topic.tracing_config }}"
+  {%  endif -%}
+
+  {%  if topic.tags_formatted %}
+  tags = {
+    {%- for key, value in topic.tags_formatted.items() %}
+    "{{ key }}" = "{{ value | replace('"', '\\"') }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

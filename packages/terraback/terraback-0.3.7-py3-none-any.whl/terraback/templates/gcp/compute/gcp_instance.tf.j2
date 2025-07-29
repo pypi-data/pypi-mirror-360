@@ -1,0 +1,69 @@
+{% for instance in resources -%}
+resource "google_compute_instance" "{{ instance.name_sanitized }}" {
+  name         = "{{ instance.name }}"
+  project      = "{{ instance.project }}"
+  zone         = "{{ instance.zone }}"
+  machine_type = "{{ instance.machine_type }}"
+
+  {%  if instance.tags %}
+  tags = {{ instance.tags | tojson }}
+  {%  endif -%}
+
+  {%  if instance.boot_disk %}
+  boot_disk {
+    source      = "{{ instance.boot_disk.source }}"
+    auto_delete = {{ instance.boot_disk.auto_delete | lower }}
+    device_name = "{{ instance.boot_disk.device_name }}"
+  }
+  {%  endif -%}
+
+  {%- for disk in instance.attached_disks %}
+  attached_disk {
+    source      = "{{ disk.source }}"
+    device_name = "{{ disk.device_name }}"
+    mode        = "READ_WRITE"
+  }
+  {%- endfor %}
+
+  {%- for nic in instance.network_interfaces %}
+  network_interface {
+    {%  if nic.subnetwork %}
+    subnetwork = "{{ nic.subnetwork }}"
+    {%- else %}
+    network = "{{ nic.network }}"
+    {%  endif -%}
+
+    {%- for ac in nic.access_configs %}
+    access_config {
+      nat_ip = "{{ ac.nat_ip }}"
+      // Ephemeral IP
+    }
+    {%- endfor %}
+  }
+  {%- endfor %}
+
+  {%  if instance.metadata %}
+  metadata = {
+    {%- for key, value in instance.metadata.items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  {%  if instance.labels %}
+  labels = {
+    {%- for key, value in instance.labels.items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

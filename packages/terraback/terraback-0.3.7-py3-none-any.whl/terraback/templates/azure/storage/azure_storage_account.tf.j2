@@ -1,0 +1,118 @@
+{% for account in resources -%}
+resource "azurerm_storage_account" "{{ account.name_sanitized }}" {
+  name                     = "{{ account.name }}"
+  resource_group_name      = "{{ account.resource_group_name }}"
+  location                 = "{{ account.location }}"
+  account_tier             = "{{ account.account_tier }}"
+  account_replication_type = "{{ account.account_replication_type }}"
+
+  {%  if account.account_kind %}
+  account_kind             = "{{ account.account_kind }}"
+  {%  endif -%}
+
+  {%  if account.access_tier %}
+  access_tier              = "{{ account.access_tier }}"
+  {%  endif -%}
+
+  {%  if account.enable_https_traffic_only is defined %}
+  enable_https_traffic_only = {{ account.enable_https_traffic_only | lower }}
+  {%  endif -%}
+
+  {%  if account.min_tls_version %}
+  min_tls_version          = "{{ account.min_tls_version }}"
+  {%  endif -%}
+
+  {%  if account.allow_nested_items_to_be_public is defined %}
+  allow_nested_items_to_be_public = {{ account.allow_nested_items_to_be_public | lower }}
+  {%  endif -%}
+
+  {%  if account.shared_access_key_enabled is defined %}
+  shared_access_key_enabled = {{ account.shared_access_key_enabled | lower }}
+  {%  endif -%}
+
+  {%  if account.public_network_access_enabled is defined %}
+  public_network_access_enabled = {{ account.public_network_access_enabled | lower }}
+  {%  endif -%}
+
+  {%  if account.infrastructure_encryption_enabled is defined %}
+  infrastructure_encryption_enabled = {{ account.infrastructure_encryption_enabled | lower }}
+  {%  endif -%}
+
+  {%  if account.network_rules %}
+  network_rules {
+    default_action             = "{{ account.network_rules.default_action }}"
+    {%  if account.network_rules.bypass %}
+    bypass                     = {{ account.network_rules.bypass | tojson }}
+    {%  endif -%}
+    {%  if account.network_rules.ip_rules %}
+    ip_rules                   = {{ account.network_rules.ip_rules | tojson }}
+    {%  endif -%}
+    {%  if account.network_rules.virtual_network_subnet_ids %}
+    virtual_network_subnet_ids = {{ account.network_rules.virtual_network_subnet_ids | tojson }}
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  {%  if account.blob_properties %}
+  blob_properties {
+    {%  if account.blob_properties.versioning_enabled is defined %}
+    versioning_enabled = {{ account.blob_properties.versioning_enabled | lower }}
+    {%  endif -%}
+    {%  if account.blob_properties.change_feed_enabled is defined %}
+    change_feed_enabled = {{ account.blob_properties.change_feed_enabled | lower }}
+    {%  endif -%}
+    {%  if account.blob_properties.last_access_time_enabled is defined %}
+    last_access_time_enabled = {{ account.blob_properties.last_access_time_enabled | lower }}
+    {%  endif -%}
+
+    {%  if account.blob_properties.delete_retention_policy and account.blob_properties.delete_retention_policy.days > 0 %}
+    delete_retention_policy {
+      days = {{ account.blob_properties.delete_retention_policy.days }}
+    }
+    {%  endif -%}
+
+    {%  if account.blob_properties.container_delete_retention_policy and account.blob_properties.container_delete_retention_policy.days > 0 %}
+    container_delete_retention_policy {
+      days = {{ account.blob_properties.container_delete_retention_policy.days }}
+    }
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  {%  if account.static_website %}
+  static_website {
+    {%  if account.static_website.index_document %}
+    index_document = "{{ account.static_website.index_document }}"
+    {%  endif -%}
+    {%  if account.static_website.error_404_document %}
+    error_404_document = "{{ account.static_website.error_404_document }}"
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  {%  if account.identity %}
+  identity {
+    type = "{{ account.identity.type }}"
+    {%  if account.identity.identity_ids %}
+    identity_ids = {{ account.identity.identity_ids | tojson }}
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  {%  if account.tags %}
+  tags = {
+    {%- for key, value in account.tags.items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}
