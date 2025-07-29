@@ -1,0 +1,52 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "isek"
+version = "0.2.0"
+description = "ISEK Distributed Multi-Agent Framework"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "ISEK Team", email = "sparks@isek.xyz" }
+]
+requires-python = ">=3.10"
+keywords = ["LLM", "multi-agent", "distributed", "AI"]
+
+dependencies = [
+    "click>=8.0.0",
+    "loguru>=0.6.0",
+    "pyyaml>=6.0",
+    "requests>=2.28.0",
+    # Core dependencies
+    "openai>=0.27.0",
+    "flask>=2.0.0",
+    "ecdsa",
+    "numpy>=1.23,<2.0",
+    "python-dotenv",
+    "sphinx",
+    "sphinxawesome-theme",
+    "pytest",
+    "pre-commit",
+    "etcd3gw",
+    "mypy",
+    "litellm",
+    "uvicorn",
+    "rich",
+    "fastmcp",
+    "a2a-sdk",
+]
+
+[project.scripts]
+isek = "isek.cli:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["isek"]
+
+[tool.hatch.build.targets.wheel.sources]
+"isek" = "isek"
+
+[tool.hatch.build.targets.wheel.include]
+"isek/protocol/p2p/*.js" = "isek/protocol/p2p/"
+"isek/protocol/p2p/package.json" = "isek/protocol/p2p/"
