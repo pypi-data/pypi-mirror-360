@@ -1,0 +1,158 @@
+{% load static %}
+
+<html>
+    <head>
+        <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"
+                integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8="
+                crossorigin="anonymous">
+        </script>
+
+        <style>
+            h1 {font-size: 24px; text-align: center;}
+            h1.title {color: #7b7d7d; font-size: 20px;}
+            h2 {font-size: 22px;}
+            h3 {font-size: 20px;}
+
+            .bigskip {margin-top: 1.5cm;}
+            .medskip {margin-top: 1cm;}
+
+            .contact-data {
+                margin-top: 1.5cm;
+            }
+
+            .table-row {display: flex;}
+            .table-cell {flex: 1; padding: 5px;}
+
+            .btn {visibility: hidden}
+
+            .primary.button {
+                background-color: #2185d0;
+                border: none;
+                border-radius: .28571429rem;
+                box-shadow: 0 0 0 0 rgba(34, 36, 38, .15) inset;
+                color: #fff;
+                font-size: 1rem;
+                min-height: 1em;
+                padding: .78571429em 1.5em .78571429em;
+                text-shadow: none;
+            }
+
+            {% block extra_css %}{% endblock extra_css %}
+        </style>
+    </head>
+    <body>
+        <div class="page">
+            <h1 class="title">Studieninformation und Einwilligungserklärung</h1>
+            <h1>Information über die Teilnahme an der Studie</h1>
+            <h1>{{ project.title }}</h1>
+
+            <div class="table-row bigskip">
+                <div class="table-cell">
+                    <b>Durchführende Stelle(n):</b><br>
+                    Max-Planck-Institut für Kognitions- und Neurowissenschaften (MPI-CBS)<br>
+                    {{ project.research_unit.name }}<br>
+                    Stephanstrasse 1a, 04103 Leipzig
+                </div>
+                <div class="table-cell">
+                    <b>Studienleiter:</b><br>
+                    {{ project.principal_investigator.get_full_name }}<br>
+                    Max-Planck-Institut für Kognitions- und Neurowissenschaften (MPI-CBS)<br>
+                    {{ project.research_unit.name }}<br>
+                    Stephanstrasse 1a, 04103 Leipzig<br>
+                    E-Mail: {{ project.principal_investigator.email }}
+                </div>
+            </div>
+
+            <p class="medskip">
+                <b>Studienkontakt:</b>
+                {% for project_intermediary in project_intermediaries %}
+                <br>
+                <u>{{ project_intermediary.project_membership.user.get_full_name }}</u><br>
+                {% if project_intermediary.email %}E-Mail: {{ project_intermediary.email }}<br>{% endif %}
+                {% if project_intermediary.phone %}Phone: {{ project_intermediary.phone }}<br>{% endif %}
+                {% endfor %}
+            </p>
+
+            <p class="bigskip">
+                {% if subject.contact.gender == 0 %}
+                Sehr geehrte {{ subject.contact.display_name }},
+                {% elif subject.contact.gender == 1 %}
+                Sehr geehrter {{ subject.contact.display_name }},
+                {% else %}
+                Hallo {{ subject.contact.display_name }},
+                {% endif %}
+            </p>
+
+            {% for text_fragment in consent.text_fragments %}
+            {% with template_name="project_consents/text_fragments/"|add:text_fragment.type|add:".html" %}
+            {% include template_name with index=forloop.counter0 %}
+            {% endwith %}
+            {% endfor %}
+
+            <p class="bigskip">
+                Eine Weitergabe, Speicherung, Auswertung und Nutzung der bei wissenschaftlichen Studien erhobenen Daten erfolgt nach gesetzlichen Bestimmungen und setzt vor Teilnahme an der Studie die folgenden freiwilligen Einwilligungen voraus:
+            </p>
+        </div>
+
+        <div class="page new_page" style="page-break-before: always;">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="form-TOTAL_FORMS" value="2">
+                <input type="hidden" name="form-INITIAL_FORMS" value="0">
+
+                <h2>Einwilligungserklärung zur Teilnahme an der Studie</h2>
+                <h2>{{ project.title }}</h2>
+
+                <ol>
+                    <li>Ich wurde über die Studie und deren Wesen, Bedeutung, Tragweite und Risiken aufgeklärt und habe diese Informationen gelesen und verstanden.</li>
+                    <li>Mir wurde ausreichend Gelegenheit gegeben, alle offenen Fragen zu klären.</li>
+                    <li>Ich habe jederzeit das Recht, weitere Informationen zur Studie zu erfragen.</li>
+                    <li>Ich erkläre mich freiwillig bereit, an der Studie teilzunehmen.</li>
+                    <li>Ich wurde darauf hingewiesen, dass ich jederzeit von dieser Studienteilnahme zurücktreten kann, ohne dass mir dadurch ein Nachteil entsteht.</li>
+                    <li>Eine Ausfertigung der <b>Studieninformation und Einwilligungserklärung</b> habe ich erhalten.</li>
+                    <li>Die <b>Erklärungen zum Datenschutz</b> habe ich gelesen und stimme diesen zu.</li>
+                    <li>Die Erklärungen zu Zufallsfunden habe ich gelesen und stimme diesen zu.</li>
+                </ol>
+
+                <div class="table-row" style="margin-top: 1.2cm;">
+                    <div class="table-cell">
+                        Versuchsleiter/in:<br>
+                        {{ experimenter }}<br><br><br>
+                        Leipzig, den {% now "SHORT_DATE_FORMAT" %}
+                    </div>
+                    <div class="table-cell">
+                        Unterschrift Versuchsleiter/in:
+                        {% block signature_experimenter %}{% endblock signature_experimenter %}
+                    </div>
+                </div>
+
+                <div class="table-row" style="margin-top: 1.0cm;">
+                    <div class="table-cell">
+                        Studienteilnehmer/in:<br>
+                        {{ subject.contact.display_name }}<br><br>
+                        Geburtsdatum:<br>
+                        {{ subject.contact.date_of_birth }}<br><br><br>
+                        Leipzig, den {% now "SHORT_DATE_FORMAT" %}
+                    </div>
+                    <div class="table-cell">
+                        Unterschrift Studienteilnehmer/in oder gesetzliche/r Vertreter/in*:
+                        {% block signature_subject %}{% endblock signature_subject %}
+                    </div>
+                </div>
+
+                <p class="bigskip">
+                    <b>* bei minderjährigen Studienteilnehmer*innen:</b> Als Sorgeberechtigte*r bzw. gesetzliche*r Vertreter*in eines*r minderjährigen Studienteilnehmers*in versichere ich, dass ich auch im Namen des*der zweiten Sorgeberechtigten handle oder alleine sorgeberechtigt bin.
+                </p>
+
+                {% block submit_button %}
+                <div>
+                    <button class="primary button">submit</button>
+                </div>
+                {% endblock submit_button %}
+            </form>
+        </div>
+
+        <script src="https://unpkg.com/@popperjs/core@2"></script>
+        {{ form.media }}
+    </body>
+</html>
