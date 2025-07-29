@@ -1,0 +1,117 @@
+.. _spkg_curl:
+
+curl: Multiprotocol data transfer library and utility
+===============================================================
+
+Description
+-----------
+
+Multiprotocols data transfer library (and utility).
+
+License
+-------
+
+"MIT style license" : see file "COPYING" at the root of the source
+tarball, explanations at https://curl.haxx.se/docs/copyright.html.
+
+
+Upstream Contact
+----------------
+
+According to the file README at the root of the tarball, contact is done
+by mailing https://curl.haxx.se/mail/
+
+Type
+----
+
+standard
+
+
+Dependencies
+------------
+
+- :ref:`spkg_openssl`
+
+Version Information
+-------------------
+
+package-version.txt::
+
+    7.84.0
+
+
+Equivalent System Packages
+--------------------------
+
+.. tab:: Alpine
+
+   .. CODE-BLOCK:: bash
+
+       $ apk add curl 
+
+
+.. tab:: conda-forge
+
+   .. CODE-BLOCK:: bash
+
+       $ conda install curl 
+
+
+.. tab:: Debian/Ubuntu
+
+   .. CODE-BLOCK:: bash
+
+       $ sudo apt-get install curl libcurl4-openssl-dev 
+
+
+.. tab:: Fedora/Redhat/CentOS
+
+   .. CODE-BLOCK:: bash
+
+       $ sudo yum install libcurl-devel curl 
+
+
+.. tab:: FreeBSD
+
+   .. CODE-BLOCK:: bash
+
+       $ sudo pkg install ftp/curl 
+
+
+.. tab:: Homebrew
+
+   .. CODE-BLOCK:: bash
+
+       $ brew install curl 
+
+
+.. tab:: MacPorts
+
+   No package needed.
+
+.. tab:: openSUSE
+
+   .. CODE-BLOCK:: bash
+
+       $ sudo zypper install curl pkgconfig\(libcurl\) 
+
+
+.. tab:: Slackware
+
+   .. CODE-BLOCK:: bash
+
+       $ sudo slackpkg install curl cyrus-sasl openldap-client libssh2
+
+
+.. tab:: Void Linux
+
+   .. CODE-BLOCK:: bash
+
+       $ sudo xbps-install curl libcurl-devel 
+
+
+
+See https://repology.org/project/curl/versions
+
+If the system package is installed, ``./configure`` will check if it can be used.
+

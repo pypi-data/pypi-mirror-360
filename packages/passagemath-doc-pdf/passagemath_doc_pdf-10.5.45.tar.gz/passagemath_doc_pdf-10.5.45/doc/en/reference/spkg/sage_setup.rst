@@ -1,0 +1,39 @@
+.. _spkg_sage_setup:
+
+sage-setup: Build system of the SageMath library
+==========================================================
+
+This is the build system of the Sage library, based on setuptools.
+
+Type
+----
+
+standard
+
+
+Dependencies
+------------
+
+- $(PYTHON)
+- $(PYTHON_TOOLCHAIN)
+- :ref:`spkg_cython`
+- :ref:`spkg_jinja2`
+- :ref:`spkg_pkgconfig`
+
+Version Information
+-------------------
+
+package-version.txt::
+
+    10.5.45
+
+version_requirements.txt::
+
+    passagemath-setup ~= 10.5.45.0
+
+
+Equivalent System Packages
+--------------------------
+
+(none known)
+
