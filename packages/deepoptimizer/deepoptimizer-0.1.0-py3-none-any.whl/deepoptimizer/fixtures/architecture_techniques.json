@@ -1,0 +1,128 @@
+[
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Grouped Convolutions",
+      "category": "architecture",
+      "description": "Divides input channels into groups and performs separate convolutions on each, reducing parameters and computation.",
+      "implementation_code": "# Standard ResNeXt block with grouped convolutions\nclass ResNeXtBlock(nn.Module):\n    def __init__(self, in_channels, out_channels, groups=32, width_per_group=4):\n        super().__init__()\n        width = groups * width_per_group\n        \n        self.conv1 = nn.Conv2d(in_channels, width, 1)\n        self.bn1 = nn.BatchNorm2d(width)\n        \n        # Grouped convolution - key component\n        self.conv2 = nn.Conv2d(\n            width, width, 3, \n            padding=1, \n            groups=groups  # This is the grouped convolution\n        )\n        self.bn2 = nn.BatchNorm2d(width)\n        \n        self.conv3 = nn.Conv2d(width, out_channels, 1)\n        self.bn3 = nn.BatchNorm2d(out_channels)\n        \n        self.relu = nn.ReLU(inplace=True)\n        self.downsample = nn.Conv2d(in_channels, out_channels, 1) \\\n                         if in_channels != out_channels else None\n    \n    def forward(self, x):\n        identity = x\n        \n        out = self.relu(self.bn1(self.conv1(x)))\n        out = self.relu(self.bn2(self.conv2(out)))  # Grouped conv\n        out = self.bn3(self.conv3(out))\n        \n        if self.downsample:\n            identity = self.downsample(x)\n            \n        return self.relu(out + identity)",
+      "expected_benefits": "Same accuracy with 2-4x fewer parameters, better GPU utilization",
+      "compatibility_notes": "May not be optimized on all hardware. Can conflict with channel-wise operations.",
+      "research_reference": "Xie et al. (2017) - Aggregated Residual Transformations for Deep Neural Networks (ResNeXt)",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 0.0,
+      "speed_impact": 30.0,
+      "memory_impact": 50.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "mature"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Squeeze-and-Excitation",
+      "category": "architecture",
+      "description": "Adds channel-wise attention that adaptively recalibrates feature responses, improving representational power.",
+      "implementation_code": "class SEBlock(nn.Module):\n    def __init__(self, channels, reduction=16):\n        super().__init__()\n        self.squeeze = nn.AdaptiveAvgPool2d(1)\n        self.excitation = nn.Sequential(\n            nn.Linear(channels, channels // reduction, bias=False),\n            nn.ReLU(inplace=True),\n            nn.Linear(channels // reduction, channels, bias=False),\n            nn.Sigmoid()\n        )\n        \n    def forward(self, x):\n        b, c, _, _ = x.size()\n        # Squeeze: global average pooling\n        y = self.squeeze(x).view(b, c)\n        # Excitation: learn channel importance\n        y = self.excitation(y).view(b, c, 1, 1)\n        # Scale: reweight channels\n        return x * y.expand_as(x)\n\n# Add to any CNN architecture\nclass ResNetWithSE(nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.conv = nn.Conv2d(64, 64, 3, padding=1)\n        self.se = SEBlock(64, reduction=16)\n        self.relu = nn.ReLU()\n        \n    def forward(self, x):\n        out = self.conv(x)\n        out = self.se(out)  # Channel attention\n        return self.relu(out)",
+      "expected_benefits": "1-3% accuracy improvement with minimal overhead (<1% FLOPs)",
+      "compatibility_notes": "Works with any CNN. May conflict with other attention mechanisms.",
+      "research_reference": "Hu et al. (2018) - Squeeze-and-Excitation Networks",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 2.0,
+      "speed_impact": -5.0,
+      "memory_impact": -2.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "mature"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Inverted Residuals (MobileNetV2)",
+      "category": "architecture",
+      "description": "Uses thin bottleneck layers with expanded intermediate representations, opposite of traditional residuals.",
+      "implementation_code": "class InvertedResidualBlock(nn.Module):\n    def __init__(self, in_channels, out_channels, expand_ratio=6, stride=1):\n        super().__init__()\n        hidden_dim = in_channels * expand_ratio\n        self.use_residual = stride == 1 and in_channels == out_channels\n        \n        layers = []\n        if expand_ratio != 1:\n            # Pointwise expansion\n            layers.extend([\n                nn.Conv2d(in_channels, hidden_dim, 1, bias=False),\n                nn.BatchNorm2d(hidden_dim),\n                nn.ReLU6(inplace=True)\n            ])\n        \n        # Depthwise convolution\n        layers.extend([\n            nn.Conv2d(hidden_dim, hidden_dim, 3, stride, 1, \n                     groups=hidden_dim, bias=False),\n            nn.BatchNorm2d(hidden_dim),\n            nn.ReLU6(inplace=True),\n            # Pointwise projection (no activation!)\n            nn.Conv2d(hidden_dim, out_channels, 1, bias=False),\n            nn.BatchNorm2d(out_channels)\n        ])\n        \n        self.conv = nn.Sequential(*layers)\n        \n    def forward(self, x):\n        if self.use_residual:\n            return x + self.conv(x)\n        else:\n            return self.conv(x)",
+      "expected_benefits": "3-4x fewer operations than ResNet, better for mobile",
+      "compatibility_notes": "ReLU6 required for quantization. Linear bottleneck is crucial.",
+      "research_reference": "Sandler et al. (2018) - MobileNetV2: Inverted Residuals and Linear Bottlenecks",
+      "hardware_requirements": ["gpu", "cpu", "mobile"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": -1.0,
+      "speed_impact": 60.0,
+      "memory_impact": 60.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "mature"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "EfficientNet Compound Scaling",
+      "category": "architecture",
+      "description": "Uniformly scales network depth, width, and resolution with a compound coefficient for optimal efficiency.",
+      "implementation_code": "class EfficientNetScaling:\n    \"\"\"Compound scaling for balanced network growth\"\"\"\n    def __init__(self, phi=1.0, alpha=1.2, beta=1.1, gamma=1.15):\n        # phi: compound coefficient\n        # alpha: depth multiplier (alpha^phi)\n        # beta: width multiplier (beta^phi)  \n        # gamma: resolution multiplier (gamma^phi)\n        self.depth_mult = alpha ** phi\n        self.width_mult = beta ** phi\n        self.res_mult = gamma ** phi\n        \n    def scale_network(self, base_config):\n        # Scale depth (number of layers)\n        scaled_depth = int(math.ceil(\n            base_config['num_layers'] * self.depth_mult\n        ))\n        \n        # Scale width (number of channels)\n        def scale_width(channels):\n            # Make divisible by 8 for hardware efficiency\n            scaled = int(channels * self.width_mult)\n            new_channels = max(8, int(scaled + 4) // 8 * 8)\n            if new_channels < 0.9 * scaled:\n                new_channels += 8\n            return new_channels\n        \n        # Scale resolution\n        scaled_resolution = int(base_config['resolution'] * self.res_mult)\n        \n        return {\n            'num_layers': scaled_depth,\n            'channels': [scale_width(c) for c in base_config['channels']],\n            'resolution': scaled_resolution\n        }\n\n# Example: EfficientNet-B1 from B0\nscaler = EfficientNetScaling(phi=0.5)  # B1 uses phi=0.5\nb1_config = scaler.scale_network(b0_config)",
+      "expected_benefits": "10x smaller and 5x faster than ResNet with same accuracy",
+      "compatibility_notes": "Requires retraining for each scale. Memory grows quadratically with resolution.",
+      "research_reference": "Tan & Le (2019) - EfficientNet: Rethinking Model Scaling for CNNs",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 2.0,
+      "speed_impact": 80.0,
+      "memory_impact": 80.0,
+      "implementation_difficulty": "hard",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Reversible Residual Networks (RevNet)",
+      "category": "architecture",
+      "description": "Residual networks where activations can be reconstructed from subsequent layers, eliminating storage during backprop.",
+      "implementation_code": "class ReversibleBlock(nn.Module):\n    def __init__(self, f_func, g_func):\n        super().__init__()\n        self.f = f_func\n        self.g = g_func\n        \n    def forward(self, x):\n        x1, x2 = torch.chunk(x, 2, dim=1)\n        y1 = x1 + self.f(x2)\n        y2 = x2 + self.g(y1)\n        return torch.cat([y1, y2], dim=1)\n    \n    def inverse(self, y):\n        # Reconstruct input from output\n        y1, y2 = torch.chunk(y, 2, dim=1)\n        x2 = y2 - self.g(y1)\n        x1 = y1 - self.f(x2)\n        return torch.cat([x1, x2], dim=1)\n\n# Custom backward pass to save memory\nclass RevNetFunction(torch.autograd.Function):\n    @staticmethod\n    def forward(ctx, x, blocks):\n        ctx.blocks = blocks\n        for block in blocks:\n            x = block(x)\n        ctx.save_for_backward(x)\n        return x\n    \n    @staticmethod\n    def backward(ctx, grad_output):\n        y = ctx.saved_tensors[0]\n        # Reconstruct activations during backward\n        for block in reversed(ctx.blocks):\n            y = block.inverse(y)\n            # Compute gradients...\n        return grad_input, None",
+      "expected_benefits": "50% memory reduction during training, same computational cost",
+      "compatibility_notes": "Not compatible with in-place operations. Requires custom autograd.",
+      "research_reference": "Gomez et al. (2017) - The Reversible Residual Network",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 0.0,
+      "speed_impact": -10.0,
+      "memory_impact": 50.0,
+      "implementation_difficulty": "hard",
+      "maturity_level": "experimental"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Neural Architecture Search (NAS)",
+      "category": "architecture",
+      "description": "Automatically searches for optimal neural network architectures using reinforcement learning, evolution, or gradient-based methods.",
+      "implementation_code": "# DARTS (Differentiable Architecture Search) example\nimport torch.nn.functional as F\n\nclass DARTSCell(nn.Module):\n    def __init__(self, steps=4, multiplier=4, C=16):\n        super().__init__()\n        self.steps = steps\n        \n        # Learnable architecture parameters (alpha)\n        self.alpha_normal = nn.Parameter(\n            torch.randn(steps, 8)  # 8 operations\n        )\n        \n        # Candidate operations\n        self.ops = nn.ModuleList([\n            # Identity\n            lambda x: x,\n            # Convolutions\n            nn.Conv2d(C, C, 3, padding=1),\n            nn.Conv2d(C, C, 5, padding=2),\n            # Separable convolutions\n            SepConv(C, C, 3),\n            SepConv(C, C, 5),\n            # Pooling\n            nn.MaxPool2d(3, stride=1, padding=1),\n            nn.AvgPool2d(3, stride=1, padding=1),\n            # Zero (for pruning)\n            lambda x: torch.zeros_like(x)\n        ])\n    \n    def forward(self, x):\n        # Weighted sum of operations based on architecture parameters\n        weights = F.softmax(self.alpha_normal, dim=-1)\n        \n        output = sum(\n            w * op(x) for w, op in zip(weights[0], self.ops)\n        )\n        return output\n\n# Bi-level optimization\ndef train_darts(model, train_loader, val_loader, epochs=50):\n    # Separate optimizers for weights and architecture\n    w_optimizer = torch.optim.SGD(\n        model.weights(), lr=0.025, momentum=0.9, weight_decay=3e-4\n    )\n    a_optimizer = torch.optim.Adam(\n        model.arch_parameters(), lr=3e-4, weight_decay=1e-3\n    )\n    \n    for epoch in range(epochs):\n        # Train weights on training set\n        train_weights(model, train_loader, w_optimizer)\n        # Train architecture on validation set\n        train_arch(model, val_loader, a_optimizer)",
+      "expected_benefits": "Discovers architectures that outperform hand-designed networks",
+      "compatibility_notes": "Computationally expensive search. Found architectures may not transfer across tasks.",
+      "research_reference": "Liu et al. (2019) - DARTS: Differentiable Architecture Search",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 8000,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 5.0,
+      "speed_impact": -500.0,
+      "memory_impact": -200.0,
+      "implementation_difficulty": "hard",
+      "maturity_level": "experimental"
+    }
+  }
+]
