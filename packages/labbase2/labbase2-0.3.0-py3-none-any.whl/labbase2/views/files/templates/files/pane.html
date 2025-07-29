@@ -1,0 +1,95 @@
+{% from 'files/form.html' import file_upload_form %}
+{% from 'files/form.html' import file_edit_form %}
+{% from 'macros/modal.html' import modal %}
+
+
+{% macro pane_details(file, form) %}
+
+    <div class="rounded border p-3 mb-3">
+
+        <div class="d-flex flex-start align-items-center mb-0">
+
+            <div class="flex-fill">
+
+                <h5 class="mb-1">{{ file.filename_exposed }}</h5>
+
+                <p class="mb-0">{{ file.timestamp_uploaded | format_datetime }} by {{ file.user.username }}</p>
+
+                <p>
+                    {% if file.note %}
+                        <a class="text-info me-2"
+                           data-bs-toggle="collapse"
+                           href="#card-file-{{ file.id }}"
+                           aria-expanded="false"
+                           aria-controls="card-file-{{ file.id }}">
+                            <i class="bi bi-info-circle"></i></a>
+                    {% endif %}
+
+                    {% if current_user.has_permission('upload-file') %}
+                        <a class="text-info me-2"
+                           href="{{ url_for('files.download', id_=file.id, download=1) }}">
+                            <i class="bi bi-download"></i></a>
+
+                        <a class="text-primary me-2"
+                           data-bs-toggle="modal"
+                           data-bs-target="#modal-edit-file-{{ file.id }}">
+                            <i class="bi bi-pencil-fill"></i></a>
+
+                        <a class="text-danger"
+                           onclick="delete_entity('{{ url_for("files.delete", id_=file.id) }}')">
+                            <i class="bi bi-trash3-fill"></i></a>
+                    {% endif %}
+
+                </p>
+
+            </div>
+
+            {% if file.type == "image" %}
+                <img class="rounded ml-3"
+                     src="{{ url_for('files.download', id_=file.id) }}"
+                     width="70" height="70">
+            {% endif %}
+
+        </div>
+
+        {% if file.note %}
+            <p class="collapse hide mt-3" id="card-file-{{ file.id }}">{{ file.note }}</p>
+        {% endif %}
+    </div>
+
+    {{ file_edit_form(form(filename=file.filename_exposed, obj=file), "files.edit", "PUT", file.id) }}
+
+{% endmacro %}
+
+
+{% macro files_pane(status, pane_id, entity, form) %}
+    <div class="tab-pane container {{ status }}" id="{{ pane_id }}">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+
+            <h2 class="flex-grow-1 mb-0">Files</h2>
+
+            <div class="flex-shrink-0">
+                {% if current_user.has_permission('upload-file') %}
+                    <button
+                        type="button"
+                        class="btn btn-success btn-sm"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modal-edit-file--1">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                {% endif %}
+            </div>
+
+        </div>
+
+        {% for file in entity.files %}
+            {{ pane_details(file, form) }}
+        {% else %}
+            <div class="fw-bold text-center mb-3">No files uploaded yet!</div>
+        {% endfor %}
+
+        {{ file_upload_form(form(), "files.add", "POST", -1, entity.id) }}
+
+    </div>
+{% endmacro %}

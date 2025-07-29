@@ -1,0 +1,132 @@
+{% from 'plasmids/form.html' import plasmid_add_form %}
+{% from 'plasmids/form.html' import upload_plasmid_form %}
+{% from 'files/macros/lightbox.html' import lightbox %}
+
+
+{% macro pane_details(status, pane_id, plasmid, form) %}
+
+    <div class="tab-pane container {{ status }}" id="{{ pane_id }}">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+
+            <h2 class="flex-grow-1 mb-0">Details</h2>
+
+            <div class="flex-shrink-0">
+
+                {% if current_user.has_permission('add-plasmid') %}
+                    <a class="text-primary me-2"
+                       data-bs-toggle="modal"
+                       data-bs-target="#modal-edit-plasmid-{{ plasmid.id }}">
+                        <i class="bi bi-pencil-fill"></i></a>
+
+                    {% if plasmid.deletable %}
+                        <a class="text-danger"
+                           onclick="delete_entity('{{ url_for("plasmids.delete", id_=plasmid.id) }}')">
+                            <i class="bi bi-trash3-fill"></i></a>
+                    {% endif %}
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <table class="table table-details">
+            <tbody>
+            <tr>
+                <td>Database ID</td>
+                <td>{{ plasmid.id }}</td>
+            </tr>
+            <tr>
+                <td>Added</td>
+                <td>{{ plasmid.timestamp_created | format_datetime }}</td>
+            </tr>
+            <tr>
+                <td>Label</td>
+                <td>{{ plasmid.label }}</td>
+            </tr>
+            <tr>
+                <td>Owner</td>
+                <td>{{ plasmid.owner.username }}</td>
+            </tr>
+            <tr>
+                <td>Cloning date</td>
+                <td>{{ plasmid.cloning_date }}</td>
+            </tr>
+            <tr>
+                <td>Insert</td>
+                <td>{{ plasmid.insert }}</td>
+            </tr>
+            <tr>
+                <td>Vector</td>
+                <td>{{ plasmid.vector }}</td>
+            </tr>
+            <tr>
+                <td><i class="bi bi-circle"></i> File</td>
+                <td class="d-flex">
+                    {% if plasmid.file_plasmid_id %}
+                    <a class="link-primary flex-shrink-0"
+                       href="{{ url_for('files.download', id_=plasmid.file_plasmid_id) }}">
+                    {{ plasmid.file.filename_exposed }}
+                    </a>
+                    {% endif %}
+                    <div class="flex-fill"></div>
+                    <a class="link-primary me-2 flex-shrink-0"
+                       data-bs-toggle="modal"
+                       data-bs-target="#modal-upload-{{ plasmid.id }}-file">
+                        <i class="bi bi-upload"></i></a>
+                </td>
+            </tr>
+            <tr>
+                <td><i class="bi bi-map-fill"></i> Map</td>
+                <td class="d-flex">
+                    {% if plasmid.file_map_id %}
+                    {{ lightbox(plasmid.map) }}
+                    {% endif %}
+                    <div class="flex-fill"></div>
+                    <a class="link-primary me-2 flex-shrink-0"
+                       data-bs-toggle="modal"
+                       data-bs-target="#modal-upload-{{ plasmid.id }}-map">
+                        <i class="bi bi-upload"></i></a>
+                </td>
+            </tr>
+            <tr>
+                <td>Storage place</td>
+                <td>{{ plasmid.storage_place }}</td>
+            </tr>
+            <tr>
+                <td>Glycerol stock(s)</td>
+                <td>{% if plasmid.stocks %}Yes ({{ plasmid.stocks|length }}){% else %}No{% endif %}</td>
+            </tr>
+            <tr>
+                <td>Length</td>
+                <td>{{ plasmid|length }}</td>
+            </tr>
+            <tr>
+                <td>Current plasmid file</td>
+                <td>
+
+                </td>
+            </tr>
+            <tr>
+                <td>Reference</td>
+                <td>{{ plasmid.reference }}</td>
+            </tr>
+            </tbody>
+        </table>
+
+        {% if plasmid.description %}
+            <h3 class="mt-4">Description</h3>
+            <p class="text-justify">
+                {{ plasmid.description }}
+            </p>
+        {% endif %}
+
+    </div>
+
+    {{ plasmid_add_form(form, "plasmids.edit", "PUT", plasmid.id) }}
+    {{ upload_plasmid_form(file_form(), 'plasmids.upload_plasmid_file', plasmid.id,
+    "file") }}
+    {{ upload_plasmid_form(file_form(), 'plasmids.upload_plasmid_file', plasmid.id,
+    "map") }}
+
+{% endmacro %}

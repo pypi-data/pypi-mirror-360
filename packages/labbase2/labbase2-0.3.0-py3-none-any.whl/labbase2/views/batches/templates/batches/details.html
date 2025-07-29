@@ -1,0 +1,134 @@
+{% from 'batches/form.html' import batch_add_form %}
+
+
+<div id="sidebar-right-messages"></div>
+
+<h1 class="mb-4">{{ batch.consumable.label }}</h1>
+
+<div class="btn-group btn-group-sm bg-white rounded border w-100" role="group">
+
+    <ul class="nav nav-pills m-0" role="tablist">
+
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tab-info"
+                    type="button"
+                    role="tab"
+                    aria-selected="true">
+                Details
+            </button>
+        </li>
+
+    </ul>
+
+</div>
+
+<div class="tab-content bg-white rounded border my-3">
+
+    <div class="tab-pane container active" id="tab-info">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+
+            <h2 class="flex-grow-1 mb-0">Details</h2>
+
+            <div class="flex-shrink-0">
+
+                {% if current_user.has_permission('add-consumable-batch') %}
+
+                    <a class="text-primary me-2"
+                       data-bs-toggle="modal"
+                       data-bs-target="#modal-edit-batch-{{ batch.id }}">
+                        <i class="bi bi-pencil-fill"></i></a>
+
+                    {% if (not batch.in_use) and (batch.date_emptied is none) %}
+                        <a class="text-info me-2"
+                           onclick="batch_action('{{ url_for("batches.in_use", id_=batch.id) }}')">
+                            Mark open</a>
+                    {% endif %}
+
+                    {% if batch.in_use and batch.date_emptied is none %}
+                        <a class="text-danger me-2"
+                           onclick="batch_action('{{ url_for("batches.emptied", id_=batch.id) }}')">
+                            Mark empty</a>
+                    {% endif %}
+
+                    <a class="text-danger"
+                       onclick="delete_entity('{{ url_for("batches.delete", id_=batch.id) }}')">
+                        <i class="bi bi-trash3-fill"></i></a>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <table class="table table-details">
+            <tbody>
+            <tr>
+                <td>Database ID</td>
+                <td>{{ batch.id }}</td>
+            </tr>
+            <tr>
+                <td>Consumable</td>
+                <td>
+                    {% if batch.consumable.entity_type == 'antibody' %}
+                        <a href="{{ url_for('antibodies.index', id=batch.consumable_id) }}">
+                            {{ batch.consumable.label }}
+                        </a>
+                    {% else %}
+                        {{ batch.consumable.label }}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>Supplier</td>
+                <td>{{ batch.supplier }}</td>
+            </tr>
+            <tr>
+                <td>Article number</td>
+                <td>{{ batch.article_number }}</td>
+            </tr>
+            <tr>
+                <td>Lot</td>
+                <td>{{ batch.lot }}</td>
+            </tr>
+            <tr>
+                <td>Amount</td>
+                <td>{{ batch.amount }}</td>
+            </tr>
+            <tr>
+                <td>Order date</td>
+                <td>{{ batch.date_ordered | format_date }}</td>
+            </tr>
+            <tr>
+                <td>Expiration date</td>
+                <td>{{ batch.date_expiration | format_date }}</td>
+            </tr>
+            <tr>
+                <td>Price</td>
+                <td>{{ batch.price }}</td>
+            </tr>
+            <tr>
+                <td>Storage place</td>
+                <td>{{ batch.storage_place }}</td>
+            </tr>
+            <tr>
+                <td>Currently in use</td>
+                <td>{% if batch.in_use %}Yes{% else %}No{% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>Opened on</td>
+                <td>{{ batch.date_opened | format_date }}</td>
+            </tr>
+            <tr>
+                <td>Emptied on</td>
+                <td>{{ batch.date_emptied | format_date }}</td>
+            </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
