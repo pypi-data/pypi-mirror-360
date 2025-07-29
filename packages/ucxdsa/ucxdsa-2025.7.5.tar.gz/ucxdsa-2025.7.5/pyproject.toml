@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ucxdsa"
+version = "2025.7.5"
+authors = [
+  { name="Carl Limsico", email="limsico@berkeley.edu" },
+]
+description = "Data Structures and Algorithms Source Code"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+
+[project.urls]
+Homepage = "https://github.com/ucxinstructor/dsa_package"
+
+[tool.hatch.build]
+exclude = [
+  "/__pycache__",
+  "dsabuild_readme.md"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dsa"]
+
+[tool.hatch.envs.default]
+dependencies = ["networkx", "matplotlib"]
+
+[tool.hatch.envs.test]
+dependencies = ["networkx", "matplotlib"]
+
+[tool.hatch.envs.test.scripts]
+run = "python -m unittest discover -s tests"
+
+[tool.hatch.envs.docs]
+dependencies = ["pdoc", "networkx", "matplotlib"]
+require-runtime-dependencies = true
+
+[tool.hatch.envs.docs.scripts]
+build = "pdoc dsa -o src/html"
+
