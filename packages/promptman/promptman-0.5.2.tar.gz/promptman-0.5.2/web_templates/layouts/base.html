@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ page_title }} - AI Prompt Manager{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- Alpine.js for additional interactivity -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="h-full">
+    <div class="min-h-full">
+        <!-- Navigation (shown in both single-user and multi-tenant modes) -->
+        <nav class="bg-white shadow-sm border-b border-gray-200">
+                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div class="flex h-16 justify-between items-center">
+                        <div class="flex items-center">
+                            <div class="flex flex-shrink-0 items-center hidden">
+                                <h1 class="text-xl font-bold text-gray-900">
+                                    <i class="fas fa-robot text-primary-500 mr-2"></i>
+                                    {{ i18n.t('app.title') }}
+                                </h1>
+                            </div>
+                            <div class="hidden sm:ml-6 sm:flex sm:space-x-8 sm:items-center">
+                                <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">
+                                    <i class="fas fa-home mr-1"></i>
+                                    {{ i18n.t('nav.home') }}
+                                </a>
+                                <a href="/prompts" class="nav-link {% if '/prompts' in request.url.path and '/builder' not in request.url.path %}active{% endif %}">
+                                    <i class="fas fa-file-text mr-1"></i>
+                                    {{ i18n.t('nav.prompts') }}
+                                </a>
+                                <a href="/prompts/builder" class="nav-link {% if '/prompts/builder' in request.url.path %}active{% endif %}">
+                                    <i class="fas fa-hammer mr-1"></i>
+                                    {{ i18n.t('nav.builder') }}
+                                </a>
+                                <a href="/templates" class="nav-link {% if '/templates' in request.url.path %}active{% endif %}">
+                                    <i class="fas fa-layer-group mr-1"></i>
+                                    {{ i18n.t('template.list') }}
+                                </a>
+                                <a href="/settings" class="nav-link {% if '/settings' in request.url.path %}active{% endif %}">
+                                    <i class="fas fa-cog mr-1"></i>
+                                    {{ i18n.t('nav.settings') }}
+                                </a>
+                                {% if user and user.role == 'admin' %}
+                                <a href="/admin" class="nav-link {% if '/admin' in request.url.path %}active{% endif %}">
+                                    <i class="fas fa-shield-alt mr-1"></i>
+                                    {{ i18n.t('nav.admin') }}
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="hidden sm:ml-6 sm:flex sm:items-center">
+                            <!-- Language selector -->
+                            <div class="relative mr-4" x-data="{ open: false }">
+                                <button @click="open = !open" type="button" 
+                                        class="flex items-center text-sm text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-md p-2" 
+                                        id="language-menu-button">
+                                    <i class="fas fa-globe mr-1"></i>
+                                    <span class="hidden lg:inline">{{ available_languages.get(current_language, 'English') if available_languages else 'English' }}</span>
+                                    <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                                </button>
+                                <div x-show="open" @click.away="open = false" x-transition
+                                     class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                    {% if available_languages %}
+                                        {% for code, name in available_languages.items() %}
+                                        <form method="POST" action="/language" class="inline-block w-full">
+                                            <input type="hidden" name="language" value="{{ code }}">
+                                            <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {% if current_language == code %}bg-primary-50 text-primary-600{% endif %}">
+                                                {{ name }}
+                                            </button>
+                                        </form>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- User menu (only show in multi-tenant mode) -->
+                            {% if user %}
+                            <div class="relative ml-3" x-data="{ open: false }">
+                                <div>
+                                    <button @click="open = !open" type="button" 
+                                            class="relative flex max-w-xs items-center rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2" 
+                                            id="user-menu-button">
+                                        <span class="sr-only">Open user menu</span>
+                                        <div class="h-8 w-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-medium">
+                                            {{ user.first_name[0].upper() if user.first_name else 'U' }}
+                                        </div>
+                                        <span class="ml-2 text-sm font-medium text-gray-700">{{ user.first_name }} {{ user.last_name }}</span>
+                                        <i class="fas fa-chevron-down ml-1 text-xs text-gray-400"></i>
+                                    </button>
+                                </div>
+                                <div x-show="open" @click.away="open = false" x-transition
+                                     class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                    <div class="px-4 py-2 text-xs text-gray-500 border-b">
+                                        {{ user.email }}
+                                    </div>
+                                    <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-user mr-2"></i>Profile
+                                    </a>
+                                    <a href="/api-tokens" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-key mr-2"></i>API Tokens
+                                    </a>
+                                    <a href="/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-sign-out-alt mr-2"></i>Sign out
+                                    </a>
+                                </div>
+                            </div>
+                            {% else %}
+                            <!-- Single-user mode indicator -->
+                            <div class="relative ml-3">
+                                <div class="flex items-center">
+                                    <div class="h-8 w-8 rounded-full bg-gray-500 flex items-center justify-center text-white font-medium">
+                                        <i class="fas fa-user text-sm"></i>
+                                    </div>
+                                    <span class="ml-2 text-sm font-medium text-gray-700">Single User Mode</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+        <!-- Main content -->
+        <main>
+            {% block content %}
+                {% if user or single_user_mode %}
+                    <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+                        {% block main_content %}{% endblock %}
+                    </div>
+                {% else %}
+                    {% block auth_content %}{% endblock %}
+                {% endif %}
+            {% endblock %}
+        </main>
+    </div>
+
+    <!-- Toast notifications -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Custom styles -->
+    <style>
+        .nav-link {
+            @apply border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200;
+        }
+        .nav-link.active {
+            @apply border-primary-500 text-primary-600;
+        }
+        .btn-primary {
+            @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 inline-flex items-center;
+        }
+        .btn-secondary {
+            @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-md border border-gray-300 transition-colors duration-200 inline-flex items-center;
+        }
+        .btn-danger {
+            @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 inline-flex items-center;
+        }
+        .form-input {
+            @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm;
+        }
+        .form-textarea {
+            @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm;
+        }
+        .form-select {
+            @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm;
+        }
+        .card {
+            @apply bg-white overflow-hidden shadow rounded-lg;
+        }
+        .card-header {
+            @apply px-4 py-5 sm:px-6 border-b border-gray-200;
+        }
+        .card-body {
+            @apply px-4 py-5 sm:p-6;
+        }
+    </style>
+
+    <!-- HTMX and Alpine.js enhancements -->
+    <script>
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-500' : 
+                           type === 'error' ? 'bg-red-500' : 
+                           type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500';
+            
+            toast.className = `${bgColor} text-white px-4 py-2 rounded-md shadow-lg transform transition-all duration-300 translate-x-full opacity-0`;
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+            }, 100);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        // HTMX event listeners
+        document.addEventListener('htmx:responseError', function(evt) {
+            showToast('An error occurred. Please try again.', 'error');
+        });
+
+        document.addEventListener('htmx:beforeRequest', function(evt) {
+            // Add loading state
+            const target = evt.target;
+            if (target.classList.contains('btn-primary')) {
+                target.disabled = true;
+                const originalText = target.innerHTML;
+                target.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+                target.setAttribute('data-original-text', originalText);
+            }
+        });
+
+        document.addEventListener('htmx:afterRequest', function(evt) {
+            // Remove loading state
+            const target = evt.target;
+            if (target.hasAttribute('data-original-text')) {
+                target.disabled = false;
+                target.innerHTML = target.getAttribute('data-original-text');
+                target.removeAttribute('data-original-text');
+            }
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
