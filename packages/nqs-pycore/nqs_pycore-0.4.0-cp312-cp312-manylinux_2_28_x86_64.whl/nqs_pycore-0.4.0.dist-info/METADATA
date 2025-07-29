@@ -1,0 +1,70 @@
+Metadata-Version: 2.4
+Name: nqs_pycore
+Version: 0.4.0
+Classifier: Programming Language :: Rust
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown; charset=UTF-8; variant=GFM
+
+# NQS Simulator python binding
+
+## Setup
+
+The following steps require python ≥3.11.
+
+1. Create and activate `venv`:
+
+```shell
+python3 -m venv venv
+source venv/bin/activate
+```
+
+1. Setup AWS python registry and enable `pip` command
+
+Follow instructions [Using Nuant Python Registry on AWS](https://github.com/Nuant/quantlib-rs/blob/master/docs/UsingNuantPythonRegistry.md#using-the-registry)
+
+- _Login to renew the access token_
+- _Using pip command_
+
+The credentials expire after 12 hours.
+
+2. Install dependencies:
+
+```shell
+pip3 install -r dev-requirements.txt
+pip3 install -r requirements.txt
+```
+
+## Run tests
+
+Using UNIX Shell:
+
+```shell
+RUST_LOG_SPAN_EVENTS=full RUST_LOG=trace cargo test
+```
+
+Using Windows PowerShell
+
+```powershell
+$env:RUST_LOG_SPAN_EVENTS="full"; $env:RUST_LOG="trace"; cargo test
+```
+
+You can use `-- --nocapture` at the end to show tracing log.
+
+## Run bench
+
+```shell
+cargo make test-bench
+```
+
+## Custom profile and target dir
+
+Build and install `nqs_pycore` package in your venv:
+
+```shell
+# activate the venv first,
+# then for profile `profiling` and target directory `/mnt/build/nqs-simulator-rs`:
+maturin dev -F extension-module,uniswap_v3_evm/revmc --profile profiling --target-dir /mnt/build/nqs-simulator-rs
+```
+
