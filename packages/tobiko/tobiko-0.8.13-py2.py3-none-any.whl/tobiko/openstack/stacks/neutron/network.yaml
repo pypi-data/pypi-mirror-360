@@ -1,0 +1,196 @@
+heat_template_version: newton
+
+
+description: |
+  Creates an network with a subnet and a gateway router to an external network
+  if given
+
+
+parameters:
+  port_security_enabled:
+    description: Default value to be assigned to network ports
+    type: boolean
+    default: false
+
+  network_value_specs:
+    description: Extra network creation parameters
+    type: json
+    default: {}
+
+  has_ipv4:
+    description: Whenever to create IPv4 subnet
+    type: boolean
+    default: false
+
+  has_ipv6:
+    description: Whenever to create IPv6 subnet
+    type: boolean
+    default: false
+
+  subnet_pool_ipv4_id:
+    description: IPv4 Subnet Pool ID
+    type: string
+
+  subnet_pool_ipv6_id:
+    description: IPv6 Subnet Pool ID
+    type: string
+
+  ipv4_dns_nameservers:
+    description: IPv4 nameservers IP addresses
+    type: comma_delimited_list
+    default: ''
+
+  ipv6_dns_nameservers:
+    description: IPv6 nameservers IP addresses
+    type: comma_delimited_list
+    default: ''
+
+  ipv6_address_mode:
+    description: IPv6 address mode
+    type: string
+    default: slaac
+    constraints:
+      - allowed_values: [ slaac, dhcpv6-stateful, dhcpv6-stateless ]
+
+  ipv6_ra_mode:
+    description: IPv6 router advertisement mode
+    type: string
+    default: slaac
+    constraints:
+      - allowed_values: [ slaac, dhcpv6-stateful, dhcpv6-stateless ]
+
+  has_gateway:
+    description: whenever to create gateway router
+    type: boolean
+    default: false
+
+  gateway:
+    description: Optional gateway to route packages to
+    type: string
+    default: '<no-gateway-id>'
+
+  has_net_mtu:
+    description: whenever net-mtu extension is available
+    type: boolean
+    default: false
+
+  has_qos_policy:
+    description: whether qos policy is attached to the network
+    type: boolean
+    default: false
+
+
+conditions:
+  has_ipv4:
+    get_param: has_ipv4
+
+  has_ipv6:
+    get_param: has_ipv6
+
+  has_gateway:
+    get_param: has_gateway
+
+  has_ipv4_gateway:
+    and:
+    - get_param: has_ipv4
+    - get_param: has_gateway
+
+  has_ipv6_gateway:
+    and:
+    - get_param: has_ipv6
+    - get_param: has_gateway
+
+  has_net_mtu:
+    get_param: has_net_mtu
+
+  has_qos_policy:
+    get_param: has_qos_policy
+
+
+resources:
+
+  _network:
+    type: OS::Neutron::Net
+    properties:
+      port_security_enabled: {get_param: port_security_enabled}
+      value_specs: {get_param: network_value_specs}
+
+  _ipv4_subnet:
+    type: OS::Neutron::Subnet
+    condition: has_ipv4
+    properties:
+      network: {get_resource: _network}
+      ip_version: 4
+      subnetpool: {get_param: subnet_pool_ipv4_id}
+      dns_nameservers: {get_param: ipv4_dns_nameservers}
+
+  _ipv6_subnet:
+    type: OS::Neutron::Subnet
+    condition: has_ipv6
+    properties:
+      network: {get_resource: _network}
+      ip_version: 6
+      subnetpool: {get_param: subnet_pool_ipv6_id}
+      dns_nameservers: {get_param: ipv6_dns_nameservers}
+      ipv6_address_mode: {get_param: ipv6_address_mode}
+      ipv6_ra_mode: {get_param: ipv6_ra_mode}
+
+  _gateway:
+    type: OS::Neutron::Router
+    condition: has_gateway
+    external_id: {get_param: gateway}
+
+  _ipv4_gateway_interface:
+    type: OS::Neutron::RouterInterface
+    condition: has_ipv4_gateway
+    properties:
+      router: {get_resource: _gateway}
+      subnet: {get_resource: _ipv4_subnet}
+
+  _ipv6_gateway_interface:
+    type: OS::Neutron::RouterInterface
+    condition: has_ipv6_gateway
+    properties:
+      router: {get_resource: _gateway}
+      subnet: {get_resource: _ipv6_subnet}
+
+
+outputs:
+
+  network_id:
+    description: Network ID
+    value: {get_resource: _network}
+
+  port_security_enabled:
+    description: whenever port security has been enabled on created network
+    value: {get_attr: [_network, port_security_enabled]}
+
+  ipv4_subnet_id:
+    description: IPv4 subnet ID
+    value: {get_resource: _ipv4_subnet}
+    condition: has_ipv4
+
+  ipv6_subnet_id:
+    description: IPv6 subnet ID
+    value: {get_resource: _ipv6_subnet}
+    condition: has_ipv6
+
+  gateway_id:
+    description: Gateway router ID
+    value: {get_resource: _gateway}
+    condition: has_gateway
+
+  gateway_network_id:
+    description: Gateway network ID
+    value: {get_attr: [_gateway, external_gateway_info, network_id]}
+    condition: has_gateway
+
+  mtu:
+    description: Network MTU value (integer)
+    value: {get_attr: [_network, mtu]}
+    condition: has_net_mtu
+
+  qos_policy_id:
+    description: QoS Policy ID attached to the network
+    value:  {get_attr: [_network, qos_policy_id]}
+    condition: has_qos_policy

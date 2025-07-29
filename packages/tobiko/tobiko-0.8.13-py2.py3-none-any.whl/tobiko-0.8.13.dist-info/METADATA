@@ -1,0 +1,155 @@
+Metadata-Version: 2.1
+Name: tobiko
+Version: 0.8.13
+Summary: OpenStack Testing Upgrades Library
+Home-page: https://tobiko.readthedocs.io/
+Author: OpenStack
+Author-email: openstack-discuss@lists.openstack.org
+Keywords: setup,distutils
+Classifier: Environment :: OpenStack
+Classifier: Intended Audience :: Information Technology
+Classifier: Intended Audience :: System Administrators
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Requires-Python: >=3.8
+License-File: LICENSE
+License-File: AUTHORS
+Requires-Dist: decorator >=4.4.2
+Requires-Dist: docker >=4.4.1
+Requires-Dist: fixtures >=3.0.0
+Requires-Dist: Jinja2 >=2.11.2
+Requires-Dist: keystoneauth1 >=4.3.0
+Requires-Dist: metalsmith >=1.6.2
+Requires-Dist: netaddr >=0.8.0
+Requires-Dist: neutron-lib >=2.7.0
+Requires-Dist: openstacksdk >=0.31.2
+Requires-Dist: oslo.concurrency >=3.26.0
+Requires-Dist: oslo.config >=8.4.0
+Requires-Dist: oslo.log >=4.4.0
+Requires-Dist: oslo.utils >=4.12.3
+Requires-Dist: packaging >=20.4
+Requires-Dist: paramiko >=2.9.2
+Requires-Dist: pbr >=5.5.1
+Requires-Dist: psutil >=5.8.0
+Requires-Dist: python-dateutil >=2.8.0
+Requires-Dist: python-designateclient >=4.4.0
+Requires-Dist: python-glanceclient >=3.2.2
+Requires-Dist: python-heatclient >=2.3.0
+Requires-Dist: python-ironicclient >=4.6.1
+Requires-Dist: python-manilaclient >=4.5.1
+Requires-Dist: python-neutronclient >=7.2.1
+Requires-Dist: python-novaclient >=17.2.1
+Requires-Dist: python-octaviaclient >=2.2.0
+Requires-Dist: python-openstackclient >=5.4.0
+Requires-Dist: PyYAML >=5.4.1
+Requires-Dist: sshtunnel >=0.3.1
+Requires-Dist: testtools >=2.5.0
+Requires-Dist: setuptools !=24.0.0,!=34.0.0,!=34.0.1,!=34.0.2,!=34.0.3,!=34.1.0,!=34.1.1,!=34.2.0,!=34.3.0,!=34.3.1,!=34.3.2,!=36.2.0,>=21.0.0 ; (python_version>='3.12')
+
+======
+Tobiko
+======
+
+
+Test Big Cloud Operations
+-------------------------
+
+Tobiko is an OpenStack testing framework focusing on areas mostly
+complementary to `Tempest <https://docs.openstack.org/tempest/latest/>`__.
+While Tempest main focus has been testing OpenStack rest APIs, the main Tobiko
+focus is to test OpenStack system operations while "simulating"
+the use of the cloud as the final user would.
+
+Tobiko's test cases populate the cloud with workloads such as Nova instances;
+they execute disruption operations such as services/nodes restart; finally they
+run test cases to validate that the cloud workloads are still functional.
+
+Tobiko's test cases can also be used, for example, for testing that previously
+created workloads are working right after OpenStack services update/upgrade
+operation.
+
+
+Project Requirements
+--------------------
+
+Tobiko Python framework is being automatically tested with below Python
+versions:
+
+- Python 3.8
+- Python 3.9
+- Python 3.10 (new)
+
+and below Linux distributions:
+
+- CentOS 9 / RHEL 8 (with Python 3.9)
+- Ubuntu Focal (with Python 3.8)
+- Ubuntu Jammy (with Python 3.10)
+
+Tobiko has also been tested for development purposes with below OSes:
+
+- OSX (with Python 3.6 to 3.10)
+
+The Tobiko Python framework is being used to implement test cases. As Tobiko
+can be executed on nodes that are not part of the cloud to test against, this
+doesn't mean Tobiko requires cloud nodes have to run with one of above Python
+versions or Linux distributions.
+
+There is also a Docker file that can be used to create a container for running
+test cases from any node that do support containers execution.
+
+
+Main Project Goals
+~~~~~~~~~~~~~~~~~~
+
+- To test OpenStack and Red Hat OpenStack Platform projects before they are
+  released.
+- To provide a Python framework to write system scenario test cases (create
+  and test workloads).
+- To verify previously created workloads are working fine after executing
+  OpenStack nodes update/upgrade.
+- To write white boxing test cases (to log to cloud nodes
+  for internal inspection purpose).
+- To write disruptive test cases (to simulate
+  service disruptions like for example rebooting/interrupting a service to
+  verify cloud reliability).
+- To provide Ansible roles implementing a workflow designed to run an ordered
+  sequence of test suites. For example a workflow could do below steps:
+
+  - creates workloads;
+  - run disruptive test cases (IE reboot OpenStack nodes or services);
+  - verify workloads are still working.
+
+  The main use of these roles is writing continuous integration jobs for Zuul
+  or other services like Jenkins (IE by using the Tobiko InfraRed plug-in).
+- To provide tools to monitor and recollect the healthy status of the cloud as
+  seen from user perspective (black-box testing) or from an inside point of
+  view (white-box testing built around SSH client).
+
+
+References
+----------
+
+* Free software: Apache License, Version 2.0
+* Documentation: https://tobiko.readthedocs.io/
+* Release notes: https://docs.openstack.org/releasenotes/tobiko/
+* Source code: https://opendev.org/x/tobiko
+* Bugs: https://storyboard.openstack.org/#!/project/x/tobiko
+* Code review: https://review.opendev.org/q/project:x/tobiko
+
+
+Related projects
+~~~~~~~~~~~~~~~~
+* OpenStack: https://www.openstack.org/
+* Red Hat OpenStack Platform: https://www.redhat.com/en/resources/openstack-platform-datasheet
+* Python: https://www.python.org/
+* Testtools: https://github.com/testing-cabal/testtools
+* Ansible: https://www.ansible.com/
+* InfraRed: https://infrared.readthedocs.io/en/latest/
+* DevStack: https://docs.openstack.org/devstack/latest/
+* Zuul: https://docs.openstack.org/infra/system-config/zuul.html
+* Jenkins: https://www.jenkins.io/
+

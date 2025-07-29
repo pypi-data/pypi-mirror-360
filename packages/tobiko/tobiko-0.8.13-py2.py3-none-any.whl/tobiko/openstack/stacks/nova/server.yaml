@@ -1,0 +1,214 @@
+heat_template_version: newton
+
+
+description: |
+  Creates a Nova server connected to an existing Neutron network and
+  optionally assign a floating IP address to server so it is routable from the
+  public network.
+
+
+parameters:
+
+  key_name:
+    type: string
+    description: Name of keypair to assign to server
+    constraints:
+    - custom_constraint: nova.keypair
+
+  flavor:
+    type: string
+    description: Flavor to use for server
+    constraints:
+    - custom_constraint: nova.flavor
+
+  image:
+    type: string
+    description: Name of image to use for server
+
+  network:
+    type: string
+    description: ID of network to which server get connected
+    constraints:
+    - custom_constraint: neutron.network
+
+  port_security_enabled:
+    type: boolean
+    description: Whenever port security is enabled on server port
+    default: true
+
+  security_groups:
+    type: comma_delimited_list
+    description: Security groups to subscrive server port
+    default: []
+
+  use_extra_dhcp_opts:
+    type: boolean
+    description: A set of zero or more extra DHCP option pairs
+    default: false
+
+  has_floating_ip:
+    type: boolean
+    description: Whenever server has floating IP associated
+    default: false
+
+  floating_network:
+    type: string
+    description: |
+      Public network for which floating IP addresses will be allocated
+    constraints:
+    - custom_constraint: neutron.network
+
+  scheduler_hints:
+    type: json
+    description: Hints to create server
+
+  config_drive:
+    type: boolean
+    description: Whenever server should use config drive with metadata or not
+    default: false
+
+  user_data:
+    type: string
+    default: ''
+    description: Optional user_data to be passed to the server
+
+  has_vlan:
+    type: boolean
+    default: false
+
+  vlan_network:
+    type: string
+    description: Network ID where vlan trunk support is attached
+    default: ''
+
+  vlan_id:
+    type: number
+    description: Segmentation ID for vlan trunk subport
+    default: 101
+
+conditions:
+
+  has_floating_ip:
+    get_param: has_floating_ip
+
+  use_extra_dhcp_opts:
+    get_param: use_extra_dhcp_opts
+
+  has_vlan:
+    get_param: has_vlan
+
+resources:
+
+  port:
+    type: OS::Neutron::Port
+    description: Neutron port
+    properties:
+      network: {get_param: network}
+      port_security_enabled: {get_param: port_security_enabled}
+      security_groups: {get_param: security_groups}
+      value_specs:
+        # TODO(eolivare): I tried a different approach to define
+        # extra_dhcp_opts, but it did not work: providing a list of
+        # dictionaries from the python class
+        # ExtraDhcpOptsCirrosServerStackFixture would have been my preferred
+        # option but I got the following error from neutron:
+        # No valid key specs matched for: ...
+        # Apparently heat does not parse correctly the list of dictionaries and
+        # instead it provides a list of strings to neutron
+        extra_dhcp_opts:
+          if:
+            - 'use_extra_dhcp_opts'
+            - [{'opt_name': 'domain-name', 'opt_value': '"tobiko.domain"'}]
+            - []
+
+  server_name:
+    type: OS::Heat::RandomString
+    properties:
+      character_classes: [{'class': 'lowercase', 'min': 1}]
+      length: 8
+
+  server:
+    type: OS::Nova::Server
+    description: Nova server connected to Neutron port
+    properties:
+      name: {get_attr: [server_name, value]}
+      key_name: {get_param: key_name}
+      image: {get_param: image}
+      flavor: {get_param: flavor}
+      networks:
+        if:
+        - "has_vlan"
+        - [port: {get_attr: [trunk, port_id]}]
+        - [port: {get_resource: port}]
+      scheduler_hints: {get_param: scheduler_hints}
+      config_drive: {get_param: config_drive}
+      user_data_format: RAW
+      user_data: {get_param: user_data}
+
+  floating_ip:
+    type: OS::Neutron::FloatingIP
+    description: Floating IP address to be connected to server
+    condition: has_floating_ip
+    properties:
+      floating_network: {get_param: floating_network}
+      port_id: {get_resource: port}
+
+  vlan_port:
+    type: OS::Neutron::Port
+    description: Vlan trunk subport
+    condition: has_vlan
+    properties:
+      network: {get_param: vlan_network}
+      mac_address: {get_attr: [port, mac_address]}
+      port_security_enabled: {get_param: port_security_enabled}
+      security_groups: {get_param: security_groups}
+
+  trunk:
+    type: OS::Neutron::Trunk
+    description: Trunk connected to the server port
+    condition: has_vlan
+    properties:
+      port: {get_resource: port}
+      sub_ports:
+        - port: {get_resource: vlan_port}
+          segmentation_type: vlan
+          segmentation_id: {get_param: vlan_id}
+
+outputs:
+
+  fixed_ips:
+    description: fixed IP addresses of server
+    value: {get_attr: [port, fixed_ips]}
+
+  floating_ip_id:
+    description: server floating IP ID
+    value: {get_resource: floating_ip}
+
+  floating_ip_address:
+    description: Floating IP address of server in public network
+    value: {get_attr: [floating_ip, floating_ip_address ] }
+    condition: has_floating_ip
+
+  port_security_enabled:
+    value: {get_attr: [port, port_security_enabled]}
+
+  security_groups:
+    value: {get_attr: [port, security_groups]}
+
+  server_name:
+    value: {get_attr: [server, name]}
+
+  server_id:
+    value: {get_resource: server}
+
+  port_id:
+    value: {get_resource: port}
+
+  vlan_port_id:
+    value: {get_resource: vlan_port}
+    condition: has_vlan
+
+  vlan_fixed_ips:
+    description: fixed IP addresses of server vlan port
+    value: {get_attr: [vlan_port, fixed_ips]}
+    condition: has_vlan

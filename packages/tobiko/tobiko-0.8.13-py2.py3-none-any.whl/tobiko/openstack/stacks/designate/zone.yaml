@@ -1,0 +1,55 @@
+heat_template_version: newton
+
+description: A Zone
+
+parameters:
+    zone_description:
+        type: string
+        default: Zone used by Tobiko test cases
+
+    zone_email:
+        type: string
+        description: The zone adimistrator e-mail
+        default: info@tobiko.org
+
+    zone_name:
+        type: string
+        description: The zone domain name
+        default: tobiko.org.
+
+    record_name:
+        type: string
+        description: The recordset name
+
+    record_type:
+        type: string
+        description: The recordset type
+
+    recordset_records:
+        type: comma_delimited_list
+        description: The recordset record
+
+resources:
+    zone:
+        type: OS::Designate::Zone
+        properties:
+            description: {get_param: zone_description}
+            email: { get_param: zone_email }
+            name: { get_param: zone_name }
+
+    recordsets:
+        type: OS::Designate::RecordSet
+        properties:
+            zone: { get_resource: zone }
+            name: { get_param: record_name }
+            type: { get_param: record_type }
+            records: { get_param: recordset_records }
+
+outputs:
+    zone_id:
+        description: Zone ID
+        value: { get_resource: zone }
+
+    recordset_id:
+        description: recordset ID
+        value: { get_resource: recordsets }
