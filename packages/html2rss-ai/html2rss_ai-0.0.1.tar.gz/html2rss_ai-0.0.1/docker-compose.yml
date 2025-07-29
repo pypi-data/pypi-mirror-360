@@ -1,0 +1,49 @@
+services:
+  html2rss-ai:
+    build: .
+    image: html2rss-ai:latest
+    container_name: html2rss-ai
+    environment:
+      # OpenAI API Configuration
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      
+      # Optional: Playwright settings for JavaScript sites
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+      
+      # Logging
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Mount output directory for extracted data
+      - ./data/output:/app/data/output
+      # Mount pattern cache for faster processing
+      - ./pattern_cache:/app/pattern_cache
+      # Mount config for feeds configuration
+      - ./config:/app/config:ro
+    working_dir: /app
+    # Default command - run batch extraction
+    command: ["python", "examples/batch_extract.py"]
+    
+  # Development service with additional mounts
+  dev:
+    build: .
+    image: html2rss-ai:dev
+    container_name: html2rss-ai-dev
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - PYTHONUNBUFFERED=1
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+    volumes:
+      # Full project mount for development
+      - .:/app
+      - /app/.venv  # Exclude venv from host mount
+    working_dir: /app
+    command: ["/bin/bash"]
+    stdin_open: true
+    tty: true
+
+# Define volumes for data persistence
+volumes:
+  output:
+    driver: local
+  pattern_cache:
+    driver: local 

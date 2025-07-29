@@ -1,0 +1,339 @@
+# html2rss-ai
+
+🚀 **Smart web scraping meets AI intelligence** - Extract structured content from any website using OpenAI's GPT models. Intelligently identifies content patterns and extracts articles, blog posts, job listings, news items, and other repeating content with modern CSS layout support.
+
+> ⭐ **Latest Update**: Enhanced CSS Grid/Flexbox recognition and automatic CSS selector sanitization for modern websites like Satispay, Tailwind CSS sites, and complex layouts.
+
+## Features
+
+- 🤖 **AI-Powered Pattern Recognition**: Uses OpenAI GPT-4 to intelligently identify content patterns
+- 🎨 **Modern CSS Layout Support**: Recognizes CSS Grid, Flexbox, and Tailwind CSS structures  
+- 🛠️ **Automatic CSS Sanitization**: Handles malformed selectors (e.g., `my-1.5` class names)
+- 🔄 **Smart Caching**: Caches pattern analysis to avoid repeated API calls
+- 📅 **Advanced Date Extraction**: Extracts publication dates with fallback strategies
+- 🎯 **Universal Compatibility**: Works with any website structure, from legacy HTML to modern SPAs
+- 📊 **Confidence Scoring**: Provides accuracy metrics for extraction reliability  
+- 🚀 **Async Support**: Built with asyncio for efficient processing
+- 🔍 **Multiple Link Extraction**: Finds all content items in container elements
+
+## Installation
+
+### Prerequisites
+
+- Python 3.8+
+- OpenAI API key
+- Playwright (for web content extraction)
+
+### Install the package
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/html2rss-ai.git
+cd html2rss-ai
+
+# Install dependencies
+pip install -e .
+```
+
+### Install Playwright browsers
+
+This project uses Playwright for web content extraction. You need to install the browser binaries:
+
+```bash
+# Install Playwright browsers
+playwright install
+```
+
+### Set up your OpenAI API key
+
+```bash
+export OPENAI_API_KEY="your-openai-api-key-here"
+```
+
+## Quick Start
+
+### Basic Usage
+
+```python
+import asyncio
+from html2rss_ai.extractor import UniversalPatternExtractor
+
+async def main():
+    # Initialize the extractor
+    extractor = UniversalPatternExtractor()
+    
+    # Extract articles from a blog
+    url = "https://example-blog.com/posts/"
+    result = await extractor.extract_pattern_links(url)
+    
+    # Print results
+    print(f"Found {len(result.items)} articles")
+    for item in result.items:
+        print(f"- {item.title}: {item.url}")
+
+# Run the extraction
+asyncio.run(main())
+```
+
+### Example: Extract from ordep.dev blog
+
+We've included a complete example that demonstrates extracting articles from the [ordep.dev blog](https://ordep.dev/posts/):
+
+```bash
+# Run the example
+python examples/extract_ordep_blog.py
+```
+
+This example will:
+- Extract all blog posts from ordep.dev
+- Display them in a formatted list
+- Save the results to `ordep_blog_articles.json`
+- Show extraction statistics and confidence scores
+
+**Sample output:**
+```
+🔍 Extracting articles from: https://ordep.dev/posts/
+============================================================
+📊 Extraction Results:
+   Pattern Type: blog_posts
+   Confidence Score: 0.85
+   Total Items Found: 25
+   Page Title: Writing - ordep.dev
+
+📝 Articles Found:
+------------------------------------------------------------
+ 1. Writing Code Was Never The Bottleneck
+    URL: https://ordep.dev/posts/writing-code-was-never-the-bottleneck/
+    Date: 2025-06-30
+
+ 2. Writing More Often
+    URL: https://ordep.dev/posts/writing-more-often/
+    Date: 2025-06-26
+...
+```
+
+## Modern Website Support
+
+**html2rss-ai** is specifically designed to handle modern web layouts that traditional scrapers struggle with:
+
+### ✅ **CSS Grid & Flexbox Layouts**
+- **Automatically detects**: `grid-template-columns`, `grid-cols-*`, `flex` patterns
+- **Example**: Job listings on Satispay, product cards, article grids
+- **Works with**: Tailwind CSS, Bootstrap, custom CSS frameworks
+
+### ✅ **Complex CSS Selectors**  
+- **Auto-sanitizes**: Problematic selectors like `li.my-1.5.text-md .date`
+- **Converts to**: Valid attribute selectors `[class~="my-1.5"]`
+- **Handles**: Tailwind's decimal classes, custom naming conventions
+
+### ✅ **Container-based Content**
+- **Finds all links**: In grid containers, card layouts, list structures
+- **Before**: Only extracted first item per container  
+- **Now**: Extracts all items (e.g., 20 job listings instead of 1)
+
+### 🎯 **Real-world Examples**
+
+**Job Listings (Satispay-style):**
+```python
+# Extracts all 20+ job positions from modern job boards
+result = await extractor.extract_pattern_links("https://company.com/careers")
+# Before: 1 job found
+# After: 20+ jobs found ✅
+```
+
+**E-commerce Product Grids:**
+```python  
+# Handles CSS Grid product layouts
+result = await extractor.extract_pattern_links("https://shop.com/products")
+# Recognizes: grid-cols-3, flex-wrap, card layouts
+```
+
+**Blog Post Lists:**
+```python
+# Works with modern CSS frameworks
+result = await extractor.extract_pattern_links("https://blog.com/posts")  
+# Handles: Tailwind, styled-components, CSS modules
+```
+
+## API Reference
+
+### UniversalPatternExtractor
+
+The main class for extracting content patterns from web pages.
+
+#### Constructor
+
+```python
+UniversalPatternExtractor(
+    openai_api_key: str | None = None,
+    cache_dir: str = "pattern_cache"
+)
+```
+
+**Parameters:**
+- `openai_api_key`: Your OpenAI API key (defaults to `OPENAI_API_KEY` environment variable)
+- `cache_dir`: Directory to store cached pattern analysis (default: "pattern_cache")
+
+#### Methods
+
+##### `extract_pattern_links(url: str, force_regenerate: bool = False) -> ExtractedPattern`
+
+Extract patterned links from a webpage.
+
+**Parameters:**
+- `url`: The webpage URL to extract from
+- `force_regenerate`: Force regeneration of pattern analysis (default: False)
+
+**Returns:** `ExtractedPattern` object containing:
+- `page_title`: Title of the webpage
+- `feed_url`: Original URL
+- `pattern`: Pattern analysis information
+- `items`: List of extracted `FeedItem` objects
+
+##### `to_json(result: ExtractedPattern) -> dict`
+
+Convert extraction result to JSON format.
+
+### FeedItem
+
+Represents an extracted content item:
+
+```python
+class FeedItem:
+    url: str           # Full URL of the item
+    title: str         # Title/heading of the item
+    publication_date: str | None  # Publication date if found
+```
+
+## Advanced Usage
+
+### Custom Cache Directory
+
+```python
+extractor = UniversalPatternExtractor(cache_dir="my_cache")
+```
+
+### Force Pattern Regeneration
+
+```python
+# Force the AI to re-analyze the page structure
+result = await extractor.extract_pattern_links(url, force_regenerate=True)
+```
+
+### Direct JSON Output
+
+```python
+from html2rss_ai.extractor import extract_pattern_links
+
+# Get JSON directly
+json_result = await extract_pattern_links("https://example.com")
+print(json.dumps(json_result, indent=2))
+```
+
+## Configuration
+
+### Environment Variables
+
+- `OPENAI_API_KEY`: Your OpenAI API key (required)
+
+### Logging
+
+The library uses Python's logging module. Configure logging level:
+
+```python
+import logging
+logging.basicConfig(level=logging.INFO)
+```
+
+## Troubleshooting
+
+### Playwright Issues
+
+If you encounter issues with web content extraction:
+
+1. **Make sure Playwright browsers are installed:**
+   ```bash
+   playwright install
+   ```
+
+2. **Check browser installation:**
+   ```bash
+   playwright --version
+   ```
+
+3. **For headless environments (Docker, CI):**
+   ```bash
+   playwright install-deps
+   ```
+
+4. **Common issues:**
+   - **Permission denied**: Run `sudo playwright install-deps` on Linux
+   - **Browser not found**: Ensure you've run `playwright install`
+   - **Timeout errors**: Some sites may take longer to load, consider increasing timeouts
+
+## Examples
+
+### Extract News Articles
+
+```python
+async def extract_news():
+    extractor = UniversalPatternExtractor()
+    result = await extractor.extract_pattern_links("https://news-site.com")
+    
+    for item in result.items:
+        print(f"📰 {item.title}")
+        if item.publication_date:
+            print(f"   📅 {item.publication_date}")
+```
+
+### Extract Product Listings
+
+```python
+async def extract_products():
+    extractor = UniversalPatternExtractor()
+    result = await extractor.extract_pattern_links("https://ecommerce-site.com/products")
+    
+    print(f"Found {len(result.items)} products")
+    for item in result.items:
+        print(f"🛍️ {item.title} - {item.url}")
+```
+
+## How It Works
+
+1. **🌐 HTML Extraction**: Downloads and parses webpage HTML with JavaScript support
+2. **🔍 Advanced Structure Analysis**: 
+   - Analyzes link patterns and HTML structure
+   - **NEW**: Detects CSS Grid/Flexbox layouts (`grid-cols-*`, `flex`, etc.)
+   - **NEW**: Identifies modern CSS frameworks (Tailwind, Bootstrap)
+3. **🤖 Enhanced AI Pattern Recognition**: 
+   - Uses OpenAI GPT-4 with improved prompts for modern layouts
+   - **NEW**: Recognizes non-semantic structures (divs with CSS classes)
+   - **NEW**: Understands container-based content organization
+4. **💾 Smart Pattern Caching**: Caches successful patterns for 7-day reuse
+5. **⚡ Robust Content Extraction**: 
+   - **NEW**: CSS selector sanitization (`my-1.5` → `[class~="my-1.5"]`)
+   - **NEW**: Multiple link extraction per container
+   - **NEW**: Fallback strategies for complex selectors
+6. **📅 Advanced Date Extraction**: 
+   - **NEW**: Sanitized date selectors with retry logic
+   - Multiple date format support with fallback patterns
+7. **📊 Structured Output**: Returns JSON with URLs, titles, dates, and confidence scores
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with [OpenAI](https://openai.com/) GPT models
+- Uses [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/) for HTML parsing
+- Uses [Playwright](https://playwright.dev/) for web content extraction
+- Inspired by RSS feed generation tools
