@@ -1,0 +1,14 @@
+from setuptools import setup, find_packages
+import pathlib
+
+HERE = pathlib.Path(__file__).parent
+README = (HERE / "README.md").read_text()
+
+setup(
+    name="jict-dict",
+    version="0.1.3",
+    packages=find_packages(),
+    long_description=README,
+    long_description_content_type="text/markdown",
+    # ... your other metadata ...
+)
