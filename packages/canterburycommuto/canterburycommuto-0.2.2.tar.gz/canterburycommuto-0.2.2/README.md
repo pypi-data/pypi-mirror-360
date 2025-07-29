@@ -1,0 +1,225 @@
+# CanterburyCommuto
+
+The aim of CanterburyCommuto is to find commuting information including time and distance travelled before, during, and after the overlap, if it exists, between two routes. 
+
+It relies on the Google Maps API. 
+
+## How to use it
+
+### Install the package
+
+To use CanterburyCommuto, you need to clone the respository first. You can do this by running the following command in your terminal:
+
+```bash
+git clone https://github.com/PeirongShi/CanterburyCommuto.git
+```
+
+And then install the requirements
+
+```bash
+cd CanterburyCommuto
+pip install -r requirements.txt
+```
+
+### Get Google API Key
+
+To use CanterburyCommuto, it is necessary to have your API key ready from Google. 
+
+0. You need a Google Account.
+1. Go to Google Cloud Console.
+2. Create a billing account. If the usage of API is below a certain threshold, no payment will be needed.
+3. Click on the button next to the Google Cloud logo to make a new project.
+4. From Quick access, find APIs&Services. Click on it.
+5. Go to the API Library.
+6. Type in Google Maps in the search bar.
+7. Enable the Google Maps Routes API. (It is probably harmless to enable more APIs than needed.) You will be able to create an API key in this step.
+8. Go to Credentials, where you will find your key stored.
+
+*Caveat: Do not share your Google API key to the public. Your key is related to your billing account. If abused, high costs will be incurred.*
+
+## Google Maps Routes API Pricing Summary
+
+Google Maps Routes API is structured into three feature tiers—**Essentials**, **Advanced (Pro)**, and **Preferred (Enterprise)**—with pricing based on usage volume and feature complexity.
+
+| Tier       | Free Monthly Quota | 1–100K Requests | 100K–500K | 500K–1M | 1M–5M | 5M+    |
+|------------|--------------------|------------------|------------|----------|--------|--------|
+| Essentials | 10,000 requests     | $5.00 / 1,000     | $4.00      | $3.00    | $1.50  | $0.38  |
+| Advanced   | 5,000 requests      | $10.00 / 1,000    | $8.00      | $6.00    | $3.00  | $0.75  |
+| Preferred  | 1,000 requests      | $15.00 / 1,000    | $12.00     | $9.00    | $4.50  | $1.14  |
+
+- **Essentials**: Basic routing (up to 10 waypoints), no traffic awareness.
+- **Advanced (Pro)**: Supports traffic-aware routing, more waypoints (11–25), and route modifiers.
+- **Preferred (Enterprise)**: Includes premium features like two-wheel vehicle routing and fleet management.
+
+All tiers offer automatic volume discounts beyond 100,000 monthly requests. Free quotas reset each month and are applied per SKU.
+
+[View official pricing documentation](https://developers.google.com/maps/billing-and-pricing/pricing#routes)
+
+This Python package uses the essential tier of the Google Maps Routes API, relying only on basic parameters and avoiding advanced features, thereby qualifying for standard usage rates.
+
+### Launch the computation
+
+You can generate a test dataset with the script
+  
+```bash
+python CanterburyCommuto/canterburycommuto/Sample.py
+```
+
+Otherwise, you need to create a csv file with the following columns:
+
+0. **ID** - Each observation's ID (optional).
+1. **OriginA_latitude** – The latitude of the starting location of Route A.  
+2. **OriginA_longitude** – The longitude of the starting location of Route A.  
+3. **DestinationA_latitude** – The latitude of the ending location of Route A.  
+4. **DestinationA_longitude** – The longitude of the ending location of Route A.  
+5. **OriginB_latitude** – The latitude of the starting location of Route B.  
+6. **OriginB_longitude** – The longitude of the starting location of Route B.  
+7. **DestinationB_latitude** – The latitude of the ending location of Route B.  
+8. **DestinationB_longitude** – The longitude of the ending location of Route B.
+
+Next, import the main function.
+
+```bash
+from canterburycommuto.CanterburyCommuto import Overlap_Function
+```
+Before running the main function to retrieve commuting data, it's recommended to first run the estimation command. This provides an estimate of the number of Google API requests and the potential cost, assuming the free tier is exceeded. This helps users make informed decisions, as extensive API use can become costly depending on route complexity and Google's pricing. 
+
+```bash
+python -m canterburycommuto estimate \
+    --csv_file origin_destination_coordinates.csv \
+    --input_dir "C:\Users\HUAWEI\CanterburyCommuto\CanterburyCommuto" \
+    --approximation "exact" \
+    --commuting_info "no" \
+    --home_a_lat "home_A" \
+    --home_a_lon "home_A_lon" \
+    --work_a_lat "work_A" \
+    --work_a_lon "work_A_lon" \
+    --home_b_lat "home_B" \
+    --home_b_lon "home_B_lon" \
+    --work_b_lat "work_B" \
+    --work_b_lon "work_B_lon" \
+    --id_column "ID" \
+    --skip_invalid True
+```
+
+Then, to use CanterburyCommuto, you can run the command in a way like the example illustrated below. This example chooses to create 150-meter buffers along the two routes to find the buffers' intersection ratios for each route. The output is "buffer_output.csv". The --skip_invalid True option tells the program to skip over rows with missing or invalid data, allowing the analysis to continue uninterrupted. The --save_api_info True option enables saving API responses to a file for future reference or debugging purposes.
+
+```bash
+!python -m canterburycommuto overlap \
+    --csv_file origin_destination_coordinates.csv \
+    --input_dir "C:\Users\HUAWEI\CanterburyCommuto\CanterburyCommuto" \
+    --api_key "API_KEY" \
+    --method "google" \
+    --buffer 150 \
+    --approximation "yes with buffer" \
+    --home_a_lat "home_A" \
+    --home_a_lon "home_A_lon" \
+    --work_a_lat "work_A" \
+    --work_a_lon "work_A_lon" \
+    --home_b_lat "home_B" \
+    --home_b_lon "home_B_lon" \
+    --work_b_lat "work_B" \
+    --work_b_lon "work_B_lon" \
+    --id_column "ID" \
+    --output_file "buffer_percentage_output.csv" \
+    --skip_invalid True \
+    --save_api_info True \
+    --yes
+```
+
+You can run this package on as many route pairs as you wish, as long as these route pairs are stored in a csv file in a way similar to the output of Sample.py in the repository.
+Don't worry if the order of the columns in your csv file is different from that of the Sample.py output, as you can manually fill in the column names corresponding to the origins and destinations of the route pairs in CanterburyCommuto. 
+
+The parameter input_dir specifies the input directory where the source CSV file is located. The output data generated by the package will be saved in the same directory.
+
+The parameter skip_invalid is a Boolean flag that controls error handling. If set to True, the script will skip over any invalid or malformed rows in the input file and continue processing the remaining data. If set to False, the script will terminate upon encountering the first error.
+
+
+
+#### For simplified execution using a configuration file and additional usage details, please refer to the `example.ipynb` file located in the example folder. As an alternative to the Google Maps API, the free and locally hosted GraphHopper method may be used. Please refer to `example.ipynb` for detailed setup and usage instructions.
+
+
+### Results
+
+The output will be a csv file including the GPS coordinates of the route pairs' origins and destinations and the values describing the overlaps of route pairs. Graphs are also produced to visualize the commuting paths on the **OpenStreetMap** background. By placing the mouse onto the markers, one is able to see the origins and destinations of route A and B marked as Origin A and Destination A in red and Origin B and Destination B in green. Each generated map file includes the ID of the corresponding observation in its filename. This ID is either taken from the user’s original dataset (if provided) or automatically generated by the package when no explicit ID is present.
+
+Distances are measured in kilometers and the time unit is minute. Users are able to calculate percentages of overlaps, for instance, with the values of the following variables. As shown below, the list explaining the meaning of the possible output variables:
+
+0. **ID** - Each observation's ID (optional).
+1. **OriginA_latitude** – The latitude of the starting location of Route A.  
+2. **OriginA_longitude** – The longitude of the starting location of Route A.  
+3. **DestinationA_latitude** – The latitude of the ending location of Route A.  
+4. **DestinationA_longitude** – The longitude of the ending location of Route A.  
+5. **OriginB_latitude** – The latitude of the starting location of Route B.  
+6. **OriginB_longitude** – The longitude of the starting location of Route B.  
+7. **DestinationB_latitude** – The latitude of the ending location of Route B.  
+8. **DestinationB_longitude** – The longitude of the ending location of Route B.
+
+9. **aDist**: Total distance of route A. 
+10. **aTime**: Total time to traverse route A.
+11. **bDist**: Total distance of route B.
+12. **bTime**: Total time to traverse route B.
+
+13. **overlapDist**: Distance of the overlapping segment between route A and route B.
+14. **overlapTime**: Time to traverse the overlapping segment between route A and route B.
+
+15. **aBeforeDist**: Distance covered on route A before the overlap begins.
+16. **aBeforeTime**: Time spent on route A before the overlap begins.
+17. **bBeforeDist**: Distance covered on route B before the overlap begins.
+18. **bBeforeTime**: Time spent on route B before the overlap begins.
+
+19. **aAfterDist**: Distance covered on route A after the overlap ends.
+20. **aAfterTime**: Time spent on route A after the overlap ends.
+21. **bAfterDist**: Distance covered on route B after the overlap ends.
+22. **bAfterTime**: Time spent on route B after the overlap ends.
+23. **aIntersecRatio**: The proportion of the buffer area of Route A that intersects with the buffer of Route B. It is calculated as:
+
+    `aIntersecRatio = Intersection Area / Area of A`
+
+24. **bIntersecRatio**: The proportion of the buffer area of Route B that intersects with the buffer of Route A.
+25. **aoverlapDist**: Distance of the overlapping segment on route A inside the buffer intersection with route B.  
+26. **aoverlapTime**: Time to traverse the overlapping segment on route A.  
+27. **boverlapDist**: Distance of the overlapping segment on route B inside the buffer intersection with route A.  
+28. **boverlapTime**: Time to traverse the overlapping segment on route B.
+
+### Overlap Function Options
+
+This table summarizes the available options for the package's main function, including whether commuting information before and after the overlap can be considered, how realistic the results are, and a brief description. "Commuting Information (Pre/Post Overlap) Available?" refers to whether the system can provide separate commuting data for the parts of the route before and after the overlapping segment of a shared commute.
+
+| Option Name                 | Commuting Information (Pre/Post Overlap) Available? | Closeness to Reality (0 = Not Close, 10 = Very Close) | Description |
+|----------------------------|---------------------------|--------------------------------------|-------------|
+| Common Node                | Yes                       | 6                                    | This option finds the first and last common nodes along the two routes' polylines given by Google Maps. The overlapping information is obtained via these nodes. |
+| Rectangle Approximation    | Yes                       | 5 to 7                                | As a modified variant of the Common Node Method, this option draws rectangles along the route segments before and after the first and last common nodes of the two routes. It may extend the overlapping range of the route pair if the overlapping area ratio of these rectangles exceeds certain thresholds, which is set to 50% by default, but adjustable by the users. |
+| Buffer Area Ratio          | No                        | 8                                    | This option creates 100-meter (m) buffers along the two routes to find the ratios of the buffers' intersection area for each route separately. The buffer width is 100m by default, but it may be adjusted upon the users' wishes. |
+| Buffer Route Node          | Yes                       | 6 to 8                                | This option considers the routes and buffers as lines and geometric shapes. It finds the closest nodes to the points of intersections among the buffer polygons and route lines. The overlapping information is determined based on these closest nodes. |
+| Buffer Route Intersection  | Yes                       | 9                                    | As an improved version of the Buffer Route Node method, this option directly records the GPS coordinates corresponding to the points of intersections among the buffer polygons and the route lines and then proceeds to compute the overlapping distance and time information based on these GPS coordinates. |
+
+## Additional Notes and Features
+
+### Interrupting the Script
+
+You can stop the script during execution by pressing **Ctrl + C** in the terminal or command prompt.  
+If interrupted, the script will **gracefully exit** and **save all completed results** to the `ResultsCommuto/` folder. This ensures partial progress is not lost.
+
+### Output Order and Row Identification
+
+To improve performance, the package uses **multithreading**, which may result in a slight reordering of the output rows—particularly **within processing blocks**.  
+To assist with traceability, a `row_id` field is included in the output. This allows users to easily match results back to the original input or re-sort if needed.
+
+### Output Folder Structure
+
+All results, including CSV files, maps, and logs, are now saved in a dedicated folder named `ResultsCommuto/`, located in the same directory as the input file.  
+This helps keep input and output files organized and clearly separated.
+
+## Acknowledgment
+
+This Python package CanterburyCommuto is created under the instruction of Professor Florian Grosset and Professor Émilien Schultz. 
+
+The **Specification on API Usage** section, located in doc, was written with assistance from OpenAI's ChatGPT, as its explanation on the details of API utilization is relatively clear. 
+
+If you have any question, please open an issue.
+
+
+
+
+
