@@ -1,0 +1,108 @@
+{
+    "header": {
+        "id": "example-schema.json",
+        "schema": "http://json-schema.org/draft-07/schema",
+        "title": "Example Schema",
+        "description": "Ansible host vars for my networking device. Requires the below objects:\n- chassis\n- system\n- interfaces\n"
+    },
+    "js_kinds": {
+        "hostname": {
+            "title": "Hostname",
+            "description": "Hostname of the device",
+            "type": "pattern",
+            "regex": "^[a-zA-Z0-9-]{1,63}$"
+        }
+    },
+    "schema": {
+        "chassis": {
+            "title": "Chassis",
+            "description": "Object containing Chassis information. Has the below properties: \nhostname [required]: hostname\nmodel [required]: string\ndevice_type [required]: choice (router, switch, firewall, load-balancer)\n",
+            "properties": {
+                "hostname": {
+                    "js_kind": {
+                        "name": "hostname"
+                    }
+                },
+                "model": {
+                    "description": "Model of the device",
+                    "js_kind": {
+                        "name": "string"
+                    }
+                },
+                "device_type": {
+                    "title": "Device Type",
+                    "description": "Device Type options are:\nrouter, switch, firewall, load-balancer\n",
+                    "js_kind": {
+                        "name": "choice",
+                        "choices": [
+                            "router",
+                            "switch",
+                            "firewall",
+                            "load-balancer"
+                        ]
+                    }
+                }
+            },
+            "required": [
+                "hostname",
+                "model",
+                "device_type"
+            ]
+        },
+        "system": {
+            "title": "System",
+            "description": "Object containing System information. Has the below properties:\ndomain_name [required]: string\nntp_servers [required]: list of ipv4 addresses\n",
+            "properties": {
+                "domain_name": {
+                    "js_kind": {
+                        "name": "string"
+                    }
+                },
+                "ntp_servers": {
+                    "title": "NTP Servers",
+                    "description": "List of NTP servers",
+                    "items": {
+                        "js_kind": {
+                            "name": "ipv4"
+                        }
+                    }
+                }
+            },
+            "required": [
+                "domain_name",
+                "ntp_servers"
+            ]
+        },
+        "interfaces": {
+            "title": "Device Interfaces",
+            "description": "List of device interfaces. Each interface has the below properties:\nif [required]: string\ndesc: string\nipv4: ipv4_cidr\nipv6: ipv6_cidr\n",
+            "items": {
+                "properties": {
+                    "if": {
+                        "js_kind": {
+                            "name": "string"
+                        }
+                    },
+                    "desc": {
+                        "js_kind": {
+                            "name": "string"
+                        }
+                    },
+                    "ipv4": {
+                        "js_kind": {
+                            "name": "ipv4_cidr"
+                        }
+                    },
+                    "ipv6": {
+                        "js_kind": {
+                            "name": "ipv6_cidr"
+                        }
+                    }
+                },
+                "required": [
+                    "if"
+                ]
+            }
+        }
+    }
+}
