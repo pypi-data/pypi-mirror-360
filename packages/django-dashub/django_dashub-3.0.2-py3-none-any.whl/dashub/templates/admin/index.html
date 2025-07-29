@@ -1,0 +1,82 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static dashub %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block content_title %} {% trans 'Dashboard' %} {% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin:index' %}">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item">{% trans 'Dashboard' %}</li>
+    </ol>
+{% endblock %}
+
+
+{% block content %}
+    {% get_side_menu using="app_list" as dashboard_list %}
+    {% if dashboard_list %}
+        {% widthratio dashboard_list|length 2 1 as middle %}
+    {% endif %}
+
+    <div class="col-12">
+        {% get_analytics as analytics %}
+        {% if analytics.summary_cards %}
+            <div class="row">
+                {% for card in analytics.summary_cards %}
+                    <div class="col-lg-4 col-md-6 col-12 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="flex-grow-1">
+                                        <p class="card-text text-muted mb-1 small">
+                                            {{ card.title }}
+                                        </p>
+                                        <h3 class="mb-0 fw-bold">{{ card.total_value }}</h3>
+                                    </div>
+                                    <div class="metric-icon icon-bg-success">
+                                        <i class="{{ card.icon }}"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="small">
+                                        <strong class="{% if card.change == 0 %}text-muted{% elif card.change > 0 %}text-success{% else %}text-danger{% endif %} fw-semibold">
+                                            {% if card.change != 0 %}{{ card.change }}{% if card.type == "percentage" %}%{% endif %}{% endif %}</strong>
+                                        <span class="text-muted ms-1">{{ card.change_text }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+
+        <div class="row">
+            {% for app in dashboard_list %}
+                <div class="col-12 col-md-6 col-xl-4 mb-4">
+                    <div class="card dashboard_card">
+                        <div class="card-header">{{ app.name }}</div>
+                        <div class="card-body">
+                            <div>
+                                {% for model in app.models %}
+                                    <a href="{% if model.url %}{{ model.url }}{% else %}#!{% endif %}"
+                                       class="text-reset fw-medium">
+                                        <div>
+                                            <i class="{{ model.icon }} text-muted"></i>
+                                            <p class="text-muted mb-0 text-truncate">{{ model.name }}</p>
+                                        </div>
+                                        <div>{{ model.count }}</div>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
