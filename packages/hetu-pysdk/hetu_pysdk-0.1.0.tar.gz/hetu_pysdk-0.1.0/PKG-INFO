@@ -1,0 +1,165 @@
+Metadata-Version: 2.1
+Name: hetu-pysdk
+Version: 0.1.0
+Summary: A Python SDK for interacting with the hetu blockchain (cosmos-sdk + EVM), wrapping EVM contract and cosmos RPC client features.
+Home-page: https://github.com/hetu-project/hetu-pysdk
+Author: Hetu Protocol
+Requires-Python: >=3.12,<4.0
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Dist: colorama (>=0.4.6,<0.5.0)
+Requires-Dist: cosmpy (>=0.11.1,<0.12.0)
+Requires-Dist: fastapi (>=0.115.14,<0.116.0)
+Requires-Dist: grpcio (>=1.73.1,<2.0.0)
+Requires-Dist: msgpack-numpy-opentensor (>=0.5.0,<0.6.0)
+Requires-Dist: munch (>=4.0.0,<5.0.0)
+Requires-Dist: nest_asyncio (>=1.6.0,<2.0.0)
+Requires-Dist: netaddr (>=1.3.0,<2.0.0)
+Requires-Dist: numpy (>=2.3.1,<3.0.0)
+Requires-Dist: protobuf (>=5.29.5,<6.0.0)
+Requires-Dist: python-statemachine (>=2.5.0,<3.0.0)
+Requires-Dist: pyyaml (>=6.0.2,<7.0.0)
+Requires-Dist: requests (>=2.32.4,<3.0.0)
+Requires-Dist: scalecodec (>=1.2.11,<2.0.0)
+Requires-Dist: torch (>=2.7.1,<3.0.0)
+Requires-Dist: twine (>=6.1.0,<7.0.0)
+Requires-Dist: typing-extensions (>=4.14.0,<5.0.0)
+Requires-Dist: uvicorn (>=0.35.0,<0.36.0)
+Requires-Dist: web3 (>=7.12.0,<8.0.0)
+Requires-Dist: wheel (>=0.45.1,<0.46.0)
+Requires-Dist: xxhash (>=3.5.0,<4.0.0)
+Description-Content-Type: text/markdown
+
+# hetu-pysdk
+
+A Python SDK for interacting with the hetu blockchain (Cosmos SDK + EVM), wrapping EVM contract and Cosmos RPC client features. Provides Axon/Dendrite/Synapse communication, EVM JSON-RPC, and ETH-compatible signing/verification.
+
+## Features
+- EVM contract interaction via web3.py
+- Cosmos RPC client support
+- Axon (server) and Dendrite (client) neuron communication
+- Synapse: extensible message/data structure for requests
+- ETH/EVM-compatible signing and signature verification
+- Full support for ETH wallet/address
+- Mock/test infrastructure for all core modules
+- Custom exceptions and error handling
+- Modern, extensible, and type-annotated codebase
+
+## Project Structure
+
+- `hetu/`         — Core SDK modules (axon, dendrite, synapse, chain_api, etc.)
+- `chain_api/`    — EVM/Cosmos chain RPC and wallet logic
+- `chain_data/`   — Data structures for chain state, neurons, axons, etc.
+- `utils/`        — Utilities, logging, networking, versioning, mocks
+- `tests/`        — Pytest test cases for all major features
+- `contrib/`      — Contributing guidelines, changelog, etc.
+- `README.md`    — Project overview and installation instructions
+
+
+## Installation
+
+### Install from [PyPI](https://pypi.org/project/hetu-pysdk/)
+
+Run
+
+```bash
+pip install -U hetu-pysdk
+```
+
+### Install from source
+
+1. Clone the Hetu SDK repo.
+
+```bash
+git clone https://github.com/hetu-project/hetu-pysdk.git
+```
+
+2. `cd` into `hetu-pysdk` directory.
+
+```bash
+cd hetu-pysdk
+```
+
+3. Create and activate a virtual environment.
+
+```bash
+make init-venv
+```
+
+4. Install dependencies and the CLI:
+
+To install the SDK, you can use Poetry, which manages dependencies and virtual environments.
+Make sure you have Poetry installed, then run:
+
+```bash
+pip install -U pip setuptools poetry wheel
+poetry install
+```
+
+## Usage
+### Basic EVM/Cosmos Client
+
+```python
+from hetu_pysdk import HetuClient
+
+client = HetuClient(rpc_url="http://localhost:26657", evm_rpc_url="http://localhost:8545")
+block_number = client.eth_blockNumber()
+balance = client.eth_getBalance(address, "latest")
+```
+
+### Axon/Dendrite/Synapse Example
+```python
+import hetu_pysdk as ht
+
+class EchoSynapse(ht.Synapse):
+    input: str
+    output: str = None
+
+def echo_forward(syn: EchoSynapse) -> EchoSynapse:
+    syn.output = syn.input
+    return syn
+
+def verify_echo(syn: EchoSynapse):
+    assert isinstance(syn.input, str)
+
+# Create ETH wallet/account
+dendrite_wallet = ht.Account.create()
+axon_wallet = ht.Account.create()
+
+# Start Axon server
+axon = ht.Axon(account=axon_wallet, port=8091)
+axon.attach(forward_fn=echo_forward, verify_fn=verify_echo)
+axon.serve(netuid=1).start()
+
+# Dendrite client sends request
+syn = EchoSynapse(input="hello")
+dendrite = ht.Dendrite(account=dendrite_wallet)
+response = dendrite.call(ht.AxonInfo(ip="127.0.0.1", port=8091, hotkey=axon_wallet.address), syn)
+print(response.output)  # 'hello'
+```
+
+### ETH-Compatible Signing & Verification
+
+- All requests are signed using eth_account and encode_defunct (EIP-191).
+- Axon verifies signatures using Account.recover_message, matching claimed address.
+- Nonce and computed_body_hash included in signature to prevent replay/tampering.
+
+### Testing
+
+```bash
+poetry run pytest
+```
+
+- All core modules and communication patterns are covered by tests in `tests/`.
+- Includes Axon/Dendrite/Synapse integration, EVM RPC, and mock logic.
+
+### Mock/Offline Support
+
+- Mock classes and MagicMock are used for offline/test scenarios.
+- See `hetu/utils/mock/hetutensor_mock.py` for mock neuron/chain data.
+
+## License
+
+MIT
+
