@@ -1,0 +1,456 @@
+Metadata-Version: 2.4
+Name: mouth2_oc
+Version: 2.2.1
+Summary: Mouth contains a service to run outgoing communications like email and sms messages
+Project-URL: Documentation, https://github.com/ouroboroscoding/mouth2
+Project-URL: Source, https://github.com/ouroboroscoding/mouth2
+Project-URL: Tracker, https://github.com/ouroboroscoding/mouth2/issues
+Author-email: "Chris Nasr - Ouroboros Coding Inc." <chris@ouroboroscoding.com>
+Maintainer-email: "Chris Nasr - Ouroboros Coding Inc." <chris@ouroboroscoding.com>
+License-File: LICENSE
+Requires-Python: >=3.10
+Requires-Dist: body-oc<2.3,>=2.2.0
+Requires-Dist: brain2-oc<2.5,>=2.4.0
+Requires-Dist: config-oc<1.2,>=1.1.0
+Requires-Dist: define-oc<1.1,>=1.0.5
+Requires-Dist: email-smtp<1.1,>=1.0.1
+Requires-Dist: namedredis<1.1,>=1.0.2
+Requires-Dist: rest-mysql<1.3,>=1.2.5
+Requires-Dist: tools-oc<1.3,>=1.2.5
+Requires-Dist: twilio==9.4.1
+Requires-Dist: undefined-oc<1.1,>=1.0.0
+Requires-Dist: upgrade-oc<1.2,>=1.1.0
+Description-Content-Type: text/markdown
+
+# mouth2_oc
+[![pypi version](https://img.shields.io/pypi/v/mouth2-oc.svg)](https://pypi.org/project/mouth2-oc) ![Custom License](https://img.shields.io/pypi/l/mouth2-oc.svg)
+
+[body_oc](https://pypi.org/project/body-oc/) 2.0 service that handles locale
+options, as well as templating and sending email (smtp) and sms (twilio)
+messages.
+
+Please see [LICENSE](https://github.com/ouroboroscoding/mouth2/blob/main/LICENSE)
+for further information.
+
+See [Releases](https://github.com/ouroboroscoding/mouth2/blob/main/releases.md)
+for changes from release to release.
+
+## RESTlike Documentation
+If you're only connecting to mouth through the RESTlike API, check out the
+[full documentation](https://github.com/ouroboroscoding/mouth2/blob/main/rest.md)
+on the individual requests.
+
+## JavaScript/TypeScript
+Also check out [@ouroboros/mouth](https://www.npmjs.com/package/@ouroboros/mouth)
+on npm if you want to easily connect to mouth in your choice of javascript /
+typescript framework.
+
+## Contents
+- [Module Install](#module-install)
+- [Module Configuration](#module-configuration)
+  - [Example Configuration](#example-configuration)
+  - [Configuration Sections](#configuration-sections)
+- [Install Tables and Records](#install-tables-and-records)
+- [Update Tables and/or Records](#upgrade-tables-andor-records)
+
+## Module Install
+
+### Requires
+mouth2_oc requires python 3.10 or higher
+
+### Install
+```bash
+pip install mouth2_oc
+```
+
+[ [mouth2_oc](#mouth2_oc) / [contents](#contents) ]
+
+## Module Configuration
+Mouth and all [body_oc](https://pypi.org/project/body-oc/) services use
+[JSON](https://www.json.org/) to store their server side settings. For more
+information on how to setup and store these configuration files, visit
+[config_oc](https://pypi.org/project/config-oc/).
+
+### Example Configuration
+Below is a sample configuration file, we'll break it down section by section
+immediately after.
+
+```json
+{
+  "body": {
+    "rest": {
+      "allowed": [ "mydomain.com" ],
+      "default": {
+        "domain": "localhost",
+        "host": "0.0.0.0",
+        "protocol": "http"
+      },
+      "services": {
+        "brain": { "port": 8000, "workers": 10 },
+        "mouth": { "port": 8001, "workers": 2 }
+      },
+      "verbose": true
+    }
+  },
+
+  "email": {
+    "error_to": "me+errors@mydomain.com",
+    "allowed": null,
+    "from": "MyApp! <contact@mydomain.com>",
+    "smtp": {
+      "host": "smtp.mydomain.com",
+      "port": 587,
+      "tls": true,
+      "user": "contact@mydomain.com",
+      "passwd": "********"
+    }
+  },
+
+  "memory": {
+    "redis": "session"
+  },
+
+  "mouth": {
+    "data": "../.data",
+    "mysql": "records",
+	"send_error_emails": true
+  },
+
+  "mysql": {
+    "hosts": {
+      "records": {
+        "host": "sql.mydomain.com",
+        "charset": "utf8mb4",
+        "passwd": "********"
+      }
+    },
+    "db": "my_app"
+  },
+
+  "sms": {
+    "active": true,
+    "twilio": {
+      "account_sid": "someaccountidfromtwilio",
+      "token": "sometokenfromtwilio",
+      "from_number": "+5145559876"
+    }
+  }
+}
+```
+
+[ [brain2_oc](#brain2_oc) / [contents](#contents) /
+[module configuration](#module-configuration) ]
+
+### Configuration Sections
+First, we'll start with the lowest level things we control, the email/smtp, sms,
+database, and caching software connection settings. Later we'll talk about other
+Ouroboros Coding software, the memory and body settings.
+
+#### email section
+```json
+  "email": {
+    "allowed": null,
+    "error_to": "me+errors@mydomain.com",
+    "from": "MyApp! <contact@mydomain.com>",
+    "smtp": {
+      "host": "smtp.mydomain.com",
+      "port": 587,
+      "tls": true,
+      "user": "contact@mydomain.com",
+      "passwd": "********"
+    }
+  }
+```
+This section will most likely exist in your project in order to handle sending
+error e-mails on crashes, but for Mouth is even more important as it's used to
+send all e-mails out.
+
+`allowed` should be set to null or false by default, as that allows all e-mails
+to any address allowed. If you want to limit which e-mail addresses can receive
+e-mails via Mouth, set `allowed` to an array, e.g.
+```json
+    "allowed": [ "somename@mydomain.com", "someothername@mydomain.com" ]
+```
+Any requests that receive e-mail addresses that aren't in the list will simply
+not send out the e-mail and return success as if they did.
+
+`error_to` represents the person or person's who will receive emails whenever
+mouth has some sort of exception that wasn't handled.
+
+`from` is the default email address any emails come from. It is only used if no
+from is passed to the request.
+
+`smtp` represents the SMTP server connection values.
+
+[ [mouth2_oc](#mouth2_oc) / [contents](#contents) /
+[module configuration](#module-configuration) /
+[configuration sections](#configuration-sections) ]
+
+#### sms section
+```json
+  "sms": {
+    "active": true,
+    "twilio": {
+      "account_sid": "someaccountidfromtwilio",
+      "token": "sometokenfromtwilio",
+      "from_number": "+5145559876"
+    }
+  }
+```
+The `sms` section represents sending SMS messages via Twilio to specific phone
+numbers.
+
+##### sms.active
+If set to `false`, any request to send an SMS will be rejected.
+
+##### sms.twilio
+The twilio specific configuration.
+
+`account_sid` The SID provided by Twilio.
+
+`token` The token provided by Twilio.
+
+`from_number` The phone number to "send" the SMS from.
+
+#### mysql section
+```json
+  "mysql": {
+	"hosts": {
+	  "records": {
+		"host": "sql.mydomain.com",
+		"charset": "utf8mb4",
+		"passwd": "********"
+	  }
+	},
+	"db": "my_app"
+  }
+```
+Each object under `hosts` represents a named [MySQL](https://www.mysql.com/) or
+[MariaDB](https://mariadb.org/) connection. The important part is the name, we
+only have one, **records**.
+
+For more information on what can be entered under each name, see
+[rest_mysql](https://pypi.org/project/rest_mysql/).
+
+[ [mouth2_oc](#mouth2_oc) / [contents](#contents) /
+[module configuration](#module-configuration) /
+[configuration sections](#configuration-sections) ]
+
+#### redis section
+```json
+  "redis": {
+	"records": {
+	  "host": "redis.mydomain.com",
+	  "db": 0
+	},
+	"session": {
+	  "host": "redis.mydomain.com",
+	  "db": 1
+	}
+  }
+```
+Each object under the "redis" section represents a named [Redis](https://redis.io/)
+connection. The important part is the name, we have two here, **records** and
+**session**.
+
+For more info on what can be put under each name, see the extensive
+list on [Connecting to Redis](https://redis.readthedocs.io/en/stable/connections.html).
+
+[ [mouth2_oc](#mouth2_oc) / [contents](#contents) /
+[module configuration](#module-configuration) /
+[configuration sections](#configuration-sections) ]
+
+#### memory section
+```json
+  "memory": {
+	"redis": "session"
+  }
+```
+[memory_oc](https://pypi.org/project/memory_oc/) is an Ouroboros Coding module
+that handles the sessions for all services that run on the
+[body_oc](https://pypi.org/project/body_oc/) framework.
+
+It needs to know which [Redis](https://redis.io/) connection it should use to
+store the session information. We have two from the redis section, **records**
+and **session**, and we are telling [memory_oc](https://pypi.org/project/memory_oc/)
+to use the **session** one.
+
+[ [mouth2_oc](#mouth2_oc) / [contents](#contents) /
+[module configuration](#module-configuration) /
+[configuration sections](#configuration-sections) ]
+
+#### body section
+```json
+  "body": {
+	"rest": {
+	  "allowed": [ "mydomain.com" ],
+	  "default": {
+		"domain": "localhost",
+		"host": "0.0.0.0",
+		"protocol": "http"
+	  },
+	  "services": {
+		"mouth": { "port": 8000, "workers": 10 },
+		"mouth": { "port": 8001, "workers": 2 }
+	  },
+	  "verbose": true
+	}
+  }
+```
+
+[body_oc](https://pypi.org/project/body_oc/) is the rest / service framework
+that mouth runs on top of. There's a lot of data here, but it's really only
+setting up two things.
+
+##### body.rest.allowed
+Represents the domains that can make cross origin requests to the RESTlike
+interface. This is mandatory if requests are being made from browsers, but in no
+way affects direct requests via curl / requests / postman / etc. In this case,
+we are allowing any pages across `https://mydomain.com`, this includes
+`https://mydomain.com/some/page/`, `https://mydomain.com/other`, and
+even `https://admin.mydomain.com/`.
+
+To limit to a specific subdomain, change "allowed" to be more specific
+```json
+	  "allowed": [ "admin.mydomain.com" ]
+```
+this way `https://admin.mydomain.com/` and `https://bob.admin.mydomain.com/`
+work, but not `https://mydomain.com/`.
+
+[ [mouth2_oc](#mouth2_oc) / [contents](#contents) /
+[module configuration](#module-configuration) /
+[configuration sections](#configuration-sections) /
+[body section](#body-section) ]
+
+##### body.rest.services
+Second, in order to know how to both run and connect to
+[body_oc](https://pypi.org/project/body_oc/) services, we need to indicate,
+what protocol, domain, and port to use to connect, what interface they will
+respond to, and how many instances of each we can spin up.
+
+In the above instance we have two services, [brain](https://pypi.org/project/brain2-oc/)
+and mouth. Brain is available at `http://localhost:8000` and will be running 10
+threads that will be listening on ip `0.0.0.0`, or internal only traffic. Mouth
+is available at `http://localhost:8001` and will be running 2 threads that will
+also be listening on ip `0.0.0.0`.
+
+We are relying on the defaults to generate some of the data, and this is a very
+simplistic initial launch setup. As we launch more servers and spread the load,
+you might have the config on the mouth server be something more like this where
+[brain](https://pypi.org/project/brain2-oc/) is running on another server inside
+the network.
+```json
+	  "services": {
+		"brain": {
+		  "domain": "brain.mydomain",
+		  "port": 80,
+		  "protocol": "http"
+		},
+		"mouth": {
+		  "domain": "localhost",
+		  "host": "192.168.0.1",
+		  "port": 80,
+		  "protocol": "http",
+		  "workers": 2
+		}
+	  }
+```
+...or like this, where it's running outside the network
+```json
+		"brain": {
+		  "domain": "brain.mydomain.com",
+		  "port": 443,
+		  "protocol": "https"
+		}
+```
+
+##### body.rest.verbose
+This flags decides whether all body services using the config print out the
+requests they receive and the responses they send, to stdout. This can be
+unbelievably helpful during development and debugging.
+
+[ [mouth2_oc](#mouth2_oc) / [contents](#contents) /
+[module configuration](#module-configuration) /
+[configuration sections](#configuration-sections) /
+[body section](#body-section) ]
+
+#### mouth section
+```json
+  "mouth": {
+    "data": "../.data",
+    "mysql": "records",
+	"send_error_emails": true
+  },
+```
+With the rest of the sections cleared up, hopefully the mouth section is easier
+to digest.
+
+##### mouth.data
+A directory where mouth will store any files it needs. Things like the version file
+"mouth.ver" which keeps track of what is [installed](#install-tables-and-records)
+and [upgraded](#upgrade-tables-andor-records). We want this directory outside of
+the root of mouth or the project it's in, in case that folder ever gets deleted.
+
+[ [mouth2_oc](#mouth2_oc) / [contents](#contents) /
+[module configuration](#module-configuration) /
+[configuration sections](#configuration-sections) /
+[mouth section](#brain-section) ]
+
+##### mouth.mysql
+References the only named connection from the [mysql configuration](#mysql-configuration),
+**records**. This is the connection mouth will use to store its tables.
+
+[ [mouth2_oc](#mouth2_oc) / [contents](#contents) /
+[module configuration](#module-configuration) /
+[configuration sections](#configuration-sections) /
+[mouth section](#brain-section) ]
+
+##### mouth.send_error_emails
+If `true`, error emails will be sent to the address in `config.email.error_to`
+whenever a request to mouth causes an uncaught exception.
+
+[ [mouth2_oc](#mouth2_oc) / [contents](#contents) /
+[module configuration](#module-configuration) /
+[configuration sections](#configuration-sections) /
+[mouth section](#mouth-section) ]
+
+## Install Tables and Records
+After installing the module into the project via pip, you will need to install
+the tables to your database.
+
+```console
+(myenv) foo@bar:~$ mouth install
+Installing tables
+Setting lastest version
+Done
+(myenv) foo@bar:~$
+```
+
+[ [mouth2_oc](#mouth2_oc) / [contents](#contents) ]
+
+## Upgrade Tables and/or Records
+If you upgrade to a new version of mouth2_oc be sure to run the upgrade script.
+This will ensure any data and tables are up to date with the version.
+
+```console
+(myenv) foo@bar:~$ mouth upgrade
+Already up to date
+(myenv) foo@bar:~$
+```
+This process works by checking the "mouth.ver" in the [mouth.data](#mouthdata)
+directory to see what, if any, scripts need to be run to upgrade tables and/or
+data. This is one reason why it's very important not to keep the [mouth.data](#mouthdata)
+directory inside your repository or some directory that might get wiped out.
+
+Have no fear though, if the file does get wiped out, the next time the upgrade
+process is run you will be prompted to pick the current version you are on and
+the file will be re-created.
+
+Take note though, the options you will be given will not correspond directly to
+every version of mouth2_oc, only to the versions where data or tables changed in
+a way that the software couldn't support alone. When prompted, ALWAYS pick the
+version which is closest to, but under, the version of mouth2_oc you have
+installed in your project. If you're on `8.1.0` and the choices are between
+`1.0.0` and `8.1.1`, you pick `1.0.0`.
+
+[ [mouth2_oc](#mouth2_oc) / [contents](#contents) ]
