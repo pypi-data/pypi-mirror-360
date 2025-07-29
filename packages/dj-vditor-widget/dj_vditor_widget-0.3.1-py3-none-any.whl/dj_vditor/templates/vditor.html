@@ -1,0 +1,51 @@
+{% load static %}
+<div id="vditor-{{ id }}" class="vditor-container"></div>
+<textarea id="{{ id }}" {{ final_attrs|safe }} style="display:none">{{ value }}</textarea>
+
+<script>
+    (function() {
+        const EDITOR_ID = '{{ id }}';
+        const CONTAINER_ID = `vditor-${EDITOR_ID}`;
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const isDark = localStorage.getItem('theme') === 'dark';
+        
+        // 安全合并配置
+        const originalConfig = {{ config|safe }} || {};
+        const config = {
+            ...originalConfig,
+            value: document.getElementById(EDITOR_ID).value,
+            theme: isDark ? 'dark' : 'classic',
+            preview: {
+                ...(originalConfig.preview || {}),
+                theme: { 
+                    current: isDark ? 'dark' : 'light',
+                    list: originalConfig.preview?.theme?.list || {} 
+                },
+                hljs: {
+                    ...(originalConfig.preview?.hljs || {}),
+                    lineNumber: true,
+                    style: isDark ? 'monokai' : 'monokailight'
+                }
+            },
+            upload: {
+                ...(originalConfig.upload || {}),  // 保留原始上传配置
+                headers: {
+                    ...(originalConfig.upload?.headers || {}),  // 保留原始 headers
+                    'X-CSRFToken': csrfToken
+                }
+            },
+            input: value => {
+                document.getElementById(EDITOR_ID).value = value;
+            }
+        };
+    
+        // 实例管理逻辑不变
+        if (window.vditorInstances?.[EDITOR_ID]) {
+            window.vditorInstances[EDITOR_ID].destroy();
+        }
+        
+        const vditor = new Vditor(CONTAINER_ID, config);
+        window.vditorInstances = window.vditorInstances || {};
+        window.vditorInstances[EDITOR_ID] = vditor;
+    })();
+</script>
