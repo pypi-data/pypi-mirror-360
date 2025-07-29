@@ -1,0 +1,203 @@
+# freetracker
+
+A command-line application for freelancers to track working hours per client/project.
+
+## Features
+
+- **Client Management**: Add, edit, delete, and list clients
+- **Project Management**: Create projects with hours quoted and due dates
+- **Time Tracking**: Start/stop timers with active timer notifications, manual time entry
+- **Tab Completion**: Auto-complete client and project names while typing
+- **Progress Reports**: Visual progress bars showing project completion
+- **Data Export**: Export reports as CSV or view in terminal
+- **Beautiful UI**: Rich terminal formatting with tables and progress bars
+- **Local Storage**: All data stored locally using TinyDB
+
+## Installation
+
+### Prerequisites
+- Python 3.12 or higher
+- [uv](https://github.com/astral-sh/uv) package manager
+
+### Quick Install (Recommended)
+
+Install freetracker as a standalone CLI tool using uv:
+
+```bash
+uv tool install freetracker
+```
+
+This installs freetracker globally, making the `freetracker` command available anywhere in your terminal.
+
+### Development Setup
+
+1. Clone the repository:
+```bash
+git clone https://github.com/tensorturtle/freetracker.git
+cd freetracker
+```
+
+2. Install dependencies:
+```bash
+uv sync
+```
+
+## Usage
+
+### Getting Started
+
+1. **Add a client:**
+```bash
+freetracker client add
+```
+
+2. **Add a project for the client:**
+```bash
+freetracker project add
+```
+
+3. **Start tracking time:**
+```bash
+freetracker start
+```
+
+4. **Stop tracking time:**
+```bash
+freetracker stop
+```
+
+5. **View reports:**
+```bash
+freetracker report
+```
+
+### Client Management
+
+```bash
+# Add a new client
+freetracker client add
+
+# List all clients
+freetracker client list
+
+# Edit a client
+freetracker client edit
+
+# Delete a client (and all its projects)
+freetracker client delete
+```
+
+### Project Management
+
+```bash
+# Add a new project
+freetracker project add
+
+# List all projects
+freetracker project list
+
+# List projects for a specific client
+freetracker project list --client <client_id>
+
+# Edit a project
+freetracker project edit
+
+# Delete a project
+freetracker project delete
+```
+
+### Time Tracking
+
+```bash
+# Start timer for a project
+freetracker start
+
+# Stop the active timer
+freetracker stop
+
+# Check timer status
+freetracker status
+
+# Manually add hours (if you forgot to start timer)
+freetracker add
+
+# View time entry log
+freetracker log
+
+# View time entries for specific project
+freetracker log "Project Name"
+```
+
+### Reports and Export
+
+```bash
+# Generate visual report with progress bars
+freetracker report
+
+# Export report as CSV
+freetracker report --csv
+
+# Export to specific file
+freetracker report --csv --output my_report.csv
+```
+
+### Data Structure
+
+- **Clients**: Simple name-based client records
+- **Projects**: Each project has:
+  - Name
+  - Hours quoted (integer)
+  - Due date
+  - Associated client
+- **Time Entries**: 
+  - Automatic tracking of start/stop times
+  - Manual time entry for forgotten sessions
+
+### Pro Tips
+
+1. **Use names, not IDs**: When adding projects or starting timers, just enter the client/project name
+2. **Tab completion**: Press Tab to auto-complete client and project names when prompted
+3. **Active timer notification**: The app shows your active timer on every command
+4. **Progress visualization**: The report command shows beautiful progress bars
+5. **Data location**: All data is stored in `~/.freetracker/db.json` (or custom path via `FREETRACKER_DB_PATH`)
+6. **Case insensitive**: Client and project name matching is case insensitive
+
+## Configuration
+
+### Database Location
+
+By default, freetracker stores its database at `~/.freetracker/db.json`. You can customize this location using the `FREETRACKER_DB_PATH` environment variable:
+
+```bash
+# Use a custom database location
+export FREETRACKER_DB_PATH=/path/to/your/database.json
+freetracker client list
+
+# Use a temporary database for testing
+export FREETRACKER_DB_PATH=/tmp/freetracker_test.json
+freetracker client add
+
+# Use cloud storage (e.g., Dropbox)
+export FREETRACKER_DB_PATH="$HOME/Dropbox/freetracker/db.json"
+freetracker start
+```
+
+This is useful for:
+- **Development**: Use a separate test database without affecting production data
+- **Cloud Sync**: Store your database in Dropbox, Google Drive, or other cloud storage
+- **Multiple Profiles**: Maintain separate databases for different contexts
+
+## Technology Stack
+
+- **Package Manager**: [uv](https://github.com/astral-sh/uv) - Fast Python package manager
+- **CLI Framework**: [Click](https://click.palletsprojects.com/) - Command-line interface creation
+- **UI Library**: [Rich](https://rich.readthedocs.io/) - Beautiful terminal formatting
+- **Database**: [TinyDB](https://tinydb.readthedocs.io/) - Lightweight document database
+
+## Development
+
+See [CLAUDE.md](CLAUDE.md) for detailed development instructions and project structure.
+
+## License
+
+MIT License - Copyright (c) 2025 Jason (Janghyup) Sohn
