@@ -1,0 +1,212 @@
+[
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Lion Optimizer",
+      "category": "optimization",
+      "description": "Discovered through program search by Google Brain, Lion (EvoLved Sign Momentum) is more memory-efficient than Adam and often achieves better performance with proper tuning.",
+      "implementation_code": "# PyTorch implementation\nimport torch\nfrom torch.optim import Optimizer\n\noptimizer = Lion(\n    model.parameters(),\n    lr=1e-4,  # Lion typically needs 10x smaller lr than Adam\n    betas=(0.9, 0.99),\n    weight_decay=1e-2\n)",
+      "expected_benefits": "15-20% memory reduction compared to Adam, potential accuracy improvements",
+      "compatibility_notes": "Requires different learning rate scaling than Adam. Not compatible with some schedulers.",
+      "research_reference": "Chen et al. (2023) - Symbolic Discovery of Optimization Algorithms",
+      "hardware_requirements": ["gpu", "tpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "jax"],
+      "is_active": true,
+      "accuracy_impact": 2.0,
+      "speed_impact": 5.0,
+      "memory_impact": 20.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "experimental"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Multi-Query Attention",
+      "category": "architecture",
+      "description": "MQA uses a single set of keys and values across all attention heads, dramatically reducing KV-cache memory usage during inference.",
+      "implementation_code": "# PyTorch implementation\nclass MultiQueryAttention(nn.Module):\n    def __init__(self, d_model, n_heads):\n        super().__init__()\n        self.n_heads = n_heads\n        self.d_head = d_model // n_heads\n        \n        # Multiple query heads, single K/V\n        self.q_proj = nn.Linear(d_model, d_model)\n        self.k_proj = nn.Linear(d_model, self.d_head)\n        self.v_proj = nn.Linear(d_model, self.d_head)\n        self.out_proj = nn.Linear(d_model, d_model)",
+      "expected_benefits": "Up to n_heads× reduction in KV-cache memory, faster inference",
+      "compatibility_notes": "May slightly reduce model quality. Works best with proper training.",
+      "research_reference": "Shazeer (2019) - Fast Transformer Decoding",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": -2.0,
+      "speed_impact": 40.0,
+      "memory_impact": 60.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "SmoothQuant",
+      "category": "quantization",
+      "description": "Enables efficient 8-bit quantization by smoothing activation outliers through mathematically equivalent transformations.",
+      "implementation_code": "# Usage with transformers\nfrom smoothquant import smooth_lm\n\n# Smooth the model before quantization\nsmooth_lm(model, act_scales)\n\n# Then apply INT8 quantization\nmodel_int8 = quantize_model(model, w_bit=8, a_bit=8)",
+      "expected_benefits": "4× memory reduction, 2-4× speedup with minimal accuracy loss",
+      "compatibility_notes": "Requires activation statistics collection. Best for LLMs.",
+      "research_reference": "Xiao et al. (2023) - SmoothQuant",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": -1.0,
+      "speed_impact": 200.0,
+      "memory_impact": 75.0,
+      "implementation_difficulty": "hard",
+      "maturity_level": "experimental"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "FSDP (Fully Sharded Data Parallel)",
+      "category": "distributed",
+      "description": "PyTorch's native solution for training large models by sharding parameters, gradients, and optimizer states across GPUs.",
+      "implementation_code": "# PyTorch FSDP\nfrom torch.distributed.fsdp import FullyShardedDataParallel as FSDP\nfrom torch.distributed.fsdp.fully_sharded_data_parallel import CPUOffload\n\nmodel = FSDP(\n    model,\n    cpu_offload=CPUOffload(offload_params=True),\n    sharding_strategy=ShardingStrategy.FULL_SHARD,\n    auto_wrap_policy=transformer_auto_wrap_policy,\n    mixed_precision=mixed_precision_policy\n)",
+      "expected_benefits": "Linear memory scaling with number of GPUs, enables training models that don't fit on single GPU",
+      "compatibility_notes": "Requires careful configuration. May have communication overhead.",
+      "research_reference": "PyTorch team (2021) - FairScale FSDP",
+      "hardware_requirements": ["multi_gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch"],
+      "is_active": true,
+      "accuracy_impact": 0.0,
+      "speed_impact": -10.0,
+      "memory_impact": 80.0,
+      "implementation_difficulty": "hard",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "RMSNorm",
+      "category": "normalization",
+      "description": "Root Mean Square Normalization - simpler and more efficient than LayerNorm, used in modern LLMs like Llama.",
+      "implementation_code": "class RMSNorm(nn.Module):\n    def __init__(self, dim, eps=1e-6):\n        super().__init__()\n        self.eps = eps\n        self.weight = nn.Parameter(torch.ones(dim))\n\n    def forward(self, x):\n        norm = x.pow(2).mean(-1, keepdim=True).add(self.eps).sqrt()\n        return x / norm * self.weight",
+      "expected_benefits": "10-15% faster than LayerNorm, similar or better stability",
+      "compatibility_notes": "Drop-in replacement for LayerNorm in most cases.",
+      "research_reference": "Zhang & Sennrich (2019) - Root Mean Square Layer Normalization",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow", "jax"],
+      "is_active": true,
+      "accuracy_impact": 0.0,
+      "speed_impact": 15.0,
+      "memory_impact": 5.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Prefix Tuning",
+      "category": "peft",
+      "description": "Prepends trainable continuous vectors to the input, keeping the model frozen. Very parameter-efficient alternative to fine-tuning.",
+      "implementation_code": "from peft import PrefixTuningConfig, get_peft_model\n\nconfig = PrefixTuningConfig(\n    task_type=\"CAUSAL_LM\",\n    num_virtual_tokens=20,\n    prefix_projection=True,\n    encoder_hidden_size=768\n)\n\nmodel = get_peft_model(model, config)\n# Only 0.1% of parameters are trainable!",
+      "expected_benefits": "99%+ parameter reduction, multi-task capable",
+      "compatibility_notes": "Less expressive than LoRA for complex tasks.",
+      "research_reference": "Li & Liang (2021) - Prefix-Tuning",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": -3.0,
+      "speed_impact": 20.0,
+      "memory_impact": 95.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Grouped Query Attention",
+      "category": "architecture",
+      "description": "Intermediate between Multi-Head and Multi-Query Attention. Groups heads to share KV projections, balancing quality and efficiency.",
+      "implementation_code": "class GroupedQueryAttention(nn.Module):\n    def __init__(self, d_model, n_heads, n_kv_groups):\n        super().__init__()\n        self.n_heads = n_heads\n        self.n_kv_groups = n_kv_groups\n        self.d_head = d_model // n_heads\n        \n        self.q_proj = nn.Linear(d_model, d_model)\n        self.k_proj = nn.Linear(d_model, self.n_kv_groups * self.d_head)\n        self.v_proj = nn.Linear(d_model, self.n_kv_groups * self.d_head)\n        self.out_proj = nn.Linear(d_model, d_model)",
+      "expected_benefits": "2-8× KV-cache reduction with minimal quality loss",
+      "compatibility_notes": "Used in Llama 2 70B. Requires careful group number selection.",
+      "research_reference": "Ainslie et al. (2023) - GQA: Training Generalized Multi-Query Transformer",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "jax"],
+      "is_active": true,
+      "accuracy_impact": -1.0,
+      "speed_impact": 30.0,
+      "memory_impact": 40.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "CutMix",
+      "category": "augmentation",
+      "description": "Data augmentation that cuts and pastes patches between training images, along with mixing their labels proportionally.",
+      "implementation_code": "def cutmix(images, labels, alpha=1.0):\n    batch_size = images.size(0)\n    indices = torch.randperm(batch_size)\n    \n    lam = np.random.beta(alpha, alpha)\n    bbx1, bby1, bbx2, bby2 = rand_bbox(images.size(), lam)\n    \n    images[:, :, bbx1:bbx2, bby1:bby2] = images[indices, :, bbx1:bbx2, bby1:bby2]\n    labels_a, labels_b = labels, labels[indices]\n    \n    return images, labels_a, labels_b, lam",
+      "expected_benefits": "2-3% accuracy improvement on ImageNet, better robustness",
+      "compatibility_notes": "Works best with Mixup. Not suitable for segmentation tasks.",
+      "research_reference": "Yun et al. (2019) - CutMix: Regularization Strategy",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 3.0,
+      "speed_impact": -2.0,
+      "memory_impact": 0.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Depthwise Separable Convolutions",
+      "category": "architecture",
+      "description": "Factorizes standard convolution into depthwise and pointwise convolutions, dramatically reducing parameters and compute.",
+      "implementation_code": "class DepthwiseSeparableConv(nn.Module):\n    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0):\n        super().__init__()\n        self.depthwise = nn.Conv2d(\n            in_channels, in_channels, kernel_size,\n            stride=stride, padding=padding, groups=in_channels\n        )\n        self.pointwise = nn.Conv2d(in_channels, out_channels, 1)\n        \n    def forward(self, x):\n        x = self.depthwise(x)\n        x = self.pointwise(x)\n        return x",
+      "expected_benefits": "8-9× fewer parameters and operations than standard convolution",
+      "compatibility_notes": "May require more layers for same capacity. Used in MobileNet.",
+      "research_reference": "Howard et al. (2017) - MobileNets",
+      "hardware_requirements": ["gpu", "cpu", "mobile"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": -2.0,
+      "speed_impact": 60.0,
+      "memory_impact": 80.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "mature"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Knowledge Distillation",
+      "category": "compression",
+      "description": "Trains a smaller student model to mimic a larger teacher model, enabling model compression with minimal accuracy loss.",
+      "implementation_code": "def distillation_loss(student_logits, teacher_logits, labels, temperature=4.0, alpha=0.7):\n    # Soft targets from teacher\n    soft_targets = F.softmax(teacher_logits / temperature, dim=-1)\n    soft_loss = F.kl_div(\n        F.log_softmax(student_logits / temperature, dim=-1),\n        soft_targets,\n        reduction='batchmean'\n    ) * (temperature ** 2)\n    \n    # Hard targets (true labels)\n    hard_loss = F.cross_entropy(student_logits, labels)\n    \n    return alpha * soft_loss + (1 - alpha) * hard_loss",
+      "expected_benefits": "10-100× model compression with only 1-5% accuracy loss",
+      "compatibility_notes": "Requires access to teacher model during training.",
+      "research_reference": "Hinton et al. (2015) - Distilling the Knowledge in a Neural Network",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow", "jax"],
+      "is_active": true,
+      "accuracy_impact": -3.0,
+      "speed_impact": 90.0,
+      "memory_impact": 90.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "mature"
+    }
+  }
+]

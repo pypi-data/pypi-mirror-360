@@ -1,0 +1,149 @@
+[
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "RandAugment",
+      "category": "augmentation",
+      "description": "Automated data augmentation that randomly selects and applies transformations from a fixed set with uniform magnitude.",
+      "implementation_code": "from torchvision import transforms\nfrom torchvision.transforms import RandAugment\n\n# Simple to use - just two hyperparameters\ntransform = transforms.Compose([\n    transforms.Resize(256),\n    transforms.CenterCrop(224),\n    RandAugment(num_ops=2, magnitude=9),  # 2 ops, magnitude 9/30\n    transforms.ToTensor(),\n    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])\n])\n\n# Custom implementation\nclass RandAugmentCustom:\n    def __init__(self, n=2, m=9):\n        self.n = n\n        self.m = m\n        self.augmentations = [\n            ('rotate', -30, 30),\n            ('translateX', -0.3, 0.3),\n            ('translateY', -0.3, 0.3),\n            ('shearX', -0.3, 0.3),\n            ('shearY', -0.3, 0.3),\n            ('color', 0.1, 1.9),\n            ('brightness', 0.1, 1.9),\n            ('contrast', 0.1, 1.9),\n        ]",
+      "expected_benefits": "3-4% ImageNet accuracy improvement, works across datasets",
+      "compatibility_notes": "May conflict with other augmentation strategies. Less effective with Mixup/CutMix.",
+      "research_reference": "Cubuk et al. (2019) - RandAugment: Practical Automated Data Augmentation",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 3.5,
+      "speed_impact": -5.0,
+      "memory_impact": 0.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "AutoAugment",
+      "category": "augmentation", 
+      "description": "Uses reinforcement learning to find optimal augmentation policies for specific datasets. More powerful but computationally expensive.",
+      "implementation_code": "# Using pre-discovered policies\nfrom torchvision.transforms.autoaugment import AutoAugmentPolicy\n\n# ImageNet policy\ntransform = transforms.Compose([\n    transforms.RandomResizedCrop(224),\n    transforms.AutoAugment(AutoAugmentPolicy.IMAGENET),\n    transforms.ToTensor(),\n    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])\n])\n\n# CIFAR10 policy\ntransform_cifar = transforms.Compose([\n    transforms.RandomCrop(32, padding=4),\n    transforms.RandomHorizontalFlip(),\n    transforms.AutoAugment(AutoAugmentPolicy.CIFAR10),\n    transforms.ToTensor(),\n    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))\n])",
+      "expected_benefits": "5% CIFAR-10 improvement, 1.5% ImageNet improvement",
+      "compatibility_notes": "Policies are dataset-specific. May overfit to validation set used for search.",
+      "research_reference": "Cubuk et al. (2018) - AutoAugment: Learning Augmentation Policies from Data",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 4.0,
+      "speed_impact": -5.0,
+      "memory_impact": 0.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "MixMatch",
+      "category": "augmentation",
+      "description": "Semi-supervised learning method that combines consistency regularization with MixUp on both labeled and unlabeled data.",
+      "implementation_code": "def mixmatch(model, labeled_batch, unlabeled_batch, T=0.5, K=2, alpha=0.75):\n    x, y = labeled_batch\n    u, _ = unlabeled_batch\n    \n    # Augment unlabeled data K times\n    u_augs = [augment(u) for _ in range(K)]\n    \n    # Predict on unlabeled augmentations\n    with torch.no_grad():\n        p = torch.stack([model(u_a) for u_a in u_augs])\n        p = p.mean(dim=0)  # Average predictions\n        p = sharpen(p, T)  # Temperature sharpening\n        \n    # MixUp all data\n    all_inputs = torch.cat([x] + u_augs)\n    all_targets = torch.cat([y] + [p] * K)\n    \n    mixed_inputs, mixed_targets = mixup(\n        all_inputs, all_targets, alpha\n    )\n    \n    return mixed_inputs, mixed_targets",
+      "expected_benefits": "250x less labels needed for same accuracy, SOTA semi-supervised results",
+      "compatibility_notes": "Complex to implement. May conflict with other semi-supervised methods.",
+      "research_reference": "Berthelot et al. (2019) - MixMatch: A Holistic Approach to Semi-Supervised Learning",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 10.0,
+      "speed_impact": -20.0,
+      "memory_impact": -50.0,
+      "implementation_difficulty": "hard",
+      "maturity_level": "experimental"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Curriculum Learning",
+      "category": "training",
+      "description": "Presents training examples in meaningful order, from easy to hard, mimicking human learning progression.",
+      "implementation_code": "class CurriculumDataLoader:\n    def __init__(self, dataset, difficulty_fn, stages=5):\n        self.dataset = dataset\n        self.stages = stages\n        \n        # Score each sample by difficulty\n        self.difficulties = [difficulty_fn(x, y) for x, y in dataset]\n        self.indices = torch.argsort(torch.tensor(self.difficulties))\n        \n    def get_curriculum_loader(self, epoch, total_epochs):\n        # Gradually include harder samples\n        stage = min(self.stages - 1, epoch * self.stages // total_epochs)\n        percent = (stage + 1) / self.stages\n        \n        n_samples = int(len(self.dataset) * percent)\n        curriculum_indices = self.indices[:n_samples]\n        \n        subset = Subset(self.dataset, curriculum_indices)\n        return DataLoader(subset, batch_size=32, shuffle=True)\n\n# Example difficulty function for images\ndef image_difficulty(image, label):\n    # Could be: edge density, color variation, object size, etc.\n    edges = cv2.Canny(image.numpy(), 100, 200)\n    return edges.sum()  # More edges = harder",
+      "expected_benefits": "Faster convergence, better generalization, more stable training",
+      "compatibility_notes": "Difficulty metric must be carefully designed. May conflict with random sampling benefits.",
+      "research_reference": "Bengio et al. (2009) - Curriculum Learning",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 2.0,
+      "speed_impact": 20.0,
+      "memory_impact": 0.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Contrastive Learning (SimCLR)",
+      "category": "training",
+      "description": "Self-supervised learning that maximizes agreement between differently augmented views of the same data.",
+      "implementation_code": "class SimCLR(nn.Module):\n    def __init__(self, encoder, projection_dim=128, temperature=0.5):\n        super().__init__()\n        self.encoder = encoder\n        self.projection = nn.Sequential(\n            nn.Linear(encoder.output_dim, 512),\n            nn.ReLU(),\n            nn.Linear(512, projection_dim)\n        )\n        self.temperature = temperature\n        \n    def forward(self, x1, x2):\n        # Encode both views\n        h1 = self.encoder(x1)\n        h2 = self.encoder(x2)\n        \n        # Project to embedding space\n        z1 = F.normalize(self.projection(h1), dim=1)\n        z2 = F.normalize(self.projection(h2), dim=1)\n        \n        # Compute contrastive loss\n        batch_size = z1.shape[0]\n        z = torch.cat([z1, z2], dim=0)\n        sim = torch.mm(z, z.T) / self.temperature\n        \n        # Mask out self-similarities\n        mask = torch.eye(2 * batch_size, device=sim.device).bool()\n        sim.masked_fill_(mask, -float('inf'))\n        \n        # Positive pairs are (i, i+batch_size)\n        labels = torch.arange(batch_size, device=sim.device)\n        labels = torch.cat([labels + batch_size, labels])\n        \n        return F.cross_entropy(sim, labels)",
+      "expected_benefits": "Matches supervised performance with 10x less labels",
+      "compatibility_notes": "Requires large batch sizes (256+). May conflict with supervised objectives.",
+      "research_reference": "Chen et al. (2020) - A Simple Framework for Contrastive Learning of Visual Representations",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 8000,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 5.0,
+      "speed_impact": -30.0,
+      "memory_impact": -100.0,
+      "implementation_difficulty": "hard",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Progressive Resizing",
+      "category": "training",
+      "description": "Gradually increases input image resolution during training, starting small for speed and ending large for accuracy.",
+      "implementation_code": "class ProgressiveResizing:\n    def __init__(self, initial_size=64, final_size=224, stages=4):\n        self.sizes = np.linspace(initial_size, final_size, stages).astype(int)\n        self.stages = stages\n        \n    def get_transform(self, epoch, total_epochs):\n        stage = min(self.stages - 1, epoch * self.stages // total_epochs)\n        current_size = self.sizes[stage]\n        \n        return transforms.Compose([\n            transforms.Resize(int(current_size * 1.14)),  # For RandomCrop\n            transforms.RandomCrop(current_size),\n            transforms.RandomHorizontalFlip(),\n            transforms.ToTensor(),\n            transforms.Normalize(mean=[0.485, 0.456, 0.406], \n                               std=[0.229, 0.224, 0.225])\n        ])\n    \n# Usage in training loop\nresizer = ProgressiveResizing(64, 224, 4)\nfor epoch in range(num_epochs):\n    transform = resizer.get_transform(epoch, num_epochs)\n    train_loader.dataset.transform = transform",
+      "expected_benefits": "2-3x faster training to reach target accuracy",
+      "compatibility_notes": "Model must handle variable input sizes. May conflict with fixed position embeddings.",
+      "research_reference": "Howard et al. (2018) - fastai's Progressive Resizing",
+      "hardware_requirements": ["gpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 0.0,
+      "speed_impact": 50.0,
+      "memory_impact": 30.0,
+      "implementation_difficulty": "medium",
+      "maturity_level": "stable"
+    }
+  },
+  {
+    "model": "knowledge_base.mltechnique",
+    "fields": {
+      "name": "Test Time Augmentation (TTA)",
+      "category": "augmentation",
+      "description": "Applies multiple augmentations during inference and averages predictions for improved accuracy.",
+      "implementation_code": "def test_time_augmentation(model, image, n_augmentations=10):\n    # Define TTA transforms\n    tta_transforms = [\n        lambda x: x,  # Original\n        lambda x: torch.flip(x, dims=[3]),  # Horizontal flip\n        lambda x: torch.rot90(x, k=1, dims=[2, 3]),  # 90° rotation\n        lambda x: torch.rot90(x, k=2, dims=[2, 3]),  # 180° rotation\n        lambda x: torch.rot90(x, k=3, dims=[2, 3]),  # 270° rotation\n    ]\n    \n    predictions = []\n    with torch.no_grad():\n        for transform in tta_transforms[:n_augmentations]:\n            aug_image = transform(image)\n            pred = model(aug_image)\n            \n            # Inverse transform if needed (e.g., for segmentation)\n            # pred = inverse_transform(pred, transform)\n            \n            predictions.append(pred)\n    \n    # Average predictions\n    return torch.stack(predictions).mean(dim=0)\n\n# For better results, use learnable TTA weights\nclass LearnableTTA(nn.Module):\n    def __init__(self, model, n_augmentations=5):\n        super().__init__()\n        self.model = model\n        self.weights = nn.Parameter(torch.ones(n_augmentations))\n        \n    def forward(self, x):\n        predictions = [self.model(aug(x)) for aug in self.augmentations]\n        weights = F.softmax(self.weights, dim=0)\n        return sum(w * p for w, p in zip(weights, predictions))",
+      "expected_benefits": "1-3% accuracy improvement at inference, better calibration",
+      "compatibility_notes": "Increases inference time linearly. May conflict with real-time requirements.",
+      "research_reference": "Simonyan & Zisserman (2014) - Very Deep Convolutional Networks (used TTA)",
+      "hardware_requirements": ["gpu", "cpu"],
+      "min_gpu_memory": 0,
+      "frameworks": ["pytorch", "tensorflow"],
+      "is_active": true,
+      "accuracy_impact": 2.0,
+      "speed_impact": -400.0,
+      "memory_impact": 0.0,
+      "implementation_difficulty": "easy",
+      "maturity_level": "mature"
+    }
+  }
+]
