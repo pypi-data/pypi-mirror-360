@@ -1,0 +1,156 @@
+
+# readmegen-cli 🛠️📄 — AI-Powered README Generator
+
+[![PyPI Version](https://img.shields.io/pypi/v/readmegen-cli.svg)](https://pypi.org/project/readmegen-cli/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/readmegen-cli.svg)](https://pypi.org/project/readmegen-cli/)
+[![License](https://img.shields.io/github/license/inevitablegs/readmegen-cli)](LICENSE)
+
+**readmegen-cli** is a smart command-line tool that uses Google Gemini AI to auto-generate clean, professional, and detailed `README.md` files based on your project's structure, dependencies, and content.
+
+---
+
+## ✨ Features
+
+- 📂 Analyzes your local project files for key data
+- 🤖 Uses Gemini AI (1.5 / 2.5) for rich README generation
+- 📌 Detects languages, dependencies, config, tests, and docs
+- 💬 Accepts custom prompts to tailor output
+- 💾 Automatically backs up old READMEs (unless `--overwrite`)
+- 🧠 Summarizes project insights before generation
+
+---
+
+## 📦 Installation
+
+Install from PyPI:
+
+```bash
+pip install readmegen-cli
+```
+
+Or install locally for development:
+
+```bash
+git clone https://github.com/inevitablegs/readmegen-cli
+cd readmegen-cli
+pip install .
+```
+
+---
+
+## 🔐 Setup: API Key Required
+
+You must set your Gemini API key to use this tool:
+
+### Option 1: `.env` File
+
+Create a `.env` in your project or home directory:
+
+```env
+GEMINI_API_KEY=your_google_gemini_api_key
+```
+
+Get your key here: [https://makersuite.google.com/app/apikey](https://makersuite.google.com/app/apikey)
+
+### Option 2: System Environment Variable
+
+```bash
+export GEMINI_API_KEY=your_key_here  # Linux/Mac
+$env:GEMINI_API_KEY="your_key_here"  # PowerShell
+```
+
+---
+
+## 🚀 Usage
+
+### Basic
+
+```bash
+readmegen-cli .
+```
+
+✅ Generates a `README.md` in the current project folder.
+
+### With Custom Instructions
+
+```bash
+readmegen-cli . --prompt "Add badges and a quickstart section"
+```
+
+### Save to Custom File
+
+```bash
+readmegen-cli . --output CUSTOM_README.md
+```
+
+### Overwrite Without Backup
+
+```bash
+readmegen-cli . --overwrite
+```
+
+---
+
+## 🧠 What It Does
+
+- Detects: languages, file counts, dependencies, key config files
+- Prepares AI prompt with project insights
+- Sends to Gemini 2.5 Flash model
+- Outputs a fully structured Markdown README
+
+---
+
+## 📁 Project Structure
+
+```
+readmegen-cli/
+├── readmegen_core/
+│   ├── cli.py
+│   ├── generate.py
+│   ├── local_inspector.py
+├── LICENSE
+├── README.md
+├── setup.py
+├── setup.cfg
+├── pyproject.toml
+└── .github/
+    └── workflows/publish.yml
+```
+
+---
+
+## 🛠 Tech Stack
+
+| Technology       | Purpose                        |
+|------------------|--------------------------------|
+| Python 3.7+       | CLI engine                     |
+| argparse          | Command-line parsing           |
+| dotenv            | Load `.env` API key            |
+| google-generativeai | Connect to Gemini models    |
+| setuptools/wheel  | Packaging                      |
+
+---
+
+## 🔁 GitHub Actions (CI/CD)
+
+Auto-publishing to PyPI is supported using `.github/workflows/publish.yml` triggered on releases.
+
+---
+
+## 🤝 Contributing
+
+PRs and issues welcome! Improve prompts, templates, or features.
+
+---
+
+## 📜 License
+
+MIT License © 2025 Ganesh Sonawane
+
+---
+
+## 📦 Links
+
+- 🔗 GitHub: [inevitablegs/readmegen-cli](https://github.com/inevitablegs/readmegen-cli)
+- 📦 PyPI: [readmegen-cli on PyPI](https://pypi.org/project/readmegen-cli)
+- 🧠 Gemini API: [https://makersuite.google.com/app/apikey](https://makersuite.google.com/app/apikey)
