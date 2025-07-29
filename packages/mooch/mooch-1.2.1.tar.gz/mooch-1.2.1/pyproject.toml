@@ -1,0 +1,88 @@
+[project]
+name = "mooch"
+version = "1.2.1"
+authors = [
+  { name="Nick Stuer", email="nickstuer@duck.com" },
+]
+description = "Lightweight Python utility library designed to streamline common development tasks needed for every python project."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "mooch-settings>=1.2.0",
+    "packaging>=25.0",
+    "requests>=2.32.4",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/nickstuer/mooch"
+Issues = "https://github.com/nickstuer/mooch/issues"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src/"
+]
+testpaths = [
+    "tests/",
+]
+
+[tool.ruff]
+line-length = 120
+show-fixes = true
+lint.select = [
+    "ALL", # include all the rules, including new ones
+]
+lint.ignore = [
+  "D100",
+  "D101",
+  "D102",
+  "D103",
+  "D107",
+  "G004",
+  "ANN204",
+  "INP001",
+  "D104",
+  "D213",
+  "D203",
+  "COM812",
+]
+
+lint.per-file-ignores = { "tests/*.py" = ["S101", "D103", "PLR2004", "ANN201", "ANN202", "ANN001"] }
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.2.0",
+    "pytest>=8.4.0",
+    "pytest-asyncio>=1.0.0",
+    "pytest-cov>=6.2.1",
+    "ruff>=0.12.2",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: not covered",
+    "@overload",
+    "if TYPE_CHECKING:",
+    "def __del__",
+]
+
+[tool.coverage.run]
+branch = true
+relative_files = true
+omit = [
+    ".tox/*",
+    "tests/*",
+]
+
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
