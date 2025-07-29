@@ -1,0 +1,20 @@
+{% if table.title -%}
+===== {{ table.title }} =====
+
+{% endif -%}
+{%- if table.header -%}
+{% for h in table.header %}^ {{ h.get_text(sep=" ") | safe }} {% endfor %}^
+{%- endif -%}
+{% for r in table.rows %}
+{% for cell in r %}
+{%- set lsp = "  " if cell.style in ("right", "center") else " " -%}
+{%- set rsp = "  " if cell.style == "center" else " " -%}
+{%- set msg = cell.metadata.get("message") -%}
+{%- set footnote = "((" + msg + "))" if msg else "" -%}
+{%- set endpipe = "|" if loop.last else "" -%}
+|{{lsp}}{{cell.text}}{{footnote}}{{rsp}}{{endpipe}}
+{%- endfor -%}
+{%- endfor -%}
+{%- if table.footer %}
+{% for f in table.footer -%}^ {{ f.get_text(sep=" ") | safe }} {% endfor %} ^
+{%- endif -%}
