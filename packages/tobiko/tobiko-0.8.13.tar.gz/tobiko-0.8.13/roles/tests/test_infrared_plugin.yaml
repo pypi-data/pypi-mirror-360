@@ -1,0 +1,52 @@
+---
+
+- hosts: primary
+  vars:
+    test_collect_dir: '{{ test_dir }}/test_results'
+
+  roles:
+    - role: tobiko-bindep
+      vars:
+        bindep_file: '{{ test_dir }}/bindep.txt'
+    - tobiko-ensure-tox
+
+  tasks:
+    - name: "remove '{{ test_collect_dir }}' dir"
+      file:
+        path: '{{ test_collect_dir }}'
+        state: absent
+
+    - name: "show ansible distro variables"
+      debug:
+        msg:
+          ansible_distribution: '{{ ansible_distribution }}'
+          ansible_distribution_major_version: '{{ ansible_distribution_major_version }}'
+          ansible_distribution_version: '{{ ansible_distribution_version }}'
+          ansible_os_family: '{{ ansible_os_family }}'
+
+    - name: "include platform variables"
+      include_vars: "{{ item }}"
+      ignore_errors: yes
+      with_first_found:
+        - "test-{{ ansible_distribution }}-{{ ansible_distribution_version }}.yaml"
+        - "test-{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yaml"
+        - "test-{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yaml"
+        - "test-{{ ansible_distribution }}.yaml"
+        - "test-{{ ansible_os_family }}.yaml"
+      register: include_platform_vars
+
+    - name: "run Tox InfraRed plugin"
+      shell:
+        cmd: >
+          {{ tox_executable }} -e infrared -- --collect-dir '{{ test_collect_dir }}'
+        chdir: '{{ test_dir }}'
+      ignore_errors: yes
+      register: run_tox
+
+    - name: "show Tox InfraRed plugin output"
+      debug: var=run_tox.stdout_lines
+
+    - name: "show Tox InfraRed plugin errors"
+      debug: var=run_tox.stderr_lines
+      when: run_tox is failed
+      failed_when: yes

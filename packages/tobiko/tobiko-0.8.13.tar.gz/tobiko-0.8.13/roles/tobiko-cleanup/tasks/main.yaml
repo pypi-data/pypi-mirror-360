@@ -1,0 +1,47 @@
+---
+- name: "cleanup Loadbalancers created by Tobiko tests"
+  shell: |
+    for lb in $({{ openstack_cmd }} loadbalancer list -f value -c 'name' | grep "^tobiko")
+    do
+        {{ openstack_cmd }} loadbalancer delete --cascade --wait $lb
+    done
+  ignore_errors: yes
+
+- name: "cleanup Heat stacks created by Tobiko tests"
+  shell: |
+    {{ openstack_cmd }} stack list -f value -c 'Stack Name' | \
+        grep "^tobiko\." | \
+        xargs -r timeout 180 {{ openstack_cmd }} stack delete -y --wait
+  register: result
+  retries: 5
+  delay: 5
+  until: result.rc == 0
+  ignore_errors: yes
+
+- name: "cleanup subnet pools created by Tobiko tests"
+  shell: |
+    {{ openstack_cmd }} subnet pool list -f value -c 'Name' | \
+        grep "^tobiko\." | \
+        xargs -r {{ openstack_cmd }} subnet pool delete
+  ignore_errors: yes
+
+- name: "cleanup Security Groups created by Tobiko tests"
+  shell: |
+    {{ openstack_cmd }} security group list -f value -c 'Name' | \
+        grep "^tobiko\." | \
+        xargs -r {{ openstack_cmd }} security group delete
+  ignore_errors: yes
+
+- name: "cleanup Glance images created by Tobiko tests"
+  shell: |
+    {{ openstack_cmd }} image list -f value -c 'Name' | \
+        grep "^tobiko\." | \
+        xargs -r {{ openstack_cmd }} image delete
+  ignore_errors: yes
+
+- name: "cleanup Manila shares created by Tobiko tests"
+  shell: |
+    {{ openstack_cmd }} share list -f value -c 'Name' | \
+        grep "^tobiko" | \
+        xargs -r {{ openstack_cmd }} share delete --force
+  ignore_errors: yes

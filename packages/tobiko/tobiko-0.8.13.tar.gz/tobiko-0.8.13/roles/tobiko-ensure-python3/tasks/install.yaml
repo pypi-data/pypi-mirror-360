@@ -1,0 +1,83 @@
+---
+
+- name: "enable yum repos"
+  become: yes
+  shell:
+    yum-config-manager --enable '{{ item }}' | grep baseurl
+  loop: '{{ enable_yum_repos }}'
+
+
+- name: "install '{{ python_command }}' packages"
+  become: '{{ test_become | bool }}'
+  package:
+    name: "{{ python_packages[python_command] | flatten }}"
+  when: 'python_command in python_packages'
+  register: install_python_packages
+
+
+- name: "compile python 3 from sources"
+  include_role: name=tobiko-compile-python
+  when:
+    - compile_python3 | bool
+
+
+- name: "initialize found_python_version"
+  set_fact:
+    found_python_version: false
+
+
+- name: "get '{{ python_command }}' full path"
+  shell: |
+    export PATH={{ python_exe_path }}
+    which "{{ python_command }}"
+  register: get_python_exe
+  changed_when: no
+
+
+- name: "update found_python_version"
+  set_fact:
+    found_python_version: true
+
+
+- name: "get '{{ get_python_exe.stdout_lines | first }}' info"
+  script:
+    cmd: get_python_info.py --base --quiet
+    executable: '{{ get_python_exe.stdout_lines | first }}'
+  register: get_python_info
+  changed_when: false
+
+
+- name: "set python_info['{{ python_command }}'] fact"
+  set_fact:
+    python_info: >
+      {{ python_info | combine({python_command:
+                                (item | from_json)}) }}
+  loop: '{{ get_python_info.stdout_lines }}'
+  when: item.startswith('{')
+  failed_when: (python_info | length) == 0
+
+
+- name: "check if upper-constraints file exists"
+  stat:
+    path: "{{ openstack_requirements_dir }}/upper-constraints.txt"
+  register: upper_constraints_file
+
+
+- name: "upgrade '{{ python_command }}' packages to the latest versions"
+  command: >
+    '{{ python_info[python_command].executable }}' -m pip install \
+    {% if upper_constraints_file.stat.exists == true %}-c'{{ upper_constraints_file.stat.path }}'{% endif %}
+    '{{ item }}' --upgrade --user
+  register: upgrade_python_packages
+  changed_when:
+    "'Successfully installed' in upgrade_python_packages.stdout"
+  loop:
+    - pip
+    - setuptools
+    - wheel
+
+
+- name: "show python_info facts"
+  debug:
+    msg:
+      python_info: '{{ python_info }}'

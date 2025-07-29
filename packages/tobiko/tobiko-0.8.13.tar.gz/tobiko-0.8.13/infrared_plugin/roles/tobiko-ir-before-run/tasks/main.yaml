@@ -1,0 +1,84 @@
+---
+
+- name: apply quotas to the openstack admin project
+  shell: |
+    source {{ stackrc_file }}
+    openstack quota set --{{ item.key }} {{ item.value }} $OS_PROJECT_NAME
+  with_dict: "{{ quota | default({}) }}"
+  delegate_to: "{{ groups.undercloud|first }}"
+
+- name: ensure auto ssh key exchange in test host
+  block:
+    - name: Retrieve public key from private key
+      command: "ssh-keygen -y -f ~/.ssh/id_rsa"
+      register: test_host_pubkey_result
+
+    - name: insert the public key to the known test host
+      authorized_key:
+        user: "{{ ansible_ssh_user }}"
+        key: "{{ test_host_pubkey_result.stdout }}"
+  ignore_errors: yes
+
+- name: copy files from the undercloud to the test_host
+  block:
+    - name: read /etc/hosts from the undercloud
+      become: true
+      slurp:
+        src: /etc/hosts
+      delegate_to: "{{ groups.undercloud|first }}"
+      register: hosts_file
+
+    - name: write /etc/hosts to the test_host
+      become: true
+      copy:
+        content: "{{ hosts_file.content | b64decode }}"
+        dest: /etc/hosts
+        force: true
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: ensure 127.0.0.1 is not in the test_host /etc/hosts file
+      become: yes
+      lineinfile:
+        path: /etc/hosts
+        regexp: '^127.0.0.1 .*undercloud'
+        state: absent
+
+    - name: copy crt file from the undercloud
+      become: true
+      slurp:
+        src: /etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt
+      delegate_to: "{{ groups.undercloud|first }}"
+      register: crt_file
+
+    - name: write crt file to the test_host
+      become: true
+      copy:
+        content: "{{ crt_file.content | b64decode }}"
+        dest: /etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt
+        force: true
+        owner: root
+        group: root
+        mode: '0444'
+
+  ignore_errors: yes
+  when:
+    - groups.get("undercloud")
+    - test_host is defined
+    - test_host not in groups.undercloud
+
+- name: Remove the containers list file, if required
+  block:
+    - name: Save the containers list file, if exists
+      copy:
+        dest: ~/expected_containers_list_df.old.csv
+        src: ~/expected_containers_list_df.csv
+        remote_src: yes
+      failed_when: false
+
+    - name: Remove the original containers list file
+      file:
+        path: ~/expected_containers_list_df.csv
+        state: absent
+  when: cleanup_containerlist_file | bool

@@ -1,0 +1,92 @@
+---
+
+# --- Tobiko workflow stages
+
+test_stage: all
+test_no_become: "{{ ansible_os_family in ['Darwin'] }}"
+test_become: '{{ not (test_no_become | bool) }}'
+
+# --- Test deploy options -----------------------------------------------------
+
+test_deploy_home: '{{ ansible_user_dir }}/src'
+
+git_base: 'https://opendev.org'
+
+test_dir: "{{ test_deploy_home }}/{{ test_project }}"
+test_project:
+  "{{ test_git_repo | urlsplit('path') | regex_replace('^\\/|\\/$', '') | splitext | first }}"
+test_git_repo: '{{ git_base }}/x/tobiko.git'
+test_src_dir: ''
+
+openstack_requirements_dir: "/opt/stack/requirements"
+
+
+# NOTE: if test_dir and tobiko_dir variables endup being the same actual
+# directory then test_src and test_git_* variables will be overriden
+# tobiko_src and tobiko_git_* variables
+
+tobiko_dir: "{{ test_deploy_home }}/{{ tobiko_project }}"
+tobiko_project:
+  "{{ tobiko_git_repo | urlsplit('path') | regex_replace('^\\/|\\/$', '') | splitext | first }}"
+tobiko_git_repo: '{{ git_base }}/x/tobiko.git'
+tobiko_src_dir: ''
+
+
+# --- Test configuration options ----------------------------------------------
+
+# Configuration options
+test_conf_file: '{{ test_dir | realpath }}/tobiko.conf'
+
+test_conf: {}
+
+# --- Test report options -----------------------------------------------------
+
+# Remote directory where test cases shoulw write report files to
+test_report_dir: "{{ test_dir | realpath }}/report"
+test_report_files:
+  - '{{ test_conf_file | realpath }}'
+  - '{{ test_log_file | realpath }}'
+
+# Test report files prefix
+test_report_name: tobiko_results
+
+# Log file where test cases should write logging messages to
+test_log_file: '{{ test_report_dir | realpath }}/tobiko.log'
+
+# Local where test cases results are being collected to
+test_collect_dir: '{{ test_src_dir | realpath }}/{{ test_report_name }}'
+
+
+# --- download-images options -------------------------------------------------
+download_images_dir: "{{ ansible_user_dir }}/.downloaded-images"
+download_images_default:
+  advanced_vm:
+    username: fedora
+    type: advanced_vm
+    url: "https://download.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2"
+    customized: false
+    copy_in_files:
+      - nginx_id.conf
+      - iperf3-server.service
+      - config
+    # vlan101 is created on top of both eth0 and ens3 because depending on the computes OS, VM interface name changes
+    # nmcli will create two connections with same name and different UUIDs and only one of them will become active: the one that finds an existing parent NIC
+    customize_command_pattern: >
+      LIBGUESTFS_BACKEND=direct virt-customize -a $TMPPATH
+      --copy-in /tmp/config:/etc/selinux
+      --firstboot-command 'sh -c "nmcli connection add type vlan con-name vlan101 ifname vlan101 vlan.parent eth0 vlan.id 101 ipv6.addr-gen-mode default-or-eui64;
+      nmcli connection add type vlan con-name vlan101 ifname vlan101 vlan.parent ens3 vlan.id 101 ipv6.addr-gen-mode default-or-eui64"'
+      --install iperf3,iputils,nmap,nmap-ncat,nginx
+      --copy-in /tmp/nginx_id.conf:/etc/nginx/conf.d
+      --run-command 'systemctl enable nginx'
+      --copy-in /tmp/iperf3-server.service:/etc/systemd/system
+      --run-command 'systemctl enable iperf3-server'
+      --root-password password:tobiko
+      --selinux-relabel
+
+download_images: >-
+  {{
+    download_images_default |
+    combine(download_images_override | default({}), recursive=True)
+  }}
+# download_images_override can be provided with more images or with values to override the default ones from download_images_default

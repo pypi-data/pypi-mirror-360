@@ -1,0 +1,54 @@
+---
+
+- name: "get RHOSP version"
+  shell:
+    awk '{print $6}' /etc/rhosp-release
+  register: get_rhosp_version
+  failed_when: no
+  changed_when: no
+
+
+- name: set rhosp_version and python_vars_prefixes facts
+  set_fact:
+    rhosp_version: '{{ get_rhosp_version.stdout_lines | first }}'
+    python_vars_prefixes: "{{ ['rhosp'] + python_vars_prefixes }}"
+  when:
+    - (get_rhosp_version.rc == 0)
+
+
+- name: show RHOSP version
+  debug: var=rhosp_version
+  when: rhosp_version is defined
+
+
+- name:
+  set_fact:
+    python_vars_files: >
+      {{ python_vars_prefixes |
+         product(python_vars_names) |
+         map('join', '-') |
+         product(['yaml']) |
+         map('join', '.') |
+         list }}
+
+
+- name: "show platform vars files"
+  debug: var=python_vars_files
+
+
+- name: "include platform variables"
+  include_vars: "{{ item }}"
+  ignore_errors: yes
+  with_first_found: '{{ python_vars_files }}'
+  register: include_platform_vars
+
+
+- name: "set Python platform facts"
+  set_fact:
+    python_platform:
+      '{{ (include_platform_vars.results | first).item | basename | splitext | first }}'
+
+
+- name: 'show Python platform facts'
+  debug:
+    msg: '{{ (include_platform_vars.results | first).ansible_facts }}'

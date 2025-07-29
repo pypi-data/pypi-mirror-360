@@ -1,0 +1,44 @@
+---
+
+test_default_conf:
+  DEFAULT:
+    debug: "{{ test_log_debug }}"
+    log_dir: "{{ test_log_file | dirname }}"
+    log_file: "{{ test_log_file | basename }}"
+
+  testcase:
+    timeout: "{{ test_case_timeout }}"
+    test_runner_timeout: "{{ test_runner_timeout }}"
+
+  tripleo:
+    undercloud_ssh_hostname: "{{ undercloud_ssh_hostname }}"
+    overcloud_ssh_username: "{{ overcloud_ssh_username }}"
+    undercloud_ssh_key_filename: "{{ undercloud_ssh_key_filename }}"
+    has_external_load_balancer: "{{ has_external_load_balancer }}"
+    ceph_rgw: "{{ ceph_rgw }}"
+
+  nova:
+    advanced_vm_connection_timeout: "{{ advanced_vm_connection_timeout }}"
+    advanced_vm_is_reachable_timeout: "{{ advanced_vm_is_reachable_timeout }}"
+
+  manila:
+    share_protocol: "{{ manila_share_protocol }}"
+
+test_log_debug: ''
+
+test_case_timeout: 1800.
+test_runner_timeout: 14400.
+
+undercloud_hostname: '{{ groups.get("undercloud", []) | first | default("undercloud-0") }}'
+undercloud_ssh_hostname: ''
+undercloud_ssh_key_filename: ''
+has_external_load_balancer: ''
+
+overcloud_ssh_username: ''
+
+ceph_rgw: ''
+
+advanced_vm_connection_timeout: ''
+advanced_vm_is_reachable_timeout: ''
+
+manila_share_protocol: ''

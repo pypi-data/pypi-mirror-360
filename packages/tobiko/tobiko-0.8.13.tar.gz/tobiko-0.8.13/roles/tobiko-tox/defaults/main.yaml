@@ -1,0 +1,43 @@
+---
+
+# Directory where test cases has been deployed to
+tox_description: 'run test cases'
+tox_dir: '{{ test_dir | realpath }}'
+tox_command: '{{ tox_executable | default(tox) }}'
+tox_environment: {}
+tox_envlist:
+tox_extra_args: ''
+
+tox_python: '{{ python_executable }}'
+tox_report_dir: '{{ test_report_dir | realpath }}'
+tox_step_name:
+tox_step_index: 0
+tox_report_name:
+  "{{ test_report_name }}{% if tox_step_index %}_{{ '{:02d}'.format(tox_step_index | int) }}{% endif %}{% if tox_step_name %}_{{ tox_step_name }}{% endif %}{% if tox_envlist %}_{{ tox_envlist }}{% endif %}"
+
+tox_run_tests_timeout: 18000  # 5 hours
+
+tox_constraints: ''
+
+tox_constrain_env:
+  PYTEST_ADDOPTS: >
+     {% if pytest_markers %}-m '{{ pytest_markers }}'{% endif %}
+     {% if pytest_maxfail %}--maxfail '{{ pytest_maxfail }}'{% endif %}
+     {{ pytest_addopts }}
+  TOX_REPORT_DIR: '{{ tox_report_dir }}'
+  TOX_REPORT_NAME: '{{ tox_report_name }}'
+  TOX_CONSTRAINTS: '{{ tox_constraints }}'
+  TOX_RUN_TESTS_TIMEOUT: '{{ tox_run_tests_timeout | float }}'
+
+tox_succeeded_rc: 0
+tox_failed_rc: 1
+
+tox_expected_rcs:
+  - '{{ tox_succeeded_rc }}'
+ignore_test_failures: no
+
+pytest_addopts: '{{ pytest_addopts_global }}'
+pytest_addopts_global: ''
+pytest_markers: "{% if not test_flaky%}not flaky{% endif %}"
+pytest_maxfail: ''
+test_flaky: false

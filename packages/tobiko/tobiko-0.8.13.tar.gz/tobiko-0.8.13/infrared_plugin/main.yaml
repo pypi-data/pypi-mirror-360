@@ -1,0 +1,17 @@
+---
+
+- hosts: 'localhost'
+  roles:
+    - role: tobiko-ir-init
+
+
+- hosts: >
+    {{ test_host |
+       default(hostvars.localhost.test_host) |
+       default('localhost') }}
+  gather_facts: yes
+  tasks:
+    - include_role: name=tobiko-ir-run
+      vars:
+        test_collect_dir: >
+          {{ test_collect_dir | default(inventory_dir + '/test_results') }}

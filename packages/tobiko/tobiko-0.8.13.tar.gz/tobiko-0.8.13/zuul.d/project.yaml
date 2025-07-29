@@ -1,0 +1,34 @@
+- project:
+    templates:
+      - ansible-role-jobs
+      - build-openstack-docs-pti
+      - build-release-notes-jobs-python3
+      - check-requirements
+      - devstack-tobiko
+      - devstack-tobiko-functional
+      - devstack-tobiko-neutron
+      - devstack-tobiko-nova
+      - devstack-tobiko-octavia
+      - devstack-tobiko-ovs
+      - devstack-tobiko-storage
+      - docs-on-readthedocs
+      - openstack-cover-jobs
+      - openstack-python3-jobs
+      - publish-to-pypi
+      - tobiko-infrared
+      - tobiko-tox-py39
+    vars:
+        rtd_webhook_id: '84947'
+    periodic:
+      jobs:
+        - requirements-check:
+            voting: true
+    post:
+      jobs:
+        - tobiko-upload-git-mirror
+    release:
+      jobs:
+        - tobiko-upload-git-mirror
+    pre-release:
+      jobs:
+        - tobiko-upload-git-mirror

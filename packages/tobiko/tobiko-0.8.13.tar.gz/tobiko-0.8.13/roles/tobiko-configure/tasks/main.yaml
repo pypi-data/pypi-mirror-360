@@ -1,0 +1,59 @@
+---
+
+- name: "pick undercloud SSH hostname from inventory"
+  set_fact:
+    undercloud_ssh_hostname: >-
+      {{ hostvars[undercloud_hostname].ansible_fqdn |
+         default(undercloud_hostname) }}
+  when:
+    - (undercloud_ssh_hostname | length) == 0
+    - (undercloud_hostname | length) > 0
+    - undercloud_hostname in hostvars
+
+
+- name: "list configuration options"
+  set_fact:
+    test_conf_yaml: |
+        {% for section, options in (sections.items() | sort)  %}
+        {% for option, value in (options.items() | sort)  %}
+        - section: "{{ section }}"
+          option: "{{ option }}"
+          value: "{{ value }}"
+        {% endfor %}
+        {% endfor %}
+        {% for file_name, dict_value in download_images.items() %}
+        - section: "{{ dict_value.type }}"
+          option: image_url
+          value: "file://{{ download_images_dir }}/{{ file_name }}"
+        {% if dict_value.username is defined %}
+        - section: "{{ dict_value.type }}"
+          option: username
+          value: "{{ dict_value.username }}"
+        {% endif %}
+        {% endfor %}
+
+  vars:
+    sections: "{{ test_default_conf | combine(test_conf, recursive=True) }}"
+
+
+- name: "generate '{{ test_conf_file }}' file"
+  ini_file:
+    path: "{{ test_conf_file }}"
+    section: "{{ item.section }}"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    mode: '0644'
+  when:
+    - item.section
+    - item.option
+    - item.value
+  loop: "{{ test_conf_yaml | from_yaml | list }}"
+
+
+- name: "read resulting '{{ test_conf_file }}' file"
+  command: "cat '{{ test_conf_file }}'"
+  register: read_test_conf_file
+
+
+- name: "show resulting '{{ test_conf_file }}' file"
+  debug: var=read_test_conf_file.stdout_lines

@@ -1,0 +1,32 @@
+---
+
+- name: 'set step variables'
+  set_fact:
+    '{{ item.0 }}': '{{ item.1 }}'
+  loop: '{{ test_step | dictsort }}'
+  loop_control:
+    label: '{{ item.0 }} = {{ item.1 }}'
+
+
+- name: 'set test step index'
+  set_fact:
+    tox_step_index: "{{ (tox_step_index | int) + 1 }}"
+  when:
+    - (test_workflow_steps | length) > 1
+
+
+- block:
+    - name: '{{ test_step.tox_description }}'
+      include_role:
+        name: tobiko-tox
+
+  rescue:
+    - name: "add step failure: '{{ tox_step_name }}'"
+      set_fact:
+        test_step_failures: '{{ test_step_failures + [test_step] }}'
+      when: 'found_python_version is not defined or found_python_version == true'
+
+    - name: "abort execution at first failure"
+      debug: var=test_step
+      when: test_failfast
+      failed_when: yes

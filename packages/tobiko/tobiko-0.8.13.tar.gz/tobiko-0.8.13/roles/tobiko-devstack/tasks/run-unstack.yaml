@@ -1,0 +1,26 @@
+---
+
+- name: check '{{ devstack_dir }}/local.conf' exists
+  stat:
+    path: '{{ devstack_dir }}/local.conf'
+  register: check_devstack_local_conf_file_exists
+  failed_when: no
+
+
+- name: run unstack.sh
+  become: yes
+  become_user: stack
+  shell:
+    cmd: |
+      sudo su -l stack -c "cd '{{ devstack_dir }}' && ./unstack.sh" 2>&1
+      rc=$?
+      echo "*** FINISHED ***"
+      exit $rc
+  register: run_unstack
+  ignore_errors: yes
+  when:
+    check_devstack_local_conf_file_exists.stat.exists | default(False)
+
+
+- debug: var=run_unstack.stdout_lines
+  when: run_unstack is failed

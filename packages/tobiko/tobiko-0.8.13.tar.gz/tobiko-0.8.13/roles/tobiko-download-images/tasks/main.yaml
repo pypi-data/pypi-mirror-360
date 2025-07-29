@@ -1,0 +1,17 @@
+---
+
+- name: create directory to store images
+  file:
+    state: directory
+    dest: "{{ download_images_dir }}"
+
+- name: install libguestfs-tools
+  become: true
+  package:
+    name: libguestfs-tools
+
+- name: "download and customize images"
+  include_tasks: download-and-customize.yaml
+  loop: '{{ download_images | dict2items }}'
+  loop_control:
+    loop_var: dl_image

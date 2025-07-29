@@ -1,0 +1,88 @@
+---
+
+version: '3.4'
+services:
+  py3:
+    build:
+      context: .
+      target: test
+    hostname: tobiko
+    environment:
+      TOBIKO_TEST_PATH: tobiko/tests/unit
+      TOBIKO_REPORT_NAME: tobiko_results_py3
+    volumes:
+      - ./report:/report
+      - .:/tobiko
+      - ~/.ssh:/root/.ssh
+
+  py39:
+    extends:
+      service: py3
+    build:
+      args:
+        base_image: py39
+    environment:
+      TOBIKO_REPORT_NAME: tobiko_results_py39
+
+  py310:
+    extends:
+      service: py3
+    build:
+      args:
+        base_image: py310
+    environment:
+      TOBIKO_REPORT_NAME: tobiko_results_py310
+
+  linters:
+    extends:
+      service: py3
+    build:
+      target: linters
+
+  functional:
+    extends:
+      service: py3
+    environment:
+      TOBIKO_TEST_PATH: tobiko/tests/functional
+      TOBIKO_REPORT_NAME: tobiko_results_functional
+
+  create-workloads:
+    extends:
+      service: py3
+    environment:
+      TOBIKO_TEST_PATH: tobiko/tests/scenario
+      TOBIKO_REPORT_NAME: tobiko_results_create_workloads
+
+  disrupt-services:
+    extends:
+      service: py3
+    environment:
+      TOBIKO_TEST_PATH: tobiko/tests/faults
+      TOBIKO_REPORT_NAME: tobiko_results_disrupt_services
+
+  verify-workloads:
+    extends:
+      service: create-workloads
+    environment:
+      TOBIKO_PREVENT_CREATE: 'true'
+      TOBIKO_REPORT_NAME: tobiko_results_verify_workloads
+
+  verify-services:
+    extends:
+      service: py3
+    environment:
+      TOBIKO_TEST_PATH: tobiko/tests/sanity
+      TOBIKO_REPORT_NAME: tobiko_results_verify_services
+
+  infrared:
+    build:
+      context: infrared_plugin
+      target: run
+    hostname: infrared
+    environment:
+      IR_EXTRA_ARGS: --tobiko-src-dir /tobiko
+    volumes:
+      - ./report:/report
+      - .:/tobiko:ro
+      - ./infrared_plugin:/tobiko-infrared:ro
+      - ~/.ssh:/root/.ssh:ro

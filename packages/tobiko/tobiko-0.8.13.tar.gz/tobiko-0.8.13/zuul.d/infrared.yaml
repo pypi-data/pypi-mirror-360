@@ -1,0 +1,61 @@
+---
+
+- project-template:
+    name: tobiko-infrared
+    description: |
+      Infrared jobs intended to gate infrared Tobiko plugin changes
+    check:
+      jobs:
+        - tobiko-infrared
+    gate:
+      jobs:
+        - tobiko-infrared
+    periodic:
+      jobs:
+        - tobiko-infrared
+
+
+- job:
+    name: tobiko-infrared
+    parent: tox
+    nodeset: tobiko-infrared-single-node-centos-9
+    timeout: 3600
+    description: |
+      Run test cases using tobiko infrared plugin
+    pre-run: playbooks/infrared/pre.yaml
+    run: playbooks/infrared/run.yaml
+    required-projects:
+      - name: x/tobiko
+    voting: true
+    vars:
+      ensure_pip_from_packages_with_python2: no
+      test_collect_dir: '{{ zuul_output_dir }}/logs'
+      test_inventory_file: '{{ zuul_work_dir }}/ansible_hosts'
+      test_inventory_groups: {undercloud: [primary]}
+      tox_envlist: infrared
+      tox_extra_args: >-
+        --
+        --collect-dir {{ test_collect_dir | quote }}
+        --customized-fedora-image-url
+        https://download.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images/Fedora-Cloud-Base-Generic.x86_64-40-1.14.qcow2
+      tox_environ:
+        ANSIBLE_INVENTORY: '{{ test_inventory_file }}'
+      zuul_output_dir: '{{ ansible_user_dir }}/zuul-output'
+      zuul_work_dir: "{{ zuul.projects['opendev.org/x/tobiko'].src_dir }}"
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/
+      - ^releasenotes/
+      - ^report/
+      - ^tobiko/tests/scenario/
+      - ^tobiko/tests/faults/
+
+- nodeset:
+    name: tobiko-infrared-single-node-centos-9
+    nodes:
+      - name: primary
+        label: centos-9-stream
+    groups:
+      - name: undercloud
+        nodes:
+          - primary

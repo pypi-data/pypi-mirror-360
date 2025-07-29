@@ -1,0 +1,42 @@
+---
+
+- block:
+  - name: install Docker compose using pip
+    become: true
+    pip:
+      name: "{{ item }}"
+    with_items:
+      - "docker<7.0"
+      - "docker-compose"
+
+  - name: get docker compose location path
+    shell: which docker-compose
+    register: get_docker_compose_path
+
+  - name: save docker compose path fact
+    set_fact:
+      docker_compose_executable: '{{ get_docker_compose_path.stdout.strip() }}'
+
+  - debug: var=docker_compose_executable
+
+  rescue:
+  - name: install latest Docker compose with Curl
+    become: true
+    shell: |
+      set -x
+      VERSION=$(
+        git ls-remote https://github.com/docker/compose |
+        awk '/refs\/tags\/v/{print $2}' |
+        sort --version-sort |
+        tail -n 1)
+      ARCH=$(uname -s)-$(uname -m)
+      URL=https://github.com/docker/compose/releases/download/${VERSION}/docker-compose-${ARCH}
+      mkdir -p $(dirname '{{ docker_compose_executable }}')
+      curl -L ${URL} > '{{ docker_compose_executable }}'
+      chmod +x '{{ docker_compose_executable }}'
+
+  - name: save docker compose path fact
+    set_fact:
+      docker_compose_executable: '{{ docker_compose_executable }}'
+
+  - debug: var=docker_compose_executable

@@ -1,0 +1,49 @@
+---
+
+- name: "ensure Tobiko directory exists"
+  file:
+    path: '{{ tobiko_src_dir | realpath }}'
+    state: directory
+  register: create_tobiko_dir
+
+
+- name: "get Tobiko files"
+  include_role: name=tobiko-ir-deploy
+  vars:
+    deploy_dir: '{{ tobiko_src_dir | realpath }}'
+    deploy_git_repo: '{{ tobiko_git_repo }}'
+    deploy_git_refspec: "{{ tobiko_git_refspec | default('0.8.13') }}"
+    deploy_git_remote: "{{ tobiko_git_remote | default('') }}"
+  when: create_tobiko_dir is changed
+
+
+- name: "find roles in directory '{{ tobiko_src_dir | realpath }}/roles'"
+  find:
+    paths:
+      - "{{ tobiko_src_dir | realpath }}/roles"
+    patterns:
+      - "tobiko-*"
+    file_type: directory
+  register: find_tobiko_roles
+
+
+- name: "add links to Tobiko roles to IR plugin"
+  file:
+    src: '{{ item | realpath }}'
+    dest: '{{ playbook_dir }}/roles/{{ item | basename }}'
+    state: link
+    force: yes
+  loop: "{{ find_tobiko_roles.files | map(attribute='path') | list }}"
+
+
+- name: "select tester host from the inventory"
+  set_fact:
+    test_host: '{{ item }}'
+  when:
+    - test_host is not defined
+    - item in hostvars
+  loop:
+    - '{{ groups.get("tester", []) | first | default("tester")  }}'
+    - '{{ groups.get("undercloud", []) | first | default("undercloud-0") }}'
+    - '{{ groups.get("tempest", []) | first | default("tempest") }}'
+    - primary

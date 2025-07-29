@@ -1,0 +1,83 @@
+---
+
+- name: "clean target directory '{{ deploy_dir }}'"
+  file:
+    path: "{{ deploy_dir | realpath }}"
+    state: absent
+  when:
+    - (deploy_clean | bool)
+
+
+- when: (deploy_git_refspec | length) > 0
+  block:
+    - name: "ensure target directory exists: '{{ deploy_dir }}'"
+      file:
+        path: "{{ deploy_dir | realpath }}"
+        state: directory
+      register: create_dest_dir
+
+    - name: install git
+      ignore_errors: yes
+      become: true
+      package:
+        name: git
+        state: present
+
+    - name: "checkout files from '{{ deploy_git_repo }}[{{ deploy_git_refspec }}]' to '{{ deploy_dir }}'"
+      git:
+        dest: '{{ deploy_dir }}'
+        repo: '{{ deploy_git_repo }}'
+        refspec: '{{ deploy_git_refspec }}'
+        version: FETCH_HEAD
+        remote: '{{ deploy_git_remote or omit }}'
+        force: yes
+      register: checkout_files
+      until: checkout_files is not failed
+      retries: 5
+      delay: 5
+
+
+- when:
+    - (deploy_src_dir | length) > 0
+    - checkout_files is skipped
+  block:
+    - name: "check source directory exists"
+      delegate_to: localhost
+      stat:
+        path: '{{ deploy_src_dir }}'
+      register: deploy_src_dir_stat
+
+    - when: deploy_src_dir_stat.stat.exists
+      block:
+        - name: "ensure target directory exists: '{{ deploy_dir }}'"
+          file:
+            path: "{{ deploy_dir | realpath }}"
+            state: directory
+          register: create_dest_dir
+
+        - name: "copy '{{ deploy_src_dir }}' to '{{ deploy_dir }}'"
+          synchronize:
+            src: "{{ deploy_src_dir | realpath }}/."
+            dest: "{{ deploy_dir | realpath }}"
+            use_ssh_args: yes
+            recursive: yes
+            rsync_opts:
+              - '--exclude-from={{ deploy_src_dir | realpath }}/.gitignore'
+          register: copy_src_dir
+
+
+- when: (checkout_files is not skipped) or (copy_src_dir is not skipped)
+  block:
+    - name: "get last change details for '{{ deploy_dir }}'"  # noqa 303
+      command:
+        chdir: "{{ deploy_dir }}"
+        cmd: git log -n 1
+      changed_when: no
+      register: get_git_log
+
+    - name: "show last change details"
+      debug: var=get_git_log.stdout_lines
+
+  rescue:
+    - name: "unable to show last change details"
+      debug: var=get_git_log.stderr_lines

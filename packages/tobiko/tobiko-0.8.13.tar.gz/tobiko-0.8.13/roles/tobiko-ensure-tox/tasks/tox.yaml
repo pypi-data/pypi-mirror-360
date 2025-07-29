@@ -1,0 +1,53 @@
+---
+
+- name: "check if upper-constraints file exists"
+  stat:
+    path: "{{ openstack_requirements_dir }}/upper-constraints.txt"
+  register: upper_constraints_file
+
+
+- name: "Determine min tox version to be installed"
+  when: upper_constraints_file.stat.exists == true
+  block:
+    - name: "Check requirements repo branch"
+      ansible.builtin.command:
+        cmd: git rev-parse --abbrev-ref HEAD
+        chdir: "{{ openstack_requirements_dir }}"
+      register: requirements_branch
+
+    - name: "Set min tox version for OpenStack stable/zed and stable/2023.1"
+      set_fact:
+        tox_min_version: "3.28"
+      when: requirements_branch.stdout == "stable/2023.1" or "stable/zed"
+
+    - name: "Set min tox version for OpenStack stable/2023.2"
+      set_fact:
+        tox_min_version: "4.5.1"
+      when: requirements_branch.stdout == "stable/2023.2"
+
+
+- name: "ensure Tox is installed"
+  command: >
+    '{{ python_executable }}' -m pip install \
+    {% if upper_constraints_file.stat.exists is true %}-c'{{ upper_constraints_file.stat.path }}'{% endif %} \
+    --user 'tox>={{ tox_min_version }}{% if tox_max_version is not none %},<={{ tox_max_version }}{% endif %}'
+  register: install_tox
+  changed_when: "'Successfully installed' in install_tox.stdout"
+
+- name: "set tox_executable fact"
+  set_fact:
+    tox_executable: "{{ python_executable }} -m tox"
+
+- name: "get installed Tox version"
+  command: "{{ tox_executable }} --version"
+  register: get_tox_version
+
+- name: "update tox_version fact"
+  set_fact:
+    tox_version: '{{ get_tox_version.stdout_lines | first }}'
+
+- name: "show Tox facts"
+  debug:
+    msg:
+      tox_executable: '{{ tox_executable }}'
+      tox_version: '{{ tox_version }}'

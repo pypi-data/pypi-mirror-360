@@ -1,0 +1,133 @@
+---
+
+- project-template:
+    name: tobiko-docker
+    description: |
+      Docker jobs intended to gate Tobiko container related changes
+    check: &CHECK
+      jobs:
+        - tobiko-docker-functional
+        - tobiko-docker-linters
+        - tobiko-docker-py39
+        - tobiko-docker-py310
+    check-arm64:
+      jobs:
+        - tobiko-docker-functional-arm64
+        - tobiko-docker-py3-arm64
+        - tobiko-docker-py310-arm64
+    gate:
+      jobs:
+        - tobiko-docker-py3
+        - tobiko-docker-functional
+    periodic: *CHECK
+
+
+# ----------------------------------------------------------------------------
+
+- job:
+    name: tobiko-docker-py3
+    description: |
+      Run unit tests for an OpenStack Python project inside a Docker container.
+    voting: true
+    parent: base
+    timeout: 2400
+    pre-run: playbooks/docker/pre.yaml
+    run: playbooks/docker/run.yaml
+    post-run: playbooks/docker/post.yaml
+    vars:
+        docker_compose_service: py3
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/
+      - ^releasenotes/
+      - ^report/
+      - ^tobiko/tests/faults/
+      - ^tobiko/tests/functional/
+      - ^tobiko/tests/sanity/
+      - ^tobiko/tests/scenario/
+
+
+- job:
+    name: tobiko-docker-py39
+    description: |
+      Run functional tests for an OpenStack Python project inside a Docker container
+      with Python 3.9
+    voting: true
+    parent: tobiko-docker-py3
+    vars:
+        docker_compose_service: py39
+
+
+- job:
+    name: tobiko-docker-py310
+    description: |
+      Run functional tests for an OpenStack Python project inside a Docker container
+      with Python 3.10
+    voting: false
+    parent: tobiko-docker-py3
+    vars:
+        docker_compose_service: py310
+
+
+- job:
+    name: tobiko-docker-functional
+    description: |
+      Run functional tests for an OpenStack Python project inside a Docker container
+    voting: true
+    parent: tobiko-docker-py3
+    timeout: 3600
+    vars:
+        docker_compose_service: functional
+
+
+- job:
+    name: tobiko-docker-infrared
+    description: |
+      Run Tobiko InfraRed plugin inside of a Docker container
+    voting: false
+    parent: tobiko-docker-py3
+    timeout: 3600
+    vars:
+        docker_compose_service: infrared
+
+
+- job:
+    name: tobiko-docker-linters
+    description: |
+      Run static analisys verifications
+    voting: false
+    parent: tobiko-docker-py3
+    vars:
+        docker_compose_service: linters
+
+
+# --- ARM64 jobs ----------------------------------------------------------------------
+
+- job:
+    name: tobiko-docker-py3-arm64
+    description: |
+      Run unit tests for an OpenStack Python project inside a Docker container on top
+      of arm64 architecture
+    voting: true
+    parent: tobiko-docker-py3
+    nodeset: ubuntu-focal-arm64
+
+
+- job:
+    name: tobiko-docker-py310-arm64
+    description: |
+      Run unit tests for an OpenStack Python project inside a Docker container on top
+      of arm64 architecture
+    voting: true
+    parent: tobiko-docker-py310
+    nodeset: ubuntu-focal-arm64
+
+
+- job:
+    name: tobiko-docker-functional-arm64
+    description: |
+      Run unit tests for an OpenStack Python project inside a Docker container on top
+      of arm64 architecture
+    voting: true
+    parent: tobiko-docker-functional
+    nodeset: ubuntu-focal-arm64
