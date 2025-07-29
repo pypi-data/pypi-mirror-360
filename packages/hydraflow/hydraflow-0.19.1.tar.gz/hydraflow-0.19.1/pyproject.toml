@@ -1,0 +1,123 @@
+[build-system]
+requires = ["uv_build>=0.7.19,<0.8.0"]
+build-backend = "uv_build"
+
+[project]
+name = "hydraflow"
+version = "0.19.1"
+description = "HydraFlow seamlessly integrates Hydra and MLflow to streamline ML experiment management, combining Hydra's configuration management with MLflow's tracking capabilities."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "daizutabi", email = "daizutabi@gmail.com" }]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.13"
+keywords = [
+  "machine-learning",
+  "mlflow",
+  "hydra",
+  "experiment-tracking",
+  "mlops",
+  "ai",
+  "deep-learning",
+  "research",
+  "data-science",
+]
+dependencies = [
+  "hydra-core>=1.3",
+  "joblib>=1.4.0",
+  "mlflow>=3",
+  "omegaconf>=2.3",
+  "polars>=1.26",
+  "python-ulid>=3.0.0",
+  "rich>=14",
+  "typer>=0.16",
+]
+
+[project.urls]
+Documentation = "https://daizutabi.github.io/hydraflow/"
+Source = "https://github.com/daizutabi/hydraflow"
+Issues = "https://github.com/daizutabi/hydraflow/issues"
+
+[project.scripts]
+hydraflow = "hydraflow.cli:app"
+
+[dependency-groups]
+dev = [
+  "hydra-joblib-launcher",
+  "pytest-clarity",
+  "pytest-cov",
+  "pytest-order",
+  "pytest-randomly",
+  "pytest-xdist",
+  "ruff>=0.12",
+]
+docs = ["markdown-exec[ansi]", "mkapi>=4.4", "mkdocs-material"]
+
+[tool.pytest.ini_options]
+addopts = [
+  "--cov=hydraflow",
+  "--cov-report=lcov:lcov.info",
+  "--doctest-modules",
+]
+filterwarnings = [
+  "ignore:Support for class-based `config` is deprecated",
+  "ignore:Pydantic V1 style",
+]
+
+[tool.coverage.report]
+exclude_lines = ["no cov", "raise NotImplementedError", "if TYPE_CHECKING:"]
+skip_covered = true
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["ALL"]
+unfixable = ["F401"]
+ignore = [
+  "A005",
+  "ANN003",
+  "ANN401",
+  "B904",
+  "D104",
+  "D105",
+  "D107",
+  "D203",
+  "D213",
+  "EM101",
+  "FBT001",
+  "FBT002",
+  "PGH003",
+  "PLC0415",
+  "PLR0911",
+  "PLR0913",
+  "PLR1704",
+  "PLR2004",
+  "S603",
+  "SIM102",
+  "SIM108",
+  "SIM115",
+  "TRY003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"examples/*.py" = ["D", "G", "INP", "T"]
+"src/hydraflow/cli.py" = ["ANN", "D"]
+"src/hydraflow/core/main.py" = ["ANN201", "D401"]
+"src/hydraflow/executor/conf.py" = ["ANN", "D"]
+"tests/*" = ["A001", "ANN", "ARG", "D", "FBT", "PD", "PLR", "PT", "S", "SLF"]
+
+[tool.pyright]
+include = ["src", "tests"]
