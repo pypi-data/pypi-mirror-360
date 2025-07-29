@@ -1,0 +1,135 @@
+---
+# This is an example configuration file that contains an 
+# error handler flow and a test flow. The error handler flow
+# will log any error messages locally to a file and will also
+# send them to a Solace broker.
+#
+# It will subscribe to `my/topic1` and expect an event with the payload:
+# {
+#   "value": <number>
+# }
+# If value is not a number, the error will be caught, logged to file and send back to the Solace broker.
+# 
+# Subscribe to `ai_connector_error/*/*/*` to see the error messages.
+#
+# required ENV variables:
+# - SOLACE_BROKER_URL
+# - SOLACE_BROKER_USERNAME
+# - SOLACE_BROKER_PASSWORD
+# - SOLACE_BROKER_VPN
+
+instance:
+  name: solace_ai_connector1
+log:
+  stdout_log_level: DEBUG
+  log_file_level: DEBUG
+  log_file: solace_ai_connector.log
+
+shared_config:
+  - broker_config: &broker_connection
+      broker_type: solace
+      broker_url: ${SOLACE_BROKER_URL}
+      broker_username: ${SOLACE_BROKER_USERNAME}
+      broker_password: ${SOLACE_BROKER_PASSWORD}
+      broker_vpn: ${SOLACE_BROKER_VPN}
+
+# List of flows
+flows:
+  - name: error_handler
+    components:
+      - component_name: error_input
+        component_module: error_input
+        component_config:
+          max_queue_depth: 100
+      - component_name: error_logger
+        component_module: file_output
+        input_transforms:
+          - type: copy
+            source_expression: input.payload
+            dest_expression: user_data.log:content
+          - type: copy
+            source_value: a
+            dest_expression: user_data.log:mode
+          - type: copy
+            source_value: error_log.log
+            dest_expression: user_data.log:file_path
+        input_selection:
+          source_expression: user_data.log
+      - component_name: solace_sw_broker
+        component_module: broker_output
+        component_config: 
+          <<: *broker_connection
+          payload_format: json
+        input_transforms:
+          - type: copy
+            source_expression: input.payload
+            dest_expression: user_data.output:payload
+          - type: copy
+            source_expression: template:ai_connector_error/{{input.user_properties:instance_name}}/{{input.user_properties:flow_name}}/{{input.user_properties:component_name}}
+            dest_expression: user_data.output:topic
+          - type: copy
+            source_expression: input.user_properties
+            dest_expression: user_data.output:user_properties
+        input_selection:
+          source_expression: user_data.output
+
+
+  - name: test_flow
+    trace_level: DEBUG
+    components:
+
+      # Input from a Solace broker
+      - component_name: solace_sw_broker
+        component_module: broker_input
+        component_config: 
+          <<: *broker_connection
+          broker_queue_name: my_queue
+          broker_subscriptions:
+            - topic: my/topic1
+              qos: 1
+          payload_encoding: utf-8
+          payload_format: json
+
+      - component_name: pass_through
+        component_module: pass_through
+        component_config:
+        input_transforms:
+          - type: copy
+            source_expression: input.payload
+            dest_expression: user_data.temp:text
+        input_selection:
+          source_expression: user_data.temp:text
+
+      - component_name: solace_sw_broker
+        component_module: broker_output
+        component_config: 
+          <<: *broker_connection
+          payload_format: json
+        input_transforms:
+          - type: copy
+            source_expression: input.payload
+            dest_expression: user_data.output:payload.original_payload
+          - type: copy
+            source_expression: 
+              invoke:
+                module: invoke_functions
+                function: power
+                params:
+                  positional:
+                    - evaluate_expression(input.payload:value) # This will throw an error if value is not a number
+                    - 2
+            dest_expression: user_data.output:payload.valueSquared
+          - type: copy
+            source_expression: input.user_properties
+            dest_expression: user_data.output:payload.user_properties
+          - type: copy
+            source_expression: input.topic
+            dest_expression: user_data.output:payload.topic
+          - type: copy
+            source_expression: template:response/{{input.topic}}
+            dest_expression: user_data.output:topic
+          - type: copy
+            source_expression: user_data.temp
+            dest_expression: user_data.output:user_properties
+        input_selection:
+          source_expression: user_data.output

@@ -1,0 +1,87 @@
+---
+# Example for a request-reply flow
+# Flow 1: stdin -> broker_request_reply -> stdout
+# Flow 2: broker_input -> pass_through -> broker_output
+# 
+# required ENV variables:
+# - SOLACE_BROKER_URL
+# - SOLACE_BROKER_USERNAME
+# - SOLACE_BROKER_PASSWORD
+# - SOLACE_BROKER_VPN
+
+log:
+  stdout_log_level: INFO
+  log_file_level: INFO
+  log_file: solace_ai_connector.log
+
+shared_config:
+  - broker_config: &broker_connection
+      broker_type: solace
+      broker_url: ${SOLACE_BROKER_URL}
+      broker_username: ${SOLACE_BROKER_USERNAME}
+      broker_password: ${SOLACE_BROKER_PASSWORD}
+      broker_vpn: ${SOLACE_BROKER_VPN}
+
+flows:
+  - name: request_flow
+    components:
+      - component_name: stdin
+        component_base_path: .
+        component_module: stdin_input
+      - component_name: request_handler
+        component_module: broker_request_response
+        component_config:
+          <<: *broker_connection
+          request_expiry_ms: 30000  # 30 seconds
+          user_properties_reply_topic_key: :response.user.topic # nested with :
+          user_properties_reply_metadata_key: response.user.metadata # string literal
+
+        input_transforms:
+          - type: copy
+            source_expression: input.payload
+            dest_expression: user_data.request:payload
+          - type: copy
+            source_value: request/topic
+            dest_expression: user_data.request:topic
+        input_selection:
+          source_expression: user_data.request
+
+      - component_name: stdout
+        component_module: stdout_output
+
+  - name: reply_flow
+    components:
+      - component_name: broker_input
+        component_module: broker_input
+        component_config:
+          <<: *broker_connection
+          broker_queue_name: reply_queue
+          broker_subscriptions:
+            - topic: request/topic
+
+      - component_name: process_request
+        component_module: pass_through
+        input_transforms:
+          - type: copy
+            source_expression: input.payload
+            dest_expression: user_data.reply:payload.wrapper
+        input_selection:
+          source_expression: user_data.reply:payload
+
+      - component_name: broker_output
+        component_module: broker_output
+        component_config:
+          <<: *broker_connection
+        input_transforms:
+          - type: copy
+            source_expression: previous
+            dest_expression: user_data.output:payload
+          - type: copy
+            source_expression: input.user_properties
+            dest_expression: user_data.output:user_properties
+          - type: copy
+            source_expression: input.user_properties:response.user.topic
+            dest_expression: user_data.output:topic
+        input_selection:
+          source_expression: user_data.output
+
