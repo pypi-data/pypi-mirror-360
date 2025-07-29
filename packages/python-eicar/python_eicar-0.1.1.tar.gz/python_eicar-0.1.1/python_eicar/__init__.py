@@ -1,0 +1,1 @@
+from .main import eicar_print,write_eicar_in_file
