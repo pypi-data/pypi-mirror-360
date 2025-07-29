@@ -1,0 +1,213 @@
+name: Main
+
+on:
+  push:
+    branches: [main]
+    tags: [v*.*.*]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@bd01e18f51369d5a26f1651c3cb451d3417e3bba # v6.3.1
+        with:
+          enable-cache: true
+
+      - name: Install project
+        run: uv sync --frozen
+
+      - name: Lint code
+        run: make lint
+
+  test:
+    name: Tests
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@bd01e18f51369d5a26f1651c3cb451d3417e3bba # v6.3.1
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install project
+        run: uv sync --frozen
+
+      - name: Run tests
+        run: make test
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
+
+  pypi-deploy:
+    name: Release to PyPI
+    if: github.ref_type == 'tag'
+    needs: [lint, test]
+    environment: pypi
+    permissions:
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@bd01e18f51369d5a26f1651c3cb451d3417e3bba # v6.3.1
+        with:
+          enable-cache: true
+
+      - name: Build package
+        run: uv build
+
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+
+  aur-deploy:
+    name: Release to AUR
+    if: true && !contains(github.ref, 'alpha') && !contains(github.ref, 'beta')
+    needs: [pypi-deploy]
+    environment:
+      name: aur
+      url: https://aur.archlinux.org/packages/python-images-upload-cli
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for PyPI update
+        run: sleep 10
+
+      - name: Update version in PKGBUILD
+        run: |
+          sed "s|^pkgver=.*$|pkgver=\"${GITHUB_REF_NAME#v}\"|" -i PKGBUILD
+
+      - name: Deploy PKGBUILD to the Arch User Repository
+        uses: ksxgithub/github-actions-deploy-aur@2ac5a4c1d7035885d46b10e3193393be8460b6f1 # v4.1.1
+        with:
+          pkgname: python-images-upload-cli
+          pkgbuild: ./PKGBUILD
+          commit_username: deadnews
+          commit_email: deadnewsgit@gmail.com
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: Upstream release ${{ github.ref_name }}
+          updpkgsums: true
+
+  github-deploy:
+    name: Release to GitHub
+    if: github.ref_type == 'tag'
+    needs: [lint, test]
+    environment: github-releases
+    permissions:
+      contents: write
+    env:
+      CHANGELOG: https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md
+      PRERELEASE: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        run: |
+          gh release create ${{ github.ref_name }} \
+            --title ${{ github.ref_name }} \
+            --notes="See [the CHANGELOG](${{ env.CHANGELOG }}) for more details." \
+            --draft=${{ env.PRERELEASE }} \
+            --prerelease=${{ env.PRERELEASE }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-win:
+    name: Windows Build
+    if: github.ref_type == 'tag'
+    needs: [github-deploy]
+    environment: github-releases
+    permissions:
+      contents: write
+    env:
+      ASSET: ${{ github.event.repository.name }}_${{ github.ref_name }}_windows_amd64.zip
+      BINARY: ${{ github.event.repository.name }}.exe
+      NUITKA_CACHE_DIR: /cache/nuitka
+      PYTHON_VERSION: "3.13"
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@bd01e18f51369d5a26f1651c3cb451d3417e3bba # v6.3.1
+        with:
+          enable-cache: true
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install project
+        run: uv sync --frozen
+
+      - name: Cache nuitka
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-nuitka
+          path: ${{ env.NUITKA_CACHE_DIR }}
+
+      - name: Build binaries
+        run: make nuitka OUTPUT_FILE=${{ env.BINARY }}
+
+      - name: Archive binaries
+        run: uv run python -m zipfile --create ${{ env.ASSET }} dist/${{ env.BINARY }}
+
+      - name: Upload binaries to Release
+        run: gh release upload ${{ github.ref_name }} ${{ env.ASSET }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  docs-build:
+    name: Build docs
+    if: github.ref_type == 'tag'
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@bd01e18f51369d5a26f1651c3cb451d3417e3bba # v6.3.1
+        with:
+          enable-cache: true
+
+      - name: Build docs
+        run: uv run --frozen mkdocs build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  docs-deploy:
+    name: Deploy docs
+    if: true && !contains(github.ref, 'alpha')
+    needs: [docs-build]
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      id-token: write
+      pages: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
