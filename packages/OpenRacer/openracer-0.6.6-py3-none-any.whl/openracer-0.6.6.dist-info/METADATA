@@ -1,0 +1,108 @@
+Metadata-Version: 2.1
+Name: OpenRacer
+Version: 0.6.6
+Summary: Package to connect with OpenRacer application.
+Project-URL: Issues, https://github.com/Loony4Logic/OpenRacer/issues
+Author-email: Hitansh Doshi <hkd159@gmail.com>
+License-File: LICENSE
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Web Environment
+Classifier: Framework :: FastAPI
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Science/Research
+Classifier: Natural Language :: English
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Games/Entertainment :: Simulation
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.8
+Requires-Dist: annotated-types==0.7.0
+Requires-Dist: anyio==4.5.2
+Requires-Dist: click==8.1.8
+Requires-Dist: colorama==0.4.6
+Requires-Dist: exceptiongroup==1.2.2
+Requires-Dist: fastapi==0.115.11
+Requires-Dist: h11==0.14.0
+Requires-Dist: httptools==0.6.4
+Requires-Dist: idna==3.10
+Requires-Dist: markdown-it-py==3.0.0
+Requires-Dist: mdurl==0.1.2
+Requires-Dist: numpy==1.24.4
+Requires-Dist: pydantic-core==2.27.2
+Requires-Dist: pydantic==2.10.6
+Requires-Dist: pygments==2.19.1
+Requires-Dist: python-dotenv==1.0.1
+Requires-Dist: pyyaml==6.0.2
+Requires-Dist: rich==13.9.4
+Requires-Dist: sniffio==1.3.1
+Requires-Dist: starlette==0.44.0
+Requires-Dist: typing-extensions==4.12.2
+Requires-Dist: uvicorn==0.33.0
+Requires-Dist: watchfiles==0.24.0
+Requires-Dist: websockets==13.1
+Description-Content-Type: text/markdown
+
+# OpenRacer
+
+## Overview
+
+The OpenRacer WebSocket interface facilitates communication between the Unity-based simulator and Python-based machine learning models. The simulator sends input data for each frame, and the ML model processes it before sending a response back.
+
+This package provides a server interface that manages WebSocket connections and ensures seamless real-time data exchange.
+
+## Installation
+
+```sh
+pip install OpenRacer
+```
+
+## Usage
+
+### Creating a Custom Model
+
+To integrate an ML model, create a class that **inherits from** `ModelBase` in the OpenRacer package and implement following methonds
+* `preProcess` (optional) : used for processing input before passing to `trainEval` or `testEval`
+* `trainEval` : will be called each frame for training
+* `testEval`: will be called each frame for testing/Race/eval
+* `rewardFn`: will be called in each eval to monitor model performance
+* `backprop` : will be called for each step in training. Use this to update model based on eval.
+
+
+```python
+from OpenRacer.Model import ModelBase
+
+class MyModel(ModelBase):
+    # implement the required functions 
+```
+
+### Starting the Interface
+
+The Interface is responsible for handling connections between the simulator and the ML model and Dashboard.
+
+```python
+from OpenRacer.Interface import Interface
+
+# Create and start the server
+Interface(model=modelInterface).start()
+```
+
+### API Reference
+
+Will be updated in some time
+
+### Notes
+- Ensure that the **WebSocket server is running before launching the simulator.**
+
+### License
+
+This package is open-source under the MIT License.
+
+### Contributing
+
+Contributions are welcome! Feel free to submit issues or pull requests on GitHub.
+
+### Contact
+
+For questions, reach out to the OpenRacer team via GitHub.
+
