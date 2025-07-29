@@ -1,0 +1,65 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "atlas-mc-scanner"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+keywords = []
+authors = [{ name = "Gordon Watts", email = "gwatts@uw.edu" }]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "typer>=0.9.0",
+  "func_adl_servicex_xaodr25",
+  "func_adl>=3.5.0b1",
+  "servicex==3.1.1",
+  "awkward",
+  "servicex-analysis-utils",
+  "tabulate",
+  "particle",
+  "jinja2",
+]
+
+[project.optional-dependencies]
+local = ["servicex-local", "func_adl_xAOD"]
+test = ["pytest", "pytest-cov", "pytest-mock", "pytest-xdist", "coverage"]
+
+[project.urls]
+Documentation = "https://github.com/Gordon Watts/atlas-mc-scanner#readme"
+Issues = "https://github.com/Gordon Watts/atlas-mc-scanner/issues"
+Source = "https://github.com/Gordon Watts/atlas-mc-scanner"
+
+[tool.hatch.version]
+path = "src/atlas_mc_scanner/__about__.py"
+
+[tool.coverage.run]
+source_pkgs = ["atlas_mc_scanner", "tests"]
+branch = true
+parallel = true
+omit = ["src/atlas_mc_scanner/__about__.py"]
+
+[tool.coverage.paths]
+atlas_mc_scanner = [
+  "src/atlas_mc_scanner",
+  "*/atlas-mc-scanner/src/atlas_mc_scanner",
+]
+tests = ["tests", "*/atlas-mc-scanner/tests"]
+
+[tool.coverage.report]
+exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
+
+[project.scripts]
+atlas-mc-scanner = "atlas_mc_scanner.cli:app"
