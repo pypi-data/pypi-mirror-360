@@ -1,0 +1,78 @@
+[project]
+name = "one-updater"
+version = "1.0.0"
+description = "One tool many packages"
+authors = [{ name = "Tim Bryant", email = "timothybryant3@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = ["pyyaml", "rich", "python-semantic-release"]
+
+[project.optional-dependencies]
+dev = [
+  "autopep8",
+  "black",
+  "pytest",
+  "pre-commit",
+  "isort",
+  "pyinstaller",
+  "pyyaml",
+]
+
+[tool.uv]
+default-groups = []
+package = true
+
+[tool.pytest.ini_options]
+pythonpath = [".", "one_updater"]
+filterwarnings = [
+  "error",
+  "ignore::RuntimeWarning",
+  "ignore::DeprecationWarning",
+]
+
+[project.scripts]
+one-updater = "one_updater.cli:main"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = [
+  "build",
+  "chore",
+  "refactor",
+  "fix",
+  "perf",
+  "style",
+  "docs",
+  "ci",
+  "test",
+  "feat",
+  ":boom:",
+  "BREAKING_CHANGE",
+]
+major_tags = [":boom:", "BREAKING_CHANGE"]
+minor_tags = ["feat"]
+patch_tags = [
+  "fix",
+  "perf",
+  "style",
+  "docs",
+  "ci",
+  "test",
+  "refactor",
+  "chore",
+  "build",
+]
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+branch = "main"
+changelog_file = "CHANGELOG.md"
+build_command = "uv build"
+dist_path = "dist/"
+upload_to_vcs_release = true
+upload_to_pypi = false
+remove_dist = false
+patch_without_tag = true
+
+[tool.setuptools.packages.find]
+include = ["one_updater*"]
+exclude = ["ARCHIVE*", "tests*", "build*"]
