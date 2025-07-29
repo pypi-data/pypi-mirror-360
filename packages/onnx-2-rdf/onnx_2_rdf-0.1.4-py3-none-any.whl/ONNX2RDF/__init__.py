@@ -1,0 +1,1 @@
+from ONNX2RDF.parser import ONNX2RDFParser

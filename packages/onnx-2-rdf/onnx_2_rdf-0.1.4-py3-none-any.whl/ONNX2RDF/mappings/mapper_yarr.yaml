@@ -1,0 +1,1220 @@
+prefixes:
+  base: http://base.onnx.model.com#
+  baseR: http://base.onnx.model.com/resource/
+  modelR: templete
+  rr: http://www.w3.org/ns/r2rml#
+  rml: http://w3id.org/rml/
+  ql: http://semweb.mmlab.be/ns/ql#
+  xsd: http://www.w3.org/2001/XMLSchema#
+  rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  rdfs: http://www.w3.org/2000/01/rdf-schema#
+  schema: http://schema.org/
+  owl: http://www.w3.org/2002/07/owl#
+  skos: http://www.w3.org/2004/02/skos/core#
+  dc: http://purl.org/dc/elements/1.1/
+  mod: https://w3id.org/mod#
+  grel: http://users.ugent.be/~bjdmeest/function/grel.ttl#
+  ex: http://www.example.com
+  fno: https://w3id.org/function/ontology#
+  fns: http://example.com/functions/
+  fnml: http://semweb.mmlab.be/ns/fnml#
+  idlab-fn: http://example.com/idlab/function/
+  morph-kgc: https://github.com/morph-kgc/morph-kgc/function/built-in.ttl#
+  olo: http://purl.org/ontology/olo/core#
+
+  
+
+sources:
+  model_onnx:
+      access: data_mapping/model_data.json
+      referenceFormulation: jsonpath
+      iterator: "$"
+  tensor_annotation:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..quantizationAnnotation[*]"
+  all_metadata:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..metadataProps[*]"
+  operator_sets_data:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..opsetImport[*]"
+  operator_data:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.operators[*]"
+  all_node:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..node[*]"
+  node_data:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.node[*]"
+  function_data:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.functions[*]"
+  graph_data:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph"
+  tensor_types:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.tensor_types[*]"
+  map_key_types:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.map_key_types[*]"
+  operator_status_types:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.operator_types[*]"
+  location_types:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.location_types[*]"
+  node_outputs:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..output_node[*]"
+  node_inputs:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..input_node[*]"
+
+  att_values:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..attribute[*].value"
+  att_list_values:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..attribute[*].typed_list[*].value"
+  att_values_dims:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..attribute[*].value.shape[*]"
+  att_list_values_dims:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..attribute[*].typed_list[*].value.shape[*]"
+
+  att_values_proto_dims:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..attribute[*].value['tensorType','sparseTensorType'].shape[*]"
+  att_list_values_proto_dims:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..attribute[*].typed_list[*].value['tensorType','sparseTensorType'].shape[*]"
+
+
+
+
+  inputs_graph_dims:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.input[*].type['tensorType','sparseTensorType'].shape[*]"
+  outputs_graph_dims:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.output[*].type['tensorType','sparseTensorType'].shape[*]"
+  all_value_infos_dims:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..valueInfo[*].type['tensorType','sparseTensorType'].shape[*]"
+
+  inputs_graph_type_tensor:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.input[*].type['tensorType','sparseTensorType']"
+  outputs_graph_type_tensor:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.output[*].type['tensorType','sparseTensorType']"
+  all_value_infos_type_tensor:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..valueInfo[*].type['tensorType','sparseTensorType']"
+
+  inputs_graph_type:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.input[*].type"
+  outputs_graph_type:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.output[*].type"
+  all_value_infos_type:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..valueInfo[*].type"
+  
+
+
+  inputs_graph:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.input[*]"
+  outputs_graph:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.output[*]"
+  all_value_infos:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..valueInfo[*]"
+  
+    
+  initializer_data:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.initializer[*]"
+  initializer_data_dims:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.initializer[*].shape[*]"
+  sparse_init_data:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.sparseInitializer[*]"
+
+  sparse_init_data_i:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.sparseInitializer[*].indices"
+  sparse_init_data_v:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.sparseInitializer[*].values"
+  sparse_init_data_dims:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.sparseInitializer[*].shape[*]"
+
+  sparse_init_data_dims_i:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.sparseInitializer[*].indices.shape[*]"
+  sparse_init_data_dims_v:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph.sparseInitializer[*].values.shape[*]"
+  all_attributes:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..attribute[*]"
+  
+  all_attributes_list_entry:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..attribute[*].typed_list[*]"
+
+  all_attributes_func:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..attributeProto[*]"
+  all_attributes_func_entry:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$..attributeProto[*].typed_list[*]"
+
+  graph_data:
+    access: data_mapping/model_data.json
+    referenceFormulation: jsonpath
+    iterator: "$.graph"
+
+mappings:
+
+
+  status:
+    sources: operator_status_types
+    subjects: baseR:$(label)
+    po:
+      - [a, base:OperatorStatus]
+      - [skos:prefLabel, $(prefLabel),xsd:string]
+      - [skos:altLabel, $(altLabel),xsd:integer]
+
+  dataLocation:
+    sources: location_types
+    subjects: baseR:$(label)
+    po:
+      - [a, base:DataLocation]
+      - [skos:prefLabel, $(prefLabel),xsd:string]
+      - [skos:altLabel, $(altLabel),xsd:integer]
+
+  tensor_type:
+    sources: tensor_types
+    subjects: baseR:$(label)
+    po:
+      - [a, base:ElementType]
+      - [skos:prefLabel, $(prefLabel),xsd:string]
+      - [skos:altLabel, $(altLabel),xsd:integer]
+
+  map_key_type:
+    sources: map_key_types
+    subjects: baseR:$(label)
+    po:
+      - [a, base:KeyType]
+      - [skos:prefLabel, $(prefLabel),xsd:string]
+      - [skos:altLabel, $(altLabel),xsd:integer]
+
+  # domain no vacio y version no vacio (opsets imports)
+  operator_sets:
+   sources: operator_sets_data
+   subjects: baseR:OperatorSet/$(element_id)
+   po:
+     - [a, base:OperatorSet]
+     - [base:domain, $(domain),xsd:string]
+     - [base:version, $(version),xsd:string]
+     - [dc:description, $(docString),xsd:string]
+     - [dc:magic_sequence, $(magic),xsd:string]
+
+  custom_operator_sets:
+   sources: operator_sets_data
+   subjects: modelR:OperatorSet/$(element_id)$(is_custom)
+   po:
+     - [a, base:OperatorSet]
+     - [base:domain, $(domain),xsd:string]
+     - [base:version, $(version),xsd:string]
+     - [dc:description, $(docString),xsd:string]
+     - [dc:magic_sequence, $(magic),xsd:string]
+    
+
+   
+  operators:
+   sources: operator_data
+   subjects: baseR:Operator/$(element_id)
+   po:
+     - [a, base:Operator]
+     - [base:name, $(name),xsd:string]
+     - [base:domain, $(domain),xsd:string]
+     - [base:since_version, $(since_version),xsd:string]
+     
+     - [dc:description, $(docString),xsd:string]
+     - [base:is_shape_inference, $(is_shape_inference),xsd:boolean]
+     - [base:is_function, $(is_function),xsd:boolean]
+     - [base:is_custom,"false",xsd:boolean]
+     - predicates: base:has_operator_status
+       objects: baseR:$(status.rdfLabel)~iri
+     - predicates: base:is_defined_by
+       objects: baseR:OperatorSet/$(opset_id)~iri
+
+  custom_op:
+    sources: all_node
+    subjects: modelR:Operator/$(custom_id)
+    po:
+     - [a, base:Operator]
+     - [base:name, $(op_type),xsd:string]
+     - [base:name, $(domain),xsd:string]
+     - [base:since_version, $(version),xsd:string]
+     - [base:is_custom,"true",xsd:boolean]
+     
+     - predicates: base:is_defined_by
+       objects: modelR:OperatorSet/domain$(domain)-v$(version)~iri
+
+  funcs:
+   sources: function_data
+   subjects: modelR:Function/$(element_id)
+   po:
+     - [a, base:Function]
+     - [base:name, $(name),xsd:string]
+     - [base:overload, $(overload),xsd:string]
+     - [dc:description, $(docString),xsd:string]
+     - predicates: base:is_defined_by
+       objects: baseR:OperatorSet/$(opset_id)~iri
+          
+     - predicates: base:imports_operators_set
+       objects: baseR:OperatorSet/$(opsetImport[*].element_id)~iri
+
+     - predicates: base:has_value_info
+       objects: modelR:ValueInfo/$(valueInfo[*].is_value)~iri
+     - predicates: base:has_func_input
+       objects: modelR:ValueInfo/$(valueInfo[*].is_input)~iri
+     - predicates: base:has_func_output
+       objects: modelR:ValueInfo/$(valueInfo[*].is_output)~iri
+     - predicates: base:defines_attribute
+       objects: modelR:Attribute/$(attribute[*].element_id)~iri
+
+     - predicates: base:defines_default_attribute
+       objects: modelR:Attribute/$(attributeProto[*].element_id)~iri
+     - predicates: base:has_node
+       objects: modelR:Node/$(element_id)-Node-$(node[*].name)~iri
+     - predicates: base:has_metadata_property
+       objects: modelR:MetadataProperty/$(metadataProps[*].element_id)~iri
+     
+
+  operator_sets_conn:
+    sources: operator_sets_data
+    subjects: modelR:OperatorSet/$(element_id)$(is_custom)
+    po:
+      - predicates: base:defines
+        objects:
+          - mapping: operators
+            condition:
+              - function: equal
+                parameters:
+                  - [str1, $(domain), s]
+                  - [str2, $(domain), o]
+              - function: equal
+                parameters:
+                  - [str1, $(version), s]
+                  - [str2, $(since_version), o]
+
+
+
+
+  operator_sets_conn:
+   sources: operator_sets_data
+   subjects: baseR:OperatorSet/$(element_id)
+   po:
+     - predicates: base:defines
+       objects:
+        - mapping: operators
+          condition:
+            - function: equal
+              parameters:
+                - [str1, $(domain), s]
+                - [str2, $(domain), o]
+            - function: equal
+              parameters:
+                - [str1, $(version), s]
+                - [str2, $(since_version), o]
+        - mapping: funcs
+          condition:
+            - function: equal
+              parameters:
+                - [str1, $(domain), s]
+                - [str2, $(domain), o]
+            - function: equal
+              parameters:
+                - [str1, $(version), s]
+                - [str2, $(version), o]
+
+
+
+
+  tensor_segments: 
+    sources:
+      - att_values
+      - att_list_values 
+      - initializer_data
+      - sparse_init_data_i
+      - sparse_init_data_v
+    subjects: modelR:Segment/$(tensor_id)$(is_segment)
+    po:
+      - [a, base:Segment]
+      - [base:begin, $(segment.begin),xsd:integer]
+      - [base:end, $(segment.end),xsd:integer]
+
+  tensor_values: 
+    sources:
+      - att_values
+      - att_list_values    
+      - initializer_data
+      - sparse_init_data_i
+      - sparse_init_data_v
+    subjects: modelR:TensorValue/$(tensor_id)
+    po:
+      - [a, base:TensorValue]
+      - [base:storage_type, $(storage_type),xsd:string]
+      - [base:value, $(value)]
+
+
+  initializer:
+    sources:
+      - initializer_data
+    subjects: modelR:Tensor/$(tensor_id)
+    po:
+      - [a, base:Initializer]
+      - [base:name, $(name),xsd:string]
+      - [dc:description, $(docString),xsd:string]
+      - [rdfs:subClassOf, base:Tensor~iri]
+      - predicates: base:has_data_location
+        objects: baseR:$(dataLocation.rdfLabel)~iri
+
+      - predicates: base:has_element_type
+        objects: baseR:$(dataType.rdfLabel)~iri
+      - predicates: base:has_segment
+        objects: modelR:Segment/$(tensor_id)$(is_segment)~iri
+      - predicates: base:has_tensor_value
+        objects: modelR:TensorValue/$(tensor_id)~iri
+      - predicates: base:has_shape
+        objects: modelR:TensorShape/$(tensor_id)$(is_shape)~iri
+
+  tensor:
+    sources:
+      - att_values
+      - att_list_values
+      - sparse_init_data_i
+      - sparse_init_data_v
+    subjects: modelR:Tensor/$(tensor_id)$(is_tensor)
+    po:
+      - [a, base:Tensor]
+      - [base:name, $(name),xsd:string]
+      - [dc:description, $(docString),xsd:string]
+      - predicates: base:has_data_location
+        objects: baseR:$(dataLocation.rdfLabel)~iri
+      - predicates: base:has_element_type
+        objects: baseR:$(dataType.rdfLabel)~iri
+      - predicates: base:has_segment
+        objects: modelR:Segment/$(tensor_id)$(is_segment)~iri
+      - predicates: base:has_tensor_value
+        objects: modelR:TensorValue/$(tensor_id)~iri
+      - predicates: base:has_shape
+        objects: modelR:TensorShape/$(tensor_id)$(is_shape)~iri
+      - predicates: base:has_metadata_property
+        objects: modelR:MetadataProperty/$(metadataProps[*].element_id)~iri
+
+
+
+  dims_tensor:
+    sources: 
+      - att_values
+      - att_list_values
+      - initializer_data
+      - sparse_init_data
+      - sparse_init_data_i
+      - sparse_init_data_v
+      - inputs_graph_type_tensor
+      - outputs_graph_type_tensor
+      - all_value_infos_type_tensor
+   
+    subjects: modelR:TensorShape/$(tensor_id)$(is_shape)
+   
+    po:
+      - [a, base:TensorShape]
+      - [rdfs:subClassOf, olo:OrderedList~iri]
+      - predicates: olo:slot
+        objects: modelR:TensorShapeEntry/$(tensor_id)-idx$(shape[*].index)~iri
+
+  dims_tensor_entry:
+    sources:
+      - att_values_dims
+      - att_list_values_dims
+      - initializer_data_dims
+      - sparse_init_data_dims
+      - sparse_init_data_dims_i
+      - sparse_init_data_dims_v
+      - inputs_graph_dims
+      - outputs_graph_dims
+      - all_value_infos_dims  
+  
+    subjects: modelR:TensorShapeEntry/$(tensor_id)-idx$(index)
+    po:
+      - [a, base:DimEntry]
+      - [rdfs:subClassOf, olo:Slot~iri]
+      - [base:dim_value, $(dimValue),xsd:integer]
+      - [base:dim_name, $(dimParam),xsd:string]
+      - [olo:index, "$(index)",xsd:positiveInteger]
+
+      - predicates: olo:ordered_list
+        objects: modelR:TensorShape/$(tensor_id)~iri
+          
+      - predicates: olo:next
+        objects: modelR:TensorShapeEntry/$(tensor_id)-idx$(next_index)~iri   
+      - predicates: olo:next
+        objects: rdf:nil$(last_index)~iri
+
+
+  sparse_initializer:
+    sources: 
+      - sparse_init_data
+    subjects: modelR:SparseTensor/$(tensor_id)$(is_sparse)
+
+    po:
+      - [a, base:Initializer]
+      - [rdfs:subClassOf, base:SparseTensor~iri]
+      - predicates: base:has_sparse_values
+        objects: modelR:Tensor/$(values.tensor_id)~iri         
+      - predicates: base:has_sparse_indices
+        objects: modelR:Tensor/$(indices.tensor_id)~iri
+      - predicates: base:has_shape
+        objects: modelR:TensorShape/$(tensor_id)$(is_shape)~iri
+
+  sparse_tensor:
+    sources: 
+      - att_values_dims
+      - att_list_values_dims
+    subjects: modelR:SparseTensor/$(tensor_id)$(is_sparse)
+
+    po:
+      - [a, base:SparseTensor]
+      - predicates: base:has_sparse_values
+        objects: modelR:Tensor/$(values.tensor_id)~iri         
+      - predicates: base:has_sparse_indices
+        objects: modelR:Tensor/$(indices.tensor_id)~iri
+      - predicates: base:has_shape
+        objects: modelR:TensorShape/$(tensor_id)$(is_shape)~iri
+                
+
+  connection_out_list:
+    sources: node_data
+    subjects: modelR:NodeOutputs/$(element_id)-Node-$(name)-outputs
+    po:
+      - [a, base:NodeOutputs]
+      - [rdfs:subClassOf, olo:OrderedList~iri]
+      - predicates: olo:slot
+        objects: modelR:NodeOutput/$(name)-outputs-idx$(output_node[*].index)~iri
+         
+  connection_in_list:
+    sources: node_data
+    subjects: modelR:NodeInputs/$(element_id)-Node-$(name)-inputs
+    po:
+      - [a, base:NodeInputs]
+      - [rdfs:subClassOf, olo:OrderedList~iri]
+      - predicates: olo:slot
+        objects: modelR:NodeInput/$(name)-inputs-idx$(input_node[*].index)~iri
+  
+
+  nodos:
+   sources: all_node
+   subjects: modelR:Node/$(element_id)-Node-$(name)
+   po:
+     - [a, base:Node]
+     - [base:name, $(name),xsd:string]
+     - [dc:description, $(docString),xsd:string]
+     - predicates: base:applies_operator 
+       objects: baseR:Operator/$(operator_id)~iri
+
+     - predicates: base:applies_operator 
+       objects: modelR:Operator/$(custom_id)~iri
+       
+     - predicates: base:applies_operator 
+       objects: modelR:Function/$(func_id)~iri
+       
+     - predicates: base:has_inputs
+       objects: modelR:NodeInputs/$(element_id)-Node-$(name)-inputs~iri
+     - predicates: base:has_outputs
+       objects: modelR:NodeOutputs/$(element_id)-Node-$(name)-outputs~iri
+
+     - predicates: base:has_attribute
+       objects: modelR:Attribute/$(attribute[*].element_id)~iri
+     - predicates: base:has_metadata_property
+       objects: modelR:MetadataProperty/$(metadataProps[*].element_id)~iri
+
+  connections_out:
+    sources: node_outputs
+    subjects: modelR:NodeOutput/$(element_id)-outputs-idx$(index)
+    po:
+      - [a, base:NodeOutput]
+      - [base:name, $(name),xsd:string]
+      - [olo:index, $(index),xsd:positiveInteger]
+      - [rdfs:subClassOf,olo:Slot~iri]
+      - predicates: olo:ordered_list
+        objects: modelR:NodeOutputs/$(element_id)-outputs~iri
+
+      - predicates: olo:next
+        objects: modelR:NodeOutput/$(element_id)-outputs-idx$(next_index)~iri
+
+      - predicates: olo:next
+        objects: rdf:nil$(last_index)~iri
+    
+  connections_in:
+    sources: node_inputs
+    subjects: modelR:NodeInput/$(element_id)-inputs-idx$(index)
+    po:
+      - [a, base:NodeInput]
+      - [base:name, $(name),xsd:string]
+      - [olo:index, $(index),xsd:positiveInteger]
+      - [rdfs:subClassOf,olo:Slot~iri]
+      - [base:is_being_used, $(is_empty),xsd:boolean]
+
+      - predicates: olo:ordered_list
+        objects: modelR:NodeInputs/$(element_id)-inputs~iri
+
+      - predicates: olo:next
+        objects: modelR:NodeInput/$(element_id)-inputs-idx$(next_index)~iri        
+
+      - predicates: olo:next
+        objects: rdf:nil$(last_index)~iri
+
+  connections_out_conn:
+    sources: node_outputs
+    subjects: modelR:NodeOutput/$(element_id)-idx$(index)
+    po:
+      - predicates: base:connects
+        objects: modelR:NodeInput/$(conc_id)~iri
+
+      - predicates: base:is_graph_output
+        objects: modelR:ValueInfo/$(g_output_id)~iri
+          
+      - predicates: base:is_function_output
+        objects: modelR:Function/$(func_id)~iri
+         
+
+          
+
+  connections_in_conn:
+    sources: node_inputs
+    subjects: modelR:NodeInput/$(element_id)-idx$(index)
+    po:
+
+      - predicates: base:connects
+        objects: modelR:NodeOutput/$(conc_id)~iri 
+
+      - predicates: base:uses_initializer
+        objects: modelR:Tensor/$(init_id)~iri
+      - predicates: base:uses_initializer
+        objects: modelR:SparseTensor/$(sparse_id)~iri
+
+      - predicates: base:is_graph_input
+        objects: modelR:ValueInfo/$(g_input_id)~iri
+          
+      - predicates: base:is_function_input
+        objects: modelR:Function/$(func_id)~iri
+              
+  attributes:
+    sources: 
+      - all_attributes
+      - all_attributes_func
+    subjects: modelR:Attribute/$(element_id)
+    po:
+        - [a, base:Attribute]
+        - [base:name, $(name),xsd:string]
+        - [base:type, $(type),xsd:string]
+        - [dc:description, $(values.docString),xsd:string]
+        - predicates: base:from_node
+          objects: modelR:Node/$(node_id)~iri
+
+        - predicates: base:has_attribute_value
+          objects: modelR:TypedOrdererList/$(element_id)-$(type)$(is_list)~iri
+        - predicates: base:has_attribute_value
+          objects: modelR:UNDEFINED_DATA/$(element_id)-$(type)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "UNDEFINED"]
+        - predicates: base:has_attribute_value
+          objects: modelR:SimpleValue/$(element_id)-$(type)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "INT"]
+        - predicates: base:has_attribute_value
+          objects: modelR:SimpleValue/$(element_id)-$(type)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "FLOAT"]
+        - predicates: base:has_attribute_value
+          objects: modelR:SimpleValue/$(element_id)-$(type)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "STRING"]
+        - predicates: base:has_attribute_value
+          objects: modelR:Graph/$(element_id)-Graph-$(name)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "GRAPH"]
+        - predicates: base:has_attribute_value
+          objects: modelR:Tensor/$(element_id)-$(type)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "TENSOR"]
+        - predicates: base:has_attribute_value
+          objects: modelR:SparseTensor/$(element_id)-$(type)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "SPARSE_TENSOR"]
+
+        - predicates: base:has_attribute_value
+          objects: modelR:ValueInfo/$(element_id)-$(type)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "TYPE_PROTO"]
+
+   
+  attributes_list_type:
+    sources: 
+      - all_attributes
+      - all_attributes_func
+    subjects: modelR:TypedOrderList/$(element_id)-$(type)$(is_list)
+    po:
+        - [a, base:TypedOrderedList]
+        - [base:type_list, $(type)]
+        - predicates: olo:slot
+          objects: modelR:TypedOrderedListItem/$(element_id)-$(type)-idx$(typed_list[*].index)~iri
+
+ 
+  attributes_list_entry:
+    sources: 
+      - all_attributes_list_entry
+      - all_attributes_func_entry
+    subjects: modelR:TypedOrderedListItem/$(element_id)-idx$(index)
+    po:
+        - [a, base:TypedOrderedListItem]
+        - [olo:index, $(index),xsd:positiveInteger]
+        - predicates: olo:ordered_list
+          objects: modelR:TypedOrderList/$(element_id)~iri
+        - predicates: olo:next
+          objects: modelR:TypedOrderedListItem/$(element_id)-idx$(next_index)~iri       
+        - predicates: olo:next
+          objects: rdf:nil$(last_index)~iri
+
+        - predicates: base:item_has_value
+          objects: modelR:UNDEFINED_DATA/$(element_id)-idx$(index)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "UNDEFINED"]
+        - predicates: base:item_has_value
+          objects: modelR:SimpleValue/$(element_id)-idx$(index)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "INTS"]
+        - predicates: base:item_has_value
+          objects: modelR:SimpleValue/$(element_id)-idx$(index)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "FLOATS"]
+        - predicates: base:item_has_value
+          objects: modelR:SimpleValue/$(element_id)-idx$(index)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "STRINGS"]
+        - predicates: base:item_has_value
+          objects: modelR:Graph/$(element_id)-Graph-$(name)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "GRAPHS"]
+        - predicates: base:item_has_value
+          objects: modelR:Tensor/$(element_id)-idx$(index)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "TENSORS"]
+        - predicates: base:item_has_value
+          objects: modelR:SparseTensor/$(element_id)-idx$(index)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "SPARSE_TENSORS"]
+        - predicates: base:item_has_value
+          objects: modelR:ValueInfo/$(element_id)-idx$(index)~iri
+          condition:
+            function: equal
+            parameters:
+              - [str1, "$(type)"]
+              - [str2, "TYPE_PROTOS"]
+
+
+
+
+  attribute_simple_type:
+   sources: 
+    - all_attributes
+    - all_attributes_func
+
+   subjects: modelR:SimpleValue/$(element_id)-$(type)
+   condition:
+    function: grel:boolean_or
+    parameters:
+      - parameter: grel:param_rep_b
+        value:
+          function: equal
+          parameters:
+            - [str1, $(type)]
+            - [str2, "INT"]
+      - parameter: grel:param_rep_b
+        value:
+          function: equal
+          parameters:
+            - [str1, $(type)]
+            - [str2, "FLOAT"]
+      - parameter: grel:param_rep_b
+        value:
+          function: equal
+          parameters:
+            - [str1, $(type)]
+            - [str2, "STRING"]   
+   po:
+      - [a, base:SimpleValue]
+      - predicates: base:has_value
+        objects:
+          - value: $(value)
+            datatype: xsd:integer
+        condition:
+          function: equal
+          parameters:
+            - [str1, $(type)]
+            - [str2, "INT"]
+      - predicates: base:has_value
+        objects:
+          - value: $(value)
+            datatype: xsd:string
+        condition:
+          function: equal
+          parameters:
+            - [str1, "$(type)"]
+            - [str2, "STRING"]
+      - predicates: base:has_value
+        objects:
+          - value: $(value)
+            datatype: xsd:string
+        condition:
+          function: equal
+          parameters:
+            - [str1, "$(type)"]
+            - [str2, "FLOAT"]                     
+
+  attribute_simple_type_list:
+   sources: 
+    - all_attributes_list_entry
+    - all_attributes_func_entry
+   subjects: modelR:SimpleValue/$(element_id)-idx$(index)
+   condition:
+    function: grel:boolean_or
+    parameters:
+      - parameter: grel:param_rep_b
+        value:
+          function: equal
+          parameters:
+            - [str1, $(type)]
+            - [str2, "INTS"]
+      - parameter: grel:param_rep_b
+        value:
+          function: equal
+          parameters:
+            - [str1, $(type)]
+            - [str2, "FLOATS"]
+      - parameter: grel:param_rep_b
+        value:
+          function: equal
+          parameters:
+            - [str1, $(type)]
+            - [str2, "STRINGS"]   
+   po:
+      - [a, base:SimpleValue]
+      - predicates: base:has_value
+        objects:
+          - value: $(value)
+            datatype: xsd:integer
+        condition:
+          function: equal
+          parameters:
+            - [str1, $(type)]
+            - [str2, "INTS"]
+      - predicates: base:has_value
+        objects:
+          - value: $(value)
+            datatype: xsd:string
+        condition:
+          function: equal
+          parameters:
+            - [str1, "$(type)"]
+            - [str2, "STRINGS"]
+      - predicates: base:has_value
+        objects:
+          - value: $(value)
+            datatype: xsd:string
+        condition:
+          function: equal
+          parameters:
+            - [str1, "$(type)"]
+            - [str2, "FLOATS"]                     
+
+
+
+  proto_seq:
+   sources:
+    - inputs_graph_type
+    - outputs_graph_type
+    - all_value_infos_type
+    - att_values
+    - att_list_values
+   subjects: modelR:SequenceType/$(element_id)
+   condition:
+    function: equal
+    parameters:
+      - [str1, $(type)]
+      - [str2, "seq"]   
+   po:
+      - [a, base:SequenceType]
+      - [rdfs:subClassOf, base:OnnxType~iri]
+      - [base:denotation,$(denotation),xsd:string]
+      - predicates: base:forces_type
+        objects: modelR:SequenceType/$(element_id)-Seq~iri
+
+  proto_op:
+   sources:
+    - inputs_graph_type
+    - outputs_graph_type
+    - all_value_infos_type 
+    - att_values
+    - att_list_values
+   subjects: modelR:OptionalType/$(element_id)
+   condition:
+    function: equal
+    parameters:
+      - [str1, $(type)]
+      - [str2, "opt"]   
+   po:
+      - [a, base:OptionalType]
+      - [rdfs:subClassOf, base:OnnxType~iri]
+      - [base:denotation,$(denotation),xsd:string]
+      - predicates: base:forces_type
+        objects: modelR:OptionalType/$(element_id)-Opt~iri
+  
+  proto_map:
+   sources:
+    - inputs_graph_type
+    - outputs_graph_type
+    - all_value_infos_type 
+    - att_values
+    - att_list_values
+   subjects: modelR:MapType/$(element_id)
+   condition:
+    function: equal
+    parameters:
+      - [str1, $(type)]
+      - [str2, "map"]   
+   po:
+      - [a, base:MapType]
+      - [rdfs:subClassOf, base:OnnxType~iri]
+      - [base:denotation,$(denotation),xsd:string]
+      
+      - predicates: base:forces_type
+        objects: modelR:MapType/$(element_id)-Map~iri
+      - predicates: base:has_key_type
+        objects: baseR:$(mapType.key_type.rdfLabel)~iri   
+  
+  proto_tensor:
+   sources:
+    - inputs_graph_type
+    - outputs_graph_type
+    - all_value_infos_type 
+    - att_values
+    - att_list_values
+   subjects: modelR:TensorType/$(element_id)
+   condition:
+    function: equal
+    parameters:
+      - [str1, $(type)]
+      - [str2, "tensor"]   
+   po:
+      - [a, base:TensorType]
+      - [rdfs:subClassOf, base:OnnxType~iri]
+      - [base:denotation,$(denotation),xsd:string]
+      - predicates: base:has_shape
+        objects: modelR:TensorShape/$(tensorType.tensor_id)$(tensorType.is_shape)~iri
+      - predicates: base:has_element_type
+        objects: baseR:$(tensorType.dataType.rdfLabel)~iri
+
+  proto_sparse:
+   sources:
+    - inputs_graph_type
+    - outputs_graph_type
+    - all_value_infos_type
+    - att_values
+    - att_list_values
+   subjects: modelR:SparseType/$(element_id)
+   condition:
+    function: equal
+    parameters:
+      - [str1, $(type)]
+      - [str2, "sparse"]   
+   po:
+    - [a, base:SparseType]
+    - [rdfs:subClassOf, base:OnnxType~iri]
+    - [base:denotation,$(denotation),xsd:string]
+    - predicates: base:has_shape
+      objects: modelR:TensorShape/$(sparseTensorType.tensor_id)$(sparseTensorType.is_shape)~iri
+    - predicates: base:has_element_type
+      objects: baseR:$(sparseTensorType.dataType.rdfLabel)~iri
+
+  value_infos:
+   sources: 
+    - all_value_infos
+    - inputs_graph
+    - outputs_graph
+   subjects: modelR:ValueInfo/$(element_id)
+   po:
+    - [a, base:ValueInfo]
+    - [base:name,$(name),xsd:string]
+    - [dc:description,$(docString),xsd:string]
+    - predicates: base:forces_type
+      objects: modelR:TensorType/$(element_id)~iri
+      condition:
+        function: equal
+        parameters:
+          - [str1, "$(type.type)"]
+          - [str2, "tensor"]
+    - predicates: base:forces_type
+      objects: modelR:SparseType/$(element_id)~iri
+      condition:
+        function: equal
+        parameters:
+          - [str1, "$(type.type)"]
+          - [str2, "sparse"]   
+    - predicates: base:forces_type
+      objects: modelR:SequenceType/$(element_id)~iri
+      condition:
+        function: equal
+        parameters:
+          - [str1, "$(type.type)"]
+          - [str2, "seq"]
+    - predicates: base:forces_type
+      objects: modelR:MapType/$(element_id)~iri
+      condition:
+        function: equal
+        parameters:
+          - [str1, "$(type.type)"]
+          - [str2, "map"]
+    - predicates: base:forces_type
+      objects: modelR:OptionalType/$(element_id)~iri
+      condition:
+        function: equal
+        parameters:
+          - [str1, "$(type.type)"]
+          - [str2, "opt"]
+    - predicates: base:has_metadata_property
+      objects: modelR:MetadataProperty/$(metadataProps[*].element_id)~iri
+
+  graph:
+   sources:
+     - graph_data
+   subjects: modelR:Graph/Graph-$(name)
+   po:
+    - [a, base:OnnxGraph]
+    - [base:name,$(name),xsd:string]
+    - [dc:description,$(docString),xsd:string]
+    - predicates: base:has_graph_input
+      objects: modelR:ValueInfo/$(input[*].element_id)~iri
+    - predicates: base:has_graph_output
+      objects: modelR:ValueInfo/$(output[*].element_id)~iri
+    - predicates: base:has_value_info
+      objects: modelR:ValueInfo/$(valueInfo[*].element_id)~iri
+    - predicates: base:has_node
+      objects: modelR:Node/Graph-$(name)-Node-$(node[*].name)~iri
+    - predicates: base:has_initializer
+      objects: modelR:Tensor/$(initializer[*].tensor_id)~iri
+    - predicates: base:has_initializer
+      objects: modelR:SparseTensor/$(sparseInitializer[*].tensor_id)~iri
+    - predicates: base:has_metadata_property
+      objects: modelR:MetadataProperty/$(metadataProps[*].element_id)~iri
+    - predicates: base:has_tensor_annotation
+      objects: modelR:TensorAnnotation/$(quantizationAnnotation[*].element_id)~iri
+  
+  att_graph:
+   sources:
+     - att_values
+     - att_list_values
+   subjects: modelR:Graph/$(element_id)-Graph-$(name)$(is_subgraph)
+   po:
+    - [a, base:OnnxGraph]
+    - [base:name,$(name),xsd:string]
+    - [dc:description,$(docString),xsd:string]
+    - predicates: base:has_graph_input
+      objects: modelR:ValueInfo/$(input[*].element_id)~iri
+    - predicates: base:has_graph_output
+      objects: modelR:ValueInfo/$(output[*].element_id)~iri
+    - predicates: base:has_value_info
+      objects: modelR:ValueInfo/$(valueInfo[*].element_id)~iri
+    - predicates: base:has_node
+      objects: modelR:Node/$(element_id)-Graph-$(name)-Node-$(node[*].name)~iri
+    - predicates: base:has_initializer
+      objects: modelR:Tensor/$(initializer[*].tensor_id)~iri
+    - predicates: base:has_initializer
+      objects: modelR:SparseTensor/$(sparseInitializer[*].tensor_id)~iri
+    - predicates: base:has_metadata_property
+      objects: modelR:MetadataProperty/$(metadataProps[*].element_id)~iri
+    - predicates: base:has_tensor_annotation
+      objects: modelR:TensorAnnotation/$(quantizationAnnotation[*].element_id)~iri
+
+
+
+
+
+  all_metadata:
+    sources:
+      - all_metadata
+    subjects: modelR:MetadataProperty/$(element_id)~iri
+    po:
+      - [a, base:EntryStringKey]
+      - [base:key,$(key),xsd:string]
+      - [base:value,$(value),xsd:string]
+
+  tensor_annotation:
+    sources:
+      - tensor_annotation
+    subjects: modelR:TensorAnnotation/$(element_id)~iri
+    po:
+      - [a, base:EntryStringKey]
+      - [base:name,$(tensorName),xsd:string]
+      - predicates: base:has_metadata_property
+        objects: modelR:MetadataProperty/$(metadataProps[*].element_id)~iri
+      - predicates: base:relates_to_tensor
+        objects:
+          - mapping: initializer
+            condition:
+              function: equal
+              parameters:
+                - [str1, $(tensorName), s]
+                - [str2, $(name), o]
+          - mapping: tensor
+            condition:
+              function: equal
+              parameters:
+                - [str1, $(tensorName), s]
+                - [str2, $(name), o]
+  
+  model:
+    sources:
+      - model_onnx
+    subjects: modelR:Model
+    po:
+      - [a, base:Model]
+      - [base:name,$(tensorName),xsd:string]
+      - [base:ir_version,$(irVersion),xsd:string]
+      - [base:producer_name,$(producerName),xsd:string]
+      - [base:producer_version,$(producerVersion),xsd:string]
+      - [base:domain,$(domain),xsd:string]
+      - [base:model_version,$(modelVersion),xsd:string]
+      - [dc:description,$(docString),xsd:string]
+      - predicates: base:has_graph_pipeline
+        objects: modelR:Graph/Graph-$(graph.name)~iri    
+      - predicates: base:has_metadata_property
+        objects: modelR:MetadataProperty/$(metadataProps[*].element_id)~iri
+      - predicates: base:has_functions
+        objects: modelR:Function/$(functions[*].element_id)~iri 
+      - predicates: base:imports_operators_set
+        objects: baseR:OperatorSet/$(opsetImport[*].element_id)~iri
+
+  
+
+  
+  
+  
+
+
+
+
