@@ -1,0 +1,48 @@
+[project]
+name = "pape-docs"
+version = "0.1.0"
+description = "A tool for flexibly managing templated docs of all kinds."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = ["pape>=0.1.0", "click>=8.2.1", "toml>=0.10.2"]
+
+[[project.authors]]
+name = "Carter Pape"
+email = "pape-docs-author@carterpape.com"
+
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+new-doc = "src.new_doc:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.uv]
+package = true
+
+[tool.pape-docs]
+docs-dir = "docs/"
+
+[dependency-groups]
+dev = ["pytest>=8.4.1", "pytest-cov>=6.2.1", "ruff>=0.12.2"]
+
+[tool.ruff.lint.pep8-naming]
+extend-ignore-names = [
+    "klass",
+] # `cls` is ambiguous; `class` is a protected keyword; `klass` is a good compromise
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D212", # multi-line-summary-first-line - Conflicts with preferred rule D213 (multi-line-summary-second-line) - Ignoring D212 ensures we DO put the summary line of multi-line docstrings on the line after the tripe quotations, treating the triple quotations as a Markdown-like fence
+    "D203", # incorrect-blank-line-before-class - Conflicts with preferred rule D211 (blank-line-before-class) - Ignoring D203 ensures we DO add a blank line between a class and its docstring, creating more breathing room in the source file
+]
+
+[tool.ruff.lint.per-file-ignores]
+"test/*" = [
+    "SLF001", # protected-access: Tests should be allowed to modify the protected methods and variables of the instances and classes they are testing
+    "S101",   # assert: Tests rely on assertions
+]
