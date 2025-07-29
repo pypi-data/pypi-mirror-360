@@ -1,0 +1,63 @@
+# SAMBA Copyright (C) 2024 - Closed source
+
+#=========================================================================================================================
+# Observações importantes !!! ============================================================================================
+#=========================================================================================================================
+# Utilize apenas redes 2D cujos vetores (A1,A2) estejam no plano KxKy, e cujo vetor A3 esteja na direção do eixo-z -------
+# A1 = (A1x, A1y, 0.0)  |  A2 = (A2x, A2y, 0.0)  |  A3 = (0.0, 0.0, A3z)
+#-------------------------------------------------------------------------------------------------------------------------
+# Utilize para cada material a célula unitária 2D, células não-unitárias limitaram a quantidade de estruturas geradas,
+# além de introduzir "lentidão" na execução do código --------------------------------------------------------------------
+#=========================================================================================================================
+
+#=========================================================================================================================
+# Parâmetros de ajuste: ==================================================================================================
+#=========================================================================================================================
+dir_o = 'Structures'                   # Diretório de saída das Heteroestruturas
+dir_poscar = 'POSCAR'                  # Diretório de localização dos arquivos POSCAR a serem utilizados
+
+#=============================================================================================================
+# Habilite ou Desative a execução do código em Loop: funcional apenas para gerar bilayers (n_Lattice = 2 ) ===
+#=============================================================================================================
+loop_ht = 0                            # [0] Desabilita; [1] Habilita o loop, gerando heteroestruturas para todas as combinações
+                                       #                                      de arquivos POSCAR contidos no diretório "dir_poscar"
+#===============================================================
+# Parâmetros caso o loop esteja Desativado =====================
+#===============================================================
+if (loop_ht == 0):
+   n_Lattice = 2                       # nº de materiais a serem empilhados, utilize 2 ou 3.
+   Lattice1  = 'C2.vasp'               # 1º Material  "Substrato: Material a principio mantido fixo (sem deformação)"
+   Lattice2  = 'hBN.vasp'              # 2º Material  "Material a ser depositado sobe o Subtrato e sofrer deformação"
+   Lattice3  = 'SnTe.vasp'             # 3º Material  "Material a ser depositado sobe o 2º Material e sofrer deformação"
+
+#===============================================================
+# Demais parâmetros ============================================
+#===============================================================
+separacao1 = 3.00                      # Distância de separação (em Angs.) entre o 1º e 2º material.
+separacao2 = 3.00                      # Distância de separação (em Angs.) entre o 2º e 3º material.
+vacuum     = 15.0                      # Vacuo (em Angs.) a ser introduzido na célula da Heteroestrutura.
+#----------------------------------
+cell_fator = [10, 10, 1]               # Fator de multiplicação da célula unitária em função dos vetores A1, A2 e A3.
+                                       # Observação: Valores muito elevados pode levar a lentidão excessiva do código.
+#----------------------------------
+crit_mod_vector  = 3                   # Variação perc. % do módulo entre os vetores (A e B) das redes:  A1_com_A2 e B1_com_B2
+crit_distorc_lattice = 3               # Variação perc. % do módulo entre os vetores (A e B) de uma mesma rede:  A1_com_B1 e A2_com_B2
+crit_angle_perc = 2                    # Variação perc. % do ângulo formado entre o vetores (A e B) das redes:  Theta1_com_Theta2
+crit_angle_diff = 2                    # Variação (em módulo) do ângulo em graus (º) formado entre o vetores (A e B) das redes:  Theta1_com_Theta2 
+crit_area = 5                          # Variação perc. % da área das redes que irão compor a Heteroestrutura:  Area1_com_Area2
+#----------------------------------
+ions_crit_i = 1                        # Critério para o nº mínimo de átomos permitido na Heteroestrutura.
+ions_crit_f = 100                      # Critério para o nº máximo de átomos permitido na Heteroestrutura.
+                                       # Observação: Ao fazer o loop de muitas estruturas, aconselho varrer pequenos ranges de ions
+                                       #             por exemplo:  (1, 10);  (10, 20);  (50,60) 
+#----------------------------------
+                                       # Por padrão sempre teremos: angle > 0.0 and angle < 180.0
+angle_min = 15.0                       # Angulo minímo de abertura entre os vetores A1 e A2
+angle_max = 165.0                      # Angulo máximo de abertura entre os vetores A1 e A2
+#----------------------------------
+mismatch_type = 0                      # Deformação aplicada: [0] Distribuida proporcionalmente entre os materiais
+                                       #                      [1], [2] ou [3] mantém o 1º, 2º ou 3º material fixo, deformando os demais.
+#----------------------------------    
+rot_angle_calc = 'center_cell'         # 'center_cell', 'A1' ou 'A2'  Vetor com relação ao qual o ângulo de rotação entre os materiais é cálculado   
+#----------------------------------
+
