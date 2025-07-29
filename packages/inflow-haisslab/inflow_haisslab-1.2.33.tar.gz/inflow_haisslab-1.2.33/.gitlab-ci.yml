@@ -1,0 +1,44 @@
+image: python:3.11
+
+stages:
+  #- build
+  #- deploy
+  - post
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "pre-releases" || $CI_PIPELINE_SOURCE == "merge_request_event"
+
+#build:
+#  stage: build
+#  script:
+#    - pip install -r requirements.txt
+#    - pip install natsort mkdocs>=4.0 mkdocs-material mkdocstrings mkdocstrings-python
+#    - pip install git+https://github.com/JostTim/auto-doc.git
+#    - auto_fast_docs Inflow
+#    - mkdocs build --verbose
+#  artifacts:
+#    paths:
+#      - $CI_PROJECT_DIR/public
+
+#pages:
+#  stage: deploy
+#  dependencies:
+#    - build
+#  artifacts:
+#    paths:
+#      - $CI_PROJECT_DIR/public
+#  script:
+#    - pip --version
+
+publish:
+  stage: post
+  variables:
+    TWINE_PASSWORD: ${PIPY_TOKEN}
+    TWINE_USERNAME: __token__
+  script:
+    - pip install build twine
+    - python -m build
+    - python -m twine upload --repository pypi dist/*
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
