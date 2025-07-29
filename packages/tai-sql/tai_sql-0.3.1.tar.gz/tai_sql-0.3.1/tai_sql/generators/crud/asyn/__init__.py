@@ -1,0 +1,149 @@
+import os
+import jinja2
+from typing import ClassVar, Optional
+
+from tai_sql import pm
+from ...base import BaseGenerator
+
+class AsyncCRUDGenerator(BaseGenerator):
+    """
+    Generador de clases CRUD para modelos SQLAlchemy con soporte sync/async.
+    """
+
+    _jinja_env: ClassVar[jinja2.Environment] = None
+    
+    def __init__(self, 
+                 output_dir: Optional[str] = None, 
+                 models_import_path: str = "database.models"):
+        """
+        Inicializa el generador CRUD.
+        
+        Args:
+            output_dir: Directorio de salida para los archivos CRUD
+            models_import_path: Ruta de importación donde están los modelos generados
+        """
+        super().__init__(output_dir)
+        self.models_import_path = models_import_path
+    
+    @property
+    def jinja_env(self) -> jinja2.Environment:
+        """Retorna el entorno Jinja2 configurado"""
+        if self._jinja_env is None:
+            templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
+            self._jinja_env = jinja2.Environment(
+                loader=jinja2.FileSystemLoader(templates_dir),
+                trim_blocks=True,
+                lstrip_blocks=True
+            )
+            self._jinja_env.filters['repr'] = repr
+        return self._jinja_env
+    
+    def generate(self) -> str:
+        """
+        Genera las clases CRUD según el modo especificado.
+        
+        Returns:
+            Ruta al directorio generado
+        """
+        
+        # Generar session_manager.py
+        self.generate_session_manager()
+        
+        # Generar endpoints.py
+        self.generate_endpoints()
+        
+        # Generar __init__.py
+        self.generate_init_file()
+
+        return self.config.output_dir
+    
+    def generate_session_manager(self) -> None:
+        """
+        Genera el archivo session_manager.py
+        """
+        template = self.jinja_env.get_template(f'session_manager.py.jinja2')
+
+        imports = [
+            'from __future__ import annotations',
+            'import os',
+            'from typing import Optional, AsyncGenerator',
+            'from contextlib import asynccontextmanager',
+            'from urllib.parse import urlparse, parse_qs',
+            'from sqlalchemy import URL',
+            'from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, AsyncSession, async_sessionmaker'
+        ]
+        
+        code = template.render(
+            imports=imports,
+            provider=pm.db.provider,
+            engine_params=pm.db.engine_params.to_dict(),
+            connection_params=pm.db.provider.get_connection_params()
+        )
+        
+        file_path = os.path.join(self.config.output_dir, 'session_manager.py')
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(code)
+    
+    def generate_endpoints(self) -> None:
+        """
+        Genera el archivo endpoints.py
+        """
+        template = self.jinja_env.get_template(f'endpoints.py.jinja2')
+
+        imports = [
+            'from __future__ import annotations',
+            'from dataclasses import dataclass',
+            'from typing import List, Optional, Dict, Any, TYPE_CHECKING',
+            'from sqlalchemy.ext.asyncio import AsyncSession',
+            'from sqlalchemy import select, update, delete',
+            f'from {self.models_import_path} import *',
+            'from .session_manager import AsyncSessionManager',
+        ]
+
+        has_datetime = any(
+                any(col.type == 'datetime' for col in model.columns.values())
+                for model in self.models
+            )
+        if has_datetime:
+            imports.append('from datetime import datetime')
+        
+        models_data = [model.info() for model in self.models]
+        
+        code = template.render(
+            imports=imports,
+            models=models_data,
+            models_import_path=self.models_import_path,
+            schema_name=pm.db.schema_name
+        )
+        
+        file_path = os.path.join(self.config.output_dir, 'endpoints.py')
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(code)
+    
+    def generate_init_file(self) -> None:
+        """
+        """
+        template = self.jinja_env.get_template(f'__init__.py.jinja2')
+        
+        imports = [
+            'from __future__ import annotations',
+            'from typing import Optional',
+            'from .session_manager import AsyncSessionManager',
+            'from .endpoints import *'
+        ]
+
+        models = [{'name': model._name, 'tablename': model.tablename} for model in self.models]
+        enums = [enum.info() for enum in self.enums]
+        
+        code = template.render(
+            imports=imports,
+            models=models,
+            enums=enums,
+            models_import_path=self.models_import_path,
+            mode_prefix='Async',  # 'Sync' o 'Async'
+            schema_name=pm.db.schema_name
+        )
+        
+        file_path = os.path.join(self.config.output_dir, '__init__.py')
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(code)
