@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pitwall"
+version = "0.2.1"
+description = "The agentic AI companion to MultiViewer, the best app to watch motorsports"
+authors = [{name = "Rob Spectre", email = "rob@brooklynhacker.com"}]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "mvf1>=2.0.1",
+    "pydantic-ai-slim[mcp,openai]",
+    "typer",
+    "rich",
+    "requests",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-asyncio",
+    "pytest-cov",
+    "black",
+    "flake8",
+    "mypy",
+    "tox",
+    "types-requests",
+]
+
+[project.urls]
+Homepage = "https://github.com/RobSpectre/pitwall"
+Repository = "https://github.com/RobSpectre/pitwall"
+
+[project.scripts]
+pitwall = "pitwall.cli:cli_main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pitwall*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "--cov=pitwall --cov-report=term-missing --cov-report=html --cov-report=xml"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore:coroutine '_quick_async' was never awaited:RuntimeWarning",
+    "ignore::ResourceWarning",
+    "ignore::DeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["pitwall"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
