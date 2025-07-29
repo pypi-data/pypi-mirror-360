@@ -1,0 +1,58 @@
+# Known Issues with Sokoban Environment
+
+## ✅ FIXED: Recursion Bug in gym_sokoban==0.0.6
+
+### Issue Description
+The gym_sokoban library version 0.0.6 has a recursion bug in its `reset()` method. When the room generation fails (which happens frequently with certain parameters), the reset method calls itself recursively without any limit, leading to infinite recursion and eventual stack overflow.
+
+### Root Cause
+In the gym_sokoban library's `sokoban_env.py`, the reset method is implemented as:
+
+**Location**: `/src/synth_env/examples/sokoban/engine_helpers/vendored/envs/sokoban_env.py`
+**Lines**: 202-213
+**Imported from**: Line 5 imports `generate_room` from `.room_utils`
+
+```python
+def reset(self, second_player=False, render_mode='rgb_array'):
+    try:
+        self.room_fixed, self.room_state, self.box_mapping = generate_room(
+            dim=self.dim_room,
+            num_steps=self.num_gen_steps,
+            num_boxes=self.num_boxes,
+            second_player=second_player
+        )
+    except (RuntimeError, RuntimeWarning) as e:
+        print("[SOKOBAN] Runtime Error/Warning: {}".format(e))
+        print("[SOKOBAN] Retry . . .")
+        return self.reset(second_player=second_player)  # <-- INFINITE RECURSION!
+```
+
+When `generate_room()` fails (common with small room sizes or many boxes), it recursively calls `self.reset()` without any retry limit.
+
+The `generate_room()` function in `room_utils.py` can raise:
+1. **RuntimeWarning** (line 45): "Generated Model with score == 0" - when the room generation algorithm fails to create a solvable puzzle
+2. **RuntimeError** (line 141): "Not enough free spots (#{}) to place {} player and {} boxes" - when the room is too small for the requested elements
+
+### Current Fix
+The vendored code has been patched to fix the recursion issue:
+1. The reset() method now uses a loop instead of recursion
+2. It retries up to 5 times (configurable via max_attempts parameter)
+3. After max attempts, it creates a simple 3x3 fallback room with just a player
+4. This prevents infinite recursion while still allowing reasonable retries
+
+**Fixed in**: `/src/synth_env/examples/sokoban/engine_helpers/vendored/envs/sokoban_env.py` lines 202-226
+
+### Symptoms
+- Endless "[SOKOBAN] Runtime Error/Warning: Generated Model with score == 0" messages
+- Eventual RecursionError: maximum recursion depth exceeded
+- Common triggers: small room dimensions (e.g., 5x5) with multiple boxes
+
+### Better Solutions
+1. Fork gym_sokoban and fix the reset method to have a retry limit
+2. Use a different Sokoban library that doesn't have this issue
+3. Pre-generate valid room configurations instead of relying on random generation
+
+### Related Parameters
+- Room dimensions: Larger rooms (10x10) are less likely to trigger the issue than smaller ones (5x5)
+- Number of boxes: Fewer boxes reduce the chance of generation failure
+- The issue is particularly bad when the room generation algorithm can't find valid placements for all game elements
