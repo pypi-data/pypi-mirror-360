@@ -1,0 +1,11 @@
+version: 2
+
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "{{ cookiecutter.python_version.lstrip('^~>=<!').split(',')[0].split()[0] }}"
+  commands:
+    - pip install poetry
+    - poetry config virtualenvs.create false
+    - poetry install --with docs --no-interaction
+    - python -m sphinx -T -b html -d _build/doctrees -D language=en docs $READTHEDOCS_OUTPUT/html
