@@ -1,0 +1,124 @@
+---
+alwaysApply: true
+---
+# Python Package Development Protocol
+
+This document outlines the mandatory protocol for all Python development in this repository. The primary goal is to produce robust, maintainable, and distributable Python packages, not standalone scripts. Adherence is not optional.
+
+---
+
+## 🥇 Tier 1: Non-Negotiable Core Principles
+
+These are the most critical rules. They must be followed at all times.
+
+1.  **Package-First Architecture**: Every line of code must be written with the understanding that it belongs to an installable Python package. This informs structure, imports, and dependencies.
+2.  **Test-Driven Development (TDD) is Mandatory**: The TDD cycle is the **only** accepted workflow.
+    -   **Step 1**: Write a failing unit test that clearly defines the desired behavior.
+    -   **Step 2**: Write the minimum amount of application code required to make the test pass.
+    -   **Step 3**: Refactor the code for clarity and efficiency while ensuring the test still passes.
+3.  **Strict Adherence to Test Isolation**: You **MUST** follow all rules in the `.cursor/pytest rule.md` file. All tests must be 100% pure unit tests—fast, isolated, and with no I/O. Any deviation is a failure.
+4.  **API-Grade Documentation**: Docstrings are not comments; they are specifications. They must be comprehensive and follow the specified format to enable automated documentation generation.
+
+---
+
+## 2. Project & Package Structure
+
+This repository follows the standard `src` layout for Python packages to ensure clean separation and prevent common import path issues.
+
+**Canonical File Structure:**
+
+```
+my-python-project/
+├── .cursor/
+│   └── pytest rule.md       # Your guide for all testing.
+├── docs/
+│   └── ...                  # Documentation files.
+├── src/
+│   └── my_package_name/
+│       ├── __init__.py      # Makes the directory a package.
+│       ├── module1.py
+│       └── subpackage/
+│           ├── __init__.py
+│           └── module2.py
+├── tests/
+│   ├── test_module1.py
+│   └── subpackage/
+│       └── test_module2.py
+├── pyproject.toml           # Single source of truth for project metadata.
+└── README.md
+```
+
+-   **`src/my_package_name`**: All application code lives here.
+-   **`tests/`**: All test code lives here, mirroring the `src` structure.
+-   **`pyproject.toml`**: Defines project name, version, dependencies, and tool configurations (like pytest).
+
+---
+
+## 3. Code & Documentation Standards
+
+### Docstring Format: NumPy Style (Mandatory)
+
+All modules, classes, and functions MUST have NumPy-style docstrings. This is for clarity and compatibility with documentation generators like Sphinx.
+
+**Canonical Function Docstring Example:**
+
+```python
+def connect(user: str, host: str, port: int) -> Connection:
+    """Establishes a network connection and returns a connection object.
+
+    This function encapsulates the logic for creating and authenticating a
+    network socket connection.
+
+    Parameters
+    ----------
+    user : str
+        The username for authentication.
+    host : str
+        The hostname or IP address of the server.
+    port : int
+        The port number to connect to on the server.
+
+    Returns
+    -------
+    Connection
+        A new, authenticated connection object if successful.
+
+    Raises
+    ------
+    ConnectionAuthenticationError
+        If the provided user credentials are invalid.
+    ConnectionTimeoutError
+        If the connection attempt to the host exceeds the timeout period.
+
+    Examples
+    --------
+    >>> try:
+    ...     conn = connect('admin', 'localhost', 8080)
+    ... except ConnectionError as e:
+    ...     print(f"Failed to connect: {e}")
+    """
+    # ... implementation code ...
+```
+
+### Other Core Standards
+
+-   **Type Hinting**: All function signatures and variable declarations **MUST** include type hints (`PEP 484`).
+-   **PEP 8 Compliance**: Code must be formatted according to PEP 8. Use an auto-formatter like `black` or `ruff` to enforce this.
+-   **Modularity**: Design for importability. Prefer smaller, focused functions and classes with clear interfaces over large, monolithic files. No Python file should exceed 1000 lines.
+-   **Error Handling**: Use specific, custom exceptions where appropriate. Avoid catching generic `Exception`.
+
+---
+
+## 4. Dependency Management & Tooling
+
+-   **Tool**: Use `uv` for all environment and package management.
+-   **Adding Dependencies**: Use `uv add <package_name>`. This automatically updates `pyproject.toml`. **Never** use `pip install` directly for project dependencies.
+-   **Execution**: Run all project tasks through `uv run <command>`. This ensures you are using the correct virtual environment and dependencies. Example: `uv run pytest`.
+-   **One-off Tools**: Use `uvx <tool>` to run tools in a temporary, isolated environment (e.g., `uvx black .`).
+
+---
+
+## 5. Advanced Patterns (Use When Justified)
+
+-   **Performance Optimization**: Profile code before optimizing. Focus on algorithmic efficiency and reducing I/O bottlenecks.
+-   **Concurrency**: For I/O-bound tasks, consider `asyncio` for modern, non-blocking code. For CPU-bound tasks, consider the `multiprocessing` module. These add complexity and should only be used when performance requirements demand them.
