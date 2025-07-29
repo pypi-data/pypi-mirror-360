@@ -1,0 +1,22 @@
+//! take the square root of the input
+
+use std::sync::Arc;
+use pipelines::{PipeData, PipelineSubscriber};
+use pipelines::stateless::pure::PureStatelessPipeline1;
+use user_messages::UserMsgProvider;
+use crate::analysis::types::math_traits::Sqrt;
+
+fn sqrt<T>(_rc: Box<dyn UserMsgProvider>, _name: String, input: Arc<T>) -> Arc<T::Output>
+where
+    T: Sqrt
+{
+    Arc::new(input.square_root())
+}
+
+pub (crate) async fn create<T>(rc: Box<dyn UserMsgProvider>, name: impl Into<String>, input: &PipelineSubscriber<T>)
+    -> PipelineSubscriber<<T as Sqrt>::Output>
+where
+    T: Sqrt + PipeData
+{
+    PureStatelessPipeline1::start(rc, name, input, sqrt).await
+}
