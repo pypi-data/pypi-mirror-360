@@ -1,0 +1,88 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mudssky-pyutils"
+version = "0.1.0"
+description = "Python通用工具库 - 提供丰富的实用函数和工具类"
+readme = "README.rst"
+requires-python = ">=3.10"
+authors = [{ name = "mudssky", email = "mudssky@gmail.com" }]
+maintainers = [{ name = "mudssky", email = "mudssky@gmail.com" }]
+keywords = ["utils", "utilities", "tools", "helpers"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+license = "MIT"
+dependencies = ["typer"]
+
+# 开发依赖已迁移到 [dependency-groups] 部分
+
+[project.urls]
+
+bugs = "https://github.com/mudssky/pyutils/issues"
+changelog = "https://github.com/mudssky/pyutils/blob/master/changelog.md"
+homepage = "https://github.com/mudssky/pyutils"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.package-data]
+"*" = ["*.*"]
+
+# UV Configuration
+[tool.uv]
+# 启用项目管理模式
+managed = true
+
+
+# Mypy
+# ----
+
+[tool.mypy]
+files = "."
+
+# Use strict defaults
+strict = true
+warn_unreachable = true
+warn_no_return = true
+
+[[tool.mypy.overrides]]
+# Don't require test functions to include types
+module = "tests.*"
+disallow_untyped_defs = false
+disable_error_code = "attr-defined"
+
+[dependency-groups]
+dev = [
+    # 测试工具
+    "pytest>=8.4.1",
+    "pytest-asyncio>=0.25.0",
+    "pytest-cov>=4.0.0",
+    "pytest-xdist>=3.0.0", # 并行测试
+    "pytest-benchmark>=4.0.0", # 性能基准测试
+    "hypothesis>=6.0.0", # 属性测试
+    # 代码质量工具
+    "ruff>=0.8.4",
+    "mypy>=1.13.0",
+    "bandit>=1.7.0", # 安全检查
+    "pre-commit>=3.0.0", # Git钩子
+    # 覆盖率工具
+    "coverage>=7.6.9",
+    # 文档工具
+    "sphinx>=8.1.3",
+    "sphinx-rtd-theme>=2.0.0",
+    "sphinx-autodoc-typehints>=1.0.0",
+    # 发布工具
+    "twine>=6.0.1",
+    "build>=1.0.0",
+    # 类型检查支持
+    "types-setuptools>=69.0.0",
+    "typing-extensions>=4.0.0",
+]
