@@ -1,0 +1,279 @@
+# ANKML - 高效恶意软件检测库
+
+ANKML是一个基于机器学习的恶意软件检测库，提供简单易用的API来检测文件是否为恶意软件。
+
+## 安装
+
+```bash
+pip install ankml
+```
+
+## 快速开始
+
+ANKML 库提供了丰富的功能，以下是一个涵盖主要特性的综合示例，帮助您快速上手。
+
+```python
+import os
+from ankml import ANKPredictor, ANKMLConfig
+
+# 1. 基础配置
+config = ANKMLConfig()
+# 必须设置服务器地址，可以是官方服务器或本地测试服务器
+config.set('server_url', 'http://127.0.0.1:5000') 
+config.set('cache_dir', './ankml_cache') # 设置模型缓存目录
+
+# 2. 初始化预测器
+# 您可以传入配置对象，或让预测器使用默认配置
+predictor = ANKPredictor(model_type='tall', config=config)
+
+# 3. 定义恶意软件判定阈值
+threshold = 0.5
+
+# 4. 扫描文件
+# 准备一个安全文件和恶意文件（请替换为真实路径）
+safe_file = "setup.py"
+malicious_file = r"C:\Users\AX372\Downloads\20250703\fd5286ddadfab05124317901d942f68250587d4d97a59acc45f9f565580060ac.exe"
+
+files_to_scan = {
+    "安全文件": safe_file,
+    "恶意文件": malicious_file
+}
+
+for name, path in files_to_scan.items():
+    if not os.path.exists(path):
+        print(f"警告: {name} 未找到，跳过扫描。路径: {path}")
+        continue
+
+    print(f"\n正在扫描 {name}: {os.path.basename(path)}")
+    try:
+        result = predictor.predict(path)
+        
+        # 5. 解读结果
+        probability = result.get('probability', 0.0)
+        is_malware = probability >= threshold
+        status = "恶意软件" if is_malware else "安全"
+        model_type = result.get('model_type', '未知')
+
+        print(f"  -> 状态: {status}")
+        print(f"  -> 置信度: {probability:.4f}")
+        print(f"  -> 使用模型: {model_type}")
+
+    except Exception as e:
+        print(f"扫描失败: {e}")
+
+# 6. 批量扫描
+print("\n--- 批量扫描示例 ---")
+files_batch = [safe_file, malicious_file, "non_existent_file.txt"]
+results_batch = predictor.predict_batch(files_batch)
+
+for file_path, result in results_batch.items():
+    print(f"\n文件: {file_path}")
+    if 'error' in result:
+        print(f"  -> 扫描失败: {result['error']}")
+    else:
+        probability = result.get('probability', 0.0)
+        is_malware = probability >= threshold
+        status = "恶意软件" if is_malware else "安全"
+        print(f"  -> 状态: {status} (置信度: {probability:.4f})")
+```
+
+## 功能特性
+
+- **多种模型支持**: 支持grande、tall、short三种不同精度的模型
+- **自动模型管理**: 自动下载、缓存和更新模型
+- **高效特征提取**: 快速提取文件特征用于检测
+- **批量扫描**: 支持批量文件扫描
+- **配置管理**: 灵活的配置系统，支持命令行编辑和永久保存配置
+- **命令行工具**: 提供便捷的CLI接口，包含扫描、配置、模型管理等功能
+
+## API文档
+
+### ANKPredictor类
+
+主要的预测器类，用于恶意软件检测。
+
+#### 构造函数
+
+```python
+ANKPredictor(model_type='tall', config_file=None)
+```
+
+参数：
+- `model_type`: 模型类型，可选值：'grande'、'tall'、'short'
+- `config_file`: 配置文件路径（可选）
+
+#### 方法
+
+##### predict(file_path)
+
+检测单个文件是否为恶意软件。
+
+```python
+result = predictor.predict('/path/to/file.exe')
+```
+
+返回值：
+```python
+{
+    'is_malware': bool,      # 是否为恶意软件
+    'confidence': float,     # 置信度 (0.0-1.0)
+    'model_type': str,       # 使用的模型类型
+    'file_path': str         # 文件路径
+}
+```
+
+### ModelLoader类
+
+模型加载和管理类。
+
+```python
+from ankml.loader import ModelLoader
+
+loader = ModelLoader()
+
+# 下载模型
+loader.download_model('tall')
+
+# 检查模型更新
+loader.check_for_updates('tall')
+
+# 获取模型信息
+info = loader.get_model_info('tall')
+```
+
+### FeatureExtractor类
+
+文件特征提取类。
+
+```python
+from ankml.features import FeatureExtractor
+
+extractor = FeatureExtractor()
+
+# 提取文件特征
+features = extractor.extract_features('/path/to/file.exe')
+```
+
+### 配置管理
+
+```python
+from ankml.config import ANKMLConfig
+
+config = ANKMLConfig()
+
+# 设置配置
+config.set('server_url', 'https://your-server.com/api')
+config.set('cache_dir', './my_cache')
+config.set('timeout', 60)
+
+# 获取配置
+server_url = config.get('server_url')
+```
+
+## 命令行工具
+
+ANKML提供了便捷的命令行工具：
+
+### 文件扫描
+```bash
+# 扫描单个文件
+ankml scan /path/to/file.exe
+
+# 扫描多个文件
+ankml scan /path/to/file1.exe /path/to/file2.exe
+
+# 使用指定模型
+ankml scan --model grande /path/to/file.exe
+
+# 设置检测阈值
+ankml scan --threshold 0.7 /path/to/file.exe
+
+# 显示详细信息
+ankml scan --verbose /path/to/file.exe
+```
+
+### 配置管理
+```bash
+# 显示当前配置
+ankml config --show
+
+# 设置服务器地址（永久保存）
+ankml config --server-url https://api.ankml.top
+
+# 设置默认模型（永久保存）
+ankml config --default-model grande
+
+# 设置缓存目录（永久保存）
+ankml config --cache-dir /tmp/ankml_cache
+
+# 设置超时时间（永久保存）
+ankml config --timeout 60
+
+# 设置自定义配置项（永久保存）
+ankml config --set debug true
+ankml config --set max_retries 5
+
+# 重置为默认配置（永久保存）
+ankml config --reset
+```
+
+配置文件默认保存在用户主目录的 `~/.ankml_config.json`，所有配置更改都会自动永久保存。
+
+### 模型管理
+```bash
+# 更新模型
+ankml update --model tall
+
+# 检查模型更新
+ankml update --check
+
+# 查看模型信息
+ankml info --model tall
+
+# 查看所有模型信息
+ankml info
+```
+
+## 配置文件
+
+可以创建配置文件来管理设置：
+
+```json
+{
+    "server_url": "https://your-ankml-server.com/api",
+    "cache_dir": "./ankml_cache",
+    "timeout": 30,
+    "max_retries": 3,
+    "log_level": "INFO"
+}
+```
+
+## 错误处理
+
+```python
+from ankml.exceptions import ANKMLError, ModelNotFoundError, NetworkError
+
+try:
+    predictor = ANKPredictor(model_type='tall')
+    result = predictor.predict('/path/to/file.exe')
+except ModelNotFoundError:
+    print("模型未找到，请检查模型是否已下载")
+except NetworkError:
+    print("网络连接错误，请检查服务器地址和网络连接")
+except ANKMLError as e:
+    print(f"ANKML错误: {e}")
+```
+
+## 性能优化
+
+- 使用缓存：模型和特征会自动缓存以提高性能
+- 批量处理：对于大量文件，建议使用批量扫描功能
+- 模型选择：根据需求选择合适的模型（grande精度最高但速度较慢，short速度最快但精度较低）
+
+## 许可证
+
+MIT License
+
+## 支持
+
+如有问题或建议，请访问我们的官网或提交Issue。
