@@ -1,0 +1,33 @@
+default_inputs:
+    clean_workdir: True
+    max_iterations: 10
+    meta_convergence: True
+    tolerance_onsite: 0.1
+    tolerance_intersite: 0.01
+    radial_analysis:
+        nn_finder: 'crystal'
+        nn_inputs:
+            distance_cutoffs: null # in Angstrom
+            x_diff_weight: 0
+            porous_adjustment: False
+        radius_max: 10.0 # in Angstrom
+        thr: 0.01 # in Angstrom
+    scf:
+        kpoints_distance: 0.4
+
+default_protocol: balanced
+protocols:
+    balanced:
+        description: 'Protocol to perform the computation at normal precision at balanced computational cost.'
+    stringent:
+        description: 'Protocol to perform the computation at high precision at higher computational cost.'
+        tolerance_onsite: 0.01
+        tolerance_intersite: 0.005
+        scf:
+            kpoints_distance: 0.2
+    fast:
+        description: 'Protocol to perform the computation at low precision at minimal computational cost for testing purposes.'
+        tolerance_onsite: 0.2
+        tolerance_intersite: 0.1
+        scf:
+            kpoints_distance: 0.6

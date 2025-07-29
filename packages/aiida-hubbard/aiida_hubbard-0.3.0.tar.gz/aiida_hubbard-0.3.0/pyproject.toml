@@ -1,0 +1,153 @@
+[build-system]
+requires = ['flit_core>=3.4,<4']
+build-backend = 'flit_core.buildapi'
+
+[project]
+name = 'aiida-hubbard'
+dynamic = ['description', 'version']
+authors = [
+    {name = 'Lorenzo Bastonero', email = 'lbastone@uni-bremen.de'},
+    {name = 'Sebastiaan P. Huber', email = 'mail@sphuber.net'}
+]
+readme = 'README.md'
+license = {file = 'LICENSE.txt'}
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Framework :: AiiDA',
+    'License :: Free To Use But Restricted',
+    'Operating System :: POSIX :: Linux',
+    'Operating System :: MacOS :: MacOS X',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+]
+keywords = ['aiida', 'workflows']
+requires-python = '>=3.9'
+dependencies = [
+    'aiida-core~=2.3,!=2.6',
+    'aiida-quantumespresso~=4.10',
+]
+
+[project.urls]
+Home = 'https://github.com/aiidateam/aiida-hubbard'
+Source = 'https://github.com/aiidateam/aiida-hubbard'
+Documentation = 'https://aiida-hubbard.readthedocs.io'
+
+[project.optional-dependencies]
+docs = [
+    'myst-nb~=1.0',
+    'jupytext>=1.11.2,<1.15.0',
+    'sphinx~=6.2.1',
+    'sphinx-copybutton~=0.5.2',
+    'sphinx-book-theme~=1.0.1',
+    'sphinx-click~=4.4.0',
+    'sphinx-design~=0.4.1',
+    'sphinxcontrib-details-directive~=0.1.0',
+    'sphinx-autoapi~=3.0.0',
+    'myst-parser~=3.0',
+    'sphinx-togglebutton',
+]
+pre-commit = [
+    'pre-commit~=2.17',
+    'pylint~=2.15.10',
+    'pylint-aiida~=0.1.1',
+    'toml'
+]
+tests = [
+    'pgtest~=1.3',
+    'pytest~=6.0',
+    'coverage[toml]',
+    'pytest-cov',
+    'pytest-regressions~=2.3',
+    'pytest-timeout',
+]
+
+[project.scripts]
+aiida-hubbard = 'aiida_hubbard.cli:cmd_root'
+
+[project.entry-points.'aiida.calculations']
+'quantumespresso.hp' = 'aiida_hubbard.calculations.hp:HpCalculation'
+
+[project.entry-points.'aiida.parsers']
+'quantumespresso.hp' = 'aiida_hubbard.parsers.hp:HpParser'
+
+[project.entry-points.'aiida.workflows']
+'quantumespresso.hp.main' = 'aiida_hubbard.workflows.hp.main:HpWorkChain'
+'quantumespresso.hp.parallelize_atoms' = 'aiida_hubbard.workflows.hp.parallelize_atoms:HpParallelizeAtomsWorkChain'
+'quantumespresso.hp.parallelize_qpoints' = 'aiida_hubbard.workflows.hp.parallelize_qpoints:HpParallelizeQpointsWorkChain'
+'quantumespresso.hp.base' = 'aiida_hubbard.workflows.hp.base:HpBaseWorkChain'
+'quantumespresso.hp.hubbard' = 'aiida_hubbard.workflows.hubbard:SelfConsistentHubbardWorkChain'
+
+[tool.flit.module]
+name = 'aiida_hubbard'
+
+[tool.flit.sdist]
+exclude = [
+    '.github/',
+    'tests/',
+    '.gitignore',
+    '.pre-commit-config.yaml',
+]
+
+[tool.flynt]
+line-length = 120
+fail-on-change = true
+
+[tool.isort]
+force_sort_within_sections = true
+include_trailing_comma = true
+line_length = 120
+multi_line_output = 3
+
+[tool.coverage.run]
+# Configuration of [coverage.py](https://coverage.readthedocs.io)
+# reporting which lines of your plugin are covered by tests
+source = ["src/aiida_hubbard"]
+
+[tool.pydocstyle]
+ignore = [
+    'D104',
+    'D203',
+    'D213'
+]
+
+[tool.pylint.master]
+load-plugins = ['pylint_aiida']
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.messages_control]
+disable = [
+    'duplicate-code',
+    'import-outside-toplevel',
+    'inconsistent-return-statements',
+    'invalid-name',
+    'no-member',
+    'too-many-arguments',
+    'too-many-branches',
+    'too-many-locals',
+    'too-many-public-methods',
+]
+
+[tool.pytest.ini_options]
+# Configuration for [pytest](https://docs.pytest.org)
+python_files = "test_*.py example_*.py"
+filterwarnings = [
+    "ignore::DeprecationWarning:aiida:",
+    "ignore:Creating AiiDA configuration folder:",
+    "ignore::DeprecationWarning:plumpy:",
+    "ignore::DeprecationWarning:yaml:",
+]
+# testpaths = 'tests'
+
+[tool.yapf]
+align_closing_bracket_with_visual_indent = true
+based_on_style = 'google'
+coalesce_brackets = true
+column_limit = 120
+dedent_closing_brackets = true
+indent_dictionary_value = false
+split_arguments_when_comma_terminated = true

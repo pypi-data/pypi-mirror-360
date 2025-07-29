@@ -1,0 +1,47 @@
+default_inputs:
+    clean_workdir: True
+    only_initialization: False
+    hp:
+        metadata:
+            options:
+                resources:
+                    num_machines: 1
+                max_wallclock_seconds: 43200  # Twelve hours
+                withmpi: True
+        parameters:
+            INPUTHP:
+                conv_thr_chi: 5.e-6
+                niter_max: 200
+                nmix: 8
+                alpha_mix(1): 0.4
+        qpoints:
+            - 2
+            - 2
+            - 2
+        settings:
+            parent_folder_symlink: true
+
+default_protocol: balanced
+protocols:
+    balanced:
+        description: 'Protocol to perform the computation at normal precision at balanced computational cost.'
+    stringent:
+        description: 'Protocol to perform the computation at high precision at higher computational cost.'
+        hp:
+            parameters:
+                INPUTHP:
+                    conv_thr_chi: 1.e-8
+            qpoints:
+                - 3
+                - 3
+                - 3
+    fast:
+        description: 'Protocol to perform the computation at low precision at minimal computational cost for testing purposes.'
+        hp:
+            parameters:
+                INPUTHP:
+                    conv_thr_chi: 1.e-4
+            qpoints:
+                - 1
+                - 1
+                - 1
