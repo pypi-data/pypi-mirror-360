@@ -1,0 +1,181 @@
+# tkPDFViewer
+
+The `tkPDFViewer` is a Python library that allows you to embed PDF files directly into your Tkinter GUI. It's designed for simplicity and ease of use, requiring just a few steps to integrate.
+
+## Features!
+
+* Embed your PDF in your Tkinter GUI.
+
+* Customize the initial width and height of your PDF display.
+
+* High-quality PDF page rendering with customizable DPI.
+
+* **Zoom In/Out Functionality:**
+
+  * Zoom in/out by pressing `Control` + scrolling the mouse wheel.
+
+  * Zoom in by pressing `Control` + `+` (plus key).
+
+  * Zoom out by pressing `Control` + `-` (minus key).
+
+* Configurable loading bar to show PDF loading progress.
+
+* Choose between "after" (asynchronous) or "immediate" (synchronous) PDF loading strategies.
+
+## Installation
+
+Install `tkPDFViewer3` using pip:
+
+```
+pip install tkPDFViewer3
+
+
+```
+
+Or using pip3:
+
+```
+pip3 install tkPDFViewer3
+
+
+```
+
+You can also install directly from the Git repository (if available, replace with your actual repo URL if different):
+
+```
+pip install git+"[https://github.com/juleslagarde/tkPDFViewer3](https://github.com/juleslagarde/tkPDFViewer3)"
+
+
+```
+
+## Usage
+
+Here's an example of how to use `tkPDFViewer` in your Tkinter application:
+
+```
+import tkinter as tk
+from tkPDFViewer import PDFViewer # Simplified import!
+
+# --- Create a dummy PDF file for testing (optional, for a runnable example) ---
+try:
+    import fitz # PyMuPDF
+    dummy_pdf_path = "dummy_example.pdf"
+    doc = fitz.open() # new empty PDF
+    page = doc.new_page() # new page
+    page.insert_text((50, 50), "Hello from tkPDFViewer!", fontname="helv", fontsize=24)
+    page.insert_text((50, 100), "This is a dummy PDF for demonstration.", fontname="helv", fontsize=16)
+    page.insert_text((50, 150), "Use Ctrl + MouseWheel or Ctrl + +/- to zoom.", fontname="helv", fontsize=12)
+    doc.save(dummy_pdf_path)
+    doc.close()
+    print(f"Created a dummy PDF at: {dummy_pdf_path}")
+except Exception as e:
+    print(f"Could not create dummy PDF: {e}. Please ensure PyMuPDF (fitz) is installed correctly.")
+    dummy_pdf_path = None # Set to None if creation fails
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.title("tkPDFViewer Example")
+    root.geometry("800x700") # Set a default window size
+
+    if dummy_pdf_path:
+        # 1. Create an instance of the PDFViewer class, inheriting from tk.Frame.
+        #    Pass the master (root) and any tk.Frame specific keyword arguments.
+        pdf_viewer = PDFViewer(root, bg="lightgray", relief="groove", bd=2)
+
+        # 2. Call the display_pdf method to load and show the PDF.
+        #    Pass the PDF location and display-specific configurations.
+        pdf_viewer.display_pdf(
+            pdf_location=dummy_pdf_path,
+            width=780,
+            height=600,
+            dpi=120,
+            show_loading_bar=True,
+        )
+
+        # 3. Pack the PDFViewer instance (which is a tk.Frame) into your GUI.
+        pdf_viewer.pack(expand=True, fill="both", padx=10, pady=10)
+
+        # You can add other Tkinter widgets here if needed
+        # For example, a button to open a new PDF
+        open_button = ttk.Button(root, text="Open Another PDF (Not Implemented)",
+                                 command=lambda: print("Open PDF functionality would go here"))
+        open_button.pack(pady=5)
+    else:
+        # Display a message if dummy PDF creation failed
+        error_label = tk.Label(root, text="Error: Could not create dummy PDF. Please provide a valid PDF path.", fg="red")
+        error_label.pack(pady=20)
+
+    root.mainloop()
+
+
+```
+
+## Attributes and Parameters
+
+The `PDFViewer` class is a `tk.Frame` and its functionality is configured via its `__init__` method and the `display_pdf` method.
+
+### `PDFViewer(master=None, **kwargs)` (Constructor Parameters)
+
+These parameters are passed when you create an instance of `PDFViewer`, similar to any `tk.Frame`.
+
+* `master`: The parent Tkinter widget (e.g., `tk.Tk()` or another `tk.Frame`).
+
+* `**kwargs`: Arbitrary keyword arguments that are passed directly to the `tk.Frame` constructor. Common examples include:
+
+  * `width`: Initial width of the PDFViewer frame.
+
+  * `height`: Initial height of the PDFViewer frame.
+
+  * `bg`: Background color of the frame.
+
+  * `relief`: Border style (e.g., `"flat"`, `"raised"`, `"sunken"`, `"groove"`, `"ridge"`).
+
+  * `bd`: Border width.
+
+### `display_pdf(pdf_location, width=1200, height=600, show_loading_bar=True, load_strategy="after", dpi=100)` (Method Parameters)
+
+This method is called on your `PDFViewer` instance to load and display a specific PDF.
+
+* `pdf_location` (string): **Required.** The file path to your PDF document.
+
+* `width` (int): The desired width of the PDF display area within the frame. Default is `1200`.
+
+* `height` (int): The desired height of the PDF display area within the frame. Default is `600`.
+
+* `show_loading_bar` (boolean): `True` or `False`. If `True`, a progress bar and message are shown while the PDF is loading. Defaults to `True`.
+
+* `dpi` (int): Dots per inch for rendering PDF pages. Higher DPI results in better image quality but consumes more memory and takes longer to load. Default is `100`.
+
+### Layout
+
+To embed your `PDFViewer` instance into your GUI, use standard Tkinter geometry managers:
+
+* `.pack()`
+
+* `.grid()`
+
+* `.place()`
+
+## Dependencies
+
+* `tkinter` (built-in Python GUI library)
+
+* `PyMuPDF` (for PDF rendering, also known as `fitz`)
+
+* `Pillow` (for image manipulation, `PIL`)
+
+* `threading` (built-in, for asynchronous loading)
+
+* `math` (built-in, for calculations)
+
+* `platform` (built-in, for OS-specific event bindings)
+
+## License
+
+MIT
+
+## Author
+
+* [Roshan Paswan](https://github.com/Roshanpaswan/)
+
+* Updated by [Jules Lagarde](https://www.google.com/search?q=https://github.com/juleslagarde)
