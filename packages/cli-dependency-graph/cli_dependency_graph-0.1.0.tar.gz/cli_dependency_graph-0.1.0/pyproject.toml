@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cli-dependency-graph"
+version = "0.1.0"
+description = "CLI tool to statically analyze and visualize Click/Typer command trees."
+authors = [
+    { name = "Tamas Kovacs", email = "kovacs.tamas03@gmail.com" }
+]
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+dependencies = [
+    "typer>=0.12.3",
+    "click>=8.1.7",
+    "rich>=13.7.1",
+    "graphviz>=0.20.3"
+]
+[project.urls]
+Homepage = "https://github.com/Najabi99/cli-dependency-graph"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+    "coverage"
+]
+
+[project.scripts]
+cli-dependency-graph = "cli_dependency_graph.cli:app"
+
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cli_dependency_graph"]
+
+[tool.hatch.envs.default]
+dependencies = [
+    "pytest",
+    "pytest-cov",
+    "coverage"
+]
+post-install-commands = [
+    "pip install -e ."
+]
+
+[tool.hatch.envs.test]
+dependencies = [
+    "pytest",
+    "pytest-cov",
+    "coverage"
+]
+scripts = { test = "pytest --cov=src/cli_dependency_graph --cov-report=term --cov-report=xml" }
