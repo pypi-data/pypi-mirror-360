@@ -1,0 +1,51 @@
+Metadata-Version: 2.3
+Name: openshift-python-wrapper-data-collector
+Version: 2.0.14
+Summary: Data collector for https://github.com/openshift/openshift-python-wrapper when running with PyTest
+License: Apache-2.0
+Keywords: Openshift,OCP
+Author: Meni Yakove
+Author-email: myakove@gmail.com
+Requires-Python: >=3.9,<4.0
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Dist: openshift-python-wrapper
+Requires-Dist: pytest-testconfig (>=0.2.0,<0.3.0)
+Requires-Dist: pyyaml (>=6.0.1,<7.0.0)
+Project-URL: Bug Tracker, https://github.com/RedHatQE/openshift-python-wrapper-data-collector/issues
+Project-URL: Documentation, https://github.com/RedHatQE/openshift-python-wrapper-data-collector/blob/main/README.md
+Project-URL: Download, https://github.com/RedHatQE/openshift-python-wrapper-data-collector/archive/refs/tags/1.0.4.tar.gz
+Project-URL: Homepage, https://github.com/RedHatQE/openshift-python-wrapper-data-collector
+Description-Content-Type: text/markdown
+
+To enable data-collector pass data-collector.yaml
+YAML format:
+```yaml
+    data_collector_base_directory: "<base directory for data collection>"
+    collect_data_function: "<import path for data collection method>"
+    collect_pod_logs: true|false # bool whether to collect logs if resource is a pod
+```
+YAML Example `ocp_utilities/data-collector.yaml`:
+```yaml
+    data_collector_base_directory: "collected-info"
+    collect_data_function: "data_collector.collect_data"
+    collect_pod_logs: true
+```
+Either export path to yaml file in `OPENSHIFT_PYTHON_WRAPPER_DATA_COLLECTOR_YAML` or set `data_collector` in your py_config
+The environment variable takes precedence over py_config.
+
+To use dynamic base directory, export `OPENSHIFT_PYTHON_WRAPPER_DATA_COLLECTOR_DYNAMIC_BASE_DIR`  
+Example:
+```
+data_collector_base_directory = "/data/results/collected-info"
+OPENSHIFT_PYTHON_WRAPPER_DATA_COLLECTOR_DYNAMIC_BASE_DIR = "dynamic_collector_test_dir"
+
+Result: /data/results/dynamic_collector_test_dir/collected-info
+```
+
