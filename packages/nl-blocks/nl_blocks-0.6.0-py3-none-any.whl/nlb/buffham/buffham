@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# NB: we don't use a path from @bazel_tools//tools/sh:toolchain_type because that's configured for the exec
+# configuration, while this script executes in the target configuration at runtime.
+
+# This is a special comment for py_pex_binary to find the python entrypoint.
+# __PEX_PY_BINARY_ENTRYPOINT__ _main/nlb/buffham/buffham.py
+
+
+# --- begin runfiles.bash initialization v3 ---
+# Copy-pasted from the Bazel Bash runfiles library v3.
+# https://github.com/bazelbuild/bazel/blob/master/tools/bash/runfiles/runfiles.bash
+set -uo pipefail; set +e; f=bazel_tools/tools/bash/runfiles/runfiles.bash
+source "${RUNFILES_DIR:-/dev/null}/$f" 2>/dev/null || \
+  source "$(grep -sm1 "^$f " "${RUNFILES_MANIFEST_FILE:-/dev/null}" | cut -f2- -d' ')" 2>/dev/null || \
+  source "$0.runfiles/$f" 2>/dev/null || \
+  source "$(grep -sm1 "^$f " "$0.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/null || \
+  source "$(grep -sm1 "^$f " "$0.exe.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/null || \
+  { echo>&2 "ERROR: runfiles.bash initializer cannot find $f. An executable rule may have forgotten to expose it in the runfiles, or the binary may require RUNFILES_DIR to be set."; exit 1; }; f=; set -e
+# --- end runfiles.bash initialization v3 ---
+
+runfiles_export_envvars
+
+set -o errexit -o nounset -o pipefail
+
+PWD="$(pwd)"
+
+# Returns an absolute path to the given location if the path is relative, otherwise return
+# the path unchanged.
+function alocation {
+  local P=$1
+  if [[ "${P:0:1}" == "/" ]]; then
+    echo -n "${P}"
+  else
+    echo -n "${PWD}/${P}"
+  fi
+}
+
+function python_location {
+  local PYTHON="rules_python++python+python_3_12_x86_64-unknown-linux-gnu/bin/python3"
+  local RUNFILES_INTERPRETER="true"
+
+  if [[ "${RUNFILES_INTERPRETER}" == "true" ]]; then
+    echo -n "$(alocation $(rlocation ${PYTHON}))"
+  else
+    echo -n "${PYTHON}"
+  fi
+}
+
+VENV_TOOL="$(rlocation aspect_rules_py++py_tools+rules_py_tools.linux_amd64/venv)"
+VIRTUAL_ENV="$(alocation "${RUNFILES_DIR}/.buffham.venv")"
+export VIRTUAL_ENV
+
+"${VENV_TOOL}" \
+    --location "${VIRTUAL_ENV}" \
+    --python "$(python_location)" \
+    --pth-file "$(rlocation _main/nlb/buffham/buffham.venv.pth)" \
+    --collision-strategy "error" \
+    --venv-name ".buffham.venv"
+
+PATH="${VIRTUAL_ENV}/bin:${PATH}"
+export PATH
+
+# Set all the env vars here, just before we launch
+export BAZEL_TARGET="//nlb/buffham:buffham"
+export BAZEL_WORKSPACE="_main"
+export BAZEL_TARGET_NAME="buffham"
+
+# This should detect bash and zsh, which have a hash command that must
+# be called to get it to forget past commands.  Without forgetting
+# past commands the $PATH changes we made may not be respected
+if [ -n "${BASH:-}" -o -n "${ZSH_VERSION:-}" ] ; then
+    hash -r 2> /dev/null
+fi
+
+exec "python3" -B -I "$(rlocation _main/nlb/buffham/buffham.py)" "$@"
