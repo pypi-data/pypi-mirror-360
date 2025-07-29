@@ -1,0 +1,197 @@
+# {{ project_name_title }}
+
+{{ description }}
+
+## Quick Start
+
+1. Install dependencies:
+   ```bash
+   uv sync
+   ```
+
+2. Configure your agent:
+   - Edit `agent_config.yaml` to customize skills, providers, and features
+   - Set environment variables in `.env` file
+
+3. Start the development server:
+   ```bash
+   agentup agent serve
+   ```
+
+   Or manually:
+   ```bash
+   uv run uvicorn agent.api.app:app --reload --port 8000
+   ```
+
+### **Template-Specific Features**
+This agent was created with the **{{ template_name }}** template and includes:
+
+{% if has_middleware %}
+- ✅ Middleware system (rate limiting, caching, validation)
+{% endif %}
+{% if has_services %}
+- ✅ External service integrations
+{% endif %}
+{% if has_multimodal %}
+- ✅ Multi-modal processing (images, documents)
+{% endif %}
+{% if has_state %}
+- ✅ Enhanced state management and conversation persistence
+{% endif %}
+{% if has_auth %}
+- ✅ Advanced authentication and security schemes
+{% endif %}
+{% if has_testing %}
+- ✅ Comprehensive A2A-compliant test suite
+{% endif %}
+{% if has_deployment %}
+- ✅ Deployment tools (Docker, Kubernetes)
+{% endif %}
+
+## Development
+
+### Pure Config-Driven Architecture
+
+This agent runs entirely from the AgentUp framework package.
+
+#### 1. Adding New Skills via Plugins
+
+**Create a Local Plugin:**
+```bash
+# Create plugin in the plugins directory
+agentup plugin create my-skill --output-dir plugins/
+
+# Install in development mode
+pip install -e plugins/my-skill
+
+# Add to agent_config.yaml
+```
+
+**Use Existing Plugins:**
+```bash
+# Install from PyPI
+pip install agentup-plugin-name
+
+# Or from Git
+pip install git+https://github.com/user/agentup-plugin-name
+```
+
+#### 2. Configuration-Based Customization
+
+**Modify Agent Behavior** (`agent_config.yaml`):
+```yaml
+skills:
+  - skill_id: my_plugin_skill  # From installed plugin
+    name: My Skill
+    description: Custom skill via plugin
+    tags: [custom, business]
+    routing_mode: ai  # or 'direct'
+    priority: 100
+```
+
+**Environment Configuration** (`.env`):
+```bash
+# Set API keys and service URLs
+OPENAI_API_KEY=your_key_here
+GITHUB_TOKEN=your_token_here
+```
+
+#### 3. Framework Updates
+
+Your agent automatically gets framework updates when you upgrade AgentUp:
+
+```bash
+# Upgrade to latest AgentUp version
+pip install --upgrade agentup
+
+# Restart your agent - new features available immediately
+agentup agent serve
+```
+
+## Plugin Development
+
+See the `plugins/` directory for local plugin development. Each plugin should:
+
+1. Implement the AgentUp plugin API
+2. Provide one or more skills
+3. Include proper configuration validation
+4. Follow A2A specification compliance
+
+For detailed plugin development guidelines, see the AgentUp documentation.
+
+## Testing
+
+Test your agent using A2A-compliant JSON-RPC calls:
+
+```bash
+# Test basic message handling
+curl -X POST http://localhost:8000/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "method": "message/send",
+    "params": {
+      "message": {
+        "role": "user",
+        "parts": [{"kind": "text", "text": "Hello"}],
+        "messageId": "msg-001",
+        "contextId": "ctx-001",
+        "kind": "message"
+      }
+    },
+    "id": "req-001"
+  }'
+
+# Test agent discovery
+curl http://localhost:8000/.well-known/agent.json
+```
+
+## Project Structure
+
+```
+{{ project_name_snake }}/
+├── agent_config.yaml     # Main configuration
+├── .env                  # Environment variables  
+├── plugins/              # Local plugin development
+├── README.md            # This file
+└── pyproject.toml       # Dependencies (just agentup)
+```
+
+## Deployment
+
+The agent can be deployed anywhere Python runs:
+
+```bash
+# Production server
+gunicorn agent.api.app:app --workers 4 --bind 0.0.0.0:8000
+
+# Or with uvicorn
+uvicorn agent.api.app:app --host 0.0.0.0 --port 8000
+```
+
+{% if has_deployment %}
+For advanced deployment options (Docker, Kubernetes), see the deployment documentation.
+{% endif %}
+
+## Production Checklist
+
+- [ ] Environment variables configured in `.env` or deployment environment
+- [ ] API keys and secrets properly secured
+- [ ] Agent configuration tested with expected workloads
+- [ ] Plugin dependencies installed and validated
+- [ ] A2A compliance verified with test clients
+
+## Documentation
+
+For more information:
+- [AgentUp Documentation](https://docs.agentup.dev)
+- [A2A Specification](https://a2a.dev)
+- [Plugin Development Guide](https://docs.agentup.dev/plugins)
+
+## License
+
+Apache 2.0
+
+---
+Created with [AgentUp](https://github.com/RedDotRocket/AgentUp)
+

@@ -1,0 +1,56 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  agent-creation-test:
+    name: Test Agent Creation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        enable-cache: true
+
+    - name: Set up Python
+      run: |
+        uv python install 3.11
+        uv python pin 3.11
+
+    - name: Install dependencies
+      run: |
+        make install-dev
+
+    - name: Test minimal agent creation
+      run: |
+        make agent-create-minimal
+        # Verify the agent was created
+        test -f ./test-agents/minimal/agent_config.yaml
+        test -f ./test-agents/minimal/pyproject.toml
+
+    - name: Test standard agent creation
+      run: |
+        make agent-create-standard
+        # Verify the agent was created
+        test -f ./test-agents/standard/agent_config.yaml
+        test -f ./test-agents/standard/pyproject.toml
+
+    - name: Test agent validation
+      run: |
+        uv run agentup agent validate --config ./test-agents/minimal/agent_config.yaml
+
+    - name: Upload created agents
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-agents
+        path: test-agents/
