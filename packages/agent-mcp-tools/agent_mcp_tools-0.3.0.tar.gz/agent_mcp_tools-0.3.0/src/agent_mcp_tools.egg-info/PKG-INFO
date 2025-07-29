@@ -1,0 +1,100 @@
+Metadata-Version: 2.4
+Name: agent-mcp-tools
+Version: 0.3.0
+Summary: Agent MCP Tools - LLM agent framework using Model Context Protocol for multi-agent systems
+Author-email: PsychArch <example@example.com>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/PsychArch/agent-mcp-tools
+Project-URL: Bug Tracker, https://github.com/PsychArch/agent-mcp-tools/issues
+Project-URL: Source Code, https://github.com/PsychArch/agent-mcp-tools
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Operating System :: OS Independent
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: requests>=2.32.3
+Requires-Dist: httpx>=0.28.1
+Requires-Dist: typer>=0.15.4
+Requires-Dist: mcp>=1.9.0
+Requires-Dist: httpx-sse>=0.4.0
+Requires-Dist: fastmcp>=2.10.2
+Requires-Dist: rich>=14.0.0
+Dynamic: license-file
+
+# Agent MCP Tools
+
+[![PyPI version](https://badge.fury.io/py/agent-mcp-tools.svg)](https://badge.fury.io/py/agent-mcp-tools)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+**Agent MCP Tools** is both a Model Context Protocol (MCP) server and client, allowing building multi-agent system by tool use.
+
+## Quick Start
+
+### 1. Installation
+
+```bash
+pipx install agent-mcp-tools
+```
+
+### 2. Configuration
+
+Set your OpenRouter API key. Get one from the [OpenRouter website](https://openrouter.ai/keys).
+
+```bash
+export OPENROUTER_API_KEY="your_openrouter_api_key"
+```
+
+### 3. Command-Line Usage
+
+**Basic Query:**
+```bash
+agent-mcp-tools query "What is the capital of France?"
+```
+
+**Query with Tools:**
+Provide an MCP config file to give the LLM access to tools.
+```bash
+# Create a tool config file (e.g., mcp.json)
+agent-mcp-tools query "List files in the /tmp directory" --mcp-config mcp.json
+```
+
+**Run as an MCP Server:**
+Expose `agent-mcp-tools` itself as a MCP tool for other agents.
+```bash
+agent-mcp-tools http --tool-name "web_search" --tool-description "Search the web and returns the summarized contents."
+```
+
+## MCP Configuration
+
+To use tools, create an `mcp.json` file that defines your MCP servers. Agent MCP Tools is compatible with the [MCP specification](https://mcp.ai) used by Cursor and other tools.
+
+**Example `mcp.json`:**
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp/"],
+      "env": {}
+    },
+    "http-transport-mcp": {
+      "url": "http://localhost:3000/mcp"
+    }
+  }
+}
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
