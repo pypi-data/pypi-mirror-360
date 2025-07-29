@@ -1,0 +1,85 @@
+[project]
+name = "catalystwan"
+version = "2.0.0a3"
+description = "Cisco Catalyst WAN SDK for Python"
+dependencies = [
+    "packaging >= 23.0",
+    "requests >= 2.32.3",
+    "typing-extensions >= 4.12.2",
+    "urllib3 >=2.2.2",
+    "catalystwan-types == 2.0.0a0",
+    "catalystwan-v20-15 == 2.0.0a1",
+    "catalystwan-v20-16 == 2.0.0a1"
+]
+readme = "README.md"
+license = { file = "LICENSE"}
+
+requires-python = ">= 3.8"
+classifiers = [
+  # one of:
+  # "Development Status :: 3 - Alpha"
+  # "Development Status :: 4 - Beta"
+  # "Development Status :: 5 - Production/Stable"
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent",
+  "Topic :: Internet",
+]
+[project.urls]
+Homepage = "https://github.com/cisco-en-programmability/catalystwan-sdk-next-python"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.2.2",
+]
+"ver-all" = [
+    "catalystwan-v20-15 == 2.0.0a1",
+    "catalystwan-v20-16 == 2.0.0a1",
+]
+"ver-2015" = [
+    "catalystwan-v20-15 == 2.0.0a1",
+]
+"ver-2016" = [
+    "catalystwan-v20-16 == 2.0.0a1",
+]
+# for nox
+[dependency-groups]
+dev = [
+  { include-group = "test" },
+  { include-group = "typing" },
+]
+typing = [
+    "mypy",
+    "pytype",
+]
+test = [
+  "coverage[toml]>=7.2",
+  "pytest",
+  "pytest-cov",
+  "pytest-snapshot",
+]
+
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+files = "src"
+exclude="loader\\.py$"
+mypy_path = "$MYPY_CONFIG_FILE_DIR/src/"
+namespace_packages = true
+explicit_package_bases = true
+
+[project.entry-points.pytest11]
+catalystwan = "catalystwan.core.tests"
