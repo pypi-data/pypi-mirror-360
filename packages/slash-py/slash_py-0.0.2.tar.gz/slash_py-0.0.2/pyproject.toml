@@ -1,0 +1,69 @@
+## Configuration for the `setuptools` tool.
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "slash-py"
+version = "v0.0.2"
+dependencies = [
+    'requests',
+    'ruamel.yaml',
+    'filelock',
+    'rich',
+    'psutil',
+    'Faker',
+]
+requires-python = ">=3.8"
+description = "SLURM Link Assistant Service Hub (SLASH) is a submodule for the python package sapp, dealing with the Internect connection problems."
+readme = "README.md"
+license = {file = "LICENSE"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: POSIX :: Linux",
+]
+
+[project.optional-dependencies]
+docs = ["sphinx >= 7.4.7", "myst-parser", "linkify-it-py", "sphinx-autodoc2", "furo", "sphinxcontrib-autoprogram"]
+test = ["pytest"]
+
+[project.urls]
+Homepage = "https://github.com/why-in-Shanghaitech/slash"
+Documentation = "https://why-in-shanghaitech.github.io/slash/"
+Repository = "https://github.com/why-in-Shanghaitech/slash.git"
+"Bug Tracker" = "https://github.com/why-in-Shanghaitech/slash/issues"
+
+[project.scripts]
+slash = "slash:main"
+
+
+## Configuration for the `ruff` tool.
+[tool.ruff]
+line-length = 119
+
+[tool.ruff.lint]
+# Never enforce `E501` (line length violations).
+ignore = ["C901", "E501", "E741", "F402", "F823" ]
+select = ["C", "E", "F", "I", "W"]
+
+# Ignore import violations in all `__init__.py` files.
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F401", "F403", "F811"]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+known-first-party = ["transformers"]
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
