@@ -1,0 +1,153 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ccdproc"
+dynamic = ["version"]
+description = "Astropy affiliated package"
+readme = "README.rst"
+license = { text = "BSD-3-Clause" }
+requires-python = ">=3.8"
+authors = [
+    { name = "Steve Crawford", email = "ccdproc@gmail.com" },
+    { name = "Matt Craig" },
+    { name = "and Michael Seifert" },
+]
+dependencies = [
+    "astropy>=5.0.1",
+    "astroscrappy>=1.1.0",
+    "numpy>=1.24",
+    "reproject>=0.7",
+    "scikit-image",
+    "scipy",
+]
+
+[project.optional-dependencies]
+docs = [
+    "matplotlib",
+    "sphinx-astropy",
+]
+test = [
+    "black",
+    "memory_profiler",
+    "pre-commit",
+    "pytest-astropy>=0.10.0",
+    "ruff",
+]
+
+[project.urls]
+Homepage = "https://ccdproc.readthedocs.io/"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "ccdproc/_version.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/ccdproc",
+    "/docs",
+    "/licenses",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$|\.ipynb$'
+# 'extend-exclude' excludes files or directories in addition to the defaults
+extend-exclude = '''
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+(
+  ^/ccdproc/extern/.*.py   # Ignore files in the extern directory
+  | .*\.fits?$             # Ignore FITS files
+)
+'''
+
+[tool.coverage]
+    [tool.coverage.run]
+    source = ["ccdproc"]
+    omit = [
+        "*/ccdproc/__init__*",
+        "*/ccdproc/*setup*",
+        "*/ccdproc/*/tests/*",
+        "*/ccdproc/tests/*",
+        "*/conftest.py",
+        "*/ccdproc/conftest.py"
+    ]
+
+    [tool.coverage.report]
+    exclude_lines = [
+        # Have to re-enable the standard pragma
+        "pragma: no cover",
+        # Don't complain about packages we have installed
+        "except ImportError",
+        # Don't complain if tests don't hit assertions
+        "raise AssertionError",
+        "raise NotImplementedError",
+        # Don't complain about script hooks
+        "def main\\(.*\\):",
+        # Ignore branches that don't pertain to this version of Python
+        "pragma: py{ignore_python_version}",
+    ]
+
+[tool.ruff]
+# ruff 0.6.0 started automatically linting notebooks. We are not ready for that yet.
+extend-exclude = ["*.ipynb", "extern"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # E and W are the checks done by pycodestyle
+    "W",
+    "F",    # pyflakes checks
+    "ARG",  # flake8-unused-arguments
+    "UP",   # language updates
+    # "NPY",  # check for numpy deprecations
+    "I",    # isort checks
+    "B",    # flake8-bugbear
+]
+[tool.ruff.lint.per-file-ignores]
+# Ignore `E402` and `F403` (import violations) in all `__init__.py` files.
+"__init__.py" = ["E402", "F403"]
+# Ignore `E402` in `run_for_memory_profiler.py` because we need to check for a package or
+# skip the test before importing the module.
+"run_for_memory_profile.py" = ["E402"]
+# Ignore F405 (variable may be from star imports) in docs/conf.py
+"docs/conf.py" = ["F405"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = [
+    "ccdproc",
+    "docs",
+]
+norecursedirs = [
+    "docs[\\/]_build",
+    "docs[\\/]generated",
+]
+astropy_header = true
+doctest_plus = "enabled"
+text_file_format = "rst"
+remote_data_strict = true
+addopts = [
+    "--doctest-rst",
+    "--color=yes",
+    "--strict-config",
+    "--strict-markers",
+    "-ra",
+]
+log_cli_level = "INFO"
+xfail_strict = true
+filterwarnings= [
+    "error",
+    "ignore:numpy\\.ufunc size changed:RuntimeWarning",
+    "ignore:numpy.ndarray size changed:RuntimeWarning",
+    "ignore:`np.bool` is a deprecated alias for the builtin `bool`:DeprecationWarning",
+]
+markers = [
+    "data_size(N): set dimension of square data array for ccd_data fixture",
+    "data_scale(s): set the scale of the normal distribution used to generate data",
+    "data_mean(m): set the center of the normal distribution used to generate data",
+]
