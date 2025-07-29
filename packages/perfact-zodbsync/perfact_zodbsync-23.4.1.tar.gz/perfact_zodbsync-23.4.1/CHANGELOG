@@ -1,0 +1,359 @@
+23.4.1
+  * Use lock for layer-update, avoiding interference from other operations
+
+23.4.0
+  * Refactor layering (step 1). Note that this explicitly does not try to be
+    backwards compatible to a layering setup as given before. I think it will
+    be much simpler to no longer support truly frozen layers where changes are
+    somehow again stored into the custom layer even though the object was
+    originally defined in a lower layer. Instead, every layer must have both a
+    source (provided by the Debian package) and a workdir (where the contents
+    of the Debian package are copied to and where subsequent changes can be
+    pre-applied).
+
+23.3.1
+  * Fix path preparation for changes in __deleted__ and __frozen__ markers
+
+23.3.0
+  * Only try to playback differing paths below __root__
+  * Add `since` and `until` arguments to the `pick` command
+
+23.2.0
+  * Fixed a bug where zodbsync was writing `source`-files into frozen
+    layers
+  * Fix layer-update for cases where the last element in both checksum files is
+    not the same.
+
+23.1.2
+  * Add warning for custom layer paths shadowing changes in layer-update
+  * Panic before deleting the top-level acl_users
+
+23.1.1
+  * Add method that exposes reading the db_modtime
+
+23.1.0
+  * Update README
+  * Explicitly name git branch in tests
+  * Add configuration option playback_hook
+
+22.2.5
+  * Omit title attributes if they are callable.
+  * Drop support for Python 2
+  * Change to using toml package configuration
+
+22.2.4
+  * Refactor scripts into entry points to be usable with zc.buildout >= 3.
+
+22.2.3
+  * Simplify recording of top-level object such that permissions that are only
+    granted to Manager. This creates a one-time diff in this object, but makes
+    the recording more stable in the future if permissions are added or removed
+
+  * Add more output to reformat and allow fixing files without retrying from
+    the start
+
+22.2.2
+  * Add subcommand `checkout`
+
+  * Add github-workflow to execute tox
+
+22.2.1
+  * Change cherry-pick options for `pick` to never do rename recognition
+
+22.2.0
+  * Add missing options for ZPsycopgDA
+
+22.1.1
+  * Add configuration option run_after_playback
+
+22.1.0
+  * Change versioning to include Ubuntu version the current template is based on
+
+  * Allow reformat to work with the current state only, without commits sitting
+    on top of it.
+
+  * Add some more tests and mark some code as intentionally untested.
+
+  * Remove exception converters in to_* helpers
+
+  * Allow properties and methods to replace each other in the same step
+
+4.3.4
+  * Add support for a whitespace-separated list of recipient addresses for the
+    codechange email.
+
+4.3.3
+  * Make reformat robust against newline changes
+
+4.3.2
+  * Make meta files more diff-friendly
+
+4.3.1
+  * Add new config variable to force default user usage
+
+  * Avoid piping git output to pager
+
+  * Restart on filesystem diff
+
+4.3.0
+  * Check for missing meta files during git operation
+
+4.2.4
+  * Switch fix_encoding to return dict instead of list of tuples
+
+  * Make sure to roll back a failed `pick` even if the list of changed files is
+    too long for the command line (#92)
+
+  * Add test to check that unchanged objects and paths are not actually
+    updated
+
+  * Correctly playback type changes of properties
+
+4.2.3
+  * Allow recreating the top-level User Folder if it is accidentally deleted.
+
+4.2.2
+  * Handle changes between "Folder" and "Folder (Ordered)" in playback without
+    needing to recursively play back everything below it, using cut+paste for
+    the children instead.
+
+  * Refactor playback to work iteratively with a stack of paths
+
+4.2.1
+  * Allow automatically resetting generic commits
+
+4.2.0
+  * Add tests for more object types
+
+  * Execute after-recurse-hook after loop over paths in playback, in reverse
+    order
+
+4.1.6
+  * Reduce memory footprint of watcher by spawning initialization subprocess
+
+  * Restore showing of diff that causes a failed pick
+
+4.1.5
+  * Fix timing issues in watcher
+
+  * Add option `--replace-periods` to subcommand `upload` to replace
+    periods with underscores
+
+  * Add more recognized file types to subcommand `upload`
+
+  * Add option `--valid-extensions` to subcommand `upload` to only upload
+    certain types of files
+
+4.1.4
+  * Add subcommand `exec` to capture many git operations
+
+  * Rewrite `pick` to use common code with `exec`, making it applicable to
+    situations where `git` is able to automatically merge, but `pick` refused
+    to do so before because the same file was changed.
+
+  * Speed up tests by reusing environment
+
+  * Increase test coverage
+
+  * Fix `with-lock` subcommand, which used the argument named `command` twice.
+
+4.1.3
+  * Make sure Python 2 test also run under Ubuntu
+
+  * Integrate code for creating generic commits and sending mails, adding the
+    possibility to change the sender
+
+4.1.2
+  * Make with-lock work with Python 2
+
+  * Fix perfact-zoperecord compatibility wrapper
+
+  * Extract docstring of each subcommand for --help
+
+  * Add py2-zope2 as test environment
+
+4.1.1
+  * Fix regression in Zope2 compatibility introduced in 4.0.6
+
+4.1.0
+  * Add --grep option to pick subcommand
+
+4.0.6
+  * Add reset subcommand
+
+  * Refactor argument parsing and subcommand logic
+
+  * Only initialize ZODBSync object if connection to ZODB is required
+
+  * Make sure each command releases the lock correctly
+
+  * Clean up initialization of ZODBSync object
+
+  * Use explicit transaction manager
+
+  * Add some tests for the watcher
+
+4.0.5
+  * Fix playback of local roles
+
+4.0.4
+  * Restore graceful shutdown of watcher
+
+  * Switch tests to use a socket for the ZEO connection
+
+4.0.3
+  * Delete roles and local roles on playback if they are not set in the file
+    (#22)
+
+  * Fix recognition of redundant paths when playing back (#50)
+
+  * Record proxy roles independent of acquired roles (#49)
+
+  * Adjust remaining code to the fact that config is now a dict and not a
+    module
+
+4.0.2
+  * Read Page Template source code without triggering macro expansion
+
+  * Unregister signals before waiting for lock so we may be interrupted
+
+  * Fix config path in README
+
+  * Clean up Python 2 compatibility code
+
+  * Add subcommand with-lock and option --no-lock
+
+4.0.1
+  * Add upload subcommand to push JS/CSS files into the Data.fs
+
+4.0.0
+  * Relax dependency to allow installation under Zope 5
+
+  * Fix bytes/str bug with watcher under Python 3 after packing the Data.FS.
+
+  * Add issue template for github.
+
+3.15.1
+  * Fix lookup of parent in external editor to avoid creating a new object when
+    trying to edit an existing one but using it in an acquired context.
+
+  * Do not re-record the meta file of an object if the only change is the
+    newline at the end.
+
+3.15.0
+  * Fix dry-run mode for repositories that have an upstream remote.
+
+  * End meta files with a newline. Be aware that this will result in a change
+    of the recording of existing meta files if introducing and reverting a
+    change. However, since most text editors end files with a newline, this
+    makes the recording more consistent in the long run.
+
+  * Include more output if an object cannot be read during playback
+
+  * Add --skip-errors argument for record
+
+3.14.4
+  * Include wrapper scripts for editing sources of objects by an external
+    editor.
+
+3.14.3
+  * Include deprecation replacement for `perfact-zopeplayback` in installed
+    scripts so the fallback from `python-perfact` will throw a readable error.
+
+3.14.2
+  * Merge separate watcher subclass into the corresponding subcommand class
+
+  * Fix watcher so it handles changes to Users inside `User Folder`s correctly
+    (#30)
+
+  * Add dry-run options to playback and pick
+
+3.14.1
+  Bugfix release: remove option accidentally added twice
+
+3.14.0
+  * Auto-stash unstaged changes if picking commits
+
+  * Include a test suite and some first tests
+
+  * Allow picking commit ranges by using COMMIT1..COMMIT2
+
+  * Switch to using a single excutable `zodbsync` with subcommands like
+    `record`, `playback`, `watch` and `pick`, opening the way to add further
+    functionality.
+
+  * Remove unused features like recording since a given timestamp or
+    transaction ID. Also remove `--apply` functionality, which was not very
+    helpful in the case of merge conflicts. If you really need to apply a
+    patchfile, use `git am` directly, reset the branch to before the resulting
+    commit and `pick` it again.
+
+3.13.0
+  Expose methods to read and write objects as well as obtain the modtime of an
+  object.
+
+3.12.5
+  Sort properties alphabetically when recording, ensuring stability when
+  playing back and re-recording.
+
+  Consistently use relative paths and os.path.join, fixing #15.
+
+  Change handling of strings in metadata for transition from Python 2 to 3.
+
+  * Properties that were stored as bytes in Python 2 and are stored as Unicode
+    in Python 3 are now recorded using UTF-8 literals instead of their 7-bit
+    representation ('testü' instead of 'test\\xc3\\xbc'). This allows
+    transferring the meaning of such strings from Python 2 to 3 rather than the
+    implementation details, which changed for these properties.
+
+  * Titles that were already Unicode in Python 2 are now encoded when
+    recording, allowing a smaller diff in the transition to Python 3.
+
+  * Metadata recording no longer attempts to split long lines.
+
+  WARNING: If updating to this version, you must expect a large diff in your
+  repository on the next call to zoperecord.
+
+3.12.4
+  Provide a wrapper to apply patches and play back the affected objects.
+
+3.12.3
+  Fix python3 crash in read_pdata, source might be bytes or string.
+
+  Allow playing back of commits from a remote repository.
+
+3.12.2
+  Fix package naming error when trying to send mail with commit summary.
+
+3.12.1
+  Refactor perfact-zopeplayback so it can handle almost anything coming from
+  `git diff-tree` and generally creates code that is easier to patch and deploy.
+
+  WARNING: If updating to this version, you must expect a large diff in your
+  repository on the next call to zoperecord.
+
+  * Don't store the ID of each object in its meta data file, rely on the folder
+    name only instead.
+
+  * Don't store the contents of Folders except in Ordered Folders in order to
+    store the ordering. Use the folder contents instead when uploading.
+
+  * Adjust the ordering of ordered folders _after_ recursing into the children.
+
+  * Allow passing newly created as well as deleted paths to perfact-zopeplayback.
+
+3.12.0
+  There is no version 3.12.0 in order to prevent anyone from thinking that
+  DB-Utils 3.12 was released with zodbsync 3.12.0.
+
+3.11.3
+  Change reading and storing of permissions so it also works without acqusition
+  context, which is important to get a functioning watch mode
+
+3.11.2
+  Complete separation of repositories, splitting the default config file names.
+
+3.11.1
+  PostgreSQL database dumps are no longer performed by zodbsync. This
+  functionality was transferred into perfact.dbbackup. The repository for the
+  code snapshots and that for the database dumps can now be separated.
