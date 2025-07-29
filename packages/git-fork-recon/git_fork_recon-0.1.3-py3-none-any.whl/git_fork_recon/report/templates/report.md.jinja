@@ -1,0 +1,39 @@
+# Fork Analysis Report for {{ repo.owner }}/{{ repo.name }}
+
+Repository: [{{ repo.owner }}/{{ repo.name }}](https://github.com/{{ repo.owner }}/{{ repo.name }})
+{% if repo.description %}
+Description: {{ repo.description }}
+{% endif %}
+Stars: {{ repo.stars }}
+
+## Fork Analysis
+
+Found {{ analyses|length }} active forks with significant changes.
+
+{% for analysis in analyses %}
+### [{{ analysis.fork.repo_info.owner }}/{{ analysis.fork.repo_info.name }}](https://github.com/{{ analysis.fork.repo_info.owner }}/{{ analysis.fork.repo_info.name }})
+
+**Stats:**
+- Commits ahead: {{ analysis.fork.ahead_commits }}
+- Commits behind: {{ analysis.fork.behind_commits }}
+- Stars: {{ analysis.fork.repo_info.stars }}
+{% if analysis.fork.has_pull_requests %}
+- Pull Requests:
+{% for pr_url in analysis.fork.pull_request_urls %}
+  - [PR #{{ loop.index }}]({{ pr_url }})
+{% endfor %}
+{% else %}
+- Has pull requests: No
+{% endif %}
+- Last updated: {{ analysis.fork.last_updated }}
+
+**Summary of Changes:**
+{{ analysis.summary | linkify_commits }}
+
+**Commits:**
+{% for commit in analysis.commits %}
+- [{{ commit.hash[:8] }}]({{ repo_url }}/commit/{{ commit.hash }}) - <span style="color:green">+{{ commit.insertions }}</span>/<span style="color:red">-{{ commit.deletions }}</span> ({{ commit.files_changed|length }} files): {{ commit.message.split('\n')[0] }} [{{ commit.author }}]
+{% endfor %}
+
+---
+{% endfor %}
