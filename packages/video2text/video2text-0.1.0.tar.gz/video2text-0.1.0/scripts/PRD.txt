@@ -1,0 +1,90 @@
+# Overview  
+A Python package that enables users to transcribe audio or video files from a URL into structured JSON using pluggable transcription services. The initial implementation uses OpenAI Whisper, but the architecture supports additional services in the future. This tool is valuable for researchers, journalists, content creators, and developers who need fast, programmatic access to high-quality transcriptions from online media.
+
+# Core Features  
+- **Download from URL**  
+  - Downloads audio (or audio from video) from a given URL using `yt-dlp` in audio-only mode.
+  - Ensures compatibility with a wide range of platforms (YouTube, direct links, etc.).
+- **Pluggable Transcription Interface**  
+  - Defines a standard interface for transcription services.
+  - Allows easy swapping or addition of new transcription backends.
+- **Whisper Transcription (MVP)**  
+  - Uses OpenAI Whisper to transcribe downloaded audio.
+  - Outputs transcription as structured JSON (with text, segments, and language).
+- **Simple API**  
+  - Exports a single function: `transcribe_url(url: str) -> dict`
+  - Handles download, transcription, and returns JSON.
+- **Demonstration Notebooks**  
+  - Provides Marimo notebooks to show usage and integration.
+
+# User Experience  
+- **User Personas**  
+  - Developers integrating transcription into their apps.
+  - Researchers/journalists needing bulk or automated transcription.
+  - Content creators archiving or repurposing spoken content.
+- **Key User Flows**  
+  1. User calls `transcribe_url(url)` in Python.
+  2. The package downloads the audio, transcribes it, and returns JSON.
+  3. User can inspect or save the JSON output.
+- **UI/UX Considerations**  
+  - No GUI; API and Marimo notebook-based demonstration.
+  - Clear error messages for unsupported URLs or failed downloads.
+  - Minimal configuration for MVP.
+
+# Technical Architecture  
+- **System Components**  
+  - `downloader.py`: Handles URL download via `yt-dlp`.
+  - `transcriber/`: Contains the transcription interface and implementations.
+  - `notebooks/`: Contains Marimo (`.py`) notebooks for usage examples and demos.
+- **Data Models**  
+  - JSON output: `{ "text": ..., "segments": [...], "language": ... }`
+- **APIs and Integrations**  
+  - `yt-dlp` for downloading.
+  - OpenAI Whisper (local or API).
+- **Infrastructure Requirements**  
+  - Python 3.8+
+  - ffmpeg (for audio extraction)
+  - Sufficient disk space for temporary files.
+
+# Development Roadmap  
+- **MVP Requirements**  
+  1. Implement downloader using `yt-dlp` (audio-only).
+  2. Define transcription service interface.
+  3. Implement Whisper-based transcriber.
+  4. Orchestrate download + transcription in a single function.
+  5. Output JSON.
+  6. Add demonstration notebook using Marimo.
+- **Future Enhancements**  
+  - Support for additional transcription services (e.g., Google, AWS).
+  - CLI interface.
+  - Batch processing.
+  - Language selection/translation.
+  - Error handling improvements.
+  - Output formatting options (e.g., SRT, VTT).
+  - Caching and deduplication.
+
+# Logical Dependency Chain
+1. Downloader (must work before transcription).
+2. Transcription interface (needed before implementing any backend).
+3. Whisper implementation.
+4. Orchestration function.
+5. Notebook demonstration.
+6. (Future) Additional services, CLI, batch, etc.
+
+# Risks and Mitigations  
+- **Technical challenges:**  
+  - yt-dlp or ffmpeg compatibility: Mitigate by documenting requirements and testing on common platforms.
+  - Whisper model size/performance: Allow for both local and API-based usage.
+- **MVP scoping:**  
+  - Focus on a minimal, working pipeline before adding features.
+- **Resource constraints:**  
+  - Large files may require significant disk/memory; document limitations.
+
+# Appendix  
+- **Research:**  
+  - yt-dlp supports a wide range of sites and is actively maintained.
+  - Whisper is state-of-the-art for open-source transcription.
+  - Marimo is a Python-native notebook format, ideal for sharing and reproducibility.
+- **Technical specs:**  
+  - Output JSON schema.
+  - Example Marimo notebook.
