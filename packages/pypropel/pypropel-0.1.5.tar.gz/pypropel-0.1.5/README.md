@@ -1,0 +1,107 @@
+<h1 align="center">
+    <img src="https://github.com/2003100127/pypropel/blob/main/docs/img/pypropel-logo-v3.png?raw=true" width="200" height="63">
+    <br>
+</h1>
+
+
+[![Anaconda-Server Badge](https://anaconda.org/jianfeng_sun/pypropel/badges/latest_release_date.svg)](https://anaconda.org/jianfeng_sun/pypropel)
+![PyPI](https://img.shields.io/pypi/v/pypropel?logo=PyPI)
+![Docker Image Version (latest)](https://img.shields.io/docker/v/2003100127/pypropel)
+![Docker Pulls](https://img.shields.io/docker/pulls/2003100127/pypropel)
+[![Anaconda-Server Badge](https://anaconda.org/jianfeng_sun/pypropel/badges/version.svg)](https://anaconda.org/jianfeng_sun/pypropel)
+![](https://img.shields.io/docker/automated/2003100127/pypropel.svg)
+![](https://img.shields.io/github/stars/2003100127/pypropel?logo=GitHub&color=blue)
+[![Material for MkDocs](https://img.shields.io/badge/Material_for_MkDocs-526CFE?style=for-the-badge&logo=MaterialForMkDocs&logoColor=white)](https://squidfunk.github.io/mkdocs-material/)
+[![Downloads](https://pepy.tech/badge/pypropel)](https://pepy.tech/project/pypropel)
+
+<hr>
+
+#### Platform
+
+![Python](https://img.shields.io/badge/-Python-000?&logo=Python)
+![Docker](https://img.shields.io/badge/-Docker-000?&logo=Docker)
+![Anaconda](https://img.shields.io/badge/-Anaconda-000?&logo=Anaconda)
+![PyPI](https://img.shields.io/badge/-PyPI-000?&logo=PyPI)
+
+###### tags: `protein` `preprocessing` `postprocessing`
+
+
+## Overview
+
+
+## 📔 Documentation
+Please check https://2003100127.github.io/pypropel for how to use PyPropel.
+
+## 🛠️ Installation Steps
+
+PyPropel can be installed in the following ways.
+
+* ![PyPI](https://img.shields.io/badge/-PyPI-000?&logo=PyPI) (https://pypi.org/project/pypropel)
+
+  ```bash
+  conda create --name pypropel python=3.11
+      
+  conda activate pypropel
+  
+  pip install pypropel --upgrade
+  ```
+  
+* ![Anaconda](https://img.shields.io/badge/-Anaconda-000?&logo=Anaconda) (https://anaconda.org/Jianfeng_Sun/pypropel)
+
+  ```bash
+  conda create --name pypropel python=3.11
+      
+  conda activate pypropel
+  
+  conda install -c jianfeng_sun pypropel
+  ```
+  
+* ![Docker](https://img.shields.io/badge/-Docker-000?&logo=Docker) (https://hub.docker.com/repository/docker/2003100127/pypropel/general)
+
+  ```bash
+  docker pull 2003100127/pypropel:latest
+  ```
+
+* ![Github](https://img.shields.io/badge/-Github-000?&logo=Github)
+
+  ```bash
+  conda create --name pypropel python=3.11
+    
+  conda activate pypropel
+  
+  git clone https://github.com/2003100127/pypropel.git
+  
+  cd pypropel
+  
+  pip install .
+  ```
+
+## 🚀 Get started
+``` py
+import pypropel as pp
+```
+
+## 📄 Citation
+``` shell
+@article{pypropel,
+   author = {Jianfeng Sun and Jinlong Ru and Adam P. Cribbs and Dapeng Xiong},
+   doi = {10.1186/s12859-025-06079-3},
+   issn = {1471-2105},
+   issue = {1},
+   journal = {BMC Bioinformatics},
+   month = {3},
+   pages = {70},
+   title = {PyPropel: a Python-based tool for efficiently processing and characterising protein data},
+   volume = {26},
+   year = {2025},
+}
+```
+
+## 🏠 Homepage
+[📍Cribbslab](https://www.ndorms.ox.ac.uk/team/jianfeng-sun) 
+
+## 📧 Reach us
+[![Linkedin Badge](https://img.shields.io/badge/-Jianfeng_Sun-blue?style=flat-square&logo=Linkedin&logoColor=white&link=https://www.linkedin.com/in/jianfeng-sun-2ba9b1132)](https://www.linkedin.com/in/jianfeng-sun-2ba9b1132) 
+[![Gmail Badge](https://img.shields.io/badge/-jianfeng.sunmt@gmail.com-c14438?style=flat-square&logo=Gmail&logoColor=white&link=mailto:jianfeng.sunmt@gmail.com)](mailto:jianfeng.sunmt@gmail.com)
+[![Outlook Badge](https://img.shields.io/badge/jianfeng.sun@ndorms.ox.ac.uk--000?style=social&logo=microsoft-outlook&logoColor=0078d4&link=mailto:jianfeng.sun@ndorms.ox.ac.uk)](mailto:jianfeng.sun@ndorms.ox.ac.uk)
+<a href="https://twitter.com/Jianfeng_Sunny" ><img src="https://img.shields.io/twitter/follow/Jianfeng_Sunny.svg?style=social" /> </a>
