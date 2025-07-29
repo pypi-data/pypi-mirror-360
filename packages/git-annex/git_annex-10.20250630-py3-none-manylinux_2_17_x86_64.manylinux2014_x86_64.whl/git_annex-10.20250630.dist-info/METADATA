@@ -1,0 +1,134 @@
+Metadata-Version: 2.4
+Name: git-annex
+Version: 10.20250630
+Summary: manage files with git, without checking their contents into git
+Project-URL: Homepage, https://git-annex.branchable.com/
+Project-URL: Documentation, https://git-annex.branchable.com/git-annex
+Project-URL: Issues, https://git-annex.branchable.com/bugs
+Project-URL: Source, http://source.git-annex.branchable.com/?p=source.git
+Project-URL: Changelog, http://source.git-annex.branchable.com/?p=source.git;a=blob;f=CHANGELOG;hb=HEAD
+Author-email: Joey Hess <id@joeyh.name>
+Maintainer-email: Michael Hanke <mih@ngln.eu>
+License-Expression: AGPL-3.0-or-later
+Keywords: data logistics,git,version control
+Classifier: Development Status :: 6 - Mature
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: Intended Audience :: Information Technology
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: DFSG approved
+Classifier: License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)
+Classifier: Natural Language :: English
+Classifier: Operating System :: MacOS
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Haskell
+Classifier: Topic :: Software Development :: Version Control
+Classifier: Topic :: Software Development :: Version Control :: Git
+Classifier: Topic :: System :: Archiving :: Backup
+Classifier: Topic :: System :: Archiving :: Mirroring
+Classifier: Topic :: System :: Archiving :: Packaging
+Classifier: Topic :: Utilities
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+
+# Python wheel package for git-annex
+
+[![Test git-annex wheel from PyPi](https://github.com/psychoinformatics-de/git-annex-wheel/actions/workflows/test-pypi-wheel.yaml/badge.svg)](https://github.com/psychoinformatics-de/git-annex-wheel/actions/workflows/test-pypi-wheel.yaml)
+
+## Why?
+
+[Git-annex](https://git-annex.branchable.com/) is written in Haskell and plenty
+of [installation methods](https://git-annex.branchable.com/install/) are
+available. However, for deploying git-annex as a dependency of a Python
+library/application, like [DataLad](https://datalad.org) or
+[AnnexRemote](https://github.com/Lykos153/AnnexRemote), system packages
+are a lot less flexible than Python's virtual environments, and other methods
+are more complex and fragile.
+
+With git-annex being available from PyPi, versioned dependencies and deployment
+in application-specific environments are possible via standard means of Python
+packaging.
+
+## Caveats
+
+A standard git-annex deployment is (primarily) a single binary (`git-annex`),
+and a bunch of symlinks that make this one binary fulfilled multiple roles
+(`git-annex-shell`, `git-remote-annex`, etc.). A Python wheel, however, is a
+ZIP file container with no support for symlinks, and also no support for
+"post-install" scripts.
+
+In order to square this circle, the git-annex binary is wrapped via regular
+Python entrypoint scripts that handle calling git-annex as necessary. This
+delivers a cross-platform compatible wheel, but at a start-up cost (~30ms vs
+~11ms on my laptop).
+
+## Installation
+
+Get the package from [PyPi](https://pypi.org/project/git-annex/), and install like
+any other package from PyPi.
+
+[uv](https://docs.astral.sh/uv/) users can deploy git-annex in a dedicated virtual
+environment via the one-liner:
+
+```
+uv tool install git-annex
+```
+
+## git-annex build configuration
+
+Git-annex is built with libmagic support.
+
+## Platform notes
+
+### Linux
+
+The `manylinux` wheel is self-contained and includes copies of all libraries.
+It only depends on the declared GLIBC versions.
+The `magic.mgc` database is not included, and is assumed to be available on
+the target system. Install it separately, if needed (e.g., `libmagic-mgc`
+package).
+
+### Windows
+
+The wheel is self-contained and includes a copy of libmagic and the `magic.mgc` database.
+
+### Mac
+
+The wheel is self-contained and includes a copy of libmagic and the `magic.mgc` database.
+
+
+## Developer information
+
+### Sources
+
+The sources for this package are available at
+https://github.com/psychoinformatics-de/git-annex-wheel
+
+The repository tracks the git-annex sources as a Git submodule.
+
+### Issues
+
+For issues related to the Python wheel packaging of git-annex, please
+use the tracker at https://github.com/psychoinformatics-de/git-annex-wheel/issues
+
+### How to update for a new git-annex release?
+
+Advance the submodule `./git-annex` to the new release tag.
+
+Now adjust the package version in `pyproject.toml` accordingly. This version
+must follow the [rules for Python
+packages](https://packaging.python.org/en/latest/discussions/versioning/).
+
+The included (GitHub) action workflows will build a corresponding wheel
+and upload it to PyPi.
+
+
+## Acknowledgements
+
+This work was funded, in part, by
+
+- Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) under grant TRR 379 (546006540, Q02 project)
+- Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) under grant SFB 1451 (431549029, INF project)
+- MKW-NRW: Ministerium für Kultur und Wissenschaft des Landes Nordrhein-Westfalen under the Kooperationsplattformen 2022 program, grant number: KP22-106A
