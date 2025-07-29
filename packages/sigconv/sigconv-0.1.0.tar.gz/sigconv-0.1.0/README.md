@@ -1,0 +1,106 @@
+# sigconv
+
+[![PyPI version](https://img.shields.io/pypi/v/sigconv?color=blue&label=PyPI&logo=python&logoColor=white)](https://pypi.org/project/sigconv/)
+[![License: MIT](https://img.shields.io/github/license/zwalloc/sigconv)](https://github.com/zwalloc/sigconv/blob/main/LICENSE)
+[![View on GitHub](https://img.shields.io/badge/View_on-GitHub-24292e?logo=github)](https://github.com/zwalloc/sigconv)
+
+`sigconv` is a Python package and CLI tool for converting byte signatures between common formats used in binary pattern matching and reverse engineering.
+
+---
+
+## Features
+
+- Convert signatures between:
+  - **spaced** — hex bytes separated by spaces, wildcards as `?`  
+    Example: `48 8B 05 ? ? ? ? 41`
+  - **escaped** — escaped bytes with `\xHH` and wildcards as `.`  
+    Example: `\x48\x8B\x05....\x41`
+  - **bytesmask** — pair of hex string and mask string (`x` for fixed bytes, `?` for wildcards)  
+    Example:  
+    ```
+    Hex: 488B050000000041  
+    Mask: xxx????x
+    ```
+
+- Robust parsing of inputs and automatic format detection
+- Support for combined input formats (e.g. hex+mask in one string)
+- Command-line interface for quick conversions
+
+---
+
+## Installation
+
+You can install the package via pip (if published) or manually:
+
+```bash
+pip install sigconv
+```
+
+Or clone the repo and install locally:
+
+```bash
+git clone https://github.com/zwalloc/sigconv.git
+cd sigconv
+pip install .
+```
+
+## Usage
+### Command line interface
+
+```bash
+sigconv <to_format> <input> [mask_for_bytesmask]
+```
+- `<to_format>`: one of escaped, spaced, bytesmask
+- `<input>`: input signature string (spaced, escaped, or bytesmask format)
+- `[mask_for_bytesmask]`: mask string for bytesmask format (optional if included with input)
+
+#### Examples:
+
+```bash
+# Convert escaped to spaced
+sigconv spaced "\x48\x8B\x05....\x41"
+
+# Convert spaced to escaped
+sigconv escaped "48 8B 05 ? ? ? ? 41"
+
+# Convert bytesmask (hex + mask) to spaced
+sigconv spaced 488B050000000041 xxx????x
+
+# Convert combined bytesmask input to spaced
+sigconv spaced "\x48\x8B\x05\x00\x00\x00\x00\x41" "xxx????x"
+
+# Convert combined bytesmask input with comma to spaced
+sigconv spaced "\x48\x8B\x05\x00\x00\x00\x00\x41", "xxx????x"
+
+# Convert spaced to bytesmask
+sigconv bytesmask "48 8B 05 ? ? ? ? 41"
+```
+
+## Using as a Python module
+
+```python
+from sigconv import SignatureConverter, detect_format
+
+input_data = "48 8B 05 ? ? ? ? 41"
+mask = None
+
+fmt = detect_format(input_data, mask)
+sig = SignatureConverter.from_spaced(input_data)
+
+print(sig.to_escaped())
+print(sig.to_bytesmask())
+```
+
+| Format    | Wildcard symbol | Example input           |
+| --------- | --------------- | ----------------------- |
+| spaced    | `?`             | `48 8B 05 ? ? ? ? 41`   |
+| escaped   | `.`             | `\x48\x8B\x05....\x41`  |
+| bytesmask | `?` in mask     | Hex: `488B050000000041` Mask: `xxx????x` or `"\x48\x8B\x05\x00\x00\x00\x00\x41", "xxx????x"` with or without comma |
+|           |                 |         |
+
+
+## Notes
+- Always quote inputs containing spaces or backslashes to avoid shell issues.
+- For bytesmask input, the mask is mandatory.
+- You can specify the mask either as a separate argument or combined with the hex string, separated by a comma.
+- Wildcards behave consistently across formats (? in spaced and mask, . in escaped).
