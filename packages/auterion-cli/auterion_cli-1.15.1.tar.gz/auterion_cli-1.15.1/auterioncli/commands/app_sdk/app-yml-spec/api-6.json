@@ -1,0 +1,450 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/definitions/AuterionAppYml",
+    "definitions": {
+      "AuterionAppYml": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "auterion-api-version": {
+            "type": "integer",
+            "const": 6
+          },
+          "auterion-app-base": {
+            "type": "string",
+            "pattern": "^v\\d+|none$"
+          },
+          "app-name": {
+            "type": "string",
+            "pattern": "^[a-z0-9-_]+$"
+          },
+          "app-author": {
+            "type": "string",
+            "pattern": "^[a-z]+(\\.[a-z][a-z0-9-_]*)*$"
+          },
+          "app-version": {
+            "type": "string"
+          },
+          "target-platform": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/AuterionAppYmlTargetPlatform"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/AuterionAppYmlTargetPlatform"
+                }
+              }
+            ]
+          },
+          "system-app": {
+            "type": "boolean"
+          },
+          "mission-executor": {
+            "type": "boolean"
+          },
+          "dependencies": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[a-z]+(\\.[a-z][a-z0-9-_]*)*$": {
+                "type": "string"
+              }
+            },
+            "minProperties": 1
+          },
+          "services": {
+            "$ref": "#/definitions/AuterionAppYmlServices"
+          },
+          "compose-override": {
+            "$ref": "compose-spec.json"
+          },
+          "logging": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "msg-paths": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              "subscriptions": {
+                "$ref": "#/definitions/AuterionAppYmlLoggingSubscriptions"
+              },
+              "profiles": {
+                "type": "object",
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^default|verbose$": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "when": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "condition": {
+                              "type": "string",
+                              "enum": ["always", "never", "default", "while-armed", "while-disarmed"]
+                            },
+                            "subscriptions": {
+                              "$ref": "#/definitions/AuterionAppYmlLoggingSubscriptions"
+                            }
+                          },
+                          "required": ["condition", "subscriptions"]
+                        }
+                      }
+                    },
+                    "required": ["when"]
+                  }
+                }
+              }
+            }
+          },
+          "parameters": {
+            "$ref": "#/definitions/AuterionAppYmlParameters"
+          }
+        },
+        "required": [
+          "app-author",
+          "app-name",
+          "app-version",
+          "auterion-api-version",
+          "auterion-app-base",
+          "services",
+          "target-platform"
+        ],
+        "title": "AuterionAppYml"
+      },
+      "AuterionAppYmlTargetPlatform": {
+        "type": "string"
+      },
+      "AuterionAppYmlServices": {
+        "type": "object",
+        "additionalProperties": false,
+        "patternProperties": {
+          "^[a-z0-9-_]+$": {
+            "$ref": "#/definitions/AuterionAppYmlService"
+          }
+        },
+        "title": "AuterionAppYmlServices",
+        "minProperties": 1
+      },
+      "AuterionAppYmlService": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "build": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string"
+          },
+          "build-args": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[a-zA-Z0-9-_]+$": {
+                "type": "string"
+              }
+            }
+          },
+          "http": {
+            "$ref": "#/definitions/AuterionAppYmlServiceHttps"
+          },
+          "ssh": {
+            "type": "boolean"
+          },
+          "networking": {
+            "$ref": "#/definitions/AuterionAppYmlNetworking"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "build"
+            ]
+          },
+          {
+            "required": [
+              "image"
+            ]
+          }
+        ],
+        "title": "AuterionAppYmlService"
+      },
+      "AuterionAppYmlServiceHttps": {
+        "type": "object",
+        "additionalProperties": false,
+        "patternProperties": {
+          "^[-a-zA-Z0-9()@:%_\\+.~#?&/=]+$": {
+            "$ref": "#/definitions/AuterionAppYmlServiceHttp"
+          }
+        },
+        "title": "AuterionAppYmlServiceHttps",
+        "minProperties": 1
+      },
+      "AuterionAppYmlServiceHttp": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "static-root": {
+            "type": "string"
+          },
+          "proxy": {
+            "$ref": "#/definitions/AuterionAppYmlServiceHttpProxy"
+          },
+          "function": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/AuterionAppYmlServiceHttpFunction"
+                }
+              },
+              {
+                "$ref": "#/definitions/AuterionAppYmlServiceHttpFunction"
+              }
+            ]
+          }
+        },
+        "title": "AuterionAppYmlServiceHttp",
+        "oneOf": [
+          {
+            "required": [
+              "static-root"
+            ]
+          },
+          {
+            "required": [
+              "proxy"
+            ]
+          }
+        ]
+      },
+      "AuterionAppYmlServiceHttpProxy": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "port": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "port"
+        ],
+        "title": "AuterionAppYmlServiceHttpProxy"
+      },
+      "AuterionAppYmlServiceHttpFunction": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/AuterionAppYmlServiceHttpUIFunction"
+          },
+          {
+            "$ref": "#/definitions/AuterionAppYmlServiceHttpCameraFunction"
+          },
+          {
+            "$ref": "#/definitions/AuterionAppYmlServiceHttpUnknownFunction"
+          }
+        ]
+      },
+      "AuterionAppYmlServiceHttpUIFunction": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "pattern": "^ui$"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "type"
+        ]
+      },
+      "AuterionAppYmlServiceHttpCameraFunction": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "pattern": "^camera$"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "AuterionAppYmlServiceHttpUnknownFunction": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "AuterionAppYmlLoggingSubscriptions": {
+        "type": "object",
+        "patternProperties": {
+          "^.*$": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_]+/[a-zA-Z0-9_]+$",
+                "description": "Message Type, e.g. 'geometry_msgs/Point'"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "pattern": "^[a-zA-Z0-9_]+/[a-zA-Z0-9_]+$",
+                    "description": "Message Type, e.g. 'geometry_msgs/Point'"
+                  },
+                  "max_rate_hz": {
+                    "type": "number"
+                  },
+                  "dds_name_prefix": {
+                    "type": "string",
+                    "default": "rt"
+                  }
+                },
+                "required": ["type"]
+              }
+            ]
+          }
+        }
+      },
+      "AuterionAppYmlNetworking": {
+        "type": "object",
+        "properties": {
+          "subnet": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "externalIP": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        },
+        "required": ["subnet"]
+      },
+      "AuterionAppYmlParameters": {
+        "type": "array",
+        "description": "Parameter definitions",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9-_\\.]+$",
+              "description": "The parameter name (without <app_author>.<app_name> prefix)"
+            },
+            "default": {
+              "description": "Default value, matching the type specified in the 'type' field"
+            },
+            "type": {
+              "type": "string",
+              "enum": [ "bool", "int64", "float64", "string", "byte[]", "bool[]", "int64[]", "float64[]", "string[]" ]
+            },
+            "description": {
+              "type": "object",
+              "properties": {
+                "short": {
+                  "type": "string",
+                  "pattern": "[^\\n]+",
+                  "description": "Short description (one line)"
+                },
+                "long": {
+                  "type": "string",
+                  "description": "Long description (can be multiple lines)"
+                }
+              },
+              "required": ["short"],
+              "additionalProperties": false
+            },
+            "volatile": {
+              "type": "boolean",
+              "description": "if true, it can dynamically be changed by an application, and should not be transferred to other vehicles.\nCan be used for example for calibration parameters",
+              "default": false
+            },
+            "decimal": {
+              "type": "integer",
+              "description": "Optional number of decimal places to display (only for float64)"
+            },
+            "increment": {
+              "type": "number",
+              "description": "Optional increment step size (for a UI) (only for float64)"
+            },
+            "unit": {
+              "type": "string",
+              "description": "Optional unit (only for int64 or float64)"
+            },
+            "enum_values": {
+              "type": "object",
+              "description": "Enum values, only applicable if the type is int64",
+              "patternProperties": {
+                "^[0-9]+$": {
+                  "type": "string"
+                }
+              }
+            },
+            "readonly": {
+              "type": "boolean",
+              "description": "if true, a user cannot modify the value (but an application or an OEM layer still can)"
+            },
+            "visibility": {
+              "type": "string",
+              "enum": [ "visible", "advanced", "hidden" ],
+              "description": "The visibility of the parameter for user-facing configuration interfaces"
+            },
+            "reset_on_update": {
+              "type": "boolean",
+              "description": "if true, a user-set value is reset on an update",
+              "default": false
+            },
+            "min": {
+              "type": "number",
+              "description": "Optional minimum value (only for int64 or float64). This is only enforced in the UI."
+            },
+            "max": {
+              "type": "number",
+              "description": "Optional maximum value (only for int64 or float64). This is only enforced in the UI."
+            }
+          },
+          "required": [ "name", "default", "type", "description" ],
+          "additionalProperties": false
+        },
+        "title": "AuterionAppYmlParameters"
+      }
+    }
+  }
