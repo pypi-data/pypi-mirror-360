@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+// See https://docs.microsoft.com/en-us/aspnet/core/grpc/versioning?view=aspnetcore-6.0 for what consitutes a breaking change
+package ansys.api.additive.v0.materials;
+
+option csharp_namespace = "Ansys.Api.Additive.Materials";
+
+import "ansys/api/additive/v0/additive_domain.proto";
+import "google/protobuf/empty.proto";
+
+service MaterialsService {
+
+    rpc AddMaterial(AddMaterialRequest) returns (AddMaterialResponse);
+
+    rpc RemoveMaterial(RemoveMaterialRequest) returns (google.protobuf.Empty);
+
+    rpc GetMaterialsList (google.protobuf.Empty) returns (GetMaterialsListResponse);
+
+    rpc GetMaterial (GetMaterialRequest) returns (AdditiveMaterial);
+}
+
+message AddMaterialRequest {
+    string id = 1;
+    AdditiveMaterial material = 2;
+}
+
+message AddMaterialResponse {
+    string id = 1;
+    oneof ResponseType {
+        string error = 2;
+        AdditiveMaterial material = 3;
+    }
+}
+
+message RemoveMaterialRequest {
+    string name = 1;
+}
+
+message GetMaterialRequest {
+    string name = 1;
+}
+
+message GetMaterialsListResponse {
+    repeated string names = 1;
+}

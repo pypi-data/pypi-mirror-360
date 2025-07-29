@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+// See https://docs.microsoft.com/en-us/aspnet/core/grpc/versioning?view=aspnetcore-6.0 for what consitutes a breaking change
+package ansys.api.additive.v0.settings;
+
+option csharp_namespace = "Ansys.Api.Additive.Settings";
+
+import "google/protobuf/empty.proto";
+
+service SettingsService {
+    rpc ApplySettings(SettingsRequest) returns (SettingsResponse);
+    rpc ListSettings(google.protobuf.Empty) returns (ListSettingsResponse);
+}
+
+message Setting {
+    string key = 1;
+    string value = 2;
+}
+
+message SettingsRequest {
+    repeated Setting settings = 1;
+}
+
+message SettingsResponse {
+    repeated string messages = 1;
+}
+
+message ListSettingsResponse {
+    repeated Setting settings = 1;
+}
