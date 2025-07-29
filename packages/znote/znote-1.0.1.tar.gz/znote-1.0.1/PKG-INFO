@@ -1,0 +1,143 @@
+Metadata-Version: 2.4
+Name: znote
+Version: 1.0.1
+Summary: Vault de prise de note
+Author: 
+License: mit
+Platform: ALL
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: chardet
+Requires-Dist: pyotp
+Requires-Dist: pycryptodome
+Requires-Dist: zpp_color
+Requires-Dist: zpp_args
+Requires-Dist: zpp_ManagedFile
+Requires-Dist: pony
+Requires-Dist: prompt_toolkit
+Requires-Dist: dill
+Requires-Dist: impmagic
+Requires-Dist: pyyaml
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: keywords
+Dynamic: license
+Dynamic: license-file
+Dynamic: platform
+Dynamic: requires-dist
+Dynamic: summary
+
+# znote : Client de prise de notes sÃ©curisÃ©
+
+znote est une application de prise de notes en ligne de commande fonctionnant sur un modÃ¨le client-serveur. L'accent est mis sur la sÃ©curitÃ©, avec un chiffrement de bout-en-bout des communications et des donnÃ©es, garantissant que seul l'utilisateur peut accÃ©der au contenu de ses notes.
+
+
+## FonctionnalitÃ©s
+
+- **SÃ©curitÃ© RenforcÃ©e** : Chiffrement de bout-en-bout (E2EE) avec une architecture hybride RSA-4096/AES-256.
+- **Signatures NumÃ©riques** : Chaque message est signÃ© pour garantir son intÃ©gritÃ© et son authenticitÃ©.
+- **Gestion ComplÃ¨te des Notes** : CrÃ©ez, Ã©ditez, consultez, listez et supprimez des notes.
+- **Ã‰diteur IntÃ©grÃ©** : Un Ã©diteur de texte simple est intÃ©grÃ© directement dans le terminal pour une expÃ©rience fluide.
+- **Workspaces (Espaces de travail)** : Organisez vos notes dans des espaces de travail distincts.
+- **Synchronisation de Fichiers** : Envoyez (`push`) un fichier local pour crÃ©er une note, ou tÃ©lÃ©chargez (`pull`) une note dans un fichier.
+- **Protection par Mot de Passe** : ProtÃ©gez l'accÃ¨s Ã  des notes spÃ©cifiques avec un mot de passe.
+- **Recherche** : Retrouvez du contenu rapidement grÃ¢ce Ã  une fonction de recherche dans toutes vos notes.
+- **Stockage en base** : Pour l'instant les notes sont stockÃ©es en clair dans la base. A voir pour rajouter le support du chiffrement cÃ´tÃ© serveur.
+
+## Installation
+
+Assurez-vous d'avoir Python et `pip` installÃ©s. Le projet est disponible sur Pypi.
+
+```bash
+pip install zpp_note
+```
+
+## CÃ´tÃ© serveur
+
+Le serveur est le cÅ“ur de l'application. Il gÃ¨re les comptes utilisateurs, stocke les donnÃ©es chiffrÃ©es et rÃ©pond aux requÃªtes des clients.
+
+### Premier Lancement
+
+1.  **Initialiser le serveur** : Cette commande vous guidera pour crÃ©er le fichier de configuration `config.toml`.
+    ```bash
+    znote_server --init
+    ```
+
+2.  **CrÃ©er un utilisateur** :
+    ```bash
+    znote_server --create_user --username mon_user --password "mon_mot_de_passe"
+    ```
+
+3.  **Lancer le serveur** :
+    ```bash
+    znote_server
+    ```
+
+### Utilisation du Serveur
+
+**Lancement du serveur :**
+Pour dÃ©marrer le serveur en mode normal, exÃ©cutez simplement :
+```bash
+znote_server
+```
+Le serveur tournera en arriÃ¨re-plan, en attente de connexions.
+
+### Options de Lancement du Serveur
+
+| Option              | Description                                                                                             | Exemple d'utilisation                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `--init`            | Lance un assistant interactif pour configurer le fichier `config.toml` du serveur.                      | `znote_server --init`                                                      |
+| `--config <chemin>` | SpÃ©cifie un chemin personnalisÃ© pour le fichier de configuration.                                       | `znote_server --config /etc/znote/server.toml`                         |
+| `--create_user`     | Un drapeau pour activer la crÃ©ation d'un nouvel utilisateur. Doit Ãªtre utilisÃ© avec `username` et `password`. | `znote_server --create_user --username admin --password "secret"`      |
+| `--username <nom>`  | SpÃ©cifie le nom d'utilisateur pour la crÃ©ation.                                                         | `... --username admin`                                                 |
+| `--password <mdp>`  | SpÃ©cifie le mot de passe pour la crÃ©ation.                                                              | `... --password "un_mot_de_passe_solide"`                              |
+
+
+## CÃ´tÃ© client
+
+Le client est l'interface en ligne de commande pour interagir avec vos notes.
+
+### Premier Lancement
+
+1.  **Initialiser le client** (dans un autre terminal) :
+    ```bash
+    znote --init
+    ```
+    Assurez-vous que les informations du serveur (host, port) correspondent.
+
+2.  **Connectez-vous** :
+    ```bash
+    znote login
+    ```
+
+### Options GÃ©nÃ©rales du Client
+
+| Option              | Description                                                                    | Exemple d'utilisation                         |
+| ------------------- | ------------------------------------------------------------------------------ | -------------------------------------------- |
+| `--init`            | Lance un assistant interactif pour configurer le `config.toml` du client.      | `znote --init`                               |
+| `--config <chemin>` | SpÃ©cifie un chemin personnalisÃ© pour le fichier de configuration.              | `znote --config ~/.znote_perso.toml`         |
+| `--info`            | Affiche les informations de connexion de base (host, port) sans se connecter.  | `znote --info`                               |
+
+### Commandes du Client
+
+La syntaxe gÃ©nÃ©rale est `znote <commande> [arguments...]`.
+
+| Commande                       | Description                                                                                                                            | Exemple d'utilisation                                                  |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `login`                        | Ouvre une session sÃ©curisÃ©e avec le serveur. Demande le nom d'utilisateur et le mot de passe.                                          | `znote login`                                                          |
+| `logout`                       | Met fin Ã  la session actuelle et invalide le token.                                                                                    | `znote logout`                                                         |
+| `status`                       | Affiche l'Ã©tat de la connexion, le workspace actif et le nombre de notes.                                                              | `znote status`                                                         |
+| `list`                         | Liste toutes les notes dans le workspace actuel.                                                                                       | `znote list`                                                           |
+| `add <nom_note>`               | CrÃ©e une nouvelle note et ouvre l'Ã©diteur de texte intÃ©grÃ©.                                                                            | `znote add "Ma premiÃ¨re note"`                                         |
+| `edit <nom_note>`              | Ouvre une note existante dans l'Ã©diteur de texte.                                                                                      | `znote edit "Ma premiÃ¨re note"`                                        |
+| `view <nom_note>`              | Affiche le contenu d'une note directement dans le terminal.                                                                            | `znote view "Courses Ã  faire"`                                         |
+| `remove <nom_note>`            | Supprime une note de maniÃ¨re permanente.                                                                                               | `znote remove "Vieille note"`                                          |
+| `info <nom_note>`              | Affiche les mÃ©tadonnÃ©es d'une note (date de crÃ©ation/modification, crÃ©ateur, etc.).                                                    | `znote info "Ma premiÃ¨re note"`                                        |
+| `find "<pattern>"`             | Recherche un mot ou une phrase dans le contenu de toutes les notes du workspace.                                                       | `znote find "rÃ©union importante"`                                      |
+| `protect <nom_note>`           | DÃ©finit un mot de passe pour une note spÃ©cifique. L'accÃ¨s Ã  la note nÃ©cessitera ce mot de passe.                                        | `znote protect`                                              |
+| `pull <nom_note> [fichier]`    | TÃ©lÃ©charge le contenu d'une note et le sauvegarde dans un fichier local. Si le nom de fichier n'est pas donnÃ©, il est dÃ©duit du titre. | `znote pull "Rapport" rapport.txt`                                     |
+| `push <fichier> [nom_note]`    | Envoie le contenu d'un fichier local pour crÃ©er une nouvelle note. Si le nom de la note n'est pas donnÃ©, il est dÃ©duit du nom de fichier. | `znote push rapport_final.md "Rapport Final"`                          |
+| `workspace`                    | Affiche la liste des workspaces disponibles et indique celui qui est actif.                                                            | `znote workspace`                                                      |
+| `workspace <nom_ws>`           | Change le workspace actif.                                                                                                             | `znote workspace "Projets"`                                            |
+| `workspace <nom_ws> --create`  | CrÃ©e un nouveau workspace.                                                                                                             | `znote workspace "Archives" --create`                                  |
+| `workspace <nom_ws> --remove`  | Supprime un workspace.                                                                                                                 | `znote workspace "Archives" --remove`                                  |
