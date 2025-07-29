@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools >= 43.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+addopts = "-p no:warnings"
+console_output_style = "classic"
+log_level = "INFO"
+log_format = '[%(filename)-22s:%(lineno)4s] %(message)s'
+log_cli = "true"
+log_file = "exam_terminal_pytest.log"
+log_file_format = '[%(filename)-22s:%(lineno)4s] %(message)s'
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.ruff]
+line-length = 119
+target-version = "py39"
+
+# Only specify exclusions beyond ruff's smart defaults
+exclude = [
+    "dev_things",
+    "docs",
+    "setup.py",
+    "**/__main__.py",
+]
+
+[tool.ruff.lint]
+# Enable comprehensive rule sets - ruff's defaults are already good
+select = [
+    "E", "W",    # pycodestyle
+    "F",         # Pyflakes
+    "I",         # isort
+    "B",         # flake8-bugbear
+    "C4",        # flake8-comprehensions
+    "UP",        # pyupgrade
+    "C90",       # mccabe
+    "PL",        # pylint rules
+    "RUF",       # ruff-specific
+]
+
+# Only ignore what conflicts with your current codebase
+ignore = [
+    "E501",      # Line too long
+    "PLR0913",   # Too many arguments
+    "PLR0915",   # Too many statements
+    "PLR2004",   # Magic values
+    "T201",      # print statements (CLI tool needs these)
+    "RUF012",    # Mutable class attributes ClassVar annotation
+    "B006",      # Mutable default arguments (fix manually when convenient)
+    "E712",      # Comparison to True/False (can be auto-fixed)
+    "F403",      # Undefined iport names
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+max-args = 5
+max-statements = 50
+max-branches = 12
+
+[tool.ruff.lint.isort]
+known-first-party = ["exam_terminal"]
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint.per-file-ignores]
+# Only essential per-file ignores
+"tests/**" = ["PLR2004", "S101"]  # Allow magic values and asserts in tests
+"**/__init__.py" = ["F401"]       # Allow unused imports
+"setup.py" = ["ALL"]              # Ignore setup.py entirely
+"dev_stuff/**" = ["ALL"]
+
+# UI drawing functions - complex terminal interface logic
+"exam_terminal/ExamTerminal.py" = ["C901", "PLR0912"]  # Allow complex UI functions
+
+# Utility functions - complex logic with many return paths
+"exam_terminal/utility.py" = ["PLR0911"]  # Allow many return statements
