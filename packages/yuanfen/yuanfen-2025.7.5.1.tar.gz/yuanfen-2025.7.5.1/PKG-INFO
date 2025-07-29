@@ -1,0 +1,106 @@
+Metadata-Version: 2.3
+Name: yuanfen
+Version: 2025.7.5.1
+Summary: Yuanfen Python Library
+License: MIT
+Author: Bean
+Author-email: bean@yuanfen.net
+Requires-Python: >=3.9
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python
+Requires-Dist: chardet (>=5.2.0,<6.0.0)
+Requires-Dist: pydantic (>=2.10.6,<3.0.0)
+Requires-Dist: pytz (>=2025.1,<2026.0)
+Requires-Dist: pyyaml (>=6.0.2,<7.0.0)
+Requires-Dist: redis (>=6.2.0,<7.0.0)
+Requires-Dist: requests (>=2.32.3,<3.0.0)
+Requires-Dist: watchdog (>=6.0.0,<7.0.0)
+Project-URL: Repository, https://github.com/YuanfenNet/yf-lib-py
+Description-Content-Type: text/markdown
+
+# Yuanfen Python Library
+
+## build && upload
+
+```bash
+$ poetry build
+$ poetry publish
+```
+
+## Config
+
+Support .json, .yaml, .ini files.
+Support auto reloading while config file changes.
+
+```python
+config_json = Config("configs/config.json")
+config_yaml = Config("configs/config.yaml")
+config_ini = Config("configs/config.ini")
+
+print(config_ini["app"]["config_a"])
+print(config_yaml["movie"]["name"])
+```
+
+## Logger
+
+Stream and TimedRotatingFile handlers for logging.
+
+```python
+logger = Logger(name="my-logger", level=logging.INFO)
+
+logger.debug("debug log")
+logger.info("info log")
+logger.warning("warning log")
+logger.error("error log")
+```
+
+## BaseResponse, SuccessResponse, ErrorResponse
+
+Response models for fastapi.
+
+```python
+import uvicorn
+from fastapi import FastAPI
+from yuanfen import SuccessResponse
+
+app = FastAPI()
+
+
+@app.get("/health-check")
+def health_check():
+    return SuccessResponse(data="OK")
+
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+```
+
+## time
+
+```python
+from yuanfen import time
+
+time.format(dt=datetime.now(), format="%Y-%m-%dT%H:%M:%S")
+time.parse(dt_string="2023-11-25T10:51:19", format="%Y-%m-%dT%H:%M:%S")
+time.format_duration(90)
+```
+
+## GroupRobot
+
+Webhook group robot
+
+```python
+robot = GroupRobot(webhook="your robot's webhook path")
+robot.send(data)
+```
+
+## hash
+
+```python
+from yuanfen import hash
+get_file_hash("path/to/file")
+```
+
