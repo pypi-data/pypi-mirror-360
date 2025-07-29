@@ -1,0 +1,119 @@
+{% for sg in resources -%}
+resource "aws_security_group" "sg_{{ sg.GroupId | replace('-', '_') }}" {
+  name        = "{{ sg.GroupName }}"
+  description = "{{ sg.Description | replace('"', '\\"') }}"
+  vpc_id      = "{{ sg.VpcId }}"
+
+  {% for rule in sg.get('IpPermissions', []) -%}
+  ingress {
+    {%- if rule.IpProtocol == '-1' %}
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    {%- else %}
+    from_port   = {{ rule.get('FromPort', 0) }}
+    to_port     = {{ rule.get('ToPort', 65535) }}
+    protocol    = "{{ rule.IpProtocol }}"
+    {%- endif %}
+    
+    {% if rule.get('IpRanges') -%}
+    cidr_blocks = [
+      {%- for ip_range in rule.get('IpRanges', []) %}
+      "{{ ip_range.CidrIp }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    
+    {% if rule.get('Ipv6Ranges') -%}
+    ipv6_cidr_blocks = [
+      {%- for ip_range in rule.get('Ipv6Ranges', []) %}
+      "{{ ip_range.CidrIpv6 }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    
+    {% if rule.get('PrefixListIds') -%}
+    prefix_list_ids = [
+      {%- for prefix_list in rule.get('PrefixListIds', []) %}
+      "{{ prefix_list.PrefixListId }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    
+    {% if rule.get('UserIdGroupPairs') -%}
+    security_groups = [
+      {%- for group in rule.get('UserIdGroupPairs', []) %}
+      "{{ group.GroupId }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    
+    {% if rule.get('IpPermissions') and rule.IpPermissions[0].get('Description') -%}
+    description = "{{ rule.IpPermissions[0].Description | replace('"', '\\"') }}"
+    {% endif -%}
+  }
+  {% endfor -%}
+
+  {% for rule in sg.get('IpPermissionsEgress', []) -%}
+  egress {
+    {%- if rule.IpProtocol == '-1' %}
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    {%- else %}
+    from_port   = {{ rule.get('FromPort', 0) }}
+    to_port     = {{ rule.get('ToPort', 65535) }}
+    protocol    = "{{ rule.IpProtocol }}"
+    {%- endif %}
+    
+    {% if rule.get('IpRanges') -%}
+    cidr_blocks = [
+      {%- for ip_range in rule.get('IpRanges', []) %}
+      "{{ ip_range.CidrIp }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    
+    {% if rule.get('Ipv6Ranges') -%}
+    ipv6_cidr_blocks = [
+      {%- for ip_range in rule.get('Ipv6Ranges', []) %}
+      "{{ ip_range.CidrIpv6 }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    
+    {% if rule.get('PrefixListIds') -%}
+    prefix_list_ids = [
+      {%- for prefix_list in rule.get('PrefixListIds', []) %}
+      "{{ prefix_list.PrefixListId }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    
+    {% if rule.get('UserIdGroupPairs') -%}
+    security_groups = [
+      {%- for group in rule.get('UserIdGroupPairs', []) %}
+      "{{ group.GroupId }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    
+    {% if rule.get('IpPermissionsEgress') and rule.IpPermissionsEgress[0].get('Description') -%}
+    description = "{{ rule.IpPermissionsEgress[0].Description | replace('"', '\\"') }}"
+    {% endif -%}
+  }
+  {% endfor -%}
+
+  {% if sg.get('Tags') -%}
+  tags = {
+    {%- for tag in sg.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value | replace('"', '\\"') }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {% endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif %}
+{%- endfor %}

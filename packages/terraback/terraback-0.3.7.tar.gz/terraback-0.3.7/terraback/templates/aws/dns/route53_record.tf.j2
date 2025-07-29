@@ -1,0 +1,75 @@
+{% for record in resources -%}
+resource "aws_route53_record" "record_{{ record.ZoneId | replace('/', '_') }}_{{ record.Name | replace('.', '_') | replace('*', 'star') | replace('-', '_') | replace('/', '_') | lower }}_{{ record.Type | lower }}" {
+  zone_id = "{{ record.ZoneId }}"
+  name    = "{{ record.Name }}"
+  type    = "{{ record.Type }}"
+
+  {% if record.get('TTL') -%}
+  ttl     = {{ record.TTL }}
+  {% endif -%}
+
+  {% if record.get('ResourceRecords') -%}
+  records = [
+    {%- for rec_value in record.ResourceRecords %}
+    {{ rec_value.Value | tojson }}{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {% endif -%}
+
+  {% if record.get('AliasTarget') -%}
+  alias {
+    name                   = "{{ record.AliasTarget.DNSName }}"
+    zone_id                = "{{ record.AliasTarget.HostedZoneId }}"
+    evaluate_target_health = {{ record.AliasTarget.EvaluateTargetHealth | lower }}
+  }
+  {% endif -%}
+
+  {% if record.get('SetIdentifier') -%}
+  set_identifier = "{{ record.SetIdentifier }}"
+  {% endif -%}
+
+  {% if record.get('Weight') is defined and record.Weight is not none -%}
+  weighted_routing_policy {
+    weight = {{ record.Weight }}
+  }
+  {% endif -%}
+
+  {% if record.get('Region') -%}
+  latency_routing_policy {
+    region = "{{ record.Region }}"
+  }
+  {% endif -%}
+
+  {% if record.get('GeoLocation') -%}
+  geolocation_routing_policy {
+    {% if record.GeoLocation.get('ContinentCode') -%}
+    continent = "{{ record.GeoLocation.ContinentCode }}"
+    {% endif -%}
+    {% if record.GeoLocation.get('CountryCode') -%}
+    country = "{{ record.GeoLocation.CountryCode }}"
+    {% endif -%}
+    {% if record.GeoLocation.get('SubdivisionCode') -%}
+    subdivision = "{{ record.GeoLocation.SubdivisionCode }}"
+    {% endif -%}
+  }
+  {% endif -%}
+
+  {% if record.get('Failover') -%}
+  failover_routing_policy {
+    type = "{{ record.Failover }}"
+  }
+  {% endif -%}
+
+  {% if record.get('MultiValueAnswer') -%}
+  multivalue_answer_routing_policy = {{ record.MultiValueAnswer | lower }}
+  {% endif -%}
+
+  {% if record.get('HealthCheckId') -%}
+  health_check_id = "{{ record.HealthCheckId }}"
+  {% endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif %}
+{%- endfor %}
