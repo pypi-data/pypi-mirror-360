@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pdf2md-mcp"
+version = "0.1.0"
+description = "MCP server for converting PDF files to Markdown using AI sampling"
+authors = [
+    {name = "Gavin Huang", email = "shuminghuang@gmail.com"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+keywords = ["mcp", "pdf", "markdown", "conversion", "ai"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "fastmcp>=2.10.1",
+    "httpx>=0.25.0",
+    "aiofiles>=23.0.0",
+    "pathlib",
+    "typing-extensions>=4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/gavinhuang/pdf2md-mcp"
+Repository = "https://github.com/gavinhuang/pdf2md-mcp.git"
+Issues = "https://github.com/gavinhuang/pdf2md-mcp/issues"
+
+[project.scripts]
+pdf2md-mcp = "pdf2md_mcp.server:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pdf2md_mcp*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
