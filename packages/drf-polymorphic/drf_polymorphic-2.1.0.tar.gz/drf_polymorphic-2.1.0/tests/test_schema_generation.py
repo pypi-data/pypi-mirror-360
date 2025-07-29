@@ -1,0 +1,191 @@
+from django.db import models
+
+from drf_spectacular.settings import patched_settings
+from rest_framework import serializers, status, views
+from rest_framework.reverse import reverse
+
+from drf_polymorphic.serializers import PolymorphicSerializer
+
+from . import assert_schema
+from .schema import generate_schema
+
+
+def test_get_schema(api_client):
+    url = reverse("schema")
+
+    response = api_client.get(url)
+
+    assert response.status_code == status.HTTP_200_OK
+
+    response_schema = response.content.decode()
+
+    assert_schema(response_schema, "schema.yaml")
+
+
+def test_polymorphic_extension_component_names():
+    class Dummy(PolymorphicSerializer):
+        object_type = serializers.ChoiceField(choices=["foo", "bar"])
+        serializer_mapping = {}
+
+    class XView(views.APIView):
+        serializer_class = Dummy
+
+        def get(self, *args, **kwargs): ...
+
+    schema = generate_schema("x", view=XView)
+
+    assert "Dummy" in schema["components"]["schemas"]
+    assert schema["components"]["schemas"]["Dummy"] == {
+        "oneOf": [],
+        "discriminator": {"propertyName": "object_type", "mapping": {}},
+    }
+
+
+def test_polymorphic_extension_alternative_discriminator():
+    class DummySerializer(PolymorphicSerializer):
+        type = serializers.ChoiceField(choices=["foo", "bar"])
+        serializer_mapping = {}
+        discriminator_field = "type"
+
+    class XView(views.APIView):
+        serializer_class = DummySerializer
+
+        def get(self, *args, **kwargs): ...
+
+    schema = generate_schema("x", view=XView)
+
+    assert "Dummy" in schema["components"]["schemas"]
+    assert schema["components"]["schemas"]["Dummy"] == {
+        "oneOf": [],
+        "discriminator": {"propertyName": "type", "mapping": {}},
+    }
+
+
+def test_polymorphic_extension_generic_subserializer(no_warnings):
+    class Nested(serializers.Serializer):
+        pass
+
+    class DummySerializer(PolymorphicSerializer):
+        object_type = serializers.ChoiceField(choices=["foo", "bar"])
+        # note this raises a warning and it's better to use None instead or provide an
+        # explicit subclasses serializer with a proper name
+        serializer_mapping = {"foo": Nested}
+
+    class XView(views.APIView):
+        serializer_class = DummySerializer
+
+        def get(self, *args, **kwargs): ...
+
+    schema = generate_schema("x", view=XView)
+
+    schemas = schema["components"]["schemas"]
+    assert "Dummy" in schemas
+    assert "GenericObject" in schemas
+
+    assert schemas["GenericObject"] == {
+        "type": "object",
+        "description": "Generic object",
+        "additionalProperties": True,
+    }
+
+
+def test_multiple_occurences_of_same_combined_serializer():
+    class Nested(serializers.Serializer):
+        name = serializers.CharField()
+
+    class DummySerializer(PolymorphicSerializer):
+        object_type = serializers.ChoiceField(choices=["foo", "bar"])
+        serializer_mapping = {"foo": Nested, "bar": Nested}
+
+    class XView(views.APIView):
+        serializer_class = DummySerializer
+
+        def get(self, *args, **kwargs): ...
+
+    schema = generate_schema("x", view=XView)
+
+    schemas = schema["components"]["schemas"]
+    assert "Dummy" in schemas
+    assert len(schemas["Dummy"]["oneOf"]) == 1
+
+
+def test_allow_omitting_mapped_serializer():
+    # not every value is guaranteed to add extra properties. Allow skipping those
+    # with ``None``.
+    class DummySerializer(PolymorphicSerializer):
+        object_type = serializers.ChoiceField(choices=["foo", "bar"])
+        serializer_mapping = {"foo": None}
+
+    class XView(views.APIView):
+        serializer_class = DummySerializer
+
+        def get(self, *args, **kwargs): ...
+
+    schema = generate_schema("x", view=XView)
+
+    schemas = schema["components"]["schemas"]
+    assert "Dummy" in schemas
+    assert schemas["Dummy"] == {
+        "oneOf": [{"$ref": "#/components/schemas/DummyShared"}],
+        "discriminator": {
+            "propertyName": "object_type",
+            "mapping": {"foo": "#/components/schemas/DummyShared"},
+        },
+    }
+
+
+def test_use_textchoices_for_mapping_keys():
+    class MyChoices(models.TextChoices):
+        first = "one", "First"
+        second = "two", "Second"
+
+    class DummySerializer(PolymorphicSerializer):
+        choice = serializers.ChoiceField(choices=MyChoices.choices)
+        serializer_mapping = {
+            MyChoices.first: None,
+            MyChoices.second: None,
+        }
+
+    class XView(views.APIView):
+        serializer_class = DummySerializer
+
+        def get(self, *args, **kwargs): ...
+
+    schema = generate_schema("x", view=XView)
+
+    schemas = schema["components"]["schemas"]
+    assert "Dummy" in schemas
+
+    assert "one" in schemas["Dummy"]["discriminator"]["mapping"]
+    assert "two" in schemas["Dummy"]["discriminator"]["mapping"]
+    mapping_keys = schemas["Dummy"]["discriminator"]["mapping"].keys()
+    # must be cast to string so that YAML & JSON can properly serialize this
+    for key in mapping_keys:
+        assert not isinstance(key, MyChoices)
+
+
+@patched_settings(
+    {
+        "POSTPROCESSING_HOOKS": [
+            "drf_spectacular.hooks.postprocess_schema_enums",
+            "drf_spectacular.contrib.djangorestframework_camel_case."
+            "camelize_serializer_fields",
+        ],
+    }
+)
+def test_support_for_drf_camelcase():
+    class Dummy(PolymorphicSerializer):
+        camel_case = serializers.ChoiceField(choices=["foo", "bar"])
+        serializer_mapping = {}
+        discriminator_field = "camel_case"
+
+    class XView(views.APIView):
+        serializer_class = Dummy
+
+        def get(self, *args, **kwargs): ...
+
+    schema = generate_schema("x", view=XView)
+
+    assert "Dummy" in schema["components"]["schemas"]
+    discriminator = schema["components"]["schemas"]["Dummy"]["discriminator"]
+    assert discriminator["propertyName"] == "camelCase"
