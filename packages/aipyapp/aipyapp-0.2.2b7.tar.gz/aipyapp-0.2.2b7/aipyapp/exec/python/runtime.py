@@ -1,0 +1,91 @@
+#! /usr/bin/env python3
+# -*- coding: utf-8 -*-
+import sys
+import subprocess
+from abc import ABC, abstractmethod
+from typing import Any
+
+from loguru import logger
+
+class PythonRuntime(ABC):
+    def __init__(self, envs=None):
+        self.envs = envs or {}
+        self.packages = set()
+        self.session = {}
+        self.state = None
+        self.previous_state = None
+        self.block = None
+        self.log = logger.bind(src='runtime')
+
+    def start_block(self, block):
+        """开始一个新的代码块执行"""
+        self.block = block
+        self.previous_state = self.state
+        self.state = {}
+
+    def set_state(self, success: bool, **kwargs) -> None:
+        """设置当前代码块的执行状态"""
+        self.state['success'] = success
+        self.state.update(kwargs)
+
+    def get_previous_state(self, key: str) -> Any:
+        """获取上一个代码块的状态值"""
+        return self.previous_state.get(key)
+    
+    def set_persistent_state(self, **kwargs) -> None:
+        """设置在整个会话中持久化的状态值"""
+        self.session.update(kwargs)
+        self.block.add_dep('set_state', list(kwargs.keys()))
+
+    def get_persistent_state(self, key: str) -> Any:
+        """获取会话中保存的持久化的状态值"""
+        self.block.add_dep('get_state', key)
+        return self.session.get(key)
+
+    def set_env(self, name, value, desc):
+        self.envs[name] = (value, desc)
+
+    def ensure_packages(self, *packages, upgrade=False, quiet=False):
+        if not packages:
+            return True
+
+        packages = list(set(packages) - self.packages)
+        if not packages:
+            return True
+        
+        cmd = [sys.executable, "-m", "pip", "install"]
+        if upgrade:
+            cmd.append("--upgrade")
+        if quiet:
+            cmd.append("-q")
+        cmd.extend(packages)
+
+        try:
+            subprocess.check_call(cmd)
+            self.packages.update(packages)
+            return True
+        except subprocess.CalledProcessError:
+            self.log.error("依赖安装失败: {}", " ".join(packages))
+        
+        return False
+
+    def ensure_requirements(self, path="requirements.txt", **kwargs):
+        with open(path) as f:
+            reqs = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+        return self.ensure_packages(*reqs, **kwargs)
+    
+    @abstractmethod
+    def install_packages(self, *packages: str):
+        pass
+
+    @abstractmethod
+    def get_env(self, name: str, default: Any = None, *, desc: str = None) -> Any:
+        pass
+    
+    @abstractmethod
+    def display(self, path: str = None, url: str = None) -> None:
+        pass
+
+    @abstractmethod
+    def input(self, prompt: str = '') -> str:
+        pass
