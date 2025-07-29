@@ -1,0 +1,83 @@
+from __future__ import annotations
+
+import typing as t
+
+from viur.core import errors
+
+if t.TYPE_CHECKING:
+    from viur.shop.services import Hook
+
+_sentinel = object()
+
+
+class ViURShopException(Exception):
+    ...
+
+
+class InvalidStateError(ViURShopException):
+    ...
+
+
+class ConfigurationError(ViURShopException):
+    ...
+
+
+class IllegalOperationError(ViURShopException):
+    ...
+
+
+class DispatchError(ViURShopException):
+    def __init__(self, msg: t.Any, hook: Hook, *args: t.Any) -> None:
+        super().__init__(msg, *args)
+        self.hook: hook = hook
+
+
+class ViURShopHttpException(errors.HTTPException):
+    ...
+
+
+# Use custom (unassigned) error codes, starting at 460
+# see https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
+
+class InvalidArgumentException(ViURShopHttpException):
+    def __init__(
+        self,
+        argument_name: str,
+        argument_value: t.Any = _sentinel,
+        descr_appendix: str = "",
+    ):
+        self.argument_name = argument_name
+        self.argument_value = argument_value
+        self.descr_appendix = descr_appendix
+        msg = f"Invalid value"
+        if argument_value is not _sentinel:
+            msg += f" '{argument_value}'"
+        msg += f" for parameter {argument_name}"
+        if descr_appendix:
+            msg += f". {descr_appendix}"
+        super().__init__(
+            status=460,
+            name="Invalid Parameter",
+            descr=msg,
+        )
+
+
+class InvalidKeyException(ViURShopHttpException):
+    # TODO: is this class really necessary or is InvalidArgumentException enough?
+    def __init__(self, key: str, argument_name: str = "key"):
+        self.key = key
+        self.argument_name = argument_name
+        super().__init__(
+            status=461, name="Invalid Parameter",
+            descr=f"The provided key '{key}' (parameter {argument_name}) is not a valid db.Key"
+        )
+
+
+class TooManyArgumentsException(ViURShopHttpException):
+    def __init__(self, func_nam: str, *argument_name: str):
+        self.func_nam = func_nam
+        self.argument_names: tuple[str, ...] = argument_name
+        super().__init__(
+            status=462, name="Too Many Arguments",
+            descr=f"{func_nam} got too many (unknown) arguments: {', '.join(argument_name)}"
+        )
