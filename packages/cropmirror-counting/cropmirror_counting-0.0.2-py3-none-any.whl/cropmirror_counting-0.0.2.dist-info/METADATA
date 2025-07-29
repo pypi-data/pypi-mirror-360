@@ -1,0 +1,76 @@
+Metadata-Version: 2.3
+Name: cropmirror-counting
+Version: 0.0.2
+Summary: 云稷识别算法库
+License: MIT
+Author: Long.liu
+Requires-Python: >=3.11,<4
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Classifier: License :: OSI Approved :: MIT License
+Requires-Dist: GDAL
+Requires-Dist: Pillow (>=11.2.1)
+Requires-Dist: Shapely (>=2.1.0)
+Requires-Dist: chardet (>=5.2.0)
+Requires-Dist: fiona (>=1.10.1)
+Requires-Dist: loguru (>=0.7.3)
+Requires-Dist: matplotlib (>=3.10.1)
+Requires-Dist: numpy (>=2.2.5)
+Requires-Dist: rasterio
+Requires-Dist: rtree (>=1.4.0)
+Requires-Dist: sahi (>=0.11.22)
+Requires-Dist: scipy (>=1.15.2)
+Requires-Dist: setuptools (>=75.8.0)
+Requires-Dist: tifffile
+Requires-Dist: torch (>=2.7.0)
+Requires-Dist: torchvision (>=0.22.0)
+Requires-Dist: ultralytics (>=8.3.105)
+Project-URL: Bug Tracker, https://github.com/cropmirror/counting/issues
+Project-URL: Repository, https://github.com/cropmirror/counting
+Description-Content-Type: text/markdown
+
+
+### 说明
+ccnet算法执行之后，每个图片输出三个文件
+
+- detected_pts.txt json文件，标识了识别的标点数量和位置。
+- result.tif 打上结果标点之后的，geotiff格式的原始图片。
+- result.jpg 压缩之后便于web展示的图片。
+
+### run in python env
+
+```shell
+#安装本地环境 requirements.txt CCNet_3.8.env.*,
+#项目中CCNet_3.8.env.* 是linux的，可能不适用于windows、macos
+
+conda activate CCNet #或者使用本地环境
+
+python main.py --algorithm ccnet --model-file test/ccnet/model/mouse_hole.pth --input-path test/ccnet/images/mouse --output test/ccnet/output
+
+python main.py --algorithm yolo --model-file test/yolo/model/sheep_counting.pt --input-path test/yolo/images --output test/yolo/output
+```
+
+
+### run in docker
+
+```shell
+docker run -ti --rm -v ./test:/test --entrypoint /bin/bash harbor.hzw.ruihudata.cn/cropmirror/counting_model:v0.7
+
+conda activate CCNet
+
+python counting/main.py --algorithm ccnet --model-file /test/ccnet/model/mouse_hole.pth --input-path /test/ccnet/images/mouse --output /test/ccnet/output
+
+python counting/main.py --algorithm yolo --model-file /test/yolo/model/sheep_counting.pt --input-path /test/yolo/images --output /test/yolo/output
+```
+
+# windows 10
+
+```shell
+conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+conda install opencv
+pip install opencv-contrib-python
+pip install ultralytics
+pip install scipy
+#https://github.com/cgohlke/geospatial-wheels/releases/tag/v2024.2.18
+```
+
