@@ -1,0 +1,98 @@
+Metadata-Version: 2.4
+Name: e-pet
+Version: 0.3
+Summary: A virtual pet companion CLI application
+Home-page: https://github.com/athuler/e-pet
+Author: Andrei Thüler
+Author-email: info@andreithuler.com
+Project-URL: Bug Reports, https://github.com/athuler/e-pet/issues
+Project-URL: Donate, https://ko-fi.com/andreithuler
+Project-URL: Source, https://github.com/athuler/e-pet
+Keywords: virtual pet,cli,game,simulation,terminal,simulation
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Games/Entertainment :: Simulation
+Classifier: Environment :: Console
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+Requires-Dist: rich>=13.0.0
+Requires-Dist: importlib_resources>=5.0.0; python_version < "3.9"
+Requires-Dist: importlib_resources>=5.0.0; python_version < "3.9"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: project-url
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# e-pet
+
+[![PyPI - Version](https://img.shields.io/pypi/v/e-pet?label=Latest%20Version&link=https%3A%2F%2Fpypi.org%2Fproject%2FPassioGo%2F)](https://pypi.org/project/e-pet/) [![Pepy Total Downlods](https://img.shields.io/pepy/dt/e-pet)](https://www.pepy.tech/projects/e-pet)
+
+A CLI Virtual Pet Companion
+
+# Installation
+
+```sh
+pip install e-pet
+```
+
+Local installation:
+```sh
+pip install .
+```
+
+# Usage
+
+When installed using pip:
+```sh
+e-pet
+```
+
+Local development:
+```sh
+python e-pet.py
+```
+
+# Interface
+
+The CLI interface should be an ASCII art/animation of the pet, and below various actions that the user can select. The user should be able to select the option they would like to go for using arrow keys (the selected option is highlighted) and then pressing enter, or by selecting the corresponding option number on their keyboard.
+
+
+# Game Mechanics
+
+The pet has the following attributes:
+- name (randomly generated; can be re-generated at any time by the user)
+- age (starts at 0, increases as the user plays)
+- sex (M, F, ??; randomly assigned, can be re-generated at any time by the user)
+- Health (between 0 and 5)
+- Happiness (between 0 and 5)
+- Despair (between 0 and 5)
+- Wealth (unbounded number, starts at 100)
+
+The user can interact with the pet in the following main ways:
+- Feeding
+- Playing
+- Talking
+
+Each option has many different dialog trees. The dialog trees are stored as JSON files. Throughout the dialog trees, selecting various options may have effects on any of the pet's attributes (health, ahppiness, ...). There may be multiple possible outcome at any point of a tree, in which case randomness is used to determine which path to let the user continue on.
+
+
+# Architecture
+
+Game data is saved in a JSON file in the current directory. When starting, the app looks for a current save, if it doesn't find one it creates a new one. The game auto-saves after each action.
+
+The app runs as a Python application without internet connection.
