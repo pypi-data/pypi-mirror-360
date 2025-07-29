@@ -1,0 +1,107 @@
+Metadata-Version: 2.4
+Name: mcp2cli
+Version: 0.1.0
+Summary: A command-line tool to interact with Model Context Protocol (MCP) servers.
+Project-URL: Homepage, https://github.com/PsychArch/mcp2cli
+Project-URL: Bug Tracker, https://github.com/PsychArch/mcp2cli/issues
+Author-email: PsychArch <psycharch@users.noreply.github.com>
+License: Copyright (c) 2025 PsychArch
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE. 
+License-File: LICENSE
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.13
+Requires-Python: >=3.11
+Requires-Dist: mcp[cli]>=1.10.1
+Requires-Dist: rich>=14.0.0
+Requires-Dist: typer>=0.16.0
+Description-Content-Type: text/markdown
+
+# mcp2cli
+
+A command-line interface (CLI) for interacting with Model Context Protocol (MCP) servers. It dynamically generates CLI commands from the tools exposed by an MCP server.
+
+## Configuration
+
+`mcp2cli` requires a `mcp.json` file in the current directory to define available MCP servers.
+
+**`mcp.json` format:**
+
+```json
+{
+  "mcpServers": {
+    "local_server": {
+      "command": "uv",
+      "args": ["run", "python", "examples/server.py", "--transport", "stdio"]
+    },
+    "remote_server": {
+      "url": "http://127.0.0.1:8000/mcp"
+    }
+  }
+}
+```
+
+- `command` and `args`: For servers managed by `mcp2cli` (e.g., via `stdio`).
+- `url`: For remotely accessible servers (e.g., via `http`).
+
+## Usage
+
+**List all available tools:**
+```bash
+uvx mcp2cli
+```
+
+**Execute a tool:**
+```bash
+# Format: uvx mcp2cli <tool_name> [tool_arguments]
+uvx mcp2cli sum --a 5 --b 3
+```
+
+**Get help for a tool:**
+```bash
+uvx mcp2cli <tool_name> --help
+```
+
+**Target a specific server** (if a tool is on multiple servers):
+```bash
+uvx mcp2cli <tool_name> --server-name <server_name>
+```
+
+## Example Server
+
+The project includes an example server in `examples/server.py`.
+
+1.  **Run the HTTP server:**
+    ```bash
+    uv run python examples/server.py --transport http
+    ```
+2.  **Configure `mcp.json`** to connect to it:
+    ```json
+    {
+      "mcpServers": {
+        "http_server": { "url": "http://127.0.0.1:8000/mcp" }
+      }
+    }
+    ```
+3.  **Use the CLI:**
+    ```bash
+    uvx mcp2cli sum --a 10 --b 20
+    ```
