@@ -1,0 +1,494 @@
+Metadata-Version: 2.4
+Name: b64tensors
+Version: 0.1.0
+Summary: Base64 tensor encoding and decoding for PyTorch tensors
+Author: b64tensors contributors
+License:                                  Apache License
+                                   Version 2.0, January 2004
+                                http://www.apache.org/licenses/
+        
+           TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+        
+           1. Definitions.
+        
+              "License" shall mean the terms and conditions for use, reproduction,
+              and distribution as defined by Sections 1 through 9 of this document.
+        
+              "Licensor" shall mean the copyright owner or entity authorized by
+              the copyright owner that is granting the License.
+        
+              "Legal Entity" shall mean the union of the acting entity and all
+              other entities that control, are controlled by, or are under common
+              control with that entity. For the purposes of this definition,
+              "control" means (i) the power, direct or indirect, to cause the
+              direction or management of such entity, whether by contract or
+              otherwise, or (ii) ownership of fifty percent (50%) or more of the
+              outstanding shares, or (iii) beneficial ownership of such entity.
+        
+              "You" (or "Your") shall mean an individual or Legal Entity
+              exercising permissions granted by this License.
+        
+              "Source" form shall mean the preferred form for making modifications,
+              including but not limited to software source code, documentation
+              source, and configuration files.
+        
+              "Object" form shall mean any form resulting from mechanical
+              transformation or translation of a Source form, including but
+              not limited to compiled object code, generated documentation,
+              and conversions to other media types.
+        
+              "Work" shall mean the work of authorship, whether in Source or
+              Object form, made available under the License, as indicated by a
+              copyright notice that is included in or attached to the work
+              (an example is provided in the Appendix below).
+        
+              "Derivative Works" shall mean any work, whether in Source or Object
+              form, that is based on (or derived from) the Work and for which the
+              editorial revisions, annotations, elaborations, or other modifications
+              represent, as a whole, an original work of authorship. For the purposes
+              of this License, Derivative Works shall not include works that remain
+              separable from, or merely link (or bind by name) to the interfaces of,
+              the Work and Derivative Works thereof.
+        
+              "Contribution" shall mean any work of authorship, including
+              the original version of the Work and any modifications or additions
+              to that Work or Derivative Works thereof, that is intentionally
+              submitted to Licensor for inclusion in the Work by the copyright owner
+              or by an individual or Legal Entity authorized to submit on behalf of
+              the copyright owner. For the purposes of this definition, "submitted"
+              means any form of electronic, verbal, or written communication sent
+              to the Licensor or its representatives, including but not limited to
+              communication on electronic mailing lists, source code control systems,
+              and issue tracking systems that are managed by, or on behalf of, the
+              Licensor for the purpose of discussing and improving the Work, but
+              excluding communication that is conspicuously marked or otherwise
+              designated in writing by the copyright owner as "Not a Contribution."
+        
+              "Contributor" shall mean Licensor and any individual or Legal Entity
+              on behalf of whom a Contribution has been received by Licensor and
+              subsequently incorporated within the Work.
+        
+           2. Grant of Copyright License. Subject to the terms and conditions of
+              this License, each Contributor hereby grants to You a perpetual,
+              worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+              copyright license to reproduce, prepare Derivative Works of,
+              publicly display, publicly perform, sublicense, and distribute the
+              Work and such Derivative Works in Source or Object form.
+        
+           3. Grant of Patent License. Subject to the terms and conditions of
+              this License, each Contributor hereby grants to You a perpetual,
+              worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+              (except as stated in this section) patent license to make, have made,
+              use, offer to sell, sell, import, and otherwise transfer the Work,
+              where such license applies only to those patent claims licensable
+              by such Contributor that are necessarily infringed by their
+              Contribution(s) alone or by combination of their Contribution(s)
+              with the Work to which such Contribution(s) was submitted. If You
+              institute patent litigation against any entity (including a
+              cross-claim or counterclaim in a lawsuit) alleging that the Work
+              or a Contribution incorporated within the Work constitutes direct
+              or contributory patent infringement, then any patent licenses
+              granted to You under this License for that Work shall terminate
+              as of the date such litigation is filed.
+        
+           4. Redistribution. You may reproduce and distribute copies of the
+              Work or Derivative Works thereof in any medium, with or without
+              modifications, and in Source or Object form, provided that You
+              meet the following conditions:
+        
+              (a) You must give any other recipients of the Work or
+                  Derivative Works a copy of this License; and
+        
+              (b) You must cause any modified files to carry prominent notices
+                  stating that You changed the files; and
+        
+              (c) You must retain, in the Source form of any Derivative Works
+                  that You distribute, all copyright, patent, trademark, and
+                  attribution notices from the Source form of the Work,
+                  excluding those notices that do not pertain to any part of
+                  the Derivative Works; and
+        
+              (d) If the Work includes a "NOTICE" text file as part of its
+                  distribution, then any Derivative Works that You distribute must
+                  include a readable copy of the attribution notices contained
+                  within such NOTICE file, excluding those notices that do not
+                  pertain to any part of the Derivative Works, in at least one
+                  of the following places: within a NOTICE text file distributed
+                  as part of the Derivative Works; within the Source form or
+                  documentation, if provided along with the Derivative Works; or,
+                  within a display generated by the Derivative Works, if and
+                  wherever such third-party notices normally appear. The contents
+                  of the NOTICE file are for informational purposes only and
+                  do not modify the License. You may add Your own attribution
+                  notices within Derivative Works that You distribute, alongside
+                  or as an addendum to the NOTICE text from the Work, provided
+                  that such additional attribution notices cannot be construed
+                  as modifying the License.
+        
+              You may add Your own copyright statement to Your modifications and
+              may provide additional or different license terms and conditions
+              for use, reproduction, or distribution of Your modifications, or
+              for any such Derivative Works as a whole, provided Your use,
+              reproduction, and distribution of the Work otherwise complies with
+              the conditions stated in this License.
+        
+           5. Submission of Contributions. Unless You explicitly state otherwise,
+              any Contribution intentionally submitted for inclusion in the Work
+              by You to the Licensor shall be under the terms and conditions of
+              this License, without any additional terms or conditions.
+              Notwithstanding the above, nothing herein shall supersede or modify
+              the terms of any separate license agreement you may have executed
+              with Licensor regarding such Contributions.
+        
+           6. Trademarks. This License does not grant permission to use the trade
+              names, trademarks, service marks, or product names of the Licensor,
+              except as required for reasonable and customary use in describing the
+              origin of the Work and reproducing the content of the NOTICE file.
+        
+           7. Disclaimer of Warranty. Unless required by applicable law or
+              agreed to in writing, Licensor provides the Work (and each
+              Contributor provides its Contributions) on an "AS IS" BASIS,
+              WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+              implied, including, without limitation, any warranties or conditions
+              of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+              PARTICULAR PURPOSE. You are solely responsible for determining the
+              appropriateness of using or redistributing the Work and assume any
+              risks associated with Your exercise of permissions under this License.
+        
+           8. Limitation of Liability. In no event and under no legal theory,
+              whether in tort (including negligence), contract, or otherwise,
+              unless required by applicable law (such as deliberate and grossly
+              negligent acts) or agreed to in writing, shall any Contributor be
+              liable to You for damages, including any direct, indirect, special,
+              incidental, or consequential damages of any character arising as a
+              result of this License or out of the use or inability to use the
+              Work (including but not limited to damages for loss of goodwill,
+              work stoppage, computer failure or malfunction, or any and all
+              other commercial damages or losses), even if such Contributor
+              has been advised of the possibility of such damages.
+        
+           9. Accepting Warranty or Additional Liability. While redistributing
+              the Work or Derivative Works thereof, You may choose to offer,
+              and charge a fee for, acceptance of support, warranty, indemnity,
+              or other liability obligations and/or rights consistent with this
+              License. However, in accepting such obligations, You may act only
+              on Your own behalf and on Your sole responsibility, not on behalf
+              of any other Contributor, and only if You agree to indemnify,
+              defend, and hold each Contributor harmless for any liability
+              incurred by, or claims asserted against, such Contributor by reason
+              of your accepting any such warranty or additional liability.
+        
+           END OF TERMS AND CONDITIONS
+        
+           APPENDIX: How to apply the Apache License to your work.
+        
+              To apply the Apache License to your work, attach the following
+              boilerplate notice, with the fields enclosed by brackets "[]"
+              replaced with your own identifying information. (Don't include
+              the brackets!)  The text should be enclosed in the appropriate
+              comment syntax for the file format. We also recommend that a
+              file or class name and description of purpose be included on the
+              same "printed page" as the copyright notice for easier
+              identification within third-party archives.
+        
+           Copyright [yyyy] [name of copyright owner]
+        
+           Licensed under the Apache License, Version 2.0 (the "License");
+           you may not use this file except in compliance with the License.
+           You may obtain a copy of the License at
+        
+               http://www.apache.org/licenses/LICENSE-2.0
+        
+           Unless required by applicable law or agreed to in writing, software
+           distributed under the License is distributed on an "AS IS" BASIS,
+           WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+           See the License for the specific language governing permissions and
+           limitations under the License.
+        
+Project-URL: Homepage, https://github.com/44670/b64tensors
+Project-URL: Repository, https://github.com/44670/b64tensors
+Project-URL: Issues, https://github.com/44670/b64tensors/issues
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: safetensors>=0.6.0
+Dynamic: license-file
+
+# b64tensors
+
+[![PyPI version](https://badge.fury.io/py/b64tensors.svg)](https://badge.fury.io/py/b64tensors)
+[![Python Support](https://img.shields.io/pypi/pyversions/b64tensors.svg)](https://pypi.org/project/b64tensors/)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+A Python package for encoding and decoding PyTorch tensors as base64 strings using the b64tensor format specification.
+
+## Features
+
+- 🚀 **Fast**: Built on safetensors for efficient serialization
+- 🔒 **Safe**: Type-safe encoding/decoding with validation
+- 📦 **Simple**: Easy-to-use API with just 4 functions
+- 🎯 **Comprehensive**: Supports all major PyTorch data types
+- 🔄 **Reliable**: Extensive test coverage and error handling
+
+## Installation
+
+```bash
+pip install b64tensors
+```
+
+## Quick Start
+
+```python
+import torch
+import b64tensors
+
+# Create a tensor
+tensor = torch.randn(100, 200, dtype=torch.float32)
+
+# Encode to base64 string
+encoded = b64tensors.encode(tensor)
+print(encoded)  # float32##(100,200)##<base64_data>
+
+# Decode back to tensor
+decoded = b64tensors.decode(encoded)
+print(torch.equal(tensor, decoded))  # True
+```
+
+## API Reference
+
+### Core Functions
+
+#### `encode(tensor: torch.Tensor) -> str`
+
+Encode a PyTorch tensor as a base64 string.
+
+**Parameters:**
+- `tensor`: The PyTorch tensor to encode
+
+**Returns:**
+- Base64-encoded string in format: `<data_type>##<shape>##<b64_encoded_data>`
+
+**Example:**
+```python
+tensor = torch.randn(10, 20, dtype=torch.float32)
+encoded = b64tensors.encode(tensor)
+```
+
+#### `decode(encoded_str: str) -> torch.Tensor`
+
+Decode a base64-encoded tensor string back to a PyTorch tensor.
+
+**Parameters:**
+- `encoded_str`: The base64-encoded tensor string
+
+**Returns:**
+- The decoded PyTorch tensor
+
+**Example:**
+```python
+decoded = b64tensors.decode(encoded_str)
+```
+
+#### `encode_dict(tensor_dict: Dict[str, torch.Tensor]) -> Dict[str, str]`
+
+Encode a dictionary of PyTorch tensors as base64 strings.
+
+**Parameters:**
+- `tensor_dict`: Dictionary mapping keys to PyTorch tensors
+
+**Returns:**
+- Dictionary mapping the same keys to base64-encoded tensor strings
+
+**Example:**
+```python
+tensors = {
+    "weights": torch.randn(10, 20),
+    "biases": torch.randn(20)
+}
+encoded_dict = b64tensors.encode_dict(tensors)
+```
+
+#### `decode_dict(encoded_dict: Dict[str, str]) -> Dict[str, torch.Tensor]`
+
+Decode a dictionary of base64-encoded tensor strings back to PyTorch tensors.
+
+**Parameters:**
+- `encoded_dict`: Dictionary mapping keys to base64-encoded tensor strings
+
+**Returns:**
+- Dictionary mapping the same keys to decoded PyTorch tensors
+
+**Example:**
+```python
+decoded_dict = b64tensors.decode_dict(encoded_dict)
+```
+
+## Supported Data Types
+
+- `torch.float16` - 16-bit floating point
+- `torch.float32` - 32-bit floating point
+- `torch.bfloat16` - Brain floating point (16-bit)
+- `torch.int32` - 32-bit integer
+- `torch.int64` - 64-bit integer
+- `torch.uint8` - 8-bit unsigned integer
+- `torch.bool` - Boolean
+
+## Format Specification
+
+The b64tensor format follows this structure:
+```
+<data_type>##<shape>##<b64_encoded_data>
+```
+
+### Examples
+
+**2D Float32 Tensor:**
+```
+float32##(100,200)##SGVsbG8gV29ybGQhIFRoaXMgaXMgYSBzYW1wbGUgYmFzZTY0IGVuY29kZWQgdGVuc29yIGRhdGE...
+```
+
+**3D Float16 Tensor:**
+```
+float16##(3,224,224)##QWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWg...
+```
+
+**1D Integer Tensor:**
+```
+int32##(1000,)##MTIzNDU2Nzg5MGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6QUJDREVGR0hJSktMTU5PUFF...
+```
+
+**Scalar Boolean:**
+```
+bool##()##dHJ1ZQ==
+```
+
+## Advanced Usage
+
+### Working with Model Weights
+
+```python
+import torch
+import torch.nn as nn
+import b64tensors
+
+# Create a simple model
+model = nn.Linear(784, 10)
+
+# Encode all model parameters
+encoded_weights = b64tensors.encode_dict(dict(model.named_parameters()))
+
+# Save to file or send over network
+with open('model_weights.txt', 'w') as f:
+    for name, encoded_tensor in encoded_weights.items():
+        f.write(f"{name}: {encoded_tensor}\n")
+
+# Later, decode the weights
+decoded_weights = b64tensors.decode_dict(encoded_weights)
+
+# Load back into model
+for name, param in model.named_parameters():
+    param.data = decoded_weights[name]
+```
+
+### Batch Processing
+
+```python
+import torch
+import b64tensors
+
+# Process multiple tensors
+tensors = [
+    torch.randn(100, 200, dtype=torch.float32),
+    torch.randint(0, 10, (50, 50), dtype=torch.int32),
+    torch.randn(3, 224, 224, dtype=torch.float16)
+]
+
+# Encode all tensors
+encoded_tensors = [b64tensors.encode(t) for t in tensors]
+
+# Decode all tensors
+decoded_tensors = [b64tensors.decode(e) for e in encoded_tensors]
+
+# Verify they match
+for original, decoded in zip(tensors, decoded_tensors):
+    assert torch.equal(original, decoded)
+```
+
+## Error Handling
+
+The package provides comprehensive error handling:
+
+```python
+import b64tensors
+
+try:
+    # Invalid format
+    b64tensors.decode("invalid_format")
+except ValueError as e:
+    print(f"Error: {e}")
+
+try:
+    # Unsupported dtype
+    tensor = torch.complex(torch.randn(5, 5), torch.randn(5, 5))
+    b64tensors.encode(tensor)
+except ValueError as e:
+    print(f"Error: {e}")
+```
+
+## Development
+
+### Setting up Development Environment
+
+```bash
+git clone https://github.com/44670/b64tensors.git
+cd b64tensors
+pip install -e .
+pip install pytest torch safetensors
+```
+
+### Running Tests
+
+```bash
+pytest tests/
+```
+
+### Building Package
+
+```bash
+python -m build
+```
+
+## Requirements
+
+- Python >= 3.8
+- PyTorch >= 1.10.0
+- safetensors >= 0.6.0
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Changelog
+
+### 0.1.0
+- Initial release
+- Basic encode/decode functionality
+- Support for all major PyTorch data types
+- Dictionary encoding/decoding
+- Comprehensive test suite
