@@ -1,0 +1,273 @@
+#!/usr/bin/env python3
+"""CFEngine Build System"""
+
+__copyright__ = ["Northern.tech AS"]
+
+import logging as log
+import sys
+import os
+from typing import Union
+
+from cfbs.result import Result
+from cfbs.validate import CFBSValidationError
+from cfbs.version import string as version
+from cfbs.utils import GenericExitError, is_cfbs_repo, ProgrammerError
+from cfbs.cfbs_config import CFBSConfig
+from cfbs import commands
+from cfbs.args import get_args, print_help, get_manual
+
+
+def init_logging(level):
+    # Warning: logging.basicConfig() cannot be called multiple times to set
+    #          different parameters. We have to set both format and level in
+    #          the same call
+    format = "%(levelname)s: %(message)s"
+    level = level.strip().lower()
+    if level == "critical":
+        log.basicConfig(level=log.CRITICAL, format=format)
+    elif level == "error":
+        log.basicConfig(level=log.ERROR, format=format)
+    elif level == "warning":
+        log.basicConfig(level=log.WARNING, format=format)
+    elif level == "info":
+        log.basicConfig(level=log.INFO, format=format)
+    elif level == "debug":
+        log.basicConfig(level=log.DEBUG, format=format)
+    else:
+        raise ValueError("Unknown log level: {}".format(level))
+
+
+def does_log_info(level):
+    return level == "info" or level == "debug"
+
+
+def _main() -> Union[int, Result]:
+    """Actual body of main function.
+
+    Mainly for getting command line arguments and calling the appropriate
+    functions based on command line arguments.
+
+    Actual logic should be implemented elsewhere (primarily in commands.py).
+
+    This function is wrapped by main() which catches exceptions.
+    """
+    args = get_args()
+    init_logging(args.loglevel)
+    if args.manual:
+        print(get_manual())
+        return 0
+    if args.version:
+        print("cfbs %s" % version())
+        return 0
+
+    if not args.command:
+        print_help()
+        print("")
+        raise GenericExitError("No command given")
+
+    if args.command not in commands.get_command_names():
+        print_help()
+        raise GenericExitError("Command '%s' not found" % args.command)
+
+    if args.masterfiles and args.command != "init":
+        raise GenericExitError(
+            "The option --masterfiles is only for 'cfbs init', not 'cfbs %s'"
+            % args.command
+        )
+
+    if args.omit_download and args.command != "generate-release-information":
+        raise GenericExitError(
+            "The option --omit-download is only for 'cfbs generate-release-information', not 'cfbs %s'"
+            % args.command
+        )
+
+    if args.check_against_git and args.command != "generate-release-information":
+        raise GenericExitError(
+            "The option --check-against-git is only for 'cfbs generate-release-information', not 'cfbs %s'"
+            % args.command
+        )
+
+    if args.minimum_version and args.command != "generate-release-information":
+        raise GenericExitError(
+            "The option --from is only for 'cfbs generate-release-information', not 'cfbs %s'"
+            % args.command
+        )
+
+    if args.masterfiles_dir and args.command not in ("analyze", "analyse"):
+        raise GenericExitError(
+            "The option --masterfiles-dir is only for 'cfbs analyze', not 'cfbs %s'"
+            % args.command
+        )
+
+    if args.reference_version and args.command not in ("analyze", "analyse"):
+        raise GenericExitError(
+            "The option --reference-version is only for 'cfbs analyze', not 'cfbs %s'"
+            % args.command
+        )
+
+    if args.to_json and args.command not in ("analyze", "analyse"):
+        raise GenericExitError(
+            "The option --to-json is only for 'cfbs analyze', not 'cfbs %s'"
+            % args.command
+        )
+
+    if args.ignored_path_components and args.command not in ("analyze", "analyse"):
+        raise GenericExitError(
+            "The option --ignored-path-components is only for 'cfbs analyze', not 'cfbs %s'"
+            % args.command
+        )
+
+    if args.offline and args.command not in ("analyze", "analyse"):
+        raise GenericExitError(
+            "The option --offline is only for 'cfbs analyze', not 'cfbs %s'"
+            % args.command
+        )
+
+    if args.non_interactive and args.command not in (
+        "init",
+        "add",
+        "remove",
+        "clean",
+        "update",
+        "input",
+    ):
+        raise GenericExitError(
+            "The option --non-interactive is not for cfbs %s" % (args.command)
+        )
+
+    # Commands you can run outside a cfbs repo:
+    if args.command == "help":
+        print_help()
+        return 0
+
+    CFBSConfig.get_instance(index=args.index, non_interactive=args.non_interactive)
+
+    if args.command == "init":
+        return commands.init_command(
+            index=args.index,
+            masterfiles=args.masterfiles,
+            non_interactive=args.non_interactive,
+        )
+
+    if args.command == "search":
+        return commands.search_command(args.args)
+    if args.command == "pretty":
+        return commands.pretty_command(args.args, args.check, args.keep_order)
+    if args.command == "validate":
+        return commands.validate_command()
+    if args.command in ("info", "show"):
+        return commands.info_command(args.args)
+
+    if args.command in ("analyze", "analyse"):
+        return commands.analyze_command(
+            args.args,
+            args.to_json,
+            args.reference_version,
+            args.masterfiles_dir,
+            args.ignored_path_components,
+            args.offline,
+            does_log_info(args.loglevel),
+        )
+
+    if args.command == "generate-release-information":
+        return commands.generate_release_information_command(
+            omit_download=args.omit_download,
+            check=args.check_against_git,
+            min_version=args.minimum_version,
+        )
+
+    if not is_cfbs_repo():
+        raise GenericExitError(
+            "This is not a cfbs repo, to get started, type: cfbs init"
+        )
+
+    if args.command == "status":
+        return commands.status_command()
+    if args.command == "add":
+        return commands.add_command(
+            args.args,
+            checksum=args.checksum,
+        )
+    if args.command == "remove":
+        return commands.remove_command(args.args)
+    if args.command == "clean":
+        return commands.clean_command()
+    if args.command == "download":
+        return commands.download_command(args.force)
+    if args.command == "build":
+        return commands.build_command(ignore_versions=args.ignore_versions_json)
+    if args.command == "install":
+        return commands.install_command(args.args)
+    if args.command == "update":
+        return commands.update_command(args.args)
+    if args.command == "input":
+        return commands.input_command(args.args)
+    if args.command in ("set-input", "get-input"):
+        filename = "stdin" if args.command == "set-input" else "stdout"
+        if len(args.args) <= 0:
+            log.error(
+                "Missing required arguments <module> and <filename (or - for %s)>"
+                % filename
+            )
+            return 1
+        if len(args.args) == 1:
+            log.error("Missing required argument <filename (or - for %s)>" % filename)
+            return 1
+        if len(args.args) > 2:
+            log.error(
+                "Too many arguments: expected <module> and <filename (or - for %s)>"
+                % filename
+            )
+            return 1
+
+        module, filename = args.args[0], args.args[1]
+
+        if filename == "-":
+            file = sys.stdin if args.command == "set-input" else sys.stdout
+        else:
+            try:
+                file = open(filename, "r" if args.command == "set-input" else "w")
+            except OSError as e:
+                log.error("Can't open '%s': %s" % (filename, e))
+                return 1
+        try:
+            if args.command == "set-input":
+                return commands.set_input_command(module, file)
+            return commands.get_input_command(module, file)
+        finally:
+            file.close()
+
+    raise ProgrammerError(
+        "Command '%s' not handled appropriately by the code above" % args.command
+    )
+
+
+def main() -> int:
+    """Entry point
+
+    The only thing we want to do here is call _main() and handle exceptions (errors).
+    """
+    if os.getenv("CFBACKTRACE") == "1":
+        r = _main()
+        assert type(r) is int
+        return r
+    try:
+        r = _main()
+        # TODO: I'm not exactly sure when the commands
+        # would actually return result and what that really means.
+        assert type(r) is int
+        return r
+    except CFBSValidationError as e:
+        print("Error: " + str(e))
+    except GenericExitError as e:
+        print("Error: " + str(e))
+    except (AssertionError, ProgrammerError) as e:
+        print("Error: " + str(e))
+        print(
+            "This is an unexpected error indicating a bug, please create a ticket at:"
+        )
+        print("https://northerntech.atlassian.net/")
+    print("(Rerun with CFBACKTRACE=1 in front of your command to show backtraces)")
+
+    # TODO: Handle other exceptions
+    return 1
