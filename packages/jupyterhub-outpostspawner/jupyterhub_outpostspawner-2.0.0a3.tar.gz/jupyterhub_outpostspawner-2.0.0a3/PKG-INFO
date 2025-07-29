@@ -1,0 +1,76 @@
+Metadata-Version: 2.4
+Name: jupyterhub-outpostspawner
+Version: 2.0.0a3
+Summary: JupyterHub OutpostSpawner enables start on multiple, remote system
+Author-email: Tim Kreuzer <t.kreuzer@fz-juelich.de>
+License: BSD 3-Clause License
+        
+        Copyright (c) 2023, Forschungszentrum Juelich GmbH
+        
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+        
+        1. Redistributions of source code must retain the above copyright notice, this
+           list of conditions and the following disclaimer.
+        
+        2. Redistributions in binary form must reproduce the above copyright notice,
+           this list of conditions and the following disclaimer in the documentation
+           and/or other materials provided with the distribution.
+        
+        3. Neither the name of the copyright holder nor the names of its
+           contributors may be used to endorse or promote products derived from
+           this software without specific prior written permission.
+        
+        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+        AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+        FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+        DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+        SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+        CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+        OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+        OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+License-File: LICENSE
+Keywords: jupyterhub,kubernetes,spawner
+Requires-Python: >=3.9
+Requires-Dist: escapism
+Requires-Dist: jinja2
+Requires-Dist: jupyterhub-forwardbasespawner
+Requires-Dist: jupyterhub>=5.0.0
+Requires-Dist: kubernetes
+Requires-Dist: traitlets
+Requires-Dist: urllib3
+Description-Content-Type: text/markdown
+
+
+[![Documentation Status](https://readthedocs.org/projects/jupyterhub-outpostspawner/badge/?version=latest)](https://jupyterhub-outpostspawner.readthedocs.io/en/latest/?badge=latest)
+
+# OutpostSpawner
+
+The OutpostSpawner in combination with the [JupyterHub Outpost service](https://github.com/kreuzert/jupyterhub-outpost) enables JupyterHub to spawn single-user notebook servers on multiple remote resources.
+
+## Documentation
+
+Link to [documentation](https://jupyterhub-outpostspawner.readthedocs.io).
+
+## Overview  
+  
+The JupyterHub community created many useful [JupyterHub Spawner](https://jupyterhub.readthedocs.io/en/latest/reference/spawners.html#examples) over the past years, to allow JupyterHub to use the specific resources of different systems. For most of these Spawners JupyterHub has to run at the system itself. The OutpostSpawner enables the use of these Spawners on remote systems.
+
+Other Spawners like [SSHSpawner](https://github.com/NERSC/sshspawner) can spawn single-user servers on remote systems, but are not able to use system-specific features like [KubeSpawner](https://github.com/jupyterhub/kubespawner) or [BatchSpawner](https://github.com/jupyterhub/batchspawner).
+
+The JupyterHub Outpost service in combination with the OutpostSpawner enables a single JupyterHub to offer multiple remote systems of different types.  
+  
+- Use one JupyterHub to offer single-user servers on multiple systems.
+- Each system may use a different JupyterHub Spawner.
+- Integrated SSH port forwarding solution to reach remote single-user server.
+- supports the JupyterHub `internal_ssl` feature.
+- shows events gathered by the remote Spawner to the user.
+- Users can override the configuration of the remote Spawner at runtime (e.g. to select a different Docker Image).
+- One JupyterHub Outpost can be connected to multiple JupyterHubs, without interfering with each other.
+  
+## Requirements  
+  
+JupyterHub must run on a Kubernetes Cluster (recommended is the use of Zero2JupyterHub).  
+The JupyterHub Outpost must fulfill the requirements of the configured Spawner class. 
