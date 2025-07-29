@@ -1,0 +1,26 @@
+skip_output:
+  - meta
+  - success
+  - summary
+pre-commit:
+  parallel: true
+  commands:
+    black:
+      tags: formatter
+      glob: "*.{py,pyi}"
+      run: uv run ruff format --check -- {staged_files}
+    isort:
+      tags: formatter
+      glob: "*.{py,pyi}"
+      run: uv run ruff check --select 'I' --output-format 'concise' -- {staged_files}
+    taplo:
+      tags: formatter
+      glob: "*.toml"
+      # No need to --force-exclude for taplo
+      run: uv run taplo format --check -- {staged_files}
+      env:
+        # without this, taplo is very verbose
+        RUST_LOG: warn
+    typos:
+      tags: spellcheck
+      run: uv run typos --force-exclude -- {staged_files}
