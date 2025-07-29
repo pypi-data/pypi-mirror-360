@@ -1,0 +1,24 @@
+{% if field.is_hidden %}
+{{ field }}
+{% else %}
+<div class="control-group {{ field.field.widget.input_type }}{% if field.errors %} f_error{% endif %}">
+  <label for="id_{{ field.name }}" class="control-label">{{ field.label }}
+    {% if field.field.required %}
+    <span class="f_req">*</span>
+    {% endif %}
+  </label>
+  <div class="controls">
+    {% if field.is_readonly %}
+    <p>{{ field.contents }}</p>
+    {% else %}
+    {{ field }}
+    {% endif %}
+    {% if field.help_text %}
+    <span class="help-block">({{ field.help_text }})</span>
+    {% endif %}
+    {% if field.errors %}
+    <label for="{{ field.name }}" class="error">{{ field.errors }}</label>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
