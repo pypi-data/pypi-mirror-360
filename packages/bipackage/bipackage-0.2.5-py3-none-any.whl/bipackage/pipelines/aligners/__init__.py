@@ -1,0 +1,1 @@
+from bipackage.pipelines.aligners.bwa_dedup_sp_qc_mosdepth import bwa_dedup
