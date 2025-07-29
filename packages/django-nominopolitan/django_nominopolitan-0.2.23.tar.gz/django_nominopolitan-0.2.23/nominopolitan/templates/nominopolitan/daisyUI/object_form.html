@@ -1,0 +1,48 @@
+{% extends base_template_path %}
+{% load nominopolitan %}
+{% load partials %}
+
+{% if use_crispy %}
+    {% include framework_template_path|add:"/crispy_partials.html#load_tags" %}
+{% endif %}
+
+{% block content %}
+    {% partial nm_content %}
+{% endblock %}
+
+{% partialdef nm_content %}
+<div class="is-flex is-flex-direction-column m-2 p-2">
+    <h1 class="flex-1 font-bold text-xl bg-primary text-primary-content rounded p-2 mb-4">{% if object %}Edit {{object_verbose_name}}{% else %}Create {{object_verbose_name}}{% endif %}</h1>
+
+    <div class="box">
+        <form method="POST" 
+            {% if form.is_multipart %}enctype="multipart/form-data" {% endif %}
+            action="{% if object %}{{ update_view_url }}{% else %}{{ create_view_url }}{% endif %}"
+            {% if use_htmx and original_target %}
+                hx-post="{% if object %}{{ update_view_url }}{% else %}{{ create_view_url }}{% endif %}"
+                hx-target="{{ original_target }}"
+                {% if not use_modal %}hx-push-url="true"{% else %}hx-push-url="false"{% endif %}
+                hx-headers='{"X-Redisplay-Object-List": "true"}'
+            {% endif %}>
+            {% csrf_token %}
+
+            {# Add hidden fields for all current GET params except csrf, page, and form fields #}
+            {% for key, values in request.GET.lists %}
+                {% if key != 'csrfmiddlewaretoken' and key != 'page' %}
+                    {% for value in values %}
+                        <input type="hidden" name="_nominopolitan_filter_{{ key }}" value="{{ value }}">
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+            
+            {% if use_crispy %}
+                {% include framework_template_path|add:"/crispy_partials.html#crispy_form" %}
+            {% else %}
+                {{ form }}
+            {% endif %}
+
+            <button type="submit" class="btn btn-primary mt-4">Save</button>
+        </form>
+    </div>
+</div>
+{% endpartialdef nm_content %}
