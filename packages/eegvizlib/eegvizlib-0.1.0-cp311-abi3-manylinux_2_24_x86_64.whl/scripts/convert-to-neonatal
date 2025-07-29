@@ -1,0 +1,116 @@
+#!/usr/bin/env Rscript
+
+# Copyright (C) 2025 Université de Reims Champagne-Ardenne.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     (1) Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#
+#     (2) Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in
+#     the documentation and/or other materials provided with the
+#     distribution.
+#
+#     (3)The name of the author may not be used to
+#     endorse or promote products derived from this software without
+#     specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+
+options (warn=1)
+
+args <- commandArgs (trailingOnly = TRUE)
+
+sampling_frequency <- 256
+f1 <- signal::butter (5, c (0.53, 70) / (sampling_frequency / 2), "pass")
+f2 <- signal::butter (5, c (0.53, 35) / (sampling_frequency / 2), "pass")
+maximum_encoded <- 1024
+minimum_encoded <- -1024
+sensitive_amplitude <- maximum_encoded - minimum_encoded
+
+if ('-h' %in% args || '--help' %in% args) {
+    cat (sprintf ("Usage: convert-to-neonatal FILE ...\n"))
+    cat (sprintf ("\n"))
+    cat (sprintf ("Convert an EDF file to a neonatal file suitable to use with Eegviz.\n"))
+    cat (sprintf ("\n"))
+    cat (sprintf ("The neonatal file format consists of two different filtered versions of the signal, one version filtered with a [0.53 Hz, 70 Hz] band-pass filter, and one version with a [0.53 Hz, 35 Hz] band-pass filter. The contents are simply concatenated in file.\n"))
+    cat (sprintf ("\n"))
+    cat (sprintf ("Each filtered version is the concatenation of the filtered values for the different electrodes, in this specific order: Fp2, F4, T4, C4, O2, Fz, Cz, Pz, Fp1, F3, T3, C3 and O1. Each channel is sampled at 256 Hz, and has the exact same length.\n"))
+    cat (sprintf ("Each value is encoded into two bytes, in big endian order. The logical value 0 corresponds to an amplitude of -1024 µV, and the logical value 65535 corresponds to +1024 µV.\n"))
+    cat (sprintf ("\n"))
+    cat (sprintf ("So, the total number of observations for a signal is the file size in bytes, divided by two (to have the number of observations), divided by two (because there are 2 versions of the signal), divided by 13 (because there are 13 channels).\n"))
+}
+
+for (filename in args) {
+    tryCatch ({
+        file <- edf::read.edf (filename)
+        electrodes <- c ("Fp2", "F4", "T4", "C4", "O2", "Fz", "Cz", "Pz", "Fp1", "F3", "T3", "C3", "O1")
+        raw_signal_data <- do.call (cbind, lapply (electrodes, function (electrode) {
+            edf_signal_index <- NA
+            for (signal_index_candidate in seq_along (file$header.signal)) {
+                if (file$header.signal[[signal_index_candidate]]$label %in% c (electrode, paste0 ("EEG_", electrode), paste0 ("EEG ", electrode))) {
+                    edf_signal_index <- signal_index_candidate
+                }
+            }
+            if (is.na (edf_signal_index)) {
+                return (0)
+            }
+            sfreq <- file$header.signal[[edf_signal_index]]$samplingrate
+            if (sfreq < 256) {
+                warning (sprintf ("Signal %d for %s is sampled at %f Hz < 256 Hz, so it will be upsampled",
+                                  edf_signal_index,
+                                  filename,
+                                  sfreq))
+                n_source_points <- length (file$signal[[edf_signal_index]]$data)
+                source_times <- seq_len (n_source_points) / sfreq
+                source_duration <- n_source_points / sfreq
+                resampled_duration <- source_duration
+                n_resampled_points <- resampled_duration * 256
+                resampled_times <- seq (0, resampled_duration, length.out = n_resampled_points)
+                return (approx (## Original coordinates:
+                    source_times,
+                    file$signal[[edf_signal_index]]$data,
+                    ## New X:
+                    resampled_times,
+                    ## Interpolation:
+                    method = "linear",
+                    yleft = file$signal[[edf_signal_index]]$data[1],
+                    yright = file$signal[[edf_signal_index]]$data[n_source_points])
+                    $y)
+            } else if (sfreq == 256) {
+                return (file$signal[[edf_signal_index]]$data)
+            } else {
+                stop ("Downsampling is not implemented yet.")
+            }
+        }))
+        filtered1 <- do.call (cbind, lapply (seq_len (ncol (raw_signal_data)), function (i) {
+            return (c (signal::filter (f1, raw_signal_data[, i])))
+        }))
+        filtered2 <- do.call (cbind, lapply (seq_len (ncol (raw_signal_data)), function (i) {
+            return (c (signal::filter (f2, raw_signal_data[, i])))
+        }))
+        both <- cbind (filtered1, filtered2)
+        array_like <- c (both)
+        binary <- round (((array_like - minimum_encoded) / sensitive_amplitude) * 65536)
+        binary[binary < 0] <- 0
+        binary[binary > 65535] <- 65535
+        writeBin (as.integer(binary), paste0 (filename, ".neonatal"), size = 2, endian = "big")
+    }, error = function (cond) {
+        message (sprintf ("File %s cannot be processed", filename))
+        message (conditionMessage (cond))
+    })
+}
