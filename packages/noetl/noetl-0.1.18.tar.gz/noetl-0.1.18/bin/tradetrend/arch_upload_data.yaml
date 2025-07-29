@@ -1,0 +1,226 @@
+variables:
+  base_url: "http://localhost:8000"
+  LOAD: remote  # Load mode (either 'remote' or 'local')
+  BASE_BLOB_PATH: data/dictionary
+  BASE_RAW_BLOB_PATH: data/raw_data/NG
+  BASE_FILE_PATH: /usr/data
+  BUCKET: tradetrend
+
+tasks:
+  upload_sys_param:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: sys_param
+          blob: "{BASE_BLOB_PATH}/sys_param.csv"
+          file: "{BASE_FILE_PATH}/sys_param.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+
+  upload_symbol:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: symbol
+          blob: "{BASE_BLOB_PATH}/symbol.csv"
+          file: "{BASE_FILE_PATH}/symbol.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+
+  upload_symb_limit:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: symb_limit
+          blob: "{BASE_BLOB_PATH}/symb_limit.csv"
+          file: "{BASE_FILE_PATH}/symb_limit.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+
+  upload_contract:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: contract
+          blob: "{BASE_BLOB_PATH}/contract.csv"
+          file: "{BASE_FILE_PATH}/contract.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+
+  upload_exclusion:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: exclusion
+          blob: "{BASE_BLOB_PATH}/exclusion.csv"
+          file: "{BASE_FILE_PATH}/exclusion.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+
+  upload_client_symb:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: client_symb
+          blob: "{BASE_BLOB_PATH}/client_symb.csv"
+          file: "{BASE_FILE_PATH}/client_symb.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+
+  upload_at_setup_type:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: at_setup_type
+          blob: "{BASE_BLOB_PATH}/at_setup_type.csv"
+          file: "{BASE_FILE_PATH}/at_setup_type.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+
+  upload_operand:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: operand
+          blob: "{BASE_BLOB_PATH}/operand.csv"
+          file: "{BASE_FILE_PATH}/operand.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+
+  upload_operand_check:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: operand_check
+          blob: "{BASE_BLOB_PATH}/operand_check.csv"
+          file: "{BASE_FILE_PATH}/operand_check.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+
+  upload_bias:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: bias
+          blob: "{BASE_BLOB_PATH}/bias.csv"
+          file: "{BASE_FILE_PATH}/bias.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+
+  upload_data_ibkr_realtime:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: v_data_ibkr_realtime
+          blob: "data/raw_data/new_data/data_ibkr_realtime.csv"
+          file: "{BASE_FILE_PATH}/data_ibkr_realtime.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+
+  upload_data_ng:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: data_volfix
+          blob: "{BASE_RAW_BLOB_PATH}/{period}_crop.csv"
+          file: "{BASE_FILE_PATH}/{period}_crop.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+        loop:
+          - MAR25
+          - APR25
+
+  upload_test:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: test
+          blob: "data/temp/test.csv"
+          file: "{BASE_FILE_PATH}/test.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+
+  upload_ml:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: ml
+          blob: "data/ml/ml_1_parameter_iteration_time_608.csv"
+          file: "data/cleansing/ml_1_parameter_iteration_time_608.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+
+  upload_ibkr_client_current_trading_data:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: client_ibkr_exposition
+          blob: "data/trading_examples/client_ibkr_exposition.csv"
+          file: "{BASE_FILE_PATH}/client_ibkr_exposition.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: client_ibkr_order
+          blob: "data/trading_examples/client_ibkr_order.csv"
+          file: "{BASE_FILE_PATH}/client_ibkr_order.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: ibkr_order_status
+          blob: "data/trading_examples/ibkr_order_status.csv"
+          file: "{BASE_FILE_PATH}/ibkr_order_status.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"

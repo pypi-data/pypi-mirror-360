@@ -1,0 +1,231 @@
+workflow: ../../data/noetl/workflows/load_dict.yaml
+system:
+    dataPath: ../../data/noetl
+    outputPath: "{{ system.dataPath }}/output/"
+    templatePath: "{{ system.dataPath }}/templates/default.tpl"
+    workflowPath: "{{ system.dataPath }}/workflows/load_dict.yaml"
+    executionPath: "{{ system.dataPath }}/executions/job_{{ jobId }}.json"
+    storageType: json  # Options: 'json' or 'sqlite'
+    sqlitePath: "{{ system.dataPath }}/state/noetl.database"  # Used when storage_type is 'sqlite'
+    logPath: "{{ system.dataPath }}/logs/noetl_{{ jobId }}.log"
+    logLevel: DEBUG
+    logFormat: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+variables:
+  baseUrl: "http://localhost:8000"  # Base URL for endpoints
+  load: remote  # Local mode or remote mode
+  baseBlobPath: data  # Base path for blobs
+  dictBlobPath: data/dictionary
+  baseFilePath: /usr/data/cleansing  # Base path for local files
+  bucket: tradetrend  # bucket name for the data
+  break: False
+  retry: 0
+
+
+steps:  # High-level workflow steps
+  - step: load_all  # Logical step name
+    tasks:  # Tasks within this step
+      - sys_param
+      - symbol
+      - symb_limit
+      - contract
+      - exclusion
+      - client_symb
+      - at_setup_group
+      - at_setup_type
+      - operand
+      - operand_function
+      - operand_settings
+      - operand_check
+
+tasks:
+  - task: sys_param
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"  # Using baseUrl variable
+        params:
+          input: "Primary cleansing input string"
+          table: sys_param
+          blob: "{{ dictBlobPath }}/sys_param.csv"  # Using baseBlobPath for blob
+          file: "{{ baseFilePath }}/sys_param.csv"  # Using baseFilePath for file
+          header: false  # Include headers in the API call
+          load: "{{ load }}"  # Dynamic load mode (remote/local)
+          bucket: "{{ bucket }}"  # Reference bucket variable
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/admin/postgres/sql"
+        params:
+          query: "CALL f_set_sys_param('system_status', '0');"
+
+  - task: symbol
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: symbol
+          blob: "{{ dictBlobPath }}/symbol.csv"
+          file: "{{ baseFilePath }}/symbol.csv"
+          header: false
+          load: "{{ load }}"
+          bucket: "{{ bucket }}"
+
+  - task: symb_limit
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: symb_limit
+          blob: "{{ dictBlobPath }}/symb_limit.csv"
+          file: "{{ baseFilePath }}/symb_limit.csv"
+          header: false
+          load: "{{ load }}"
+          bucket: "{{ bucket }}"
+
+  - task: contract
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: contract
+          blob: "{{ dictBlobPath }}/contract.csv"
+          file: "{{ baseFilePath }}/contract.csv"
+          header: false
+          load: "{{ load }}"
+          bucket: "{{ bucket }}"
+
+  - task: exclusion
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: exclusion
+          blob: "{{ dictBlobPath }}/exclusion.csv"
+          file: "{{ baseFilePath }}/exclusion.csv"
+          header: false
+          load: "{{ load }}"
+          bucket: "{{ bucket }}"
+
+  - task: client_symb
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "client_symb cleansing input string"
+          bucket: "{{ bucket }}"
+          blob: "{{ dictBlobPath }}/client_symb.csv"
+          file: "{{ baseFilePath }}/client_symb.csv"
+          table: client_symb
+          header: false
+          load: "{{ load }}"
+
+  - task: at_setup_group
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "at_setup_group cleansing input string"
+          bucket: "{{ bucket }}"
+          blob: "{{ dictBlobPath }}/at_setup_group.csv"
+          file: "{{ baseFilePath }}/at_setup_group.csv"
+          table: at_setup_group
+          header: false
+          load: "{{ load }}"
+
+  - task: at_setup_type
+    actions:
+      - action: http
+        method: post
+        retry: 3
+        endpoint: "{{ baseUrl }}/admin/postgres/sql"
+        params:
+          query: "CALL delete_at_all_calculated_data();"
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/admin/postgres/sql"
+        params:
+          query: "DELETE FROM at_setup_type WHERE at_setup_type_id IS NULL;"
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: at_setup_type
+          header: false
+          blob: "{{ dictBlobPath }}/at_setup_type.csv"
+          file: "{{ baseFilePath }}/at_setup_type.csv"
+          multiline: true
+          load: "{{ load }}"
+          bucket: "{{ bucket }}"
+
+  - task: operand
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "operand cleansing input string"
+          bucket: "{{ bucket }}"
+          blob: "{{ dictBlobPath }}/operand.csv"
+          file: "{{ baseFilePath }}/operand.csv"
+          table: operand
+          header: false
+          load: "{{ load }}"
+
+  - task: operand_function
+    retry: 3
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "operand_function cleansing input string"
+          bucket: "{{ bucket }}"
+          blob: "{{ dictBlobPath }}/operand_function.csv"
+          file: "{{ baseFilePath }}/operand_function.csv"
+          table: operand_function
+          header: false
+          load: "{{ load }}"
+
+  - task: operand_settings
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "operand_settings cleansing input string"
+          bucket: "{{ bucket }}"
+          blob: "{{ dictBlobPath }}/operand_settings.csv"
+          file: "{{ baseFilePath }}/operand_settings.csv"
+          table: operand_settings
+          header: false
+          load: "{{ load }}"
+
+  - task: operand_check
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/admin/postgres/sql"
+        params:
+          query: "DELETE FROM operand_check;"
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Primary cleansing input string"
+          table: operand_check
+          blob: "{{ dictBlobPath }}/operand_check.csv"
+          file: "{{ baseFilePath }}/operand_check.csv"
+          load: "{{ load }}"
+          header: false
+          bucket: "{{ bucket }}"

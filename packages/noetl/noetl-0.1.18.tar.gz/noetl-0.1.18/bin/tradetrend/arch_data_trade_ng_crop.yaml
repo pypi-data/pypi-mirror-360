@@ -1,0 +1,92 @@
+variables:
+  base_url: "http://localhost:8000"
+  LOAD: remote
+  BASE_BLOB_PATH: data/raw_data/NG
+  BASE_FILE_PATH: /usr/data
+  BUCKET: tradetrend
+
+tasks:
+  upload_ng_data:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Uploading NGNOV24crop data"
+          table: data_volfix
+          blob: "{BASE_BLOB_PATH}/NGNOV24crop.csv"
+          file: "{BASE_FILE_PATH}/NGNOV24crop.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Uploading NGDEC24crop data"
+          table: data_volfix
+          blob: "{BASE_BLOB_PATH}/NGDEC24crop.csv"
+          file: "{BASE_FILE_PATH}/NGDEC24crop.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Uploading NGJAN25crop data"
+          table: data_volfix
+          blob: "{BASE_BLOB_PATH}/NGJAN25crop.csv"
+          file: "{BASE_FILE_PATH}/NGJAN25crop.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Uploading NGFEB25crop data"
+          table: data_volfix
+          blob: "{BASE_BLOB_PATH}/NGFEB25crop.csv"
+          file: "{BASE_FILE_PATH}/NGFEB25crop.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Uploading NGMAR25crop data"
+          table: data_volfix
+          blob: "{BASE_BLOB_PATH}/NGMAR25crop.csv"
+          file: "{BASE_FILE_PATH}/NGMAR25crop.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "Uploading NGAPR25crop data"
+          table: data_volfix
+          blob: "{BASE_BLOB_PATH}/NGAPR25crop.csv"
+          file: "{BASE_FILE_PATH}/NGAPR25crop.csv"
+          local: "{LOAD}"
+          bucket: "{BUCKET}"
+
+  execute_stored_procedures:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/admin/postgres/sql"
+        params:
+          query: "CALL load_data_volfix2data_raw2data();"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/admin/postgres/sql"
+        params:
+          query: "CALL load_data_ibkr_realtime2data_raw2data();"
+        on_error:
+          log: "⚠️ Error in load_data_ibkr_realtime2data_raw2data"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/admin/postgres/sql"
+        params:
+          query: "CALL initial_calculation();"
+        on_error:
+          log: "⚠️ Error in initial_calculation"

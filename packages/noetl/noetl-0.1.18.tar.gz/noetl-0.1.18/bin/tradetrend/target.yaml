@@ -1,0 +1,143 @@
+load_dict:
+  config: "{{ system.dataPath }}/workflows/load_dict.yaml"
+  system:
+      dataPath: data/noetl
+  variables:
+      baseUrl: "http://localhost:8000"
+
+load_ng_trade:
+  config: "{{ system.dataPath }}/workflows/load_ng.yaml"
+  system:
+    dataPath: data/noetl
+  variables:
+    baseUrl: "http://localhost:8000"
+  steps:
+    - step: load_ng_trade_target
+      tasks:
+#        - load_data_realtime
+        - load_ng_trade
+
+load_data_realtime:
+  config: "{{ system.dataPath }}/workflows/load_ng.yaml"
+  system:
+    dataPath: data/noetl
+  variables:
+    baseUrl: "http://localhost:8000"
+  steps:
+    - step: load_data_realtime
+      tasks:
+        - load_data_realtime
+
+load_ng_2022:
+  config: "{{ system.dataPath }}/workflows/load_ng.yaml"
+  system:
+    dataPath: data/noetl
+  variables:
+    baseUrl: "http://localhost:8000"
+  steps:
+    - step: load_ng_trade_target
+      tasks:
+      - load_data_realtime
+      - load_ng_2022
+      - load_ng_2023
+      - load_ng_2024
+      - load_ng_2025
+      - load_ng_trade
+
+sys_param:
+  config: "{{ system.dataPath }}/workflows/load_dict.yaml"
+  system:
+      dataPath: data/noetl
+  variables:
+      baseUrl: "http://localhost:8000"
+  steps:
+    - step: sys_param
+      tasks:
+        - sys_param
+
+load_ng:
+  config: "{{ system.dataPath }}/workflows/load_ng.yaml"
+  system:
+      dataPath: data/noetl
+
+export_data_realtime:
+  config: "{{ system.dataPath }}/workflows/export_data_realtime.yaml"
+  system:
+    dataPath: data/noetl
+
+export_data_ng:
+  config: "{{ system.dataPath }}/workflows/export_data_ng.yaml"
+  system:
+      dataPath: data/noetl
+
+export_dict:
+  config: "{{ system.dataPath }}/workflows/export_dict.yaml"
+  system:
+    dataPath: data/noetl
+
+export_at_setup_type:
+  config: "{{ system.dataPath }}/workflows/export_dict.yaml"
+  system:
+    dataPath: data/noetl
+  steps:
+    - step: export_at_setup_type
+      tasks:
+      - export_at_setup_group
+      - export_at_setup_type
+
+export_operand_set:
+  config: "{{ system.dataPath }}/workflows/export_dict.yaml"
+  system:
+    dataPath: data/noetl
+  steps:
+    - step: export_operand_set
+      tasks:
+      - export_at_setup_group
+      - export_at_setup_type
+      - export_operand
+      - export_operand_function
+      - export_operand_settings
+      - export_operand_check
+
+start_instance:
+  config: "{{ system.dataPath }}/workflows/config_instance.yaml"
+  system:
+    dataPath: data/noetl
+  variables:
+    baseUrl: "http://localhost:8000"
+  steps:
+    - step: start_instance
+      tasks:
+        - start_instance
+
+start_alex:
+  config: "{{ system.dataPath }}/workflows/config_instance.yaml"
+  system:
+    dataPath: data/noetl
+  variables:
+    clientId: U8546212
+  steps:
+    - step: start_alex_instance
+      tasks:
+        - start_instance
+        - start_alex
+
+start_alexis:
+  config: "{{ system.dataPath }}/workflows/config_instance.yaml"
+  system:
+    dataPath: data/noetl
+  variables:
+    clientId: DU7705327
+  steps:
+    - step: start_alexis_instance
+      tasks:
+        - start_instance
+        - start_alexis
+
+# Load several targets at once (Done)
+# Export data (Done)
+
+debug:
+  config: "{{ system.dataPath }}/workflows/test.yaml"
+  system:
+    dataPath: ../../data/noetl

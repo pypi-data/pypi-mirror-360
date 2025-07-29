@@ -1,0 +1,413 @@
+apiVersion: noetl.io/v1
+kind: Playbook
+name: load_ng
+path: /catalog/tradetrend/load_ng
+
+environment:
+  dataPath: data/noetl
+  outputPath: "{{ environment.dataPath }}/output/"
+  templatePath: "{{ environment.dataPath }}/templates/default.tpl"
+  workflowPath: "{{ environment.dataPath }}/workflows/load_ng.yaml"
+  executionPath: "{{ environment.dataPath }}/executions/job_{{ context.jobId }}.json"
+  storageType: json
+  sqlitePath: "{{ environment.dataPath }}/state/noetl.database"
+  logPath: "{{ environment.dataPath }}/logs/noetl_{{ context.jobId }}.log"
+  logLevel: DEBUG
+  logFormat: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+context:
+  baseUrl: "http://localhost:8000"
+  load: remote
+  baseBlobPath: data
+  ngBlobPath: data/raw_data/NG
+  baseFilePath: /usr/data/cleansing
+  bucket: tradetrend
+  break: false
+  retry: 0
+  jobId: "{{ generate_uuid() }}"
+  steps:
+    - name: load_data_realtime
+      status: READY
+  state: NEW
+
+
+tasks:
+  - name: load_data_realtime_task
+    run:
+      - action: http
+        method: post
+        name: delete_records
+        desc: "Delete all records from data_ibkr_realtime"
+        endpoint: "{{ context.baseUrl }}/admin/postgres/sql"
+        params:
+          query: "DELETE FROM data_ibkr_realtime;"
+      - action: http
+        method: post
+        name: load_new_data
+        desc: "Load new data into data_ibkr_realtime"
+        endpoint: "{{ context.baseUrl }}/cleansing/process"
+        params:
+          input: "Processed load_ng_realtime"
+          bucket: "{{ context.bucket }}"
+          blob: "data/raw_data/new_data/data_ibkr_realtime.csv"
+          file: "{{ context.baseFilePath }}/data_ibkr_realtime.csv"
+          table: data_ibkr_realtime
+          header: false
+          load: "{{ context.load }}"
+
+  - name: load_ng_2019_task
+    run:
+      - action: http
+        method: post
+        name: load_ng_2019
+        desc: "Load data for NG 2019 contracts"
+        endpoint: "{{ context.baseUrl }}/cleansing/process"
+        loop:
+          items:
+            - NGOCT18
+            - NGNOV18
+            - NGDEC18
+            - NGJAN19
+            - NGFEB19
+            - NGMAR19
+            - NGAPR19
+            - NGMAY19
+            - NGJUN19
+            - NGJUL19
+            - NGAUG19
+            - NGSEP19
+          iterator: contract
+        params:
+          input: "Processed {{ contract }}"
+          bucket: "{{ context.bucket }}"
+          table: data_volfix
+          blob: "{{ context.ngBlobPath }}/{{ contract }}.csv"
+          file: "{{ context.baseFilePath }}/{{ contract }}.csv"
+          header: true
+          volfix: true
+          fname: true
+          load: "{{ context.load }}"
+
+  - name: load_ng_2020_task
+    run:
+      - action: http
+        method: post
+        name: load_ng_2020
+        desc: "Load data for NG 2020 contracts"
+        endpoint: "{{ context.baseUrl }}/cleansing/process"
+        loop:
+          items:
+            - NGOCT19
+            - NGNOV19
+            - NGDEC19
+            - NGJAN20
+            - NGFEB20
+            - NGMAR20
+            - NGAPR20
+            - NGMAY20
+            - NGJUN20
+            - NGJUL20
+            - NGAUG20
+            - NGSEP20
+          iterator: contract
+        params:
+          input: "Processed {{ contract }}"
+          bucket: "{{ context.bucket }}"
+          table: data_volfix
+          blob: "{{ context.ngBlobPath }}/{{ contract }}.csv"
+          file: "{{ context.baseFilePath }}/{{ contract }}.csv"
+          header: true
+          volfix: true
+          fname: true
+          load: "{{ context.load }}"
+
+  - name: load_ng_2021_task
+    run:
+      - action: http
+        method: post
+        name: load_ng_2021
+        desc: "Load data for NG 2021 contracts"
+        endpoint: "{{ context.baseUrl }}/cleansing/process"
+        loop:
+          items:
+            - NGOCT20
+            - NGNOV20
+            - NGDEC20
+            - NGJAN21
+            - NGFEB21
+            - NGMAR21
+            - NGAPR21
+            - NGMAY21
+            - NGJUN21
+            - NGJUL21
+            - NGAUG21
+            - NGSEP21
+          iterator: contract
+        params:
+          input: "Processed {{ contract }}"
+          bucket: "{{ context.bucket }}"
+          table: data_volfix
+          blob: "{{ context.ngBlobPath }}/{{ contract }}.csv"
+          file: "{{ context.baseFilePath }}/{{ contract }}.csv"
+          header: true
+          volfix: true
+          fname: true
+          load: "{{ context.load }}"
+
+  - name: load_ng_2022_task
+    run:
+      - action: http
+        method: post
+        name: load_ng_2022
+        desc: "Load data for NG 2022 contracts"
+        endpoint: "{{ context.baseUrl }}/cleansing/process"
+        loop:
+          items:
+            - NGOCT21
+            - NGNOV21
+            - NGDEC21
+            - NGJAN22
+            - NGFEB22
+            - NGMAR22
+            - NGAPR22
+            - NGMAY22
+            - NGJUN22
+            - NGJUL22
+            - NGAUG22
+            - NGSEP22
+          iterator: contract
+        params:
+          input: "Processed {{ contract }}"
+          bucket: "{{ context.bucket }}"
+          table: data_volfix
+          blob: "{{ context.ngBlobPath }}/{{ contract }}.csv"
+          file: "{{ context.baseFilePath }}/{{ contract }}.csv"
+          header: true
+          volfix: true
+          fname: true
+          load: "{{ context.load }}"
+
+  - name: load_ng_2023_task
+    run:
+      - action: http
+        method: post
+        name: load_ng_2023
+        desc: "Load data for NG 2023 contracts"
+        endpoint: "{{ context.baseUrl }}/cleansing/process"
+        loop:
+          items:
+            - NGOCT22
+            - NGNOV22
+            - NGDEC22
+            - NGJAN23
+            - NGFEB23
+            - NGMAR23
+            - NGAPR23
+            - NGMAY23
+            - NGJUN23
+            - NGJUL23
+            - NGAUG23
+            - NGSEP23
+          iterator: contract
+        params:
+          input: "Processed {{ contract }}"
+          bucket: "{{ context.bucket }}"
+          table: data_volfix
+          blob: "{{ context.ngBlobPath }}/{{ contract }}.csv"
+          file: "{{ context.baseFilePath }}/{{ contract }}.csv"
+          header: true
+          volfix: true
+          fname: true
+          load: "{{ context.load }}"
+
+  - name: load_ng_2024_task
+    run:
+      - action: http
+        method: post
+        name: load_ng_2024
+        desc: "Load data for NG 2024 contracts"
+        endpoint: "{{ context.baseUrl }}/cleansing/process"
+        loop:
+          items:
+            - NGOCT23
+            - NGNOV23
+            - NGDEC23
+            - NGJAN24
+            - NGFEB24
+            - NGMAR24
+            - NGAPR24
+            - NGMAY24
+            - NGJUN24
+            - NGJUL24
+            - NGAUG24
+            - NGSEP24
+          iterator: contract
+        params:
+          input: "Processed {{ contract }}"
+          bucket: "{{ context.bucket }}"
+          table: data_volfix
+          blob: "{{ context.ngBlobPath }}/{{ contract }}.csv"
+          file: "{{ context.baseFilePath }}/{{ contract }}.csv"
+          header: true
+          volfix: true
+          fname: true
+          load: "{{ context.load }}"
+
+  - name: load_ng_2025_task
+    run:
+      - action: http
+        method: post
+        name: load_ng_2025
+        desc: "Load data for NG 2025 contracts"
+        endpoint: "{{ context.baseUrl }}/cleansing/process"
+        loop:
+          items:
+            - NGOCT24
+            - NGNOV24
+            - NGDEC24
+            - NGJAN25
+            - NGFEB25
+            - NGMAR25
+            - NGAPR25
+            - NGMAY25
+            - NGJUN25
+            - NGJUL25
+            - NGAUG25
+            - NGSEP25
+          iterator: contract
+        params:
+          input: "Processed {{ contract }}"
+          bucket: "{{ context.bucket }}"
+          table: data_volfix
+          blob: "{{ context.ngBlobPath }}/{{ contract }}.csv"
+          file: "{{ context.baseFilePath }}/{{ contract }}.csv"
+          header: true
+          volfix: true
+          fname: true
+          load: "{{ context.load }}"
+
+  - name: load_ng_trade_task
+    run:
+      - action: http
+        method: post
+        name: load_ng_trade
+        desc: "Load trade data for NG"
+        endpoint: "{{ context.baseUrl }}/cleansing/process"
+        params:
+          input: "Processed ng_trade"
+          bucket: "{{ context.bucket }}"
+          blob: "data/trade/ng_trade.csv"
+          file: "{{ context.baseFilePath }}/ng_trade.csv"
+          table: ng_trade
+          header: true
+          load: "{{ context.load }}"
+
+steps:
+  - name: load_data_realtime
+    mode: sequential
+    when: "{{ event.type == 'workflow_started' and event.jobId == context.jobId }}"
+    run:
+      - task: load_data_realtime_task
+        until: "{{ context.data_ready }}"
+    next:
+      - when: "{{ context.data_ready }}"
+        run:
+          - step: load_ng_2019
+
+  - name: load_ng_2019
+    mode: sequential
+    when: "{{ event.type == 'load_data_realtime_completed' and event.jobId == context.jobId }}"
+    run:
+      - task: load_ng_2019_task
+        until: "{{ context.ng_2019_loaded }}"
+    next:
+      - when: "{{ context.ng_2019_loaded }}"
+        run:
+          - step: load_ng_2020
+
+  - name: load_ng_2020
+    mode: sequential
+    when: "{{ event.type == 'load_ng_2019_completed' and event.jobId == context.jobId }}"
+    run:
+      - task: load_ng_2020_task
+        until: "{{ context.ng_2020_loaded }}"
+    next:
+      - when: "{{ context.ng_2020_loaded }}"
+        run:
+          - step: load_ng_2021
+
+  - name: load_ng_2021
+    mode: sequential
+    when: "{{ event.type == 'load_ng_2020_completed' and event.jobId == context.jobId }}"
+    run:
+      - task: load_ng_2021_task
+        until: "{{ context.ng_2021_loaded }}"
+    next:
+      - when: "{{ context.ng_2021_loaded }}"
+        run:
+          - step: load_ng_2022
+
+  - name: load_ng_2022
+    mode: sequential
+    when: "{{ event.type == 'load_ng_2021_completed' and event.jobId == context.jobId }}"
+    run:
+      - task: load_ng_2022_task
+        until: "{{ context.ng_2022_loaded }}"
+    next:
+      - when: "{{ context.ng_2022_loaded }}"
+        run:
+          - step: load_ng_2023
+
+  - name: load_ng_2023
+    mode: sequential
+    when: "{{ event.type == 'load_ng_2022_completed' and event.jobId == context.jobId }}"
+    run:
+      - task: load_ng_2023_task
+        until: "{{ context.ng_2023_loaded }}"
+    next:
+      - when: "{{ context.ng_2023_loaded }}"
+        run:
+          - step: load_ng_2024
+
+  - name: load_ng_2024
+    mode: sequential
+    when: "{{ event.type == 'load_ng_2023_completed' and event.jobId == context.jobId }}"
+    run:
+      - task: load_ng_2024_task
+        until: "{{ context.ng_2024_loaded }}"
+    next:
+      - when: "{{ context.ng_2024_loaded }}"
+        run:
+          - step: load_ng_2025
+
+  - name: load_ng_2025
+    mode: sequential
+    when: "{{ event.type == 'load_ng_2024_completed' and event.jobId == context.jobId }}"
+    run:
+      - task: load_ng_2025_task
+        until: "{{ context.ng_2025_loaded }}"
+    next:
+      - when: "{{ context.ng_2025_loaded }}"
+        run:
+          - step: load_ng_trade
+
+  - name: load_ng_trade
+    mode: sequential
+    when: "{{ event.type == 'load_ng_2025_completed' and event.jobId == context.jobId }}"
+    run:
+      - task: load_ng_trade_task
+        until: "{{ context.ng_trade_loaded }}"
+    next:
+      - when: "{{ context.ng_trade_loaded }}"
+        run:
+          - step: finalize_workflow
+
+  - name: finalize_workflow
+    mode: sequential
+    when: "{{ event.type == 'load_ng_trade_completed' and event.jobId == context.jobId }}"
+    run:
+      - action: log
+        method: log
+        level: info
+        message: "Workflow {{ context.jobId }} completed successfully."
+    next: []

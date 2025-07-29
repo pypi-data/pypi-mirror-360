@@ -1,0 +1,148 @@
+@startuml
+
+!theme plain
+top to bottom direction
+skinparam linetype ortho
+
+class catalog {
+   resource_type: varchar
+   resource_location: json
+   content: varchar
+   payload: json
+   meta: json
+   labels: json
+   tags: json
+   template: varchar
+   timestamp: timestamp
+   resource_path: varchar(255)
+   resource_version: varchar(11)
+}
+class context {
+   runtime_id: varchar(36)
+   status: varchar
+   payload: json
+   meta: json
+   labels: json
+   tags: json
+   started_at: timestamp
+   completed_at: timestamp
+   context_id: varchar(36)
+}
+class dict_component {
+   route_module: varchar
+   schema_module: varchar
+   service_module: varchar
+   model_module: varchar
+   table_name: varchar
+   description: varchar
+   component_name: varchar
+}
+class dict_operand {
+   description: varchar
+   operand_name: varchar
+}
+class dict_resource {
+   description: varchar
+   name: varchar
+}
+class dict_state {
+   template: varchar
+   description: varchar
+   name: varchar(50)
+}
+class dict_unit {
+   description: varchar
+   name: varchar
+}
+class dispatch {
+   route_path: varchar
+   http_method: varchar
+   payload: json
+   description: varchar
+   component_name: varchar
+   unit_name: varchar
+   operand_name: varchar
+   state: varchar
+   event_type: varchar
+}
+class event {
+   parent_id: varchar(36)
+   workload_id: varchar(36)
+   runtime_id: varchar(36)
+   context_id: varchar(36)
+   event_type: varchar
+   scope: varchar
+   status: varchar
+   state: varchar
+   event_message: varchar
+   content: varchar
+   payload: json
+   meta: json
+   labels: json
+   tags: json
+   timestamp: timestamp
+   event_id: varchar(36)
+}
+class result {
+   runtime_id: varchar(36)
+   context_id: varchar(36)
+   data: json
+   location: json
+   meta: json
+   labels: json
+   tags: json
+   timestamp: timestamp
+   result_id: varchar(36)
+}
+class runtime {
+   workload_id: varchar(36)
+   status: varchar
+   started_at: timestamp
+   completed_at: timestamp
+   logs: json
+   labels: json
+   tags: json
+   runtime_id: varchar(36)
+}
+class state_transition {
+   description: varchar
+   active: boolean
+   from_state: varchar(50)
+   to_state: varchar(50)
+}
+class unit_transition {
+   active: boolean
+   from_unit: varchar
+   to_unit: varchar
+   method: varchar
+}
+class workload {
+   event_id: varchar(36)
+   resource_path: varchar
+   resource_version: varchar
+   namespace: json
+   status: varchar
+   payload: json
+   meta: json
+   labels: json
+   tags: json
+   timestamp: timestamp
+   workload_id: varchar(36)
+}
+
+catalog           -[#595959,plain]-^  dict_resource    : "resource_type:name"
+context           -[#595959,plain]-^  runtime          : "runtime_id"
+event             -[#595959,plain]-^  context          : "context_id"
+event             -[#595959,plain]-^  dict_state       : "state:name"
+event             -[#595959,plain]-^  runtime          : "runtime_id"
+event             -[#595959,plain]-^  workload         : "workload_id"
+result            -[#595959,plain]-^  context          : "context_id"
+result            -[#595959,plain]-^  runtime          : "runtime_id"
+runtime           -[#595959,plain]-^  workload         : "workload_id"
+state_transition  -[#595959,plain]-^  dict_state       : "from_state:name"
+state_transition  -[#595959,plain]-^  dict_state       : "to_state:name"
+unit_transition   -[#595959,plain]-^  dict_unit        : "from_unit:name"
+unit_transition   -[#595959,plain]-^  dict_unit        : "to_unit:name"
+workload          -[#595959,plain]-^  catalog          : "resource_path, resource_version"
+workload          -[#595959,plain]-^  event            : "event_id"
+@enduml
