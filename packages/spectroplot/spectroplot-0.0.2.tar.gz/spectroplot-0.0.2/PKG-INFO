@@ -1,0 +1,157 @@
+Metadata-Version: 2.4
+Name: spectroplot
+Version: 0.0.2
+Summary: A Python class for plotting frequency overlaps.
+Project-URL: Homepage, https://github.com/murzabaevb/spectroplot
+Project-URL: Issues, https://github.com/murzabaevb/spectroplot/issues
+Author-email: Bakyt-Bek Murzabaev <b.b.murzabaev@gmail.com>
+License-Expression: MIT
+License-File: LICENSE.txt
+Keywords: frequency,plot,spectrum
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Programming Language :: Python :: 3.13
+Requires-Python: >=3.13
+Requires-Dist: matplotlib~=3.9.2
+Requires-Dist: numpy~=2.1.3
+Requires-Dist: openpyxl~=3.1.5
+Requires-Dist: pandas~=2.2.3
+Description-Content-Type: text/markdown
+
+# SpectroPlot
+
+**SpectroPlot** is a Python class for loading frequency assignment data 
+from Excel files, cleaning it, and plotting frequency overlaps by category. 
+It’s designed for radio spectrum engineers, regulators, or analysts who want 
+to visualize how frequency assignments stack up within different categories 
+(e.g., services, technologies, or operators).
+
+![Example Plot](https://github.com/murzabaevb/spectroplot/blob/master/img/Figure_1.png)
+
+---
+
+## Features
+
+✅ Load frequency ranges and categories directly from Excel  
+✅ Exclude specified entries (e.g., rows marked with `Exclude='yes'`)  
+✅ Automatically clean, validate, and prepare data  
+✅ Plot frequency overlap "staircase" charts per category  
+✅ Flexible column naming  
+✅ Configurable frequency bounds  
+✅ Handles near-identical frequencies with `epsilon` tolerance
+
+---
+
+## Requirements
+
+- Python 3.7+
+- `pandas`
+- `matplotlib`
+- `openpyxl` (required by pandas to read `.xlsx`)
+
+## Installing
+```bash
+# From PyPI
+py -m pip install spectroplot  # on Windows
+python3 -m pip install spectroplot  # on Unix/macOS
+
+# From GitHub
+py -m pip install git+https://github.com/murzabaevb/spectroplot.git  # on Windows 
+python3 -m pip install git+https://github.com/murzabaevb/spectroplot.git  # on Unix/macOS
+```
+
+---
+
+## Expected Excel Format
+
+Your Excel sheet must contain **four columns**, for example:
+
+| Category | Start  | Stop   | Exclude |
+|----------|--------|--------|---------|
+| LTE      | 700.0  | 720.0  |         |
+| GSM      | 900.0  | 915.0  | yes     |
+| 5G       | 3500.0 | 3700.0 |         |
+
+- **Category**: name of the assignment category (e.g., LTE, GSM)  
+- **Start**: start frequency (numeric)  
+- **Stop**: end frequency (numeric)  
+- **Exclude**: set to "yes" (case-insensitive) to exclude the row from plotting
+
+*Note:* These four columns could be named differently in Excel file. If so, 
+it is necessary to pass these headers when instantiating the object of the 
+class as shown in the example below. Apart from these four columns, the Excel 
+file may contain other columns that would be ignored during reading.
+
+---
+
+## Usage Example
+
+```python
+from spectroplot import SpectroPlot
+
+# Initialize with your Excel file, default sheet name and column headers
+sp = SpectroPlot(excel_file='data.xlsx')
+
+# Load and clean data
+sp.load_data()
+
+# Plot overlaps
+sp.plot()
+```
+
+Default values: 
+- `sheet_name='Sheet1`,
+- `columns=['Category', 'Start', 'Stop', 'Exclude']`
+
+```python
+from spectroplot import SpectroPlot
+# Initialize with your Excel file and custom sheet/columns
+sp = SpectroPlot(
+    excel_file='assignments.xlsx',
+    sheet_name='uhf',
+    columns=['system', 'f_low', 'f_hi', 'excl'],
+)
+
+# Load and clean data
+sp.load_data()
+
+# Plot overlaps of entire data read
+sp.plot()
+
+# Or specify frequency bounds as per your requirement
+sp.plot(min_freq=600, max_freq=4000)
+```
+
+---
+
+## Output
+
+- Generates a **matplotlib plot** with one subplot per category
+- Each plot shows the number of overlapping frequency assignments as a staircase
+- Colors are automatically assigned from the `tab20` colormap
+
+---
+
+## Parameters
+
+`SpectroPlot` constructor:
+- **excel_file**: Path to your Excel file  
+- **sheet_name**: Name of the worksheet to read (default: `'Sheet1'`)  
+- **columns**: List of four column names in order (default: `['Category', 'Start', 'Stop', 'Exclude']`)  
+- **epsilon**: Tolerance for merging events with nearly identical frequencies (default: `1e-6`)  
+
+`plot()` method:
+- **min_freq**: Lower frequency bound of plotting
+- **max_freq**: Upper frequency bound of plotting
+
+---
+
+## License
+
+MIT License. Feel free to use, modify, and contribute!
+
+---
+
+## Project Links
+
+- [GitHub Repository](https://github.com/murzabaevb/spectroplot.git)
+- [GitHub Issues](https://github.com/murzabaevb/spectroplot/issues)

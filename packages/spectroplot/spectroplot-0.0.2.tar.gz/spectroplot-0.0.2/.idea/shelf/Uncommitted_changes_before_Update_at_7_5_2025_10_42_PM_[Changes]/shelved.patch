@@ -1,0 +1,54 @@
+Index: tmp/test_spectroplot.py
+===================================================================
+diff --git a/tmp/test_spectroplot.py b/tmp/test_spectroplot.py
+deleted file mode 100644
+--- a/tmp/test_spectroplot.py	(revision fbbcd66fc5c785335a06d770abc53c99fb2b1fd7)
++++ /dev/null	(revision fbbcd66fc5c785335a06d770abc53c99fb2b1fd7)
+@@ -1,47 +0,0 @@
+-import pandas as pd
+-import pytest
+-from pathlib import Path
+-from spectroplot import SpectrumPlotter
+-
+-
+-@pytest.fixture
+-def example_excel_file(tmp_path):
+-    """
+-    Create a temporary Excel file with test data.
+-    Returns the path to the file.
+-    """
+-    df = pd.DataFrame([
+-        {"Category": "Alpha", "Start": 27950, "Stop": 28050, "Exclude": "no"},
+-        {"Category": "Beta", "Start": 28000, "Stop": 28100, "Exclude": "yes"},
+-        {"Category": "Gamma", "Start": 28100, "Stop": 28200, "Exclude": "no"},
+-    ])
+-    file_path = tmp_path / "test_data.xlsx"
+-    df.to_excel(file_path, index=False, sheet_name="Sheet1")
+-    return str(file_path)
+-
+-
+-def test_load_data(example_excel_file):
+-    """
+-    Test that the class loads and cleans data, and that excluded rows are filtered out.
+-    """
+-    plotter = SpectrumPlotter(excel_file=example_excel_file)
+-    plotter.load_data()
+-
+-    # Check that the cleaned dataframe exists
+-    assert plotter.df is not None
+-    # Check that excluded rows were removed
+-    categories = set(plotter.df['Category'].unique())
+-    assert "Beta" not in categories
+-    assert "Alpha" in categories and "Gamma" in categories
+-    # Check that the determined min/max frequencies are correct
+-    assert plotter.min_freq == 27950
+-    assert plotter.max_freq == 28200
+-
+-
+-def test_plot_runs_without_error(example_excel_file):
+-    """
+-    Test that plot() executes without raising errors (but does not check the image).
+-    """
+-    plotter = SpectrumPlotter(excel_file=example_excel_file)
+-    plotter.load_data()
+-    plotter.plot()  # should not raise any exceptions
