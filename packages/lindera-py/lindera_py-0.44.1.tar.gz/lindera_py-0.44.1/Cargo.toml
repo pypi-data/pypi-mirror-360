@@ -1,0 +1,39 @@
+[package]
+name = "lindera-py"
+version = "0.44.1"
+edition = "2024"
+description = "Python binding for Lindera."
+documentation = "https://docs.rs/lindera-py"
+homepage = "https://github.com/lindera-morphology/lindera-py"
+repository = "https://github.com/lindera-morphology/lindera-py"
+readme = "README.md"
+keywords = ["morphological", "analysis", "library", "python"]
+categories = ["text-processing"]
+license = "MIT"
+
+[lib]
+name = "lindera_py"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[features]
+ipadic = ["lindera/ipadic"] # Include Japanese dictionary (IPADIC)
+ipadic-neologd = [
+    "lindera/ipadic-neologd",
+] # Include Japanese dictionary (IPADIC NEologd)
+unidic = ["lindera/unidic"] # Include Japanese dictionary (UniDic)
+ko-dic = ["lindera/ko-dic"] # Include Korean dictionary (ko-dic)
+cc-cedict = ["lindera/cc-cedict"] # Include Chinese dictionary (CC-CEDICT)
+cjk = [
+    "ipadic",
+    "ko-dic",
+    "cc-cedict",
+] # Include CJK dictionary (CC-CEDICT, IPADIC, ko-dic)
+default = [] # No directories included
+
+[dependencies]
+pyo3 = { version = "0.25.1", features = ["extension-module"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+
+lindera = "0.44.1"

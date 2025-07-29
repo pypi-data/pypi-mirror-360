@@ -1,0 +1,410 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    name: Format
+    strategy:
+      matrix:
+        platform:
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+        toolchain: [stable]
+    runs-on: ${{ matrix.platform.runner }}
+    steps:
+      - name: Run checkout
+        uses: actions/checkout@v4
+
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.platform.target }}
+          components: rustfmt, clippy
+
+      - name: Check format
+        run: cargo fmt --all -- --check
+
+  test:
+    name: Test
+    needs: [format]
+    strategy:
+      matrix:
+        platform:
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - runner: macOS-latest
+            target: x86_64-apple-darwin
+          - runner: macOS-latest
+            target: aarch64-apple-darwin
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+        toolchain: [stable]
+    runs-on: ${{ matrix.platform.runner }}
+    steps:
+      - name: Run checkout
+        uses: actions/checkout@v4
+
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.platform.target }}
+          components: rustfmt, clippy
+
+      - name: Run test
+        run: cargo test --target "${{ matrix.platform.target }}" --all-features
+
+  linux:
+    name: Linux
+    needs: [test]
+    strategy:
+      matrix:
+        platform:
+          - runner: ubuntu-latest
+            target: x86_64
+        toolchain: [stable]
+        features:
+          # - value: "ipadic"
+          #   package_name: "lindera-py-ipadic"
+          #   package_description: "Python binding for Lindera with Japanese dictionary (IPADIC)"
+          # - value: "unidic"
+          #   package_name: "lindera-py-unidic"
+          #   package_description: "Python binding for Lindera with Japanese dictionary (Unidic)"
+          # - value: "ko-dic"
+          #   package_name: "lindera-py-ko-dic"
+          #   package_description: "Python binding for Lindera with Korean dictionary (ko-dic)"
+          # - value: "cc-cedict"
+          #   package_name: "lindera-py-cc-cedict"
+          #   package_description: "Python binding for Lindera with CHinese dictionary (CC-CEDICT)"
+          - value: "cjk"
+            package_name: "lindera-py"
+            package_description: "Python binding for Lindera with CJK dictionaries (IPADIC, ko-dic, CC-CEDICT)"
+    runs-on: ${{ matrix.platform.runner }}
+    steps:
+      - name: Run checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      # - name: Generate pyproject.toml for each feature
+      #   run: |
+      #     # Make package name to Python package name conversion (hyphen to underscore)
+      #     PYTHON_PACKAGE_NAME=$(echo "${{ matrix.features.package_name }}" | sed 's/-/_/g')
+      #     # Copy the original pyproject.toml
+      #     cp pyproject.toml pyproject-${{ matrix.features.value }}.toml
+      #     # Replace package name and description
+      #     sed -i 's/name = "lindera_py"/name = "'${PYTHON_PACKAGE_NAME}'"/' pyproject-${{ matrix.features.value }}.toml
+      #     sed -i 's/description = ""/description = "${{ matrix.features.package_description }}"/' pyproject-${{ matrix.features.value }}.toml
+      #     # Confirm the generated file
+      #     echo "Generated pyproject-${{ matrix.features.value }}.toml:"
+      #     cat pyproject-${{ matrix.features.value }}.toml
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --find-interpreter --features=${{ matrix.features.value }} #--manifest-path pyproject-${{ matrix.features.value }}.toml
+          sccache: "false"
+          manylinux: auto
+          before-script-linux: "yum install openssl-devel devtoolset-10-libatomic-devel perl-IPC-Cmd -y"
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.features.package_name }}-linux-${{ matrix.platform.target }}-${{ github.ref_name }}
+          path: dist
+
+  linux2:
+    name: Linux2
+    needs: [test]
+    strategy:
+      matrix:
+        platform:
+          - runner: ubuntu-latest
+            target: aarch64
+          # - runner: ubuntu-latest
+          #   target: armv7
+        toolchain: [stable]
+        features:
+          # - value: "ipadic"
+          #   package_name: "lindera-py-ipadic"
+          #   package_description: "Python binding for Lindera with Japanese dictionary (IPADIC)"
+          # - value: "unidic"
+          #   package_name: "lindera-py-unidic"
+          #   package_description: "Python binding for Lindera with Japanese dictionary (Unidic)"
+          # - value: "ko-dic"
+          #   package_name: "lindera-py-ko-dic"
+          #   package_description: "Python binding for Lindera with Korean dictionary (ko-dic)"
+          # - value: "cc-cedict"
+          #   package_name: "lindera-py-cc-cedict"
+          #   package_description: "Python binding for Lindera with CHinese dictionary (CC-CEDICT)"
+          - value: "cjk"
+            package_name: "lindera-py"
+            package_description: "Python binding for Lindera with CJK dictionaries (IPADIC, ko-dic, CC-CEDICT)"
+    runs-on: ${{ matrix.platform.runner }}
+    steps:
+      - name: Run checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      # - name: Generate pyproject.toml for each feature
+      #   run: |
+      #     # Make package name to Python package name conversion (hyphen to underscore)
+      #     PYTHON_PACKAGE_NAME=$(echo "${{ matrix.features.package_name }}" | sed 's/-/_/g')
+      #     # Copy the original pyproject.toml
+      #     cp pyproject.toml pyproject-${{ matrix.features.value }}.toml
+      #     # Replace package name and description
+      #     sed -i 's/name = "lindera_py"/name = "'${PYTHON_PACKAGE_NAME}'"/' pyproject-${{ matrix.features.value }}.toml
+      #     sed -i 's/description = ""/description = "${{ matrix.features.package_description }}"/' pyproject-${{ matrix.features.value }}.toml
+      #     # Confirm the generated file
+      #     echo "Generated pyproject-${{ matrix.features.value }}.toml:"
+      #     cat pyproject-${{ matrix.features.value }}.toml
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --find-interpreter --features=${{ matrix.features.value }} #--manifest-path pyproject-${{ matrix.features.value }}.toml
+          sccache: "false"
+          manylinux: auto
+          before-script-linux: "apt-get update && apt-get install libssl-dev pkg-config -y"
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.features.package_name }}-linux-${{ matrix.platform.target }}-${{ github.ref_name }}
+          path: dist
+
+  windows:
+    name: Windows
+    needs: [test]
+    strategy:
+      matrix:
+        platform:
+          - runner: windows-latest
+            target: x64
+        toolchain: [stable]
+        features:
+          # - value: "ipadic"
+          #   package_name: "lindera-py-ipadic"
+          #   package_description: "Python binding for Lindera with Japanese dictionary (IPADIC)"
+          # - value: "unidic"
+          #   package_name: "lindera-py-unidic"
+          #   package_description: "Python binding for Lindera with Japanese dictionary (Unidic)"
+          # - value: "ko-dic"
+          #   package_name: "lindera-py-ko-dic"
+          #   package_description: "Python binding for Lindera with Korean dictionary (ko-dic)"
+          # - value: "cc-cedict"
+          #   package_name: "lindera-py-cc-cedict"
+          #   package_description: "Python binding for Lindera with CHinese dictionary (CC-CEDICT)"
+          - value: "cjk"
+            package_name: "lindera-py"
+            package_description: "Python binding for Lindera with CJK dictionaries (IPADIC, ko-dic, CC-CEDICT)"
+    runs-on: ${{ matrix.platform.runner }}
+    steps:
+      - name: Run checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+          architecture: ${{ matrix.platform.target }}
+
+      # - name: Generate pyproject.toml for each feature (Windows)
+      #   run: |
+      #     $PYTHON_PACKAGE_NAME = "${{ matrix.features.package_name }}".Replace("-", "_")
+      #     Copy-Item pyproject.toml pyproject-${{ matrix.features.value }}.toml
+      #     (Get-Content pyproject-${{ matrix.features.value }}.toml) -replace 'name = "lindera_py"', "name = `"$PYTHON_PACKAGE_NAME`"" | Set-Content pyproject-${{ matrix.features.value }}.toml
+      #     (Get-Content pyproject-${{ matrix.features.value }}.toml) -replace 'description = ""', 'description = "${{ matrix.features.package_description }}"' | Set-Content pyproject-${{ matrix.features.value }}.toml
+      #     # Confirm the generated file
+      #     Write-Host "Generated pyproject-${{ matrix.features.value }}.toml:"
+      #     Get-Content pyproject-${{ matrix.features.value }}.toml
+      #   shell: powershell
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --find-interpreter --features=${{ matrix.features.value }} #--manifest-path pyproject-${{ matrix.features.value }}.toml
+          sccache: "false"
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.features.package_name }}-windows-${{ matrix.platform.target }}-${{ github.ref_name }}
+          path: dist
+
+  macos:
+    name: MacOS
+    needs: [test]
+    strategy:
+      matrix:
+        platform:
+          - runner: macos-latest
+            target: x86_64
+          - runner: macos-latest
+            target: aarch64
+        toolchain: [stable]
+        features:
+          # - value: "ipadic"
+          #   package_name: "lindera-py-ipadic"
+          #   package_description: "Python binding for Lindera with Japanese dictionary (IPADIC)"
+          # - value: "unidic"
+          #   package_name: "lindera-py-unidic"
+          #   package_description: "Python binding for Lindera with Japanese dictionary (Unidic)"
+          # - value: "ko-dic"
+          #   package_name: "lindera-py-ko-dic"
+          #   package_description: "Python binding for Lindera with Korean dictionary (ko-dic)"
+          # - value: "cc-cedict"
+          #   package_name: "lindera-py-cc-cedict"
+          #   package_description: "Python binding for Lindera with CHinese dictionary (CC-CEDICT)"
+          - value: "cjk"
+            package_name: "lindera-py"
+            package_description: "Python binding for Lindera with CJK dictionaries (IPADIC, ko-dic, CC-CEDICT)"
+    runs-on: ${{ matrix.platform.runner }}
+    steps:
+      - name: Run checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      # - name: Generate pyproject.toml for each feature
+      #   run: |
+      #     # Make package name to Python package name conversion (hyphen to underscore)
+      #     PYTHON_PACKAGE_NAME=$(echo "${{ matrix.features.package_name }}" | sed 's/-/_/g')
+      #     # Copy the original pyproject.toml
+      #     cp pyproject.toml pyproject-${{ matrix.features.value }}.toml
+      #     # Replace package name and description
+      #     sed -i '' 's/name = "lindera_py"/name = "'${PYTHON_PACKAGE_NAME}'"/' pyproject-${{ matrix.features.value }}.toml
+      #     sed -i '' 's/description = ""/description = "${{ matrix.features.package_description }}"/' pyproject-${{ matrix.features.value }}.toml
+      #     # Confirm the generated file
+      #     echo "Generated pyproject-${{ matrix.features.value }}.toml:"
+      #     cat pyproject-${{ matrix.features.value }}.toml
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --release --out dist --find-interpreter --features=${{ matrix.features.value }} #--manifest-path pyproject-${{ matrix.features.value }}.toml
+          sccache: "false"
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.features.package_name }}-macos-${{ matrix.platform.target }}-${{ github.ref_name }}
+          path: dist
+
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run checkout
+        uses: actions/checkout@v4
+
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-sdist
+          path: dist
+
+  release:
+    name: Release
+    # needs: [linux, linux2, musllinux, windows, macos, sdist]
+    needs: [linux, linux2, windows, macos, sdist]
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' }}
+    permissions:
+      # Use to sign the release artifacts
+      id-token: write
+      # Used to upload release artifacts
+      contents: write
+      # Used to generate artifact attestation
+      attestations: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: "wheels-*/*"
+
+      - name: Publish to PyPI
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: PyO3/maturin-action@v1
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        with:
+          command: upload
+          args: --non-interactive --skip-existing wheels-*/*
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./dist/*
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-crates:
+    name: Publish crate
+    needs: [release]
+    strategy:
+      matrix:
+        platform:
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+        toolchain: [stable]
+    runs-on: ${{ matrix.platform.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          components: rustfmt, clippy
+
+      - name: Publish lindera-py
+        run: |
+          LINDERA_PY_VERSION=$(cargo metadata --no-deps --format-version=1 | jq -r '.packages[] | select(.name=="lindera-py") | .version')
+          LINDERA_PY_VERSIONS=$(curl -s -XGET https://crates.io/api/v1/crates/lindera-py | jq -r 'select(.versions != null) | .versions[].num')
+          if echo ${LINDERA_PY_VERSIONS} | grep ${LINDERA_PY_VERSION} >/dev/null; then
+            echo "lindera-py ${LINDERA_PY_VERSION} has already published"
+          else
+            cargo publish
+          fi
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_TOKEN }}
