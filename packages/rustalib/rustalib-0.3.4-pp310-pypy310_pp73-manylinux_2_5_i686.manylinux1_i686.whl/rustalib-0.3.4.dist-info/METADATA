@@ -1,0 +1,156 @@
+Metadata-Version: 2.4
+Name: rustalib
+Version: 0.3.4
+Classifier: Programming Language :: Rust
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+License-File: LICENSE
+Summary: Python wrapper for rustalib-core, a high-performance technical analysis library written in Rust.
+Home-Page: https://github.com/cuantilab
+Author: Cuantilab
+License: MIT
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown; charset=UTF-8; variant=GFM
+Project-URL: Homepage, https://github.com/cuantilab/rustalib
+Project-URL: Issues, https://github.com/cuantilab/rustalib/issues
+Project-URL: Documentation, https://github.com/cuantilab/rustalib#readme
+Project-URL: Changelog, https://github.com/cuantilab/rustalib/blob/main/CHANGELOG.md
+
+# rustalib
+
+📈 High-performance technical indicators for trading, written in Rust and exposed to Python.  
+Designed for time series analysis, backtesting, and real-time execution.
+
+---
+
+## 🚀 Installation
+
+### 🔧 For Python users (from PyPI)
+
+If you just want to use the library in your Python projects:
+
+```bash
+pip install rustalib
+```
+
+> This will install the precompiled Rust extension (wheels) published on PyPI.  
+> Requires Python ≥ 3.8.
+
+---
+
+### 🛠️ For contributors or internal development
+
+> ⚠️ The Rust core of this project is private.  
+> You will not be able to build this project from source unless you have access to the Rust codebase.
+
+If you are part of the internal team or have access to the Rust core, you can:
+
+1. Make sure [Rust](https://rustup.rs) and [maturin](https://github.com/PyO3/maturin) are installed.
+2. Clone the repo and install in development mode:
+
+```bash
+pip install maturin
+maturin develop
+```
+
+To build a distributable wheel:
+
+```bash
+maturin build
+pip install target/wheels/rustalib-*.whl
+```
+---
+
+## 📋 Requirements
+
+To run the example scripts, you need to install the Python dependencies listed in:
+
+```bash
+examples/requirements.txt
+```
+
+You can install them with:
+
+```bash
+pip install -r examples/requirements.txt
+```
+
+---
+
+## 📁 Data source
+
+All examples use SPY historical data downloaded via [Yahoo Finance](https://finance.yahoo.com/quote/SPY), saved to:
+
+```
+examples/data/SPY_1D.csv
+examples/data/SPY_1D_2000_2024.csv
+```
+
+You can regenerate the CSV by running:
+
+```bash
+python examples/data/download_data.py
+```
+
+---
+
+
+## 🧪 Example: Simple Moving Average (SMA)
+
+Example file: [`examples/sma_example.py`](https://github.com/cuantilab/rustalib/blob/main/examples/sma_example.py)  
+Uses real SPY data from 2020 to 2024.
+
+```python
+import pandas as pd
+import numpy as np
+
+import rustalib as rl
+
+df = pd.read_csv("examples/data/SPY_1D.csv")
+close = df["Close"].to_numpy(dtype=np.float64)
+
+PERIOD = 20
+df["SMA20"] =  rl.SMA(PERIOD, close)
+print(df.tail())
+```
+
+>💡 This is just one of the available indicators.
+>For more examples, check the [`examples`](https://github.com/cuantilab/rustalib/tree/main/examples) folder in the repository.
+
+---
+
+## 📦 Available indicators
+
+| Indicator | Description                          |
+|-----------|--------------------------------------|
+| `EMA`     | Exponential Moving Average           |
+| `MACD`    | Moving Average Convergence Divergence|
+| `SMA`     | Simple Moving Average                |
+
+> Upcoming indicators: RSI, ATR, SuperTrend...
+
+---
+
+## 💡 Suggest new indicators
+
+The Rust core is private and not open to external contributions.
+
+If you’d like a new indicator to be included, open an issue in the [rustalib repo](https://github.com/cuantilab/rustalib/issues) with a clear description. Requests are welcome!
+
+---
+
+## 🧰 Features
+
+- Backtest-friendly
+- Ultra-fast thanks to Rust core
+- Simple and consistent Python API
+
+---
+
+## 🪪 License
+
+MIT © [Cuantilab](https://github.com/cuantilab)
+
