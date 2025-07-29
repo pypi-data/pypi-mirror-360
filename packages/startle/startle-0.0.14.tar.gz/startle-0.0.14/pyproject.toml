@@ -1,0 +1,64 @@
+[build-system]
+requires = ["hatchling>=1.26.1", "hatch-vcs>=0.3.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "startle"
+description = "Instantly start a CLI from a function"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+keywords = ["cli", "command line interface", "argparse"]
+authors = [
+  { name = "Ozan Irsoy" }
+]
+dynamic = ["version"]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+
+  "Intended Audience :: Developers",
+  "Topic :: Software Development",
+
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [ "rich" ]
+
+[project.urls]
+"Homepage" = "https://github.com/oir/startle"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+version_scheme = "python-simplified-semver"
+local_scheme = "no-local-version"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "startle/_version.py"
+
+[tool.hatch.envs.test]
+dependencies = [ "pytest", "pytest-cov", "mypy" ]
+
+[[tool.hatch.envs.test.matrix]]
+python = ["3.10", "3.11", "3.12", "3.13"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=startle --cov-branch --cov-report=xml"
+python_files = ["tests/*.py", "tests/**/*.py"]
+
+[tool.coverage.run]
+omit = ["startle/_version.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: not covered",
+    "@overload",
+]
