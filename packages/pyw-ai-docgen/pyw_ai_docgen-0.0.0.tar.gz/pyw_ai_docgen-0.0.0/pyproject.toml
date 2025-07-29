@@ -1,0 +1,152 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pyw-ai-docgen"
+dynamic = ["version"]
+description = "AI-powered automated docstring generation and Sphinx documentation tool within the PythonWoods framework."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+keywords = ["ai", "docstring", "documentation", "sphinx", "python", "automation"]
+authors = [
+  { name = "PythonWoods", email = "gianluca.catalano@gmail.com" },
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "sphinx>=7.0.0",
+  # "some-ai-lib>=1.0.0",  # sostituire con la libreria AI effettiva
+]
+
+[project.optional-dependencies]
+dev = [
+  "build",
+  "twine",
+  "pytest>=8.0",
+  "pytest-cov",
+  "mypy>=1.0",
+  "ruff",
+  "pre-commit",
+  "pydocstyle",
+]
+
+docs = [
+  "sphinx-autodoc-typehints",
+  "pydata-sphinx-theme",
+  "myst-parser",
+]
+
+[project.urls]
+Documentation = "https://github.com/PythonWoods/pyw-ai-docgen#readme"
+Issues = "https://github.com/PythonWoods/pyw-ai-docgen/issues"
+Source = "https://github.com/PythonWoods/pyw-ai-docgen"
+
+[tool.hatch.version]
+path = "src/pyw/autodocgen/__about__.py"
+
+[tool.hatch.build]
+sources = ["src"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pyw"]
+
+# --- HATCH ENVIRONMENT CONFIGURATION ---
+
+[tool.hatch.envs.default]
+# Ambiente base senza dipendenze extra
+path = ".venv/default"
+
+[tool.hatch.envs.dev]
+dev-mode = true
+features = ["dev"]
+path = ".venv/dev"
+
+[tool.hatch.envs.dev.scripts]
+all-checks = [
+  "lint",
+  "typecheck",
+  "test-cov",
+]
+
+release = [
+  "clean",
+  "build",
+  "publish"
+]
+
+lint = "ruff check src tests"
+fix = "ruff check --fix src tests"
+typecheck = "mypy src tests"
+test = "pytest"
+test-cov = "pytest --cov=src/pyw/autodocgen --cov-report=term-missing"
+style = "pydocstyle src/pyw/autodocgen"
+clean = "rm -rf dist/ build/ *.egg-info"
+build = "python -m build"
+publish = "twine upload dist/*"
+publish-test = "twine upload --repository testpypi dist/*"
+
+
+[tool.hatch.envs.test]
+dev-mode = true
+features = ["dev"]
+path = ".venv/test"
+dependencies = [
+  "pytest",
+  "pytest-cov",
+]
+
+[tool.hatch.envs.docs]
+features = ["dev", "docs"]
+path = ".venv/docs"
+
+[tool.hatch.envs.docs.scripts]
+build = "sphinx-build docs/source docs/build -b html -W --keep-going"
+clean = "rm -rf docs/build"
+build-clean = "hatch run docs:clean && hatch run docs:build"
+serve = "python -m http.server --directory docs/build 8008"
+
+# --- TOOL CONFIGURATION ---
+
+[tool.coverage.run]
+source = ["pyw.autodocgen"]
+branch = true
+parallel = true
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+  "pragma: no cover",
+  "raise NotImplementedError",
+  "\\.\\.\\."
+]
+
+[tool.mypy]
+python_version = "3.10"
+explicit_package_bases = true
+namespace_packages = true
+mypy_path = "src"
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+disallow_any_unimported = true
+disallow_incomplete_defs = true
+
+[tool.bandit]
+skips = ["B101", "B105", "B301"]
+
+[tool.pydocstyle]
+convention = "google"
+add_ignore = "D107,D104"
