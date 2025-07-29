@@ -1,0 +1,122 @@
+Metadata-Version: 2.4
+Name: docker-volume-migrator
+Version: 0.1.0
+Summary: Interactive CLI utility to migrate Docker named volumes between hosts via SSH.
+Author-email: djbios <djbios@djbios.org>
+License: MIT License
+        
+        Copyright (c) 2025 Andrei Dorofeev
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/djbios/docker-volume-migrator
+Project-URL: Source, https://github.com/djbios/docker-volume-migrator
+Project-URL: Tracker, https://github.com/djbios/docker-volume-migrator/issues
+Keywords: docker,cli,volume,migration,ssh
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: System :: Systems Administration
+Classifier: Topic :: Utilities
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: typer>=0.16
+Dynamic: license-file
+
+# Docker Volume Migrator
+
+> Interactive command-line tool to copy Docker **named volumes** between two remote hosts over SSH – no local Docker daemon required.
+
+## Features
+
+* 📦 **Stream-based transfer** – data is piped directly between hosts, never written to disk
+* 🔐 **SSH first** – authenticate with existing SSH keys/agents
+* 🎛️ **Interactive wizard** – guided, step-by-step prompts to pick source/target hosts & volumes
+* 🐳 **Minimal deps** – only needs Docker & `ssh` on your machine; the rest happens remotely
+* 🪄 **One command** – install & run in seconds
+
+
+## TODO (PRs welcome)
+* Direct host to host transfer with ssh keys transfer
+* Tests
+
+
+## Installation
+
+```bash
+pip install docker-volume-migrator
+```
+
+or install the bleeding-edge version from GitHub:
+
+```bash
+pip install git+https://github.com/djbios/docker-volume-migrator.git
+```
+
+## Usage
+
+```bash
+docker-volume-migrate run
+```
+
+The wizard will:
+
+1. Ask for the **source host** (SSH hostname/IP)
+2. List its Docker volumes and let you pick which to copy
+3. Ask for the **target host**
+4. Let you create new destination volumes or map to existing ones
+5. Show a summary and start the streaming transfer
+
+### Non-interactive / automation
+
+All prompts have sensible defaults and can be pre-answered by setting environment variables or using CLI options (coming soon).
+
+## How it works
+
+Under the hood, data is transferred via a TAR streaming pipeline:
+
+```text
+ssh SRC_HOST "docker run --rm -v SRC_VOL:/from alpine tar czf - -C /from ." \
+  | ssh DST_HOST "docker run --rm -i -v DST_VOL:/to alpine tar xzf - -C /to"
+```
+
+No temporary files, no Docker daemon on your workstation.
+
+## Contributing
+
+Pull requests welcome! Please open an issue first to discuss major changes.
+
+```bash
+# set up dev env
+git clone https://github.com/djbios/docker-volume-migrator.git
+cd docker-volume-migrator
+uv venv  # or python -m venv .venv
+source .venv/bin/activate
+uv pip install -e .[dev]
+```
+
+## License
+
+[MIT](LICENSE)  © djbios
