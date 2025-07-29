@@ -1,0 +1,31 @@
+{% for natgw in resources -%}
+resource "aws_nat_gateway" "{{ natgw.name_sanitized }}" {
+  {%  if natgw.get('SubnetId') %}
+  subnet_id = "{{ natgw.SubnetId }}"
+  {%  endif -%}
+
+  {%  if not natgw.is_private and natgw.get('primary_allocation_id') %}
+  allocation_id = "{{ natgw.primary_allocation_id }}"
+  {%  endif -%}
+
+  {%  if natgw.get('ConnectivityType') %}
+  connectivity_type = "{{ natgw.ConnectivityType }}"
+  {%  endif -%}
+
+  {%  if natgw.get('Tags') %}
+  tags = {
+    {%- for tag in natgw.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  {%  if not natgw.is_private %}
+  depends_on = [aws_internet_gateway.igw]
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

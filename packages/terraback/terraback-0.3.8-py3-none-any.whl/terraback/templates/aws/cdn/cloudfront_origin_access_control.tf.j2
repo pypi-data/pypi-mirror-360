@@ -1,0 +1,13 @@
+{% for oac in resources -%}
+resource "aws_cloudfront_origin_access_control" "{{ oac.name_sanitized }}" {
+  name                              = "{{ oac.config_formatted.get('name') }}"
+  description                       = "{{ oac.config_formatted.get('description', '') }}"
+  origin_access_control_origin_type = "{{ oac.config_formatted.get('origin_access_control_origin_type', 's3') }}"
+  signing_behavior                  = "{{ oac.config_formatted.get('signing_behavior', 'always') }}"
+  signing_protocol                  = "{{ oac.config_formatted.get('signing_protocol', 'sigv4') }}"
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

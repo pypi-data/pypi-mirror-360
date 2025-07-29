@@ -1,0 +1,33 @@
+{% for snapshot in resources -%}
+resource "aws_ebs_snapshot" "{{ snapshot.SnapshotId | strip_id_prefix | tf_resource_name }}" {
+  volume_id   = "{{ snapshot.VolumeId }}"
+  description = "{{ snapshot.Description | default('Imported snapshot') }}"
+
+  {%  if snapshot.get('Encrypted') %}
+  encrypted = {{ snapshot.Encrypted | lower }}
+  {%  endif -%}
+
+  {%  if snapshot.get('KmsKeyId') %}
+  kms_key_id = "{{ snapshot.KmsKeyId }}"
+  {%  endif -%}
+
+  {%  if snapshot.get('Tags') %}
+  tags = {
+    {%- for tag in snapshot.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes = [
+      description
+    ]
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

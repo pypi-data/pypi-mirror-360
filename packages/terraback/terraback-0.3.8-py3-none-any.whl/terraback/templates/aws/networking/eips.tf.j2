@@ -1,0 +1,25 @@
+{% for eip in resources -%}
+resource "aws_eip" "{{ eip.AllocationId | strip_id_prefix | tf_resource_name }}" {
+  domain = "{{ eip.Domain }}"
+
+  {%  if eip.get('InstanceId') %}
+  instance = "{{ eip.InstanceId }}"
+  {%  endif -%}
+
+  {%  if eip.get('NetworkInterfaceId') %}
+  network_interface = "{{ eip.NetworkInterfaceId }}"
+  {%  endif -%}
+
+  {%  if eip.get('Tags') %}
+  tags = {
+    {%- for tag in eip.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

@@ -1,0 +1,20 @@
+{% for vpc in resources -%}
+resource "aws_vpc" "{{ vpc.VpcId | strip_id_prefix | tf_resource_name }}" {
+  cidr_block           = "{{ vpc.CidrBlock }}"
+  instance_tenancy     = "{{ vpc.InstanceTenancy }}"
+  enable_dns_support   = true
+  enable_dns_hostnames = false
+
+  {%  if vpc.get('Tags') %}
+  tags = {
+    {%- for tag in vpc.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{% endfor %}

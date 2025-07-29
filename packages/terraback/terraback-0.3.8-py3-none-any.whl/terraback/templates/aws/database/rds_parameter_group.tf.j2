@@ -1,0 +1,27 @@
+{% for group in resources -%}
+resource "aws_db_parameter_group" "{{ group.DBParameterGroupName | tf_resource_name }}" {
+  name        = "{{ group.DBParameterGroupName }}"
+  family      = "{{ group.DBParameterGroupFamily }}"
+  description = "{{ group.Description }}"
+
+  {%- for param in group.get('Parameters', []) %}
+  parameter {
+    name         = "{{ param.ParameterName }}"
+    value        = "{{ param.ParameterValue }}"
+    apply_method = "{{ param.ApplyMethod | default('immediate') }}"
+  }
+  {%- endfor %}
+
+  {%  if group.get('Tags') %}
+  tags = {
+    {%- for tag in group.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

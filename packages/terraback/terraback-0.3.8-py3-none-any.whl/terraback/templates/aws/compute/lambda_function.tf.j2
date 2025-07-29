@@ -1,0 +1,143 @@
+{% for func in resources -%}
+resource "aws_lambda_function" "{{ func.FunctionName | terraform_name }}" {
+  function_name = "{{ func.FunctionName }}"
+  role          = "{{ func.Role }}"
+  handler       = "{{ func.Handler }}"
+  runtime       = "{{ func.Runtime }}"
+  timeout       = {{ func.Timeout | safe_int }}
+  memory_size   = {{ func.MemorySize | safe_int }}
+
+  # Deploy from S3 bucket (recommended) or local file
+  {%  if func.get('Code') and func.Code.get('S3Bucket') %}
+  s3_bucket     = "{{ func.Code.S3Bucket }}"
+  s3_key        = "{{ func.Code.S3Key }}"
+  {%  if func.Code.get('S3ObjectVersion') %}
+  s3_object_version = "{{ func.Code.S3ObjectVersion }}"
+  {%  endif %}
+  {%- else %}
+  # Local deployment - create a zip file with your Lambda code
+  filename = "${path.module}/lambda_functions/{{ func.FunctionName }}.zip"
+  source_code_hash = filebase64sha256("${path.module}/lambda_functions/{{ func.FunctionName }}.zip")
+  {%  endif %}
+
+  {%  if func.get('Description') and func.Description | has_value %}
+  description   = "{{ func.Description | escape_quotes }}"
+  {%  endif %}
+
+  {%  if func.get('Environment') and func.Environment.get('Variables') and func.Environment.Variables | has_value %}
+  environment {
+    variables = {
+      {%- for key, value in func.Environment.Variables.items() %}
+      "{{ key }}" = "{{ value | escape_quotes | replace('\n', '\\n') | replace('\r', '\\r') }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    }
+  }
+  {%  endif %}
+
+  {%  if func.get('VpcConfig') and func.VpcConfig.get('SubnetIds') and func.VpcConfig.SubnetIds | has_value %}
+  vpc_config {
+    subnet_ids         = [
+      {%- for subnet_id in func.VpcConfig.SubnetIds %}
+      "{{ subnet_id }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    security_group_ids = [
+      {%- for sg_id in func.VpcConfig.get('SecurityGroupIds', []) %}
+      "{{ sg_id }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+  }
+  {%  endif %}
+
+  {%  if func.get('DeadLetterConfig') and func.DeadLetterConfig.get('TargetArn') %}
+  dead_letter_config {
+    target_arn = "{{ func.DeadLetterConfig.TargetArn }}"
+  }
+  {%  endif %}
+
+  {%  if func.get('TracingConfig') and func.TracingConfig.get('Mode') %}
+  tracing_config {
+    mode = "{{ func.TracingConfig.Mode }}"
+  }
+  {%  endif %}
+
+  {%  if func.get('Layers') and func.Layers | has_value %}
+  layers = [
+    {%- for layer_arn in func.Layers %}
+    "{{ layer_arn }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif %}
+
+  {%  if func.get('FileSystemConfigs') and func.FileSystemConfigs | has_value %}
+  {%- for fs_config in func.FileSystemConfigs %}
+  file_system_config {
+    arn              = "{{ fs_config.Arn }}"
+    local_mount_path = "{{ fs_config.LocalMountPath }}"
+  }
+  {%- endfor %}
+  {%  endif %}
+
+  {%  if func.get('ImageConfig') %}
+  image_config {
+    {%  if func.ImageConfig.get('EntryPoint') and func.ImageConfig.EntryPoint | has_value %}
+    entry_point = [
+      {%- for entry in func.ImageConfig.EntryPoint %}
+      "{{ entry }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {%  endif %}
+    {%  if func.ImageConfig.get('Command') and func.ImageConfig.Command | has_value %}
+    command = [
+      {%- for cmd in func.ImageConfig.Command %}
+      "{{ cmd }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {%  endif %}
+    {%  if func.ImageConfig.get('WorkingDirectory') and func.ImageConfig.WorkingDirectory | has_value %}
+    working_directory = "{{ func.ImageConfig.WorkingDirectory }}"
+    {%  endif %}
+  }
+  {%  endif %}
+
+  {%  if func.get('CodeSigningConfigArn') and func.CodeSigningConfigArn | has_value %}
+  code_signing_config_arn = "{{ func.CodeSigningConfigArn }}"
+  {%  endif %}
+
+  {%  if func.get('Architectures') and func.Architectures | has_value %}
+  architectures = [
+    {%- for arch in func.Architectures %}
+    "{{ arch }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif %}
+
+  {%  if func.get('EphemeralStorage') and func.EphemeralStorage.get('Size') is defined and func.EphemeralStorage.Size is not none %}
+  ephemeral_storage {
+    size = {{ func.EphemeralStorage.Size | safe_int }}
+  }
+  {%  endif %}
+
+  {%  if func.get('SnapStart') and func.SnapStart.get('ApplyOn') %}
+  snap_start {
+    apply_on = "{{ func.SnapStart.ApplyOn }}"
+  }
+  {%  endif %}
+
+  {%  if func.get('ReservedConcurrentExecutions') is defined and func.ReservedConcurrentExecutions is not none %}
+  reserved_concurrent_executions = {{ func.ReservedConcurrentExecutions | safe_int }}
+  {%  endif %}
+
+  {%  if func.get('Tags') and func.Tags | has_value %}
+  tags = {
+    {%- for key, value in func.get('Tags', {}).items() %}
+    "{{ key }}" = "{{ value | escape_quotes }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif %}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

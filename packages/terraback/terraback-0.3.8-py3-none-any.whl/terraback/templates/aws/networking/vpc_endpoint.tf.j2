@@ -1,0 +1,55 @@
+{% for endpoint in resources -%}
+resource "aws_vpc_endpoint" "{{ endpoint.name_sanitized }}" {
+  vpc_id              = "{{ endpoint.VpcId }}"
+  service_name        = "{{ endpoint.ServiceName }}"
+  vpc_endpoint_type   = "{{ endpoint.VpcEndpointType }}"
+
+  {%  if endpoint.get('RouteTableIds') and endpoint.is_gateway %}
+  route_table_ids = [
+    {%- for rt_id in endpoint.route_table_ids_formatted %}
+    "{{ rt_id }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if endpoint.get('SubnetIds') and (endpoint.is_interface or endpoint.is_gateway_load_balancer) %}
+  subnet_ids = [
+    {%- for subnet_id in endpoint.subnet_ids_formatted %}
+    "{{ subnet_id }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if endpoint.get('Groups') and (endpoint.is_interface or endpoint.is_gateway_load_balancer) %}
+  security_group_ids = [
+    {%- for sg_id in endpoint.security_group_ids_formatted %}
+    "{{ sg_id }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if endpoint.get('PrivateDnsEnabled') is defined and endpoint.PrivateDnsEnabled is not none and endpoint.is_interface %}
+  private_dns_enabled = {{ endpoint.PrivateDnsEnabled | lower }}
+  {%  endif -%}
+
+  {%  if endpoint.get('PolicyDocument') %}
+  policy = jsonencode({{ endpoint.PolicyDocument | safe }})
+  {%  endif -%}
+
+  {%  if endpoint.get('State') == 'Available' %}
+  auto_accept = true
+  {%  endif -%}
+
+  {%  if endpoint.get('tags_formatted') %}
+  tags = {
+    {%- for key, value in endpoint.get('tags_formatted', {}).items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

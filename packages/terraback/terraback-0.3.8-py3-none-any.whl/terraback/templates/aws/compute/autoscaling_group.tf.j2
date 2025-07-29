@@ -1,0 +1,109 @@
+{% for asg in resources -%}
+resource "aws_autoscaling_group" "{{ asg.name_sanitized }}" {
+  name                = "{{ asg.AutoScalingGroupName }}"
+  max_size            = {{ asg.MaxSize }}
+  min_size            = {{ asg.MinSize }}
+  desired_capacity    = {{ asg.DesiredCapacity }}
+
+  {%  if asg.get('DefaultCooldown') is defined and asg.DefaultCooldown is not none %}
+  default_cooldown    = {{ asg.DefaultCooldown }}
+  {%  endif -%}
+
+  {%  if asg.get('HealthCheckGracePeriod') is defined and asg.HealthCheckGracePeriod is not none %}
+  health_check_grace_period = {{ asg.HealthCheckGracePeriod }}
+  {%  endif -%}
+
+  {%  if asg.get('HealthCheckType') %}
+  health_check_type   = "{{ asg.HealthCheckType }}"
+  {%  endif -%}
+
+  {%  if asg.get('VPCZoneIdentifier') %}
+  vpc_zone_identifier = [
+    {%- for subnet_id in asg.VPCZoneIdentifier.split(',') %}
+    "{{ subnet_id.strip() }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if asg.get('AvailabilityZones') %}
+  availability_zones = [
+    {%- for az in asg.AvailabilityZones %}
+    "{{ az }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if asg.UsesLaunchTemplate and asg.get('LaunchTemplate') %}
+  launch_template {
+    {%  if asg.LaunchTemplate.get('LaunchTemplateId') %}
+    id = "{{ asg.LaunchTemplate.LaunchTemplateId }}"
+    {%  endif -%}
+    {%  if asg.LaunchTemplate.get('LaunchTemplateName') %}
+    name    = "{{ asg.LaunchTemplate.LaunchTemplateName }}"
+    {%  endif -%}
+    {%  if asg.LaunchTemplate.get('Version') %}
+    version = "{{ asg.LaunchTemplate.Version }}"
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  {%  if asg.UsesLaunchConfiguration and asg.get('LaunchConfigurationName') %}
+  launch_configuration = "{{ asg.LaunchConfigurationName }}"
+  {%  endif -%}
+
+  {%  if asg.get('TargetGroupARNs') %}
+  target_group_arns = [
+    {%- for tg_arn in asg.TargetGroupARNs %}
+    "{{ tg_arn }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if asg.get('LoadBalancerNames') %}
+  load_balancers = [
+    {%- for lb_name in asg.LoadBalancerNames %}
+    "{{ lb_name }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if asg.get('TerminationPolicies') %}
+  termination_policies = [
+    {%- for policy in asg.TerminationPolicies %}
+    "{{ policy }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if asg.get('ServiceLinkedRoleARN') %}
+  service_linked_role_arn = "{{ asg.ServiceLinkedRoleARN }}"
+  {%  endif -%}
+
+  {%- for tag in asg.get('TagsFormatted', []) %}
+  tag {
+    key                 = "{{ tag.Key }}"
+    value               = "{{ tag.Value }}"
+    propagate_at_launch = {{ tag.PropagateAtLaunch | lower }}
+  }
+  {%- endfor %}
+
+  {%  if asg.get('EnabledMetrics') %}
+  enabled_metrics = [
+    {%- for metric in asg.EnabledMetrics %}
+    "{{ metric.Metric }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes = [
+      desired_capacity,
+    ]
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

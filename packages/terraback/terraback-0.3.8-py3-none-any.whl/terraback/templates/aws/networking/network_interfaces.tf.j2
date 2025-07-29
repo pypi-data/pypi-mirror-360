@@ -1,0 +1,46 @@
+{% for eni in resources -%}
+resource "aws_network_interface" "{{ eni.name_sanitized }}" {
+  subnet_id         = "{{ eni.subnet_id }}"
+  {%  if eni.private_ip %}
+  private_ip        = "{{ eni.private_ip }}"
+  {%  endif -%}
+  {%  if eni.private_ips and eni.private_ips|length > 1 %}
+  private_ips       = [
+    {%- for ip in eni.private_ips %}
+    "{{ ip }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+  {%  if eni.security_groups %}
+  security_groups   = [
+    {%- for sg in eni.security_groups %}
+    "{{ sg }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+  source_dest_check = {{ 'true' if eni.source_dest_check else 'false' }}
+  {%  if eni.description %}
+  description       = "{{ eni.description }}"
+  {%  endif -%}
+
+  {%  if eni.tags %}
+  tags = {
+    {%- for key, value in eni.tags.items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{%  if eni.attached and eni.instance_id %}
+resource "aws_network_interface_attachment" "{{ eni.name_sanitized }}_attachment" {
+  instance_id          = "{{ eni.instance_id }}"
+  network_interface_id = aws_network_interface.{{ eni.name_sanitized }}.id
+  device_index         = {{ eni.device_index }}
+}
+{%  endif -%}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

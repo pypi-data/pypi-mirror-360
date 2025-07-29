@@ -1,0 +1,66 @@
+{% for cert in resources -%}
+{%  if cert.is_acm_issued %}
+resource "aws_acm_certificate" "{{ cert.domain_sanitized }}" {
+  domain_name       = "{{ cert.DomainName }}"
+  validation_method = "{{ cert.Options.ValidationMethod if cert.get('Options') and cert.Options.get('ValidationMethod') else 'DNS' }}"
+
+  {%  if cert.get('sans_formatted') %}
+  subject_alternative_names = [
+    {%- for san in cert.sans_formatted %}
+    {%  if san != cert.DomainName %}
+    "{{ san }}"{{ "," if not loop.last }}
+    {%  endif -%}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if cert.get('Options') and cert.Options.get('CertificateTransparencyLoggingPreference') %}
+  options {
+    certificate_transparency_logging_preference = "{{ cert.Options.CertificateTransparencyLoggingPreference }}"
+  }
+  {%  endif -%}
+
+  {%  if cert.get('Tags') %}
+  tags = {
+    {%- for tag in cert.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes = [
+      validation_method
+    ]
+  }
+}
+
+{%  if cert.get('domain_validation_formatted') and cert.Options.get('ValidationMethod') == 'DNS' %}
+# DNS validation records should be created separately
+# for each domain validation option in cert.domain_validation_formatted
+{%  endif -%}
+
+{%- else %}
+# Imported certificate: {{ cert.DomainName }}
+resource "aws_acm_certificate" "{{ cert.domain_sanitized }}" {
+  # This is an imported certificate and cannot be managed by Terraform
+  # The certificate must be imported manually
+  tags = {
+    "ImportedCertificate" = "true"
+    "DomainName" = "{{ cert.DomainName }}"
+    {%- for tag in cert.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+{%  endif -%}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

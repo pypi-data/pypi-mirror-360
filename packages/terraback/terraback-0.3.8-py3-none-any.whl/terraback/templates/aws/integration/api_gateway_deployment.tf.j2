@@ -1,0 +1,42 @@
+{% for deployment in resources -%}
+resource "aws_api_gateway_deployment" "{{ deployment.id | tf_resource_name }}" {
+  rest_api_id = "{{ deployment.restApiId }}"
+
+  {%  if deployment.get('stageName') %}
+  stage_name = "{{ deployment.stageName }}"
+  {%  endif -%}
+
+  {%  if deployment.get('description') %}
+  description = "{{ deployment.description | replace('"', '\\"') }}"
+  {%  endif -%}
+
+  {%  if deployment.get('stageDescription') %}
+  stage_description = "{{ deployment.stageDescription | replace('"', '\\"') }}"
+  {%  endif -%}
+
+  {%  if deployment.get('variables') %}
+  variables = {
+    {%- for key, value in deployment.variables.items() %}
+    "{{ key }}" = "{{ value | replace('"', '\\"') }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  triggers = {
+    # Trigger redeployment when the configuration changes
+    redeployment = sha1(jsonencode({
+      rest_api_id = "{{ deployment.restApiId }}"
+      stage_name  = "{{ deployment.get('stageName', 'prod') }}"
+      created_date = "{{ deployment.get('createdDate', '') }}"
+    }))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

@@ -1,0 +1,345 @@
+{% for task_def in resources -%}
+resource "aws_ecs_task_definition" "{{ task_def.family_sanitized }}" {
+  family = "{{ task_def.family }}"
+
+  {%  if task_def.get('requiresCompatibilities') %}
+  requires_compatibilities = [
+    {%- for compat in task_def.requiresCompatibilities %}
+    "{{ compat }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if task_def.get('networkMode') %}
+  network_mode = "{{ task_def.networkMode }}"
+  {%  endif -%}
+
+  {%  if task_def.get('cpu') %}
+  cpu = "{{ task_def.cpu }}"
+  {%  endif -%}
+
+  {%  if task_def.get('memory') %}
+  memory = "{{ task_def.memory }}"
+  {%  endif -%}
+
+  {%  if task_def.get('taskRoleArn') %}
+  task_role_arn = "{{ task_def.taskRoleArn }}"
+  {%  endif -%}
+
+  {%  if task_def.get('executionRoleArn') %}
+  execution_role_arn = "{{ task_def.executionRoleArn }}"
+  {%  endif -%}
+
+  {%  if task_def.get('pidMode') %}
+  pid_mode = "{{ task_def.pidMode }}"
+  {%  endif -%}
+
+  {%  if task_def.get('ipcMode') %}
+  ipc_mode = "{{ task_def.ipcMode }}"
+  {%  endif -%}
+
+  {%  if task_def.get('runtime_platform_formatted') %}
+  runtime_platform {
+    {%  if task_def.runtime_platform_formatted.get('cpu_architecture') %}
+    cpu_architecture = "{{ task_def.runtime_platform_formatted.cpu_architecture }}"
+    {%  endif -%}
+    {%  if task_def.runtime_platform_formatted.get('operating_system_family') %}
+    operating_system_family = "{{ task_def.runtime_platform_formatted.operating_system_family }}"
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  {%  if task_def.get('ephemeral_storage_formatted') and task_def.ephemeral_storage_formatted.get('size_in_gib') is defined %}
+  ephemeral_storage {
+    size_in_gib = {{ task_def.ephemeral_storage_formatted.size_in_gib }}
+  }
+  {%  endif -%}
+
+  container_definitions = jsonencode([
+    {%- for container in task_def.get('containers_formatted', []) %}
+    {
+      name  = "{{ container.name }}"
+      image = "{{ container.image }}"
+
+      {%  if container.get('memory') is defined and container.memory is not none %}
+      memory = {{ container.memory }}
+      {%  endif -%}
+      {%  if container.get('memory_reservation') is defined and container.memory_reservation is not none %}
+      memoryReservation = {{ container.memory_reservation }}
+      {%  endif -%}
+      {%  if container.get('cpu') is defined and container.cpu is not none %}
+      cpu = {{ container.cpu }}
+      {%  endif -%}
+
+      essential = {{ container.get('essential', true) | lower }}
+
+      {%  if container.get('entry_point') %}
+      entryPoint = {{ container.entry_point | tojson }}
+      {%  endif -%}
+      {%  if container.get('command') %}
+      command = {{ container.command | tojson }}
+      {%  endif -%}
+      {%  if container.get('working_directory') %}
+      workingDirectory = "{{ container.working_directory }}"
+      {%  endif -%}
+
+      {%  if container.get('environment') %}
+      environment = {{ container.environment | tojson }}
+      {%  endif -%}
+      {%  if container.get('secrets') %}
+      secrets = {{ container.secrets | tojson }}
+      {%  endif -%}
+
+      {%  if container.get('port_mappings') %}
+      portMappings = {{ container.port_mappings | tojson }}
+      {%  endif -%}
+
+      {%  if container.get('mount_points') %}
+      mountPoints = {{ container.mount_points | tojson }}
+      {%  endif -%}
+      {%  if container.get('volumes_from') %}
+      volumesFrom = {{ container.volumes_from | tojson }}
+      {%  endif -%}
+
+      {%  if container.get('log_configuration') %}
+      logConfiguration = {
+        logDriver = "{{ container.log_configuration.log_driver }}"
+        {%  if container.log_configuration.get('options') %}
+        options = {{ container.log_configuration.options | tojson }}
+        {%  endif -%}
+        {%  if container.log_configuration.get('secret_options') %}
+        secretOptions = {{ container.log_configuration.secret_options | tojson }}
+        {%  endif -%}
+      }
+      {%  endif -%}
+
+      {%  if container.get('health_check') %}
+      healthCheck = {
+        {%  if container.health_check.get('command') %}
+        command = {{ container.health_check.command | tojson }}
+        {%  endif -%}
+        {%  if container.health_check.get('interval') is defined and container.health_check.interval is not none %}
+        interval = {{ container.health_check.interval }}
+        {%  endif -%}
+        {%  if container.health_check.get('timeout') is defined and container.health_check.timeout is not none %}
+        timeout = {{ container.health_check.timeout }}
+        {%  endif -%}
+        {%  if container.health_check.get('retries') is defined and container.health_check.retries is not none %}
+        retries = {{ container.health_check.retries }}
+        {%  endif -%}
+        {%  if container.health_check.get('start_period') is defined and container.health_check.start_period is not none %}
+        startPeriod = {{ container.health_check.start_period }}
+        {%  endif -%}
+      }
+      {%  endif -%}
+
+      {%  if container.get('depends_on') %}
+      dependsOn = {{ container.depends_on | tojson }}
+      {%  endif -%}
+      {%  if container.get('links') %}
+      links = {{ container.links | tojson }}
+      {%  endif -%}
+
+      {%  if container.get('hostname') %}
+      hostname = "{{ container.hostname }}"
+      {%  endif -%}
+      {%  if container.get('user') %}
+      user = "{{ container.user }}"
+      {%  endif -%}
+
+      {%  if container.get('disable_networking') is defined %}
+      disableNetworking = {{ container.disable_networking | lower }}
+      {%  endif -%}
+      {%  if container.get('privileged') is defined %}
+      privileged = {{ container.privileged | lower }}
+      {%  endif -%}
+      {%  if container.get('readonly_root_filesystem') is defined %}
+      readonlyRootFilesystem = {{ container.readonly_root_filesystem | lower }}
+      {%  endif -%}
+
+      {%  if container.get('dns_servers') %}
+      dnsServers = {{ container.dns_servers | tojson }}
+      {%  endif -%}
+      {%  if container.get('dns_search_domains') %}
+      dnsSearchDomains = {{ container.dns_search_domains | tojson }}
+      {%  endif -%}
+      {%  if container.get('extra_hosts') %}
+      extraHosts = {{ container.extra_hosts | tojson }}
+      {%  endif -%}
+
+      {%  if container.get('docker_security_options') %}
+      dockerSecurityOptions = {{ container.docker_security_options | tojson }}
+      {%  endif -%}
+      {%  if container.get('docker_labels') %}
+      dockerLabels = {{ container.docker_labels | tojson }}
+      {%  endif -%}
+
+      {%  if container.get('ulimits') %}
+      ulimits = {{ container.ulimits | tojson }}
+      {%  endif -%}
+      {%  if container.get('system_controls') %}
+      systemControls = {{ container.system_controls | tojson }}
+      {%  endif -%}
+
+      {%  if container.get('interactive') is defined %}
+      interactive = {{ container.interactive | lower }}
+      {%  endif -%}
+      {%  if container.get('pseudo_terminal') is defined %}
+      pseudoTerminal = {{ container.pseudo_terminal | lower }}
+      {%  endif -%}
+
+      {%  if container.get('start_timeout') is defined and container.start_timeout is not none %}
+      startTimeout = {{ container.start_timeout }}
+      {%  endif -%}
+      {%  if container.get('stop_timeout') is defined and container.stop_timeout is not none %}
+      stopTimeout = {{ container.stop_timeout }}
+      {%  endif -%}
+
+      {%  if container.get('repository_credentials') %}
+      repositoryCredentials = {{ container.repository_credentials | tojson }}
+      {%  endif -%}
+
+      {%  if container.get('linux_parameters') %}
+      linuxParameters = {
+        {%  if container.linux_parameters.get('capabilities') %}
+        capabilities = {{ container.linux_parameters.capabilities | tojson }}
+        {%  endif -%}
+        {%  if container.linux_parameters.get('devices') %}
+        devices = {{ container.linux_parameters.devices | tojson }}
+        {%  endif -%}
+        {%  if container.linux_parameters.get('init_process_enabled') is defined %}
+        initProcessEnabled = {{ container.linux_parameters.init_process_enabled | lower }}
+        {%  endif -%}
+        {%  if container.linux_parameters.get('shared_memory_size') is defined and container.linux_parameters.shared_memory_size is not none %}
+        sharedMemorySize = {{ container.linux_parameters.shared_memory_size }}
+        {%  endif -%}
+        {%  if container.linux_parameters.get('tmpfs') %}
+        tmpfs = {{ container.linux_parameters.tmpfs | tojson }}
+        {%  endif -%}
+        {%  if container.linux_parameters.get('max_swap') is defined and container.linux_parameters.max_swap is not none %}
+        maxSwap = {{ container.linux_parameters.max_swap }}
+        {%  endif -%}
+        {%  if container.linux_parameters.get('swappiness') is defined and container.linux_parameters.swappiness is not none %}
+        swappiness = {{ container.linux_parameters.swappiness }}
+        {%  endif -%}
+      }
+      {%  endif -%}
+
+      {%  if container.get('firelens_configuration') %}
+      firelensConfiguration = {{ container.firelens_configuration | tojson }}
+      {%  endif -%}
+    }{{ "," if not loop.last }}
+    {%- endfor %}
+  ])
+
+  {%- for volume in task_def.get('volumes_formatted', []) %}
+  volume {
+    name = "{{ volume.name }}"
+
+    {%  if volume.get('host') and volume.host.get('sourcePath') %}
+    host_path = "{{ volume.host.sourcePath }}"
+    {%  endif -%}
+
+    {%  if volume.get('docker_volume_configuration') %}
+    docker_volume_configuration {
+      {%  if volume.docker_volume_configuration.get('scope') %}
+      scope = "{{ volume.docker_volume_configuration.scope }}"
+      {%  endif -%}
+      {%  if volume.docker_volume_configuration.get('autoprovision') is defined %}
+      autoprovision = {{ volume.docker_volume_configuration.autoprovision | lower }}
+      {%  endif -%}
+      {%  if volume.docker_volume_configuration.get('driver') %}
+      driver = "{{ volume.docker_volume_configuration.driver }}"
+      {%  endif -%}
+      {%  if volume.docker_volume_configuration.get('driver_opts') %}
+      driver_opts = {{ volume.docker_volume_configuration.driver_opts | tojson }}
+      {%  endif -%}
+      {%  if volume.docker_volume_configuration.get('labels') %}
+      labels = {{ volume.docker_volume_configuration.labels | tojson }}
+      {%  endif -%}
+    }
+    {%  endif -%}
+
+    {%  if volume.get('efs_volume_configuration') %}
+    efs_volume_configuration {
+      file_system_id = "{{ volume.efs_volume_configuration.fileSystemId }}"
+      {%  if volume.efs_volume_configuration.get('rootDirectory') %}
+      root_directory = "{{ volume.efs_volume_configuration.rootDirectory }}"
+      {%  endif -%}
+      {%  if volume.efs_volume_configuration.get('transitEncryption') %}
+      transit_encryption = "{{ volume.efs_volume_configuration.transitEncryption }}"
+      {%  endif -%}
+      {%  if volume.efs_volume_configuration.get('transitEncryptionPort') is defined and volume.efs_volume_configuration.transitEncryptionPort is not none %}
+      transit_encryption_port = {{ volume.efs_volume_configuration.transitEncryptionPort }}
+      {%  endif -%}
+
+      {%  if volume.efs_volume_configuration.get('authorizationConfig') %}
+      authorization_config {
+        {%  if volume.efs_volume_configuration.authorizationConfig.get('accessPointId') %}
+        access_point_id = "{{ volume.efs_volume_configuration.authorizationConfig.accessPointId }}"
+        {%  endif -%}
+        {%  if volume.efs_volume_configuration.authorizationConfig.get('iam') %}
+        iam = "{{ volume.efs_volume_configuration.authorizationConfig.iam }}"
+        {%  endif -%}
+      }
+      {%  endif -%}
+    }
+    {%  endif -%}
+
+    {%  if volume.get('fsx_windows_file_server_volume_configuration') %}
+    fsx_windows_file_server_volume_configuration {
+      file_system_id = "{{ volume.fsx_windows_file_server_volume_configuration.fileSystemId }}"
+      root_directory = "{{ volume.fsx_windows_file_server_volume_configuration.rootDirectory }}"
+
+      authorization_config {
+        credentials_parameter = "{{ volume.fsx_windows_file_server_volume_configuration.authorizationConfig.credentialsParameter }}"
+        domain = "{{ volume.fsx_windows_file_server_volume_configuration.authorizationConfig.domain }}"
+      }
+    }
+    {%  endif -%}
+  }
+  {%- endfor %}
+
+  {%- for constraint in task_def.get('placement_constraints_formatted', []) %}
+  placement_constraints {
+    type = "{{ constraint.type }}"
+    {%  if constraint.get('expression') %}
+    expression = "{{ constraint.expression }}"
+    {%  endif -%}
+  }
+  {%- endfor %}
+
+  {%- for accelerator in task_def.get('inference_accelerators_formatted', []) %}
+  inference_accelerator {
+    device_name = "{{ accelerator.device_name }}"
+    device_type = "{{ accelerator.device_type }}"
+  }
+  {%- endfor %}
+
+  {%  if task_def.get('proxy_configuration_formatted') %}
+  proxy_configuration {
+    type           = "{{ task_def.proxy_configuration_formatted.type }}"
+    container_name = "{{ task_def.proxy_configuration_formatted.container_name }}"
+    {%  if task_def.proxy_configuration_formatted.get('properties') %}
+    properties = {
+      {%- for prop in task_def.proxy_configuration_formatted.properties %}
+      "{{ prop.name }}" = "{{ prop.value }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    }
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  {%  if task_def.get('tags_formatted') %}
+  tags = {
+    {%- for key, value in task_def.get('tags_formatted', {}).items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}
