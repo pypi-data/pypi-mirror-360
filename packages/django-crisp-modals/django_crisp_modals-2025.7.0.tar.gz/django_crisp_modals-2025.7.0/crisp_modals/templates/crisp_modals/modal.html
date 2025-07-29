@@ -1,0 +1,77 @@
+{% load static %}
+
+<!-- Modal -->
+{% block modal_assets %}{% endblock %}
+<style>
+    legend.form-label {
+        font-size: inherit;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+    .modal-title {
+        font-size: 1.5em;
+        font-weight: 200;
+    }
+    .modal-alert {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 1em;
+        margin-bottom: 1em;
+        gap: 1em;
+    }
+    .modal-alert > .alert-message {
+        max-width: 90%;
+        margin-bottom: 0;
+        padding-left: 0;
+        list-style: none;
+    }
+    .modal-alert > .alert-icon {
+        padding: 0;
+        width: 2em;
+        height: 2em;
+    }
+
+    #modal-error:empty {
+        display: none;
+    }
+</style>
+<div class="modal fade {% block modal_classes %}{% endblock %}" id="modal" tabindex="-1" role="dialog"
+     aria-labelledby="modal-title" inert>
+    <div class="modal-dialog modal-dialog-centered {% block modal_styles %}{% endblock %}">
+        <div class="modal-content">
+            {% block pre_content %}{% endblock %}
+            <div class="modal-header bg-primary-subtle">
+                {% block modal_title_tools %}{% endblock %}
+                <div class="modal-title my-0" id="modal-title">{% block modal_title %}{% endblock %}</div>
+                <div class="modal-subtitle text-body-secondary">{% block modal_subtitle %}{% endblock %}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modal-content">
+                <div id="modal-error" class="modal-alert text-danger-emphasis bg-danger-subtle">{% block modal_error %}{% endblock %}</div>
+                {% block modal_body %}{% endblock %}
+                {% block modal_scripts %}
+                    <script>
+                        function initializeModal() {
+                        }
+                        $('#modal').on('shown.bs.modal', function () {
+                            initializeModal();
+                        });
+                    </script>
+                {% endblock %}
+            </div>
+            <div class="modal-footer" id="modal-footer">{% block modal_footer %}
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" aria-label="Close">Close</button>
+            {% endblock %}</div>
+            {% block post_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+
+

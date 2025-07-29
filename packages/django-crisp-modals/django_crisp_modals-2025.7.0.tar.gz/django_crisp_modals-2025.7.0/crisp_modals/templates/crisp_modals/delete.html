@@ -1,0 +1,28 @@
+{% extends "crisp_modals/confirm.html" %}
+{% load crisp_modals %}
+
+{% block modal_title %}Delete {{ object|verbose_name }}?{% endblock %}
+
+{% block modal_body %}
+    <p class="lead">
+        Are you sure you want to delete the {{ object|verbose_name }} <strong>"{{object}}"</strong>{% if related %}
+        and the following related items{% endif %}?
+    </p>
+    {% if related %}
+        <p>The following related items will also be deleted!</p>
+        <div class="small p-3 mb-2 bg-warning-subtle text-warning-emphasis"
+             style="max-height: 200px; overflow-y: auto;">
+            {{ related|html_list }}
+        </div>
+    {% endif %}
+    {% if protected %}
+        <p>
+            This {{ object|verbose_name }} cannot be deleted because it is
+            protected by the following related items:
+        </p>
+        <div class="small p-3 mb-2 bg-danger-subtle text-danger-emphasis"
+             style="max-height: 200px; overflow-y: auto;">
+            {{ protected|list_objects }}
+        </div>
+    {% endif %}
+{% endblock %}
