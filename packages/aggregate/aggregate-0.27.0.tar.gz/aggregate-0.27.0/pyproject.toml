@@ -1,0 +1,79 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aggregate"
+dynamic = ["version"]
+description = "Tools for creating and working with aggregate probability distributions."
+readme = "README.rst"
+authors = [
+    {name = "Stephen J. Mildenhall", email = "steve@convexrisk.com"},
+]
+maintainers = [
+    {name = "Stephen J. Mildenhall", email = "steve@convexrisk.com"},
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Education",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = [
+    "IPython",
+    "cycler",
+    "ipykernel",
+    "jinja2",
+    "matplotlib>=3.5",
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "psutil",
+    "Pygments",
+    "scipy>=1.11",
+    # made optional in 0.27
+    # "numba",
+]
+license = "BSD-3-Clause"
+requires-python = ">=3.10"
+
+[project.urls]
+Documentation = "https://aggregate.readthedocs.io/en/latest/"
+"Source Code" = "https://github.com/mynl/aggregate"
+
+[project.optional-dependencies]
+dev = [
+    "docutils<0.17",
+    "jupyter-sphinx",
+    "nbsphinx",
+    "pickleshare",
+    "recommonmark>=0.7.1",
+    "setuptools>=62.3.2",
+    "sphinx>=5.0",
+    "sphinx-panels",
+    "sphinx-rtd-dark-mode",
+    "sphinxcontrib-bibtex",
+    "sphinx-copybutton",
+    "sphinx-toggleprompt",
+    "sphinx-multitoc-numbering"
+]
+
+[tool.setuptools.dynamic]
+version  = { attr = "aggregate.__version__" }
+
+[tool.setuptools]
+include-package-data = true
+packages = ["aggregate", "aggregate.extensions", "aggregate.sly"]
+
+#[tool.setuptools.packages.find]
+#where = ["."]
+#exclude = ["templates*", "agg*"]
+
+[project.entry-points."pygments.lexers"]
+lexer = "aggregate.decl_pygments:AggLexer"
+
