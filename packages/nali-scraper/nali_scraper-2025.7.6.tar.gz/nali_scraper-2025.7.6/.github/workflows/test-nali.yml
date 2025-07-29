@@ -1,0 +1,63 @@
+name: test-nali
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+    paths:
+      - "src/nali/scrapers/*.py"
+    branches:
+      - "main"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install pytest
+
+      - name: Get modified scrapers
+        run: |
+          SCRAPERS_DIR="src/nali/scrapers"
+          DELIMITER=","
+
+          SCHOOLS=$(git diff --name-only origin/main 2>/dev/null \
+          | grep "${SCRAPERS_DIR}/" \
+          |  grep -v '__init__.py' \
+          |  grep -v 'base.py' \
+          |  sed -E "s|${SCRAPERS_DIR}/(.*)\..*|\1|" \
+          |  paste -sd "$DELIMITER" -)
+
+          if [ -z "$SCHOOLS" ]; then
+              echo "CHANGED_SCRAPERS=none" >> $GITHUB_ENV
+          else
+              echo "CHANGED_SCRAPERS=$SCHOOLS" >> $GITHUB_ENV
+          fi
+
+      - name: Run selective tests for changed scrapers
+        if: env.CHANGED_SCRAPERS != 'none'
+        run: |
+          echo "Running tests for changed scrapers: ${CHANGED_SCRAPERS}"
+          IFS=',' read -ra schools <<< "${CHANGED_SCRAPERS}"
+          for school in "${schools[@]}"; do
+            echo "Running tests for $school"
+            pytest tests --school=$school
+          done
+
+      - name: Fallback to all tests if manual run
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "Manual dispatch: run all tests"
+          pytest tests
