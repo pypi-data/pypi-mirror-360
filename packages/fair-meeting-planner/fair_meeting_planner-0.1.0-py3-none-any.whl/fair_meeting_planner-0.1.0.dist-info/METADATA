@@ -1,0 +1,174 @@
+Metadata-Version: 2.4
+Name: fair-meeting-planner
+Version: 0.1.0
+Summary: A library that finds fair, repeatable meeting times for globally distributed teams.
+Author-email: Andrew Babu Augustine <andrewbaugustine@gmail.com>
+Project-URL: Homepage, https://github.com/andrewbabu/fairmeeting
+Project-URL: Bug Tracker, https://github.com/andrewbabu/fairmeeting/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pydantic
+Requires-Dist: pytz
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: pulp
+Requires-Dist: ics
+Requires-Dist: rich
+Requires-Dist: pyyaml
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+Dynamic: license-file
+
+# fair-meeting-planner
+
+Import one function → get the fairest weekly/bi-weekly meeting grid your team will actually accept.
+
+  High-Level Vision
+
+
+  The package successfully fulfills the core vision outlined in the Project Requirements Document (PRD). It is a pure-Python library that finds fair, repeatable
+  meeting times for globally distributed teams by solving the scheduling problem as a mathematical optimization task.
+
+  ---
+
+  Core Functionality & Features
+
+
+  Here’s a breakdown of what the package can do right now:
+
+
+  1. Fairness-Based Scheduling Engine:
+   * The heart of the package is an Integer Linear Programming (ILP) solver (pulp library) that finds the most "fair" meeting times.
+   * "Fairness" is defined by minimizing the maximum discomfort experienced by any single participant over a series of meetings. This avoids solutions where one
+     person or region is consistently burdened with inconvenient times.
+
+
+  2. Recurring & Rotating Meetings:
+   * The solver can schedule a series of meetings (e.g., a weekly meeting for the next 8 weeks) using the --horizon parameter.
+   * It automatically rotates the schedule to ensure that the "pain" of early-morning or late-night meetings is distributed as evenly as possible among all
+     participants over the entire series.
+
+
+  3. Pluggable Cost Engine (Extensibility):
+   * The definition of "discomfort" is fully customizable via the Python API.
+   * A DefaultCostFunction is provided, which calculates cost based on how far a meeting is outside a person's defined working hours.
+   * You can create your own cost functions (e.g., to add penalties for meetings on Fridays, during lunch, or to favor specific times) by implementing a simple
+     protocol.
+
+
+  4. Command-Line Interface (CLI):
+   * The primary way to use the package is through the fairmeeting command-line tool.
+   * It provides a user-friendly, color-coded table of the optimal meeting schedule using the rich library.
+
+
+  5. ICS Calendar Export:
+   * The tool can generate a standard .ics calendar file containing all the scheduled meeting occurrences.
+   * This file can be directly imported into Google Calendar, Outlook, Apple Calendar, and other standard calendar applications.
+
+
+  6. Comprehensive Project Setup:
+   * The package is structured as a standard, installable Python project with a pyproject.toml file.
+   * It includes a full test suite (pytest) covering the core logic, ensuring reliability.
+   * A complete documentation site (mkdocs) is ready, including a quick-start guide, cookbook for advanced usage, and an API reference.
+   * The project is licensed under the permissive MIT License.
+
+  ---
+
+
+  How to Use the Package
+
+  As a Command-Line Tool
+
+  You can run the planner from your terminal.
+
+
+   1. Create a `participants.yaml` file:
+
+
+    1     participants:
+    2       - name: Alice
+    3         tz: America/Los_Angeles
+    4         work_start: "09:00"
+    5         work_end: "17:00"
+    6       - name: Bob
+    7         tz: Europe/Berlin
+    8         work_start: "09:00"
+    9         work_end: "17:00"
+   10       - name: Charlie
+   11         tz: Asia/Kolkata
+   12         work_start: "10:00"
+   13         work_end: "18:00"
+
+
+
+   2. Run the command:
+
+``` bash
+fairmeeting participants.yaml --horizon 4 --ics meetings.ics
+```
+
+* participants.yaml: Your input file.
+* --horizon 4: Find the best slots for 4 recurring meetings.
+* --ics meetings.ics: Save the output to an .ics file.
+* Other options include --duration and --weekdays.
+
+
+  As a Python Library (API)
+
+  You can import and use the components directly in your own Python code.
+
+
+``` python 
+
+    1 from fairmeeting.schemas import Participant, Meeting
+    2 from fairmeeting.solver import ilp_solver
+    3 from fairmeeting.export import generate_ics
+    4 from fairmeeting.cost import DefaultCostFunction
+    5 import pandas as pd
+    6 
+    7 # Example of a custom cost function that penalizes Fridays
+    8 class FridayPenaltyCost(DefaultCostFunction):
+    9     def __call__(self, local_t: pd.Timestamp, p: Participant) -> float:
+   10         base_cost = super().__call__(local_t, p)
+   11         if local_t.weekday() == 4: # Friday
+   12             return base_cost + 100 # Add a huge penalty
+   13         return base_cost
+   14 
+   15 # 1. Define participants and the meeting
+   16 participants = [Participant(name="Alice", tz="America/New_York", work_start="09:00", work_end="17:00")]
+   17 meeting = Meeting(participants=participants, duration_minutes=60, allowed_weekdays=["Mon", "Fri"], horizon=1)
+   18 
+   19 # 2. Solve for the best slots using your custom cost function
+   20 solution = ilp_solver(meeting, cost_function=FridayPenaltyCost())
+   21 
+   22 # 3. Generate the .ics file
+   23 if "scheduled_slots" in solution:
+   24     ics_content = generate_ics(meeting, solution['scheduled_slots'])
+   25     with open("custom_meetings.ics", "w") as f:
+   26         f.write(ics_content)
+   27     print("ICS file generated.")
+```
+  ---
+
+  Project Structure Overview
+
+
+  The repository now contains:
+   * src/fairmeeting/: All the core Python source code.
+       * cli.py: The command-line interface.
+       * solver.py: The ILP optimization logic.
+       * cost.py: The extensible cost function engine.
+       * schemas.py: The Pydantic data models (Participant, Meeting).
+       * export.py: The .ics generation logic.
+       * timezones.py: Timezone utility functions.
+   * tests/: The pytest test suite.
+   * docs/: The mkdocs documentation source files.
+   * pyproject.toml: The main project definition and dependency list.
+   * mkdocs.yml: Configuration for the documentation site.
+   * LICENSE: The MIT License file.
+   * README.md: The project's README.
