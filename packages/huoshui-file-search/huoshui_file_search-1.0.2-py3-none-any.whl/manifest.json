@@ -1,0 +1,60 @@
+{
+  "dxt_version": "0.1",
+  "name": "huoshui-file-search",
+  "version": "1.0.2",
+  "display_name": "Huoshui File Search",
+  "description": "Fast file search for macOS using mdfind command with advanced filtering and sorting options",
+  "author": {
+    "name": "Huoshui Team",
+    "email": "support@huoshui.com"
+  },
+  "icon": "icon.png",
+  "keywords": ["file", "search", "macos", "mdfind", "spotlight"],
+  "license": "MIT",
+  "server": {
+    "type": "python",
+    "entry_point": "server/main.py",
+    "mcp_config": {
+      "command": "uvx",
+      "args": ["huoshui-file-search"]
+    }
+  },
+  "tools": [
+    {
+      "name": "search_files",
+      "description": "Search for files using macOS mdfind with various filtering options",
+      "parameters": {
+        "query": "Search query string",
+        "path": "Optional directory path to limit search",
+        "case_sensitive": "Whether to perform case-sensitive search",
+        "regex": "Whether to use regular expression matching",
+        "sort_by": "Sort results by 'name', 'size', or 'date'",
+        "limit": "Maximum number of results to return"
+      }
+    }
+  ],
+  "user_config": {
+    "allowed_directories": {
+      "title": "Allowed Directories",
+      "type": "string",
+      "description": "Comma-separated list of directories to limit search scope",
+      "default": "${HOME}"
+    },
+    "default_limit": {
+      "title": "Default Result Limit",
+      "type": "number",
+      "description": "Default maximum number of search results",
+      "default": 100
+    },
+    "enable_logging": {
+      "title": "Enable Debug Logging",
+      "type": "boolean",
+      "description": "Enable debug logging for troubleshooting",
+      "default": false
+    }
+  },
+  "platforms": ["darwin"],
+  "requirements": {
+    "macos_version": "10.15+"
+  }
+}
