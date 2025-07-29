@@ -1,0 +1,96 @@
+"""
+Auto-generated MCP server for Facebook {{ object_name }}.
+DO NOT EDIT MANUALLY.
+"""
+
+from typing import Any, Optional
+
+from facebook_business.adobjects.{{ module_path }} import {{ class_name }}
+from fastmcp import FastMCP
+from facebook_business_mcp.utils import wrapped_fn_tool
+
+# Initialize FastMCP server
+mcp = FastMCP(f"facebook-{{ module_path }}")
+
+{% if has_crud %}
+# CRUD Operations
+{% for method in crud_methods %}
+@mcp.tool()
+@wrapped_fn_tool
+async def {{ method.name }}(
+    {{ module_path }}_id: str,
+    {%- for param in method.params %}
+    {%- if param not in ['fields', 'params', 'batch', 'success', 'failure', 'pending'] %}
+    {{ param }}: Optional[Any] = None,
+    {%- endif %}
+    {%- endfor %}
+    fields: list[str] = [],
+    params: dict[str, Any] = {},
+) -> Any:
+    result = {{ class_name }}(fbid={{ module_path }}_id).{{ method.name }}(
+        {%- if method.params %}
+        {%- for param in method.params %}
+        {%- if param == 'fields' %}
+        fields=fields,
+        {%- elif param == 'params' %}
+        params=params,
+        {%- elif param not in ['batch', 'success', 'failure', 'pending'] %}
+        {{ param }}={{ param }},
+        {%- endif %}
+        {%- endfor %}
+        {%- else %}
+        fields=fields,
+        params=params,
+        {%- endif %}
+    )
+
+    return result
+
+{% endfor %}
+{% endif %}
+
+{% if has_edges %}
+# Edge Methods
+{% for method in edge_methods %}
+@mcp.tool()
+@wrapped_fn_tool
+async def {{ method.name }}(
+{{ module_path }}_id: str,
+    {%- for param in method.params %}
+    {%- if param not in ['fields', 'params', 'batch', 'success', 'failure', 'pending', 'is_async'] %}
+    {{ param }}: Optional[Any] = None,
+    {%- endif %}
+    {%- endfor %}
+    fields: list[str] = [],
+    params: dict[str, Any] = {},
+) -> Any:
+    result = {{ class_name }}(fbid={{ module_path }}_id).{{ method.name }}(
+        {%- set has_custom_params = false %}
+        {%- for param in method.params %}
+        {%- if param not in ['fields', 'params', 'batch', 'success', 'failure', 'pending', 'is_async'] %}
+        {%- set has_custom_params = true %}
+        {%- endif %}
+        {%- endfor %}
+        {%- if has_custom_params %}
+        {%- for param in method.params %}
+        {%- if param == 'fields' %}
+        fields=fields,
+        {%- elif param == 'params' %}
+        params=params,
+        {%- elif param not in ['batch', 'success', 'failure', 'pending', 'is_async'] %}
+        {{ param }}={{ param }},
+        {%- endif %}
+        {%- endfor %}
+        {%- else %}
+        fields=fields,
+        params=params,
+        {%- endif %}
+    )
+
+    return result
+
+{% endfor %}
+{% endif %}
+
+# Export the server
+{{ module_path }}_server = mcp
