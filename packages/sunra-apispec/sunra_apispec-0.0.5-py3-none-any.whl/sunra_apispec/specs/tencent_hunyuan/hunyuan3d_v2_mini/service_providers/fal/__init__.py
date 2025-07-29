@@ -1,0 +1,1 @@
+# FAL service provider for Hunyuan3D V2 Mini 
