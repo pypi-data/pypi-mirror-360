@@ -1,0 +1,156 @@
+version: 0.1
+component: build
+timeoutInSeconds: 3600
+runAs: root
+shell: bash
+
+# ⬇️ Configuração correta para secrets do OCI Vault
+env:
+  vaultVariables:
+    PYPI_TOKEN: ocid1.vaultsecret.oc1.sa-saopaulo-1.amaaaaaasgpnwoyawqwu2uwtmyoyh7g6o65kbvjr2vfyfb622hjpne2mp7ya
+
+# ⬇️ 2) Passos de build
+steps:
+  - type: Command
+    name: Install Dependencies
+    command: |
+      echo "📦 Instalando dependências..."
+      python3 -m pip install --upgrade pip setuptools wheel twine build
+      pip install hatchling
+      pip install twine
+      echo "✅ Dependências instaladas!"
+
+  - type: Command
+    name: Increment Version
+    command: |
+      echo "🔄 Incrementando versão..."
+      
+      # Lê a versão atual do pyproject.toml
+      CURRENT_VERSION=$(grep 'version = ' pyproject.toml | cut -d'"' -f2)
+      echo "📋 Versão atual: $CURRENT_VERSION"
+      
+      # Incrementa o último número da versão
+      MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
+      MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
+      PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
+      NEW_PATCH=$((PATCH + 1))
+      NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+      
+      echo "📈 Nova versão: $NEW_VERSION"
+      
+      # Atualiza o pyproject.toml
+      sed -i "s/version = \"$CURRENT_VERSION\"/version = \"$NEW_VERSION\"/" pyproject.toml
+      
+      echo "✅ Versão atualizada para $NEW_VERSION"
+
+  - type: Command
+    name: Retrieve PyPI Token from Vault
+    command: |
+      echo "🔐 Recuperando token do OCI Vault..."
+      
+      # Define o OCID do secret
+      SECRET_OCID="ocid1.vaultsecret.oc1.sa-saopaulo-1.amaaaaaasgpnwoyawqwu2uwtmyoyh7g6o65kbvjr2vfyfb622hjpne2mp7ya"
+      echo "📋 Secret OCID: $SECRET_OCID"
+      
+      # Verifica se o OCI CLI está disponível
+      if ! command -v oci &> /dev/null; then
+        echo "❌ ERRO: OCI CLI não encontrado!"
+        exit 1
+      fi
+      
+      echo "✅ OCI CLI encontrado: $(oci --version)"
+      
+      # Tenta recuperar o secret bundle
+      echo "🔍 Buscando secret bundle..."
+      if ! SECRET_BUNDLE=$(oci secrets secret-bundle get --secret-id "$SECRET_OCID" --stage CURRENT --query 'data."secret-bundle-content".content' --raw-output 2>&1); then
+        echo "❌ ERRO ao buscar secret bundle:"
+        echo "$SECRET_BUNDLE"
+        echo ""
+        echo "🔧 Possíveis causas:"
+        echo "- Permissões insuficientes para acessar o Vault"
+        echo "- OCID do secret incorreto"
+        echo "- Secret não existe ou foi deletado"
+        exit 1
+      fi
+      
+      echo "✅ Secret bundle recuperado com sucesso"
+      
+      # Decodifica o conteúdo base64
+      echo "🔓 Decodificando conteúdo..."
+      if ! PYPI_TOKEN=$(echo "$SECRET_BUNDLE" | base64 -d 2>&1); then
+        echo "❌ ERRO ao decodificar base64:"
+        echo "$PYPI_TOKEN"
+        exit 1
+      fi
+      
+      # Verifica se o token foi recuperado
+      if [ -z "$PYPI_TOKEN" ]; then
+        echo "❌ ERRO: Token vazio após decodificação!"
+        exit 1
+      fi
+      
+      echo "✅ Token recuperado com sucesso (${#PYPI_TOKEN} caracteres)"
+      
+      # Salva o token em um arquivo temporário para os próximos steps
+      echo "$PYPI_TOKEN" > /tmp/pypi_token
+      echo "💾 Token salvo em arquivo temporário"
+
+  - type: Command
+    name: Build Package
+    command: |
+      echo "🔨 Construindo pacote..."
+      
+      # Limpa builds anteriores
+      rm -rf dist/ build/ *.egg-info/
+      
+      # Lista arquivos antes do build
+      echo "📁 Arquivos antes do build:"
+      ls -la
+      
+      # Faz o build
+      python3 -m build
+      
+      # Verifica se os arquivos foram gerados
+      echo "📁 Arquivos após o build:"
+      ls -la dist/
+      
+      if [ ! -d "dist" ] || [ -z "$(ls -A dist/)" ]; then
+        echo "❌ ERRO: Nenhum arquivo foi gerado em dist/"
+        exit 1
+      fi
+      
+      echo "✅ Build concluído!"
+
+  - type: Command
+    name: Upload to PyPI
+    command: |
+      echo "📦 Iniciando upload para PyPI..."
+      
+      # Verifica se o arquivo de token existe
+      if [ ! -f /tmp/pypi_token ]; then
+        echo "❌ ERRO: Arquivo de token não encontrado!"
+        exit 1
+      fi
+      
+      # Recupera o token do arquivo temporário
+      PYPI_TOKEN=$(cat /tmp/pypi_token)
+      
+      if [ -z "$PYPI_TOKEN" ]; then
+        echo "❌ ERRO: Token vazio!"
+        exit 1
+      fi
+      
+      echo "✅ Token carregado (${#PYPI_TOKEN} caracteres)"
+      
+      # Lista arquivos antes do upload
+      echo "📁 Arquivos para upload:"
+      ls -la dist/
+      
+      # Faz o upload
+      echo "🚀 Fazendo upload dos pacotes..."
+      python3 -m twine upload dist/* -u __token__ -p "$PYPI_TOKEN"
+      
+      # Remove o arquivo temporário por segurança
+      rm -f /tmp/pypi_token
+      echo "🧹 Arquivo temporário removido"
+      echo "✅ Upload concluído com sucesso!"
