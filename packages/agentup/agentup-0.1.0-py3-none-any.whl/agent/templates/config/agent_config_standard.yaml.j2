@@ -1,0 +1,158 @@
+# AgentUp Configuration - Standard Template
+# AI-powered agent with MCP integration - recommended for most users
+
+# Agent Information
+agent:
+  name: {{ project_name }}
+  description: {{ description }}
+  version: 0.1.0
+
+# Core skills configuration
+skills:
+  - skill_id: ai_assistant
+    name: AI Assistant
+    description: AI-powered assistant for various tasks
+    tags: [ai, assistant, helper]  # Tags for use within the @ai_function decorator
+    # No keywords or patterns defined, only available via AI routing
+    input_mode: text
+    output_mode: text
+    priority: 100
+{% if has_multimodal %}
+  - skill_id: analyze_image
+    name: Image Analysis
+    description: Analyze uploaded images and return insights
+    tags: [multimodal, image, analysis]
+    input_mode: multimodal
+    output_mode: text
+    priority: 90
+  
+  - skill_id: process_document
+    name: Document Processing
+    description: Process uploaded documents and extract content
+    tags: [multimodal, document, processing]
+    input_mode: multimodal
+    output_mode: text
+    priority: 90
+    
+  - skill_id: multimodal_chat
+    name: Multi-modal Chat
+    description: Handle conversations with mixed text and media content
+    tags: [multimodal, chat, conversation]
+    input_mode: multimodal
+    output_mode: text
+    priority: 95
+{% endif %}
+
+# Registry skills section - for skills installed from AgentUp Skills Registry
+registry_skills: []
+
+# Security configuration
+security:
+  enabled: false
+  type: "api_key"
+  api_key:
+    header_name: "X-API-Key"
+    location: "header"  # Options: header, query, cookie
+    # The below is randomly generated, and not hardcoded, please change if relevant
+    keys:
+      - "{{ generate_api_key() }}"
+
+
+# AI configuration
+{% if ai_provider_config %}
+ai_provider:
+    provider: {{ ai_provider_config.provider }}
+{% if ai_provider_config.provider == 'openai' %}
+    api_key: ${OPENAI_API_KEY}
+    model: {{ ai_provider_config.model | default('gpt-4o-mini') }}
+{% elif ai_provider_config.provider == 'anthropic' %}
+    api_key: ${ANTHROPIC_API_KEY}
+    model: {{ ai_provider_config.model | default('claude-3-5-sonnet-20241022') }}
+{% elif ai_provider_config.provider == 'ollama' %}
+    model: {{ ai_provider_config.model | default('llama3') }}
+    base_url: ${OLLAMA_BASE_URL:http://localhost:11434/v1}
+{% endif %}
+    temperature: 0.7
+    max_tokens: 1000
+    top_p: 1.0
+{% endif %}
+
+# External services configuration (non-LLM services)
+services:
+  valkey:
+    type: cache
+    config:
+      url: '${VALKEY_URL:valkey://localhost:6379}'
+      db: 1                    # Use DB 1 for cache
+      max_connections: 10
+{% if has_multimodal %}
+  multimodal:
+    type: multimodal
+    enabled: true
+    config:
+      max_image_size_mb: 10
+      max_document_size_mb: 50
+      supported_image_formats:
+        - "image/png"
+        - "image/jpeg"
+        - "image/webp"
+        - "image/gif"
+      supported_document_formats:
+        - "text/plain"
+        - "application/json"
+        - "application/pdf"
+{% endif %}
+
+# Model Context Protocol configuration
+mcp:
+  enabled: true
+  client:
+    enabled: true
+    servers:
+      - name: filesystem
+        command: npx
+        args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp']
+        env: {}
+  server:
+    enabled: true
+    name: {{ project_name }}-mcp-server
+    expose_handlers: true
+    expose_resources: [agent_status, agent_capabilities]
+
+# middleware configuration
+middleware:
+  - name: logged
+    params:
+      log_level: 20  # INFO level
+  - name: timed
+    params: {}
+{% if has_middleware and 'cache' in feature_config.get('middleware', []) %}
+  - name: cached
+    params:
+      ttl: 300  # 5 minutes
+{% endif %}
+{% if has_middleware and 'rate_limit' in feature_config.get('middleware', []) %}
+  - name: rate_limited
+    params:
+      requests_per_minute: 60
+{% endif %}
+{% if has_middleware and 'retry' in feature_config.get('middleware', []) %}
+  - name: retryable
+    params:
+      max_retries: 3
+      backoff_factor: 2
+{% endif %}
+
+# Push notifications configuration
+push_notifications:
+  enabled: true
+  backend: memory             # Simple memory backend for standard template
+  validate_urls: true         # Enable webhook URL validation
+
+
+# State management
+state:
+  backend: file            # File-based state for standard template
+  storage_dir: "./conversation_states"
+  ttl: 3600  # 1 hour
+

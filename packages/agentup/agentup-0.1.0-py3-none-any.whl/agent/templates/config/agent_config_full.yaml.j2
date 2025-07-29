@@ -1,0 +1,232 @@
+# AgentUp Configuration - Full Template
+# Enterprise-ready agent with all features including multiple MCP servers
+
+# Agent Information
+agent:
+  name: {{ project_name }}
+  description: {{ description }}
+  version: 0.1.0
+
+# Core skills configuration
+skills:
+  - skill_id: ai_assistant
+    name: AI Assistant
+    description: AI-powered assistant for various tasks
+    tags: [ai, assistant, helper]
+    # No keywords or patterns defined, only available via AI routing
+    input_mode: text
+    output_mode: text
+    priority: 100
+  - skill_id: document_processor
+    name: Document Processor
+    description: Process and analyze documents
+    tags: [document, processing, analysis]
+    # No keywords or patterns defined, only available via AI routing
+    input_mode: multimodal
+    output_mode: text
+    priority: 90
+  - skill_id: data_analyzer
+    name: Data Analyzer
+    description: Analyze and visualize data
+    tags: [data, analysis, visualization]
+    # No keywords or patterns defined, only available via AI routing
+    input_mode: text
+    output_mode: multimodal
+    priority: 90
+  - skill_id: hello_world
+    name: Hello World
+    description: Simple greeting handler
+    tags: [greeting, basic, direct]
+    input_mode: text
+    output_mode: text
+    keywords: [hello, hi, hey, greetings]
+    patterns: ['hello.*', 'hi\\s+.*', 'greet.*']
+    priority: 30
+  - skill_id: conversation
+    name: Conversation
+    description: Basic conversation handler
+    tags: [conversation, chat, direct]
+    input_mode: text
+    output_mode: text
+    keywords: [chat, talk, conversation]
+    patterns: ['chat.*', 'talk.*', 'conversation.*']
+    priority: 40
+  
+  # Multi-modal processing skills
+  - skill_id: analyze_image
+    name: Image Analysis
+    description: Analyze uploaded images and return insights
+    tags: [multimodal, image, analysis, ai]
+    input_mode: multimodal
+    output_mode: text
+    priority: 85
+  
+  - skill_id: process_document
+    name: Document Processing
+    description: Process uploaded documents and extract content
+    tags: [multimodal, document, processing, ai]
+    input_mode: multimodal
+    output_mode: text
+    priority: 85
+    
+  - skill_id: transform_image
+    name: Image Transformation
+    description: Transform images with various operations
+    tags: [multimodal, image, transformation, utility]
+    input_mode: multimodal
+    output_mode: text
+    priority: 80
+    
+  - skill_id: multimodal_chat
+    name: Multi-modal Chat
+    description: Handle conversations with mixed text and media content
+    tags: [multimodal, chat, conversation, ai]
+    input_mode: multimodal
+    output_mode: text
+    priority: 95
+
+# Registry skills section - for skills installed from AgentUp Skills Registry
+registry_skills: []
+
+# security configuration
+security:
+  enabled: true   # Authentication enabled for full template
+  type: api_key   # Options: 'api_key', 'bearer', 'oauth2'
+  api_key:
+    header_name: X-API-Key
+    location: header  # Options: 'header', 'query', 'cookie'
+    keys:
+      # Generated API keys - replace with your own
+      - "{{ generate_api_key() }}"
+      - "{{ generate_api_key() }}"
+  bearer:
+    jwt_secret: '{{ generate_jwt_secret() }}'
+    algorithm: HS256
+    issuer: your-agent
+    audience: a2a-clients
+  oauth2:
+    token_url: '${OAUTH_TOKEN_URL:/oauth/token}'
+    client_id: '${OAUTH_CLIENT_ID:your-client-id}'
+    client_secret: '{{ generate_client_secret() }}'
+    scopes:
+      read: Read access to agent capabilities
+      write: Write access to send messages
+      admin: Administrative access
+
+# AI configuration
+{% if ai_provider_config %}
+ai_provider:
+    provider: {{ ai_provider_config.provider }}
+{% if ai_provider_config.provider == 'openai' %}
+    api_key: ${OPENAI_API_KEY}
+    model: {{ ai_provider_config.model | default('gpt-4o-mini') }}
+{% elif ai_provider_config.provider == 'anthropic' %}
+    api_key: ${ANTHROPIC_API_KEY}
+    model: {{ ai_provider_config.model | default('claude-3-5-sonnet-20241022') }}
+{% elif ai_provider_config.provider == 'ollama' %}
+    model: {{ ai_provider_config.model | default('llama3') }}
+    base_url: ${OLLAMA_BASE_URL:http://localhost:11434/v1}
+{% endif %}
+    temperature: 0.7
+    max_tokens: 1000
+    top_p: 1.0
+{% endif %}
+
+# External services configuration - Full enterprise setup (LLM configuration moved to ai_provider section)
+services:
+  valkey:
+    type: cache
+    config:
+      url: '${VALKEY_CACHE_URL:valkey://localhost:6379}'
+      db: 1                    # Use DB 1 for cache (DB 0 for state)
+      max_connections: 20
+      retry_on_timeout: true
+  
+  multimodal:
+    type: multimodal
+    enabled: true
+    config:
+      max_image_size_mb: 25      # Enterprise-level limits
+      max_document_size_mb: 100
+      supported_image_formats:
+        - "image/png"
+        - "image/jpeg"
+        - "image/webp"
+        - "image/gif"
+        - "image/bmp"
+      supported_document_formats:
+        - "text/plain"
+        - "application/json"
+        - "application/pdf"
+        - "text/csv"
+        - "application/vnd.openxmlformats-officedocument.wordprocessingml.document"  # .docx
+        - "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"       # .xlsx
+
+# Model Context Protocol configuration - Full enterprise setup
+mcp:
+  enabled: true
+  client:
+    enabled: true
+    servers:
+      - name: filesystem
+        command: npx
+        args: ['-y', '@modelcontextprotocol/server-filesystem', '/']
+        env: {}
+      - name: github
+        command: npx
+        args: ['-y', '@modelcontextprotocol/server-github']
+        env:
+          GITHUB_PERSONAL_ACCESS_TOKEN: '${GITHUB_TOKEN}'
+  server:
+    enabled: true
+    name: {{ project_name }}-mcp-server
+    expose_handlers: true
+    expose_resources: [agent_status, agent_capabilities]
+    port: 8001
+
+# middleware configuration - Full enterprise setup
+middleware:
+  - name: logged
+    params:
+      log_level: 20  # INFO level
+  - name: timed
+    params: {}
+{% if has_middleware and 'cache' in feature_config.get('middleware', []) %}
+  - name: cached
+    params:
+      ttl: 300  # 5 minutes
+{% endif %}
+{% if has_middleware and 'rate_limit' in feature_config.get('middleware', []) %}
+  - name: rate_limited
+    params:
+      requests_per_minute: 60
+{% endif %}
+{% if has_middleware and 'retry' in feature_config.get('middleware', []) %}
+  - name: retryable
+    params:
+      max_retries: 3
+      backoff_factor: 2
+{% endif %}
+
+# Push notifications configuration
+push_notifications:
+  enabled: true
+  backend: valkey              # Options: memory, valkey
+  key_prefix: "agentup:push:" # Valkey key prefix for push configs
+  validate_urls: true         # Enable webhook URL validation for security
+  retry_attempts: 3           # Number of retry attempts for failed webhooks
+  timeout: 30                 # Webhook request timeout in seconds
+
+# Cache management
+cache:
+  backend: valkey
+  default_ttl: 1800           # 30 minutes
+  key_prefix: "agentup:cache:"
+  enabled: true
+
+# State management
+state:
+  backend: valkey
+  url: '${VALKEY_STATE_URL:valkey://localhost:6379}'
+  key_prefix: "agentup:state:"
+  ttl: 7200  # 2 hours
