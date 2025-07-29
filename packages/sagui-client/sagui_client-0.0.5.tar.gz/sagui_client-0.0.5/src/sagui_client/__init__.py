@@ -1,0 +1,1 @@
+from .sagui_client import install_global_handler
