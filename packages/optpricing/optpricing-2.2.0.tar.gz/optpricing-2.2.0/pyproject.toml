@@ -1,0 +1,97 @@
+[build-system]
+requires = [
+    "setuptools>=79",
+    "wheel",
+    "setuptools_scm[toml]>=8"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "optpricing"
+dynamic = ["version"]
+authors = [
+  { name="Diljit Singh", email="first_last22@google.com" },
+]
+description = "A financial options pricing and analysis library."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file="LICENSE" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Office/Business :: Financial :: Investment",
+]
+
+dependencies = [
+    "numpy~=2.2.5",
+    "scipy~=1.15.2",
+    "pandas~=2.2.3",
+    "numba~=0.61.2",
+    "pyyaml~=6.0.2",
+    "click~=8.1",
+    "typer~=0.15.2",
+    "streamlit~=1.45.1",
+    "matplotlib~=3.10.1",
+    "plotly~=6.1.2",
+    "yfinance~=0.2.63",
+    "tabulate~=0.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff==0.11.6",
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+    "mkdocs-section-index",
+    "line_profiler",
+    "pre-commit",
+]
+
+[project.urls]
+"Homepage" = "https://diljit22.github.io/quantfin/"
+
+[project.scripts]
+optpricing = "optpricing.cli.main:app"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools_scm]
+version_scheme = "post-release"
+local_scheme = "no-local-version"
+
+[tool.ruff]
+line-length = 88
+extend-exclude = ["demo"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "NPY"]
+ignore = ["N803", "N806"]
+
+[tool.ruff.lint.per-file-ignores]
+# streamlit ignores
+"src/optpricing/dashboard/pages/*.py" = ["N999"]
+
+# numba ignores
+"src/optpricing/techniques/kernels/mc_kernels.py" = ["NPY002"]
+"src/optpricing/techniques/kernels/american_mc_kernels.py" = ["NPY002", "E722"]
+"src/optpricing/techniques/kernels/path_kernels.py" = ["NPY002"]
+
+# tests
+"tests/**/*.py" = ["S101"]
+
+[tool.ruff.format]
+quote-style = "double"
+skip-magic-trailing-comma = false
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --cov=src/optpricing --cov-report=term-missing"
+testpaths = ["tests"]
