@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"] # 'wheel' is commonly added for building distributions
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cvpract" # This is the name people will use to pip install your package
+version = "0.0.3" # Start with 0.0.1, increment for new releases (e.g., 0.0.2, 0.1.0, 1.0.0)
+authors = [
+  { name="arman", email="arman9224423@gmail.com" }, # <<< IMPORTANT: Replace with your actual name and email
+]
+description = "A collection of OpenCV and image processing practical examples."
+readme = "README.md" # Assumes you'll create a README.md file
+requires-python = ">=3.7" # Specify the minimum Python version your code supports
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License", # Assuming MIT License; choose one that fits
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha", # Choose appropriate status: 1 - Planning, 2 - Pre-Alpha, 3 - Alpha, 4 - Beta, 5 - Production/Stable, 6 - Mature, 7 - Inactive
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Education", # Since these are practical examples
+]
+keywords = ["opencv", "image-processing", "computer-vision", "practical", "matplotlib", "numpy", "tutorial"]
+
+# List all external libraries your code uses as runtime dependencies
+dependencies = [
+    "opencv-python",     # For cv2
+    "matplotlib",        # For plt
+    "numpy",             # For np
+    "scipy",             # For ndimage (used in Practical 2)
+    "Pillow",            # For PIL (used in Practical 9)
+    "ultralytics",       # For YOLO (used in Practical 10)
+    "scikit-image",      # For skimage.morphology (used in Practical 6)
+]
+
+[project.urls]
+"Homepage" = "https://github.com/your-username/your-repo-name" # <<< IMPORTANT: Replace with your actual GitHub repo URL if you have one
+"Bug Tracker" = "https://github.com/your-username/your-repo-name/issues" # <<< IMPORTANT: Replace with your actual GitHub repo URL
+
+# [tool.setuptools] configuration is for setuptools specifically
+[tool.setuptools.packages.find]
+where = ["."] # Look for packages starting from the current directory (cvpract_project_root)
+include = ["cvpract*"] # This tells setuptools to find a package named 'cvpract'
+
+# This section is CRUCIAL for including your image assets if you ever make the code executable
+[tool.setuptools.package-data]
+"cvpract" = ["assets/*.jpg", "assets/*.jpeg", "assets/colorization_model_data/*"] # Include all image and model files from the assets folder. Add other extensions if needed (.png, .gif, etc.)
+# If you have specific model files for P12:
+# "cvpract.assets.colorization_model_data" = ["*.prototxt", "*.npy", "*.caffemodel"]
