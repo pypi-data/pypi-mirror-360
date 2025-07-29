@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Outlier Analysis With PyCatcher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">Data Outlier Analysis With PyCatcher</h1>
+            <p class="text-gray-600">Please upload your CSV file to detect and analyze outliers in your dataset.</p>
+        </div>
+
+        <div class="max-w-5xl mx-auto" role="main">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data" class="bg-white rounded-lg p-8">
+                <div class="upload-area bg-white rounded-lg p-8 text-center cursor-pointer mb-4">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+
+                    <div class="flex text-sm text-gray-600 justify-center mb-2">
+                        <label for="file-upload" class="relative cursor-pointer rounded-md font-medium text-blue-600 hover:text-blue-500">
+                            <span>Upload a file</span>
+                            <input id="file-upload" name="file" type="file" class="sr-only" accept=".csv" required>
+                        </label>
+                        <span class="pl-1">or drag and drop</span>
+                    </div>
+                    <p class="text-xs text-gray-500">CSV files only</p>
+                    <p id="file-name" class="text-sm text-gray-600 mt-2"></p>
+                </div>
+
+                <div class="mb-4">
+                    <label for="outlier-method" class="block text-sm font-medium text-gray-700 mb-2">Select Outlier Detection Method</label>
+                    <select id="outlier-method" name="method" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                        <option value="comprehensive">Comprehensive Approach</option>
+                        <option value="stl">STL (Seasonal-Trend Decomposition)</option>
+                        <option value="moving_average">Moving Average</option>
+                    </select>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="w-full bg-blue-700 text-white py-2 px-10 rounded-lg hover:bg-blue-700 transition duration-200">
+                    Analyze Data
+                    </button>
+                </div>
+            </form>
+
+            <!-- Loading Indicator -->
+            <div id="loading" class="hidden text-center mt-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
+                <p class="text-gray-600 mt-2">Processing your data...</p>
+            </div>
+
+            <!-- Results Area -->
+            <div id="results" class="mt-8"></div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // File upload name display
+            $('#file-upload').on('change', function() {
+                var fileName = $(this)[0].files[0] ? $(this)[0].files[0].name : 'No file selected';
+                $('#file-name').text(fileName);
+            });
+
+            // Form submission with AJAX
+            $('#uploadForm').on('submit', function(e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+
+                $('#loading').removeClass('hidden'); // Show the loading spinner
+                $('#results').html(''); // Clear previous results
+
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        $('#loading').addClass('hidden');
+
+                        if (response.success) {
+                            // Create results HTML
+                            var resultsHtml = `
+                                <div class="bg-white shadow-md rounded-lg p-6">
+                                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Analysis Results</h2>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                        <div class="p-4 bg-blue-50 rounded-lg">
+                                            <p class="text-l text-gray-600">Total Rows</p>
+                                            <p class="text-2xl font-bold">${response.data.summary.total_rows}</p>
+                                        </div>
+                                        <div class="p-4 bg-blue-50 rounded-lg">
+                                            <p class="text-l text-gray-600">Outliers Found</p>
+                                            <p class="text-2xl font-bold">${response.data.summary.outlier_rows}</p>
+                                        </div>
+                                        <div class="p-4 bg-blue-50 rounded-lg">
+                                            <p class="text-l text-gray-600">Outlier Percentage</p>
+                                            <p class="text-2xl font-bold">${response.data.summary.outlier_percentage}%</p>
+                                        </div>
+                                        <div class="p-4 bg-blue-50 rounded-lg">
+                                            <p class="text-l text-gray-600">Columns Analyzed</p>
+                                            <p class="text-2xl font-bold">${response.data.summary.columns_analyzed.join(', ')}</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-6 overflow-x-auto">
+                                        <h3 class="text-lg font-semibold bg-grey-50 mb-2">Here are the outliers detected from the given dataset!</h3>
+                                        <div class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
+                                            <div class="p-4 bg-blue-50 rounded-lg">
+                                                ${response.data.table || '<p class="text-gray-600">No outliers found in the dataset.</p>'}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    ${response.data.plot ? `
+                                    <div class="mb-6">
+                                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Outliers Visualization</h3>
+                                        <div class="flex justify-center">
+                                            <img src="data:image/png;base64,${response.data.plot}" alt="Outliers Plot" class="img-fluid rounded shadow max-w-full h-auto">
+                                        </div>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            `;
+
+                            $('#results').html(resultsHtml);
+                        } else {
+                            $('#results').html(`
+                                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                                    ${response.message}
+                                </div>
+                            `);
+                        }
+                    },
+                    error: function() {
+                        $('#loading').addClass('hidden');
+                        $('#results').html(`
+                            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                                An error occurred during file upload.
+                            </div>
+                        `);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
