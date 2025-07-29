@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "st_link_analysis"
+version = "0.5.0.dev1"
+authors = [{ name = "AlrasheedA" }]
+description = "A streamlit custom component for visualizing and interacting with graphs"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+keywords = ["streamlit", "cytoscape", "graph", "link analysis"]
+dependencies = ["streamlit >= 0.63"]
+
+[project.urls]
+Homepage = "https://github.com/AlrasheedA/st-link-analysis"
+Issues = "https://github.com/AlrasheedA/st-link-analysis/issues"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "st_link_analysis/*.py",
+  "st_link_analysis/component/*.py",
+  "st_link_analysis/frontend/build/*",
+]
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+fixable = ["ALL"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+addopts = "--reruns=3"
+
+[project.optional-dependencies]
+dev = [
+  "ruff",
+  "pytest",
+  "pytest-playwright",
+  "pytest-rerunfailures",
+  "mypy",
+]
