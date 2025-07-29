@@ -1,0 +1,41 @@
+[project]
+name = "book-strands"
+version = "0.7.5"
+description = "A powerful CLI tool for managing e-book metadata and organizing your digital library."
+readme = "README.md"
+authors = [
+    { name = "Justin Dray", email = "justin@dray.be"}
+]
+requires-python = ">=3.12"
+dependencies = [
+    "ebooklib>=0.19",
+    "strands-agents[ollama,otel]>=0.1.8",
+    "strands-agents-tools>=0.1.8",
+    "click>=8.0.0",
+    "beautifulsoup4>=4.13.4",
+]
+
+[project.scripts]
+book-strands = "book_strands.cli:cli"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.11.10",
+    "pytest>=7.0.0",
+    "pytest-mock>=3.10.0",
+    "pytest-cov>=4.0.0",
+    "ipython>=9.2.0",
+    "types-requests>=2.32.0.20250515",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+filterwarnings = [
+    "ignore::DeprecationWarning:docstring_parser.*:",
+    "ignore::DeprecationWarning:pydantic.*:",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
