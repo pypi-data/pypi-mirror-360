@@ -1,0 +1,49 @@
+# pyproject.toml — ConfidSeal Hub
+[tool.poetry]
+name        = "confidseal-hub"
+version     = "0.9.0"                     # ← nouveau numéro
+description = "ConfidSeal – API de scellement qualifié"
+authors     = ["Yannick de Murcia"]
+
+# --------------------------------------------------------------------------- #
+#  Packaging
+# --------------------------------------------------------------------------- #
+# 1) Tous les modules Python sous confidseal/
+packages = [{ include = "confidseal" }]
+
+# 2) Fichiers *non‑Python* à inclure dans la wheel **et** la sdist
+include = [
+  "confidseal/pricing.yaml",
+  "confidseal/emission_factors.yaml",
+  "confidseal/templates/*.pdf"      # ✅ nouveau chemin
+]
+
+[tool.poetry.dependencies]
+python              = ">=3.11,<3.13"
+fastapi             = "^0.111.0"
+uvicorn             = { extras = ["standard"], version = "^0.29.0" }
+pydantic            = "^2.7.1"
+pydantic-settings   = "^2.2.1"
+typing-extensions   = "^4.12.0"
+PyPDF2              = ">=3.0.1"
+httpx               = "^0.27.0"
+PyYAML              = "^6.0.1"
+
+[tool.poetry.group.dev.dependencies]
+anyio             = "^4.4.0"
+bandit            = "^1.7.5"
+coverage          = "^7.9.2"
+hypothesis        = "^6.135.24"
+mypy              = "^1.9.0"
+mutmut            = "3.3.0"
+pytest            = "^8.4.1"
+pytest-asyncio    = "^0.23.5"
+pytest-benchmark  = "^5.1.0"
+pytest-cov        = "^5.0.0"
+pytest-randomly   = "^3.16.0"
+ruff              = "^0.4.3"
+types-pyyaml      = "^6.0.12.20250516"
+
+[build-system]
+requires      = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
