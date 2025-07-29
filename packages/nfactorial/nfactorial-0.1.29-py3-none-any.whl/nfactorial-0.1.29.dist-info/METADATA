@@ -1,0 +1,108 @@
+Metadata-Version: 2.4
+Name: nfactorial
+Version: 0.1.29
+Summary: A distributed task queue for building reliable multi-agent systems.
+Project-URL: Homepage, https://factorial.sh
+Project-URL: Repository, https://github.com/ricardo-agz/nfactorial
+Project-URL: Documentation, https://factorial.sh
+Project-URL: Issues, https://github.com/ricardo-agz/nfactorial/issues
+Classifier: Typing :: Typed
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: openai>=1.81.0
+Requires-Dist: pydantic<3,>=2.10
+Requires-Dist: redis>=6.1.0
+Requires-Dist: fastapi<1,>=0.110.0
+Requires-Dist: uvicorn[standard]>=0.34.2
+Requires-Dist: websockets>=15.0.1
+Provides-Extra: dev
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-asyncio; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: isort>=5.12.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+
+# nFactorial
+
+**Build distributed agents that spawn more distributed sub-agents.**
+
+nFactorial is a distributed task queue for building reliable multi-agent systems. It makes the following trivial to implement:
+
+* **Agent Reliability**: Automatic retries, backoff strategies, and recovery of dropped tasks from crashed workers.
+* **In-flight Task Management**: Cancel, steer, and monitor running tasks. 
+* **Spawning Sub Agents**: Having an agent spawn multiple sub agents and wait for their completion before continuing.
+* **Deferred Tools**: Pause the agent while it waits for long running tools to complete externally or wait for user approval before continuing.
+* **Observability**: Built-in metrics dashboard and comprehensive logging
+
+![Dashboard](https://raw.githubusercontent.com/ricardo-agz/nfactorial/main/docs/static/img/dashboard.png)
+
+
+## Installation
+
+```bash
+pip install nfactorial
+```
+
+## Quick Start
+
+```python
+from factorial import Agent, Orchestrator, AgentWorkerConfig, gpt_41
+
+
+def get_weather(location: str) -> str:
+    return f"The weather in {location} is sunny and 72°F"
+
+
+agent = Agent(
+    instructions="You help users get weather information.",
+    model=gpt_41,
+    tools=[get_weather],
+)
+
+# Create orchestrator
+orchestrator = Orchestrator(
+    redis_host="localhost",
+    redis_port=6379,
+    redis_db=0,
+    redis_max_connections=50,
+)
+orchestrator.register_runner(
+    agent=agent, agent_worker_config=AgentWorkerConfig(workers=1)
+)
+
+# Run the system
+if __name__ == "__main__":
+    orchestrator.run()
+
+```
+
+
+## Usage Examples:
+
+### IDE Coding Agent
+
+`/docs/examples/code_agent`
+
+![Dashboard](https://raw.githubusercontent.com/ricardo-agz/nfactorial/main/docs/static/img/code-agent.png)
+
+### Multi-Agent
+
+`/docs/examples/multi_agent`
+
+![Dashboard](https://raw.githubusercontent.com/ricardo-agz/nfactorial/main/docs/static/img/multi-agent.png)
+
+### Deliberations.ai
+[Check it out](https://www.deliberations.ai/)
+
+![Dashboard](https://raw.githubusercontent.com/ricardo-agz/nfactorial/main/docs/static/img/deliberations-demo-small.gif)
