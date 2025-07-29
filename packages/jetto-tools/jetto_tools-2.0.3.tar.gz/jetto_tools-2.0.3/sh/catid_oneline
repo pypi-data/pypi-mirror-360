@@ -1,0 +1,13 @@
+#!/bin/bash
+# oneline description of runs for pasting into spreadsheet lookup table
+# run on the softlinks to catalogued folders, assumes runs have softlink produced using ln_cat
+# usage catidoneline cat_run1 catrun2 cat_run*
+
+until [ -z $1 ]; do
+  catname=`basename $1`
+  runname=`echo $catname | sed 's/cat_//'`
+  catid=`grep -s catalogue $catname/jetto.catinfo | cut -f 6 -d " "`
+  ppfname=`grep -s PPF $catname/jetto.catinfo | cut -f 4 -d "="`
+  echo -e $runname $catid $ppfname
+  shift
+done

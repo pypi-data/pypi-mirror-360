@@ -1,0 +1,188 @@
+# original project: qualikiz-group/QuaLiKiz
+stages:
+  - build
+  - test
+  - doc
+
+# Change pip's cache directory to be inside the project directory since we can
+# only cache local items.
+variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    PYTHONTOOLS_VENV_PATH: "$CI_PROJECT_DIR/venv/jetto_tools"
+    PYTHONTOOLS_DIR: "$CI_PROJECT_DIR"
+    PACKAGE_NAME: "jetto_tools"
+    PYTEST_MARK: ""
+
+# Pip's cache doesn't store the python packages
+# https://pip.pypa.io/en/stable/reference/pip_install/#caching
+#
+# If you want to also cache the installed packages, you have to install
+# them in a virtualenv and cache it as well.
+.cache_python: &cache_python
+  paths:
+    - $PIP_CACHE_DIR
+
+###############################################
+# General Freia JINTRAC environment templates #
+###############################################
+.prepare_env_jet: &prepare_env_jet |
+  export USER=root
+  export LOGNAME=root
+  source /etc/profile.d/modules.sh
+  module use /usr/local/modules/default
+  module load standard FUN
+  module list
+  uname -a # Print current OS for debugging
+  export SOCKETS=$(grep ^physical\\sid /proc/cpuinfo | uniq | wc -l)
+  export PHYS_CORES_PER_SOCKET=$(grep ^cpu\\scores /proc/cpuinfo | uniq | awk '{print $4}')
+  export PHYS_CORES=$(expr $PHYS_CORES_PER_SOCKET \* $SOCKETS)
+  export VCORES=$(grep ^processor /proc/cpuinfo | uniq | wc -l)
+  printf "CPU $(cat /proc/cpuinfo | grep 'model name' | uniq)\n"
+  echo 'physical cores: ' $PHYS_CORES
+  echo 'virtual cores: ' $VCORES
+
+.prepare_env_jintrac: &prepare_env_jintrac |
+  module use /home/sim/jintrac/default/modules
+  module load jintrac/freia.ifort
+  module swap uda  # remove once JINTRAC env fixed
+  module swap uda-mast # remove onece JINTRAC env fixed
+  module list
+
+.prepare_venv_python: &prepare_venv_python |
+  # Create a python venv with access to the globally installed packages. This links to setuptools, pip and python, pkg_resources, easy_install directly.
+  python -m venv --system-site-packages $PYTHONTOOLS_VENV_PATH
+  source $PYTHONTOOLS_VENV_PATH/bin/activate
+  # Simulate Python3.9 --upgrade-deps flag
+  #   --upgrade-deps        Upgrade core dependencies: pip setuptools to the
+  #                         latest version in PyPI
+  python -m pip install --upgrade pip setuptools setuptools_scm wheel
+  # Give venv PYTONPATH and PATH precedence over pre-defined env ones
+  export PATH=$VIRTUAL_ENV/bin:$PATH
+  export PYTHONPATH=$VIRTUAL_ENV/lib/python`python --version | cut -d' ' -f2 | cut -d'.' -f1-2`/site-packages/:$PYTHONPATH
+  export LANG=en # Set language for GUIs
+
+##############################
+# Global tests and templates #
+##############################
+
+# Almost all jobs need the default env and a python env
+# We use the intel env as default
+
+before_script:
+  - *prepare_env_jet
+  - *prepare_env_jintrac
+  - *prepare_venv_python
+
+.collect_deps_manually: &collect_deps_manually |
+  export BUILD_DEPS=$(cat pyproject.toml | grep requires | cut -d'=' -f2- | tr -d ,\"\' | sed "s/^ \[//" | sed "s/\]$//")
+  export RUN_DEP_FILES=$(find requirements_* -maxdepth 1)
+
+.print_debugging: &print_debugging |
+  python --version # Print out python version for debugging
+  pip --version # Show pip version for debugging
+  echo PYTHONPATH=$PYTHONPATH
+  echo PATH=$PATH
+  echo BUILD_DEPS=$BUILD_DEPS
+  echo RUN_DEP_FILES=$RUN_DEP_FILES
+
+# venv wheel install
+.install_venv_wheel_template:
+  script:
+    - *collect_deps_manually
+    - *print_debugging
+      # Now we install dependencies manually
+    - pip install --upgrade $BUILD_DEPS # Install build deps manually
+    - python setup.py --version # Print setuptools found version
+    - python -m pip freeze > $PYTHONTOOLS_DIR/pre_install_packages.txt
+    - pip install .[all]
+    - pip freeze > $PYTHONTOOLS_DIR/post_install_packages.txt
+    - cat $PACKAGE_NAME/version.py # Check if version file was generated
+    - python -c "import $PACKAGE_NAME; print($PACKAGE_NAME.__version__); print($PACKAGE_NAME.__path__)" # Try regular import
+      # Run the real test, pytest
+    - which pytest
+    - pytest --version
+    - pytest --cov=$PACKAGE_NAME --cov-report=term --cov-report=xml:$PYTHONTOOLS_DIR/coverage.xml --junit-xml=$PYTHONTOOLS_DIR/junit.xml -m "$PYTEST_MARK" "$PYTHONTOOLS_DIR"
+  artifacts:
+    name: "$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    paths:
+      - $PYTHONTOOLS_DIR/pre_install_packages.txt
+      - $PYTHONTOOLS_DIR/post_install_packages.txt
+      - $PYTHONTOOLS_VENV_PATH
+      - $PYTHONTOOLS_DIR/dist/$PACKAGE_NAME*
+    reports:
+      junit: [$PYTHONTOOLS_DIR/junit.xml]
+      cobertura: [$PYTHONTOOLS_DIR/coverage.xml]
+    when: always
+    expire_in: 1 day # These are only used in quick interactive CI debugging, and in next jobs
+  stage: test
+  cache:
+    <<: *cache_python
+    policy: push
+  needs: [] # Only needs a sane python env
+
+
+#############################
+# Python workflow templates #
+#############################
+
+install_venv:
+  extends: .install_venv_wheel_template
+  tags:
+    - freia
+  allow_failure: true
+
+install_global:
+  extends: .install_venv_wheel_template
+  before_script:
+    - *prepare_env_jet
+    - *prepare_env_jintrac
+    - export LANG=en # Set language for GUIs
+    - export PYTHONPATH=$PYTHONTOOLS_DIR/install/lib/python`python --version | cut -d' ' -f2 | cut -d'.' -f1-2`/site-packages/:$PYTHONPATH
+  script:
+    - *print_debugging
+    - python -m pip freeze > $PYTHONTOOLS_DIR/pre_install_packages.txt
+    #- export PYTHONTOOLS_EXTRAS='gui,test,netcdf' # Use Makefile default
+    - echo PYTHONTOOLS_EXTRAS=$PYTHONTOOLS_EXTRAS
+    - export JINTRAC_PYTHON_INSTALL_DIR=$PYTHONTOOLS_DIR/install
+    - echo JINTRAC_PYTHON_INSTALL_DIR=$JINTRAC_PYTHON_INSTALL_DIR
+    - make wheel
+    - make install_package_jintrac
+    - python -m pip freeze > $PYTHONTOOLS_DIR/pre_install_packages.txt
+    - mkdir tmp && cd tmp
+    - pytest --cov=$PACKAGE_NAME --cov-report=term --cov-report=xml:$PYTHONTOOLS_DIR/coverage.xml --junit-xml=$PYTHONTOOLS_DIR/junit.xml -m "$PYTEST_MARK" "$PYTHONTOOLS_DIR"
+  artifacts:
+    paths:
+      - $PYTHONTOOLS_DIR/pre_install_packages.txt
+      - $PYTHONTOOLS_DIR/post_install_packages.txt
+      - $PYTHONTOOLS_DIR/dist/$PACKAGE_NAME*
+      - $PYTHONTOOLS_DIR/install
+  tags:
+    - freia
+
+install_minimal:
+  extends: .install_venv_wheel_template
+  before_script:
+    - *prepare_env_jet
+    - *prepare_env_jintrac
+    - export LANG=en # Set language for GUIs
+    - export PYTHONPATH=$PYTHONTOOLS_DIR/install/lib/python`python --version | cut -d' ' -f2 | cut -d'.' -f1-2`/site-packages/:$PYTHONPATH
+  script:
+    - *print_debugging
+    - python -m pip freeze > $PYTHONTOOLS_DIR/pre_install_packages.txt
+    - export PYTHONTOOLS_EXTRAS='test' # Minimal install
+    - echo PYTHONTOOLS_EXTRAS=$PYTHONTOOLS_EXTRAS
+    - export JINTRAC_PYTHON_INSTALL_DIR=$PYTHONTOOLS_DIR/install
+    - echo JINTRAC_PYTHON_INSTALL_DIR=$JINTRAC_PYTHON_INSTALL_DIR
+    - make wheel
+    - make install_package_jintrac
+    - python -m pip freeze > $PYTHONTOOLS_DIR/pre_install_packages.txt
+    - mkdir tmp && cd tmp
+    - pytest --cov=$PACKAGE_NAME --cov-report=term --cov-report=xml:$PYTHONTOOLS_DIR/coverage.xml --junit-xml=$PYTHONTOOLS_DIR/junit.xml -m "$PYTEST_MARK" "$PYTHONTOOLS_DIR"
+  artifacts:
+    paths:
+      - $PYTHONTOOLS_DIR/pre_install_packages.txt
+      - $PYTHONTOOLS_DIR/post_install_packages.txt
+      - $PYTHONTOOLS_DIR/dist/$PACKAGE_NAME*
+      - $PYTHONTOOLS_DIR/install
+  tags:
+    - freia

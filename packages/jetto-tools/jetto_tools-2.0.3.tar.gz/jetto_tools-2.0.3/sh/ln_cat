@@ -1,0 +1,57 @@
+#!/bin/bash
+# softlink catalogued run folders to the catalogued location
+# usage: ln_cat run16 run17 run18*
+#  [produces softlink from run16 to catalog]
+#  if cat_* exists, abort
+#  if run directory has already been removed, just rename
+#  if arguments do not exist, wildcard not expanded (need to catch this)
+#  Wildcard does not work for cleanup since cannot match missing runs_* via expansion
+
+until [ -z $1 ]; do
+
+  echo $1
+
+  if [ -h $1 ]; then
+    echo $1 ' already a softlink, ignoring'
+    shift
+    continue
+  fi
+
+  if [ -h cat_$1 ];
+  then
+    if [ -d $1 ]; then
+      echo cat_$1 and $1 exist, moving.
+      mv cat_$1 cataloged/cat_$1
+    elif [ ! -e $1 ]; then
+      echo cat_$1 but NOT $1 exists, can rename.
+      mkdir -p cataloged
+      cp -a cat_$1 cataloged
+      mv cat_$1 $1
+      shift 
+      continue
+    fi
+  fi
+
+  if [ -e $1/jetto.catinfo ];
+  then
+    case=`grep -m 1 $USER/jetto $1/jetto.catinfo`
+    echo ${case:12} 
+    echo ln -s /home/$USER/cmg/catalog/${case:38} $1
+    ln -s /home/$USER/cmg/catalog/${case:38} cat_$1
+    mv $1/jetto.catinfo cat_$1
+    rm $1/jetto.status 
+    rm $1/.llcmd $1/ll.out $1/ll.err
+    rmdir $1
+    cp -a cat_$1 cataloged
+    mv cat_$1 $1     
+  else
+    echo $1 does not appear to be a catalogued case, ABORTING.
+  fi
+
+  catid_oneline $1
+
+echo '-------------------------------------------------'
+
+shift
+
+done
