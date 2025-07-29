@@ -1,0 +1,93 @@
+[project]
+name = "fh-pydantic-form"
+version = "0.3.2"
+description = "a library to turn any pydantic BaseModel object into a fasthtml/monsterui input form"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    {name = "Oege Dijk", email = "o.dijk@marcura.com"},
+]
+maintainers = [
+    {name = "Oege Dijk", email = "o.dijk@marcura.com"},
+]
+keywords = [
+    "fasthtml",
+    "monsterui",
+    "pydantic",
+    "forms",
+    "web",
+    "ui",
+]
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content :: Content Management System",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "monsterui>=1.0.19",
+    "pydantic>=2.0",
+    "python-fasthtml>=0.12.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/Marcura/fh-pydantic-form"
+Repository = "https://github.com/Marcura/fh-pydantic-form"
+Documentation = "https://github.com/Marcura/fh-pydantic-form"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+markers = [
+    "integration: integration tests needing TestClient or external dependencies",
+    "property: property-based tests using hypothesis for fuzzing/robustness",
+    "slow: tests that take longer to run",
+    "enum: tests specifically for enum field functionality",
+    "unit: fast unit tests with minimal dependencies",
+    "e2e: end to end tests, somewhat slow" 
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+# Keep only your library code and metadata; drop tests and examples
+exclude = [
+  "tests",       # root-level tests folder
+  "tests/**",    # any nested files under tests/
+  "examples",    # root-level examples folder
+  "examples/**"  # all nested files under examples/
+]
+
+[tool.hatch.build.targets.wheel]
+# Same exclusions for wheels
+exclude = [
+  "tests",
+  "tests/**",
+  "examples",
+  "examples/**"
+]
+
+
+[tool.uv]
+dev-dependencies = [
+    "mypy>=1.15.0",
+    "pre-commit>=4.2.0",
+    "pytest>=8.3.5",
+    "ruff>=0.11.6",
+    "httpx>=0.27.0",
+    "hypothesis>=6.135.4",
+    "pytest-mock>=3.14.1",
+    "pytest-asyncio>=1.0.0",
+    "beautifulsoup4>=4.13.4",
+    "pytest-benchmark>=5.1.0",
+]
+
+[tool.mypy]
+check_untyped_defs = true
