@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools >= 61", "setuptools_scm[toml] >= 6.4"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "streamlit-ext"
+description = "Small handy widgets for streamlit, e.g. download button which won't cause rerun, set page width"
+readme = "README.md"
+authors = [{ name = "John Lyu", email = "paleneutron@outlook.com" }]
+keywords = ["streamlit", "widgets"]
+license = "MIT"
+requires-python = ">=3.8"
+
+dynamic = ["version"]
+
+dependencies = ["streamlit>=1.39.0", "packaging"]
+
+
+[project.urls]
+"Source Code" = "https://github.com/PaleNeutron/streamlit-ext"
+
+[project.optional-dependencies]
+
+dev = [
+    "mypy",
+    "ruff >= 0.12",
+]
+
+test = ["pytest >= 7.1", "pytest-cov >= 3.0.0", "pandas", "openpyxl"]
+
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "dirty-tag"
+
+[tool.isort]
+skip_gitignore = true
+profile = "black"
+
+[tool.mypy]
+strict = true
+disallow_untyped_calls = false
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = [
+    "matplotlib.*",
+    "altair",
+    "IPython",
+    "pptx",
+    "pptx.*",
+    "dataframe_image",
+    "psutil",
+    "IPython.display",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = ["--strict-config", "--strict-markers"]
