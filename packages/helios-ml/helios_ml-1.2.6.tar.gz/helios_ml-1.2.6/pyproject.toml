@@ -1,0 +1,167 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "helios-ml"
+authors = [{name = "Mauricio A. Rovira Galvez", email = "maroviragalvez@outlook.com"}]
+readme = "README.rst"
+license = {text = "BSD-3-Clause"}
+description = "A light-weight system for training AI networks using PyTorch"
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+requires-python = ">= 3.11"
+dependencies = [
+    "matplotlib>=3.10.0",
+    "numpy>=2.2.2",
+    "onnx>=1.17.0",
+    "onnxruntime>=1.20.1",
+    "opencv-python>=4.11.0.86",
+    "tensorboard>=2.18.0",
+    "torch>=2.6.0",
+    "torchvision>=0.21.0",
+    "tqdm>=4.67.1",
+]
+
+dynamic = ["version"]
+
+[project.optional-dependencies]
+tune = [
+    "optuna>=4.2.0",
+]
+
+[project.urls]
+homepage = "https://github.com/marovira/helios-ml"
+source = "https://github.com/marovira/helios-ml"
+issues = "https://github.com/marovira/helios-ml/issues"
+"release notes" = "https://github.com/marovira/helios-ml/releases"
+
+[dependency-groups]
+cu124 = [
+    "torch>=2.6.0",
+    "torchvision>=0.21.0",
+]
+
+dev = [
+    "build>=1.2.1",
+    "furo>=2024.8.6",
+    "mypy>=1.15.0",
+    "optuna>=4.2.0",
+    "pre-commit>=4.1.0",
+    "pytest>=8.3.4",
+    "ruff>=0.9.6",
+    "sphinx-autoapi>=3.5.0",
+    "sphinx>=8.1.3",
+    "twine>=6.1.0",
+    "types-Pillow>=10.2.0.20240822",
+    "types-tqdm>=4.66.0.20241221",
+]
+
+ci = [
+    "build>=1.2.1",
+    "furo>=2024.8.6",
+    "mypy>=1.15.0",
+    "optuna>=4.2.0",
+    "pytest>=8.3.4",
+    "ruff>=0.9.6",
+    "sphinx-autoapi>=3.5.0",
+    "sphinx>=8.1.3",
+    "types-Pillow>=10.2.0.20240822",
+    "types-tqdm>=4.66.0.20241221",
+]
+
+[tool.setuptools_scm]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pkgname = ["py.typed"]
+
+[tool.mypy]
+warn_unused_configs = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "torchvision.*"
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 90
+indent-width = 4
+src = ["src"]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "UP",
+    "B",
+    "SIM",
+    "I",
+    "D",
+    "N",
+    "A",
+    "C4",
+    "T10",
+    "ICN",
+    "PIE",
+    "SLF",
+    "PTH",
+    "ERA",
+    "NPY",
+    "RUF100",
+    "PLR0402",
+]
+
+ignore = [
+    "D100", # Module docstring.
+    "N806", # Variable names should be lower-case.
+    "N802", # Function name should be lower-case.
+    "N812", # Imported lower-case as non-lower-case.
+]
+
+fixable = ["I", "D200", "D201", "D202", "D205", "RUF100"]
+extend-safe-fixes = ["D200", "D205"]
+unfixable = []
+
+[tool.ruff.lint.per-file-ignores]
+"test/*" = ["D"]
+"examples/*" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ruff.format]
+line-ending = "lf"
+
+[tool.pytest.ini_options]
+testpaths = "test"
+addopts = [
+    "--import-mode=importlib"
+]
+
+[tool.uv]
+required-version = ">=0.7"
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu124", group = "cu124" },
+]
+torchvision = [
+    { index = "pytorch-cu124", group = "cu124" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true

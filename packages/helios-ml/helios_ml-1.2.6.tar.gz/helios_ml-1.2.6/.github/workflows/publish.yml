@@ -1,0 +1,40 @@
+name: "Publish"
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/helios-ml
+    permissions:
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: |
+          uv sync --group ci --no-editable --locked
+
+      - name: Build Helios
+        run: |
+          uv build
+
+      - name: Publish Helios
+        uses: pypa/gh-action-pypi-publish@release/v1
+  docs:
+    needs: publish
+    uses: ./.github/workflows/docs.yml
