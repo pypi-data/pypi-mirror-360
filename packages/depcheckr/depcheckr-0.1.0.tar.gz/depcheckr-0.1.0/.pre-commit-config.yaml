@@ -1,0 +1,67 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: "v5.0.0"
+    hooks:
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+        args: [--assume-in-merge]
+      - id: check-added-large-files
+      - id: forbid-submodules
+      - id: mixed-line-ending
+      - id: check-toml
+      - id: check-vcs-permalinks
+      - id: detect-aws-credentials
+        args: [--allow-missing-credentials]
+
+  - repo: local
+    hooks:
+      - id: commitlint
+        name: Commit message must follow Conventional Commits
+        entry: bun x commitlint --edit $1
+        language: system
+        stages: [commit-msg]
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.37.1
+    hooks:
+      - id: yamllint
+        args: [--strict, -c=.yamllint]
+
+  - repo: local
+    hooks:
+      - id: uv-mypy
+        name: mypy
+        language: system
+        entry: uv run mypy
+        types: [python]
+        args: [
+          "--ignore-missing-imports",
+          "--scripts-are-modules",
+          "--cache-dir", ".mypy_cache",
+        ]
+        additional_dependencies: []
+        stages: [pre-commit, pre-merge-commit, manual]
+        require_serial: true
+
+      - id: uv-ruff
+        name: ruff
+        description: "Run 'ruff' for extremely fast Python linting"
+        entry: uv run ruff check --force-exclude
+        language: system
+        types: [python]
+        args: [--fix]
+        additional_dependencies: []
+        stages: [pre-commit, pre-merge-commit, manual]
+
+      - id: uv-ruff-format
+        name: ruff-format
+        description: "Run 'ruff format' for extremely fast Python formatting"
+        entry: uv run ruff format --force-exclude
+        language: system
+        types: [python]
+        args: []
+        additional_dependencies: []
+        stages: [pre-commit, pre-merge-commit, manual]
