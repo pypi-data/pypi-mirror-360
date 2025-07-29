@@ -1,0 +1,181 @@
+[build-system]
+requires = [
+    "hatchling",
+    "hatch-vcs"
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "decaylanguage"
+description = "A language to describe, manipulate and convert particle decays"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "Eduardo Rodrigues", email = "eduardo.rodrigues@cern.ch" },
+    { name = "Henry Schreiner", email = "henryfs@princeton.edu" },
+]
+maintainers = [
+    { name = "Scikit-HEP", email = "scikit-hep-admins@googlegroups.com" },
+]
+keywords = [
+    "HEP",
+    "chain",
+    "decay",
+    "particle",
+    "representation",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "attrs>=19.2",
+    "graphviz>=0.12.0",
+    "importlib-resources>=2.0;python_version<\"3.9\"",
+    "lark>=1.0.0",
+    "numpy>=1.12",
+    "pandas>=0.22",
+    "particle>=0.25.4",
+    "hepunits>=2.3.5",
+    "plumbum>=1.7.0",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6",
+]
+docs = [
+    "sphinx-rtd-theme>=0.5.0",
+    "sphinx>=4",
+]
+test = [
+    "pytest-cov",
+    "pytest>=6",
+]
+
+[project.urls]
+Homepage = "https://github.com/scikit-hep/decaylanguage"
+
+
+[tool.hatch]
+version.source = "vcs"
+build.hooks.vcs.version-file = "src/decaylanguage/_version.py"
+
+
+[tool.mypy]
+files = "src"
+exclude = "src/decaylanguage/(data|modeling)"
+python_version = "3.9"
+warn_unused_configs = true
+warn_unused_ignores = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+strict = true
+
+[[tool.mypy.overrides]]
+module = [
+    "lark",
+    "graphviz",
+    "pandas",
+    "plumbum",
+]
+ignore_missing_imports = true
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+addopts = [
+    "-ra",
+    "--doctest-modules",
+    "--doctest-glob=\\*.rst",
+    "--strict-markers",
+    "--strict-config",
+]
+log_cli_level = "DEBUG"
+filterwarnings = [
+    "error",
+    '''ignore:\s*Pyarrow will become a required dependency of pandas:DeprecationWarning''',
+]
+xfail_strict = true
+
+
+[tool.pylint]
+py-version = "3.12"
+reports.output-format = "colorized"
+similarities.ignore-imports = "yes"
+jobs = "0"
+messages_control.enable = [
+    "useless-suppression",
+]
+messages_control.disable = [
+    "fixme",
+    "line-too-long",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "missing-module-docstring",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-branches",
+    "too-many-instance-attributes",
+    "too-many-lines",
+    "too-many-locals",
+    "too-many-public-methods",
+    "too-many-return-statements",
+    "too-many-statements",
+    "too-many-positional-arguments",
+    "wrong-import-position",
+    "invalid-name",
+    "consider-using-f-string",  # TODO
+    "broad-except",  # TODO
+    "protected-access",  # TODO
+    "no-member",  # TODO
+    "unused-argument",  # covered by Ruff
+    "duplicate-code",
+]
+
+[tool.ruff.lint]
+extend-select = [
+  "B",           # flake8-bugbear
+  "I",           # isort
+  "ARG",         # flake8-unused-arguments
+  "C4",          # flake8-comprehensions
+  "ICN",         # flake8-import-conventions
+  "ISC",         # flake8-implicit-str-concat
+  "PGH",         # pygrep-hooks
+  "PIE",         # flake8-pie
+  "PL",          # pylint
+  "PT",          # flake8-pytest-style
+  "PTH",         # flake8-use-pathlib
+  "RET",         # flake8-return
+  "RUF",         # Ruff-specific
+  "SIM",         # flake8-simplify
+  "T20",         # flake8-print
+  "UP",          # pyupgrade
+  "YTT",         # flake8-2020
+]
+ignore = [
+  "PT013",   # Incorrect import of pytest
+  "PLR2004", # Magic value used in comparison
+  "PLR09",   # Too many X
+  "ISC001",  # Conflicts with formatter
+]
+flake8-unused-arguments.ignore-variadic-names = true
+isort.required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["T20"]
+"src/decaylanguage/modeling/*.py" = ["ARG002", "PTH", "T201"]  # Should be fixed later
+"**.ipynb" = ["T20", "PTH123", "E741"]
