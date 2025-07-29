@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "optiland"
+version = "0.5.2"
+authors = [
+  { name = "Kramer Harrison", email = "kdanielharrison@gmail.com" },
+]
+description = "Open Source Optical Design in Python"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "pyyaml",
+    "matplotlib",
+    "vtk",
+    "tabulate",
+    "numba",
+    "requests",
+    "seaborn"
+]
+license = { text = "MIT License" }
+
+[project.urls]
+Homepage = "https://github.com/HarrisonKramer/optiland"
+
+[project.optional-dependencies]
+dev = [
+    "codecov>=2.1.13",
+    "pytest>=8.3.5",
+]
+torch = ["torch"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["optiland"]  # Auto-discovers subpackages
+
+[tool.hatch.metadata.files]
+"optiland/database" = ["*.csv", "*.yml", "**/*.yml", "*.npy"]
+
+[tool.ruff]
+line-length = 88
+exclude = ["tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle
+    "F",  # Pyflakes
+    "UP", # pyupgrade
+    "B",  # flake8-bugbear
+    "SIM",# flake8-simplify
+    "I",  # isort
+]
+exclude = ["*.ipynb"]
+
+[dependency-groups]
+dev = [
+    "pytest",
+]
