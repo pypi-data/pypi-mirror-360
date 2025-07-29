@@ -1,0 +1,295 @@
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponseForbidden, JsonResponse
+from django.conf import settings
+from django import forms
+from django.utils.safestring import mark_safe
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+import time
+import re
+
+from .forms import QueryForm
+from .utils import doarchive, CHOICES, get_assistant, mathfix, thread_to_pdf
+from .models import create_or_retrieve_thread
+from django_ragamuffin.models import Assistant, Thread
+
+class AssistantEditForm(forms.ModelForm):
+
+    actual_instructions = forms.CharField(disabled=True, required=False, widget=forms.Textarea(attrs={'disabled': 'disabled'}),)
+    directory_name = forms.CharField(required=False, help_text=mark_safe('<div class="instructions"> Change name of the directory </div> ') )
+    
+
+    def __init__(self, *args, **kwargs):
+        self.custom_data = kwargs.pop("custom_data", {})
+        super().__init__(*args, **kwargs)
+        instance = self.instance
+        # Set initial value for the readonly field
+        #self.fields['actual_instructions'].initial = instance.get_instructions() + ' '.join( DEFAULT_INSTRUCTIONS.split() )  if self.instance.pk else "N/A"
+        if self.instance.pk :
+            instructions = ' '.join( instance.get_instructions().split() );
+            directory_name = instance.name.split('.')[-1];
+        self.fields['directory_name'].initial = instance.name.split('.')[-1];
+        self.fields['actual_instructions'].initial = instructions if self.instance.pk else "N/A"
+
+
+
+
+    class Meta:
+        model = Assistant
+        fields = ['instructions','actual_instructions', 'temperature','directory_name']
+        help_texts = {
+            'directory_name' : "Only the last directory can be renmamed; all children will be renamed",
+            'temperature': f"<p/>Default temperature = {settings.DEFAULT_TEMPERATURE}",
+            'instructions' : f"<b> Incremental instructions: </b>  <br>Leave or make blank to inherit default; <br> Start the field with 'append: XXX...' to append 'XXX...' to default; <br>Any other non-blank string completely replaces the default instructions.'<br> The entire instructions used by the assistant is shown below."
+
+        }
+
+def upload_file_view(request,pk):
+    if request.method == 'POST' and request.FILES.get('myfile'):
+        uploaded_file = request.FILES['myfile']
+        filename = uploaded_file.name 
+        assistant =  Assistant.objects.get(pk=pk)
+        file_url = assistant.add_file( filename, uploaded_file)
+        r = render(request, 'django_ragamuffin/upload.html', {'file_url': file_url})
+        return redirect(f"/assistant/{pk}/edit/")
+
+    return render(request, 'django_ragamuffin/upload.html')
+
+
+def delete_assistant(request, pk):
+    assistant = get_object_or_404(Assistant, pk=pk)
+    children = assistant.children()
+    if children :
+        referer = request.META.get('HTTP_REFERER', '/')
+        return redirect( referer )
+        #return HttpResponseForbidden("You cannot delete an assistant with children.")
+    threads = assistant.threads.all();
+    for thread in threads :
+        thread.delete();
+    vss = assistant.vector_stores.all();
+    for vs in vss:
+        vs.delete();
+    parent = assistant.parent();
+    referer = request.META.get('HTTP_REFERER', '/')
+    assistant.delete();
+    if parent :
+        path = '/query/' + parent.path();
+    else :
+        path = '/'
+    return redirect( path)
+    #return render(request, 'django_ragamuffin/edit_assistant.html', {'form': form, 'assistant': assistant, 'custom_data' : form.custom_data  })
+
+def edit_assistant(request, pk):
+    assistant = get_object_or_404(Assistant, pk=pk)
+    print(f"POST = {request.POST}")
+    if request.method == 'POST':
+        deletions = request.POST.getlist('deletion')
+        if deletions :
+            for f in deletions :
+                #print(f"DELETE THE FILE {f}")
+                assistant.delete_file(f)
+        new_tail = request.POST.getlist('directory_name',[None])[0]
+        old_tail = assistant.name.split('.')[-1];
+        print(f"OLD_TAIL = {old_tail} NEW_TAIL={new_tail}")
+        if not old_tail == new_tail :
+            def rename_assistants( assistant,  new_tail ):
+                old_name = assistant.name;
+                new = ( assistant.name.split('.')[:-1]  )
+                print(f"NEW = {new} {type(new)} ")
+                if not new_tail  == None :
+                    new.append(new_tail)
+                    new_name = '.'.join(new)
+                else :
+                    new_name = old_name
+                pattern = r'^%s\..+$' % old_name
+                tree = Assistant.objects.filter(name__regex=pattern).all()
+                p = r'^%s' % old_name 
+                for a in tree :
+                    n = re.sub( p , new_name, a.name)
+                    a.name = n
+                    a.save(update_fields=['name']);
+                    vs = a.vector_stores.all()[0];
+                    vs.name = n;
+                    vs.save();
+                n = re.sub( p, new_name, assistant.name)
+                assistant.name = new_name
+                a = assistant;
+                a.save(update_fields=['name']);
+                vs = a.vector_stores.all()[0];
+                vs.name = n;
+                vs.save();
+                pattern = r'^%s(\..*$|$)' % old_name
+                tree = Thread.objects.filter(name__regex=pattern).all()
+                p = r'^%s' % old_name 
+                for a in tree :
+                    n = re.sub( p , new_name, a.name)
+                    a.name = n
+                    a.save(update_fields=['name']);
+            rename_assistants( assistant, new_tail )           
+            #threads = Thread.objects.filter(name=old_name)
+            #if threads :
+            #    for thread in threads :
+            #        n = re.sub( p, new_name, thread.name)
+            #        print(f"FINALLY {thread.name} ->  {n}")
+            #        thread.name = new_name
+            #        #thread.save(update_fields=['name'])
+
+
+        form = AssistantEditForm(request.POST, instance=assistant )
+        if form.is_valid():
+            form.save()
+            return redirect('edit_assistant', pk=assistant.pk)  # or another success URL
+    else:
+        form = AssistantEditForm(instance=assistant, custom_data=assistant.files() )
+    #print(f"FORM_CUSTOM_DATA = {form.custom_data}")
+    return render(request, 'django_ragamuffin/edit_assistant.html', {'form': form, 'assistant': assistant, 'custom_data' : form.custom_data  })
+
+
+
+FILENAME = "../README.md"
+@csrf_exempt
+@login_required
+def feedback_view(request,subpath):
+    #print(f"SUBPATH IN FEEDBACK= {subpath}")
+    #print(f"SUBPATH IN QUERYVIEW = {subpath}")
+    subpath_ = re.sub( r"\.","_",subpath )
+    segments = subpath_.split('/')
+    last_messages = settings.LAST_MESSAGES;
+    max_num_results = settings.MAX_NUM_RESULTS;
+    name = ( '.'.join( segments ) ).rstrip('.')
+    choice = 0;
+    index = int( request.POST.getlist('newmessage_index')[0] )
+    post_thread =  re.sub(r'\.','_',request.POST.getlist('thread')[0])
+    thread_name = ( '.'.join( post_thread.split('/')[2:] ) ).rstrip('.');
+    threads = Thread.objects.filter(name=thread_name,user=request.user)
+    thread = threads[0]
+    comment = ''
+    comments =  request.POST.getlist('comment')
+    options  =  request.POST.getlist('option' );
+    choice= 0
+    if comments :
+        comment = comments[0]
+    elif options :
+        i = int( options[0] );
+        comment = options[1];
+        choice = i
+    if len( thread.messages) > 0 :
+        thread.messages[index].update( {'comment': comment , 'choice' : choice })
+        msg = thread.messages[index];
+        thread.save();
+        doarchive(thread, msg )
+    return JsonResponse({"success": True,'index' : index ,'comment' : comment , 'choice' :choice  })
+
+FILENAME = "../README.md"
+@csrf_exempt
+@login_required
+def query_view(request,subpath):
+    #print(f"SUBPATH IN QUERYVIEW = {subpath}")
+    subpath_ = re.sub( r"\.","_",subpath )
+    segments = subpath_.split('/')
+    last_messages = settings.LAST_MESSAGES;
+    max_num_results = settings.MAX_NUM_RESULTS;
+    name = ( '.'.join( segments ) ).rstrip('.')
+    choices = CHOICES
+    choice = 0;
+    response = None
+    user = request.user
+
+
+    #def setup_default_assistant(src):
+    #    name = src.split('/')[-1].split('.')[0]
+    #    t1 = upload_or_retrieve_openai_file( name, src )
+    #    vs = create_or_retrieve_vector_store( name, [t1])
+    #    assistant = create_or_retrieve_assistant( name  , vs )
+    #    return assistant
+    assistant = get_assistant(name,request.user)
+    if not assistant :
+        return HttpResponseForbidden(f"No assistant <b>{name} </b> exists.")
+    model = assistant.model
+    thread = create_or_retrieve_thread( assistant, name , user )
+    data = request.POST;
+    if 'delete' in request.POST.getlist('action') :
+        deletes = request.POST.getlist('entry')
+        if deletes :
+            messages = thread.messages;
+            ideletes = [int(i) for i in deletes ];
+            culled = [x for i,x in enumerate(messages) if i not in ideletes ]
+            thread.messages= culled
+            thread.save(update_fields=["messages","thread_id"])
+    elif 'print' in request.POST.getlist('action') :
+        prints = request.POST.getlist('entry')
+        if prints :
+            response = thread_to_pdf( thread , prints )
+            return response
+    d = {'status' : 'pending' , 'result' : 'RESULT' }
+    messages = thread.messages
+    mindex = 0
+    comment = ''
+    time_spent = 0;
+    now = time.time();
+    ntokens = 0;
+    if request.method == 'POST':
+        form = QueryForm(request.POST)
+        if form.is_valid():
+            query = form.cleaned_data['query']
+            txt = None
+            for i,message in enumerate( messages ) :
+                mindex = i+1;
+                if query.strip()  == message['user'].strip() :
+                    txt = "*You already asked that!*<p/>" + message['assistant']
+                    comment = message.get('comment','')
+                    choice = message.get('choice','0')
+                    mindex = mindex - 1;
+                    ntokens = message.get('ntokens')
+                    break
+            try:
+                if txt is None:
+                    msg = thread.run_query(query=query, last_messages=last_messages, max_num_results=max_num_results)
+                    txt = msg['assistant']
+                    ntokens = msg['ntokens']
+            except (KeyError, AttributeError, ValueError) as e:
+                txt = f"ERROR {type(e).__name__}: {str(e)}"
+            except Exception  as e:
+                txt = f"ERROR {type(e).__name__}: {str(e)}"
+            try :
+                txtnew = mathfix(txt)
+                txt = txtnew 
+            except Exception as err  :
+                txt = txt + f": Mathfix error {type(err).__name__} {str(err)}"
+            html = mark_safe(txt )
+            response = f" <h4> Query: </h4>  {query}  <h4> Response: </h4> {html}  "
+            response = f"{html}"
+    else:
+        form = QueryForm()
+    time_spent = int( ( time.time() - now  ) + 0.5 )
+    f = [ { 'index' : index, 'user' : item['user'] , 
+       'assistant' : mark_safe( mathfix(item['assistant'] ) ),
+       'ntokens' : item['ntokens'],
+       'comment' : item.get('comment','') ,
+       'choice' : item.get('choice',0),
+       'model' : item.get('model', model) ,  
+       'max_num_results' : item.get('max_num_results' , max_num_results ),
+       'last_messages' : item.get('last_messages' , last_messages)  ,
+       'time_spent' : item.get('time_spent', time_spent) }  for index, item in enumerate( messages ) ];
+    p = assistant.parent();
+    children = assistant.children();
+    parent = assistant.parent();
+    response = render(request, 'django_ragamuffin/query_form.html', {
+        'parent' : parent,
+        'children' : children,
+        'form': form,
+        'response': response,
+        'messages' : f,
+        'name' : assistant.name ,
+        'mindex' : mindex ,
+        'comment' : comment,
+        'choices' : choices ,
+        'choice' : choice ,
+        'ntokens' : ntokens,
+        'model' : model ,
+        'assistant_pk' : assistant.pk ,
+        'max_num_results' : max_num_results,
+        'last_messages' : last_messages ,
+        'time_spent' : time_spent  })
+    response.set_cookie('busy' , 'false')
+    return response
