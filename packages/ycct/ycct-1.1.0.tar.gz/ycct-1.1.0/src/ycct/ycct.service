@@ -1,0 +1,22 @@
+[Unit]
+Description=You Cant Change That!
+Documentation=https://gitlab.com/accidentallythecable-public/ycct/README.md
+After=remote-fs.target
+StartLimitBurst=2
+
+[Service]
+ExecStart=%EXECPATH%/ycct start
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=%EXECPATH%/ycct stop
+PIDFile=/var/run/ycct/ycct.pid
+User=root
+Group=root
+KillMode=process
+Restart=on-failure
+RestartPreventExitStatus=0 9 SIGTERM
+Type=simple
+RuntimeDirectory=ycct
+RuntimeDirectoryMode=6750
+
+[Install]
+WantedBy=remote-fs.target local-fs.target
