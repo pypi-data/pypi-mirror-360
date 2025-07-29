@@ -1,0 +1,102 @@
+Metadata-Version: 2.4
+Name: GmMonitorix
+Version: 0.1.2
+Summary: Monitorix Frontend for Gemini Protocol
+Author: Cthulhu Fhtagn
+License-Expression: GPL-2.0-only
+Project-URL: Homepage, https://codeberg.org/cthulhu/gm-monitorix-cgi
+Project-URL: Issues, https://codeberg.org/cthulhu/gm-monitorix-cgi/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: POSIX :: Linux
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: COPYING
+Requires-Dist: rrdtool
+Requires-Dist: brasciichart>=0.2
+Dynamic: license-file
+
+# Monitorix Gemini-Frontend
+
+Gemini-page with Monitorix ascii-graphs in braille.
+* System load average and usage
+  (System load, Memory allocation, Active processes, Entropy, Uptime)
+* Filesystem usage and I/O activity
+  (Filesystem usage, Disk I/O activity, Inode usage, Time spent in I/O activity)
+* Network traffic and usage (Traffic, Packets Errors)
+* Icecast (Listeners, Bitrate)
+
+|   |   |
+|---|---|
+|![w-urls.png](https://codeberg.org/cthulhu/gm-monitorix-cgi/raw/tag/v0.1.2/assets/w-urls.png)|![wo-urls.png](https://codeberg.org/cthulhu/gm-monitorix-cgi/raw/tag/v0.1.2/assets/wo-urls.png)|
+
+## Install
+
+Requirements:
+* `Monitorix` - installed and started system service
+* `rrdtool` - python package to provide access to *.rrd database files
+* `brasciichart` - python package to ascii-graph
+
+Installing `rrdtool` python-package can require developer
+packages: `python3.x-dev`, `librrd-dev`. 
+```shell
+$ sudo apt install python3.9-dev librrd-dev
+```
+```shell
+$ pip install GmMonitorix
+```
+After `GmMonitorix` successfully installed, remove dev-packages if not required:
+```shell
+$ sudo apt remove python3.9-dev librrd-dev
+```
+
+The Gemini-server account should have write-access in the work directory.
+To protect monitorix page with user certificate, place `.admins` file with
+user's certificate fingerprints into this work directory.
+
+### GmCapsule
+For [GmCapsule][3] server add to your [config-file][4]
+a section with CGI-settings.
+```gm-capsule-config.ini
+[cgi.monitorix]
+# monitoring gemini-page url-path
+path = /monitorix/*
+
+cwd = /writable/work/dir/
+
+# path to a Python-interpreter with rrdtool, brasciichart, GmMonitorix
+command = /path/to/python3 -m GmMonitorix
+```
+The monitoring gemini-page will be accessible 
+by `gemini://<hostname>/monitorix/cgi` URL.
+
+## Links
+* [Gemini Protocol][0]
+* [Project Gemini FAQ][1]
+* [Monitorix][2]
+* [GmCapsule (codeberg.org)][3]
+* [GmCapsule User manual :: Configuration][4]
+
+[0]: https://geminiprotocol.net/
+[1]: https://geminiprotocol.net/docs/faq.gmi
+[2]: https://www.monitorix.org/
+[3]: https://codeberg.org/skyjake/gmcapsule
+[4]: https://geminispace.org/gmcapsule/gmcapsule.html#id2
+
+## TODO
+* all metrics
+* support net traffic bit/s
+* support FreeBSD, OpenBSD, NetBSD total memory bytes
+* support uptime units: minutes, hours
+* support OpenBSD, NetBSD with m_mused, m_macti only
+
+## Change log
+
+### v0.1.2
+* Add Icecast (Listeners, Bitrate)
+
+### v0.1.1
+* Add Filesystem Usage (Usage, Disk I/O, Inode, Time spent in I/O)
+* Use rigid and limits from config
+  
+### v0.1.0
+Initial release
