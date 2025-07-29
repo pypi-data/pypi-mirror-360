@@ -1,0 +1,156 @@
+Metadata-Version: 2.4
+Name: glow
+Version: 0.14.7
+Summary: Functional Python tools
+Project-URL: homepage, https://github.com/arquolo/glow
+Author-email: Paul Maevskikh <arquolo@gmail.com>
+Maintainer-email: Paul Maevskikh <arquolo@gmail.com>
+License: MIT License
+        
+        Copyright (c) 2019 Paul Maevskikh
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+License-File: LICENSE
+Classifier: Development Status :: 3 - Alpha
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Python: >=3.12
+Requires-Dist: loguru
+Requires-Dist: loky~=3.1
+Requires-Dist: lxml
+Requires-Dist: numpy<3,>=1.21
+Requires-Dist: tqdm
+Requires-Dist: typing-extensions~=4.1; python_version < '3.11'
+Requires-Dist: wrapt~=1.15
+Provides-Extra: all
+Requires-Dist: asttokens; extra == 'all'
+Requires-Dist: colorama; (sys_platform == 'win32') and extra == 'all'
+Requires-Dist: executing; extra == 'all'
+Requires-Dist: matplotlib; extra == 'all'
+Requires-Dist: opencv-python-headless~=4.0; extra == 'all'
+Requires-Dist: pygments; extra == 'all'
+Requires-Dist: sounddevice; extra == 'all'
+Requires-Dist: soundfile; extra == 'all'
+Provides-Extra: dev
+Requires-Dist: black~=25.1; extra == 'dev'
+Requires-Dist: flake8-alphabetize; extra == 'dev'
+Requires-Dist: flake8-pie; extra == 'dev'
+Requires-Dist: flake8-pyi; extra == 'dev'
+Requires-Dist: flake8-pyproject; extra == 'dev'
+Requires-Dist: flake8-simplify; extra == 'dev'
+Requires-Dist: flake8~=7.0; extra == 'dev'
+Requires-Dist: isort; extra == 'dev'
+Requires-Dist: mypy~=1.16; extra == 'dev'
+Requires-Dist: pytest~=8.0; extra == 'dev'
+Requires-Dist: ruff~=0.12.2; extra == 'dev'
+Provides-Extra: dev-core
+Requires-Dist: black~=25.1; extra == 'dev-core'
+Requires-Dist: flake8-pie; extra == 'dev-core'
+Requires-Dist: flake8-pyi; extra == 'dev-core'
+Requires-Dist: flake8-pyproject; extra == 'dev-core'
+Requires-Dist: flake8-simplify; extra == 'dev-core'
+Requires-Dist: flake8~=7.0; extra == 'dev-core'
+Requires-Dist: isort; extra == 'dev-core'
+Requires-Dist: mypy~=1.16; extra == 'dev-core'
+Requires-Dist: pytest~=8.0; extra == 'dev-core'
+Requires-Dist: ruff~=0.12.2; extra == 'dev-core'
+Provides-Extra: dev-wemake
+Requires-Dist: black~=25.1; extra == 'dev-wemake'
+Requires-Dist: flake8-pie; extra == 'dev-wemake'
+Requires-Dist: flake8-pyi; extra == 'dev-wemake'
+Requires-Dist: flake8-pyproject; extra == 'dev-wemake'
+Requires-Dist: flake8-simplify; extra == 'dev-wemake'
+Requires-Dist: flake8~=7.0; extra == 'dev-wemake'
+Requires-Dist: isort; extra == 'dev-wemake'
+Requires-Dist: mypy~=1.16; extra == 'dev-wemake'
+Requires-Dist: pytest~=8.0; extra == 'dev-wemake'
+Requires-Dist: ruff~=0.12.2; extra == 'dev-wemake'
+Requires-Dist: wemake-python-styleguide~=0.15.0; extra == 'dev-wemake'
+Provides-Extra: ic
+Requires-Dist: asttokens; extra == 'ic'
+Requires-Dist: colorama; (sys_platform == 'win32') and extra == 'ic'
+Requires-Dist: executing; extra == 'ic'
+Requires-Dist: pygments; extra == 'ic'
+Provides-Extra: io
+Requires-Dist: opencv-python-headless~=4.0; extra == 'io'
+Requires-Dist: sounddevice; extra == 'io'
+Requires-Dist: soundfile; extra == 'io'
+Provides-Extra: memprof
+Requires-Dist: psutil; extra == 'memprof'
+Description-Content-Type: text/markdown
+
+# Glow Library
+Set of functional tools for easier prototyping
+
+## Overview
+...
+
+## Installation
+
+For basic installation use:
+
+```bash
+pip install glow
+```
+<details>
+<summary>Specific versions with additional requirements</summary>
+
+```bash
+pip install glow[io]  # For I/O extras
+pip install glow[all]  # For all
+```
+</details>
+Glow is compatible with: Python 3.10+.
+Tested on ArchLinux, Ubuntu 20.04/22.04, Windows 10/11.
+
+## Structure
+- `glow.*` - Core parts, available out the box
+- `glow.io.*` - I/O wrappers to access data in convenient formats
+
+## Core features
+- `glow.mapped` - convenient tool to parallelize computations
+- `glow.memoize` - use if you want to reduce number of calls for any function
+
+## IO features
+
+### `glow.io.Sound` - playable sound wrapper
+<details>
+
+```python
+from datetime import timedelta
+
+import numpy as np
+from glow.io import Sound
+
+array: np.ndarray
+sound = Sound(array, rate=44100)  # Wrap np.ndarray
+sound = Sound.load('test.flac')  # Load sound into memory from file
+
+# Get properties
+rate: int = sound.rate
+duration: timedelta = sound.duration
+dtype: np.dtype = sound.dtype
+
+ # Plays sound through default device, supports Ctrl-C for interruption
+sound.play()
+```
+</details>
