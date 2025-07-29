@@ -1,0 +1,81 @@
+Metadata-Version: 2.4
+Name: PyTac3D
+Version: 3.3.0.8
+Summary: Tac3D sensor interface
+Author-email: Lunwei Zhang <sxhzzlw@126.com>
+Requires-Python: <3.12,>=3.8
+Description-Content-Type: text/x-rst
+Requires-Dist: vtk==9.3.1
+Requires-Dist: opencv-python>=4.7.0
+Requires-Dist: ruamel.yaml==0.18.10
+Requires-Dist: vedo==2023.4.6
+Requires-Dist: netifaces2==0.0.22
+Requires-Dist: scipy
+Requires-Dist: appdirs
+Requires-Dist: requests
+Requires-Dist: tqdm
+
+PyTac3D: Python Interface for Tac3D Tactile Sensor
+==================================================
+
+**Python Compatibility**: Requires Python 3.7 through 3.11
+
+Installation
+------------
+.. code-block:: bash
+   
+   conda create -n tac3d python=3.11 tk
+   conda activate tac3d
+   pip install pytac3d
+
+Quick Start
+-----------
+1. Export demonstration files:
+
+   .. code-block:: bash
+
+      pytac3d-demo  # Exports examples to current directory
+
+2. Navigate to examples directory:
+
+   .. code-block:: bash
+
+      cd pytac3d_examples
+
+3. Execute the example scripts:
+
+   .. code-block:: bash
+
+      python get_object_info.py  # View tactile sensor outputs
+
+4. You can also use the Tac3D sensor through a GUI tool:
+
+   .. code-block:: bash
+
+      pytac3d-gui  # run the gui tool
+
+Simple Usage
+--------------
+For more complex implementations, reference the following pattern:
+
+.. code-block:: python
+
+   import PyTac3D
+
+   import time
+
+   # Initialize sensor interface
+   sensor = PyTac3D.Sensor(port=9988)
+
+   sensor.waitForFrame()
+
+   # Stream data acquisition
+   while True:
+
+       time.sleep(0.03)
+
+       frame = sensor.getFrame()
+
+       if not frame is None:
+       
+           print(frame['index'])
