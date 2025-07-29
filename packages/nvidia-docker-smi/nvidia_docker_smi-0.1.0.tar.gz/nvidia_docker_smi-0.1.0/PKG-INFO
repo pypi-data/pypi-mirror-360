@@ -1,0 +1,82 @@
+Metadata-Version: 2.4
+Name: nvidia-docker-smi
+Version: 0.1.0
+Summary: A tool to monitor NVIDIA GPU usage across Docker containers
+Author-email: Caleb Chong <lego_0603@hotmail.com>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/ThePaperFish/nvidia-docker-smi
+Project-URL: Issues, https://github.com/ThePaperFish/nvidia-docker-smi/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+# nvidia-docker-smi
+
+A command-line tool to monitor NVIDIA GPU usage across Docker containers.
+
+## Installation
+
+```bash
+pip install nvidia-docker-smi
+```
+
+## Usage
+
+Simply run:
+
+```
+> nvidia-docker-smi
+
+--- GPU Summary ---
+GPU-0: Util: 0%, Mem: 6735M/11019M (Free: 4284M)
+GPU-1: Util: 0%, Mem: 8M/11019M (Free: 11011M)
+GPU-2: Util: 0%, Mem: 5938M/11019M (Free: 5081M)
+GPU-3: Util: 0%, Mem: 8M/11019M (Free: 11011M)
+-------------------
+
+pid      user  proc             type  container             gpu_util  gpu_mem  cpu   mem   gpu
+3405     root  Xorg             G     -                     0%        N/A      0.0%  0.0%  GPU-0
+902386   root  python3          C     data_collector        0%        439M     0.2%  0.5%  GPU-0
+2343459  root  api_server       C     api_server            0%        511M     0.1%  0.1%  GPU-0
+2343966  root  python           C     ai_server             0%        5777M    1.9%  3.2%  GPU-0
+3405     root  Xorg             G     -                     0%        N/A      0.0%  0.0%  GPU-1
+3405     root  Xorg             G     -                     0%        N/A      0.0%  0.0%  GPU-2
+1944839  root  api_server       C     api_server_caleb      0%        511M     0.0%  0.1%  GPU-2
+1944937  root  python           C     ai_server_caleb       0%        5419M    0.1%  3.2%  GPU-2
+3405     root  Xorg             G     -                     0%        N/A      0.0%  0.0%  GPU-3
+```
+
+Add --debug flag for performance profiling:
+
+```
+> nvidia-docker-smi --debug
+
+...
+
+--- Performance Profile ---
+refresh_container_pid_map     :   0.0752s ( 18.4%)
+get_gpu_memory_usage          :   0.0452s ( 11.1%)
+get_gpu_stats                 :   0.0471s ( 11.6%)
+get_ps_data                   :   0.1181s ( 29.0%)
+get_container_map             :   0.0020s (  0.5%)
+display_gpu_summary           :   0.0429s ( 10.5%)
+prepare_data_rows             :   0.0737s ( 18.1%)
+display_formatted_output      :   0.0036s (  0.9%)
+Total execution time          :   0.4079s
+---------------------------
+```
+
+## Requirements
+- Python 3.6 or higher
+- NVIDIA GPU with installed drivers
+- Docker
+
+5. Install the package locally for development:
+
+```bash
+cd nvidia_docker_smi
+pip install -e .
+```
