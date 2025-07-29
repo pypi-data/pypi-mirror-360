@@ -1,0 +1,1 @@
+# VeriDoc Core Module
