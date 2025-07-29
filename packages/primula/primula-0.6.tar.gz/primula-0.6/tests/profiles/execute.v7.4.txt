@@ -1,0 +1,94 @@
+SCRIPT  tests/vimfiles/execute.vim
+Sourced 1 time
+Total time:   0.000531
+ Self time:   0.000151
+
+count  total (s)   self (s)
+                            execute "function! Spam() abort\n  echo 1\nendfunction"
+    1              0.000012 execute join([
+                            \         'function! Eggs() abort',
+                            \         '  echo 2',
+                            \         'endfunction',
+                            \       ], "\n")
+                            
+    1   0.000088   0.000017 call Spam()
+    1   0.000106   0.000007 call Eggs()
+                            
+    1              0.000004 function! Define(name, v) abort
+                              execute "function! " . a:name . "() abort\n  echo " . a:v . "\nendfunction"
+                            endfunction
+                            
+    1   0.000014   0.000005 call Define('Ham', 3)
+    1   0.000010   0.000004 call Define('Toast', 4)
+                            
+    1   0.000099   0.000004 call Ham()
+    1   0.000106   0.000007 call Toast()
+                            
+    1              0.000027 execute join([
+
+FUNCTION  Toast()
+Called 1 time
+Total time:   0.000099
+ Self time:   0.000099
+
+count  total (s)   self (s)
+    1              0.000098   echo 4
+
+FUNCTION  Define()
+Called 2 times
+Total time:   0.000016
+ Self time:   0.000016
+
+count  total (s)   self (s)
+    2              0.000015   execute "function! " . a:name . "() abort\n  echo " . a:v . "\nendfunction"
+
+FUNCTION  Beans()
+Called 0 times
+Total time:   0.000000
+ Self time:   0.000000
+
+count  total (s)   self (s)
+                              echo 5
+
+FUNCTION  Eggs()
+Called 1 time
+Total time:   0.000099
+ Self time:   0.000099
+
+count  total (s)   self (s)
+    1              0.000098   echo 2
+
+FUNCTION  Spam()
+Called 1 time
+Total time:   0.000070
+ Self time:   0.000070
+
+count  total (s)   self (s)
+    1              0.000069   echo 1
+
+FUNCTION  Ham()
+Called 1 time
+Total time:   0.000095
+ Self time:   0.000095
+
+count  total (s)   self (s)
+    1              0.000095   echo 3
+
+FUNCTIONS SORTED ON TOTAL TIME
+count  total (s)   self (s)  function
+    1   0.000099             Toast()
+    1   0.000099             Eggs()
+    1   0.000095             Ham()
+    1   0.000070             Spam()
+    2   0.000016             Define()
+                             Beans()
+
+FUNCTIONS SORTED ON SELF TIME
+count  total (s)   self (s)  function
+    1              0.000099  Toast()
+    1              0.000099  Eggs()
+    1              0.000095  Ham()
+    1              0.000070  Spam()
+    2              0.000016  Define()
+                             Beans()
+
