@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+env:
+  uv-version: "0.7.13"
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        platform:
+          # Upgrading to Ubuntu 24.04 breaks compilation of tensora-taco
+          - ubuntu-22.04
+          - ubuntu-22.04-arm
+          - macos-13
+          - macos-15
+          - windows-2025
+        python:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.uv-version }}
+      - name: Test with nox (all platforms)
+        run: >-
+          uv run --locked --only-group nox nox -s
+          test-${{ matrix.python }}
+          test_numpy-${{ matrix.python }}
+      - name: Test with nox (non-Windows)
+        if: runner.os != 'Windows'
+        run: >-
+          uv run --locked --only-group nox nox -s
+          test_cffi-${{ matrix.python }}
+          test_taco-${{ matrix.python }}
+      - name: Store coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python }}-${{ matrix.platform }}
+          path: .coverage.*
+          include-hidden-files: true
+          if-no-files-found: error
+
+  coverage:
+    needs: test
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.uv-version }}
+      - name: Fetch coverage
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          merge-multiple: true
+      - name: Combine coverage and generate report
+        run: uv run --locked nox -s coverage
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.uv-version }}
+      - name: Run code quality checks
+        run: uv run --locked nox -s lint

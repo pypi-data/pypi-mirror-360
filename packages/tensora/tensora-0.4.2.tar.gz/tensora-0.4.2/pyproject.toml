@@ -1,0 +1,129 @@
+[build-system]
+requires = ["hatchling>=1.18.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tensora"
+version = "0.4.2"
+description = "Library for dense and sparse tensors built on the tensor algebra compiler"
+authors = [ { name = "David Hagen", email = "david@drhagen.com" } ]
+license = "MIT"
+readme = "README.md"
+keywords = ["tensor", "sparse", "matrix", "array"]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11", 
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "returns >= 0.20,<0.26",
+    "cffi ~= 1.16",
+    "llvmlite == 0.44.*",
+    "parsita == 2.*",
+    "typer == 0.15.*",
+]
+
+[project.optional-dependencies]
+taco = [
+    "tensora-taco ~= 0.1.2",
+    "setuptools >= 69; python_version >= '3.12'",
+]
+cffi = [
+    # setuptools is required for cffi compilation on Python 3.12+
+    # https://cffi.readthedocs.io/en/latest/whatsnew.html#v1-16-0
+    "setuptools >= 69; python_version >= '3.12'",
+]
+numpy = [
+    "numpy >= 1.24,<3.0",
+]
+scipy = [
+    "scipy ~= 1.7",
+]
+
+[project.urls]
+Documentation = "https://tensora.drhagen.com"
+Repository = "https://github.com/drhagen/tensora"
+
+[project.scripts]
+tensora = "tensora.cli:app"
+
+[dependency-groups]
+nox = [
+    "nox-uv == 0.6.*",
+]
+test = [
+    "pytest == 7.*",  # Upgrading to pytest 8 breaks hypofuzz
+    "coverage == 7.*"
+]
+fuzz = [
+    "hypothesis == 6.*",
+    "hypofuzz == 24.*"
+]
+lint = [
+    "ruff == 0.6.*"
+]
+docs = [
+    "mkdocs-material == 9.*"
+]
+
+[tool.uv]
+default-groups = "all"
+python-preference = "only-managed"
+
+[tool.coverage.run]
+branch = true
+source_pkgs = ["tensora"]
+relative_files = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "pass",
+    "raise NotImplementedError",
+    "def __str__",
+    "def __repr__",
+]
+
+[tool.coverage.paths]
+source = [
+    "src/",
+    "**/site-packages/",
+]
+
+[tool.ruff]
+src = ["src"]
+line-length = 99
+
+[tool.ruff.lint]
+extend-select = [
+    "I", # isort
+    "N", # pep8-naming
+    "RUF", # ruff
+    "B", # flake8-bugbear
+    "N", # flake8-broken-line
+    "C4", # flake8-comprehensions
+    "PIE", # flake8-pie
+    "PT", # flake8-pytest-style
+    "PTH", # flake8-use-pathlib
+    "ERA", # flake8-eradicate
+]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["hypothesis.strategies.integers"]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow glob imports and uppercase identifiers in tests
+"tests*/*" = ["F403", "F405", "N802", "N806"]
+
+# F401: Allow unused imports in __init__.py
+"__init__.py" = ["F401"]
