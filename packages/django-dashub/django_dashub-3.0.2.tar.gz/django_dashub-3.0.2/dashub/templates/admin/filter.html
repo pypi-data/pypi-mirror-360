@@ -1,0 +1,32 @@
+{% load dashub %}
+{% load i18n %}
+
+<div class="form-group">
+    <h5>{% blocktranslate with filter_title=title %} By {{ filter_title }} {% endblocktranslate %}</h5>
+
+    {% if spec|class_name == "CheckboxFilter" %}
+        {% for choice in choices %}
+            <div class="form-check">
+                <input class="form-check-input" name="{{ field_name }}" type="radio"
+                       {% if choice.selected %}checked{% endif %} value="{{ choice.value }}"
+                       id="filter_{{ choice.value }}">
+                <label class="form-check-label" for="filter_{{ choice.value }}">
+                    {{ choice.display }}
+                </label>
+            </div>
+        {% endfor %}
+    {% else %}
+        <select class="form-control" style="width: 100%;" tabindex="-1" aria-hidden="true"
+                name="{{ field_name }}">
+            <option value="">---------</option>
+            {% for choice in choices %}
+                {% if choice.name %}
+                    <option data-name="{{ choice.name }}" value="{{ choice.value }}"
+                            {% if choice.selected %}selected {% endif %}>
+                        {{ choice.display }}
+                    </option>
+                {% endif %}
+            {% endfor %}
+        </select>
+    {% endif %}
+</div>
