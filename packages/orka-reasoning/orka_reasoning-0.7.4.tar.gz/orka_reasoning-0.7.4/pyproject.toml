@@ -1,0 +1,248 @@
+[project]
+name = "orka-reasoning"
+version = "0.7.4"
+description = "Modular agent orchestrator for reasoning pipelines"
+authors = [
+  { name = "Marco Somma", email = "marcosomma.work@gmail.com" }
+]
+readme = "README.md"
+license = { text = "Apache 2.0" }
+requires-python = ">=3.11"
+
+dependencies = [
+  "python-dotenv",
+  "redis",
+  "pyyaml",
+  "openai",
+  "duckduckgo-search",
+  "litellm",
+  "jinja2",
+  "google-api-python-client",
+  "async-timeout",
+  "sentence-transformers",
+  "numpy",
+  "rich>=13.0.0",
+  "textual>=0.40.0"
+]
+
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: Other/Proprietary License",
+  "Operating System :: OS Independent"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "coverage",
+  "pytest-cov",
+  "ruff",
+  "sphinx",
+  "sphinx-rtd-theme"
+]
+schema = [
+  "confluent-kafka[avro,protobuf,schema-registry]>=2.3.0",
+  "avro-python3",
+  "fastavro", 
+  "protobuf",
+  "jsonschema"
+]
+
+[project.entry-points."orka.agents"]
+openai-builder = "orka.agents.llm_agents:OpenAIAnswerBuilder"
+rag-agent = "orka.agents.rag_agent:RAGAgent"
+
+[project.entry-points."orka.nodes"]
+memory-writer = "orka.nodes.memory_writer_node:MemoryWriterNode"
+memory-reader = "orka.nodes.memory_reader_node:MemoryReaderNode"
+rag-node = "orka.nodes.rag_node:RAGNode"
+
+[project.urls]
+"Homepage" = "https://orkacore.com"
+"GIT" = "https://github.com/marcosomma/orka-reasoning"
+
+[project.scripts]
+orka = "orka.orka_cli:main"
+orka-start = "orka.orka_start:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+"orka" = ["docker/*", "docker/**/*", "requirements.txt", "tui/*.tcss"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["test"]
+python_files = "test_*.py"
+python_functions = "test_*"
+pythonpath = ["."]
+addopts = "--cov=orka --cov-report=xml:coverage.xml --cov-report=term --no-cov-on-fail"
+filterwarnings = [
+    "ignore::RuntimeWarning:unittest.mock",
+    "ignore::DeprecationWarning:datetime",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "performance: marks tests as performance tests",
+    "redis: marks tests that require Redis",
+    "llm: marks tests that require LLM APIs",
+    "asyncio: marks tests as async",
+]
+
+[tool.coverage.run]
+source = ["orka"]
+branch = true
+parallel = true
+omit = [
+    "*/site-packages/*",
+    "*/tests/*",
+    "test/*",
+    "setup.py",
+    "orka/start_kafka.py",
+    "orka/start_redis_only.py",
+    "orka/orka_start.py",
+    "orka/docker/*",
+    "orka/tui/*",  # TUI components can be tested separately
+    "orka/startup/*",  # Startup scripts for infrastructure
+]
+
+[tool.coverage.report]
+# Set coverage thresholds
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+    "raise ImportError",
+    "except ImportError:",
+    "if TYPE_CHECKING:",
+    "if typing.TYPE_CHECKING:",
+    "@abstractmethod",
+    "return NotImplemented",
+]
+
+# Coverage thresholds for CI/CD
+fail_under = 80
+
+[tool.coverage.html]
+directory = "htmlcov"
+show_contexts = true
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+[tool.ruff]
+# Enable autofix behavior
+fix = true
+unsafe-fixes = false
+
+# Line length configuration
+line-length = 100
+
+# Target Python version
+target-version = "py311"
+
+# Select rules to enable
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "N",   # pep8-naming
+    "PL",  # pylint
+    "RUF", # Ruff-specific rules
+    "TCH", # flake8-type-checking
+    "TID", # flake8-tidy-imports
+    "ARG", # flake8-unused-arguments
+    "PIE", # flake8-pie
+    "PT",  # flake8-pytest-style
+    "ERA", # eradicate
+    "SIM", # flake8-simplify
+    "T20", # flake8-print
+    "YTT", # flake8-2020
+    "ANN", # flake8-annotations
+    "S",   # flake8-bandit
+    "BLE", # flake8-blind-except
+    "FBT", # flake8-boolean-trap
+    "COM", # flake8-commas
+    "DTZ", # flake8-datetimez
+    "T10", # flake8-debugger
+    "ISC", # flake8-implicit-str-concat
+    "G",   # flake8-logging-format
+    "PTH", # flake8-use-pathlib
+    "PD",  # pandas-vet
+    "PGH", # pygrep-hooks
+    "PLR", # pylint rules
+    "TRY", # tryceratops
+]
+
+# Ignore specific rules
+ignore = [
+    "ANN101", # missing-self-type
+    "ANN102", # missing-type-cls
+    "ANN401", # dynamically-typed-expression
+    "D203",   # no-blank-line-before-class
+    "D212",   # multi-line-summary-first-line
+    "E501",   # line-too-long
+    "FBT001", # boolean-positional-value-in-call
+    "FBT002", # boolean-trap-in-default-argument
+    "FBT003", # boolean-trap-in-function-argument
+    "PLR0913", # too-many-arguments
+    "PLR2004", # magic-value-comparison
+    "RUF012", # mutable-class-default
+]
+
+# Allow unused variables when underscore-prefixed
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Exclude a variety of commonly ignored directories
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+[tool.ruff.isort]
+known-first-party = ["orka"]
+
+[tool.ruff.mccabe]
+max-complexity = 10
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+"test_*.py" = ["S101"]
+
+[tool.poetry.scripts]
+orka = "orka.orka_cli:main"
+orka-start = "orka.orka_start:main"
+orka-kafka = "orka.start_kafka:main"
+orka-redis = "orka.start_redis_only:main"
