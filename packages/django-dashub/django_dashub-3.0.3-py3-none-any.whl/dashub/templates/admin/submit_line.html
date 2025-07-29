@@ -1,0 +1,64 @@
+{% load i18n admin_urls dashub %}
+
+{% block submit-row %}
+    <div class="submit-row">
+        <div class="submit-row-left">
+            {% if show_close %}
+                <div class="form-group">
+                    <a href="{% url opts|admin_urlname:'changelist' %}"
+                       class="btn btn-outline-info">{% trans 'Close' %}</a>
+                </div>
+            {% endif %}
+
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                {% if show_delete_link and original %}
+                    <div class="form-group">
+                        {% url opts|admin_urlname:'delete' original.pk|admin_urlquote as delete_url %}
+                        <a href="{% add_preserved_filters delete_url %}" class="btn btn-outline-danger">
+                            <i class="hgi hgi-stroke hgi-delete-03"></i>
+                            {% trans "Delete" %}
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if show_save_as_new %}
+            <div class="form-group">
+                <button type="submit" class="btn btn-outline-secondary" name="_saveasnew">
+                    <i class="hgi hgi-stroke hgi-plus-sign-circle"></i>
+                    {% trans 'Save as new' %}
+                </button>
+            </div>
+        {% endif %}
+        {% if show_save_and_add_another %}
+            <div class="form-group">
+                <button type="submit" class="btn btn-outline-secondary" name="_addanother">
+                    <i class="hgi hgi-stroke hgi-plus-sign-circle"></i>
+                    {% trans 'Save and add another' %}
+                </button>
+            </div>
+        {% endif %}
+        {% if show_save_and_continue %}
+            <div class="form-group">
+                <button type="submit" class="btn btn-outline-secondary" name="_continue">
+                    <i class="hgi hgi-stroke hgi-task-edit-01"></i>
+                    {% if can_change %}
+                        {% trans 'Save and continue editing' %}
+                    {% else %}
+                        {% trans 'Save and view' %}
+                    {% endif %}
+                </button>
+            </div>
+        {% endif %}
+        {% if show_save %}
+            <div class="form-group">
+                <button type="submit" class="btn btn-outline-success" name="_save">
+                    <i class="hgi hgi-stroke hgi-task-edit-01"></i>
+                    {% trans 'Save' %}
+                </button>
+            </div>
+        {% endif %}
+        {% block extra-actions %}{% endblock %}
+    </div>
+{% endblock %}

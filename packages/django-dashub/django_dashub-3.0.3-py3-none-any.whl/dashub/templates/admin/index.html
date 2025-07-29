@@ -1,0 +1,54 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static dashub %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block content_title %} {% trans 'Dashboard' %} {% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin:index' %}">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item">{% trans 'Dashboard' %}</li>
+    </ol>
+{% endblock %}
+
+
+{% block content %}
+    {% get_side_menu using="app_list" as dashboard_list %}
+    {% if dashboard_list %}
+        {% widthratio dashboard_list|length 2 1 as middle %}
+    {% endif %}
+
+    <div class="col-12">
+        {% get_dashub_settings request as dashub_settings %}
+        {% if dashub_settings.analytics_template %}
+            {% include dashub_settings.analytics_template with dashboard_list=dashboard_list %}
+        {% endif %}
+
+        {% if dashub_settings.include_dashboard_list %}
+            <div class="row">
+                {% for app in dashboard_list %}
+                    <div class="col-12 col-md-6 col-xl-4 mb-4">
+                        <div class="card dashboard_card">
+                            <div class="card-header">{{ app.name }}</div>
+                            <div class="card-body">
+                                <div>
+                                    {% for model in app.models %}
+                                        <a href="{% if model.url %}{{ model.url }}{% else %}#!{% endif %}"
+                                           class="text-reset fw-medium">
+                                            <div>
+                                                <i class="{{ model.icon }} text-muted"></i>
+                                                <p class="text-muted mb-0 text-truncate">{{ model.name }}</p>
+                                            </div>
+                                            <div>{{ model.count }}</div>
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
