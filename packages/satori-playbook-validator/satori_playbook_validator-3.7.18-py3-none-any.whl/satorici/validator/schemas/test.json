@@ -1,0 +1,144 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "description": "Test",
+    "propertyNames": {
+        "pattern": "^[\\w-]+$",
+        "if": {
+            "pattern": "^assert"
+        },
+        "then": {
+            "oneOf": [
+                {
+                    "pattern": "^assert(Different|Killed)$"
+                },
+                {
+                    "pattern": "^assertStd(out|err)(SHA256)?$"
+                },
+                {
+                    "pattern": "^assertStd(out|err)(Not)?(Contains|Equal|Regex)$"
+                },
+                {
+                    "pattern": "^assert(File|Command)Exists$"
+                },
+                {
+                    "pattern": "^assertReturnCode(Not)?$"
+                }
+            ]
+        }
+    },
+    "properties": {
+        "assertDifferent": {
+            "type": "boolean"
+        },
+        "assertKilled": {
+            "type": "boolean"
+        },
+        "setCommandTimeout": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1
+        },
+        "setParallel": {
+            "type": "boolean"
+        },
+        "setSeverity": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "maximum": 5
+        },
+        "setOutput": {
+            "type": "string"
+        }
+    },
+    "patternProperties": {
+        "^assertReturnCode(Not)?$": {
+            "type": "integer"
+        },
+        "^assertStd(out|err)SHA256$": {
+            "type": [
+                "string",
+                "array"
+            ],
+            "pattern": "^[a-fA-F0-9]{64}$",
+            "items": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{64}$"
+            },
+            "uniqueItems": true
+        },
+        "^assertStd(out|err)$": {
+            "type": "boolean"
+        },
+        "^assertStd(out|err)(Not)?(Contains|Equal)$": {
+            "type": [
+                "array",
+                "string"
+            ],
+            "items": {
+                "type": "string"
+            },
+            "uniqueItems": true
+        },
+        "^assertStd(out|err)(Not)?Regex$": {
+            "type": "string",
+            "format": "regex"
+        },
+        "^assert(File|Command)Exists$": {
+            "type": [
+                "array",
+                "string"
+            ],
+            "items": {
+                "type": "string"
+            },
+            "uniqueItems": true
+        }
+    },
+    "additionalProperties": {
+        "allOf": [
+            {
+                "if": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "then": {
+                    "anyOf": [
+                        {
+                            "$ref": "file://./import.json"
+                        },
+                        {
+                            "$ref": "file://./command.json"
+                        }
+                    ]
+                }
+            },
+            {
+                "if": {
+                    "type": "array",
+                    "items": {
+                        "type": "array"
+                    }
+                },
+                "then": {
+                    "$ref": "file://./input.json"
+                }
+            },
+            {
+                "if": {
+                    "type": "object"
+                },
+                "then": {
+                    "$ref": "#"
+                }
+            }
+        ]
+    }
+}

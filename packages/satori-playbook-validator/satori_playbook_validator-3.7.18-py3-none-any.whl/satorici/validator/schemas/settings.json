@@ -1,0 +1,177 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "description": "Settings block",
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "description": {
+            "type": "string"
+        },
+        "mitigation": {
+            "type": "string"
+        },
+        "cron": {
+            "type": "string",
+            "format": "cron"
+        },
+        "timeout": {
+            "type": ["integer", "null"],
+            "minimum": 1
+        },
+        "log": {
+            "type": "string"
+        },
+        "logOnFail": {
+            "type": "string"
+        },
+        "logOnPass": {
+            "type": "string"
+        },
+        "rate": {
+            "type": "string"
+        },
+        "count": {
+            "type": "integer",
+            "maximum": 100
+        },
+        "saveReport": {
+            "type": [
+                "string",
+                "array",
+                "boolean"
+            ]
+        },
+        "files": {
+            "type": "boolean"
+        },
+        "saveOutput": {
+            "type": "boolean"
+        },
+        "cpu": {
+            "enum": [
+                256,
+                512,
+                1024,
+                2048,
+                4096,
+                8192,
+                16384
+            ]
+        },
+        "memory": {
+            "type": "integer",
+            "oneOf": [
+                {
+                    "enum": [
+                        512
+                    ]
+                },
+                {
+                    "multipleOf": 1024,
+                    "minimum": 1024,
+                    "maximum": 30720
+                },
+                {
+                    "multipleOf": 4096,
+                    "minimum": 30721,
+                    "maximum": 61440
+                },
+                {
+                    "multipleOf": 8192,
+                    "minimum": 61441,
+                    "maximum": 122880
+                }
+            ]
+        },
+        "storageSize": {
+            "type": "integer",
+            "minimum": 21,
+            "maximum": 200
+        },
+        "os": {
+            "enum": ["linux", "windows"]
+        },
+        "image": {
+            "type": "string"
+        },
+        "scheme": {
+            "type": "string",
+            "pattern": "^[a-z]+$"
+        },
+        "gallery": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "format": "uri"
+            }
+        },
+        "author": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "example": {
+            "type": "string"
+        },
+        "clone": {
+            "type": "boolean"
+        },
+        "redacted": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "output": {
+            "type": "string"
+        }
+    },
+    "dependencies": {
+        "cron": [
+            "name"
+        ],
+        "rate": [
+            "name"
+        ],
+        "cpu": [
+            "memory"
+        ],
+        "memory": [
+            "cpu"
+        ]
+    },
+    "allOf": [
+        {
+            "anyOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "cron": true
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "rate": false
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "rate": true
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "cron": false
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "additionalProperties": false
+}
