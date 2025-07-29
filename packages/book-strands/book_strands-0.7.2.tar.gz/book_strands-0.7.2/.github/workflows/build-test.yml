@@ -1,0 +1,37 @@
+name: Build and Test
+
+on: [push, pull_request, workflow_call]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+      - name: Install the project
+        run: |
+          uv sync --locked --all-extras --dev
+          uv build
+
+      - name: Run tests
+        run: |
+          uv run pytest --cov=book_strands --cov-report=term
+
+      - name: Upload production artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Minimize cache
+        run: uv cache prune --ci
