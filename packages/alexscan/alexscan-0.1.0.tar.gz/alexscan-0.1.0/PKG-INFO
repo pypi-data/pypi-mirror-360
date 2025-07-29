@@ -1,0 +1,473 @@
+Metadata-Version: 2.4
+Name: alexscan
+Version: 0.1.0
+Summary: A production-grade domain analysis CLI tool
+Home-page: https://github.com/alexevan/alexscan
+Author: Alex Evan
+Author-email: 
+License: MIT
+Project-URL: Homepage, https://github.com/alexevan/alexscan
+Project-URL: Repository, https://github.com/alexevan/alexscan
+Project-URL: Issues, https://github.com/alexevan/alexscan/issues
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: System Administrators
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Internet :: Name Service (DNS)
+Classifier: Topic :: System :: Systems Administration
+Classifier: Topic :: Utilities
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: typer>=0.9.0
+Requires-Dist: rich>=13.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: black>=22.0.0; extra == "dev"
+Requires-Dist: flake8>=4.0.0; extra == "dev"
+Requires-Dist: mypy>=0.950; extra == "dev"
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# alexscan
+
+A production-grade domain analysis CLI tool built with Python and Typer.
+
+## Features
+
+- **Modular Architecture**: Extensible analyzer system for different types of domain analysis
+- **DNS Analysis**: Comprehensive DNS record lookups (A, AAAA, MX, NS, TXT)
+- **WHOIS Analysis**: Domain registration information including registrar, dates, and name servers
+- **SSL/TLS Analysis**: SSL certificate analysis including validity, issuer, and security details
+- **Blocklist Analysis**: Domain reputation checking against popular security blocklists
+- **DGA Analysis**: Domain Generation Algorithm detection using machine learning features
+- **LLM Summary**: AI-powered plain-English summaries using Ollama and local LLMs
+- **Environment Setup**: One-command initialization for LLM features
+- **Clean CLI Interface**: Built with Typer for excellent user experience
+- **Rich Output**: Beautiful formatted output with tables and panels
+- **Production Ready**: Proper packaging, versioning, and error handling
+- **Extensible**: Easy to add new analyzers
+
+## Installation
+
+### Install from source:
+
+```bash
+pip install .
+```
+
+### For development:
+
+```bash
+pip install -e ".[dev]"
+```
+
+### Alternative installation methods:
+
+Using requirements files directly:
+
+```bash
+# Production dependencies
+pip install -r requirements.txt
+
+# Development dependencies
+pip install -r requirements-dev.txt
+```
+
+## Usage
+
+### Environment Setup
+
+Before using LLM summary features, initialize the environment:
+
+```bash
+# Initialize Docker and Ollama for LLM summary features
+alexscan init
+
+# Initialize with verbose output
+alexscan init --verbose
+```
+
+The `init` command will:
+- Check if Docker is available and running
+- Start the Ollama container automatically
+- Download the gemma:2b model (default lightweight model)
+- Verify everything is working properly
+
+**Note**: This step is optional. If you skip it, the LLM summary feature will attempt to auto-initialize when first used, but using `alexscan init` provides better control and feedback.
+
+### Basic Usage
+
+```bash
+# Analyze a domain with all available analyzers (default)
+alexscan analyze example.com
+
+# Run DNS analysis only
+alexscan analyze example.com --dns
+
+# Run WHOIS analysis only
+alexscan analyze example.com --whois
+
+# Run SSL analysis only
+alexscan analyze example.com --ssl
+
+# Run Blocklist analysis only
+alexscan analyze example.com --blocklist
+
+# Run DGA analysis only
+alexscan analyze example.com --dga
+
+# Run LLM summary analysis only
+alexscan analyze example.com --summary
+
+# Run all analyzers explicitly
+alexscan analyze example.com --all
+
+# Analyze with verbose output
+alexscan analyze example.com --verbose
+
+# Show version
+alexscan version
+
+# Show help
+alexscan --help
+```
+
+### DNS Analysis
+
+The DNS analyzer provides comprehensive DNS record lookups:
+
+```bash
+# DNS analysis with detailed record information
+alexscan analyze example.com --dns
+```
+
+Output includes:
+- **A Records**: IPv4 addresses
+- **AAAA Records**: IPv6 addresses
+- **MX Records**: Mail exchange servers
+- **NS Records**: Name servers
+- **TXT Records**: Text records (SPF, DKIM, etc.)
+
+### WHOIS Analysis
+
+The WHOIS analyzer provides domain registration information:
+
+```bash
+# WHOIS analysis with registration details
+alexscan analyze example.com --whois
+```
+
+Output includes:
+- **Registrar**: Domain registrar information
+- **Creation Date**: When the domain was registered
+- **Expiry Date**: When the domain registration expires
+- **Updated Date**: Last update to domain information
+- **Name Servers**: Authoritative name servers
+- **Status**: Domain status codes
+- **Organization**: Registrant organization (if available)
+- **Country**: Registration country
+
+### SSL/TLS Analysis
+
+The SSL analyzer provides SSL certificate information:
+
+```bash
+# SSL analysis with certificate details
+alexscan analyze example.com --ssl
+```
+
+Output includes:
+- **Subject**: Certificate subject information
+- **Issuer**: Certificate issuer/authority
+- **Valid From/To**: Certificate validity period
+- **Expiration Status**: Whether certificate is expired
+- **Days Until Expiry**: Days remaining until expiration
+- **Subject Alt Names**: Alternative domain names on certificate
+- **Signature Algorithm**: Certificate signature algorithm
+- **Protocol Version**: SSL/TLS protocol version used
+- **Cipher Suite**: Encryption cipher information
+
+### Blocklist Analysis
+
+The Blocklist analyzer checks domain reputation against security blocklists:
+
+```bash
+# Blocklist analysis with reputation checking
+alexscan analyze example.com --blocklist
+```
+
+Output includes:
+- **Summary**: Overview of blocklist check results
+- **Total Lists Checked**: Number of blocklists queried
+- **Listed/Clean/Error Counts**: Status breakdown
+- **Detailed Results**: Individual blocklist status for each service
+- **Blocklist Sources**: Spamhaus, SURBL, URIBL, and other security lists
+
+### DGA Analysis
+
+The DGA analyzer detects algorithmically generated domains using machine learning features:
+
+```bash
+# DGA analysis with domain classification
+alexscan analyze example.com --dga
+```
+
+Output includes:
+- **Classification**: Domain classification (Likely Legitimate, Possibly Legitimate, Suspicious, Likely DGA)
+- **DGA Probability**: Numerical probability score (0.0-1.0)
+- **Confidence**: Confidence level in the classification (High, Medium, Low)
+- **Risk Level**: Risk assessment (Low, Medium, High)
+- **Feature Analysis**: Detailed lexical and structural features (with --verbose flag)
+
+The DGA analyzer uses lexical features including:
+- **Length Analysis**: Domain and total length metrics
+- **Entropy Analysis**: Character randomness and frequency variance
+- **Composition Analysis**: Vowel/consonant/digit ratios
+- **Pattern Analysis**: Consecutive character sequences
+- **Dictionary Analysis**: Presence of common English words
+- **Structural Analysis**: TLD legitimacy and special characters
+
+### LLM Summary Analysis
+
+The LLM Summary analyzer generates AI-powered plain-English summaries using Ollama running on Docker:
+
+#### Quick Start
+
+```bash
+# Initialize the LLM environment (one-time setup)
+alexscan init
+
+# Run LLM summary analysis
+alexscan analyze example.com --summary
+```
+
+#### Prerequisites (Advanced Setup)
+
+If you prefer manual setup or the automatic initialization doesn't work:
+
+```bash
+# Run Ollama in a Docker container
+docker run -d -p 11434:11434 ollama/ollama:latest
+
+# Pull a lightweight model (choose based on your system memory)
+# For systems with 8+ GB RAM:
+docker exec $(docker ps -q --filter "ancestor=ollama/ollama:latest") ollama pull llama2
+
+# For systems with 4-8 GB RAM (recommended):
+docker exec $(docker ps -q --filter "ancestor=ollama/ollama:latest") ollama pull mistral:7b
+
+# For systems with limited memory (2-4 GB RAM - default):
+docker exec $(docker ps -q --filter "ancestor=ollama/ollama:latest") ollama pull gemma:2b
+
+# Verify the setup
+curl http://localhost:11434/api/version
+```
+
+**Note**: The `alexscan init` command handles all of this automatically and is the recommended approach.
+
+#### Usage
+
+```bash
+# LLM summary analysis with AI-generated insights
+alexscan analyze example.com --summary
+```
+
+Output includes:
+- **AI-Generated Summary**: Plain-English summary of all analysis results
+- **Model Information**: Which LLM model was used for generation
+- **Analyzers Included**: List of analyzers that contributed to the summary
+- **Comprehensive Insights**: Security concerns, legitimacy assessment, and key findings
+
+The LLM analyzer automatically:
+- **Runs All Analyzers**: Executes DNS, WHOIS, SSL, Blocklist, and DGA analysis first
+- **Formats Results**: Converts technical data into readable format for the LLM
+- **Generates Summary**: Uses AI to create concise, professional summaries
+- **Highlights Risks**: Identifies potential security concerns and anomalies
+- **Provides Context**: Explains findings in business-friendly language
+
+#### Docker Management
+
+```bash
+# Check if Ollama is running
+docker ps | grep ollama
+
+# Stop Ollama container
+docker stop $(docker ps -q --filter "ancestor=ollama/ollama:latest")
+
+# Start Ollama container
+docker start $(docker ps -aq --filter "ancestor=ollama/ollama:latest")
+
+# View available models
+docker exec $(docker ps -q --filter "ancestor=ollama/ollama:latest") ollama list
+
+# Remove a model to save space
+docker exec $(docker ps -q --filter "ancestor=ollama/ollama:latest") ollama rm gemma:2b
+```
+
+### Available Commands
+
+- `init` - Initialize Docker and Ollama environment for LLM features
+- `analyze DOMAIN` - Analyze a domain using available analyzers
+- `analyze DOMAIN --dns` - Run DNS analysis only
+- `analyze DOMAIN --whois` - Run WHOIS analysis only
+- `analyze DOMAIN --ssl` - Run SSL analysis only
+- `analyze DOMAIN --blocklist` - Run Blocklist analysis only
+- `analyze DOMAIN --dga` - Run DGA analysis only
+- `analyze DOMAIN --summary` - Run LLM summary analysis only
+- `analyze DOMAIN --all` - Run all available analyzers
+- `version` - Show version information
+- `--help` - Show help information
+
+### Manual Testing
+
+After installation, you can manually test the CLI:
+
+```bash
+# Set up virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install the package
+pip install .
+
+# Initialize LLM environment (one-time setup)
+alexscan init
+
+# Test DNS analysis
+alexscan analyze example.com --dns
+
+# Test WHOIS analysis
+alexscan analyze example.com --whois
+
+# Test SSL analysis
+alexscan analyze example.com --ssl
+
+# Test Blocklist analysis
+alexscan analyze example.com --blocklist
+
+# Test DGA analysis
+alexscan analyze example.com --dga
+
+# Test LLM summary analysis
+alexscan analyze example.com --summary
+
+# Test all analyzers
+alexscan analyze example.com --all
+```
+
+## Architecture
+
+The tool is designed with a modular architecture:
+
+```
+alexscan/
+├── __init__.py          # Package initialization
+├── __main__.py          # CLI entry point
+├── cli.py               # Main CLI interface
+├── analyzers/           # Domain analyzers
+│   ├── __init__.py
+│   ├── base.py          # Base analyzer class
+│   ├── dns.py           # DNS analyzer
+│   ├── whois.py         # WHOIS analyzer
+│   ├── ssl.py           # SSL/TLS analyzer
+│   ├── blocklist.py     # Blocklist analyzer
+│   ├── dga.py           # DGA analyzer
+│   └── llm_summary.py   # LLM summary analyzer
+├── utils/               # Utility functions
+│   ├── __init__.py
+│   └── validators.py    # Domain validation
+└── tests/               # Test suite
+    ├── __init__.py
+    ├── test_cli.py      # CLI tests
+    ├── test_dns.py      # DNS analyzer tests
+    ├── test_whois.py    # WHOIS analyzer tests
+    ├── test_ssl.py      # SSL analyzer tests
+    ├── test_blocklist.py # Blocklist analyzer tests
+    ├── test_dga.py      # DGA analyzer tests
+    └── test_llm_summary.py # LLM summary analyzer tests
+```
+
+## Extending with New Analyzers
+
+To add a new analyzer, create a class that inherits from `BaseAnalyzer`:
+
+```python
+from alexscan.analyzers.base import BaseAnalyzer
+
+class MyAnalyzer(BaseAnalyzer):
+    def __init__(self):
+        super().__init__("my-analyzer", "Description of my analyzer")
+
+    def analyze(self, domain: str) -> Dict[str, Any]:
+        # Your analysis logic here
+        return {"result": "analysis_data"}
+
+    def is_available(self) -> bool:
+        # Check if required dependencies are available
+        return True
+```
+
+## Development
+
+### Setup Development Environment
+
+```bash
+# Install in development mode
+pip install -e ".[dev]"
+
+# Run tests
+pytest alexscan/tests/
+
+# Format code
+black .
+
+# Type checking
+mypy alexscan/
+```
+
+### Project Structure
+
+- `alexscan/` - Main package directory
+- `alexscan/cli.py` - CLI interface using Typer
+- `alexscan/analyzers/` - Modular analyzer system
+- `alexscan/utils/` - Utility functions
+- `alexscan/tests/` - Test suite
+- `requirements.txt` - Production dependencies
+- `requirements-dev.txt` - Development dependencies
+- `setup.py` - Package configuration (reads from requirements.txt)
+- `pyproject.toml` - Modern Python packaging configuration
+
+## License
+
+MIT License
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests and linting
+5. Submit a pull request
+
+## Requirements
+
+- Python 3.8+
+
+### Production Dependencies (requirements.txt)
+- typer>=0.9.0
+- rich>=13.0.0
+- dnspython>=2.0.0
+- python-whois>=0.8.0
+- requests>=2.25.0
+
+### Development Dependencies (requirements-dev.txt)
+- pytest>=7.0.0
+- black>=22.0.0
+- flake8>=4.0.0
+- mypy>=0.950
