@@ -1,0 +1,1 @@
+npx @modelcontextprotocol/inspector uvx bir_mcp
