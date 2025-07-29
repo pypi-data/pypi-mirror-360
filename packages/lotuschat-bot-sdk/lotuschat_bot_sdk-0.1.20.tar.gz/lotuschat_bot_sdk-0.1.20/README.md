@@ -1,0 +1,161 @@
+# Lotus-chat Bot Sdk
+
+A lightweight and extensible Python SDK to interact with the LotusChat Bot API
+
+---
+
+## 🚀 Summary
+
+Documents Chatbot from Lotus: https://lotuschat.vn/user/chatbots/docs
+
+LotusChat Bot SDK simplifies integration with the LotusChat platform. It supports:
+
+- Sending messages, documents, and commands
+- Receiving and handling incoming messages via webhook or polling
+- Custom keyboard and entity formatting
+- Async and sync interfaces
+
+--- 
+
+## 💻 Version
+
+lastest version: 0.1.20
+
+Install dependencies:
+
+```bash
+pip install lotuschat-bot-sdk
+```
+
+---
+
+## ⚙️ Python Compatibility
+
+- **Supported versions:** `>=3.13`
+
+---
+
+## 📦 Dependencies
+
+| Library          | Purpose                                             |
+|------------------|-----------------------------------------------------|
+| `aiohttp`        | Async HTTP requests                                 |
+| `pydantic`       | Data validation / modeling                          |
+| `schedule`       | Scheduled jobs                                      |
+| `flask`          | Webhook support (optional)                          |
+| `requests`       | Synchronous fallback                                |
+| `pillow`         | Image conversion (.webp, etc)                       |
+| `beautifulsoup4` | HTML parsing for sticker sets                       |
+| `playwright`     | Optional: scrape dynamic content (requires install) |
+
+## Change log versions:
+
+- 0.1.20:
+    - add send_chat_action, send_video,
+    - add get_chat, get_chat_administrators, get_chat_member, get_chat_member_count, leave_chat
+    - add disable_notification for send media, forward_message
+    - update listener(add Updates to parameter, auto choose message)
+- 0.1.19:
+    - add send photo, send audio, send voice, send animation
+    - fix error listener to async and receive error type
+    - verify response with each case
+- 0.1.18:
+    - add webhook async for quart, old webhook for flask
+- 0.1.17:
+    - submit _handle_message_hook with async thought thread pool
+    - change all listener event to async
+    - add example
+- 0.1.16:
+    - add async to _handle_message_hook
+- 0.1.15:
+    - add document
+    - change structure for
+    - fix import error in command.
+    - add edit message and edit message api
+- 0.1.14:
+    - fix send message có truyền entity
+    - and 3 api set,get,delete command
+    - fix return raw messge nếu response nó trả về không phải json
+- 0.1.13:
+    - add async cho function
+    - add delete message function
+    - change package sdk -> lotuschat_sdk
+- 0.1.12:
+    - update 2 api sendMessage & getUpdates full parameters
+    - open entity_extract used for extract entities in messages object
+
+---
+
+## How to use
+
+### init
+
+```python
+    bot = ChatBot(
+    name="bot name used for filter message from this bot",
+    token="bot token, get from @BotCreator",
+    max_threads=5,  # Optional : thread number used for bot, default = 5
+    is_vpn=True  # Optional : True for develop, False for lotuschat.vn
+)
+```
+
+### hook message with flask
+
+```python
+    app = Flask(__name__)
+
+
+@app.route("/", methods=["POST"])
+def lc_webhook():
+    return bot.web_hook_flask()
+```
+
+### hook message with quart
+
+```python
+    app = Quart(__name__)
+
+
+@app.route("/", methods=["POST"])
+async def lc_webhook():
+    return bot.web_hook()
+```
+
+### add listener
+
+```python
+    async def on_errors(self, error_type: ErrorType, error: str):
+    print(f"handle bot error")
+
+
+async def on_self_messages(self, text: str, chat_id: int, message: Message, updates: Updates):
+    print(f"handle all message from this bot")
+
+
+async def on_messages(self, text: str, chat_id: int, message: Message, updates: Updates):
+    print(f"handle all message")
+
+
+async def on_messages_no_command(self, text: str, chat_id: int, message: Message, updates: Updates):
+    print(f"handle all message with no command")
+
+
+async def on_commands(self, command: str, args: list[Argument], chat_id: int, message: Message, updates: Updates):
+    print(f"handle all command with format /temp argument1 argument2...")
+
+
+async def on_temp_command(self, args: list[Argument], chat_id: int, message: Message, updates: Updates):
+    print(f"handle temp command with format /temp argument1 argument2...")
+
+
+bot = ChatBot(
+    name="bot name used for filter message from this bot",
+    token="bot token, get from @BotCreator",
+)
+bot.set_on_errors(on_errors)
+bot.set_self_messages(on_self_messages)
+bot.set_on_messages(on_messages)
+bot.set_on_messages(on_messages_no_command, is_get_command=False)
+set_on_commands(on_commands)
+bot.set_on_command("/temp", on_temp_command)
+```
