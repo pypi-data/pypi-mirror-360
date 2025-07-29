@@ -1,0 +1,35 @@
+{% extends "minibase.html" %}
+{% block body %}
+<h1>Phenotype testing report</h1>
+<div class="cards">
+  <div class="card">
+    <ul>
+      <li>Phenotype MTC filter: <em>{{ hpo_mtc_filter_name }}</em></li>
+      <li>Multiple testing correction: <em>{{ mtc_name }}</em></li>
+    </ul>
+  </div>
+  <div class="card">
+    <table>
+      <tbody>
+        <tr>
+          <th>Reason</th>
+          <th>Count</th>
+        </tr>
+        {% for skipped in issue_to_count %}
+        <tr>
+          {% if skipped.doclink is none %}
+            <td>{{ skipped.reason }}</td>
+          {% else %}
+            <td><a href="{{ "https://p2gx.github.io/gpsea/stable/user-guide/analyses/mtc.html" ~ skipped.doclink }}">{{ skipped.reason }}</a></td>
+          {% endif %}
+          <td>{{ skipped.count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <caption>
+        Performed statistical tests for {{ tested_hpo_count }} out of the total of {{ total_hpo_count }} HPO terms.
+      </caption>
+    </table>
+  </div>
+</div>
+{% endblock %}
