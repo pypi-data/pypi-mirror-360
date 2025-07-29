@@ -1,0 +1,131 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agency-swarm"
+version = "1.0.0-beta.4"
+description = "Agency Swarm framework"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "Vrsen AI Solutions", email = "me@vrsen.ai" }]
+dependencies = [
+    "openai>=1.76.0",
+    "openai-agents>=0.1.0,<0.2.0",
+    "pydantic>=2.10, <3",
+    "griffe>=1.5.6, <2",
+    "typing-extensions>=4.12.2, <5",
+    "requests>=2.0, <3",
+    "types-requests>=2.0, <3",
+    "docstring-parser>=0.16,<1.0.0",
+    "datamodel-code-generator>=0.28.5,<0.29.0",
+    "deepdiff>=6.7.1,<9.0.0",
+    "jsonref>=1.1.0,<2.0.0",
+    "python-dotenv>=1.0.1,<2.0.0",
+    "termcolor>=2.3.0,<3.0.0",
+    "rich>=13.9.4, <14.0.0",
+]
+classifiers = [
+    "Typing :: Typed",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
+]
+
+[project.urls]
+Homepage = "https://github.com/VRSEN/agency-swarm"
+Repository = "https://github.com/VRSEN/agency-swarm"
+
+[project.optional-dependencies]
+voice = ["numpy>=2.2.0, <3; python_version>='3.10'", "websockets>=15.0, <16"]
+viz = ["graphviz>=0.17"]
+litellm = ["litellm>=1.65.0, <2"]
+
+fastapi = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "ag-ui-protocol>=0.1.4",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "coverage>=7.8.2",
+    "mypy>=1.16.0",
+    "pre-commit>=4.2.0",
+    "pytest>=8.4.0",
+    "pytest-asyncio>=1.0.0",
+    "pytest-mock>=3.14.1",
+    "ruff>=0.11.12",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agency_swarm"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "W",
+    "F",
+    "I",
+    "B",
+    "C4",
+    "UP",
+]
+isort = { combine-as-imports = true, known-first-party = ["agency_swarm"] }
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"examples/**/*.py" = ["E501"]
+"tests/test_agency.py" = ["F403"]
+"tests/test_agent.py" = ["F403"]
+
+[tool.mypy]
+strict = true
+disallow_incomplete_defs = false
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
+module = "sounddevice.*"
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["tests", "src/agency_swarm"]
+
+[tool.coverage.report]
+show_missing = true
+sort = "-Cover"
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "@abc.abstractmethod",
+    "raise NotImplementedError",
+    "logger.debug",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "asyncio: mark test as asyncio",
+    "allow_call_model_methods: mark test as allowing calls to real model implementations",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+filterwarnings = [
+    "ignore:coroutine 'test_async_input_filter_fails.<locals>.invalid_input_filter' was never awaited:RuntimeWarning",
+]
+
+[tool.inline-snapshot]
+format-command = "ruff format --stdin-filename {filename}"

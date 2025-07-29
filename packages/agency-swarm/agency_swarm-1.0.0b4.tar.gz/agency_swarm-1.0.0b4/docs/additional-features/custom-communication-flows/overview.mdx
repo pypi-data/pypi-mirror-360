@@ -1,0 +1,136 @@
+---
+title: "Overview"
+description: "Learn how to customize communication flows for your agency."
+icon: "globe"
+---
+
+Multi-agent communication is the core functionality of any Multi-Agent System. Unlike in all other frameworks, Agency Swarm not only allows you to define communication flows in any way you want (uniform communication flows), but also to configure the underlying logic for this feature. This means that you can create entirely new types of communication or adjust it to your own needs. Below you will find a guide on how to do all this, along with some common examples.
+
+## Pre-Made SendMessage Classes
+
+Agency Swarm contains multiple commonly requested classes for communication flows. Currently, the following classes are available:
+
+| Class Name                  | Description                                                                                                                                                                                                                               | When to Use                                                                                                    | Code Link                                                                                                            |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `SendMessage` (default)     | This is the default class for sending messages to other agents. It uses synchronous communication with basic COT (Chain of Thought) prompting and allows agents to relay files and modify system instructions for each other.             | Suitable for most use cases. Balances speed and functionality.                                                 | [link](https://github.com/VRSEN/agency-swarm/blob/main/agency_swarm/tools/send_message/SendMessage.py)               |
+| `SendMessageQuick`          | A variant of the SendMessage class without Chain of Thought prompting, files, and additional instructions. It allows for faster communication without the overhead of COT.                                                                | Use for simpler use cases or when you want to save tokens and increase speed.                                  | [link](https://github.com/VRSEN/agency-swarm/blob/main/agency_swarm/tools/send_message/SendMessageQuick.py)          |
+| `SendMessageAsyncThreading` | Similar to `SendMessage` but with `async_mode='threading'`. Each agent will execute asynchronously in a separate thread. In the meantime, the caller agent can continue the conversation with the user and check the results later.       | Use for asynchronous applications or when sub-agents take significant amounts of time to complete their tasks. | [link](https://github.com/VRSEN/agency-swarm/blob/main/agency_swarm/tools/send_message/SendMessageAsyncThreading.py) |
+
+**To use any of the pre-made `SendMessage` classes**, simply put it in the `send_message_tool_class` parameter when initializing the `Agency` class:
+
+```python
+from agency_swarm.tools.send_message import SendMessageQuick
+
+agency = Agency(
+    ...
+    send_message_tool_class=SendMessageQuick
+)
+```
+
+That's it! Now, your agents will use your own custom `SendMessageQuick` class for communication.
+
+<Note>
+**`SendMessageSwarm` is Deprecated**: `SendMessageSwarm` will be removed in a future version. For sequential flows or transferring control between agents in one direction, use the OpenAI Agents SDK's Handoffs mechanism.
+
+Detailed guidance on implementing Handoffs, including custom data inputs, is available in the [OpenAI Agents SDK Handoffs Documentation](https://openai.github.io/openai-agents-python/handoffs/).
+</Note>
+
+## Choosing the Right Communication Method: SendMessage vs. Handoffs
+
+Agency Swarm supports two primary paradigms for inter-agent communication: direct messaging using `SendMessage` tool variants (native to Agency Swarm) and Handoffs from the OpenAI Agents SDK.
+
+### Direct Messaging (`SendMessage` tools)
+
+- **Purpose**: Use Agency Swarm's `SendMessage` tools (e.g., `SendMessage`, `SendMessageQuick`, `SendMessageAsyncThreading`) when one agent needs to request information or a discrete action from another, expecting a response to continue its own work. Unlike in Handoffs, control returns to the calling agent, making this suitable for true collaboration and agent orchestration.
+- **Data Exchange**: Primarily string-based messages, with support for file attachments.
+- **Analogy**: An orchestrator agent assigning a sub-task to a worker agent and awaiting the result to proceed.
+- **When to use**:
+    - Implementing orchestrator-worker pattern.
+    - Collaborative tasks requiring back-and-forth dialogue (evaluator-optimizer pattern) or result aggregation by a calling agent.
+    - When an agent needs to retain control of the overall workflow while delegating specific parts.
+
+### SDK Handoffs (via OpenAI Agents SDK)
+
+- **Purpose**: The OpenAI Agents SDK provides a Handoffs mechanism for an agent to **unidirectionally delegate** a task or an entire interaction flow to another specialized agent. When a handoff occurs, the receiving agent takes over that specific interaction; control does **not** automatically return to the initiating agent for that particular interaction thread.
+- **How it Works**: From the perspective of the underlying language model, a handoff is treated like a special tool (e.g., `transfer_to_BillingAgent`). To enable handoffs, you configure an agent with a list of potential target agents. This is done using the `handoffs` parameter in the `Agent` constructor, which can accept other `Agent` instances directly or customized `Handoff` objects created with the SDK's `handoff()` function. This function also allows you to define structured data inputs for the handoff.
+- **Data Exchange**: The SDK's `handoff()` function allows specifying an `input_type` (e.g., a Pydantic model) for passing structured data during the handoff. Refer to the SDK documentation for details.
+- **Analogy**: Transferring a customer in a call center to a specialized department (e.g., Billing). The Billing specialist handles the customer's request from that point forward for that specific issue.
+- **When to use (SDK Handoffs)**:
+    - **Routing Use Cases**: Such as an initial customer support agent routing a query to a specialized support agent (e.g., for billing, technical issues). A new, focused interaction begins with the specialist.
+    - **Sequential interaction flows**: Where a task must pass through a series of different specialists, and each specialist completes their part and passes it on, without the original agent resuming that specific flow.
+- **Further Details**: For comprehensive information on creating, configuring (including structured data input with Pydantic models), and utilizing handoffs, consult the [OpenAI Agents SDK Handoffs Documentation](https://openai.github.io/openai-agents-python/handoffs/).
+
+## Creating Your Own Unique Communication Flows
+
+To create your own communication flow, you will first need to extend the `SendMessageBase` class. This class extends the `BaseTool` class, like any other tools in Agency Swarm, and contains the most basic parameters required for communication, such as the `recipient_agent`.
+
+### Default `SendMessage` Class
+
+By default, Agency Swarm uses the following tool for communication:
+
+```python
+from pydantic import Field, field_validator, model_validator
+from .SendMessageBase import SendMessageBase
+
+class SendMessage(SendMessageBase):
+    """Use this tool to facilitate direct, synchronous communication between specialized agents within your agency. When you send a message using this tool, you receive a response exclusively from the designated recipient agent. To continue the dialogue, invoke this tool again with the desired recipient agent and your follow-up message. Remember, communication here is synchronous; the recipient agent won't perform any tasks post-response. You are responsible for relaying the recipient agent's responses back to the user, as the user does not have direct access to these replies. Keep engaging with the tool for continuous interaction until the task is fully resolved. Do not send more than 1 message to the same recipient agent at the same time."""
+    my_primary_instructions: str = Field(
+        ...,
+        description=(
+            "Please repeat your primary instructions step-by-step, including both completed "
+            "and the following next steps that you need to perform. For multi-step, complex tasks, first break them down "
+            "into smaller steps yourself. Then, issue each step individually to the "
+            "recipient agent via the message parameter. Each identified step should be "
+            "sent in a separate message. Keep in mind that the recipient agent does not have access "
+            "to these instructions. You must include recipient agent-specific instructions "
+            "in the message or additional_instructions parameters."
+        )
+    )
+    message: str = Field(
+        ...,
+        description="Specify the task required for the recipient agent to complete. Focus on clarifying what the task entails, rather than providing exact instructions. Make sure to include all the relevant information needed to complete the task."
+    )
+    message_files: list[str] | None = Field(
+        default=None,
+        description="A list of file IDs to be sent as attachments to this message. Only use this if you have the file ID that starts with 'file-'.",
+        examples=["file-1234", "file-5678"]
+    )
+    additional_instructions: Optional[str] = Field(
+        default=None,
+        description="Additional context or instructions from the conversation needed by the recipient agent to complete the task."
+    )
+
+    @model_validator(mode='after')
+    def validate_files(self):
+        # prevent hallucinations with agents sending file IDs into incorrect fields
+        if "file-" in self.message or (self.additional_instructions and "file-" in self.additional_instructions):
+            if not self.message_files:
+                raise ValueError("You must include file IDs in message_files parameter.")
+        return self
+
+
+    def run(self):
+        return self._get_completion(message=self.message,
+                                    message_files=self.message_files,
+                                    additional_instructions=self.additional_instructions)
+```
+
+Let's break down the code.
+
+In general, all `SendMessage` tools have the following components:
+
+1. **The Docstring**: This is used to generate a description of the tool for the agent. This part should clearly describe how your multi-agent communication works, along with some additional guidelines on how to use it.
+2. **Parameters**: Parameters like `message`, `message_files`, `additional_instructions` are used to provide the recipient agent with the necessary information.
+3. **The `run` method**: This is where the communication logic is implemented. Most of the time, you just need to map your parameters to `self._get_completion()` the same way you would call it in the `agency.get_completion()` method.
+
+When creating your own `SendMessage` tools, you can use the above components as a template.
+
+### Common Use Cases
+
+For detailed **Common Use Cases**, please refer to the [Common Use Cases](./common-use-cases) subpage.
+
+## Conclusion
+
+Agency Swarm has been designed to give you, the developer, full control over your systems. It is the only framework that does not hard-code any prompts, parameters, or even worse, agents for you. With this new feature, the last part of the system that you couldn't fully customize to your own needs is now gone!
+
+So, we want to encourage you to keep experimenting and designing your own unique communication flows. While the examples above should serve as a good starting point, they do not even merely scratch the surface of what's possible here! We are looking forward to seeing what you will create. Please share it in our [Discord server](https://discord.gg/7HcABDpFPG) so we can all learn from each other.
