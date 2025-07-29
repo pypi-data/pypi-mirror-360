@@ -1,0 +1,665 @@
+# Este archivo ha sido generado automáticamente por tai-sql
+# No modifiques este archivo directamente
+
+{{ imports|join('\n') }}
+
+# General Enum class
+
+class EnumModel:
+
+    def __init__(self, name: str, values: List[str]):
+        self.name = name
+        self.values = values
+    
+    def find_many(self) -> List[str]:
+        """
+        Devuelve una lista de los valores del Enum.
+        
+        Returns:
+            List[str]: Lista de valores del Enum
+        """
+        return self.values
+
+{% for model in models %}
+
+@dataclass
+class {{ model.name }}DTO:
+    """Data Transfer Object para {{ model.name }}"""
+    {% for column in model.columns %}
+    {{ column.name }}: {{ column.type }}
+    {% endfor %}
+    
+    @classmethod
+    def from_model(cls, model: {{ model.name }}) -> '{{ model.name }}DTO':
+        return cls(
+            {% for column in model.columns %}
+            {{ column.name }}=model.{{ column.name }},
+            {% endfor %}
+        )
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            {% for column in model.columns %}
+            '{{ column.name }}': self.{{ column.name }},
+            {% endfor %}
+        }
+
+
+class {{ model.name }}AsyncCRUD:
+    """
+    Clase CRUD asíncrona para el modelo {{ model.name }}.
+    
+    Proporciona operaciones completas de Create, Read, Update y Delete
+    para el modelo {{ model.name }} con soporte para gestión automática
+    y manual de sesiones SQLAlchemy.
+    
+    Características principales:
+    - Soporte dual: sesiones automáticas o compartidas
+    - Type hints completos para mejor experiencia de desarrollo
+    - Manejo robusto de errores con rollback automático
+    - Operaciones optimizadas con flush para obtener IDs
+    - Filtros flexibles en todas las operaciones de búsqueda
+    
+    Métodos de lectura:
+        find(**filters, session=None): Busca un único registro
+        find_many(limit, offset, **filters, session=None): Busca múltiples registros
+        find_by_id(id, session=None): Busca por clave primaria
+        count(**filters, session=None): Cuenta registros
+
+    {% if not model.is_view %}
+    Métodos de escritura:
+        create(**data, session=None): Crea un nuevo registro
+        create_many(records, session=None): Crea múltiples registros
+        update(filters, **data, session=None): Actualiza registros existentes
+        delete(**filters, session=None): Elimina registros
+
+    {% endif %}
+    Parámetros de sesión:
+        Todos los métodos aceptan un parámetro opcional 'session':
+        - Si session=None: Se crea una sesión automática con commit
+        - Si session=AsyncSession: Se usa la sesión proporcionada (para transacciones)
+    
+    Ejemplos de uso:
+        ```python
+        # Operaciones simples (sesión automática)
+        crud = {{ model.name }}CRUD(session_manager)
+        {% if model.columns %}
+        {% set first_column = model.columns[0] %}
+        {% if not first_column.args.get('autoincrement', False) %}
+        record = await crud.create({{ first_column.name }}="valor")
+        {% endif %}
+        {% endif %}
+        found = await crud.find_by_id(1)
+        
+        # Operaciones transaccionales (sesión compartida)
+        async with session_manager.transaction() as session:
+            record1 = await crud.create(data="valor1", session=session)
+            record2 = await crud.create(data="valor2", session=session)
+            # Ambos se crean en la misma transacción
+        ```
+    """
+    
+    def __init__(self, session_manager: AsyncSessionManager):
+        """
+        Inicializa el CRUD con un gestor de sesiones.
+        
+        Args:
+            session_manager: Gestor de sesiones asíncronas
+        """
+        self.session_manager = session_manager
+    
+    async def find(
+        self,
+        {% for column in model.columns %}
+        {{ column.name }}: Optional[{{ column.type }}] = None,
+        {% endfor %}
+        session: Optional[AsyncSession] = None
+    ) -> Optional[{{ model.name }}DTO]:
+        """
+        Busca un único registro por filtros.
+        
+        Args:
+            {% for column in model.columns %}
+            {{ column.name }}: Filtrar por {{ column.name }}
+            {% endfor %}
+            session: Sesión existente (opcional)
+            
+        Returns:
+            Instancia del modelo o None si no se encuentra
+        """
+        query = select({{ model.name }})
+        
+        {% for column in model.columns %}
+        if {{ column.name }} is not None:
+            query = query.where({{ model.name }}.{{ column.name }} == {{ column.name }})
+        {% endfor %}
+
+        if session is not None:
+            result = await session.execute(query)
+            data = {{ model.name }}DTO.from_model(result.scalars().first()) if result else None
+
+        else:
+            async with self.session_manager.get_session() as session:
+                result = await session.execute(query)
+                data = {{ model.name }}DTO.from_model(result.scalars().first()) if result else None
+        
+        return data
+    
+    async def find_many(
+        self,
+        limit: Optional[int] = None, 
+        offset: Optional[int] = None,
+        {% for column in model.columns %}
+        {{ column.name }}: Optional[{{ column.type }}] = None,
+        {% endfor %}
+        session: Optional[AsyncSession] = None
+    ) -> List[{{ model.name }}DTO]:
+        """
+        Busca múltiples registros por filtros.
+        
+        Args:
+            limit: Límite de registros a retornar
+            offset: Número de registros a saltar
+            {% for column in model.columns %}
+            {{ column.name }}: Filtrar por {{ column.name }}
+            {% endfor %}
+            session: Sesión existente (opcional)
+            
+        Returns:
+            Lista de instancias del modelo
+        """
+        query = select({{ model.name }})
+        
+        {% for column in model.columns %}
+        if {{ column.name }} is not None:
+            query = query.where({{ model.name }}.{{ column.name }} == {{ column.name }})
+        {% endfor %}
+        
+        if offset is not None:
+            query = query.offset(offset)
+        if limit is not None:
+            query = query.limit(limit)
+        
+        if session is not None:
+            results = await session.execute(query)
+            data = [{{ model.name }}DTO.from_model(result) for result in results.scalars().all()]
+        else:
+            async with self.session_manager.get_session() as session:
+                results = await session.execute(query)
+                data = [{{ model.name }}DTO.from_model(result) for result in results.scalars().all()]
+
+        return data
+    
+    {% if not model.is_view %}
+    async def create(
+        self, 
+        {% for column in model.columns -%}
+        {% if not column.args.get('autoincrement', False) and not column.nullable and column.default is none %}
+        {{ column.name }}: {{ column.type }},{{ ' ' }}
+        {% endif -%}
+        {% endfor -%}
+        {% for column in model.columns %}
+        {% if column.nullable %}
+        {{ column.name }}: {{ column.type }} = None,
+        {% endif %}
+        {% if column.default is not none %}
+        {% if column.default == "datetime.now" %}
+        {{ column.name }}: {{ column.type }} = datetime.now(),
+        {% elif column.default in ["True", "False", "None"] %}
+        {{ column.name }}: {{ column.type }} = {{ column.default }},
+        {% elif column.default.isdigit() %}
+        {{ column.name }}: {{ column.type }} = {{ column.default }},
+        {% elif column.default.replace(" ", "").isalnum() %}
+        {{ column.name }}: {{ column.type }} = "{{ column.default }}",
+        {% else %}
+        {{ column.name }}: {{ column.type }} = None,
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+        session: Optional[AsyncSession] = None
+    ) -> {{ model.name }}DTO:
+        """
+        Crea un nuevo registro.
+        
+        Args:
+            {% for column in model.columns %}
+            {% if not column.args.get('autoincrement', False) %}
+            {{ column.name }}: {{ column.name|title }} del registro
+            {% endif %}
+            {% endfor %}
+            session: Sesión existente (opcional)
+            
+        Returns:
+            Instancia del modelo creado
+        """
+        data = {}
+        {% for column in model.columns %}
+        {% if not column.args.get('autoincrement', False) %}
+        {% if not column.nullable and column.default is none  %}
+        data['{{ column.name }}'] = {{ column.name }}
+        {% else %}
+        if {{ column.name }} is not None:
+            data['{{ column.name }}'] = {{ column.name }}
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+        
+        instance = {{ model.name }}(**data)
+
+        if session is not None:
+            session.add(instance)
+            await session.flush()  # Asegura que se genere el ID si es autoincrement
+            data = {{ model.name }}DTO.from_model(instance)
+        else:
+            async with self.session_manager.get_session() as session:
+                session.add(instance)
+                await session.flush()  # Asegura que se genere el ID si es autoincrement
+                data = {{ model.name }}DTO.from_model(instance)
+        
+        return data
+    
+    async def create_many(self, records: List[Dict[str, Any]], session: Optional[AsyncSession] = None) -> List[{{ model.name }}DTO]:
+        """
+        Crea múltiples registros usando diccionarios para máxima flexibilidad.
+        
+        Args:
+            records: Lista de diccionarios con los datos de los registros
+            session: Sesión existente (opcional)
+            
+        Returns:
+            Lista de instancias creadas
+        
+        Example:
+        {
+            {% for column in model.columns %}
+            '{{ column.name }}': {{ column.type }}{{ ', ' if not loop.last }}
+            {% endfor %}
+        }
+        """
+        instances = []
+        for record_data in records:
+            instance = {{ model.name }}(**record_data)
+            instances.append(instance)
+        
+        if session is not None:
+            session.add_all(instances)
+            await session.flush()  # Asegura que se generen los IDs si son autoincrement
+            data = [{{ model.name }}DTO.from_model(instance) for instance in instances]
+        else:
+            async with self.session_manager.get_session() as session:
+                session.add_all(instances)
+                await session.flush()  # Asegura que se generen los IDs si son autoincrement
+                data = [{{ model.name }}DTO.from_model(instance) for instance in instances]
+
+        return data
+    
+    async def update(self, 
+        filters: Dict[str, Any],
+        {% for column in model.columns %}
+        {% if not column.args.get('autoincrement', False) and not column.args.get('primary_key', False) %}
+        {{ column.name }}: Optional[{{ column.type }}] = None,
+        {% endif -%}
+        {% endfor %}
+        session: Optional[AsyncSession] = None
+    ) -> int:
+        """
+        Actualiza registros que coincidan con los filtros.
+        
+        Args:
+            filters: Filtros para identificar registros a actualizar
+            {% for column in model.columns %}
+            {% if not column.args.get('autoincrement', False) and not column.args.get('primary_key', False) %}
+            {{ column.name }}: Nuevo valor para {{ column.name }}
+            {% endif %}
+            {% endfor %}
+            session: Sesión existente (opcional)
+            
+        Returns:
+            Número de registros actualizados
+        """
+        query = update({{ model.name }})
+        
+        for key, value in filters.items():
+            if hasattr({{ model.name }}, key):
+                query = query.where(getattr({{ model.name }}, key) == value)
+        
+        update_data = {}
+        {% for column in model.columns %}
+        {% if not column.args.get('autoincrement', False) and not column.args.get('primary_key', False) %}
+        if {{ column.name }} is not None:
+            update_data['{{ column.name }}'] = {{ column.name }}
+        {% endif %}
+        {% endfor %}
+        
+        if session is not None:
+            if update_data:
+                query = query.values(**update_data)
+                result = await session.execute(query)
+                return result.rowcount
+        else:
+            if update_data:
+                query = query.values(**update_data)
+                async with self.session_manager.get_session() as session:
+                    result = await session.execute(query)
+                    return result.rowcount
+
+        return 0
+    
+    async def update_many(self, records: List[Dict[str, Any]], match_fields: List[str], session: Optional[AsyncSession] = None) -> int:
+        """
+        Actualiza múltiples registros basándose en campos de coincidencia.
+        
+        Args:
+            records: Lista de diccionarios con los datos a actualizar
+            match_fields: Campos a usar para encontrar los registros a actualizar
+            session: Sesión existente (opcional)
+            
+        Returns:
+            Número total de registros actualizados
+        """
+        total_updated = 0
+
+        async def execute_query(session: AsyncSession) -> int:
+            
+            for record_data in records:
+                record_copy = record_data.copy()
+                # Separar campos de búsqueda de campos de actualización
+                filters = {field: record_copy.pop(field) for field in match_fields if field in record_copy}
+                
+                if filters and record_copy:  # Solo actualizar si hay filtros y datos
+                    query = update({{ model.name }})
+                    
+                    for key, value in filters.items():
+                        if hasattr({{ model.name }}, key):
+                            query = query.where(getattr({{ model.name }}, key) == value)
+                    
+                    query = query.values(**record_copy)
+                    result = await session.execute(query)
+                    total_updated += result.rowcount
+                
+        if session is not None:
+            await execute_query(session)
+
+        else:
+            async with self.session_manager.get_session() as session:
+                await execute_query(session)
+        
+        return total_updated
+    
+    async def upsert(
+        self,
+        record: Dict[str, Any],
+        match_fields: List[str] = [
+            {% for column in model.columns %}
+            {% if column.args.get('primary_key', False) %}
+            '{{ column.name }}'{{ ', ' if not loop.last }}
+            {% endif %}
+            {% endfor %}
+        ],
+        session: Optional[AsyncSession] = None
+    ) -> {{ model.name }}DTO:
+        """
+        Inserta o actualiza un registro (upsert).
+        
+        Args:
+            record: Datos del registro a insertar o actualizar
+            match_fields: Campos a usar para verificar si el registro existe. 
+                         Por defecto usa las claves primarias.
+            session: Sesión existente (opcional)
+            
+        Returns:
+            Instancia del modelo (creada o actualizada)
+        """
+        # Buscar registro existente usando los campos de coincidencia
+        if not match_fields:
+            raise ValueError("match_fields no puede estar vacío. Debe contener al menos un campo para identificar registros.")
+
+        for field in match_fields:
+            if field not in record:
+                raise ValueError(f"El campo '{field}' debe estar presente en el registro para upsert.")
+
+        filters = {field: record[field] for field in match_fields}
+
+        async def execute_query(session: AsyncSession) -> Optional[{{ model.name }}]:
+
+            query = select({{ model.name }})
+
+            for key, value in filters.items():
+                if hasattr({{ model.name }}, key):
+                    query = query.where(getattr({{ model.name }}, key) == value)
+            
+            existing = await session.execute(query).scalars().first()
+            
+            if existing:
+                # Actualizar registro existente
+                update_data = {k: v for k, v in record.items() if k not in match_fields}
+                if update_data:
+                    query = update({{ model.name }})
+                    
+                    for key, value in filters.items():
+                        if hasattr({{ model.name }}, key):
+                            query = query.where(getattr({{ model.name }}, key) == value)
+                    
+                    query = query.values(**update_data)
+                    await session.execute(query)
+                    # Refrescar la instancia
+                    await session.refresh(existing)
+                return existing
+            else:
+                # Crear nuevo registro
+                instance = {{ model.name }}(**record)
+                session.add(instance)
+                await session.flush()
+                return instance
+
+        if session is not None:
+            instance = await execute_query(session)
+            return {{ model.name }}DTO.from_model(instance)
+        else:
+            async with self.session_manager.get_session() as session:
+                instance = await execute_query(session)
+                return {{ model.name }}DTO.from_model(instance)
+    
+    async def upsert_many(
+        self,
+        records: List[Dict[str, Any]],
+        match_fields: List[str] = [
+            {% for column in model.columns %}
+            {% if column.args.get('primary_key', False) %}
+            '{{ column.name }}'{{ ', ' if not loop.last }}
+            {% endif %}
+            {% endfor %}
+        ],
+        session: Optional[AsyncSession] = None
+    ) -> List[{{ model.name }}DTO]:
+        """
+        Inserta o actualiza múltiples registros.
+        
+        Args:
+            records: Lista de diccionarios con los datos
+            match_fields: Campos a usar para verificar si los registros existen
+            session: Sesión existente (opcional)
+            
+        Returns:
+            Lista de instancias (creadas o actualizadas)
+        """
+        results = []
+
+        if session is not None:
+            for record in records:
+                result = await self.upsert(record, match_fields, session)
+                results.append(result)
+        else:
+            async with self.session_manager.get_session() as session:
+                for record in records:
+                    result = await self.upsert(record, match_fields, session)
+                    results.append(result)
+
+        return results
+    
+    async def delete(self, 
+        {% for column in model.columns %}
+        {{ column.name }}: Optional[{{ column.type }}] = None,
+        {% endfor %}
+        session: Optional[AsyncSession] = None
+    ) -> int:
+        """
+        Elimina registros que coincidan con los filtros.
+        
+        Args:
+            {% for column in model.columns %}
+            {{ column.name }}: Filtrar por {{ column.name }} para eliminar
+            {% endfor %}
+            session: Sesión existente (opcional)
+            
+        Returns:
+            Número de registros eliminados
+        """
+        query = delete({{ model.name }})
+        
+        {% for column in model.columns %}
+        if {{ column.name }} is not None:
+            query = query.where({{ model.name }}.{{ column.name }} == {{ column.name }})
+        {% endfor %}
+
+        if session is not None:
+            result = await session.execute(query)
+        else:
+            with self.session_manager.get_session() as session:
+                result = await session.execute(query)
+
+        return result.rowcount
+    
+    async def delete_many(self, filters_list: List[Dict[str, Any]]) -> int:
+        """
+        Elimina múltiples registros basándose en una lista de filtros.
+        
+        Args:
+            filters_list: Lista de diccionarios con filtros para cada eliminación
+            
+        Returns:
+            Número total de registros eliminados
+        """
+
+        total_deleted = 0
+        async def execute_query(session: AsyncSession) -> int:
+            for filters in filters_list:
+                query = delete({{ model.name }})
+                
+                for key, value in filters.items():
+                    if hasattr({{ model.name }}, key):
+                        query = query.where(getattr({{ model.name }}, key) == value)
+                
+                result = await session.execute(query)
+                total_deleted += result.rowcount
+        
+        if session is not None:
+            await execute_query(session)
+        else:
+            async with self.session_manager.get_session() as session:
+                await execute_query(session)
+        
+        return total_deleted
+    
+    # Métodos de conveniencia adicionales
+    {% set autoincrement_columns = model.columns | selectattr('args.autoincrement', 'equalto', true) | list %}
+    {% set has_autoincrement = autoincrement_columns | length > 0 %}
+    {% if has_autoincrement %}
+    {% set autoincrement_col = autoincrement_columns[0] %}
+    {% endif %}
+
+    {% if has_autoincrement %}
+    async def find_by_id(
+        self,
+        {{ autoincrement_col.name }}: {{ autoincrement_col.type }},
+        session: Optional[AsyncSession] = None
+    ) -> Optional[{{ model.name }}]:
+        """
+        Busca un registro por su ID (columna autoincrement).
+        
+        Args:
+            {{ autoincrement_col.name }}: ID del registro a buscar
+            session: Sesión existente (opcional)
+            
+        Returns:
+            Instancia del modelo o None si no se encuentra
+        """
+        return await self.find({{ autoincrement_col.name }}={{ autoincrement_col.name }}, session=session)
+
+    async def delete_by_id(
+        self,
+        {{ autoincrement_col.name }}: {{ autoincrement_col.type }},
+        session: Optional[AsyncSession] = None
+    ) -> bool:
+        """
+        Elimina un registro por su ID (columna autoincrement).
+        
+        Args:
+            id: ID del registro a eliminar
+            session: Sesión existente (opcional)
+            
+        Returns:
+            True si se eliminó, False si no se encontró
+        """
+        deleted_count = await self.delete({{ autoincrement_col.name }}={{ autoincrement_col.name }}, session=session)
+        return deleted_count > 0
+    {% endif %}
+    
+    async def count(
+        self,
+        {% for column in model.columns %}
+        {{ column.name }}: Optional[{{ column.type }}] = None,
+        {% endfor %}
+        session: Optional[AsyncSession] = None
+    ) -> int:
+        """
+        Cuenta registros que coincidan con los filtros.
+        
+        Args:
+            {% for column in model.columns %}
+            {{ column.name }}: Filtrar por {{ column.name }}
+            {% endfor %}
+            session: Sesión existente (opcional)
+            
+        Returns:
+            Número de registros que coinciden con los filtros
+        """
+        from sqlalchemy import func
+        
+        query = select(func.count({{ model.name }}))
+        
+        {% for column in model.columns %}
+        if {{ column.name }} is not None:
+            query = query.where({{ model.name }}.{{ column.name }} == {{ column.name }})
+        {% endfor %}
+
+        if session is not None:
+            result = await session.execute(query)
+        else:
+            with self.session_manager.get_session(begin=True) as session:
+                result = await session.execute(query)
+
+        return result.scalar() or 0
+    
+    async def exists(self,
+        {% for column in model.columns %}
+        {{ column.name }}: Optional[{{ column.type }}] = None,
+        {% endfor %}
+        session: Optional[AsyncSession] = None
+    ) -> bool:
+        """
+        Verifica si existe al menos un registro que coincida con los filtros.
+        
+        Args:
+            {% for column in model.columns %}
+            {{ column.name }}: Filtrar por {{ column.name }}
+            {% endfor %}
+            session: Sesión existente (opcional)
+            
+        Returns:
+            True si existe al menos un registro, False en caso contrario
+        """
+        return await self.count({% for column in model.columns %}{{ column.name }}={{ column.name }}, {% endfor %}session=session) > 0
+    {% endif %}
+
+{% endfor %}
