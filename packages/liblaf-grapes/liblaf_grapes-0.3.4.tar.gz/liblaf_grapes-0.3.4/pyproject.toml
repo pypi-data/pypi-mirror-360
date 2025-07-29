@@ -1,0 +1,130 @@
+#:schema https://json.schemastore.org/pyproject.json
+# ref: <https://packaging.python.org/en/latest/specifications/pyproject-toml/>
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatch-vcs", "hatchling"]
+
+[dependency-groups]
+build = ["check-wheel-contents", "hatch", "twine"]
+dev = ["icecream"]
+docs = [
+  "docstring-inheritance",
+  "griffe-fieldz",
+  "griffe-generics",
+  "griffe-inherited-docstrings",
+  "griffe-modernized-annotations",
+  "griffe-pydantic",
+  "griffe-warnings-deprecated",
+  "mdx-truly-sane-lists",
+  "mkdocs",
+  "mkdocs-api-autonav",
+  "mkdocs-autorefs",
+  "mkdocs-git-committers-plugin-2",
+  "mkdocs-git-revision-date-localized-plugin",
+  "mkdocs-include-markdown-plugin",
+  "mkdocs-material[imaging]",
+  "mkdocs-section-index",
+  "mkdocstrings",
+  "mkdocstrings-python",
+  "pymdown-extensions",
+  "ruff",
+]
+test = [
+  "pytest",
+  "pytest-benchmark",
+  "pytest-codspeed",
+  "pytest-cov",
+  "pytest-xdist",
+]
+
+[project]
+authors = [
+  { email = "30631553+liblaf@users.noreply.github.com", name = "liblaf" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "License :: OSI Approved",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python",
+  "Topic :: File Formats :: JSON",
+  "Topic :: File Formats",
+  "Topic :: Software Development :: Bug Tracking",
+  "Topic :: Software Development :: Debuggers",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development",
+  "Topic :: System :: Logging",
+  "Topic :: System",
+  "Topic :: Text Processing :: Filters",
+  "Topic :: Text Processing",
+  "Topic :: Utilities",
+  "Typing :: Typed",
+]
+dependencies = [
+  "about-time>=4.0.0,<5",
+  "attrs>=25.0.0,<26",
+  "autoregistry>=1.0.0,<2",
+  "environs>=14.0.0,<15",
+  "etils>=1.0.0,<2",
+  "gitpython>=3.0.0,<4",
+  "giturlparse>=0.12.0,<0.13",
+  "joblib>=1.0.0,<2",
+  "lazy-loader>=0.4.0,<0.5",
+  "loguru>=0.7.0,<0.8",
+  "msgspec[toml,yaml]>=0.19.0,<0.20",
+  "platformdirs>=4.0.0,<5",
+  "pydantic>=2.0.0,<3",
+  "rich>=14.0.0,<15",
+  "sortedcontainers-stubs>=2.0.0,<3",
+  "sortedcontainers>=2.0.0,<3",
+  "wadler-lindig>=0.1.0,<0.2",
+  "wrapt>=1.0.0,<2",
+]
+description = "Add your description here"
+dynamic = ["version"]
+keywords = []
+license = "MIT"
+name = "liblaf-grapes"
+readme = "README.md"
+requires-python = ">=3.12"
+
+[project.urls]
+"Changelog" = "https://github.com/liblaf/grapes/blob/main/CHANGELOG.md"
+"Documentation" = "https://liblaf.github.io/grapes/"
+"Homepage" = "https://github.com/liblaf/grapes"
+"Issue Tracker" = "https://github.com/liblaf/grapes/issues"
+"Release Notes" = "https://github.com/liblaf/grapes/releases"
+"Source Code" = "https://github.com/liblaf/grapes"
+
+[tool.check-wheel-contents]
+ignore = ["W002"]
+
+[tool.coverage.run]
+branch = true
+source = ["src/"]
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/liblaf/grapes/_version.py"
+
+[tool.hatch.build.targets.sdist]
+only-include = ["src/"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/liblaf/"]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.pytest.ini_options]
+addopts = ["--showlocals", "--strict-config", "--strict-markers"]
+testpaths = ["benches/", "tests/"]
+
+[tool.uv]
+default-groups = "all"
