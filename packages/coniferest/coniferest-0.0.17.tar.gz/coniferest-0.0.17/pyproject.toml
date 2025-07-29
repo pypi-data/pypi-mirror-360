@@ -1,0 +1,96 @@
+[build-system]
+requires = [
+    "setuptools",
+    "wheel",
+    "numpy>=2.0",
+    "Cython>=3.1",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "coniferest"
+description = "Coniferous forests for better machine learning"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Vladimir Korolev", email = "balodja@gmail.com" },
+    { name = "SNAD team" },
+]
+license = { text = "MIT" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Science/Research",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "click>=8.2", # click.Choice to accept enums
+    # We need it for cpu_count() only, but we have it anyway as a dependency of scikit-learn
+    "joblib",
+    "numpy",
+    # sklearn.tree._splitter.RandomSplitter changed signature in 1.4.0
+    "scikit-learn>=1.4,<2",
+    "onnxconverter-common",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+datasets = [
+    # For Plasticc dataset
+    "datasets",
+    # For downloading and parsing DevNet datasets
+    "pandas",
+]
+dev = [
+    "pytest",
+    "pytest-benchmark[histogram]",
+    "onnxruntime",
+]
+
+[project.urls]
+"Source Code" = "https://github.com/snad-space/coniferest"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+version = { attr = "coniferest.__version__" }
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+    "src/coniferest",
+]
+markers = [
+    "e2e",
+    "long",
+    "regression",
+]
+addopts = "--benchmark-min-time=0.1 --benchmark-max-time=5.0 --benchmark-min-rounds=5 --benchmark-sort=mean --benchmark-disable --doctest-modules"
+
+[tool.ruff]
+line-length = 120
+exclude = ["docs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "A"]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py310,py311
+isolated_build = True
+
+[testenv]
+extras =
+    dev
+    datasets
+set_env =
+    # For doctests
+    PY_IGNORE_IMPORTMISMATCH=1
+commands =
+    pytest -m 'not long' --durations=0
+"""
