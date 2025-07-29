@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+        <record id="act_window_create_users_partner" model="ir.actions.act_window">
+          <field name="name">Build platform users from partner members</field>
+          <field name="binding_model_id" ref="base.model_res_partner" />
+          <field name="res_model">create.users.wizard</field>
+          <field name="view_mode">form</field>
+          <field name="target">new</field>
+          <field
+        name="groups_id"
+        eval="[(4,ref('energy_communities.group_platform_manager'))]"
+      />
+        </record>
+        <record id="view_res_partner_filter" model="ir.ui.view">
+          <field name="name">view_res_partner_filter</field>
+          <field name="model">res.partner</field>
+          <field name="inherit_id" ref="base.view_res_partner_filter" />
+          <field name="arch" type="xml">
+            <xpath expr="//filter[@name='inactive']" position="before">
+              <filter
+            string="Energy Communities"
+            name="energy_communities_partners"
+            domain="[('company_hierarchy_level','=','community')]"
+          />
+              <filter
+            string="Coordinators"
+            name="energy_communities_partners"
+            domain="[('company_hierarchy_level','=','coordinator')]"
+          />
+              <filter
+            string="Platform"
+            name="energy_communities_partners"
+            domain="[('company_hierarchy_level','=','instance')]"
+          />
+              <separator />
+            </xpath>
+          </field>
+        </record>
+
+        <record id="view_partner_form" model="ir.ui.view">
+            <field name="name">view_partner_form</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='vat']" position="after">
+                  <field name="company_hierarchy_level" invisible="1" />
+                  <field name="user_current_role" />
+                  <field name="related_company_id" options="{'no_open': True}" readonly="1" attrs="{'invisible': [('company_hierarchy_level', '=', 'none')]}" />
+                </xpath>
+                <xpath expr="//field[@name='name']" position="before">
+                  <h4
+                    style="color:green;"
+                    attrs="{'invisible': [('company_hierarchy_level', '!=', 'instance')]}"
+                  >Platform company</h4>
+                  <h4
+                    style="color:green;"
+                    attrs="{'invisible': [('company_hierarchy_level', '!=', 'coordinator')]}"
+                  >Coordinator company</h4>
+                  <h4
+                    style="color:green;"
+                    attrs="{'invisible': [('company_hierarchy_level', '!=', 'community')]}"
+                  >Community company</h4>
+                </xpath>
+                <xpath expr="//field[@name='child_ids']" position="after">
+                  <label
+            for="user_ids"
+            string="Related users"
+            groups="energy_communities.group_platform_manager"
+          />
+                  <field
+            name="user_ids"
+            widget="one2many"
+            groups="energy_communities.group_platform_manager"
+          >
+            <tree open="1" create="0" edit="0">
+              <button
+                name="action_open_form_view"
+                type="object"
+                string="View"
+                class="oe_highlight"
+              />
+              <field name="name" />
+              <field name="login" />
+              <field name="lang" />
+              <field name="login_date" />
+            </tree>
+                   </field>
+                </xpath>
+
+            </field>
+        </record>
+
+        <record id="res_partner_view_form" model="ir.ui.view">
+            <field name="name">res_partner_view_form.inherit</field>
+            <field name="model">res.partner</field>
+            <field
+        name="inherit_id"
+        ref="partner_multi_company.res_partner_view_form"
+      />
+            <field name="arch" type="xml">
+                <xpath
+          expr="//page[@name='sales_purchases']//field[@name='company_ids']"
+          position="replace"
+        >
+                <field name="has_rel_user" invisible="1" />
+          <field
+            name="company_id"
+            attrs="{'invisible': [('user_current_role', '!=', 'role_platform_admin')],'readonly': [('has_rel_user','=',True)]}"
+          />
+                  <field
+            name="company_ids"
+            groups="base.group_multi_company"
+            widget="many2many_tags"
+            options="{'no_create': True}"
+            attrs="{'invisible': [('user_current_role', '!=', 'role_platform_admin')],'readonly': [('has_rel_user','=',True)]}"
+          />
+                    <field
+            name="company_ids_info"
+            groups="base.group_multi_company"
+            widget="many2many_tags"
+            attrs="{'invisible': [('user_current_role', '=', 'role_platform_admin')]}"
+          />
+          <p
+            attrs="{'invisible': ['|',('user_current_role', '!=', 'role_platform_admin'),('has_rel_user','=',False)]}"
+            style="padding: 10px; background-color: #ccc; border: 1px solid #aaa;"
+          ><strong
+            >Hint: In order to edit company related params you have to visit the related contact's user.</strong></p>
+                </xpath>
+            <xpath expr="//field[@name='bank_ids']" position="replace">
+                    <field name="bank_ids" nolabel="1" colspan="2" context="{'default_allow_out_payment': True}">
+                        <tree editable="bottom">
+                            <field name="partner_id" invisible="1"/>
+                            <field name="allowed_company_ids" invisible="1" />
+                            <field name="sequence" widget="handle"/>
+                            <field name="bank_id"/>
+                            <field name="acc_number" required="1"/>
+                            <field name="company_id" attrs="{'readonly':[('partner_id','!=',False),('allowed_company_ids','=',[])]}" />
+                            <field name="allow_out_payment" widget="boolean_toggle" options="{'autosave': False}"/>
+                            <field name="acc_holder_name" invisible="1"/>
+                        </tree>
+                    </field>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

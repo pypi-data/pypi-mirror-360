@@ -1,0 +1,128 @@
+<?xml version="1.0" ?>
+<odoo>
+  <record id="landing_page_form_view" model="ir.ui.view">
+    <field name="name">landing.page.form.view</field>
+    <field name="model">landing.page</field>
+    <field name="arch" type="xml">
+      <form create="false">
+        <header>
+          <field name="map_sync_mode" invisible="True" />
+          <field name="wp_sync_mode" invisible="True" />
+          <button
+            name="action_landing_page_status"
+            type="object"
+            string="Publish"
+            attrs="{'invisible': [('status','!=','draft')]}"
+          />
+          <button
+            name="action_landing_page_status"
+            type="object"
+            string="Unpublish"
+            attrs="{'invisible': [('status','!=','publish')]}"
+          />
+          <button
+            name="action_create_landing_place"
+            type="object"
+            string="Create map place"
+            attrs="{'invisible': [('map_sync_mode','!=','create')]}"
+          />
+          <button
+            name="action_update_public_data"
+            type="object"
+            string="Update (wp landing / map place)"
+            attrs="{'invisible': [('wp_sync_mode','!=','update'),('map_sync_mode','!=','update')]}"
+          />
+          <field name="status" widget="statusbar" />
+        </header>
+        <sheet>
+          <group style="width:40px;">
+            <h4
+              style="color:green;"
+              attrs="{'invisible': [('status','!=','publish')]}"
+            >Published</h4>
+            <h4
+              style="color:orange;"
+              attrs="{'invisible': [('status','!=','draft')]}"
+            >Draft</h4>
+          </group>
+          <group>
+            <field name="publicdata_lastupdate_datetime" readonly="True" />
+            <field name="wp_landing_page_id" readonly="True" />
+            <field name="name" />
+            <field name="slug_id" required="True" />
+            <field name="hierarchy_level" />
+            <field name="allow_new_members" />
+            <field name="number_of_members" />
+            <field name="community_type" />
+            <field name="community_secondary_type" />
+          </group>
+          <group>
+            <field name="external_website_link" />
+            <field name="show_web_link_on_header" />
+            <field name="show_newsletter_form" />
+            <field name="twitter_link" />
+            <field name="instagram_link" />
+            <field name="telegram_link" />
+          </group>
+          <group col="4">
+            <field name="primary_image_file" widget="image" />
+            <field name="secondary_image_file" widget="image" />
+          </group>
+          <group>
+            <field name="company_logo" widget="image" />
+          </group>
+          <group>
+            <field name="short_description" />
+            <field name="long_description" />
+            <field name="why_become_cooperator" widget="html" />
+            <field name="become_cooperator_process" widget="html" />
+          </group>
+          <group>
+            <field name="lat" required="1" />
+            <field name="lng" required="1" />
+            <field name="map_place_ids" options="{'widget': 'one2many'}">
+              <tree editable="bottom" create="0" delete="0">
+                <field name="name" readonly="true" />
+                <field name="status" readonly="true" />
+                <field name="company_id" readonly="true" />
+                <field name="map_id" readonly="true" />
+                <field name="slug_id" readonly="true" />
+              </tree>
+            </field>
+            <field name="cooperator_button_ids" options="{'widget': 'one2many_list'}">
+              <tree editable="bottom">
+                <button
+                  string="Restore defaults"
+                  name="action_restore_defaults"
+                  type="object"
+                  class="btn-primary"
+                />
+                <field name="name" />
+                <field name="url" />
+                <field name="mode" readonly="true" />
+                <field name="visibility" required="true" />
+                <field name="sort_order" widget="handle"/>
+              </tree>
+            </field>
+            <field name="street" />
+            <field name="postal_code" />
+            <field name="city" />
+          </group>
+          <group>
+            <field name="community_energy_action_ids" widget="one2many" readonly="1">
+              <tree>
+                <field name="energy_action_id" />
+                <field name="public_status" />
+              </tree>
+            </field>
+          </group>
+          <group name="Coordinators">
+            <field name="awareness_services" />
+            <field name="design_services" />
+            <field name="management_services" />
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+</odoo>
