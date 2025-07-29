@@ -1,0 +1,73 @@
+# pyproject.toml  (preferred for new projects, PEP 621)
+# Copyright 2025 BellaKeri (BellaKeri@github.com) & Daniel Balparda (balparda@github.com)
+# Apache-2.0 license
+
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tfinta"
+version = "1.7"
+description = "Python library and shell scripts for parsing and displaying Transport for Ireland (TFI/NTA) Rail and DART schedule datasets, both GTFS and realtime"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [
+  { name = "BellaKeri", email = "BellaKeri@github.com" },
+  { name = "Daniel Balparda", email = "balparda@github.com" }
+]
+requires-python = ">=3.11.13"  # if version changes, remember to change README.md
+classifiers = [  # see: https://pypi.org/classifiers/
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Operating System :: OS Independent",
+  "Topic :: Utilities"
+]
+dependencies = [
+  "prettytable (>=3.16,<4.0)",
+  "balparda-baselib (>=1.11,<2.0)"
+]
+
+[project.urls]
+Homepage = "https://github.com/BellaKeri/TFINTA"
+PyPI = "https://pypi.org/project/tfinta/"
+
+[tool.setuptools]
+package-dir = {"" = "src"}   # root package namespace lives in src/
+
+[tool.setuptools.packages.find]
+where   = ["src"]      # auto-discover every importable package inside src/
+include = ["tfinta*"]  # avoid picking up stuff not in "tfinta"
+
+[tool.setuptools.package-data]
+"tfinta" = ["py.typed"]
+
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
+
+[tool.poetry.group.dev.dependencies]
+pylint = "~3.3"
+flake8 = "~7.2"
+pyright = "~1.1"
+pytest = "^8.4"
+pytest-pythonpath = "^0.7"
+coverage = "^7.9"
+tomli = "^2.2.1"
+
+[tool.poetry.scripts]
+dart = "tfinta.dart:main"
+gtfs = "tfinta.gtfs:main"
+realtime = "tfinta.realtime:main"
+stations = "tfinta.stations:main"
+trains = "tfinta.trains:main"
+
+[pytest]
+pythonpath = ["src"]
+
+# test with:
+# $ python3
+# >>> import sys, tomli, pathlib
+# >>> tomli.loads(pathlib.Path('pyproject.toml').read_text())
