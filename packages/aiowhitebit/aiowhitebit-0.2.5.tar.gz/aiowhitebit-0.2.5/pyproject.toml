@@ -1,0 +1,102 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "aiowhitebit"
+version = "0.2.5"
+description = "Async Python client for WhiteBit API"
+readme = "README.md"
+authors = [
+    { name = "Oleksii Ovdiienko", email = "doubledare704@gmail.com" }
+]
+license = { text = "MIT" }
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Framework :: AsyncIO",
+]
+keywords = ["whitebit", "crypto", "exchange", "api", "async", "trading"]
+dependencies = [
+    "aiohttp==3.12.13",
+    "aiodns==3.5.0",
+    "uvloop==0.21.0",
+    "pydantic>=2.0.0,<3.0.0",  # Only support Pydantic v2
+    "websockets==15.0.1",
+    "websocket-client==1.8.0",
+]
+requires-python = ">=3.9"
+
+[project.urls]
+Homepage = "https://github.com/doubeldare704/aiowhitebit"
+Documentation = "https://github.com/doubeldare704/aiowhitebit#readme"
+Repository = "https://github.com/doubeldare704/aiowhitebit.git"
+Issues = "https://github.com/doubeldare704/aiowhitebit/issues"
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+extend-exclude = ["examples"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "C",    # flake8-comprehensions
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "D",    # pydocstyle
+    "N",    # pep8-naming
+    "ASYNC", # flake8-async
+    "S",    # flake8-bandit
+    "RUF",  # Ruff-specific rules
+]
+ignore = [
+    "N815",  # mixedCase variable names
+    "D212",  # multi-line-summary-first-line
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",    # Use of assert detected
+    "D100",    # Missing docstring in public module
+    "D101",    # Missing docstring in public class
+    "D102",    # Missing docstring in public method
+    "D103",    # Missing docstring in public function
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.pyright]
+include = ["aiowhitebit"]
+exclude = [
+    "**/node_modules",
+    "**/__pycache__",
+    "tests",
+    "examples"
+]
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "basic"
+useLibraryCodeForTypes = true
+reportMissingImports = true
+reportMissingTypeStubs = false
+pythonVersion = "3.9"
+strictListInference = true
+strictDictionaryInference = true
+strictSetInference = true
