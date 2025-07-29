@@ -1,0 +1,109 @@
+[tool.poetry]
+name = "crudclient"
+version = "0.8.4.dev202507050440"
+description = "A flexible CRUD client for RESTful APIs"
+authors = ["leikaab <nordavindltd@gmail.com>"]
+license = "LGPL-3.0-or-later"
+readme = "README.md"
+homepage = "https://github.com/Leikaab/crudclient"
+repository = "https://github.com/Leikaab/crudclient"
+documentation = "https://github.com/Leikaab/crudclient#readme"
+keywords = ["crud", "api", "client", "rest"]
+classifiers = [
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
+include = [
+    "crudclient/**/*.pyi",
+    "crudclient/py.typed"
+]
+
+
+
+[tool.poetry.dependencies]
+python = "^3.11"
+requests = "^2.32.3"
+pydantic = {version = "^2.8.2", extras = ["email"]}
+apiconfig = {version = "^0.3.2.dev0", allow-prereleases = true}
+portalocker = ">=2.8,<4.0"
+appdirs = "^1.4"
+
+[tool.poetry.extras]
+testing = []
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.1.1"
+pytest-cov = "*"
+requests-mock = "^1.12.1"
+python-dotenv = "^1.1.0"
+pytest-xdist = "^3.5.0"
+pytest-mock = "^3.12.0"
+pytest-httpserver = "^1.0.8"
+httpx = "^0.27.0"
+
+autoflake = "*"
+isort = "*"
+black = "*"
+bandit = "*"
+flake8 = "*"
+mypy = "*"
+pycodestyle = "*"
+pydocstyle = "*"
+pylint = "*"
+pre-commit = "*"
+
+types-requests = "*"
+
+# autopep8 = "*"
+# yapf = "*"
+freezegun = "^1.5.1"
+flake8-docstrings = "^1.7.0"
+types-freezegun = "^1.1.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/Leikaab/crudclient/issues"
+
+[tool.pyright]
+typeCheckingMode = "basic"
+venvPath = "."
+venv = ".venv"
+exclude = ["artifacts/"]
+
+
+[tool.isort]
+profile = "black"
+skip = ["tests/debug.py", "crudclient/config.pyi", "crudclient/client.pyi"]
+extend_skip_glob = ["**/.mypy_cache/*", "**/.pytest_cache/*", "**/.venv/*", "**/node_modules/*", "**/draft/*", "**/artifacts/*", "**/apiconfig/*"]
+known_third_party = ["apiconfig"]
+
+
+
+[tool.black]
+line-length = 150
+target-version = ['py310']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | artifacts
+  | apiconfig
+)/
+'''
