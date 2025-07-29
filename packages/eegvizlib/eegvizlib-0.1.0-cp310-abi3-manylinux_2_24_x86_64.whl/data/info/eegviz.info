@@ -1,0 +1,365 @@
+This is eegviz.info, produced by makeinfo version 7.1.1 from
+eegviz.texi.
+
+Copyright (C) 2025 Université de Reims Champagne-Ardenne.
+
+   Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the
+     distribution.
+  3. The name of the author may not be used to endorse or promote
+     products derived from this software without specific prior written
+     permission.
+
+   THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+INFO-DIR-SECTION Texinfo documentation system
+START-INFO-DIR-ENTRY
+* eegviz: (eegviz)Visualization and annotation of EEGs.
+END-INFO-DIR-ENTRY
+
+
+File: eegviz.info,  Node: Top,  Next: The default reading profile,  Up: (dir)
+
+Adftool
+*******
+
+This is the user manual for eegviz (version 0.1.0, 4 July 2025).
+
+* Menu:
+
+* The default reading profile::
+* The ad-hoc neonatal file format::
+* The ad-hoc CSV format for storing annotations::
+* The ad-hoc database format::
+* Visualization commands::
+* The shapes of the neonatal EEG::
+
+
+File: eegviz.info,  Node: The default reading profile,  Next: The ad-hoc neonatal file format,  Prev: Top,  Up: Top
+
+1 The default reading profile
+*****************************
+
+The default reading profile displays a 30-second time window (over a
+time grid with 1 second major division, and 0.2 second minor division)
+of the following bipolar references, with a default amplitude of 110 uV,
+in this order:
+  1. F4-T4
+  2. F4-C4
+  3. F3-C3
+  4. F3-T3
+  5. T4-O2
+  6. C4-O2
+  7. 8. C3-O1
+  9. T3-O1
+
+   Alternatively, a second reading profile displays these derivations:
+  1. Fp2-T4
+  2. Fp2-C4
+  3. Fz-Cz
+  4. Fp1-C3
+  5. Fp1-T3
+  6. T4-O2
+  7. C4-O2
+  8. Cz-Pz
+  9. C3-O1
+  10. T3-O1
+
+   When either the anode or cathode of a derivation is missing, then no
+signal is displayed at all.
+
+   It displays and lets the user annotate:
+  1. Front Sharp Transients;
+  2. Anterior Slow Dysrythmia;
+  3. Spikes;
+  4. Bursts;
+  5. Inter-Burst Intervals.
+
+   It allows the user to cycle between two filtering preferences:
+  1. A [0.53 Hz, 70 Hz] band-pass filter;
+  2. A [0.53 Hz, 35 Hz] band-pass filter.
+
+
+File: eegviz.info,  Node: The ad-hoc neonatal file format,  Next: The ad-hoc CSV format for storing annotations,  Prev: The default reading profile,  Up: Top
+
+2 The ad-hoc neonatal file format
+*********************************
+
+The neonatal file format is the encoding of an EEG file, where each
+observation is on two bytes.  Each recording is copied twice, with two
+different filtering parameters (they match the default reading profile):
+
+  1. With a [0.53 Hz, 70 Hz] band-pass filter;
+  2. With a [0.53 Hz, 35 Hz] band-pass filter.
+
+   Each version of the signal is the concatenation of the values for the
+following 13 electrodes, in this order:
+
+  1. Fp2
+  2. F4
+  3. T4
+  4. C4
+  5. O2
+  6. Fz
+  7. Cz
+  8. Pz
+  9. Fp1
+  10. F3
+  11. T3
+  12. C3
+  13. O1
+
+   For each of these channels, the time sequence of all observations is
+stored in a continuous segment.  All channels are expected to be sampled
+at 256 Hz, and they are expected to have the exact same number of
+observations.
+
+   The encoding of each observation for each channel is the big-endian
+2-byte value, scaled and translated so that a stored 0 should mean -1024
+uV and a stored 65535 should mean a +1024 uV.
+
+   The file is thus simply a long sequence of 2-byte-encoded electrode
+measure, and it is possible to retrieve the value of one electrode at a
+specific onset with a particular filter parameter just by following the
+conventions laid out in this section.
+
+   Eegviz distributes an R script, ‘convert-to-neonatal’, that can take
+a suitable file in the EDF standard and convert it to this ad-hoc
+neonatal file format, provided it is sampled correctly.  EDF+
+annotations and foreign channels will be discarded, as well as any
+patient metadata, obviously.
+
+   When you call ‘convert-to-neonatal’ ‘file1.edf’ ‘file2.edf’ ..., then
+the program creates ‘file1.edf.neonatal’ and ‘file2.edf.neonatal’.
+
+   If any channel is sampled at less than 256 Hz, it will be resampled
+before filtering, so the size of the converted data may be larger.
+
+
+File: eegviz.info,  Node: The ad-hoc CSV format for storing annotations,  Next: The ad-hoc database format,  Prev: The ad-hoc neonatal file format,  Up: Top
+
+3 The ad-hoc CSV format for storing annotations
+***********************************************
+
+When a neonatal file is opened, the annotations are expected to be
+listed in a companion file whose name is that of the neonatal file with
+the ‘.annotations.csv’ extension appended.  This is a header-less CSV
+file, where the columns are:
+
+  1. The onset, in seconds;
+  2. The duration, in seconds;
+  3. The figure class identifier in the Lytonepal ontology;
+  4. A semicolon-separated list of electrode identifiers in the
+     Lytonepal ontology.
+
+   This companion file is overwritten each time an annotation is
+created, modified, or deleted in the visualizer.
+
+   If you have two different sets of annotations, and you want to use
+all of them, you can simply concatenate the CSV files (since they do not
+have a header).  It can be a bit tedious to do this for multiple files,
+which is where the ‘merge-annotations’ program might help.  You invoke
+it as:
+
+     merge-annotations [-O root-of-dataset] root-of-dataset-N ...
+
+   It will read all annotations in any of the directories
+‘root-of-dataset-N’ and merge the annotations with the current working
+directory, or ‘root-of-dataset’ if specified by option ‘-O’.
+
+
+File: eegviz.info,  Node: The ad-hoc database format,  Next: Visualization commands,  Prev: The ad-hoc CSV format for storing annotations,  Up: Top
+
+4 The ad-hoc database format
+****************************
+
+In order to train the segmentation detector, a pre-processed dataset is
+required.  The format of the dataset is as follows:
+
+   • A header-less CSV file named ‘files.csv’ contains a list of file
+     names that belong to the dataset.  It has one column and no header;
+   • Next to ‘files.csv’, each sample is a 10-second window of the
+     signal with annotations.  It has 2560 rows, 40 columns, and no
+     header.  The first 10 columns are the signal values in the montage
+     (Fp2-T4, Fp2-C4, Fz-Cz, Fp1-C3, Fp1-T3, T4-O2, C4-O2, Cz-Pz, C3-O1,
+     T3-O1), and the remaining 30 columns are the labels.  The labels
+     are successions of groups of 3.  The first label in the group is
+     the binary presence of FSP, then the binary present of ASD, then
+     the binary presence of spike.  Each group is for a derivation.  So
+     the 11th column in the CSV corresponds to the binary presence of a
+     FSP on derivation Fp2-T4, the 12th column corresponds to the binary
+     presence of an ASD on derivation Fp2-T4, and the 14th column
+     corresponds to the binary presence of a FSP on derivation Fp2-C4.
+
+   ‘hash-neonatal’ updates the database in the current working directory
+by adding windows from all signals ‘.neonatal’ files passed at
+command-line.  The companion ‘.neonatal.annotations.csv’ file is also
+read to mark segmentation labels.
+
+   It is an error to invoke ‘hash-neonatal’ if the current working
+directory is not a dataset (i.e.  the ‘files.csv’ index does not exist).
+To create a new dataset, simply run ‘create-neonatal-dataset’
+beforehand.
+
+   The additional constraints are also enforced by the ‘hash-neonatal’
+program:
+
+   • each signal window is separated from the previous and the next, so
+     that no segment of the full EEG is shared by two different windows
+     (the gap is 2 seconds);
+   • the order of the windows is lost, so it is not possible to
+     reassemble the full signal from its parts;
+   • the names of the CSV files for each window is the SHA-256 digest of
+     the CSV contents;
+   • the items in files.csv are sorted by increasing SHA-256 digest
+     values;
+   • the modification and read file dates are reset to January 1, 2000
+     so that the order of processing is lost at file-system level.
+
+
+File: eegviz.info,  Node: Visualization commands,  Next: The shapes of the neonatal EEG,  Prev: The ad-hoc database format,  Up: Top
+
+5 Visualization commands
+************************
+
+If ‘eegviz’ is invoked with command-line arguments, it considers the
+first argument to be a file name and opens it.
+
+   Otherwise, a blank window is opened.  This blank window accepts drag
+and drops.  Once a file has been dropped, it disappears and the
+visualizer appears with the dropped file.
+
+   The visualizer has two modes: the “time” mode is opened by default,
+and it lets the user select time bounds for the annotation.  The user
+can switch to the “space” mode by pressing the tabulation key, where the
+selection of channels can be edited.  Pressing the tabulation key cycles
+between these two modes.  The minor time grid has a different color in
+time and space modes.
+
+   In both modes, the left and right arrow moves the view by half a
+window.  The U key compresses the signal on the time scale, and D
+expands it.  Clicking on the bottom minimap of the window moves the view
+somewhere else in the signal.
+
+   In time mode, the R key returns the window length to the default
+window length according to the profile.
+
+   In space mode, the R key erases the amplitude of the selected
+channels and resets it to what is prescribed by the reading profile.
+
+   The time mode lets the user select an interval.  A red vertical bar
+always follows the cursor.  Clicking with the left mouse button
+somewhere on the plot places the first interval boundary.  Clicking a
+second time sets the other boundary.  When the user clicks a third time,
+it unsets the boundary that is closest to the cursor.  So, when both
+boundaries are set, it is possible to change any of them by first
+clicking near the boundary to change, moving the cursor away, and
+clicking again.  The ESC key removes both bounds.
+
+   The space mode lets the user select some channels.  Clicking on the
+channel toggles its selection.  By default, all channels are selected
+(white background), so clicking in space mode will first deselect a
+channel (and give it a light grey background).  The A key selects
+everything, the Z key selects nothing, and the I key inverts the
+selection.
+
+   In space mode, if some channels are selected, then the visualization
+modifiers only apply to these channels.  So, it is possible to tune down
+the amplitude of all shown selected channels by pressing the down key,
+or tune it up by pressing the up key, or change the filter parameters by
+hitting the V key.
+
+   When the list of selected channels is correct, and the time bounds
+are set, pressing the Enter key in any mode will add an annotation.  The
+figure class is set to the figure class of the latest selected
+annotation, or the default figure class in the reading profile if no
+annotation has been selected.
+
+   To switch from one reading profile to the next, press the space bar.
+Derivations in the new profile that were not in the previous one are
+automatically deselected.  If an annotation is being edited, it will be
+changed to only have the derivations in the new profile.
+
+   Right-clicking in any mode selects the shortest annotation that is
+annotated at the time of the cursor (even if the cursor hovers a channel
+that has not been selected for the annotation).  When an annotation is
+in blue, it is selected.  It is possible to unselect an annotation by
+right-clicking at a time with no annotation or by pressing the Escape
+key.
+
+   When an annotation is selected, the time bounds are automatically set
+to the time extent of the selected annotation, and the list of selected
+channels is set to the relevant channels for this annotation.  The
+figure class of the annotation is saved to serve as the default for
+future annotations.  This lets the user easily copy an annotation:
+right-click on the annotation, press the Escape key, select the new
+bounds, and press enter.
+
+   When an annotation is selected, any change of the time bounds or
+selected channels retrospectively affect the annotation (provided that
+at least one channel is still selected).  The figure class can be
+changed by pressing the N (for next) or P (for previous) keys.  The
+default annotation type is displayed on the bottom of the screen.  Any
+new annotation will by default have this type, until you press the N or
+P keys.  Pressing the K key will kill the annotation and remove it from
+the file.  If this key is hit by mistake, the Enter key will reinstall
+the lost annotation because the list of selected channels, time bounds,
+and figure class stay the same.
+
+   Finally, pressing Q quits the visualization.
+
+
+File: eegviz.info,  Node: The shapes of the neonatal EEG,  Prev: Visualization commands,  Up: Top
+
+6 The shapes of the neonatal EEG
+********************************
+
+Once you have many annotations, you can analyze the shape of the signal
+leading to the annotation.  The ‘extrac-shapes’ program will read the
+neonatal files passed as command-line arguments, and extract every
+annotation made in these in a dataset.  You can also pass ‘-O DIR’ to
+process the next files in DIR.  By default, it will work in the current
+working directory.  If ‘-’ is passed in the command-line, the list of
+file names (1 per line) will be read from standard imput.
+
+   The ‘extract-shapes’ creates lots of files in the output directory.
+The ‘files.csv’ is a two-column CSV file, with no header.  The other
+files have their hash as their names (in base16) and contain the signal
+values within the annotation window, as CSVs with two columns: the
+number of observations since the annotation onset, and the value of the
+signal in microvolt.  The ‘files.csv’ has three columns: the names of
+the signal extracts, the types of annotation, and the annotator.
+
+
+
+Tag Table:
+Node: Top1644
+Node: The default reading profile2029
+Node: The ad-hoc neonatal file format3126
+Node: The ad-hoc CSV format for storing annotations5161
+Node: The ad-hoc database format6553
+Node: Visualization commands9064
+Node: The shapes of the neonatal EEG13704
+
+End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:
