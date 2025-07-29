@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pytest-reqcov"
+version = "0.1.0"
+description = "A pytest plugin for requirement coverage tracking"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Miquel Garcia", email = "miquel@mgfernan.com"}
+]
+maintainers = [
+    {name = "Miquel Garcia", email = "miquel@mgfernan.com"}
+]
+keywords = ["pytest", "plugin", "testing", "coverage", "requirements"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Pytest",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "pytest>=6.0",
+    "numpy",
+    "pandas"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov",
+    "black",
+    "flake8",
+    "mypy",
+    "pre-commit",
+    "twine",
+    "build",
+]
+test = [
+    "pytest>=6.0",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://github.com/mgfernan/pytest_reqcov"
+Repository = "https://github.com/mgfernan/pytest_reqcov"
+Issues = "https://github.com/mgfernan/pytest_reqcov/issues"
+Changelog = "https://github.com/mgfernan/pytest_reqcov/blob/main/CHANGELOG.md"
+
+[project.entry-points.pytest11]
+reqcov = "pytest_reqcov.plugin"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "req: tests with associated requirements",
+    "product: tests with associated product",
+    "long: tests that are long",
+]
