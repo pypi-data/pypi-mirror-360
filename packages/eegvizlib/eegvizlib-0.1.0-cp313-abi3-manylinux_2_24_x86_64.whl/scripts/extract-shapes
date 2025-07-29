@@ -1,0 +1,148 @@
+#!/usr/bin/env Rscript
+
+# Copyright (C) 2025 Université de Reims Champagne-Ardenne.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#     (1) Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#
+#     (2) Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in
+#     the documentation and/or other materials provided with the
+#     distribution.
+#
+#     (3)The name of the author may not be used to
+#     endorse or promote products derived from this software without
+#     specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+`%>%` <- magrittr::`%>%`
+
+options (warn=1)
+
+args <- commandArgs (trailingOnly = TRUE)
+
+set_output_directory <- FALSE
+set_annotator <- FALSE
+
+current_annotator <- as.character (NA)
+
+do_file <- function (filename) {
+    cat (sprintf ("Do file %s...\n", filename))
+    file_list <- tryCatch ({readr::read_csv ("files.csv", col_names = c ("filename", "type", "annotator"), col_types = list (readr::col_character (), readr::col_character (), readr::col_character ()))}, error = function(cond) {
+        tibble::tibble (filename = character (0), type = character(0), annotator = character (0))
+    })
+    ## Get the whole signal with both filter variants.
+    file_size <- file.info(filename)$size
+    ## Each value is encoded on 2 bytes.
+    stopifnot (file_size %% 2 == 0)
+    n_values <- file_size / 2
+    ## There are 2 copies of the signal.
+    stopifnot (n_values %% 2 == 0)
+    signal_length <- n_values / 2
+    ## Each copy of the signal has 11 channels of the same length.
+    electrodes <- c ("Fp2", "T4", "C4", "O2", "Fz", "Cz", "Pz", "Fp1", "T3", "C3", "O1")
+    n_electrodes <- length (electrodes)
+    stopifnot (n_electrodes == 11)
+    stopifnot (signal_length %% n_electrodes == 0)
+    n_times <- signal_length / n_electrodes
+    ## So we want to read the first 11 * n_times * 2 bytes of the signal
+    encoded_signal <- readBin (filename, "integer", n = n_electrodes * n_times, size = 2, signed = FALSE, endian = "big")
+    annotations <- tryCatch ({
+        readr::read_csv (sprintf ("%s.annotations.csv", filename),
+                         col_names = c ("onset", "duration", "figure_class", "electrode_list"),
+                         col_types = list (readr::col_double (), readr::col_double (), readr::col_character (), readr::col_character ()))
+    }, error = function (e) {
+        print (e)
+        warning(sprintf ("No annotation found for file %s", filename))
+        tibble::tibble (onset = numeric(0), duration = numeric(0), figure_class = character(0), electrode_list = character(0))
+    })
+    signal <- (tibble::tibble (value = (encoded_signal / 65536.0) * 2048.0 - 1024.0,
+                               electrode = rep (electrodes, each=n_times),
+                               time = as.integer(rep (seq_len (n_times), n_electrodes)))
+        %>% tidyr::pivot_wider (names_from = electrode, values_from = value, id_cols = c (time))
+        %>% dplyr::mutate (`Fp2-T4` = Fp2 - T4,
+                           `Fp2-C4` = Fp2 - C4,
+                           `Fz-Cz` = Fz - Cz,
+                           `Fp1-C3` = Fp1 - C3,
+                           `Fp1-T3` = Fp1 - T3,
+                           `T4-O2` = T4 - O2,
+                           `C4-O2` = C4 - O2,
+                           `Cz-Pz` = Cz - Pz,
+                           `C3-O1` = C3 - O1,
+                           `T3-O1` = T3 - O1)
+        %>% dplyr::select (time, `Fp2-T4`, `Fp2-C4`, `Fz-Cz`, `Fp1-C3`, `Fp1-T3`, `T4-O2`, `C4-O2`, `Cz-Pz`, `C3-O1`, `T3-O1`)
+        %>% tidyr::pivot_longer (!time,
+                                 names_to = "electrode",
+                                 values_to = "value")
+        %>% dplyr::mutate (filename = filename))
+    for (i in seq_len (nrow (annotations))) {
+        start <- annotations$onset[i]
+        stop <- annotations$duration[i] + start
+        start_index <- start * 256
+        stop_index <- stop * 256
+        locations <- strsplit (annotations$electrode_list[i], ";")[[1]]
+        for (loc in locations) {
+            found <- FALSE
+            for (derivation in c ("Fp2-T4", "Fp2-C4", "Fz-Cz", "Fp1-C3", "Fp1-T3", "T4-O2", "C4-O2", "Cz-Pz", "C3-O1", "T3-O1")) {
+                if (loc == sprintf ("https://neonatool.github.io/adftool-v2#%s", derivation)) {
+                    relevant_signal <- which (signal$time >= start_index & signal$time < stop_index & signal$electrode == derivation)
+                    if (length (relevant_signal) == 0) {
+                        warning (sprintf ("File %s, annotation %s at %f does not have any observable effect", filename, annotations$figure_class[i], annotations$onset[i]))
+                    }
+                    found <- TRUE
+                    relevant_part <- (signal[relevant_signal,]
+                        %>% dplyr::arrange (time)
+                        %>% dplyr::mutate (time = time - start_index)
+                        %>% dplyr::select (time, value))
+                    readr::write_csv (relevant_part, "next.csv", col_names = FALSE)
+                    digest <- openssl::sha256 (file ("next.csv"))
+                    new_name <- sprintf ("%s.csv", digest)
+                    file.rename ("next.csv", new_name)
+                    date_reset <- strptime("2000-01-01", format="%Y-%m-%d", tz="UTC")
+                    Sys.setFileTime(new_name, date_reset)
+                    file_list <- file_list %>% dplyr::add_row (filename = new_name, type = annotations$figure_class[i], annotator = current_annotator)
+                }
+            }
+            if (!found) {
+                warning (sprintf ("File %s, annotation %s at %f: unusable location %s", filename, annotations$figure_class[i], annotations$onset[i], loc))
+            }
+        }
+    }
+    readr::write_csv (file_list %>% dplyr::arrange (filename), "files.csv", col_names = FALSE)
+}
+
+for (filename in args) {
+    if (set_output_directory) {
+        dir.create (filename, showWarnings = FALSE, recursive = TRUE)
+        setwd (filename)
+        set_output_directory <- FALSE
+    } else if (set_annotator) {
+        current_annotator <- filename
+        set_annotator <- FALSE
+    } else if (filename == "-O") {
+        set_output_directory <- TRUE
+    } else if (filename == "-A") {
+        set_annotator <- TRUE
+    } else if (filename == "-") {
+        for (filename in readLines (file ("stdin"))) {
+            do_file (filename)
+        }
+    } else {
+        do_file (filename)
+    }
+}
