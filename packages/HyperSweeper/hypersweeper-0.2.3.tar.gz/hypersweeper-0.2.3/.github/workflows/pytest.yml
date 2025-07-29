@@ -1,0 +1,70 @@
+name: Tests
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:  # Manually trigger the workflow
+  # Triggers with push to main
+  push:
+    branches:
+      - main
+      - development
+
+  # Triggers with push to a PR aimed at main
+  pull_request:
+    branches:
+      - main
+      - development
+
+env:
+  package-name: "hypersweeper"
+  test-dir: tests
+  UV_SYSTEM_PYTHON: 1
+
+jobs:
+  # General unit tests
+  source-test:
+    name: test
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash # Default to using bash on all
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        # Install a specific version of uv.
+        version: "0.6.14"
+
+    - name: "Set up Python"
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11' 
+
+    - name: Install ${{ env.package-name }}
+      run: make install-dev
+
+    - name: Store git status
+      id: status-before
+      shell: bash
+      run: |
+        echo "::set-output name=BEFORE::$(git status --porcelain -b)"
+
+    - name: Tests
+      run: pytest tests -v --disable-pytest-warnings
+
+    - name: Check for files left behind by test
+      run: |
+        before="${{ steps.status-before.outputs.BEFORE }}"
+        after="$(git status --porcelain -b)"
+        if [[ "$before" != "$after" ]]; then
+            echo "git status from before: $before"
+            echo "git status from after: $after"
+            echo "Not all generated files have been deleted!"
+            exit 1
+        fi
