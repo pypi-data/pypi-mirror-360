@@ -1,0 +1,57 @@
+Metadata-Version: 2.4
+Name: pydantic-outputs
+Version: 0.1.2
+Summary: Structured output support for Pydantic models.
+Home-page: https://github.com/fswair/pydantic-outputs
+Author: fswair
+License: MIT
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: pydantic
+Requires-Dist: pydantic-core
+Dynamic: author
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+A factory type that enables structured output behavior in Pydantic models.
+
+Example usage:
+
+```python
+from pydantic_ai import Agent
+from pydantic import BaseModel
+from pydantic_outputs import structured, StructuredOutput
+
+# structured is a type alias for StructuredOutput
+# StructuredOutput(Model) is equivalent to @structured <ModelDef>
+
+@structured
+class FooBar(BaseModel):
+    foo: str
+    bar: int
+
+class BarBaz(BaseModel):
+    bar: str
+    baz: int
+
+agent = Agent('test')
+result = agent.run_sync(
+    "Generate a sample object",
+    output_type=[FooBar, StructuredOutput(BarBaz)]
+)
+
+assert isinstance(result.output, dict)
+```
