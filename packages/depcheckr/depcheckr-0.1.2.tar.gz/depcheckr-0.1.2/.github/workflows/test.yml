@@ -1,0 +1,33 @@
+name: Tests
+
+on:
+  workflow_call:  # allow this workflow to be called from other workflows
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Set up virtual environment and install dev deps
+        run: |
+          uv venv
+          uv sync --all-extras --dev --frozen
+
+      - name: Run tests
+        run: uv run pytest
