@@ -1,0 +1,184 @@
+Metadata-Version: 2.4
+Name: py-nycmta
+Version: 0.2.0
+Summary: Lightweight Python library for NYC MTA train arrival times
+Project-URL: Homepage, https://github.com/dvd-rsnw/py-nycmta
+Project-URL: Issues, https://github.com/dvd-rsnw/py-nycmta/issues
+Project-URL: Repository, https://github.com/dvd-rsnw/py-nycmta
+Author-email: David Rosenow <dvdrsnw@gmail.com>
+License-File: LICENSE
+Keywords: gtfs,metro,mta,new-york,nyc,public-transport,subway,train,transit
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Internet :: WWW/HTTP :: Dynamic Content
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Typing :: Typed
+Requires-Python: >=3.8
+Requires-Dist: gtfs-realtime-bindings>=1.0.0
+Requires-Dist: httpx>=0.24.0
+Requires-Dist: protobuf>=4.20.0
+Provides-Extra: dev
+Requires-Dist: black>=22.0.0; extra == 'dev'
+Requires-Dist: mypy>=1.0.0; extra == 'dev'
+Requires-Dist: pytest-asyncio>=0.21.0; extra == 'dev'
+Requires-Dist: pytest>=7.0.0; extra == 'dev'
+Requires-Dist: ruff>=0.1.0; extra == 'dev'
+Description-Content-Type: text/markdown
+
+# py-nycmta
+
+A lightweight Python library for getting NYC MTA train arrival times. Simple, fast, and focused.
+
+## Installation
+
+```bash
+pip install py-nycmta
+```
+
+## Quick Start
+
+```python
+from py_nycmta import Train
+
+# Create a train instance for any line
+f_train = Train('F')
+
+# Get arrivals at 7 Av (F24)
+arrivals = f_train.get_arrivals('F24')
+
+for arrival in arrivals:
+    print(f"{arrival.train_id} train in {arrival.minutes_away} minutes ({arrival.direction}bound)")
+```
+
+## Features
+
+- **Ultra-lightweight**: Only 3 dependencies (httpx, gtfs-realtime-bindings, protobuf)
+- **Simple**: Just one `Train` class for all subway lines
+- **Fast**: Direct GTFS feed access, no unnecessary abstractions
+- **Type-safe**: Full type hints for better IDE support
+
+## Usage
+
+### Basic Usage
+
+```python
+from py_nycmta import Train
+
+# Create train instances for any line
+f_train = Train('F')
+n_train = Train('N')
+a_train = Train('A')
+one_train = Train('1')
+
+# Get arrivals at a stop
+arrivals = f_train.get_arrivals('F24')  # 7 Av
+```
+
+### Filter by Direction
+
+```python
+f_train = Train('F')
+
+# Get only northbound trains
+northbound = f_train.get_arrivals('F24', direction='N')
+
+# Get only southbound trains
+southbound = f_train.get_arrivals('F24', direction='S')
+```
+
+### Get Next Few Arrivals
+
+```python
+f_train = Train('F')
+
+# Get next 2 arrivals
+next_trains = f_train.get_next_arrivals('F24', count=2)
+```
+
+### Working with Arrival Data
+
+```python
+f_train = Train('F')
+arrivals = f_train.get_arrivals('F24')
+
+for arrival in arrivals:
+    print(f"Train: {arrival.train_id}")
+    print(f"Minutes away: {arrival.minutes_away}")
+    print(f"Direction: {arrival.direction}")
+    print(f"Status: {arrival.status}")
+    print(f"Arrival time: {arrival.arrival_time}")
+    print(f"Stop ID: {arrival.stop_id}")
+    print("---")
+```
+
+## Supported Train Lines
+
+All NYC subway lines are supported using the single `Train` class:
+
+```python
+from py_nycmta import Train
+
+# Letter trains
+Train('A'), Train('B'), Train('C'), Train('D'), Train('E')
+Train('F'), Train('G'), Train('J'), Train('L'), Train('M')
+Train('N'), Train('Q'), Train('R'), Train('W'), Train('Z')
+
+# Number trains  
+Train('1'), Train('2'), Train('3'), Train('4'), Train('5'), Train('6'), Train('7')
+```
+
+## Stop IDs
+
+Use MTA stop IDs without the direction suffix:
+
+- `F24` - 7 Av
+- `A41` - Jay St-MetroTech  
+- `R16` - Times Sq-42 St
+- `R20` - 14 St-Union Sq
+
+The library automatically handles northbound (N) and southbound (S) directions.
+
+## Error Handling
+
+```python
+from py_nycmta import Train
+
+try:
+    # Invalid train line
+    train = Train('X')  # Raises ValueError
+except ValueError as e:
+    print(f"Error: {e}")  # Shows valid train options
+
+try:
+    train = Train('F')
+    arrivals = train.get_arrivals('INVALID_STOP')
+except Exception as e:
+    print(f"Error: {e}")
+```
+
+## Development
+
+```bash
+git clone https://github.com/dvd-rsnw/py-nycmta
+cd py-nycmta
+pip install -e ".[dev]"
+pytest
+```
+
+## Requirements
+
+- Python 3.8+
+- Internet connection (for MTA GTFS feeds)
+
+## License
+
+MIT License - see LICENSE file for details.
