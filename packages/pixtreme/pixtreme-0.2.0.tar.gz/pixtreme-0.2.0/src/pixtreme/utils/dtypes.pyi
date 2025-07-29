@@ -1,0 +1,19 @@
+from __future__ import annotations
+import builtins as __builtins__
+import cupy as cp
+import numpy as np
+import typing
+__all__ = ['cp', 'np', 'to_dtype', 'to_float16', 'to_float32', 'to_float64', 'to_uint16', 'to_uint8']
+def to_dtype(image: np.ndarray | cp.ndarray, dtype: str) -> np.ndarray | cp.ndarray:
+    ...
+def to_float16(image: np.ndarray | cp.ndarray) -> np.ndarray | cp.ndarray:
+    ...
+def to_float32(image: np.ndarray | cp.ndarray) -> np.ndarray | cp.ndarray:
+    ...
+def to_float64(image: np.ndarray | cp.ndarray) -> np.ndarray | cp.ndarray:
+    ...
+def to_uint16(image: np.ndarray | cp.ndarray) -> np.ndarray | cp.ndarray:
+    ...
+def to_uint8(image: np.ndarray | cp.ndarray) -> np.ndarray | cp.ndarray:
+    ...
+__test__: dict = {}
