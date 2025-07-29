@@ -1,0 +1,28 @@
+setup:
+  output_directories:
+    monthly: "diags/monthly"
+
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+
+  stages:
+    - monthly
+    - custom
+
+
+loader:
+  variables:
+    - OLR
+
+
+custom:
+  reuse: loader
+  variables:
+    - OLR:
+        destination: "global_OLR.nc"
+        dag:
+          dag:
+            - name: global
+              function: area_mean
+              args: [OLR]
+          output: global

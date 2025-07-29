@@ -1,0 +1,27 @@
+setup:
+  output_directories:
+    monthly: "diags/monthly"
+
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+
+  stages:
+    - monthly
+
+
+monthly:
+  variables:
+    - WGL:
+        destination: None
+    - WGF:
+        destination: None
+    - mrso:
+        compute: "WGL+WGF"
+        dag:
+          dag:
+            - name: soil_sum
+              function: xr.self.sum
+              args: [mrso]
+              kwargs:
+                dim: sfclevel3 # sum over soil levels axis
+          output: soil_sum

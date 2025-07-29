@@ -1,0 +1,22 @@
+setup:
+  output_directories:
+    monthly: "diags/monthly"
+
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+
+  stages:
+    - transforms
+    - monthly
+
+
+transforms:
+  variables:
+    - CDCB
+    - TCD:
+        rename: CI
+        mask: CDCB > 0
+
+monthly:
+  variables:
+    - TCD

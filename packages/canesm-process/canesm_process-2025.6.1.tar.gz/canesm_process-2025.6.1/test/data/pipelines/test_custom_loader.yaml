@@ -1,0 +1,36 @@
+setup:
+  output_directories:
+    monthly: "diags/monthly"
+    timing: "diags/timing"
+
+  canesm_version: "6.0"
+  loader:
+    function: open_mfdataset
+    args: [source]
+    kwargs:
+      engine: h5netcdf
+
+  stages:
+    - monthly
+    - timing
+
+
+# test to replace the loader with no options
+monthly:
+  variables:
+    - GT:
+        loader: mymodule.load_ccc
+    - ST
+
+# more general loader replacement that also test source replacement, inclusion of variable from prior stage
+timing:
+  reuse: monthly
+  variables:
+    - timing:
+        source: "{input}/timing.output"
+        loader: 
+          function: mymodule.load_timing
+          args: [source]
+          kwargs:
+            engine: csv
+

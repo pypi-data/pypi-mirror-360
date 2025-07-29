@@ -1,0 +1,51 @@
+{% set name = "canesm-process" %}
+{% set version = "2025.01.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/canesm_process-{{ version }}.tar.gz
+  sha256: 03d60784072cc8811a75fa60c6e1297252212a0f34048dd1d6dba3eb1bd79605
+
+build:
+  entry_points:
+    - canproc-run = canproc.cli:run
+    - canproc-pipeline = canproc.cli:process_pipeline
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - python >=3.10
+    - setuptools >64
+    - wheel
+    - setuptools-scm >=8.0
+    - pip
+  run:
+    - python >=3.10
+    - pydantic >=2.0
+    - numpy
+    - xarray >=2024.01.0
+    - click
+
+test:
+  imports:
+    - canproc
+  commands:
+    - pip check
+    - canproc-run --help
+    - canproc-pipeline --help
+  requires:
+    - pip
+
+about:
+  summary: CanESM data pipeline tools
+  license: MIT
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - LandonRieger

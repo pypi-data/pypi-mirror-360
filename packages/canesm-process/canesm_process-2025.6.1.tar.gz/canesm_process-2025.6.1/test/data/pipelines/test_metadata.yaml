@@ -1,0 +1,35 @@
+setup:
+  output_directories:
+    daily: "diags/daily"
+    monthly: "diags/monthly"
+
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+
+  stages:
+    - daily
+    - monthly
+
+
+daily:
+  reuse: monthly
+  variables:
+    - GT:
+        metadata:
+          long_name: "Daily mean ground temperature aggregated over all tiles"
+          units: "K"
+
+
+# test that metadata is updated on a previously used variable
+monthly:
+  variables:
+    - GT:
+        metadata:
+          long_name: "Monthly mean ground temperature aggregated over all tiles"
+          units: "K"
+          max: True
+          min: True
+    - ST:
+        compute: "GT * 5"
+        metadata:
+          comment: "scaled GT data"

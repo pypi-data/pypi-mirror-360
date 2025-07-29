@@ -1,0 +1,30 @@
+setup:
+  output_directories:
+    monthly: "diags/monthly"
+
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+
+  stages:
+    - monthly
+
+
+monthly:
+  variables:
+    - OLR
+    - FSR:
+        shift: 100.0
+    - FSO:  # test against variables loaded from file
+        dag:
+          dag:
+            - name: plot
+              function: mymodule.myfunc  # defined in conftest.py
+              args: [FSO]
+          output: plot
+    - BALT:  # test against computed variables
+        dag:
+          dag:
+            - name: plot
+              function: mymodule.myfunc
+              args: [OLR, FSR, FSO]
+          output: plot

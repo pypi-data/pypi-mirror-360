@@ -1,0 +1,42 @@
+setup:
+
+  output_directories:
+    yearly_max: "diags/rtd"
+    yearly: "diags/rtd"
+
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+  source: "{input}/*/{variable}.nc"
+
+  stages:
+    - level_select
+    - yearly_max
+    - yearly
+
+level_select:
+  variables:
+     - PCP
+
+yearly_max:
+  variables:
+    - PCP:  # should write as PCPMAX_G.nc
+        rename: PCPMAX_G
+        area_mean: True
+        resample:
+          resolution: YS
+          method: max
+        metadata:
+          long_name: "Annual max precipitation rate over globe"
+          units: "mm/day"
+
+yearly:
+  reuse: level_select
+  variables:
+    # Precipitation rate
+    - PCP  # should write as PCP.nc
+    - PCP_G:  # should write as PCP_G.nc
+        branch: PCP
+        area_mean: True
+        metadata:
+          long_name: "Annual precipitation rate over globe"
+          units: "mm/day"

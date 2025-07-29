@@ -1,0 +1,30 @@
+setup:
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+  output_directories:
+    daily: 'diags/daily'
+    monthly: 'diags/monthly'
+  encoding:
+    dtype: float32
+    _FillValue: 1.0E+20
+
+  stages:
+    - daily
+    - monthly
+
+
+monthly:
+  reuse: daily
+  encoding:
+    dtype: float64
+    _FillValue: -999
+  variables:
+    - ST
+    - GT:
+        encoding: 
+          dtype: float64
+          _FillValue: 1.0E+20
+
+daily:
+  variables:
+    - ST

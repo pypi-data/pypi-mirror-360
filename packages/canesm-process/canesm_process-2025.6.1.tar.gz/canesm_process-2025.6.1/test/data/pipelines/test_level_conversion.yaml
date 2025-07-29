@@ -1,0 +1,31 @@
+setup:
+  output_directories:
+    monthly: "diags/monthly"
+    pressure: "diags/pressure"
+
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+
+  stages:
+    - monthly
+    - convert
+
+
+convert:
+  variables:
+    - 3H32
+    - FSO
+    - pressure:
+        dag:
+          dag:
+            - name: pressure
+              function: log_hybrid_sigma_to_pressure
+              args: [3H32, A, B, 1000.0]
+          output: pressure
+    - FSO_pressure:
+        dag:
+          dag:
+            - name: pressure
+              function: interpolate_to_pressure
+              args: [FSO, pressure]
+          output: pressure

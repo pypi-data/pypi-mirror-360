@@ -1,0 +1,24 @@
+setup:
+  stages:
+    - transforms
+    - monthly
+
+# transforms are applied to variables after opening files but before any processing
+# if the process is linear this is slower than it needs to be.
+transforms:
+  variables:
+    - PCP:
+        rename: PR
+    - PCPN:
+        rename: PRSN
+    - PWAT:
+        rename: PRW
+
+monthly:
+  reuse: transforms
+  # these data are processed into monthly averaged variables
+  variables:
+    - PCP
+    - PCPN
+    - PWAT
+  

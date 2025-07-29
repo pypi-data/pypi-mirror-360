@@ -1,0 +1,40 @@
+setup:
+  stages:
+    - transforms
+    - daily
+    - monthly
+
+
+transforms:
+  variables:
+    - GT:
+      # shift, scale and rename are provided as shortcuts to the full DAG format
+        shift: 273.15
+        rename: TS
+    - ST:
+        # if more complicated pre-processing is required a DAG can be provided but must have one output for now.
+        # intermediate values (e.g. ST_celcius) need to be globally unique (we should add a unique ID instead)
+        dag:
+          dag:
+            - name: ST_celcius
+              function: add
+              args: [ST, 273.15]
+            - name: TAS
+              function: xr.self.rename
+              args: [ST_celcius]
+              kwargs:
+                ST: TAS
+          output: TAS
+
+monthly:
+  # reuse daily data to compute monthly if available
+  reuse: daily
+  # these data are processed into monthly averaged variables
+  variables:
+    - GT
+    - ST
+
+daily:
+  reuse: transforms
+  variables:
+    - GT

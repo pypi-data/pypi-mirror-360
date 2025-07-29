@@ -1,0 +1,45 @@
+setup:
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+  output_directories:
+    open_test: 'diags/test'
+
+  chunks:
+    chunk_3d:
+      lat: -1
+      lon: -1
+      time: -1
+    chunk_3d_t4:
+      lat: -1
+      lon: -1
+      time: 4
+
+  stages:
+    - first
+    - branch
+
+first:
+  variables:
+    - WGL:
+        chunks: ${chunks.chunk_3d}
+        destination: null
+    - WGF:
+        chunks: ${chunks.chunk_3d}
+        shift: 1.0
+        destination: null
+
+branch:
+  reuse: first
+  variables:
+    - WGL:
+        chunks: ${chunks.chunk_3d_t4}
+        rename: WGL_rechunked
+        destination: null
+    - WGLbranch:
+        branch: WGL
+        scale: 3.0
+        destination: null
+    - WGF
+    - mrsol:
+         compute: WGL+WGF
+         chunks: ${chunks.chunk_3d_t4}

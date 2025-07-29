@@ -1,0 +1,35 @@
+setup:
+  output_directories:
+    custom_resample: "diags/6h"
+
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+
+  stages:
+    - custom_resample
+    - resample_std
+    - resample_last
+
+
+resample_last:
+  variables:
+    - ST:
+        rename: 'TAS'
+        resample: 1D
+
+
+resample_std:
+  variables:
+    - ST:
+        rename: 'TAS'
+        resample:
+          resolution: 1D
+          method: std
+
+
+custom_resample:
+  resample: 6h
+  variables:
+    - FSO
+    - FSR
+    - BALT: FSO + FSR

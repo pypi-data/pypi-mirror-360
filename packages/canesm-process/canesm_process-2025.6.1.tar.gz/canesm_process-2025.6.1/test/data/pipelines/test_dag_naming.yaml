@@ -1,0 +1,52 @@
+setup:
+  output_directories: {single_field_for_masks: diags/cell_area_test}
+  canesm_version: '6.0'
+  file_format: netcdf4
+  source: "{input}/*/{variable}.nc"
+  stages: [annually,single_field_for_masks]
+
+annually:
+  variables: [FLND]  
+
+single_field_for_masks:
+  reuse: annually
+  variables:
+    - FLND:  # variable as input argument
+        dag:
+          dag:
+            - name: output
+              function: area_mean
+              args: [FLND]
+          output: output
+    - FLND_area:  # variable repeated in dag name and output
+        destination: FLND_cellarea.nc
+        dag:
+          dag:
+          - name: FLND_first_tstep
+            function: xr.self.isel
+            args: [FLND]
+            kwargs:
+              time: [0]
+          - name: cellarea
+            function: cell_area
+            args: [FLND_first_tstep]
+          - name: FLND_area
+            function: xr.mul
+            args: [FLND_first_tstep,cellarea]
+          output: FLND_area
+    - FLND_mean:  # variable repeated in dag name but not output
+        destination: FLND_cellarea.nc
+        dag:
+          dag:
+          - name: FLND_first_tstep
+            function: xr.self.isel
+            args: [FLND]
+            kwargs:
+              time: [0]
+          - name: FLND_mean
+            function: area_weights
+            args: [FLND_first_tstep]
+          - name: FLND_cellarea
+            function: xr.mul
+            args: [FLND_first_tstep,FLND_mean]
+          output: FLND_cellarea

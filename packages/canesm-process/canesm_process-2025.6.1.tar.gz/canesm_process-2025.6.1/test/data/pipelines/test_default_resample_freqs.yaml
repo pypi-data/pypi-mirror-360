@@ -1,0 +1,42 @@
+setup:
+  output_directories:
+    3hourly: "diags/3h"
+    6hourly: "diags/6h"
+    daily: "diags/daily"
+    monthly: daigs/monthly
+    yearly: "diags/yearly"
+
+  stages:
+   - 3hourly
+   - 6hourly
+   - daily
+   - monthly
+   - yearly
+
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+
+
+3hourly:
+  variables:
+    - ST
+
+6hourly:
+  reuse: 3hourly
+  variables:
+    - ST
+
+daily:
+  reuse: 6hourly
+  variables:
+    - ST
+
+monthly:
+  reuse: daily
+  variables:
+    - ST
+
+yearly:
+  reuse: daily
+  variables:
+    - ST

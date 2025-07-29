@@ -1,0 +1,50 @@
+setup:
+  output_directories:
+    custom_area: "diags/area"
+
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+
+  stages:
+    - area_mean
+    - custom_area
+    - tropics
+    - monthly
+
+area_mean:
+  area_mean: True
+  variables:
+    - ST
+    - GTA
+
+tropics:
+  area_mean:
+    region:
+      lat: [-20, 20]
+      lon: [-180, 180]
+
+  variables:
+    - ST
+    - GT:
+        area_mean:
+          region:
+            lat: [-10, 10]
+            lon: [-100, 30]
+
+monthly:
+  variables:
+    - GT
+    - gt_nino3_mon:
+        branch: GT
+        area_mean:
+          region:
+            lat: [-5.0, 5.0]
+            lon:  [210.0, 270.0]
+
+custom_area:
+  variables:
+    - GTT:
+        area_mean: False
+    - GT:
+        area_mean: True
+        rename: TS

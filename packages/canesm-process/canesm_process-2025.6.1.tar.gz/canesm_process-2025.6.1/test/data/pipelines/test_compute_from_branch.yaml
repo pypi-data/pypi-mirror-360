@@ -1,0 +1,26 @@
+setup:
+  output_directories:
+    daily: "diags/daily"
+
+  stages:
+   - daily
+
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+
+
+daily:
+  variables:
+    - VSXX:
+        destination: null
+    - VI03:
+        branch: VSXX
+        isel:
+          sfclevel3: 2
+        destination: null
+    - VI04:
+        branch: VSXX
+        isel:
+          sfclevel3: 3
+        destination: null
+    - loadbc: "VI03+VI04"

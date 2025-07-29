@@ -1,0 +1,19 @@
+setup:
+  stages:
+    - variability
+
+
+variability:
+  variables:
+    - GT:
+        dag:
+          dag:
+            - name: resampled
+              function: xr.self.resample
+              args: [GT]
+              kwargs:
+                time: MS
+            - name: monthly_std
+              function: xr.self.std
+              args: [resampled]
+          output: monthly_std

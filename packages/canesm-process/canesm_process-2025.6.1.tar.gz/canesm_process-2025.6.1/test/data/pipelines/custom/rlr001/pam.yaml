@@ -1,0 +1,27 @@
+setup:
+  stages:
+    - transforms
+    - pam
+
+
+transforms:
+  variables:
+    - P001:
+        rename: median_radius
+    - P002:
+        rename: median_radius
+    - P003:
+        rename: median_radius
+
+pam:
+  reuse: transforms
+  variables:
+    - P001:
+        dag:
+          dag:
+            - name: concat
+              function: xr.concat
+              args: [[P001, P002, P003]]
+              kwargs:
+                dim: mode
+          output: concat

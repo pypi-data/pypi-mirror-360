@@ -1,0 +1,27 @@
+setup:
+  output_directories: {classic_rtd: diags/HFL_reuse_test}
+  canesm_version: '6.0'
+  file_format: netcdf4
+  stages: [monthly, fractional_masks, classic_rtd]
+  source: "{input}/*/{variable}.nc"
+monthly:
+  variables: [HFL, FLND, FLKU]
+fractional_masks:
+  reuse: monthly
+  variables:
+  - {FLND_FLKU: FLND+FLKU}
+classic_rtd:
+  reuse: ["fractional_masks", "monthly"]
+  variables:
+  - HFL_global_mean_over_land_plus_lakes:
+      metadata: {comment: '', description: Latent heat flux over land plus lakes,
+        unit: W/m2, short description: Latent heat flux over land+lakes}
+      dag:
+        dag:
+          - name: step0
+            function: xr.mul
+            args: [HFL, FLND_FLKU]
+          - name: step1
+            function: area_mean
+            args: [step0]
+        output: step1

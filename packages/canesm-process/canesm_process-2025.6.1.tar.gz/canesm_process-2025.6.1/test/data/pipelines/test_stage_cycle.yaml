@@ -1,0 +1,31 @@
+setup:
+  output_directories:
+    custom_cycle: "diags/cycle"
+
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+
+  stages:
+    - custom_cycle
+    - cycle_std
+    - cycle_last
+
+
+custom_cycle:
+  cycle: dayofyear
+  variables:
+    - FSO
+
+cycle_std:
+  variables:
+    - GT:
+        rename: 'TS'
+        cycle:
+           group: month
+           method: std
+
+cycle_last:
+  variables:
+    - ST:
+        rename: 'TAS'
+        cycle: month

@@ -1,0 +1,52 @@
+[build-system]
+requires=["setuptools>64", "wheel", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "canesm-process"
+dynamic = ["version"]
+description = "CanESM data pipeline tools"
+authors = [{name = "Landon Rieger", email = "landon.rieger@ec.gc.ca"}]
+dependencies = [
+    "pydantic >= 2.0",
+    "numpy",
+    "xarray >= 2024.01.0",
+    "click",
+    "dask",
+    "scipy",
+    "numba"
+]
+requires-python = ">=3.10"
+license = {text = "MIT License"}
+readme = "README.md"
+
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov"]
+lint = ["black"]
+ccc = ["fstd2nc"]
+vis = ["graphviz", "python-graphviz"]
+docs = ["sphinx", "sphinxcontrib-mermaid", "sphinx-book-theme", "sphinx-design", "sphinx-tabs"]
+dev = ["canesm-process[test,docs,lint]"]
+
+
+[project.scripts]
+canproc-run = "canproc.cli:run"
+canproc-pipeline = "canproc.cli:process_pipeline"
+
+
+[tool.pytest.ini_options]
+testpaths = [
+    "test",
+]
+log_cli = true
+log_cli_level = "INFO"
+
+
+[tool.black]
+line-length = 100
+target-version = ['py312']
+
+
+[tool.setuptools_scm]

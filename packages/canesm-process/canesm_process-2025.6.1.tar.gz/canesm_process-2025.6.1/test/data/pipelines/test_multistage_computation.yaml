@@ -1,0 +1,22 @@
+setup:
+  output_directories:
+    monthly: "diags/monthly"
+
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+
+  stages:
+    - transforms
+    - monthly
+
+transforms:
+  variables:
+    - FSO
+    - FSR
+    - OLR
+    - BALT:  FSO - FSR - OLR
+
+monthly:
+  reuse: transforms
+  variables:
+    - BALT

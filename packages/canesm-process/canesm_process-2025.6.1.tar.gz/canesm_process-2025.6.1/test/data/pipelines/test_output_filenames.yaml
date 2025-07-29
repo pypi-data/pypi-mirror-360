@@ -1,0 +1,37 @@
+setup:
+  canesm_version: "6.0"
+  file_format: "netcdf4"
+  output_directories:
+    monthly: 'diags/monthly'
+    yearly: 'diags/yearly'
+    custom: 'diags/custom'
+  output_filenames:
+    monthly: 'monthly.nc'
+    yearly: 'yearly.nc'
+    custom: 'custom.nc'
+  stages:
+    - custom
+    - monthly
+    - yearly
+
+custom:
+  variables:
+    - BCD:
+        rename: bcd
+        destination: bcd.nc
+    - CDCB
+
+monthly:
+  variables:
+    - BCD
+    - BCDbranch:
+        branch: BCD
+        destination: "BCDbr.nc"
+        scale: 1.0
+    - CDCB
+
+yearly:
+  reuse: monthly
+  variables:
+    - BCD
+    - CDCB
