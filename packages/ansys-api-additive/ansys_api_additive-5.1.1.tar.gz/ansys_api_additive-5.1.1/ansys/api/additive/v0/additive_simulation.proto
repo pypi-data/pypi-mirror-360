@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+// See https://docs.microsoft.com/en-us/aspnet/core/grpc/versioning?view=aspnetcore-6.0 for what consitutes a breaking change
+package ansys.api.additive.v0.simulation;
+
+option csharp_namespace = "Ansys.Api.Additive.Simulation";
+
+import "ansys/api/additive/v0/additive_domain.proto";
+import "google/longrunning/operations.proto";
+
+service SimulationService {
+    rpc Simulate(SimulationRequest) returns (google.longrunning.Operation) {
+        option (google.longrunning.operation_info) = {
+            response_type: "SimulationResponse"
+            metadata_type: "OperationMetadata"
+        };
+    }
+
+    rpc UploadFile(stream UploadFileRequest) returns (stream UploadFileResponse);
+
+    rpc DownloadFile(DownloadFileRequest) returns (stream DownloadFileResponse);
+
+    rpc Mesh(MeshRequest) returns (google.longrunning.Operation) {
+        option (google.longrunning.operation_info) = {
+            response_type: "MeshResponse"
+            metadata_type: "OperationMetadata"
+        };
+    }
+}
+
+message SimulationRequest {
+    string id = 1;
+    oneof Input {
+        SingleBeadInput single_bead_input = 10;
+        PorosityInput porosity_input = 11;
+        MicrostructureInput microstructure_input = 12;
+        ThermalHistoryInput thermal_history_input = 13;
+        ThermalStrainInput thermal_strain_input = 14;
+        Microstructure3DInput microstructure_3d_input = 15;
+        MaterialTuningInput material_tuning_input = 16;
+    }
+}
+
+message SimulationResponse {
+    string id = 1;
+    bytes logs = 2; // zip file containing simulation logs
+    oneof ResponseType {
+        Progress progress = 10;
+        MeltPool melt_pool = 11;
+        PorosityResult porosity_result = 13;
+        MicrostructureResult microstructure_result = 14;
+        ThermalHistoryResult thermal_history_result = 15;
+        ThermalStrainResult thermal_strain_result = 16;
+        Microstructure3DResult microstructure_3d_result = 17;
+        MaterialTuningResult material_tuning_result = 18;
+    }
+}
+
+// UploadFileRequest is used to transfer a file in chunks from
+// a client to the server. Each message should be <= 4MiB
+// unless the gRPC max receive message size has been changed.
+message UploadFileRequest {
+    string name = 1; 		// file name on client
+    uint64 total_size = 2; 	// total file size in bytes
+    bytes content = 3; 		// chunk of file content
+    string content_md5 = 4; // md5 hash of content
+}
+
+message UploadFileResponse {
+    string remote_file_name = 1;
+    Progress progress = 2;
+}
+
+message DownloadFileRequest {
+    string remote_file_name = 1; // full path to file on server
+}
+
+message SimulationLogsRequest {
+    string id = 1; // id of the simulation
+}
+
+message MeshRequest {
+    string id = 1;
+    oneof Input {
+        VoxelMeshInput voxel_mesh_input = 10;
+    }
+}
+
+message MeshResponse {
+    string id = 1;
+    oneof ResponseType {
+        VoxelMeshResult voxel_mesh_result = 10;
+    }
+}

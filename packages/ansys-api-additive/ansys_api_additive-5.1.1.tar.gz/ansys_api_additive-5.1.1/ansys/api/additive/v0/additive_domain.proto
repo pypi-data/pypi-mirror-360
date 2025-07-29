@@ -1,0 +1,323 @@
+syntax = "proto3";
+
+package ansys.api.additive.v0;
+
+option csharp_namespace = "Ansys.Api.Additive";
+
+// All units are assumed to be SI unless otherwise noted
+
+message MachineSettings {
+    double laser_power = 1;
+    double scan_speed = 2;
+    double heater_temperature = 3;
+    double layer_thickness = 4;
+    double beam_diameter = 5;
+    double starting_layer_angle = 6;
+    double layer_rotation_angle = 7;
+    double hatch_spacing = 8;
+    double slicing_stripe_width = 9;
+    HeatSourceModelType heat_source_model = 10;
+    RingModeCoefficientSets ring_mode_coefficient_set = 11;
+}
+
+message MeltPoolTimeStep {
+    double laser_x = 1;
+    double laser_y = 2;
+    double length = 3;
+    double width = 4;
+    double reference_width = 5;
+    double depth = 6;
+    double reference_depth = 7;
+}
+
+message MeltPool {
+    repeated MeltPoolTimeStep time_steps = 1;
+    string thermal_history_vtk_zip = 2;
+}
+
+message AdditiveMaterial {
+    double hardening_factor = 1;
+    double strain_scaling_factor = 2;
+    double support_yield_strength_ratio = 3;
+    double poisson_ratio = 4;
+    double elastic_modulus = 5;
+    double material_yield_strength = 6;
+    double anisotropic_strain_coefficient_parallel = 7;
+    double anisotropic_strain_coefficient_perpendicular = 8;
+    double anisotropic_strain_coefficient_z = 9;
+    double absorptivity_solid_coefficient_a = 10;
+    double absorptivity_solid_coefficient_b = 11;
+    double absorptivity_powder_coefficient_a = 12;
+    double absorptivity_powder_coefficient_b = 13;
+    double absorptivity_minimum = 14;
+    double absorptivity_maximum = 15;
+    double penetration_depth_solid_coefficient_a = 16;
+    double penetration_depth_solid_coefficient_b = 17;
+    double penetration_depth_powder_coefficient_a = 18;
+    double penetration_depth_powder_coefficient_b = 19;
+    double penetration_depth_minimum = 20;
+    double penetration_depth_maximum = 21;
+    double powder_packing_density = 22;
+    double vaporization_temperature = 23;
+    double liquidus_temperature = 24;
+    double solidus_temperature = 25;
+    double thermal_expansion_coefficient = 26;
+    double purging_gas_convection_coefficient = 27;
+    double solid_density_at_room_temperature = 28;
+    double solid_specific_heat_at_room_temperature = 29;
+    double solid_thermal_conductivity_at_room_temperature = 30;
+    double nucleation_constant_bulk = 31;
+    double nucleation_constant_interface = 32;
+    string name = 34;
+    repeated ThermalPropertiesDataPoint thermal_properties_data_points = 35;
+    repeated CharacteristicWidthDataPoint characteristic_width_data_points = 36;
+    string description = 37;
+    double cooling_rate_sim_coeff_a = 38;
+    double cooling_rate_sim_coeff_b = 39;
+}
+
+message CharacteristicWidthDataPoint {
+    double scan_speed = 1;
+    double laser_power = 2;
+    double characteristic_width = 3;
+}
+
+message ThermalPropertiesDataPoint {
+    double temperature = 1;
+    double thermal_conductivity = 2;
+    double specific_heat = 3;
+    double density = 4;
+    double thermal_conductivity_ratio = 5;
+    double density_ratio = 6;
+    double specific_heat_ratio = 7;
+}
+
+message Progress {
+    ProgressState state = 1;
+    int32 percent_complete = 2; // 0 - 100
+    string message = 3;
+    string context = 4;
+}
+
+enum ProgressState {
+    PROGRESS_STATE_UNSPECIFIED = 0; // default value used in messages
+    PROGRESS_STATE_WAITING = 1;     // simulation has been queued but not started
+    PROGRESS_STATE_EXECUTING = 2;   // simulation is running
+    PROGRESS_STATE_COMPLETED = 3;   // simulation has completed successfully
+    PROGRESS_STATE_ERROR = 4;       // simulation has failed
+    PROGRESS_STATE_NEW = 5;         // simulation has been created but not queued to run
+    PROGRESS_STATE_CANCELLED = 6;   // simulation has been cancelled
+    PROGRESS_STATE_WARNING = 7;     // simulation has completed with warnings
+}
+
+message Range {
+    double min = 1;
+    double max = 2;
+}
+
+message CoaxialAverageSensorInputs {
+    float sensor_radius = 1;
+    repeated Range z_heights = 2;
+}
+
+enum BuildFileMachineType {
+    BUILD_FILE_MACHINE_TYPE_NONE = 0;
+    BUILD_FILE_MACHINE_TYPE_AI = 1;
+    BUILD_FILE_MACHINE_TYPE_SLM = 2;
+    BUILD_FILE_MACHINE_TYPE_RENISHAW = 3;
+    BUILD_FILE_MACHINE_TYPE_EOS = 4;
+    BUILD_FILE_MACHINE_TYPE_TRUMPF = 5;
+    BUILD_FILE_MACHINE_TYPE_HB3D = 6;
+    BUILD_FILE_MACHINE_TYPE_SISMA = 7;
+}
+
+message BuildFile {
+    BuildFileMachineType type = 1;
+    string name = 2;
+}
+
+message StlFile {
+    string name = 1;
+}
+
+message SingleBeadInput {
+    double bead_length = 2;
+    MachineSettings machine = 10;
+    AdditiveMaterial material = 11;
+    bool output_thermal_history = 12;
+    uint32 thermal_history_interval = 13;
+}
+
+message PorosityInput {
+    double size_x = 2;
+    double size_y = 3;
+    double size_z = 4;
+    MachineSettings machine = 10;
+    AdditiveMaterial material = 11;
+}
+
+message PorosityResult {
+    double void_ratio = 1;
+    double powder_ratio = 2;
+    double solid_ratio = 3;
+}
+
+message MicrostructureInput {
+    double cube_min_x = 2;
+    double cube_min_y = 3;
+    double cube_min_z = 4;
+    double cube_size_x = 5;
+    double cube_size_y = 6;
+    double cube_size_z = 7;
+    double sensor_dimension = 8;
+    // indicates that cooling_rate, thermal_gradient, melt_pool* have been provided by user
+    bool use_provided_thermal_parameters = 9;
+    MachineSettings machine = 15;
+    AdditiveMaterial material = 16;
+    double cooling_rate = 20; // K/s
+    double thermal_gradient = 21; // K/m
+    double melt_pool_width = 22;
+    double melt_pool_depth = 23;
+    // indicates that random_seed has been provided by the user
+    bool use_random_seed = 24;
+    uint32 random_seed = 25;
+}
+
+message GrainStatistics {
+    uint32 grain_number = 1;
+    float area_fraction = 2;
+    float diameter_um = 3; // microns
+    float orientation_angle = 4;
+}
+
+message MicrostructureResult {
+    repeated GrainStatistics xy_circle_equivalence = 1;
+    repeated GrainStatistics xz_circle_equivalence = 2;
+    repeated GrainStatistics yz_circle_equivalence = 3;
+    bytes xy_vtk = 4;
+    bytes xz_vtk = 5;
+    bytes yz_vtk = 6;
+}
+
+message ThermalHistoryInput {
+    oneof FileType {
+        StlFile stl_file = 1;
+        BuildFile build_file = 2;
+    }
+    CoaxialAverageSensorInputs coax_ave_sensor_inputs = 10;
+    MachineSettings machine = 11;
+    AdditiveMaterial material = 12;
+}
+
+message ThermalHistoryResult {
+    string coax_ave_zip_file = 1;
+}
+
+message MaterialTuningInput {
+    float allowable_error = 1;
+    uint32 max_iterations = 2;
+    bytes experiment_data = 3;
+    bytes material_parameters = 4;
+    bytes thermal_properties_lookup = 5;
+    bytes characteristic_width_lookup = 10;
+    double base_plate_temperature = 11;
+}
+
+message MaterialTuningResult {
+    bytes log = 1;
+    bytes optimized_parameters = 2;
+    bytes characteristic_width_lookup = 10;
+    bytes coefficients = 11;
+    bytes material_parameters = 12;
+}
+
+enum ThermalSolveType {
+    THERMAL_SOLVE_TYPE_UNSPECIFIED = 0; // default value used in messages
+    THERMAL_SOLVE_TYPE_SCAN_PATTERN = 1;
+}
+
+message ThermalStrainInput {
+    oneof FileType {
+        StlFile stl_file = 1;
+        BuildFile build_file = 2;
+    }
+    ThermalSolveType solve_type = 3;
+    MachineSettings machine = 10;
+    AdditiveMaterial material = 11;
+}
+
+message ThermalStrainResult {
+    string shrinkage_file = 1; // name of zip archive on server
+    uint32 number_of_deposit_layers = 2;
+    float layer_thickness = 3;
+}
+
+message VoxelMeshInput {
+    oneof FileType {
+        StlFile stl_file = 1;
+        BuildFile build_file = 2;
+    }
+    float voxel_size = 3;
+}
+
+
+message VoxelMeshResult {
+    string voxel_file = 1; // name of voxel file on server
+}
+
+message Microstructure3DInput {
+    reserved 19;
+    // Thermal and microstructure domains are assumed to be coincident.
+    double x_length = 1; // length of the domain cuboid in the x direction
+    double y_length = 2; // length of the domain cuboid in the y direction
+    double z_length = 3; // length of the domain cuboid in the z direction
+    optional bytes initial_grain_data = 4;
+    optional bytes initial_euler_angle_data = 5;
+    optional double x_origin = 16; // domain offset from base plate origin in x direction
+    optional double y_origin = 17; // domain offset from base plate origin in y direction
+    optional double z_origin = 18; // domain offset from base plate origin in z direction
+    optional uint32 num_deposit_layers = 20;
+    optional uint32 first_deposit_layer = 21;
+    optional double x_thermal_domain_grid_spacing = 22;
+    optional double y_thermal_domain_grid_spacing = 23;
+    optional double z_thermal_domain_grid_spacing = 24;
+    optional bool use_transient_bulk_nucleation = 25;
+    optional double max_bulk_nucleation_density = 26;
+    optional bool run_initial_microstructure = 27;
+    optional uint32 num_random_nuclei = 28; // only used if run_initial_microstructure is true
+    optional MachineSettings machine = 29;
+    optional AdditiveMaterial material = 30;
+    optional bool use_provided_initial_microstructure_data = 31;
+}
+
+message Microstructure3DResult {
+    bytes three_d_vtk = 1;
+    MicrostructureResult two_d_result = 2;
+}
+
+// DownloadFileResponse is used to transfer a file in chunks from
+// the server to a client. Content and content_md5 may be empty
+// if only a progress message is sent. It is defined here because
+// it is used in multiple services.
+message DownloadFileResponse {
+	string file_name = 1; 	// name of file without path
+	uint64 total_size = 2;	// total file size in bytes
+	bytes content = 3;		// chunk of file content
+	string content_md5 = 4; // md5 hash of content
+	Progress progress = 10;	// download progress
+}
+
+enum HeatSourceModelType {
+    HEAT_SOURCE_MODEL_GAUSSIAN = 0;
+    HEAT_SOURCE_MODEL_RING = 1;
+}
+
+enum RingModeCoefficientSets {
+    RING_MODE_COEFFICIENT_SET_00 = 0;
+    RING_MODE_COEFFICIENT_SET_01 = 1;
+    RING_MODE_COEFFICIENT_SET_02 = 2;
+    RING_MODE_COEFFICIENT_SET_03 = 3;
+    RING_MODE_COEFFICIENT_SET_04 = 4;
+    RING_MODE_COEFFICIENT_SET_05 = 5;
+    RING_MODE_COEFFICIENT_SET_06 = 6;
+}
