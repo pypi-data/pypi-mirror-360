@@ -1,0 +1,45 @@
+[tool.ruff]
+preview = true
+line-length = 120
+fix = true
+output-format = "grouped"
+
+[tool.ruff.format]
+exclude = [".git", ".venv", ".mypy_cache", ".tox", "__pycache__"]
+
+[tool.poetry]
+name = "vaultrun"
+version = "2.0.12"
+description = "Rofi/Dmenu to interact with vault."
+authors = ["Meni Yakove", "Ruth Netser"]
+readme = "README.md"
+repository = "https://github.com/RedHatQE/vaultrun"
+
+packages = [{ include = "app" }]
+
+[tool.poetry.scripts]
+vaultrun = "app.vaultrun:main"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+python-rofi = "^1.0.1"
+dmenu = "^0.2.1"
+hvac = { extras = ["parser"], version = "^2.0.0" }
+ruff = "^0.12.0"
+rich = "^14.0.0"
+pyyaml = "^6.0.1"
+
+[tool.poetry.group.dev.dependencies]
+ipdb = "^0.13.13"
+ipython = "*"
+
+[tool.poetry-dynamic-versioning]
+enable = false
+pattern = "((?P<epoch>\\d+)!)?(?P<base>\\d+(\\.\\d+)*)"
+
+[tool.poetry-dynamic-versioning.substitution]
+files = ["VERSION"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
+build-backend = "poetry_dynamic_versioning.backend"
