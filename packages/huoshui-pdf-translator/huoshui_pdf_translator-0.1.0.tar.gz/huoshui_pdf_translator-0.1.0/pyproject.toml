@@ -1,0 +1,82 @@
+[project]
+name = "huoshui-pdf-translator"
+version = "0.1.0"
+description = "AI-powered PDF translation assistant using PDFMathTranslate-next, specialized for academic papers with mathematical formulas"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    {name = "Huoshui AI", email = "contact@huoshui.ai"},
+]
+license = {text = "Apache-2.0"}
+keywords = ["pdf", "translation", "academic", "mathematics", "mcp", "fastmcp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Text Processing :: Linguistic",
+]
+dependencies = [
+    "fastmcp>=2.10.1",
+    "pdf2zh-next>=2.3.3",
+    "pydantic>=2.5.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/huoshuiai/huoshui-pdf-translator"
+"Bug Reports" = "https://github.com/huoshuiai/huoshui-pdf-translator/issues"
+"Source" = "https://github.com/huoshuiai/huoshui-pdf-translator"
+"Documentation" = "https://github.com/huoshuiai/huoshui-pdf-translator#readme"
+
+[project.scripts]
+huoshui-pdf-translator = "huoshui_pdf_translator.main:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "build>=1.0.0",
+    "twine>=4.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["huoshui_pdf_translator"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "huoshui_pdf_translator/",
+    "README.md",
+    "LICENSE",
+    "CLAUDE.md",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]  # Line too long (handled by black)
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "build>=1.2.2.post1",
+    "twine>=6.1.0",
+]
