@@ -1,0 +1,280 @@
+{
+    "Comment": "A Flow for performing a transfer operation",
+    "StartAt": "InitializeDefaults",
+    "States": {
+        "InitializeDefaults": {
+            "Next": "GetSourcePathInfo",
+            "Type": "ExpressionEval",
+            "Parameters": {
+                "sync_level.=": "getattr('sync_level', 3)",
+                "remove_source.=": "getattr('remove_source', False)",
+                "remove_destination.=": "getattr('remove_destination', False)",
+                "encrypt_data.=": "getattr('encrypt_data', False)",
+                "preserve_timestamp.=": "getattr('preserve_timestamp', True)",
+                "verify_checksum.=": "getattr('verify_checksum', True)",
+                "recursive.=": "getattr('recursive', True)"
+            },
+            "ResultPath": "$.ParamsWithDefaults"
+        },
+        "GetSourcePathInfo": {
+            "Next": "GetDestinationPathInfo",
+            "Type": "Action",
+            "Comment": "Get the source path info",
+            "ActionUrl": "https://transfer.actions.globus.org/stat",
+            "Parameters": {
+                "path.$": "$.source.path",
+                "endpoint_id.$": "$.source.id"
+            },
+            "ResultPath": "$.SourceStat"
+        },
+        "GetDestinationPathInfo": {
+            "Next": "IdentifyPathTypes",
+            "Type": "Action",
+            "Comment": "Get the destination path info",
+            "ActionUrl": "https://transfer.actions.globus.org/stat",
+            "Parameters": {
+                "path.$": "$.destination.path",
+                "endpoint_id.$": "$.destination.id"
+            },
+            "ResultPath": "$.DestinationStat"
+        },
+        "IdentifyPathTypes": {
+            "Next": "TestPathConstraints",
+            "Type": "ExpressionEval",
+            "Comment": "Check the paths to see if they are directories or files",
+            "Parameters": {
+                "dest_exists.=": "'code' not in DestinationStat.details or DestinationStat.details.code != 'NotFound'",
+                "dest_is_dir.=": "'type' in DestinationStat.details and DestinationStat.details.type == 'dir'",
+                "source_is_dir.=": "SourceStat.details.type == 'dir'"
+            },
+            "ResultPath": "$.PathTypes"
+        },
+        "TestPathConstraints": {
+            "Type": "Choice",
+            "Choices": [{
+                    "Next": "FailSrcAndDstMustBeDifferent",
+                    "Variable": "$.source.id",
+                    "StringEqualsPath": "$.destination.id"
+                },
+                {
+                    "Or": [{
+                            "Variable": "$.source.path",
+                            "StringEquals": "/"
+                        },
+                        {
+                            "Variable": "$.source.path",
+                            "StringEquals": "/~/"
+                        }
+                    ],
+                    "Next": "FailSourceRoot"
+                },
+                {
+                    "Next": "ComputeDestPathNoOp",
+                    "Variable": "$.PathTypes.dest_exists",
+                    "BooleanEquals": false
+                },
+                {
+                    "And": [{
+                            "Variable": "$.PathTypes.source_is_dir",
+                            "BooleanEquals": true
+                        },
+                        {
+                            "Variable": "$.PathTypes.dest_is_dir",
+                            "BooleanEquals": false
+                        }
+                    ],
+                    "Next": "FailDirOntoFile"
+                },
+                {
+                    "And": [{
+                            "Variable": "$.PathTypes.source_is_dir",
+                            "BooleanEquals": false
+                        },
+                        {
+                            "Variable": "$.PathTypes.dest_is_dir",
+                            "BooleanEquals": true
+                        }
+                    ],
+                    "Next": "ComputeDestPathFileUnderDir"
+                }
+            ],
+            "Default": "ComputeDestPathNoOp"
+        },
+        "FailSrcAndDstMustBeDifferent": {
+            "Type": "Fail",
+            "Cause": "DuplicateSourceAndDestination",
+            "Error": "To reduce the risk of data loss, the source.id cannot be the same as the destination.id",
+            "Comment": "Report failure due to using the same collection for source and destination"
+        },
+        "FailSourceRoot": {
+            "Type": "Fail",
+            "Cause": "SourcePathIsRoot",
+            "Error": "The globsync Flow requires that the source path is not '/' or '/~/'. Because this Flow will delete the source path, using the root or default directory could have unexpected negative side-effects.",
+            "Comment": "Report failure due to using a root path as the source"
+        },
+        "FailDirOntoFile": {
+            "Type": "Fail",
+            "Cause": "DirectoryOntoFile",
+            "Error": "If the source path is a directory, the destination path must also be a directory. Moving a directory to a file is not possible.",
+            "Comment": "Report failure due to a transfer of a directory to a file"
+        },
+        "ComputeDestPathNoOp": {
+            "Next": "GetSourceCollection",
+            "Type": "ExpressionEval",
+            "Comment": "\"Compute\" the destination path for file-to-file and dir-to-dir transfers. This is a no-op used to match the output format of ComputeDestPathFileUnderDir.",
+            "Parameters": {
+                "path.$": "$.destination.path"
+            },
+            "ResultPath": "$.ComputedDest"
+        },
+        "ComputeDestPathFileUnderDir": {
+            "Next": "GetSourceCollection",
+            "Type": "ExpressionEval",
+            "Comment": "Compute the destination path for file-to-dir transfers.",
+            "Parameters": {
+                "path.=": "destination.path + source.path.rpartition('/')[2]"
+            },
+            "ResultPath": "$.ComputedDest"
+        },
+        "GetSourceCollection": {
+            "Next": "CheckSourceCollectionId",
+            "Type": "Action",
+            "Comment": "Get information about the source collection",
+            "WaitTime": 172800,
+            "ActionUrl": "https://transfer.actions.globus.org/collection_info",
+            "Parameters": {
+                "endpoint_id.$": "$.source.id"
+            },
+            "ResultPath": "$.SourceEpInfo"
+        },
+        "CheckSourceCollectionId": {
+            "Type": "Choice",
+            "Choices": [{
+                "Or": [{
+                        "And": [{
+                                "Variable": "$.SourceEpInfo.details.subscription_id",
+                                "IsPresent": true
+                            },
+                            {
+                                "IsNull": false,
+                                "Variable": "$.SourceEpInfo.details.subscription_id"
+                            }
+                        ]
+                    },
+                    {
+                        "And": [{
+                                "Variable": "$.SourceEpInfo.details.entity_type",
+                                "IsPresent": true
+                            },
+                            {
+                                "Variable": "$.SourceEpInfo.details.entity_type",
+                                "StringEquals": "GCP_guest_collection"
+                            }
+                        ]
+                    }
+                ],
+                "Next": "Transfer"
+            }],
+            "Comment": "Check that the source collection is managed",
+            "Default": "GetDestinationCollection"
+        },
+        "GetDestinationCollection": {
+            "Next": "CheckDestinationCollectionId",
+            "Type": "Action",
+            "Comment": "Get information about the destination collection",
+            "WaitTime": 172800,
+            "ActionUrl": "https://transfer.actions.globus.org/collection_info",
+            "Parameters": {
+                "endpoint_id.$": "$.destination.id"
+            },
+            "ResultPath": "$.DestinationEpInfo"
+        },
+        "CheckDestinationCollectionId": {
+            "Type": "Choice",
+            "Choices": [{
+                "Or": [{
+                        "And": [{
+                                "Variable": "$.DestinationEpInfo.details.subscription_id",
+                                "IsPresent": true
+                            },
+                            {
+                                "IsNull": false,
+                                "Variable": "$.DestinationEpInfo.details.subscription_id"
+                            }
+                        ]
+                    },
+                    {
+                        "And": [{
+                                "Variable": "$.DestinationEpInfo.details.entity_type",
+                                "IsPresent": true
+                            },
+                            {
+                                "Variable": "$.DestinationEpInfo.details.entity_type",
+                                "StringEquals": "GCP_guest_collection"
+                            }
+                        ]
+                    }
+                ],
+                "Next": "Transfer"
+            }],
+            "Comment": "Check that the destination collection is managed",
+            "Default": "FailNoManagedCollection"
+        },
+        "FailNoManagedCollection": {
+            "Type": "Fail",
+            "Cause": "NoManagedCollectionFail",
+            "Error": "Either the source or destination must be managed under a subscription to use this Flow.",
+            "Comment": "Report the error and end the flow execution"
+        },
+        "Transfer": {
+            "Next": "Success",
+            "Type": "Action",
+            "Catch": [{
+                "Next": "TransferFailed",
+                "ResultPath": "$.TransferErrorResult",
+                "ErrorEquals": [
+                    "ActionUnableToRun",
+                    "ActionFailedException",
+                    "ActionTimeout"
+                ]
+            }],
+            "Comment": "Run the initial transfer operation from the source ep/source path to the destination ep/destination path",
+            "WaitTime": 2419200,
+            "ActionUrl": "https://transfer.actions.globus.org/transfer",
+            "Parameters": {
+                "DATA": [{
+                    "source_path.$": "$.source.path",
+                    "destination_path.$": "$.ComputedDest.path",
+                    "recursive.$": "$.ParamsWithDefaults.recursive"
+                }],
+                "label.=": "getattr('transfer_label', 'Transfer of << ' + pathsplit(source.path)[1] + ' >> started by globsync flow run with id ' + _context.run_id)",
+                "source_endpoint.$": "$.source.id",
+                "destination_endpoint.$": "$.destination.id",
+                "sync_level.$": "$.ParamsWithDefaults.sync_level",
+                "delete_destination_extra.$": "$.ParamsWithDefaults.remove_destination",
+                "encrypt_data.$": "$.ParamsWithDefaults.encrypt_data",
+                "preserve_timestamp.$": "$.ParamsWithDefaults.preserve_timestamp",
+                "verify_checksum.$": "$.ParamsWithDefaults.verify_checksum",
+                "store_base_path_info": true,
+                "filter_rules.=": "filter_rules if len(filter_rules) else None"
+            },
+            "ResultPath": "$.TransferResult",
+            "ExceptionOnActionFailure": true
+        },
+        "TransferFailed": {
+            "Type": "Fail",
+            "Cause": "TransferFailed",
+            "Error": "See state in $.TransferErrorResult of the run output",
+            "Comment": "Report the error and end the flow execution"
+        },
+        "Success": {
+            "End": true,
+            "Type": "Pass",
+            "Comment": "Normal completion, so report success and exit",
+            "Parameters": {
+                "message": "Transfer operation complete"
+            },
+            "ResultPath": "$.FlowResult"
+        }
+    }
+}

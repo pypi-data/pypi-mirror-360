@@ -1,0 +1,263 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "definitions": {
+    "filterRule": {
+      "additionalProperties": false,
+      "properties": {
+        "DATA_TYPE": {
+          "description": "Optional, but must be 'filter_rule' if present.",
+          "enum": [
+            "filter_rule"
+          ]
+        },
+        "method": {
+          "description": "Either \"include\" or \"exclude\". Each item found during recursive directory traversal is matched against the filter rules in the order the rules are listed, and the first matching rule is applied. e.g. 'include /foo/bar, exclude /foo' will include /foo/bar and exclude everything else in /foo",
+          "enum": [
+            "exclude",
+            "include"
+          ]
+        },
+        "name": {
+          "description": "A pattern to match against the item name. This field is currently required for all filter rules. Unix style wildcards are supported. * matches everything. ? matches any single character. [] matches any singe character within the brackets. [!] matches any single character not within the brackets.",
+          "type": "string"
+        },
+        "type": {
+          "description": "Either \"file\" or \"dir\". If omitted, this filter rule will apply to all item types. Otherwise, it will only apply to the specified type.",
+          "enum": [
+            "file",
+            "dir"
+          ]
+        }
+      },
+      "required": [
+        "method",
+        "name"
+      ],
+      "type": "object"
+    },
+    "transferItem": {
+      "additionalProperties": false,
+      "properties": {
+        "DATA_TYPE": {
+          "description": "Optional, but must be 'transfer_item' if present.",
+          "enum": [
+            "transfer_item"
+          ]
+        },
+        "checksum_algorithm": {
+          "description": "Algorithm to be used for checksum validation of this transfer_item. Accepts arbitrary strings as algorithms, but a string that does not match an algorithm supported by both endpoints will cause the task to fail at submission or execution.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "destination_path": {
+          "description": "The path on the destination endpoint where the data will be stored",
+          "type": "string"
+        },
+        "external_checksum": {
+          "description": "Checksum for validating the integrity of the source file. Assumed to be MD5 unless checksum_algorithm is set. Cannot be used for directories.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "recursive": {
+          "description": "If true, copy the entire folder and any subfolders defined by source_path. source_path must refer to a folder/directory",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "source_path": {
+          "description": "The path on the source endpoint for the data",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_path",
+        "destination_path"
+      ],
+      "type": "object"
+    }
+  },
+  "properties": {
+    "DATA": {
+      "description": "A set of individual files or folders to transfer between the source and destination endpoints",
+      "items": {
+        "$ref": "#/definitions/transferItem"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "DATA_TYPE": {
+      "description": "Optional, but must be 'transfer' if present.",
+      "enum": [
+        "transfer"
+      ]
+    },
+    "deadline": {
+      "description": "A deadline by which the Transfer task must complete or else it will be terminated by Globus Transfer",
+      "format": "date-time",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "delete_destination_extra": {
+      "default": false,
+      "description": "Delete files, directories, and symlinks on the destination endpoint which don’t exist on the source endpoint or are a different type. Only applies for recursive directory transfers.",
+      "type": "boolean"
+    },
+    "destination_endpoint": {
+      "description": "The uuid for the endpoint which serves as the destination for the Transfer",
+      "format": "uuid",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}",
+      "type": "string"
+    },
+    "destination_local_user": {
+      "description": "Optional value specifying which local user account to map to. Only for Globus Connect Server v5 mapped collections.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "encrypt_data": {
+      "default": false,
+      "description": "Whether Transfer should encrypt data sent through the network using TLS",
+      "type": "boolean"
+    },
+    "fail_on_quota_errors": {
+      "default": false,
+      "description": "Cancel the task if QUOTA_EXCEEDED errors are hit.",
+      "type": "boolean"
+    },
+    "filter_rules": {
+      "description": "One or more filter_rules to apply during recursive expansion.",
+      "items": {
+        "$ref": "#/definitions/filterRule"
+      },
+      "minItems": 1,
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "label": {
+      "description": "Optional user specified string to help identify the task.",
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[^\\n\\r]+$",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "notify_on_failed": {
+      "description": "If true and the user has notification enabled, send a notification email when the transfer completes with status FAILED. If unspecified, no value is sent to the Transfer API and the Transfer API will apply its own default.",
+      "type": "boolean"
+    },
+    "notify_on_inactive": {
+      "description": "If true and the user has notification enabled, send a notification email when the transfer enters status INACTIVE, e.g. from activation credentials expiring. If unspecified, no value is sent to the Transfer API and the Transfer API will apply its own default.",
+      "type": "boolean"
+    },
+    "notify_on_succeeded": {
+      "description": "If true and the user has notification enabled, send a notification email when the transfer completes with status SUCCEEDED. If unspecified, no value is sent to the Transfer API and the Transfer API will apply its own default.",
+      "type": "boolean"
+    },
+    "perf_cc": {
+      "description": "A performance hint for what concurrency the task should use (experimental)",
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "perf_p": {
+      "description": "A performance hint for what parallelism the task should use (experimental)",
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "perf_pp": {
+      "description": "A performance hint for what pipelining the task should use (experimental)",
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "perf_udt": {
+      "default": false,
+      "description": "If true, use the UDT transfer protocol when endpoint support is available (experimental)",
+      "type": "boolean"
+    },
+    "preserve_timestamp": {
+      "default": false,
+      "description": "Whether Transfer should set file timestamps on the destination to match the origin",
+      "type": "boolean"
+    },
+    "recursive_symlinks": {
+      "default": "ignore",
+      "description": "(beta) This field is only supported by certain endpoints. How to process symbolic links (symlinks) found in the contents of recursive directory transfer_items.",
+      "enum": [
+        null,
+        "ignore",
+        "keep",
+        "copy"
+      ]
+    },
+    "skip_source_errors": {
+      "default": false,
+      "description": "Skip files or directories on the source endpoint that hit PERMISSION_DENIED or FILE_NOT_FOUND errors.",
+      "type": "boolean"
+    },
+    "source_endpoint": {
+      "description": "The uuid for the endpoint which serves as the source of the Transfer",
+      "format": "uuid",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}",
+      "type": "string"
+    },
+    "source_local_user": {
+      "description": "Optional value specifying which local user account to map to. Only for Globus Connect Server v5 mapped collections.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "store_base_path_info": {
+      "default": false,
+      "description": "Store source and destination parent directories (derived from input paths of first item) inside the task document.",
+      "type": "boolean"
+    },
+    "sync_level": {
+      "description": "Must have one of the values 0, 1, 2, 3 as defined in the Globus Transfer API",
+      "enum": [
+        null,
+        "0",
+        "1",
+        "2",
+        "3",
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "verify_checksum": {
+      "default": false,
+      "description": "Whether Transfer should verify file checksums and retry if the source and destination don't match",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "source_endpoint",
+    "destination_endpoint",
+    "DATA"
+  ],
+  "type": "object"
+}

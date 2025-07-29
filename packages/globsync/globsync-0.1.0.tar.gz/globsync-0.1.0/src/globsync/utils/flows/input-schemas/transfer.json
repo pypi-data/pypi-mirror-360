@@ -1,0 +1,176 @@
+{
+    "type": "object",
+    "required": [
+        "source",
+        "destination"
+    ],
+    "properties": {
+        "source": {
+            "type": "object",
+            "title": "Source",
+            "format": "globus-collection",
+            "required": [
+                "id",
+                "path"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "title": "Source Collection ID",
+                    "format": "uuid",
+                    "pattern": "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}",
+                    "maxLength": 36,
+                    "minLength": 36,
+                    "description": "The UUID for the collection which serves as the source of the Move"
+                },
+                "path": {
+                    "type": "string",
+                    "title": "Source Collection Path",
+                    "description": "The path on the source collection for the data"
+                }
+            },
+            "description": "Globus-provided flows require that at least one collection is managed under a subscription.",
+            "propertyOrder": [
+                "id",
+                "path"
+            ],
+            "additionalProperties": false
+        },
+        "destination": {
+            "type": "object",
+            "title": "Destination",
+            "format": "globus-collection",
+            "required": [
+                "id",
+                "path"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "title": "Destination Collection ID",
+                    "format": "uuid",
+                    "pattern": "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}",
+                    "maxLength": 36,
+                    "minLength": 36,
+                    "description": "The UUID for the collection which serves as the destination for the Move"
+                },
+                "path": {
+                    "type": "string",
+                    "title": "Destination Collection Path",
+                    "description": "The path on the destination collection where the data will be stored"
+                }
+            },
+            "description": "Globus-provided flows require that at least one collection is managed under a subscription.",
+            "propertyOrder": [
+                "id",
+                "path"
+            ],
+            "additionalProperties": false
+        },
+        "user_email": {
+            "type": "string",
+            "format": "email",
+            "title": "User email address",
+            "description": "Email address to which a notification email will be sent with a request for confirmation of the transfer."
+        },
+        "sync_level": {
+            "type": "integer",
+            "title": "Synchronization level",
+            "minimum": 0,
+            "maximum": 3,
+            "default": 3,
+            "description": "Sync level, must have one of the values 0 (exists), 1 (size), 2 (mtime), 3 (checksum)"
+        },
+        "verify_checksum": {
+            "type": "boolean",
+            "title": "Verify checksum",
+            "default": true,
+            "description": "Whether Transfer should verify file checksums and retry if the source and destination don't match"
+        },
+        "remove_source": {
+            "type": "boolean",
+            "title": "Remove source after transfer",
+            "default": false,
+            "description": "Enable or disable the removal of the source files and folders after the transfer has succeeded."
+        },
+        "remove_destination": {
+            "type": "boolean",
+            "title": "Remove destination data",
+            "default": false,
+            "description": "Delete files, directories, and symlinks on the destination endpoint which don’t exist on the source endpoint or are a different type. Only applies for recursive directory transfers."
+        },
+        "encrypt_data": {
+            "type": "boolean",
+            "title": "Encrypt data",
+            "default": false,
+            "description": "Whether Transfer should encrypt data sent through the network using TLS"
+        },
+        "preserve_timestamp": {
+            "type": "boolean",
+            "title": "Preserve timestamps",
+            "default": true,
+            "description": "Whether Transfer should set file timestamps on the destination to match the origin"
+        },
+        "recursive": {
+            "type": "boolean",
+            "title": "Recursive copy",
+            "default": true,
+            "description": "If true, copy the entire folder and any subfolders defined by source_path. source_path must refer to a folder/directory"
+        },
+        "filter_rules": {
+            "type": "array",
+            "title": "Filter rules",
+            "items": {
+                "type": "object",
+                "required": [
+                    "method",
+                    "name"
+                ],
+                "properties": {
+                    "method": {
+                        "type": "string",
+                        "enum": ["exclude", "include"]
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": ["file", "dir"]
+                    }
+                }
+            },
+            "description": "One or more filter_rules to apply during recursive expansion."
+        },
+        "transfer_label": {
+            "type": "string",
+            "title": "Label for Transfer Task",
+            "pattern": "^[a-zA-Z0-9\\-_, ]+$",
+            "maxLength": 128,
+            "minLength": 1,
+            "description": "A label placed on the Transfer operation"
+        },
+        "delete_label": {
+            "type": "string",
+            "title": "Label for Delete Task from Source",
+            "pattern": "^[a-zA-Z0-9\\-_, ]+$",
+            "maxLength": 128,
+            "minLength": 1,
+            "description": "A label placed on the Delete operation"
+        }
+    },
+    "propertyOrder": [
+        "source",
+        "destination",
+        "user_email",
+        "sync_level",
+        "remove_source",
+        "remove_destination",
+        "encrypt_data",
+        "preserve_timestamp",
+        "recursive",
+        "transfer_label",
+        "delete_label"
+    ],
+    "additionalProperties": false
+}
