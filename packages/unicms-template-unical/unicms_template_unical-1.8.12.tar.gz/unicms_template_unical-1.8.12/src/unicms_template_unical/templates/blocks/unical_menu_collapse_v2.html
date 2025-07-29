@@ -1,0 +1,45 @@
+{% load i18n %}
+{% load static %}
+
+{% load unicms_contexts %}
+{% load unicms_menus %}
+{% load unicms_templates %}
+
+
+{% random_id as id %}
+
+<div id="collapseDiv-{{ id }}-lft" class="accordion accordion-left-icon">
+
+    {% for item in items %}
+
+    <div class="accordion-item">
+
+        {% call obj=item method='link' request=request as link %}
+        {% load_item_inherited_content item as publication %}
+
+        <div class="accordion-header" id="heading-{{ id }}-{{ forloop.counter0 }}-lft">
+            <button class="accordion-button"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapse-{{ id }}-{{ forloop.counter0 }}-lft"
+                    aria-expanded="false"
+                    aria-controls="collapse-{{ id }}-{{ forloop.counter0 }}-lft">
+                {{ item.name }}
+            </button>
+        </div>
+        <div id="collapse-{{ id }}-{{ forloop.counter0 }}-lft"
+             class="accordion-collapse collapse"
+             role="region"
+             data-bs-parent="#collapseDiv-{{ id }}-lft"
+             aria-labelledby="heading-{{ id }}-{{ forloop.counter0 }}-lft">
+            <div class="accordion-body">
+                {% if publication.content %}
+                    <p>{{ publication.content | safe }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+    {% endfor %}
+
+</div>

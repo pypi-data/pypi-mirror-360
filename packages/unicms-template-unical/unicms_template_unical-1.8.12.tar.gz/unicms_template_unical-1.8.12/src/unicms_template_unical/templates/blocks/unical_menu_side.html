@@ -1,0 +1,73 @@
+{% load i18n %}
+{% load static %}
+
+{% load unicms_contexts %}
+{% load unicms_menus %}
+
+
+{% if title %}
+<h4>
+    {% if title_href %}
+    <a class="no-color" href="{{ title_href }}">
+    {% endif %}
+        {{ title }}
+    {% if title_href %}
+    </a>
+    {% endif %}
+</h4>
+<hr />
+{% endif %}
+
+<ul class="list-unstyled">
+{% for item in items %}
+
+    {% call obj=item method='link' request=request as link %}
+
+    {% with has_childs=item.get_childs %}
+
+    <li {% if item.get_childs %}class="my-2"{% endif %}>
+        {% if has_childs %}
+            <b>
+        {% endif %}
+
+        <a class="no-color" href={% if item.link %}"{{ link }}"{% else %}"#"{% endif %}>
+            <span>{{ item.name }}</span>
+        </a>
+
+        {% if has_childs %}
+            <span class="list-item large medium right-icon no-color"
+               href="#collapse-{{item.id}}-{{ forloop.counter }}"
+               data-bs-toggle="collapse"
+               data-toggle="collapse"
+               aria-expanded="false"
+               aria-controls="collapseOne"
+               style="cursor: pointer">
+                <svg class="icon icon-sm icon-secondary right" aria-hidden="true">
+                    <use xlink:href="{% static 'svg/sprites.svg' %}#it-expand"></use>
+                </svg>
+            </span>
+            {% load_item_childs item as childs %}
+            </b>
+            </li>
+            <ul class="link-sublist collapse ps-1" id="collapse-{{item.id}}-{{ forloop.counter }}">
+            {% for child in childs %}
+                {% call obj=child method='link' request=request as child_link %}
+                <li class="list-unstyled">
+                    {% if child_link %}
+                    <a class="list-item no-color" href="{{ child_link}}">
+                    {% endif %}
+                        {{ child.name }}
+                    {% if child_link %}
+                    </a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+    </li>
+        {% endif %}
+
+    {% endwith %}
+{% endfor %}
+</ul>
+<hr />

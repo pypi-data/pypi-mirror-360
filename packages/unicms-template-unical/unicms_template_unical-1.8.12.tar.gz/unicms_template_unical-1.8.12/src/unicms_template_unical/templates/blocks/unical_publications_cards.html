@@ -1,0 +1,91 @@
+{% load i18n %}
+{% load static %}
+
+{% load unicms_contexts %}
+{% load unicms_templates %}
+
+{% settings_value "CMS_PUBLICATION_LIST_PREFIX_PATH" as page_news_suffix %}
+
+{% random_id as uid %}
+
+
+{% if publications %}
+{% if categories and not exclude_categories %}
+<h2 class="mb-3">
+    {% for category in categories %}
+        {{ category }}
+        {% if not forloop.last %}, {% endif %}
+    {% endfor %}
+</h2>
+{% endif %}
+<div class="row d-lg-flex">
+
+    {% for pub in publications %}
+    <div class="col-12 col-lg-3">
+        <!--start card-->
+        <div class="card-wrapper card-space">
+            <div class="card card-bg no-after">
+                <div class="card-body">
+                    <div class="etichetta">
+                        {% for cat in pub.publication.categories %}
+                            <span class="badge rounded-pill badge-grey-unical my-1 py-2 px-4 me-1">
+                                <a class="no-color" href="{% call obj=pub method='get_url_list' category_name=cat.name %}">
+                                    <b>{{ cat.name }}</b>
+                                </a>
+                            </span>
+                        {% endfor %}
+                    </div>
+                    {% if pub.publication.image_url %}
+                    <div class="img-responsive-wrapper mb-3">
+                        <div class="img-responsive img-responsive-panoramic">
+                            <figure class="img-wrapper">
+                              <a href="{{ pub.url }}">
+                                <img src="{{ pub.publication.image_url }}"
+                                     title="{{ pub.publication.image_title }}"
+                                     alt="{{ pub.publication.image_description }}"
+                                     loading="lazy">
+                              </a>
+                            </figure>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="category-top">
+                        <span>{% trans "Published" %}: {{ pub.date_start | date:"d/m/Y, H:i" }}</span>
+                        {% include "includes/edit_news.html" with item=pub %}
+                    </div>
+                    <h4 class="card-title">
+                        <a href="{{ pub.url }}" class="no-color">
+                            {{ pub.publication.title }}
+                        </a>
+                    </h4>
+                    {% if not pub.publication.image_url %}
+                    <p class="card-text">
+                        {{ pub.publication.subheading|truncatechars:135 }}
+                    </p>
+                    {% endif %}
+
+                    {% include "includes/social_share.html" with share_title=item.publication.title share_url=request.get_host|add:pub.url %}
+                </div>
+            </div>
+        </div>
+        <!--end card-->
+    </div>
+    {% endfor %}
+
+</div>
+
+<p class="mt-3 ms-2">
+    <a href="{{ page_news_suffix }}{% if categories|length == 1 and not exclude_categories %}?category_name={{ categories.0 }}{% endif %}" class="no-color">
+        <span class="text-black fw-bold">
+            <svg class="icon me-2" aria-labelledby="{{ uid }}_news">
+                <title id="{{ uid }}_news">{% trans "Go to all news" %}</title>
+                <use xlink:href="{% static '/svg/sprites.svg' %}#it-arrow-right-circle"></use>
+            </svg>
+            {% trans "Go to all news" %}
+            {% if categories|length == 1 and not exclude_categories %}
+                in {{ categories.0 }}
+            {% endif %}
+        </span>
+    </a>
+</p>
+{% endif %}

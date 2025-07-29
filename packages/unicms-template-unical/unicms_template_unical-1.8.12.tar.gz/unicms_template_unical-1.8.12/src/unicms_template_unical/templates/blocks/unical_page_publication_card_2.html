@@ -1,0 +1,43 @@
+{% load static %}
+
+{% load unicms_contexts %}
+
+
+<div class="row">
+    <div class="col">
+        <div class="card-wrapper card-space">
+            <div class="card card-bg no-after">
+                <div class="card-body">
+                    <div class="etichetta">
+                        {% for cat in publication.categories %}
+                        <span class="badge rounded-pill badge-grey-unical my-1 py-2 px-4 me-1">
+                            <a class="no-color" href="{% call obj=publication method='get_url_list' category_name=cat.name %}">
+                                <b>{{ cat.name }}</b>
+                            </a>
+                        </span>
+                        {% endfor %}
+                    </div>
+
+                    {% call obj=publication method='url' webpath=webpath as url %}
+
+                    {% include "includes/edit_page_publication.html" with item=page_publication %}
+
+                    <h4 class="card-title">
+                        {% if url %}
+                        <a href="{{ url }}" class="no-color">
+                        {% endif %}
+                            {{ publication.title }}
+                        {% if url %}
+                        </a>
+                        {% endif %}
+                    </h4>
+
+                    {% if url %}
+                    {% include "includes/social_share.html" with share_title=item.publication.title share_url=request.get_host|add:url %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
