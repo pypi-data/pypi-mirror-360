@@ -1,0 +1,72 @@
+prefixes:
+  hugg_base: http://base.huggingface.model.com#
+  resource_base: http://base.huggingface.model.com/resource/
+  rr: http://www.w3.org/ns/r2rml#
+  rml: http://w3id.org/rml/
+  ql: http://semweb.mmlab.be/ns/ql#
+  xsd: http://www.w3.org/2001/XMLSchema#
+  rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  rdfs: http://www.w3.org/2000/01/rdf-schema#
+  schema: http://schema.org/
+  owl: http://www.w3.org/2002/07/owl#
+  skos: http://www.w3.org/2004/02/skos/core#
+  dc: http://purl.org/dc/elements/1.1/
+  mod: https://w3id.org/mod#
+  grel: http://users.ugent.be/~bjdmeest/function/grel.ttl#
+  ex: http://www.example.com
+  fno: https://w3id.org/function/ontology#
+  fns: http://example.com/functions/
+  fnml: http://semweb.mmlab.be/ns/fnml#
+  idlab-fn: http://example.com/idlab/function/
+  morph-kgc: https://github.com/morph-kgc/morph-kgc/function/built-in.ttl#
+  olo: http://purl.org/ontology/olo/core#
+
+sources:
+  metadata_models:
+      access: test.json
+      referenceFormulation: jsonpath
+      iterator: "$"
+  issue_files:
+      access: test.json
+      referenceFormulation: jsonpath
+      iterator: "$.security_repo_status.filesWithIssues[*]"
+mappings:
+
+
+  test:
+    sources: metadata_models
+    subjects: resource_base:huggingface/$(modelId)
+    po:
+    - [a, hugg_base:HuggModel]
+    - [hugg_base:hugg_url, $(repo_url), xsd:anyURI]
+    - [hugg_base:model_id, $(modelId), xsd:string]
+    - [hugg_base:has_tag, "$(tags[*])", xsd:string]
+    - [hugg_base:author, "$(author)", xsd:string]
+    - [hugg:base:last_modified, $(last_modified),xsd:dateTime]
+    - [hugg:base:created_at, $(created_at),xsd:dateTime]
+    - [hugg:base:downloads, $(downloads),xsd:integer]
+    - [hugg:base:library_name, $(library_name),xsd:string]
+    - [hugg:base:pipeline_tag, $(pipeline_tag),xsd:string]
+    - [hugg:base:private, $(private),xsd:boolean]
+    - [hugg:base:gated, $(gated),xsd:boolean]
+    - [hugg:base:disabled, $(disabled),xsd:string]
+    - [hugg:base:inference, $(inference),xsd:string]
+    - [hugg:base:has_spaces, "$(spaces[*])",xsd:string]
+    - [hugg:base:used_storage, "$(usedStorage)",xsd:string]
+    - [hugg:base:model_card_text, "$(model_card_content)",xsd:string]
+
+    - predicates: hugg_base:has_model
+      objects: templete(being filled with code)
+    
+    - predicates: hugg_base:file_with_security_issue
+      objects: resource_base:security_issues/$(security_repo_status.filesWithIssues[*].path)~iri
+
+  files_issues:
+    sources: issue_files
+    subjects: resource_base:security_issues/$(path)
+    po:
+    - [a, hugg_base:security_issues]
+    - [hugg_base:path,$(path),xsd:string]
+    - [hugg_base:hazard_level, $(level), xsd:string]
+
+   
