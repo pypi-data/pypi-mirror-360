@@ -1,0 +1,54 @@
+[project]
+name = "mcp-for-odps"
+version = "0.1.3"
+description = "MaxCompute (ODPS) MCP Server for getting table information and DDL"
+readme = "README.md"
+requires-python = ">=3.13"
+license = {text = "MIT"}
+authors = [
+    {name = "tracy_ray", email = "846206245@qq.com"},
+]
+maintainers = [
+    {name = "bigjunhong", email = "chenjunhong0301@outlook.com"},
+]
+keywords = ["maxcompute", "odps", "mcp", "aliyun", "data"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.10.1"
+]
+
+[project.urls]
+Homepage = "https://github.com/TracyRay-cxr/mcp_for_odps"
+Repository = "https://github.com/TracyRay-cxr/mcp_for_odps"
+Documentation = "https://github.com/TracyRay-cxr/mcp_for_odps#readme"
+Issues = "https://github.com/TracyRay-cxr/mcp_for_odps/issues"
+
+[project.scripts]
+mcp-for-odps = "server:main"
+
+[project.entry-points."mcp.servers"]
+odps = "server:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["server"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "server/",
+    "main.py",
+    "README.md",
+    "LICENSE",
+]
