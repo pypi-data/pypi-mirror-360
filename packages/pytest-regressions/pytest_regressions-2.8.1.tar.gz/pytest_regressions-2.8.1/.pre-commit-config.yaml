@@ -1,0 +1,33 @@
+exclude: '^($|.*\.bin)'
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+-   repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1
+    hooks:
+    -   id: autoflake
+        name: autoflake
+        args: ["--in-place", "--remove-unused-variables", "--remove-all-unused-imports"]
+        language: python
+        files: \.py$
+-   repo: https://github.com/asottile/reorder-python-imports
+    rev: v3.15.0
+    hooks:
+    -   id: reorder-python-imports
+        args: ['--application-directories=.:src', --py36-plus]
+-   repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+    -   id: black
+        args: [--safe, --quiet]
+-   repo: local
+    hooks:
+    -   id: rst
+        name: rst
+        entry: rst-lint --encoding utf-8
+        files: ^(CHANGELOG.rst|HOWTORELEASE.rst|README.rst|changelog/.*)$
+        language: python
+        additional_dependencies: [pygments, restructuredtext_lint]
