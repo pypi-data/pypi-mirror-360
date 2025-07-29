@@ -1,0 +1,22 @@
+{% for layer_version in resources -%}
+resource "aws_lambda_layer_version" "{{ layer_version.LayerName | tf_resource_name }}_v{{ layer_version.Version }}" {
+  layer_name          = "{{ layer_version.LayerName }}"
+  filename            = "placeholder-layer.zip"
+
+  compatible_runtimes = [
+    {%- for runtime in layer_version.CompatibleRuntimes %}
+    "{{ runtime }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+
+  {%  if layer_version.get('Description') %}
+  description         = "{{ layer_version.Description }}"
+  {%  endif -%}
+
+  license_info        = "{{ layer_version.LicenseInfo | default('') }}"
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

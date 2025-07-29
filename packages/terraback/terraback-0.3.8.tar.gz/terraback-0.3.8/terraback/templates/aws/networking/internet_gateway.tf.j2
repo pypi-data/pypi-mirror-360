@@ -1,0 +1,19 @@
+{% for igw in resources -%}
+resource "aws_internet_gateway" "{{ igw.InternetGatewayId | strip_id_prefix | tf_resource_name }}" {
+  {%  if igw.get('Attachments') and igw.Attachments|length > 0 and igw.Attachments[0].get('VpcId') %}
+  vpc_id = "{{ igw.Attachments[0].VpcId }}"
+  {%  endif -%}
+
+  {%  if igw.get('Tags') %}
+  tags = {
+    {%- for tag in igw.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value | replace('"', '\\"') }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

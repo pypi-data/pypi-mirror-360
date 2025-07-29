@@ -1,0 +1,81 @@
+{% for lc in resources -%}
+resource "aws_launch_configuration" "{{ lc.name_sanitized }}" {
+  name            = "{{ lc.LaunchConfigurationName }}"
+  image_id        = "{{ lc.ImageId }}"
+  instance_type   = "{{ lc.InstanceType }}"
+
+  {%  if lc.get('KeyName') %}
+  key_name        = "{{ lc.KeyName }}"
+  {%  endif -%}
+
+  {%  if lc.get('SecurityGroupsFormatted') %}
+  security_groups = [
+    {%- for sg in lc.SecurityGroupsFormatted %}
+    "{{ sg }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if lc.get('IamInstanceProfile') %}
+  iam_instance_profile = "{{ lc.IamInstanceProfile }}"
+  {%  endif -%}
+
+  {%  if lc.get('UserData') %}
+  user_data = base64decode("{{ lc.UserData }}")
+  {%  endif -%}
+
+  {%  if lc.get('AssociatePublicIpAddress') is defined %}
+  associate_public_ip_address = {{ lc.AssociatePublicIpAddress | lower }}
+  {%  endif -%}
+
+  {%  if lc.get('EbsOptimized') is defined %}
+  ebs_optimized = {{ lc.EbsOptimized | lower }}
+  {%  endif -%}
+
+  {%  if lc.get('EnableMonitoring') is defined %}
+  enable_monitoring = {{ lc.EnableMonitoring | lower }}
+  {%  endif -%}
+
+  {%  if lc.get('PlacementTenancy') %}
+  placement_tenancy = "{{ lc.PlacementTenancy }}"
+  {%  endif -%}
+
+  {%  if lc.get('SpotPrice') %}
+  spot_price = "{{ lc.SpotPrice }}"
+  {%  endif -%}
+
+  {%- for bdm in lc.get('BlockDeviceMappingsFormatted', []) %}
+  ebs_block_device {
+    device_name = "{{ bdm.DeviceName }}"
+    {%  if bdm.get('Ebs') %}
+    {%  if bdm.Ebs.get('VolumeSize') %}
+    volume_size = {{ bdm.Ebs.VolumeSize }}
+    {%  endif -%}
+    {%  if bdm.Ebs.get('VolumeType') %}
+    volume_type = "{{ bdm.Ebs.VolumeType }}"
+    {%  endif -%}
+    {%  if bdm.Ebs.get('DeleteOnTermination') is defined %}
+    delete_on_termination = {{ bdm.Ebs.DeleteOnTermination | lower }}
+    {%  endif -%}
+    {%  if bdm.Ebs.get('Encrypted') is defined %}
+    encrypted = {{ bdm.Ebs.Encrypted | lower }}
+    {%  endif -%}
+    {%  if bdm.Ebs.get('Iops') %}
+    iops = {{ bdm.Ebs.Iops }}
+    {%  endif -%}
+    {%  if bdm.Ebs.get('SnapshotId') %}
+    snapshot_id = "{{ bdm.Ebs.SnapshotId }}"
+    {%  endif -%}
+    {%  endif -%}
+  }
+  {%- endfor %}
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

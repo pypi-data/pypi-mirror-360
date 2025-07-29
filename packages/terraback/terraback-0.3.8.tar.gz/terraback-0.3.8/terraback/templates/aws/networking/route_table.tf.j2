@@ -1,0 +1,78 @@
+## terraback/templates/aws/networking/route_table.tf.j2
+
+{% for rt in resources -%}
+resource "aws_route_table" "{{ rt.name_sanitized }}" {
+  vpc_id = "{{ rt.VpcId }}"
+
+  {%- for route in rt.get('routes_formatted', []) %}
+  route {
+    {%  if route.get('DestinationCidrBlock') %}
+    cidr_block = "{{ route.DestinationCidrBlock }}"
+    {%  endif -%}
+    {%  if route.get('DestinationIpv6CidrBlock') %}
+    ipv6_cidr_block = "{{ route.DestinationIpv6CidrBlock }}"
+    {%  endif -%}
+    {%  if route.get('DestinationPrefixListId') %}
+    destination_prefix_list_id = "{{ route.DestinationPrefixListId }}"
+    {%  endif -%}
+
+    {%  if route.get('GatewayId') %}
+    gateway_id = "{{ route.GatewayId }}"
+    {%  endif -%}
+    {%  if route.get('InstanceId') %}
+    instance_id = "{{ route.InstanceId }}"
+    {%  endif -%}
+    {%  if route.get('NatGatewayId') %}
+    nat_gateway_id = "{{ route.NatGatewayId }}"
+    {%  endif -%}
+    {%  if route.get('NetworkInterfaceId') %}
+    network_interface_id = "{{ route.NetworkInterfaceId }}"
+    {%  endif -%}
+    {%  if route.get('TransitGatewayId') %}
+    transit_gateway_id = "{{ route.TransitGatewayId }}"
+    {%  endif -%}
+    {%  if route.get('VpcPeeringConnectionId') %}
+    vpc_peering_connection_id = "{{ route.VpcPeeringConnectionId }}"
+    {%  endif -%}
+    {%  if route.get('CarrierGatewayId') %}
+    carrier_gateway_id = "{{ route.CarrierGatewayId }}"
+    {%  endif -%}
+    {%  if route.get('EgressOnlyInternetGatewayId') %}
+    egress_only_gateway_id = "{{ route.EgressOnlyInternetGatewayId }}"
+    {%  endif -%}
+    {%  if route.get('LocalGatewayId') %}
+    local_gateway_id = "{{ route.LocalGatewayId }}"
+    {%  endif -%}
+  }
+  {%- endfor %}
+
+  {%  if rt.get('propagating_vgws_formatted') %}
+  propagating_vgws = [
+    {%- for vgw_id in rt.propagating_vgws_formatted %}
+    "{{ vgw_id }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if rt.get('Tags') %}
+  tags = {
+    {%- for tag in rt.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{%- for assoc in rt.get('associations_formatted', []) %}
+{%  if assoc.get('SubnetId') and not assoc.get('Main') %}
+resource "aws_route_table_association" "{{ rt.name_sanitized }}_{{ assoc.SubnetId | strip_id_prefix | tf_resource_name }}" {
+  subnet_id      = "{{ assoc.SubnetId }}"
+  route_table_id = aws_route_table.{{ rt.name_sanitized }}.id
+}
+{%  endif -%}
+{%- endfor %}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

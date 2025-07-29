@@ -1,0 +1,55 @@
+{% for policy in resources -%}
+resource "aws_cloudfront_origin_request_policy" "{{ policy.name_sanitized }}" {
+  name    = "{{ policy.config_formatted.get('Name') }}"
+  comment = "{{ policy.config_formatted.get('Comment', '') }}"
+
+  {%- set headers = policy.config_formatted.get('headers_formatted', {}) %}
+  headers_config {
+    header_behavior = "{{ headers.get('header_behavior', 'none') }}"
+
+    {%  if headers.get('headers') %}
+    headers {
+      items = [
+        {%- for header in headers.headers %}
+        "{{ header }}"{{ "," if not loop.last }}
+        {%- endfor %}
+      ]
+    }
+    {%  endif -%}
+  }
+
+  {%- set cookies = policy.config_formatted.get('cookies_formatted', {}) %}
+  cookies_config {
+    cookie_behavior = "{{ cookies.get('cookie_behavior', 'none') }}"
+
+    {%  if cookies.get('cookies') %}
+    cookies {
+      items = [
+        {%- for cookie in cookies.cookies %}
+        "{{ cookie }}"{{ "," if not loop.last }}
+        {%- endfor %}
+      ]
+    }
+    {%  endif -%}
+  }
+
+  {%- set query_strings = policy.config_formatted.get('query_strings_formatted', {}) %}
+  query_strings_config {
+    query_string_behavior = "{{ query_strings.get('query_string_behavior', 'none') }}"
+
+    {%  if query_strings.get('query_strings') %}
+    query_strings {
+      items = [
+        {%- for qs in query_strings.query_strings %}
+        "{{ qs }}"{{ "," if not loop.last }}
+        {%- endfor %}
+      ]
+    }
+    {%  endif -%}
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

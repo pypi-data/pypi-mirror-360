@@ -1,0 +1,134 @@
+{% for rg in resources -%}
+resource "aws_elasticache_replication_group" "{{ rg.name_sanitized }}" {
+  replication_group_id       = "{{ rg.ReplicationGroupId }}"
+  description                = "{{ rg.get('Description', '') }}"
+
+  {%  if rg.get('GlobalReplicationGroupInfo') %}
+  global_replication_group_id = "{{ rg.GlobalReplicationGroupInfo.GlobalReplicationGroupId }}"
+  {%  endif -%}
+
+  {%  if rg.get('NumCacheClusters') %}
+  num_cache_clusters = {{ rg.NumCacheClusters }}
+  {%  endif -%}
+
+  {%  if rg.get('NumNodeGroups') %}
+  num_node_groups = {{ rg.NumNodeGroups }}
+  {%  endif -%}
+
+  {%  if rg.get('ReplicasPerNodeGroup') %}
+  replicas_per_node_group = {{ rg.ReplicasPerNodeGroup }}
+  {%  endif -%}
+
+  node_type = "{{ rg.get('CacheNodeType', 'cache.t3.micro') }}"
+  engine    = "redis"
+
+  {%  if rg.get('EngineVersion') %}
+  engine_version = "{{ rg.EngineVersion }}"
+  {%  endif -%}
+
+  port = {{ rg.get('Port', 6379) }}
+
+  {%  if rg.get('CacheParameterGroupName') %}
+  parameter_group_name = "{{ rg.CacheParameterGroupName }}"
+  {%  endif -%}
+
+  {%  if rg.get('cache_subnet_group_name') %}
+  subnet_group_name = "{{ rg.cache_subnet_group_name }}"
+  {%  endif -%}
+
+  {%  if rg.get('security_group_ids') %}
+  security_group_ids = [
+    {%- for sg_id in rg.security_group_ids %}
+    "{{ sg_id }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if rg.get('PreferredCacheClusterAZs') %}
+  preferred_cache_cluster_azs = [
+    {%- for az in rg.PreferredCacheClusterAZs %}
+    "{{ az }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if rg.get('SnapshotRetentionLimit') %}
+  snapshot_retention_limit = {{ rg.SnapshotRetentionLimit }}
+  {%  endif -%}
+
+  {%  if rg.get('SnapshotWindow') %}
+  snapshot_window = "{{ rg.SnapshotWindow }}"
+  {%  endif -%}
+
+  {%  if rg.get('PreferredMaintenanceWindow') %}
+  maintenance_window = "{{ rg.PreferredMaintenanceWindow }}"
+  {%  endif -%}
+
+  {%  if rg.get('NotificationTopicArn') %}
+  notification_topic_arn = "{{ rg.NotificationTopicArn }}"
+  {%  endif -%}
+
+  {%  if rg.get('KmsKeyId') %}
+  kms_key_id = "{{ rg.KmsKeyId }}"
+  {%  endif -%}
+
+  {%  if rg.get('AtRestEncryptionEnabled') is defined %}
+  at_rest_encryption_enabled = {{ rg.AtRestEncryptionEnabled | lower }}
+  {%  endif -%}
+
+  {%  if rg.get('TransitEncryptionEnabled') is defined %}
+  transit_encryption_enabled = {{ rg.TransitEncryptionEnabled | lower }}
+  {%  endif -%}
+
+  {%  if rg.get('AuthTokenEnabled') is defined %}
+  auth_token_enabled = {{ rg.AuthTokenEnabled | lower }}
+  {%  endif -%}
+
+  {%  if rg.get('user_group_ids_formatted') %}
+  user_group_ids = [
+    {%- for user_group_id in rg.user_group_ids_formatted %}
+    "{{ user_group_id }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if not rg.cluster_mode_enabled %}
+  automatic_failover_enabled = {{ rg.get('AutomaticFailover', 'disabled') == 'enabled' | lower }}
+  {%  endif -%}
+
+  {%  if rg.get('MultiAZ', 'disabled') == 'enabled' %}
+  multi_az_enabled = true
+  {%  endif -%}
+
+  {%  if rg.data_tiering_enabled %}
+  data_tiering_enabled = true
+  {%  endif -%}
+
+  {%- for log_config in rg.get('log_delivery_configurations_formatted', []) %}
+  log_delivery_configuration {
+    destination      = "{{ log_config.destination_details.get('CloudWatchLogsDetails', {}).get('LogGroup') or log_config.destination_details.get('KinesisFirehoseDetails', {}).get('DeliveryStream') }}"
+    destination_type = "{{ log_config.destination_type }}"
+    log_format       = "{{ log_config.log_format }}"
+    log_type         = "{{ log_config.log_type }}"
+  }
+  {%- endfor %}
+
+  {%  if rg.get('tags_formatted') %}
+  tags = {
+    {%- for key, value in rg.get('tags_formatted', {}).items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  lifecycle {
+    ignore_changes = [
+      auth_token,
+    ]
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

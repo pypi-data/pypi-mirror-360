@@ -1,0 +1,72 @@
+{% for subnet in resources -%}
+resource "azurerm_subnet" "{{ subnet.name_sanitized }}" {
+  name                 = "{{ subnet.name }}"
+  resource_group_name  = "{{ subnet.resource_group_name }}"
+  virtual_network_name = "{{ subnet.virtual_network_name }}"
+  address_prefixes     = {{ subnet.address_prefixes | tojson }}
+
+  {%  if subnet.service_endpoints %}
+  service_endpoints = [
+    {%- for endpoint in subnet.service_endpoints %}
+    "{{ endpoint.service }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if subnet.service_endpoint_policy_ids %}
+  service_endpoint_policy_ids = {{ subnet.service_endpoint_policy_ids | tojson }}
+  {%  endif -%}
+
+  {%  if subnet.delegation %}
+  {%- for delegation in subnet.delegation %}
+  delegation {
+    name = "{{ delegation.name }}"
+
+    service_delegation {
+      name    = "{{ delegation.service_delegation.name }}"
+      {%  if delegation.service_delegation.actions %}
+      actions = {{ delegation.service_delegation.actions | tojson }}
+      {%  endif -%}
+    }
+  }
+  {%- endfor %}
+  {%  endif -%}
+
+  {%  if subnet.private_endpoint_network_policies_enabled is not none %}
+  private_endpoint_network_policies_enabled     = {{ subnet.private_endpoint_network_policies_enabled | lower }}
+  {%  endif -%}
+
+  {%  if subnet.private_link_service_network_policies_enabled is not none %}
+  private_link_service_network_policies_enabled = {{ subnet.private_link_service_network_policies_enabled | lower }}
+  {%  endif -%}
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{%  if subnet.network_security_group_id %}
+resource "azurerm_subnet_network_security_group_association" "{{ subnet.name_sanitized }}_nsg" {
+  subnet_id                 = azurerm_subnet.{{ subnet.name_sanitized }}.id
+  network_security_group_id = "{{ subnet.network_security_group_id }}"
+}
+{%  endif -%}
+
+{%  if subnet.route_table_id %}
+resource "azurerm_subnet_route_table_association" "{{ subnet.name_sanitized }}_rt" {
+  subnet_id      = azurerm_subnet.{{ subnet.name_sanitized }}.id
+  route_table_id = "{{ subnet.route_table_id }}"
+}
+{%  endif -%}
+
+{%  if subnet.nat_gateway_id %}
+resource "azurerm_subnet_nat_gateway_association" "{{ subnet.name_sanitized }}_nat" {
+  subnet_id      = azurerm_subnet.{{ subnet.name_sanitized }}.id
+  nat_gateway_id = "{{ subnet.nat_gateway_id }}"
+}
+{%  endif -%}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

@@ -1,0 +1,99 @@
+{% for tg in resources -%}
+resource "aws_lb_target_group" "{{ tg.name_sanitized }}" {
+  name        = "{{ tg.TargetGroupName }}"
+  port        = {{ tg.Port }}
+  protocol    = "{{ tg.Protocol }}"
+  vpc_id      = "{{ tg.VpcId }}"
+  target_type = "{{ tg.TargetType }}"
+
+  {%  if tg.get('ProtocolVersion') %}
+  protocol_version = "{{ tg.ProtocolVersion }}"
+  {%  endif -%}
+
+  {%  if tg.get('IpAddressType') %}
+  ip_address_type = "{{ tg.IpAddressType }}"
+  {%  endif -%}
+
+  {%  if tg.get('Attributes', {}).get('deregistration_delay.timeout_seconds') is defined and tg.Attributes['deregistration_delay.timeout_seconds'] is not none %}
+  deregistration_delay = {{ tg.Attributes['deregistration_delay.timeout_seconds'] }}
+  {%  endif -%}
+
+  {%  if tg.get('Attributes', {}).get('deregistration_delay.connection_termination.enabled') %}
+  connection_termination = {{ tg.Attributes['deregistration_delay.connection_termination.enabled'] }}
+  {%  endif -%}
+
+  {%  if tg.get('Attributes', {}).get('preserve_client_ip.enabled') %}
+  preserve_client_ip = {{ tg.Attributes['preserve_client_ip.enabled'] }}
+  {%  endif -%}
+
+  {%  if tg.get('Attributes', {}).get('proxy_protocol_v2.enabled') %}
+  proxy_protocol_v2 = {{ tg.Attributes['proxy_protocol_v2.enabled'] }}
+  {%  endif -%}
+
+  {%  if tg.get('Attributes', {}).get('target_failover.on_deregistration') %}
+  target_failover {
+    on_deregistration = "{{ tg.Attributes['target_failover.on_deregistration'] }}"
+    on_unhealthy      = "{{ tg.Attributes.get('target_failover.on_unhealthy', 'no_rebalance') }}"
+  }
+  {%  endif -%}
+
+  {%  if tg.get('Attributes', {}).get('load_balancing.algorithm.type') %}
+  load_balancing_algorithm_type = "{{ tg.Attributes['load_balancing.algorithm.type'] }}"
+  {%  endif -%}
+
+  {%  if tg.get('Attributes', {}).get('load_balancing.cross_zone.enabled') %}
+  load_balancing_cross_zone_enabled = "{{ tg.Attributes['load_balancing.cross_zone.enabled'] }}"
+  {%  endif -%}
+
+  {%  if tg.get('stickiness_config') %}
+  stickiness {
+    enabled         = {{ tg.stickiness_config.enabled | lower }}
+    type            = "{{ tg.stickiness_config.type }}"
+    {%  if tg.stickiness_config.type == 'lb_cookie' and tg.stickiness_config.get('cookie_duration') is defined and tg.stickiness_config.cookie_duration is not none %}
+    cookie_duration = {{ tg.stickiness_config.cookie_duration }}
+    {%- elif tg.stickiness_config.type == 'app_cookie' %}
+    {%  if tg.stickiness_config.get('cookie_name') %}
+    cookie_name     = "{{ tg.stickiness_config.cookie_name }}"
+    {%  endif -%}
+    {%  if tg.stickiness_config.get('app_cookie_duration') is defined and tg.stickiness_config.app_cookie_duration is not none %}
+    cookie_duration = {{ tg.stickiness_config.app_cookie_duration }}
+    {%  endif -%}
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  health_check {
+    enabled             = {{ tg.HealthCheckEnabled | lower }}
+    interval            = {{ tg.HealthCheckIntervalSeconds }}
+    path                = "{{ tg.HealthCheckPath }}"
+    port                = "{{ tg.HealthCheckPort }}"
+    protocol            = "{{ tg.HealthCheckProtocol }}"
+    timeout             = {{ tg.HealthCheckTimeoutSeconds }}
+    healthy_threshold   = {{ tg.HealthyThresholdCount }}
+    unhealthy_threshold = {{ tg.UnhealthyThresholdCount }}
+    {%  if tg.get('Matcher') %}
+    {%  if tg.Matcher.get('HttpCode') %}
+    matcher             = "{{ tg.Matcher.HttpCode }}"
+    {%- elif tg.Matcher.get('GrpcCode') %}
+    matcher             = "{{ tg.Matcher.GrpcCode }}"
+    {%  endif -%}
+    {%  endif -%}
+  }
+
+  {%  if tg.get('Tags') %}
+  tags = {
+    {%- for tag in tg.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

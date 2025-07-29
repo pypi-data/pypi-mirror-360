@@ -1,0 +1,117 @@
+{% for lb in resources %}
+resource "azurerm_lb" "{{ lb.name_sanitized }}" {
+  name                = "{{ lb.name }}"
+  location            = "{{ lb.location }}"
+  resource_group_name = "{{ lb.resource_group_name }}"
+  sku                 = "{{ lb.sku }}"
+  {%  if lb.sku_tier %}
+  sku_tier            = "{{ lb.sku_tier }}"
+  {%  endif -%}
+
+  {%- for frontend in lb.frontend_ip_configuration %}
+  frontend_ip_configuration {
+    name                          = "{{ frontend.name }}"
+    {%  if frontend.subnet_id %}
+    subnet_id                     = "{{ frontend.subnet_id }}"
+    {%  endif -%}
+    {%  if frontend.private_ip_address %}
+    private_ip_address            = "{{ frontend.private_ip_address }}"
+    {%  endif -%}
+    {%  if frontend.private_ip_address_allocation %}
+    private_ip_address_allocation = "{{ frontend.private_ip_address_allocation }}"
+    {%  endif -%}
+    {%  if frontend.private_ip_address_version %}
+    private_ip_address_version    = "{{ frontend.private_ip_address_version }}"
+    {%  endif -%}
+    {%  if frontend.public_ip_address_id %}
+    public_ip_address_id          = "{{ frontend.public_ip_address_id }}"
+    {%  endif -%}
+    {%  if frontend.public_ip_prefix_id %}
+    public_ip_prefix_id           = "{{ frontend.public_ip_prefix_id }}"
+    {%  endif -%}
+    {%  if frontend.zones %}
+    zones                         = {{ frontend.zones | tojson }}
+    {%  endif -%}
+  }
+  {%- endfor %}
+
+  {%  if lb.tags %}
+  tags = {
+    {%- for key, value in lb.tags.items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{%  if lb.backend_address_pool %}
+{%- for pool in lb.backend_address_pool %}
+resource "azurerm_lb_backend_address_pool" "{{ lb.name_sanitized }}_{{ pool.name.replace('-', '_').lower() }}" {
+  name            = "{{ pool.name }}"
+  loadbalancer_id = azurerm_lb.{{ lb.name_sanitized }}.id
+}
+{%- endfor %}
+{%  endif -%}
+
+{%  if lb.probe %}
+{%- for probe in lb.probe %}
+resource "azurerm_lb_probe" "{{ lb.name_sanitized }}_{{ probe.name.replace('-', '_').lower() }}" {
+  name                = "{{ probe.name }}"
+  loadbalancer_id     = azurerm_lb.{{ lb.name_sanitized }}.id
+  protocol            = "{{ probe.protocol }}"
+  port                = {{ probe.port }}
+  {%  if probe.request_path %}
+  request_path        = "{{ probe.request_path }}"
+  {%  endif -%}
+  interval_in_seconds = {{ probe.interval_in_seconds }}
+  number_of_probes    = {{ probe.number_of_probes }}
+}
+{%- endfor %}
+{%  endif -%}
+
+{%  if lb.lb_rule %}
+{%- for rule in lb.lb_rule %}
+resource "azurerm_lb_rule" "{{ lb.name_sanitized }}_{{ rule.name.replace('-', '_').lower() }}" {
+  name                           = "{{ rule.name }}"
+  loadbalancer_id                = azurerm_lb.{{ lb.name_sanitized }}.id
+  protocol                       = "{{ rule.protocol }}"
+  frontend_port                  = {{ rule.frontend_port }}
+  backend_port                   = {{ rule.backend_port }}
+  frontend_ip_configuration_name = "{{ lb.frontend_ip_configuration[0].name }}"
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.{{ lb.name_sanitized }}_{{ lb.backend_address_pool[0].name.replace('-', '_').lower() }}.id]
+  {%  if rule.probe_id %}
+  probe_id                       = azurerm_lb_probe.{{ lb.name_sanitized }}_{{ lb.probe[0].name.replace('-', '_').lower() }}.id
+  {%  endif -%}
+  enable_floating_ip             = {{ rule.enable_floating_ip | lower }}
+  idle_timeout_in_minutes        = {{ rule.idle_timeout_in_minutes }}
+  load_distribution              = "{{ rule.load_distribution }}"
+  disable_outbound_snat          = {{ rule.disable_outbound_snat | lower }}
+  {%  if rule.enable_tcp_reset is not none %}
+  enable_tcp_reset               = {{ rule.enable_tcp_reset | lower }}
+  {%  endif -%}
+}
+{%- endfor %}
+{%  endif -%}
+
+{%  if lb.inbound_nat_rule %}
+{%- for nat_rule in lb.inbound_nat_rule %}
+resource "azurerm_lb_nat_rule" "{{ lb.name_sanitized }}_{{ nat_rule.name.replace('-', '_').lower() }}" {
+  resource_group_name            = "{{ lb.resource_group_name }}"
+  loadbalancer_id                = azurerm_lb.{{ lb.name_sanitized }}.id
+  name                           = "{{ nat_rule.name }}"
+  protocol                       = "{{ nat_rule.protocol }}"
+  frontend_port                  = {{ nat_rule.frontend_port }}
+  backend_port                   = {{ nat_rule.backend_port }}
+  frontend_ip_configuration_name = "{{ lb.frontend_ip_configuration[0].name }}"
+}
+{%- endfor %}
+{%  endif -%}
+
+{% if not loop.last %}
+
+{% endif -%}
+{% endfor %}

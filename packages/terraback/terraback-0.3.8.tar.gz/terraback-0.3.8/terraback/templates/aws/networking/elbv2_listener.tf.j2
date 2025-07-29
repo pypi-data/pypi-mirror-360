@@ -1,0 +1,167 @@
+{% for listener in resources -%}
+resource "aws_lb_listener" "{{ listener.Port }}_{{ listener.Protocol | lower }}" {
+  load_balancer_arn = "{{ listener.LoadBalancerArn }}"
+  port              = "{{ listener.Port }}"
+  protocol          = "{{ listener.Protocol }}"
+
+  {%  if listener.get('SslPolicy') %}
+  ssl_policy        = "{{ listener.SslPolicy }}"
+  {%  endif -%}
+
+  {%  if listener.get('AlpnPolicy') %}
+  alpn_policy       = "{{ listener.AlpnPolicy }}"
+  {%  endif -%}
+
+  {%  if listener.get('Certificates') %}
+  certificate_arn   = "{{ listener.Certificates[0].CertificateArn }}"
+  {%  endif -%}
+
+  {%- set default_action = listener.DefaultActions[0] %}
+  default_action {
+    type = "{{ default_action.Type }}"
+
+    {%  if default_action.get('Order') %}
+    order = {{ default_action.Order }}
+    {%  endif -%}
+
+    {%  if default_action.Type == 'forward' %}
+    {%  if default_action.get('TargetGroupArn') %}
+    target_group_arn = "{{ default_action.TargetGroupArn }}"
+    {%- elif default_action.get('ForwardConfig') %}
+    forward {
+      {%- for tg in default_action.ForwardConfig.TargetGroups %}
+      target_group {
+        arn = "{{ tg.TargetGroupArn }}"
+        {%  if tg.get('Weight') is defined and tg.Weight is not none %}
+        weight = {{ tg.Weight }}
+        {%  endif -%}
+      }
+      {%- endfor %}
+
+      {%  if default_action.ForwardConfig.get('TargetGroupStickinessConfig') %}
+      stickiness {
+        enabled  = {{ default_action.ForwardConfig.TargetGroupStickinessConfig.Enabled | lower }}
+        duration = {{ default_action.ForwardConfig.TargetGroupStickinessConfig.DurationSeconds }}
+      }
+      {%  endif -%}
+    }
+    {%  endif -%}
+    {%  endif -%}
+
+    {%  if default_action.Type == 'redirect' and default_action.get('RedirectConfig') %}
+    redirect {
+      {%  if default_action.RedirectConfig.get('Protocol') %}
+      protocol = "{{ default_action.RedirectConfig.Protocol }}"
+      {%  endif -%}
+      {%  if default_action.RedirectConfig.get('Port') %}
+      port = "{{ default_action.RedirectConfig.Port }}"
+      {%  endif -%}
+      {%  if default_action.RedirectConfig.get('Host') %}
+      host = "{{ default_action.RedirectConfig.Host }}"
+      {%  endif -%}
+      {%  if default_action.RedirectConfig.get('Path') %}
+      path = "{{ default_action.RedirectConfig.Path }}"
+      {%  endif -%}
+      {%  if default_action.RedirectConfig.get('Query') %}
+      query = "{{ default_action.RedirectConfig.Query }}"
+      {%  endif -%}
+      status_code = "{{ default_action.RedirectConfig.StatusCode }}"
+    }
+    {%  endif -%}
+
+    {%  if default_action.Type == 'fixed-response' and default_action.get('FixedResponseConfig') %}
+    fixed_response {
+      content_type = "{{ default_action.FixedResponseConfig.ContentType }}"
+      {%  if default_action.FixedResponseConfig.get('MessageBody') %}
+      message_body = "{{ default_action.FixedResponseConfig.MessageBody }}"
+      {%  endif -%}
+      status_code = "{{ default_action.FixedResponseConfig.StatusCode }}"
+    }
+    {%  endif -%}
+
+    {%  if default_action.Type == 'authenticate-cognito' and default_action.get('AuthenticateCognitoConfig') %}
+    authenticate_cognito {
+      user_pool_arn       = "{{ default_action.AuthenticateCognitoConfig.UserPoolArn }}"
+      user_pool_client_id = "{{ default_action.AuthenticateCognitoConfig.UserPoolClientId }}"
+      user_pool_domain    = "{{ default_action.AuthenticateCognitoConfig.UserPoolDomain }}"
+
+      {%  if default_action.AuthenticateCognitoConfig.get('AuthenticationRequestExtraParams') %}
+      authentication_request_extra_params = {
+        {%- for key, value in default_action.AuthenticateCognitoConfig.AuthenticationRequestExtraParams.items() %}
+        "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+        {%- endfor %}
+      }
+      {%  endif -%}
+
+      {%  if default_action.AuthenticateCognitoConfig.get('OnUnauthenticatedRequest') %}
+      on_unauthenticated_request = "{{ default_action.AuthenticateCognitoConfig.OnUnauthenticatedRequest }}"
+      {%  endif -%}
+
+      {%  if default_action.AuthenticateCognitoConfig.get('Scope') %}
+      scope = "{{ default_action.AuthenticateCognitoConfig.Scope }}"
+      {%  endif -%}
+
+      {%  if default_action.AuthenticateCognitoConfig.get('SessionCookieName') %}
+      session_cookie_name = "{{ default_action.AuthenticateCognitoConfig.SessionCookieName }}"
+      {%  endif -%}
+
+      {%  if default_action.AuthenticateCognitoConfig.get('SessionTimeout') is defined and default_action.AuthenticateCognitoConfig.SessionTimeout is not none %}
+      session_timeout = {{ default_action.AuthenticateCognitoConfig.SessionTimeout }}
+      {%  endif -%}
+    }
+    {%  endif -%}
+
+    {%  if default_action.Type == 'authenticate-oidc' and default_action.get('AuthenticateOidcConfig') %}
+    authenticate_oidc {
+      authorization_endpoint = "{{ default_action.AuthenticateOidcConfig.AuthorizationEndpoint }}"
+      client_id              = "{{ default_action.AuthenticateOidcConfig.ClientId }}"
+      client_secret          = "{{ default_action.AuthenticateOidcConfig.ClientSecret }}"
+      issuer                 = "{{ default_action.AuthenticateOidcConfig.Issuer }}"
+      token_endpoint         = "{{ default_action.AuthenticateOidcConfig.TokenEndpoint }}"
+      user_info_endpoint     = "{{ default_action.AuthenticateOidcConfig.UserInfoEndpoint }}"
+
+      {%  if default_action.AuthenticateOidcConfig.get('AuthenticationRequestExtraParams') %}
+      authentication_request_extra_params = {
+        {%- for key, value in default_action.AuthenticateOidcConfig.AuthenticationRequestExtraParams.items() %}
+        "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+        {%- endfor %}
+      }
+      {%  endif -%}
+
+      {%  if default_action.AuthenticateOidcConfig.get('OnUnauthenticatedRequest') %}
+      on_unauthenticated_request = "{{ default_action.AuthenticateOidcConfig.OnUnauthenticatedRequest }}"
+      {%  endif -%}
+
+      {%  if default_action.AuthenticateOidcConfig.get('Scope') %}
+      scope = "{{ default_action.AuthenticateOidcConfig.Scope }}"
+      {%  endif -%}
+
+      {%  if default_action.AuthenticateOidcConfig.get('SessionCookieName') %}
+      session_cookie_name = "{{ default_action.AuthenticateOidcConfig.SessionCookieName }}"
+      {%  endif -%}
+
+      {%  if default_action.AuthenticateOidcConfig.get('SessionTimeout') is defined and default_action.AuthenticateOidcConfig.SessionTimeout is not none %}
+      session_timeout = {{ default_action.AuthenticateOidcConfig.SessionTimeout }}
+      {%  endif -%}
+    }
+    {%  endif -%}
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+{%  if listener.Certificates|length > 1 %}
+{%- for cert in listener.Certificates[1:] %}
+resource "aws_lb_listener_certificate" "{{ listener.Port }}_{{ loop.index }}" {
+  listener_arn    = aws_lb_listener.{{ listener.Port }}_{{ listener.Protocol | lower }}.arn
+  certificate_arn = "{{ cert.CertificateArn }}"
+}
+{%- endfor %}
+{%  endif -%}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

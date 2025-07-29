@@ -1,0 +1,85 @@
+{% for cluster in resources -%}
+resource "aws_ecs_cluster" "{{ cluster.name_sanitized }}" {
+  name = "{{ cluster.clusterName }}"
+
+  {%  if cluster.get('capacity_providers_formatted') %}
+  capacity_providers = [
+    {%- for provider in cluster.capacity_providers_formatted %}
+    "{{ provider }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if cluster.get('default_capacity_strategy_formatted') %}
+  {%- for strategy in cluster.default_capacity_strategy_formatted %}
+  default_capacity_provider_strategy {
+    capacity_provider = "{{ strategy.capacityProvider }}"
+    {%  if strategy.weight > 0 %}
+    weight            = {{ strategy.weight }}
+    {%  endif -%}
+    {%  if strategy.base > 0 %}
+    base              = {{ strategy.base }}
+    {%  endif -%}
+  }
+  {%- endfor %}
+  {%  endif -%}
+
+  {%  if cluster.container_insights_enabled %}
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
+  {%  endif -%}
+
+  {%  if cluster.execute_command_enabled %}
+  configuration {
+    execute_command_configuration {
+      {%  if cluster.execute_command_config.get('kmsKeyId') %}
+      kms_key_id = "{{ cluster.execute_command_config.kmsKeyId }}"
+      {%  endif -%}
+      {%  if cluster.execute_command_config.get('logging') %}
+      logging    = "{{ cluster.execute_command_config.logging }}"
+      {%  endif -%}
+
+      {%  if cluster.execute_command_config.get('logConfiguration') %}
+      log_configuration {
+        {%  if cluster.execute_command_config.logConfiguration.get('cloudWatchLogGroupName') %}
+        cloud_watch_log_group_name = "{{ cluster.execute_command_config.logConfiguration.cloudWatchLogGroupName }}"
+        {%  endif -%}
+        {%  if cluster.execute_command_config.logConfiguration.get('cloudWatchEncryptionEnabled') %}
+        cloud_watch_encryption_enabled = {{ cluster.execute_command_config.logConfiguration.cloudWatchEncryptionEnabled | lower }}
+        {%  endif -%}
+        {%  if cluster.execute_command_config.logConfiguration.get('s3BucketName') %}
+        s3_bucket_name = "{{ cluster.execute_command_config.logConfiguration.s3BucketName }}"
+        {%  endif -%}
+        {%  if cluster.execute_command_config.logConfiguration.get('s3KeyPrefix') %}
+        s3_key_prefix = "{{ cluster.execute_command_config.logConfiguration.s3KeyPrefix }}"
+        {%  endif -%}
+        {%  if cluster.execute_command_config.logConfiguration.get('s3EncryptionEnabled') %}
+        s3_encryption_enabled = {{ cluster.execute_command_config.logConfiguration.s3EncryptionEnabled | lower }}
+        {%  endif -%}
+      }
+      {%  endif -%}
+    }
+  }
+  {%  endif -%}
+
+  {%  if cluster.get('service_connect_defaults_formatted') and cluster.service_connect_defaults_formatted.get('namespace') %}
+  service_connect_defaults {
+    namespace = "{{ cluster.service_connect_defaults_formatted.namespace }}"
+  }
+  {%  endif -%}
+
+  {%  if cluster.get('tags') %}
+  tags = {
+    {%- for tag in cluster.get('tags', []) %}
+    "{{ tag.key }}" = "{{ tag.value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

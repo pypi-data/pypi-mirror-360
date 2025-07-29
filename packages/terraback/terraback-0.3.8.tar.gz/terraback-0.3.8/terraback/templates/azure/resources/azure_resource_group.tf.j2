@@ -1,0 +1,22 @@
+{% for rg in resources -%}
+resource "azurerm_resource_group" "{{ rg.name_sanitized }}" {
+  name     = "{{ rg.name }}"
+  location = "{{ rg.location }}"
+
+  {%  if rg.tags %}
+  tags = {
+    {%- for key, value in rg.tags.items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

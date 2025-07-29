@@ -1,0 +1,52 @@
+{% for clb in resources -%}
+resource "aws_elb" "{{ clb.LoadBalancerName | tf_resource_name }}" {
+  name               = "{{ clb.LoadBalancerName }}"
+  internal           = {{ clb.Scheme == 'internal' | lower }}
+
+  subnets = [
+    {%- for subnet in clb.Subnets %}
+    "{{ subnet }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+
+  {%  if clb.SecurityGroups %}
+  security_groups = [
+    {%- for sg in clb.SecurityGroups %}
+    "{{ sg }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%- for listener in clb.ListenerDescriptions %}
+  listener {
+    instance_port     = {{ listener.Listener.InstancePort }}
+    instance_protocol = "{{ listener.Listener.InstanceProtocol }}"
+    lb_port           = {{ listener.Listener.LoadBalancerPort }}
+    lb_protocol       = "{{ listener.Listener.LoadBalancerProtocol }}"
+    {%  if listener.Listener.SSLCertificateId %}
+    ssl_certificate_id = "{{ listener.Listener.SSLCertificateId }}"
+    {%  endif -%}
+  }
+  {%- endfor %}
+
+  health_check {
+    target              = "{{ clb.HealthCheck.Target }}"
+    interval            = {{ clb.HealthCheck.Interval }}
+    timeout             = {{ clb.HealthCheck.Timeout }}
+    healthy_threshold   = {{ clb.HealthCheck.HealthyThreshold }}
+    unhealthy_threshold = {{ clb.HealthCheck.UnhealthyThreshold }}
+  }
+
+  {%  if clb.get('Tags') %}
+  tags = {
+    {%- for tag in clb.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

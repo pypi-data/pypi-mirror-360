@@ -1,0 +1,26 @@
+{% for db in resources -%}
+resource "aws_db_instance" "{{ db.DBInstanceIdentifier | tf_resource_name }}" {
+  identifier           = "{{ db.DBInstanceIdentifier }}"
+  instance_class       = "{{ db.DBInstanceClass }}"
+  engine               = "{{ db.Engine }}"
+  engine_version       = "{{ db.EngineVersion }}"
+  allocated_storage    = {{ db.AllocatedStorage }}
+
+  username             = "{{ db.MasterUsername }}"
+  password             = "changeme"
+
+  skip_final_snapshot  = true
+
+  {%  if db.get('TagList') %}
+  tags = {
+    {%- for tag in db.get('TagList', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

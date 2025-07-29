@@ -1,0 +1,77 @@
+{% for policy in resources -%}
+resource "aws_cloudfront_cache_policy" "{{ policy.name_sanitized }}" {
+  name        = "{{ policy.config_formatted.get('Name') }}"
+  comment     = "{{ policy.config_formatted.get('Comment', '') }}"
+
+  {%  if policy.config_formatted.get('DefaultTTL') is defined %}
+  default_ttl = {{ policy.config_formatted.DefaultTTL }}
+  {%  endif -%}
+
+  {%  if policy.config_formatted.get('MaxTTL') is defined %}
+  max_ttl     = {{ policy.config_formatted.MaxTTL }}
+  {%  endif -%}
+
+  {%  if policy.config_formatted.get('MinTTL') is defined %}
+  min_ttl     = {{ policy.config_formatted.MinTTL }}
+  {%  endif -%}
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    {%  if policy.config_formatted.get('enable_accept_encoding_gzip') is defined %}
+    enable_accept_encoding_gzip = {{ policy.config_formatted.enable_accept_encoding_gzip | lower }}
+    {%  endif -%}
+
+    {%  if policy.config_formatted.get('enable_accept_encoding_brotli') is defined %}
+    enable_accept_encoding_brotli = {{ policy.config_formatted.enable_accept_encoding_brotli | lower }}
+    {%  endif -%}
+
+    {%- set headers = policy.config_formatted.get('headers_formatted', {}) %}
+    headers_config {
+      header_behavior = "{{ headers.get('header_behavior', 'none') }}"
+
+      {%  if headers.get('headers') %}
+      headers {
+        items = [
+          {%- for header in headers.headers %}
+          "{{ header }}"{{ "," if not loop.last }}
+          {%- endfor %}
+        ]
+      }
+      {%  endif -%}
+    }
+
+    {%- set cookies = policy.config_formatted.get('cookies_formatted', {}) %}
+    cookies_config {
+      cookie_behavior = "{{ cookies.get('cookie_behavior', 'none') }}"
+
+      {%  if cookies.get('cookies') %}
+      cookies {
+        items = [
+          {%- for cookie in cookies.cookies %}
+          "{{ cookie }}"{{ "," if not loop.last }}
+          {%- endfor %}
+        ]
+      }
+      {%  endif -%}
+    }
+
+    {%- set query_strings = policy.config_formatted.get('query_strings_formatted', {}) %}
+    query_strings_config {
+      query_string_behavior = "{{ query_strings.get('query_string_behavior', 'none') }}"
+
+      {%  if query_strings.get('query_strings') %}
+      query_strings {
+        items = [
+          {%- for qs in query_strings.query_strings %}
+          "{{ qs }}"{{ "," if not loop.last }}
+          {%- endfor %}
+        ]
+      }
+      {%  endif -%}
+    }
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

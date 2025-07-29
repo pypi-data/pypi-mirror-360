@@ -1,0 +1,10 @@
+{% for assoc in resources -%}
+resource "aws_wafv2_web_acl_association" "{{ assoc.name_sanitized }}" {
+  resource_arn = "{{ assoc.ResourceArn }}"
+  web_acl_arn  = "{{ assoc.WebACLArn }}"
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}
