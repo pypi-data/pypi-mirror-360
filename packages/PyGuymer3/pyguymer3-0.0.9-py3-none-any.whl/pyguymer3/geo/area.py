@@ -1,0 +1,128 @@
+#!/usr/bin/env python3
+
+# Define function ...
+def area(
+    shape,
+    /,
+    *,
+          eps = 1.0e-12,
+        level = 1,
+        nIter = 100,
+    onlyValid = False,
+       repair = False,
+):
+    """Find the area of a shape.
+
+    Parameters
+    ----------
+    shape : shapely.coords.CoordinateSequence, shapely.geometry.point.Point, shapely.geometry.multipoint.MultiPoint, shapely.geometry.polygon.LinearRing, shapely.geometry.linestring.LineString, shapely.geometry.multilinestring.MultiLineString, shapely.geometry.polygon.Polygon, shapely.geometry.multipolygon.MultiPolygon
+        the shape
+    eps : float, optional
+        the tolerance of the Vincenty formula iterations
+    level : int, optional
+        the number of levels to split the shape into
+    nIter : int, optional
+        the maximum number of iterations (particularly the Vincenty formula)
+    onlyValid : bool, optional
+        only add valid Polygons (checks for validity can take a while, if being
+        being called often)
+    repair : bool, optional
+        attempt to repair invalid Polygons
+
+    Returns
+    -------
+    area : float
+        the area (in metres-squared)
+
+    Notes
+    -----
+    Copyright 2017 Thomas Guymer [1]_
+
+    References
+    ----------
+    .. [1] PyGuymer3, https://github.com/Guymer/PyGuymer3
+    """
+
+    # Import special modules ...
+    try:
+        import shapely
+        import shapely.ops
+    except:
+        raise Exception("\"shapely\" is not installed; run \"pip install --user Shapely\"") from None
+
+    # Import sub-functions ...
+    from ._area import _area
+    from .extract_polys import extract_polys
+
+    # **************************************************************************
+
+    # Initialize total ...
+    tot = 0.0                                                                   # [m2]
+
+    # Loop over the Polygons in the shape ...
+    for shapePart in extract_polys(shape, onlyValid = onlyValid, repair = repair):
+        # Loop over the Polygons in the Voronoi diagram of the part of the shape ...
+        for voronoi in extract_polys(shapely.ops.voronoi_diagram(shapePart), onlyValid = onlyValid, repair = repair):
+            # Loop over the parts of the Polygon in the Voronoi diagram of the
+            # part of the shape which intersect the part of the shape ...
+            for voronoiPart in extract_polys(shapePart.intersection(voronoi), onlyValid = onlyValid, repair = repair):
+                # Loop over triangles within the Polygon ...
+                for triangle1 in extract_polys(shapely.ops.triangulate(voronoiPart), onlyValid = onlyValid, repair = repair):
+                    # Check if the user wants this level of refinement ...
+                    if level == 1:
+                        # Increment the total and move on to the next one ...
+                        tot += _area(triangle1, eps = eps, nIter = nIter)       # [m2]
+                        continue
+
+                    # Loop over triangles within the triangle ...
+                    for triangle2 in extract_polys(shapely.ops.triangulate(triangle1), onlyValid = onlyValid, repair = repair):
+                        # Check if the user wants this level of refinement ...
+                        if level == 2:
+                            # Increment the total and move on to the next one ...
+                            tot += _area(triangle2, eps = eps, nIter = nIter)   # [m2]
+                            continue
+
+                        # Loop over triangles within the triangle ...
+                        for triangle3 in extract_polys(shapely.ops.triangulate(triangle2), onlyValid = onlyValid, repair = repair):
+                            # Check if the user wants this level of refinement ...
+                            if level == 3:
+                                # Increment the total and move on to the next
+                                # one ...
+                                tot += _area(triangle3, eps = eps, nIter = nIter)   # [m2]
+                                continue
+
+                            # Loop over triangles within the triangle ...
+                            for triangle4 in extract_polys(shapely.ops.triangulate(triangle3), onlyValid = onlyValid, repair = repair):
+                                # Check if the user wants this level of
+                                # refinement ...
+                                if level == 4:
+                                    # Increment the total and move on to the
+                                    # next one ...
+                                    tot += _area(triangle4, eps = eps, nIter = nIter)   # [m2]
+                                    continue
+
+                                # Loop over triangles within the triangle ...
+                                for triangle5 in extract_polys(shapely.ops.triangulate(triangle4), onlyValid = onlyValid, repair = repair):
+                                    # Check if the user wants this level of
+                                    # refinement ...
+                                    if level == 5:
+                                        # Increment the total and move on to the
+                                        # next one ...
+                                        tot += _area(triangle5, eps = eps, nIter = nIter)   # [m2]
+                                        continue
+
+                                    # Loop over triangles within the triangle ...
+                                    for triangle6 in extract_polys(shapely.ops.triangulate(triangle5), onlyValid = onlyValid, repair = repair):
+                                        # Check if the user wants this level of
+                                        # refinement ...
+                                        if level == 6:
+                                            # Increment the total and move on to
+                                            # the next one ...
+                                            tot += _area(triangle6, eps = eps, nIter = nIter)   # [m2]
+                                            continue
+
+                                        # Cry ...
+                                        raise Exception(f"\"level\" is too large (\"{level:,d}\")") from None
+
+    # Return total ...
+    return tot
