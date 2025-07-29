@@ -1,0 +1,51 @@
+{% import 'macros/forms.html' as forms %}
+{% import 'macros/modal.html' as modal %}
+
+
+{% macro comments_add_form(form, endpoint, method, id, entity_id) %}
+
+    {% if id == -1 %}
+        {% set action = url_for(endpoint, entity_id=entity_id) %}
+        {% set title = 'Write Comment' %}
+    {% else %}
+        {% set action = url_for(endpoint, id_=id) %}
+        {% set title = 'Edit Comment' %}
+    {% endif %}
+
+    {% set modal_id = 'modal-edit-comment-' ~ id %}
+    {% set form_id = 'form-edit-comment-' ~ id %}
+
+    {% call modal.modal(id=modal_id, title=title) %}
+
+        <form action="{{ action }}" method="get" id="{{ form_id }}">
+
+            {{ form.hidden_tag() }}
+
+            <div class="row mb-3">
+                {{ forms.field_row(form.subject, 'Subject') }}
+            </div>
+
+            <div class="row mb-3">
+                {{ forms.field_row(form.text, 'Comment') }}
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-sm-10">
+                    {{ form.submit() }}
+                </div>
+            </div>
+
+        </form>
+
+        <div id="{{ form_id }}-messages"></div>
+
+        {{ forms.script_send_form(
+            form=form,
+            form_name=form_id,
+            method=method,
+            message_field=form_id ~ '-messages'
+         ) }}
+
+    {% endcall %}
+
+{% endmacro %}

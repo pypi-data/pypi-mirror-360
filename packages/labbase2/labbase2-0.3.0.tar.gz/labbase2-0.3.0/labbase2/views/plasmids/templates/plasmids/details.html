@@ -1,0 +1,141 @@
+{% from 'plasmids/pane.html' import pane_details with context %}
+{% from 'comments/pane.html' import comment_pane with context %}
+{% from 'files/pane.html' import files_pane with context %}
+{% from 'requests/pane.html' import request_pane with context %}
+{% from 'preparations/pane.html' import preparations_pane with context %}
+{% from 'bacteria/pane.html' import bacteria_pane with context %}
+{% from 'plasmids/form.html' import plasmid_add_form %}
+{% from "bacteria/form.html" import bacteria_add_form %}
+{% from "preparations/form.html" import preparations_add_form %}
+{% from "files/form.html" import file_upload_form %}
+{% from "files/form.html" import file_edit_form %}
+{% import 'macros/pill.html' as pill %}
+
+
+{% set n_comments = plasmid.comments | length %}
+
+
+<div id="sidebar-right-messages"></div>
+
+<h1 class="mb-4">{{ plasmid.label }}</h1>
+
+<div class="btn-group btn-group-sm bg-white rounded border w-100" role="group">
+
+    <ul class="nav nav-pills m-0" role="tablist">
+
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tab-info"
+                    type="button"
+                    role="tab"
+                    aria-selected="true">
+                Details
+            </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+            <button class="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tab-preps"
+                    type="button"
+                    role="tab"
+                    aria-selected="false">
+                Preps
+            </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+            <button class="nav-link position-relative"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tab-comments"
+                    type="button"
+                    role="tab"
+                    aria-selected="false">
+                Comments
+                {% if n_comments %}{{ pill.top_right(n_comments, 'bg-primary') }}{% endif %}
+            </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+            <button class="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tab-bacteria"
+                    type="button"
+                    role="tab"
+                    aria-selected="false">
+                Stocks
+            </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+            <button class="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tab-files"
+                    type="button"
+                    role="tab"
+                    aria-selected="false">
+                Files
+            </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+            <button class="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tab-requests"
+                    type="button"
+                    role="tab"
+                    aria-selected="false">
+                Requests
+            </button>
+        </li>
+
+    </ul>
+
+</div>
+
+<div class="tab-content bg-white rounded border my-3">
+
+    {{ pane_details(
+            status='active',
+            pane_id='tab-info',
+            plasmid=plasmid,
+            form=form
+        ) }}
+
+    {{ preparations_pane(
+            status='fade',
+            pane_id='tab-preps',
+            plasmid=plasmid,
+            form=preparation_form
+          ) }}
+
+    {{ files_pane(
+            status='fade',
+            pane_id='tab-files',
+            entity=plasmid,
+            form=file_form
+          ) }}
+
+    {{ comment_pane(
+            status='fade',
+            pane_id='tab-comments',
+            entity=plasmid,
+            form=comment_form
+          ) }}
+
+    {{ bacteria_pane(
+            status='fade',
+            pane_id='tab-bacteria',
+            plasmid=plasmid,
+            form=bacteria_form
+          ) }}
+
+    {{ request_pane(
+            status='fade',
+            pane_id='tab-requests',
+            entity=plasmid,
+            form=request_form
+          ) }}
+
+</div>

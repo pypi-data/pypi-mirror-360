@@ -1,0 +1,123 @@
+<!-- EXTENSION DECLARATION AND IMPORTS -->
+{% extends "base-site.html" %}
+
+{% import 'macros/navbar.html' as nav with context %}
+{% import 'macros/toast.html' as toast %}
+
+
+<!-- START SITE BLOCK -->
+{% block body %}
+
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container-fluid">
+
+            <a class="navbar-brand" href="#">Labbase2</a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                    {{ nav.link('base.index', 'Home') }}
+
+                    <li class="nav-item dropdown">
+
+                        {{ nav.dropdown('Fly Stocks') }}
+
+                        <ul class="dropdown-menu">
+                            <li>{{ nav.dropdown_link('flystocks.index', 'Fly Stocks') }}</li>
+                        </ul>
+
+                    </li>
+
+                    <li class="nav-item dropdown">
+
+                        {{ nav.dropdown('Antibodies') }}
+
+                        <ul class="dropdown-menu">
+                            <li>{{ nav.dropdown_link('antibodies.index', 'Antibodies') }}</li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>{{ nav.dropdown_link('batches.index', 'Batches', consumable_type='antibody') }}</li>
+                        </ul>
+
+                    </li>
+
+                    <li class="nav-item dropdown">
+
+                        {{ nav.dropdown('Chemicals') }}
+
+                        <ul class="dropdown-menu">
+                            <li>{{ nav.dropdown_link('chemicals.index', 'Chemicals') }}</li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>{{ nav.dropdown_link('chemicals.solutions.index', 'Stock solutions') }}</li>
+                            <li>{{ nav.dropdown_link('batches.index', 'Batches', consumable_type='chemical') }}</li>
+                        </ul>
+
+                    </li>
+
+                    <li class="nav-item dropdown">
+
+                        {{ nav.dropdown('Plasmids') }}
+
+                        <ul class="dropdown-menu">
+                            <li>{{ nav.dropdown_link('plasmids.index', 'Plasmids') }}</li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>{{ nav.dropdown_link('plasmids.bacteria.index', 'Glycerol Stocks') }}</li>
+                        </ul>
+
+                    </li>
+
+                    <li class="nav-item dropdown">
+
+                        {{ nav.dropdown('Oligonucleotides') }}
+
+                        <ul class="dropdown-menu">
+                            <li>{{ nav.dropdown_link('oligonucleotides.index', 'Oligonucleotides') }}</li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>{{ nav.dropdown_link('oligonucleotides.find', 'Find primers') }}</li>
+                        </ul>
+
+                    </li>
+
+                    <li class="nav-item dropdown">
+
+                        {{ nav.dropdown('<span class="fas fa-user"></span>&nbsp;' ~ current_user.username) }}
+
+                        <ul class="dropdown-menu">
+                            <li>{{ nav.dropdown_link('auth.edit_user', 'User section')
+                                }}</li>
+                            <li>{{ nav.dropdown_link('imports.index', 'My imports') }}</li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>{{ nav.dropdown_link('auth.logout', '<span class="fas fa-sign-out-alt"></span>&nbsp;Logout') }}</li>
+                        </ul>
+
+                    </li>
+
+                </ul>
+
+                {% block navbar_right %}{% endblock %}
+
+            </div>
+
+        </div>
+    </nav>
+
+    <div id="vertical-flex-container">
+
+        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+
+
+
+        </div>
+
+        {% block content %}
+
+
+        {% endblock %}
+
+    </div>
+
+{% endblock %}

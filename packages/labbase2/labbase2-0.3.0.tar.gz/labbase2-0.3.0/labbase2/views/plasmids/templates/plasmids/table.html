@@ -1,0 +1,46 @@
+{% macro table(entities) %}
+
+    <table class="table table-results">
+
+        <thead class="table-light">
+
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Label</th>
+            <th scope="col">Owner</th>
+            <th scope="col">Insert</th>
+            <th scope="col">Vector</th>
+            <th scope="col">Cloning date</th>
+            <th scope="col"></th>
+            <th scope="col"></th>
+        </tr>
+
+        </thead>
+
+        <tbody id="table-results-body">
+
+        {% for plasmid in entities %}
+            <tr onclick="request_details('{{ url_for(".details", id_=plasmid.id) }}')">
+                <td class="id">{{ plasmid.id }}</td>
+                <td>{{ plasmid.label }}</td>
+                <td>{{ plasmid.owner.username }}</td>
+                <td>{{ plasmid.insert }}</td>
+                <td>{{ plasmid.vector }}</td>
+                <td>{{ plasmid.cloning_date }}</td>
+                <td>
+                    {% if plasmid.file_plasmid_id %}
+                        <i class="bi bi-circle"></i>
+                    {% endif %}</td>
+                <td>
+                    {% if plasmid.file_map_id %}
+                        <i class="bi bi-map-fill"></i>
+                    {% endif %}</td>
+                </td>
+            </tr>
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+{% endmacro %}

@@ -1,0 +1,140 @@
+{% from 'dilutions/form.html' import dilutions_add_form %}
+
+
+{% macro pane_details(dilution, form) %}
+
+    <div class="rounded border p-3 mb-3">
+
+        <div class="d-flex flex-start align-items-start mb-3">
+
+            <div class="flex-grow-1">
+                <h5 class="mb-1">{{ dilution.application | capitalize }}</h5>
+                <p class="text-muted">{{ dilution.timestamp_created | format_datetime }} by {{ dilution.user.username }}</p>
+            </div>
+
+            <div class="flex-shrink-0">
+
+                {% if dilution.user_id == current_user.id and current_user.has_permission("add-dilution") %}
+                    <a class="text-primary mx-2"
+                       data-bs-toggle="modal"
+                       data-bs-target="#modal-edit-dilution-{{ dilution.id }}">
+                        <i class="bi bi-pencil-fill"></i></a>
+
+                    <a class="text-danger"
+                       onclick="delete_entity('{{ url_for("antibodies.dilutions.delete", antibody_id=dilution.antibody_id, id_=dilution.id) }}')">
+                        <i class="bi bi-trash3-fill"></i></a>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <h6 class="mb-2 text-info">{{ dilution.dilution }}</h6>
+        <p>{{ dilution.reference }}</p>
+        {% if dilution.timestamp_edited %}
+            <p class="text-muted mb-0">
+                <em>(This dilution was updated on {{ dilution.timestamp_edited | format_datetime }})</em>
+            </p>
+        {% endif %}
+    </div>
+
+    {{ dilutions_add_form(form(None, obj=dilution), "antibodies.dilutions.edit", "PUT", dilution.id, dilution.antibody_id) }}
+
+{% endmacro %}
+
+
+{% macro dilutions_pane(status, pane_id, antibody, form) %}
+    <div class="tab-pane container {{ status }}" id="{{ pane_id }}">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="flex-grow-1 mb-0">Dilutions</h2>
+
+            <div class="flex-shrink-0">
+                {% if current_user.has_permission('add-dilution') %}
+                    <button
+                        type="button"
+                        class="btn btn-success btn-sm"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modal-edit-dilution--1">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <div class="btn-group btn-group-sm bg-white rounded border w-100" role="group">
+
+            <ul class="nav nav-pills m-0" role="tablist">
+
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active"
+                            data-bs-toggle="tab"
+                            data-bs-target="#immunostaining"
+                            type="button"
+                            role="tab"
+                            aria-selected="true">
+                        Immunostaining
+                    </button>
+                </li>
+
+                <li class="nav-item">
+                    <button class="nav-link"
+                            data-bs-toggle="tab"
+                            data-bs-target="#western-blot"
+                            type="button"
+                            role="tab"
+                            aria-selected="false">
+                        Western blot
+                    </button>
+                </li>
+
+                <li class="nav-item">
+                    <button class="nav-link"
+                            data-bs-toggle="tab"
+                            data-bs-target="#immunoprecipitation"
+                            type="button"
+                            role="tab"
+                            aria-selected="false">
+                        Immunoprecipitation
+                    </button>
+                </li>
+
+            </ul>
+
+        </div>
+
+        <!-- Tab panes -->
+        <div class="tab-content">
+
+            <div class="tab-pane container px-0 active" id="immunostaining">
+                {% for dilution in antibody.dilutions %}
+                    {% if dilution.application == "immunostaining" %}
+                        {{ pane_details(dilution, form) }}
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="tab-pane container px-0 fade" id="western-blot">
+                {% for dilution in antibody.dilutions %}
+                    {% if dilution.application == "western blot" %}
+                        {{ pane_details(dilution, form) }}
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="tab-pane container px-0 fade" id="immunoprecipitation">
+                {% for dilution in antibody.dilutions %}
+                    {% if dilution.application == "immunoprecipitation" %}
+                        {{ pane_details(dilution, form) }}
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+        </div>
+
+        {{ dilutions_add_form(form(), "antibodies.dilutions.add", "POST", -1, antibody.id) }}
+
+    </div>
+{% endmacro %}
