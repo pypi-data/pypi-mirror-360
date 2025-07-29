@@ -1,0 +1,539 @@
+# ACOLYTE Configuration File
+# =========================
+# Este archivo es la FUENTE DE VERDAD para toda la CONFIGURACIÓN
+# (SQLite es la fuente de verdad para los DATOS)
+#
+# Copia este archivo a .acolyte y ajusta según tu proyecto
+# El script de instalación genera uno automáticamente con valores detectados
+
+version: "1.0"
+
+# === INFORMACIÓN DEL PROYECTO DEL USUARIO ===
+# Esta sección ayuda a ACOLYTE a entender tu proyecto y generar código apropiado
+
+project:
+  name: mi-proyecto
+  path: .
+  user: developer
+  description: "Descripción de tu proyecto"
+  created: "2024-01-01T00:00:00Z" # Auto-generado
+
+  # Stack tecnológico (para que ACOLYTE sugiera correctamente)
+  stack:
+    backend:
+      - python
+      - fastapi
+      - postgresql
+    frontend:
+      - typescript
+      - react
+      - tailwind
+    tools:
+      - docker
+      - poetry
+      - git
+
+# Estilo de código preferido (para que ACOLYTE genere código según tus estándares)
+code_style:
+  python:
+    formatter: black
+    linter: ruff
+    line_length: 100
+    quotes: double # single o double
+    docstring_style: google # google, numpy, sphinx
+    type_checking: strict # para mypy
+
+  javascript:
+    formatter: prettier
+    linter: eslint
+    semicolons: false # true o false
+    quotes: single # single o double
+    indent: 2 # espacios
+    typescript: true # si usas TypeScript
+
+  general:
+    indent_style: spaces # spaces o tabs
+    trim_trailing_whitespace: true
+    insert_final_newline: true
+    charset: utf-8
+
+# Hardware detectado (auto-generado por script de instalación)
+hardware:
+  os: linux # windows, darwin, linux
+  cpu_cores: 4
+  ram_gb: 16
+  gpu:
+    available: false
+    name: null
+    vram_mb: 0
+
+# === CONFIGURACIÓN DE ACOLYTE ===
+# Cómo debe funcionar ACOLYTE en tu sistema
+
+# Modelo LLM
+model:
+  name: qwen2.5-coder:3b # Base: 1b, 3b, 7b, 14b, 32b (según tu RAM)
+  context_size: 32768 # 32k para 1b/3b, hasta 128k para 14b/32b
+
+# Puertos de servicios
+ports:
+  weaviate: 8080
+  ollama: 11434
+  backend: 8000
+
+# Configuración de WebSockets
+websockets:
+  max_connections: 100  # Máximo de conexiones WebSocket simultáneas (límite absoluto: 1000)
+  heartbeat_interval: 30  # Intervalo de heartbeat en segundos (rango: 10-300s)
+  connection_timeout: 60  # Timeout de conexión inactiva en segundos (rango: 30-3600s)
+  
+  # Límites de seguridad aplicados automáticamente:
+  # - max_connections será limitado entre 1 y 1000
+  # - heartbeat_interval será limitado entre 10s y 5min (300s)
+  # - connection_timeout será limitado entre 30s y 1h (3600s)
+
+# Configuración de embeddings (UniXcoder)
+embeddings:
+  cache_size: 10000 # Entradas en caché LRU
+  device: auto # auto, cuda, cpu
+  batch_size: 20 # Archivos por batch
+  max_tokens_per_batch: 10000 # Límite de tokens totales por batch para prevenir OOM
+  # Clustering fue eliminado en favor del grafo neuronal en /rag/graph/
+  reranker_model: cross-encoder/ms-marco-MiniLM-L-6-v2 # Modelo para re-ranking
+  reranker_batch_size: 32 # Batch size para re-ranking
+
+# Sistema RAG y búsqueda
+search:
+  similarity_threshold: 0.7 # Umbral mínimo de similitud
+  weaviate_batch_size: 100 # Objetos por batch en Weaviate (recomendado)
+  max_chunks_in_context: 10 # Chunks de código en contexto
+  max_conversation_history: 20 # Mensajes de historial
+  hybrid_weights:
+    semantic: 0.7 # 70% búsqueda por embeddings
+    lexical: 0.3 # 30% búsqueda por palabras
+
+# Sistema de fuzzy matching para búsqueda léxica
+rag:
+  retrieval:
+    fuzzy_matching:
+      enabled: true # Activar normalización de naming conventions
+      max_variations: 5 # Máximo de variaciones a generar
+      min_term_length: 3 # Longitud mínima para aplicar fuzzy
+      # Ejemplo: "getUserData" → ["getUserData", "get_user_data", "GetUserData"]
+
+  # Compresión contextual inteligente (Decisión #14)
+  compression:
+    enabled: true # Activar compresión contextual
+    ratio: 0.7 # Comprimir al 70% del tamaño original
+    strategy: contextual # Estrategia: contextual, simple, none
+
+    # Ratios de compresión según nivel de relevancia
+    ratios:
+      high_relevance: 0.9 # Mantener 90% (relevancia alta)
+      medium_relevance: 0.6 # Mantener 60% (relevancia media)
+      low_relevance: 0.3 # Mantener 30% (relevancia baja)
+      aggressive: 0.2 # Mantener 20% (último recurso)
+
+    # Umbrales para determinar nivel de relevancia
+    relevance_thresholds:
+      high: 0.8 # Score > 0.8 = alta relevancia
+      medium: 0.5 # Score > 0.5 = media relevancia
+      recompress: 0.3 # Score < 0.3 = no vale la pena
+
+    contextual:
+      min_chunk_size: 100 # No comprimir chunks < 100 tokens
+      early_stop_ms: 45 # Detener procesamiento después de 45ms
+      broad_query_keywords: # Palabras que indican NO comprimir
+        - arquitectura
+        - completo
+        - general
+        - overview
+        - estructura
+      specific_query_keywords: # Palabras que indican SÍ comprimir
+        - error
+        - bug
+        - función
+        - método
+        - variable
+        - línea
+
+    # Configuración de estrategias de compresión
+    strategies:
+      code:
+        max_comment_length: 80 # Comentarios más largos se eliminan
+        max_empty_lines: 1 # Máximo de líneas vacías consecutivas
+        max_signatures: 10 # Máximo de signatures a extraer
+      markdown:
+        section_preview_chars: 500 # Caracteres a mostrar de cada sección
+        max_headers: 20 # Máximo de headers a extraer
+      config:
+        max_lines: 50 # Máximo de líneas a preservar
+        max_sections: 20 # Máximo de secciones a mostrar
+      data:
+        sample_rows: 5 # Filas a mostrar al inicio/fin
+        max_create_statements: 3 # Máximo de CREATE TABLE a mostrar
+      other:
+        max_content_high: 2000 # Máximo contenido para relevancia alta
+        max_lines_preview: 50 # Líneas para preview (25 inicio + 25 fin)
+
+  # Configuración de enriquecimiento
+  enrichment:
+    batch_size: 100 # Chunks por batch (recomendado por Weaviate)
+    timeout_seconds: 30 # Timeout por operación
+
+# Indexación de código
+indexing:
+  batch_size: 20 # Archivos procesados en paralelo
+  concurrent_workers: 4 # Workers paralelos
+  max_file_size_mb: 10 # Tamaño máximo por archivo
+  
+  # === PARALELIZACIÓN (NUEVO v0.1.8+) ===
+  # Procesamiento paralelo con múltiples workers para mejorar velocidad 2-4x
+  enable_parallel: false # Activar workers paralelos (default: false para estabilidad)
+  min_files_for_parallel: 20 # Mínimo de archivos para activar paralelización
+  worker_batch_size: 10 # Archivos por batch de worker (ajustar según RAM)
+  embeddings_semaphore: 2 # Operaciones GPU simultáneas (ajustar según VRAM)
+  max_chunk_tokens: 8000 # Máximo de tokens por chunk (default: 8000)
+  min_chunk_lines: 5 # Mínimo de líneas por chunk (default: 5)
+  chunk_sizes: # Tokens por chunk según lenguaje
+    python: 150
+    javascript: 150
+    java: 100
+    go: 100
+    rust: 100
+    markdown: 50
+    default: 100
+    batch_max_size_mb: 50 # Límite por batch en MB (default: 50)
+    max_concurrent_batches: 3 # Batches simultáneos
+    chunk_size_lines: 150 # Líneas por chunk
+
+# Cache unificado para todos los módulos
+cache:
+  max_size: 1000 # Entradas máximas en cache LRU
+  ttl_seconds: 3600 # TTL de 1 hora (3600 segundos)
+  save_interval: 300 # Intervalo de guardado automático (5 minutos) para cache persistente
+  # Nota: SmartTokenCounter usa @lru_cache con maxsize=10000 internamente
+
+# Sistema de optimización ("dream")
+optimization:
+  threshold: 7.5 # 0-10: cuándo sugerir optimización
+  auto_optimize: false # Siempre requiere confirmación
+
+# Dream System - Análisis profundo y optimización
+dream:
+  # Umbrales de fatiga
+  fatigue_threshold: 7.5 # Cuando sugerir análisis (0-10)
+  emergency_threshold: 9.5 # Análisis urgente (0-10)
+  
+  # Duración y almacenamiento
+  cycle_duration_minutes: 5 # Duración de cada ciclo de análisis
+  dream_folder_name: ".acolyte-dreams" # Carpeta para insights
+  
+  # Configuración de análisis
+  analysis:
+    # Estimación de tokens por archivo (usado para calcular archivos por ciclo)
+    avg_tokens_per_file: 1000 # Tokens promedio por archivo de código
+    
+    # Ratio de contexto utilizable (reserva para overhead)
+    usable_context_ratio: 0.9 # Usar 90% del contexto total
+    
+    # Estimación de caracteres por token
+    chars_per_token: 4 # Aproximación para cálculos rápidos
+    
+    # Configuración por tamaño de modelo
+    window_sizes:
+      # Modelos 32k
+      "32k":
+        strategy: "sliding_window"
+        new_code_size: 27000 # Tokens para código nuevo por ciclo (ajustado para caber en contexto)
+        preserved_context_size: 1500 # Contexto crítico preservado
+      
+      # Modelos 64k  
+      "64k":
+        strategy: "sliding_window"
+        new_code_size: 55000 # Ajustado para caber en contexto utilizable
+        preserved_context_size: 3000
+      
+      # Modelos 128k+
+      "128k+":
+        strategy: "single_pass"
+        system_reserve: 5000 # Tokens reservados para sistema
+    
+    # Prioridades por defecto para análisis
+    default_priorities:
+      bugs: 0.3 # 30% enfoque en detección de bugs
+      security: 0.25 # 25% en seguridad
+      performance: 0.2 # 20% en performance
+      architecture: 0.15 # 15% en arquitectura
+      patterns: 0.1 # 10% en patrones
+  
+  # Configuración de prompts de análisis
+  prompts_directory: null # null = usar prompts por defecto en dream/prompts/
+  # Para usar prompts personalizados:
+  # prompts_directory: ".acolyte/dream-prompts" # Relativo al proyecto
+  # prompts_directory: "/home/user/my-prompts" # Absoluto
+  
+  # Override de prompts específicos (opcional)
+  # prompts:
+  #   bug_detection: |
+  #     You are a specialized bug hunter...
+  #     {code}
+  #   security_analysis: |
+  #     Focus on OWASP top 10...
+  #     {code}
+
+# Sistema Semantic - Procesamiento de lenguaje
+semantic:
+  language: "es" # Idioma por defecto: es, en
+
+  # Detección de tareas multiidioma
+  task_detection:
+    confidence_threshold: 0.6
+    patterns:
+      es:
+        new_task:
+          - "vamos a implementar"
+          - "necesito crear"
+          - "empecemos con"
+          - "quiero desarrollar"
+          - "hay que hacer"
+          - "implementemos"
+          - "agreguemos"
+        continuation:
+          - "sigamos con"
+          - "continuemos"
+          - "donde quedamos"
+          - "lo que estábamos haciendo"
+          - "sobre el (.+) que"
+      en:
+        new_task:
+          - "let's implement"
+          - "I need to create"
+          - "let's start with"
+          - "I want to develop"
+          - "we need to make"
+          - "let's add"
+        continuation:
+          - "let's continue"
+          - "where were we"
+          - "back to"
+          - "what we were doing"
+          - "about the (.+) that"
+
+  # Detección de decisiones técnicas
+  decision_detection:
+    auto_detect: true
+    explicit_marker: "@decision"
+    patterns:
+      es:
+        - "vamos a usar (\\w+)"
+        - "decidí implementar"
+        - "usaremos (\\w+) para"
+        - "mejor (.+?) que (.+?) porque"
+      en:
+        - "we'll use (\\w+)"
+        - "I decided to implement"
+        - "we'll use (\\w+) for"
+        - "(.+?) is better than (.+?) because"
+
+  # Análisis de queries para distribución de tokens
+  query_analysis:
+    generation_keywords:
+      es:
+        ["crea", "genera", "escribe", "implementa", "archivo completo", "hazme"]
+      en:
+        ["create", "generate", "write", "implement", "complete file", "make me"]
+    simple_question_patterns:
+      es: ["^qué es", "^cómo funciona", "^para qué sirve"]
+      en: ["^what is", "^how does", "^what's the purpose"]
+
+# Logging
+logging:
+  level: INFO # DEBUG, INFO, WARNING, ERROR
+  file: .acolyte/logs/debug.log
+  rotation_size_mb: 10
+  format: "timestamp | level | component | message" # Sin emojis
+  debug_mode: false # Si true, incluye stack traces en errores automáticamente
+
+# Límites operacionales
+limits:
+  max_context_percentage: 0.9 # Usar 90% del context_size para input
+  session_timeout_hours: 24 # Timeout de sesiones inactivas
+  vector_db_max_size_gb: 50 # Cuándo sugerir limpieza
+
+  # Límites de conversaciones
+  max_related_sessions: 10 # Máximo de sesiones relacionadas a mantener
+  related_sessions_chain: 5 # Longitud de cadena de continuidad entre chats
+  max_summary_turns: 4 # Turnos a preservar en resúmenes concatenados
+
+  # Distribución del presupuesto de tokens
+  # IMPORTANTE: El context_size es el límite TOTAL del modelo
+  # Los porcentajes abajo son del 90% disponible (10% reservado para respuesta)
+  token_distribution:
+    rag_chunks: 0.6 # 60% del 90% = 54% del total
+    conversation_history: 0.3 # 30% del 90% = 27% del total
+    system_prompts: 0.1 # 10% del 90% = 9% del total
+
+# Archivos y carpetas a ignorar en la indexación
+ignore:
+  # Control de versiones
+  vcs:
+    - .git/
+    - .svn/
+    - .hg/
+
+  # ACOLYTE mismo
+  acolyte:
+    - .acolyte/
+    - ollama/
+    - weaviate/
+
+  # Cache y temporales
+  cache:
+    - __pycache__/
+    - .pytest_cache/
+    - .mypy_cache/
+    - .ruff_cache/
+    - .coverage
+    - htmlcov/
+    - "*.pyc"
+    - "*.pyo"
+    - .eslintcache
+    - .stylelintcache  
+    - .prettiercache
+    - .parcel-cache/
+    - .webpack/
+    - .rollup.cache/
+    - .turbo/
+    - .jest/
+    - .nyc_output/
+    - coverage/
+
+  # Dependencias por lenguaje
+  dependencies:
+    python:
+      - venv/
+      - .venv/
+      - "*.egg-info/"
+      - dist/
+      - build/
+    javascript:
+      - node_modules/
+      - bower_components/
+      - .next/
+      - .nuxt/
+      - .vercel/
+      - .netlify/
+      - .yarn/
+      - .pnp.js
+      - .pnp.cjs
+    go:
+      - vendor/
+    rust:
+      - target/
+      - debug/
+      - release/
+    java:
+      - target/
+      - out/
+      - build/
+      - .gradle/
+    ruby:
+      - .bundle/
+      - vendor/bundle/
+      - tmp/
+    php:
+      - vendor/
+
+  # Documentación generada
+  docs:
+    - docs/_build/
+    - site/
+    - .docusaurus/
+    - _site/
+    - public/
+    - .gatsby/
+    - .vuepress/dist/
+    - _book/
+
+  # IDEs y editores
+  ide:
+    - .vscode/
+    - .idea/
+    - .cursor/
+    - "*.swp"
+    - "*~"
+    - .DS_Store
+    - .project
+    - .classpath
+    - .settings/
+    - nbproject/
+
+  # Binarios y media
+  binary:
+    - "*.exe"
+    - "*.dll"
+    - "*.so"
+    - "*.dylib"
+    - "*.jar"
+    - "*.class"
+    - "*.o"
+    - "*.a"
+    - "*.wasm"
+    - "*.war"
+    - "*.ear"
+    - "*.app"
+    - "*.deb"
+    - "*.rpm"
+
+  media:
+    - "*.jpg"
+    - "*.jpeg"
+    - "*.png"
+    - "*.gif"
+    - "*.mp4"
+    - "*.mp3"
+    - "*.avi"
+    - "*.mov"
+    - "*.pdf"
+    - "*.ico"
+    - "*.svg"
+    - "*.webp"
+    - "*.ttf"
+    - "*.woff"
+    - "*.woff2"
+    - "*.eot"
+    - "*.otf"
+
+  # Datos y logs
+  data:
+    - "*.log"
+    - "*.db"
+    - "*.sqlite"
+    - "*.sqlite3"
+    - data/
+    - logs/
+    - tmp/
+    - temp/
+    - "*.sql.gz"
+    - "*.dump"
+    - "*.bak"
+    - "*.backup"
+
+  # Configuración sensible
+  sensitive:
+    - .env
+    - .env.*
+    - secrets.*
+    - config.local.*
+    - "*.key"
+    - "*.pem"
+    - "*.cert"
+    - "*.p12"
+    - "*.pfx"
+    - .secrets/
+    - credentials/
+    - private/
+
+  # Personalizados para tu proyecto
+  custom: []
