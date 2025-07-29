@@ -1,0 +1,88 @@
+[build-system]
+requires = ["hatchling>=1.5.0", "jupyterlab>=4.0.0,<5", "hatch-nodejs-version"]
+build-backend = "hatchling.build"
+
+[project]
+name = "escobar"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+classifiers = [
+    "Framework :: Jupyter",
+    "Framework :: Jupyter :: JupyterLab",
+    "Framework :: Jupyter :: JupyterLab :: 4",
+    "Framework :: Jupyter :: JupyterLab :: Extensions",
+    "Framework :: Jupyter :: JupyterLab :: Extensions :: Prebuilt",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "jupyter-server>=2.0.0",
+    "aiohttp",
+    "websockets>=11.0"
+]
+dynamic = ["version", "description", "authors", "urls", "keywords"]
+
+[tool.hatch.version]
+source = "nodejs"
+
+[tool.hatch.metadata.hooks.nodejs]
+fields = ["description", "authors", "urls"]
+
+[tool.hatch.build.targets.sdist]
+artifacts = ["escobar/labextension"]
+exclude = [".github", "binder"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"escobar/labextension" = "share/jupyter/labextensions/escobar"
+"install.json" = "share/jupyter/labextensions/escobar/install.json"
+
+[tool.hatch.build.hooks.version]
+path = "escobar/_version.py"
+
+[tool.hatch.build.hooks.jupyter-builder]
+dependencies = ["hatch-jupyter-builder>=0.5"]
+build-function = "hatch_jupyter_builder.npm_builder"
+ensured-targets = [
+    "escobar/labextension/static/style.js",
+    "escobar/labextension/package.json",
+]
+skip-if-exists = ["escobar/labextension/static/style.js"]
+
+[tool.hatch.build.hooks.jupyter-builder.build-kwargs]
+build_cmd = "build:prod"
+npm = ["yarn"]
+
+[tool.hatch.build.hooks.jupyter-builder.editable-build-kwargs]
+build_cmd = "install:extension"
+npm = ["yarn"]
+source_dir = "src"
+build_dir = "escobar/labextension"
+
+[tool.jupyter-releaser.options]
+version_cmd = "hatch version"
+
+[tool.jupyter-releaser.hooks]
+before-build-npm = [
+    "python -m pip install 'jupyterlab>=4.0.0,<5'",
+    "yarn",
+    "yarn build:prod"
+]
+before-build-python = ["yarn clean:all"]
+
+[tool.check-wheel-contents]
+ignore = ["W002"]
+
+# Jupyter Server 2.x entry point (preferred for 2.16.0+)
+[project.entry-points."jupyter_server.extension"]
+escobar = "escobar:EscobarExtensionApp"
+
+# Jupyter Server 1.x entry point (backward compatibility)
+[project.entry-points."jupyter_server.extensions"]
+escobar = "escobar:_load_jupyter_server_extension"

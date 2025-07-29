@@ -1,0 +1,188 @@
+# Escobar Project Intelligence
+
+## Project Overview
+
+Escobar is a JupyterLab extension providing AI chat functionality with WebSocket proxy capabilities. It's part of the Voitta AI ecosystem and communicates with the Bonnie backend server.
+
+## Critical Implementation Paths
+
+### Protocol Synchronization
+
+- TypeScript protocol definitions in `src/types/protocol.ts` MUST stay synchronized with Python protocol in `../bonnie/lib/protocol_messages.py`
+- When adding new message types, update both TypeScript interfaces and Python classes
+- Use `call_id` for request/response correlation
+- Context identification uses `username` + `chatID` pattern
+
+### JupyterLab Extension Patterns
+
+- Use Lumino widgets for UI components (not React)
+- Follow JupyterLab plugin architecture with optional service dependencies
+- Register commands in command palette and launcher
+- Use `I[Name]` naming convention for TypeScript interfaces
+
+### Build and Development Workflow
+
+- Development installation requires specific sequence:
+  ```bash
+  jupyter labextension develop --overwrite . &&
+  pip uninstall escobar -y &&
+  pip install -e . &&
+  jupyter server extension enable escobar
+  ```
+- Use `yarn watch` for development with auto-rebuild
+- Frontend and backend versions must stay synchronized
+
+## User Preferences and Workflow
+
+### Code Style Preferences
+
+- TypeScript with strict type checking
+- Single quotes preferred over double quotes
+- Arrow functions preferred over function declarations
+- Interface naming: `I[Name]` prefix (e.g., `IProtocolMessage`)
+- No semicolons (handled by Prettier)
+
+### Development Patterns
+
+- Always use virtual environment (.venv) for Python
+- Use typed Python with type hints
+- Import order: standard library, third-party, local project
+- Never store API keys or secrets in code or version control
+
+### Error Handling Patterns
+
+- Use type-safe error responses in protocol
+- Graceful degradation for optional JupyterLab services
+- WebSocket reconnection logic for connection failures
+- Proper error propagation from backend to frontend
+
+## Project-Specific Patterns
+
+### WebSocket Communication
+
+- All messages include `message_type`, `call_id`, and optional `msg_call_id`
+- Request messages include `username` and `chatID` for context
+- Use streaming responses for AI content with `is_complete` flag
+- Proxy WebSocket connections with header forwarding
+
+### JupyterLab Integration
+
+- Inject services as optional dependencies in widget constructor
+- Use notebook tracker for context awareness
+- Integrate with debugger service for debugging workflows
+- Handle settings through ISettingRegistry
+
+### File Structure Conventions
+
+- Protocol types in `src/types/protocol.ts`
+- Integration modules in `src/integrations/`
+- Utility functions in `src/utils/`
+- Icons and assets in `src/icons/`
+- Python handlers in `escobar/` directory
+
+## Known Challenges and Solutions
+
+### Protocol Synchronization Challenge
+
+- **Problem**: Manual sync between TypeScript and Python protocol definitions
+- **Current Solution**: Careful manual maintenance
+- **Future Solution**: Consider code generation from single source
+
+### Build Complexity
+
+- **Problem**: Coordinating TypeScript + Python build pipeline
+- **Solution**: Use Hatch with nodejs version integration
+- **Key Files**: `pyproject.toml`, `package.json`, `webpack.config.js`
+
+### JupyterLab Compatibility
+
+- **Problem**: Ensuring compatibility across JupyterLab versions
+- **Solution**: Use JupyterLab 4.x APIs and follow extension patterns
+- **Testing**: Manual integration testing with JupyterLab
+
+## Evolution of Project Decisions
+
+### Architecture Evolution
+
+- Started with simple chat widget
+- Added WebSocket proxy functionality
+- Integrated with multiple JupyterLab services
+- Developed comprehensive protocol system
+
+### Technology Choices
+
+- **TypeScript**: Chosen for type safety and JupyterLab compatibility
+- **Lumino Widgets**: Required for JupyterLab integration
+- **WebSocket**: Real-time bidirectional communication
+- **Hatch**: Modern Python packaging with frontend integration
+
+### Protocol Design Evolution
+
+- Initially simple request/response
+- Added streaming support for AI responses
+- Implemented context management with username/chatID
+- Added tool call support for AI interactions
+
+## Tool Usage Patterns
+
+### Development Tools
+
+- **Yarn**: Package management and build scripts
+- **TypeScript Compiler**: Strict type checking
+- **Webpack**: Extension bundling
+- **ESLint + Prettier**: Code quality and formatting
+- **Hatch**: Python packaging and version management
+
+### JupyterLab Development
+
+- Use `jupyter labextension develop` for development mode
+- Enable server extension with `jupyter server extension enable`
+- Use JupyterLab's built-in developer tools for debugging
+- Test with actual JupyterLab instance, not isolated environment
+
+### Integration Testing
+
+- Test WebSocket communication with actual backend
+- Verify all JupyterLab service integrations
+- Test extension loading and unloading
+- Validate protocol message handling
+
+## Memory Bank Maintenance
+
+### Documentation Strategy
+
+- Keep memory bank files updated with project evolution
+- Document new patterns and decisions in .clinerules
+- Update progress.md with implementation status
+- Maintain activeContext.md with current work focus
+
+### Key Documentation Files
+
+- `memory-bank/projectbrief.md` - Project foundation and requirements
+- `memory-bank/systemPatterns.md` - Architecture and design patterns
+- `memory-bank/techContext.md` - Technology stack and constraints
+- `memory-bank/progress.md` - Implementation status and milestones
+- `memory-bank/activeContext.md` - Current work and decisions
+
+## Critical Success Factors
+
+### Technical Success
+
+- Maintain protocol synchronization between frontend and backend
+- Ensure stable WebSocket communication
+- Keep JupyterLab integrations working across versions
+- Maintain type safety throughout the codebase
+
+### Development Success
+
+- Clear development workflow and documentation
+- Comprehensive memory bank for context preservation
+- Consistent code patterns and conventions
+- Effective testing and validation processes
+
+### User Success
+
+- Seamless integration with JupyterLab workflow
+- Reliable AI chat functionality
+- Persistent chat history and management
+- Intuitive user interface and experience
