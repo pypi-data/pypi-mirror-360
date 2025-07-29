@@ -1,0 +1,107 @@
+name: CI
+
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test-gcc-cpu:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-24.04
+
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y make g++ libopenblas-dev libfftw3-dev git cmake libhdf5-dev python3-dev
+        cd ${HOME}
+        git clone https://github.com/epfl-radio-astro/neonufft.git
+        cd ${HOME}/neonufft
+        mkdir -p build
+        cd build
+        cmake .. -DNEONUFFT_BUILD_TESTS=ON -DNEONUFFT_THREADING=NATIVE -DCMAKE_CXX_FLAGS="-march=native" -DNEONUFFT_MULTI_ARCH=OFF
+        sudo make install -j2
+
+    - name: Build
+      run: |
+        cd ${GITHUB_WORKSPACE}
+        mkdir -p build
+        cd build
+        cmake .. -DBIPP_GPU=OFF -DBIPP_PYTHON=ON -DBIPP_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=DEBUG
+        make -j2
+
+    - name: Run tests
+      run: |
+        export OMPI_MCA_btl_vader_single_copy_mechanism=none
+        ${GITHUB_WORKSPACE}/build/bin/run_tests
+
+  ##################
+  # Build  with CUDA
+  ##################
+  build-gcc-cuda:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-24.04
+    container: nvidia/cuda:12.6.1-devel-ubuntu24.04
+
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        apt-get update
+        apt-get install -y make g++ libopenblas-dev libfftw3-dev git cmake libhdf5-dev
+        cd ${HOME}
+        git clone https://github.com/epfl-radio-astro/neonufft.git
+        cd ${HOME}/neonufft
+        mkdir -p build
+        cd build
+        cmake .. -DNEONUFFT_BUILD_TESTS=ON -DNEONUFFT_THREADING=NATIVE -DCMAKE_CXX_FLAGS="-march=native" -DNEONUFFT_MULTI_ARCH=OFF -DNEONUFFT_GPU=CUDA -DCMAKE_CUDA_ARCHITECTURES=90
+        make install -j2
+
+    - name: Build
+      run: |
+        cd ${GITHUB_WORKSPACE}
+        mkdir -p build
+        cd build
+        cmake .. -DBIPP_BUILD_TESTS=ON -DBIPP_GPU=CUDA -DCMAKE_CUDA_ARCHITECTURES=90 -DBIPP_PYTHON=OFF
+        make -j2
+
+  ##################
+  # Build  with ROCm
+  ##################
+  build-clang-rocm:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-24.04
+    container: rocm/dev-ubuntu-24.04:6.4-complete
+
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        apt-get update
+        apt-get install -y make g++ libopenblas-dev libfftw3-dev git cmake libhdf5-dev
+        cd ${HOME}
+        git clone https://github.com/epfl-radio-astro/neonufft.git
+        cd ${HOME}/neonufft
+        mkdir -p build
+        cd build
+        export CXX=/opt/rocm/bin/amdclang++
+        cmake .. -DNEONUFFT_THREADING=NATIVE -DCMAKE_CXX_FLAGS="-march=native" -DNEONUFFT_MULTI_ARCH=OFF -DNEONUFFT_GPU=ROCM -DCMAKE_HIP_ARCHITECTURES=gfx942 -DCMAKE_PREFIX_PATH=/opt/rocm
+        make install -j2
+
+    - name: Build
+      run: |
+        cd ${GITHUB_WORKSPACE}
+        mkdir -p build
+        cd build
+        export CXX=/opt/rocm/bin/amdclang++
+        cmake .. -DBIPP_BUILD_TESTS=ON -DBIPP_GPU=ROCM -DCMAKE_HIP_ARCHITECTURES=gfx942 -DBIPP_PYTHON=OFF -DCMAKE_PREFIX_PATH=/opt/rocm
+        make -j2
