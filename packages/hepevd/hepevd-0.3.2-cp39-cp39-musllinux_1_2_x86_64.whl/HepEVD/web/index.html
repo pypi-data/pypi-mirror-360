@@ -1,0 +1,332 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>HepEVD</title>
+    <!-- <link rel="shortcut icon" href="favicon.ico"> -->
+
+    <!-- Instantly start the app, to start loading the data -->
+    <script async type="module" src="hep_evd.js"></script>
+
+    <!-- Metadata Tags -->
+    <meta name="title" content="HepEVD" />
+    <meta
+      name="description"
+      content="A web-based event display for Particle Physics."
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://crossr.github.io/HepEVD/" />
+    <meta property="og:title" content="HepEVD" />
+    <meta
+      property="og:description"
+      content="A web-based event display for Particle Physics."
+    />
+    <meta
+      property="og:image"
+      content="https://private-user-images.githubusercontent.com/10038688/291848277-badd2e8d-9a88-492f-8f1e-b41094af7e72.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MDk2NjA0NTIsIm5iZiI6MTcwOTY2MDE1MiwicGF0aCI6Ii8xMDAzODY4OC8yOTE4NDgyNzctYmFkZDJlOGQtOWE4OC00OTJmLThmMWUtYjQxMDk0YWY3ZTcyLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDAzMDUlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwMzA1VDE3MzU1MlomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTdkZGY3NDFhOWMzMTVkYjYxZGI3NjFkOWQ4ZmNiMDI4N2NjNjBjZjFiNjI2ZWY1N2MwNmRhOTY2MDYyMDY2YzImWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.JhEN-whL2S5m9x1uz8SPyM_Bh1SJ1XmjVAwZTbPKwZs"
+    />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://crossr.github.io/HepEVD/" />
+    <meta property="twitter:title" content="HepEVD" />
+    <meta
+      property="twitter:description"
+      content="A web-based event display for Particle Physics."
+    />
+    <meta
+      property="twitter:image"
+      content="https://private-user-images.githubusercontent.com/10038688/291848277-badd2e8d-9a88-492f-8f1e-b41094af7e72.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MDk2NjA0NTIsIm5iZiI6MTcwOTY2MDE1MiwicGF0aCI6Ii8xMDAzODY4OC8yOTE4NDgyNzctYmFkZDJlOGQtOWE4OC00OTJmLThmMWUtYjQxMDk0YWY3ZTcyLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDAzMDUlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwMzA1VDE3MzU1MlomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTdkZGY3NDFhOWMzMTVkYjYxZGI3NjFkOWQ4ZmNiMDI4N2NjNjBjZjFiNjI2ZWY1N2MwNmRhOTY2MDYyMDY2YzImWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.JhEN-whL2S5m9x1uz8SPyM_Bh1SJ1XmjVAwZTbPKwZs"
+    />
+
+    <!-- Local, vendored files are used here partially for speed, and partially to make the environment the same across
+    both the local and hosted versions of the app. This is a bit of a pain to maintain, but it's worth it for the
+    consistency. -->
+    <script async src="./vendor/es-module-shims.js"></script>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.167.0/build/three.module.min.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.167.0/examples/jsm/"
+        }
+      }
+    </script>
+
+    <link href="./vendor/daisyui.css" rel="stylesheet" type="text/css" />
+    <script src="./vendor/tailwindcss.js"></script>
+    <script defer src="./vendor/theme-change.js"></script>
+    <script defer src="./vendor/katex.js"></script>
+    <link rel="stylesheet" type="text/css" href="hep_evd.css" />
+
+    <!-- Much easier to use the CDN for KaTeX...there are a lot of font files -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+      integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"
+      crossorigin="anonymous"
+    />
+
+    <script async crossorigin="anonymous">
+      const selectedTheme = localStorage.getItem("themeInfo") ?? "dark";
+      document.documentElement.setAttribute("data-theme", selectedTheme);
+    </script>
+  </head>
+
+  <body>
+    <div id="navbar" class="navbar bg-neutral-300 rounded-box">
+      <div class="flex justify-start flex-1 px-2">
+        <div class="dropdown dropdown-hover">
+          <label id="2D_dropdown_button" class="btn btn-primary m-1">
+            2D Hits
+          </label>
+          <ul
+            id="2D_dropdown"
+            class="dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-box"
+          ></ul>
+        </div>
+
+        <div class="dropdown dropdown-hover">
+          <label id="3D_dropdown_button" class="btn btn-primary m-1">
+            3D Hits
+          </label>
+          <ul
+            id="3D_dropdown"
+            class="dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-box"
+          ></ul>
+        </div>
+
+        <div class="dropdown dropdown-hover">
+          <label id="image_dropdown_button" class="btn btn-primary m-1">
+            Images
+          </label>
+          <ul
+            id="image_dropdown"
+            class="dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-box"
+          ></ul>
+        </div>
+      </div>
+
+      <div id="state_swapper" class="flex justify-center flex-1 px-2">
+        <!-- Divs for next button, previous button, and event number dropdown -->
+        <button
+          id="previous_state"
+          class="btn btn-primary btn-outline m-1"
+          onclick="prevState()"
+        >
+          ⏮️
+        </button>
+        <div class="dropdown dropdown-hover">
+          <label id="state_dropdown_button" class="btn btn-primary m-1">
+            2D
+          </label>
+          <ul
+            id="state_dropdown"
+            class="dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-box max-h-[85vh] flex-row overflow-auto"
+          ></ul>
+        </div>
+        <button
+          id="next_state"
+          class="btn btn-primary btn-outline m-1"
+          onclick="nextState()"
+        >
+          ⏭️
+        </button>
+      </div>
+
+      <div class="flex justify-end flex-1 px-2">
+        <div class="dropdown dropdown-hover">
+          <label
+            id="options_button"
+            class="btn btn-primary m-1"
+            onclick="resetView()"
+          >
+            ⚙️ Options
+          </label>
+          <div
+            class="dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-box"
+          >
+            <button
+              class="btn btn-primary btn-outline m-1 w-44"
+              id="lut_button"
+              data-act-class="ACTIVECLASS"
+              onClick="pickColourscheme()"
+            >
+              🎨 Set Colours
+            </button>
+            <button
+              class="btn btn-primary btn-outline m-1 w-44"
+              id="theme_button"
+              data-toggle-theme="dark,light"
+              data-act-class="ACTIVECLASS"
+              onClick="toggleTheme()"
+            >
+              ☀️ Change Theme
+            </button>
+            <button
+              class="btn btn-primary btn-outline m-1 w-44"
+              onclick="resetView()"
+            >
+              🔄 Reset View
+            </button>
+            <button
+              class="btn btn-primary btn-outline m-1 w-44"
+              onclick="screenshotEvd()"
+            >
+              📷 Screenshot
+            </button>
+            <button
+              class="btn btn-primary btn-outline m-1 w-44"
+              onclick="saveState()"
+            >
+              💾 Save State
+            </button>
+            <button
+              class="btn btn-primary btn-outline m-1 w-44"
+              onclick="loadState()"
+            >
+              💾 Load State
+            </button>
+          </div>
+        </div>
+        <button
+          id="quit_button"
+          class="btn btn-primary btn-outline m-1"
+          onclick="quitEvd()"
+        >
+          🛑 Quit
+        </button>
+      </div>
+    </div>
+
+    <div id="loading_bar_data" class="loading_bar_data"></div>
+
+    <ul
+      id="particle_menu_2D"
+      class="particle_menu menu menu-xs bg-base-200 rounded-lg overflow-auto"
+    >
+      <li>
+        <details id="particle_menu_items_2D" class="text-zinc-500" closed />
+        <summary>
+          <span class="label-text pr-8">Details</span>
+        </summary>
+      </li>
+    </ul>
+    <ul
+      id="particle_menu_3D"
+      class="particle_menu menu menu-xs bg-base-200 rounded-lg overflow-auto"
+    >
+      <li>
+        <details id="particle_menu_items_3D" class="text-zinc-500" closed />
+        <summary>
+          <span class="label-text pr-8">Details</span>
+        </summary>
+      </li>
+    </ul>
+
+    <div id="all_toggle_options">
+      <div class="flex flex-col toggle_options" id="types_2D"></div>
+      <div class="flex flex-col toggle_options" id="types_3D"></div>
+
+      <div class="flex flex-col toggle_options" id="markers_2D"></div>
+      <div class="flex flex-col toggle_options" id="markers_3D"></div>
+
+      <div class="toggle_options" id="types_MC_2D"></div>
+      <div class="toggle_options" id="types_MC_3D"></div>
+
+      <div class="flex flex-col toggle_options" id="particles_2D"></div>
+      <div class="flex flex-col toggle_optionss" id="particles_3D"></div>
+    </div>
+
+    <div style="overflow: hidden" id="axisLabels"></div>
+
+    <div class="alert alert-success quit_message" id="quit_message">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        class="float-left stroke-current shrink-0 w-6 h-6"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        ></path>
+      </svg>
+      <span>Server Closed!</span>
+    </div>
+
+    <!-- Generic input modal -->
+    <dialog id="input_modal" class="modal">
+      <form method="dialog" class="modal-box w-fit">
+        <button
+          id="input_close"
+          class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        >
+          ✕
+        </button>
+        <div class="join p-4">
+          <input
+            type="text"
+            id="input_modal_input"
+            class="input input-bordered join-item"
+          />
+          <button
+            id="input_modal_save"
+            class="btn btn-primary join-item h-auto"
+          >
+            Save
+          </button>
+        </div>
+      </form>
+      <form method="dialog" id="input_backdrop" class="modal-backdrop">
+        <button>close</button>
+      </form>
+    </dialog>
+
+    <!-- Generic selection modal -->
+    <dialog id="select_modal" class="modal">
+      <form method="dialog" class="modal-box w-fit">
+        <button
+          id="select_close"
+          class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        >
+          ✕
+        </button>
+        <div class="join p-4">
+          <select
+            type="text"
+            id="select_modal_options"
+            class="select select-bordered join-item"
+          ></select>
+          <button
+            id="select_modal_choose"
+            class="btn btn-primary join-item h-auto"
+          >
+            Pick
+          </button>
+        </div>
+      </form>
+      <form method="dialog" id="select_backdrop" class="modal-backdrop">
+        <button>close</button>
+      </form>
+    </dialog>
+
+    <!-- MC Info -->
+    <div id="mc_truth" class="mc_truth text-zinc-500"></div>
+
+    <!-- Floating canvas for scale drawings -->
+    <div id="scale_bar_div">
+      <div id="scale_bar_text" class="text-accent"></div>
+      <div id="scale_bar" class="bg-accent"></div>
+    </div>
+
+    <!-- Citations Info when publicly hosted -->
+    <div id="citations" class="citations"></div>
+  </body>
+</html>
