@@ -1,0 +1,161 @@
+# Example configuration file with multiple profiles
+# Save this as ~/.as-cli/config.yaml to use profiles
+
+current_profile: default
+
+profiles:
+  default:
+    name: default
+    description: Default development environment
+    api:
+      base_url: https://api-dev.appsentinels.com
+      timeout: 30
+      max_retries: 3
+      retry_delay: 1
+    auth:
+      client_id: dev-client-id
+      auth_url: https://auth-dev.appsentinels.com
+      token_url: https://auth-dev.appsentinels.com/oauth/token
+      redirect_uri: http://localhost:8080/callback
+      scope: api:read api:write
+    output:
+      default_format: table
+      max_width: 120
+      truncate_long_values: true
+      show_headers: true
+      color_output: true
+    database:
+      db_type: clickhouse
+      host: localhost
+      port: 9000
+      database: dev_logs
+      user: default
+      docker_container: clickhouse-server
+      use_docker: true
+      connection_timeout: 30
+    ingest:
+      schema_file: dev-schema.json
+      default_batch_size: 1000
+      log_file: dev-ingestion.log
+      overwrite_log: true
+      enable_ip_extraction: true
+      enable_telemetry: true
+      continue_on_error: false
+      supported_formats: [parquet, json, csv]
+
+  staging:
+    name: staging
+    description: Staging environment for testing
+    api:
+      base_url: https://api-staging.appsentinels.com
+      timeout: 45
+      max_retries: 5
+      retry_delay: 2
+    auth:
+      client_id: staging-client-id
+      auth_url: https://auth-staging.appsentinels.com
+      token_url: https://auth-staging.appsentinels.com/oauth/token
+      redirect_uri: http://localhost:8080/callback
+      scope: api:read api:write
+    output:
+      default_format: json
+      max_width: 150
+      truncate_long_values: false
+      show_headers: true
+      color_output: true
+    database:
+      db_type: clickhouse
+      host: staging-db.internal
+      port: 9000
+      database: staging_logs
+      user: staging_user
+      docker_container: clickhouse-staging
+      use_docker: false
+      connection_timeout: 45
+    ingest:
+      schema_file: staging-schema.json
+      default_batch_size: 5000
+      log_file: staging-ingestion.log
+      overwrite_log: true
+      enable_ip_extraction: true
+      enable_telemetry: true
+      continue_on_error: true
+      supported_formats: [parquet, json, csv]
+
+  production:
+    name: production
+    description: Production environment - handle with care
+    api:
+      base_url: https://api.appsentinels.com
+      timeout: 60
+      max_retries: 10
+      retry_delay: 5
+    auth:
+      client_id: prod-client-id
+      auth_url: https://auth.appsentinels.com
+      token_url: https://auth.appsentinels.com/oauth/token
+      redirect_uri: https://cli.appsentinels.com/callback
+      scope: api:read api:write
+    output:
+      default_format: json
+      max_width: 200
+      truncate_long_values: false
+      show_headers: true
+      color_output: false
+    database:
+      db_type: clickhouse
+      host: prod-db-cluster.internal
+      port: 9000
+      database: production_logs
+      user: prod_user
+      docker_container: ""
+      use_docker: false
+      connection_timeout: 60
+    ingest:
+      schema_file: prod-schema.json
+      default_batch_size: 10000
+      log_file: /var/log/as-cli/prod-ingestion.log
+      overwrite_log: false
+      enable_ip_extraction: true
+      enable_telemetry: true
+      continue_on_error: false
+      supported_formats: [parquet, json]
+
+  local:
+    name: local
+    description: Local development with Docker
+    api:
+      base_url: http://localhost:3000
+      timeout: 15
+      max_retries: 2
+      retry_delay: 1
+    auth:
+      client_id: local-client-id
+      auth_url: http://localhost:3001
+      token_url: http://localhost:3001/oauth/token
+      redirect_uri: http://localhost:8080/callback
+      scope: api:read api:write
+    output:
+      default_format: table
+      max_width: 100
+      truncate_long_values: true
+      show_headers: true
+      color_output: true
+    database:
+      db_type: clickhouse
+      host: localhost
+      port: 9001
+      database: local_test
+      user: local
+      docker_container: clickhouse-local
+      use_docker: true
+      connection_timeout: 15
+    ingest:
+      schema_file: local-schema.json
+      default_batch_size: 100
+      log_file: local-ingestion.log
+      overwrite_log: true
+      enable_ip_extraction: false
+      enable_telemetry: false
+      continue_on_error: true
+      supported_formats: [parquet, json, csv]
