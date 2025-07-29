@@ -1,0 +1,691 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://raw.githubusercontent.com/reframe-hpc/reframe/master/reframe/schemas/config.json",
+    "title": "Validation schema for ReFrame's configuration file",
+    "defs": {
+        "alphanum_string": {
+            "type": "string",
+            "pattern": "([a-zA-Z_][a-zA-Z0-9_]*)"
+        },
+        "alphanum_ext_string": {
+            "type": "string",
+            "pattern": "([a-zA-Z_]([a-zA-Z0-9_]|-)*)"
+        },
+        "system_ref": {
+            "type": "array",
+            "items": {"type": "string"}
+        },
+        "envvar_list": {
+            "type": "array",
+            "items": {
+                "type": "array",
+                "items": [{"$ref": "#/defs/alphanum_ext_string"}],
+                "additionalProperties": false
+            }
+        },
+        "modules_list": {
+            "type": "array",
+            "items": {
+                "anyOf": [
+                    {"type": "string"},
+                    {
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": "string"},
+                            "collection": {"type": "boolean"},
+                            "path": {"type": ["string", "null"]}
+                        },
+                        "required": ["name"],
+                        "additionalProperties": false
+                    }
+                ]
+            }
+        },
+        "loglevel": {
+            "type": "string",
+            "enum": ["critical", "error", "warning", "info",
+                     "verbose", "debug", "debug2", "undefined"]
+        },
+        "handler_common": {
+            "type": "object",
+            "properties": {
+                "type": {"type": "string"},
+                "level": {"$ref": "#/defs/loglevel"},
+                "format": {"type": "string"},
+                "format_perfvars": {"type": "string"},
+                "datefmt": {"type": "string"}
+            },
+            "required": ["type"]
+        },
+        "file_handler": {
+            "allOf": [
+                {"$ref": "#/defs/handler_common"},
+                {
+                    "properties": {
+                        "name": {"type": "string"},
+                        "append": {"type": "boolean"},
+                        "timestamp": {
+                            "anyOf": [
+                                {"type": "boolean"},
+                                {"type": "string"}
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        "filelog_handler": {
+            "allOf": [
+                {"$ref": "#/defs/handler_common"},
+                {
+                    "properties": {
+                        "basedir": {"type": "string"},
+                        "prefix": {"type": "string"},
+                        "append": {"type": "boolean"},
+                        "ignore_keys": {
+                            "type": "array",
+                            "items": {"type": "string"}
+                        }
+                    },
+                    "required": ["prefix"]
+                }
+            ]
+        },
+        "graylog_handler": {
+            "allOf": [
+                {"$ref": "#/defs/handler_common"},
+                {
+                    "properties": {
+                        "address": {"type": "string"},
+                        "extras": {"type": "object"}
+                    },
+                    "required": ["address"]
+                }
+            ]
+        },
+        "sched_options": {
+            "type": "object",
+            "properties": {
+                "hosts": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "ignore_reqnodenotavail": {"type": "boolean"},
+                "job_submit_timeout": {"type": "number"},
+                "max_sacct_failures": {"type": "number"},
+                "resubmit_on_errors": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "sched_access_in_submit": {"type": "boolean"},
+                "unqualified_hostnames": {"type": "boolean"},
+                "use_nodes_option": {"type": "boolean"}
+            }
+        },
+        "stream_handler": {
+            "allOf": [
+                {"$ref": "#/defs/handler_common"},
+                {
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "enum": ["stdout", "stderr"]
+                        }
+                    }
+                }
+            ]
+        },
+        "syslog_handler": {
+            "allOf": [
+                {"$ref": "#/defs/handler_common"},
+                {
+                    "properties": {
+                        "socktype": {
+                            "type": "string",
+                            "enum": ["tcp", "udp"]
+                        },
+                        "facility": {"type": "string",
+                                     "enum": ["auth", "authpriv",
+                                              "cron", "daemon",
+                                              "ftp", "kern",
+                                              "lpr", "mail",
+                                              "news", "syslog",
+                                              "user", "uucp",
+                                              "local0", "local1",
+                                              "local2", "local3",
+                                              "local4", "local5",
+                                              "local6", "local7"]},
+                        "address": {"type": "string"}
+                    },
+                    "required": ["address"]
+                }
+            ]
+        },
+        "httpjson_handler": {
+            "allOf": [
+                {"$ref": "#/defs/handler_common"},
+                {
+                    "properties": {
+                        "url": {"type": "string"},
+                        "extras": {"type": "object"},
+                        "ignore_keys": {
+                            "type": "array",
+                            "items": {"type": "string"}
+                        },
+                        "json_formatter": {},
+                        "extra_headers": {"type": "object"},
+                        "debug": {"type": "boolean"},
+                        "backoff_intervals": {
+                            "type": "array",
+                            "items": {"type": "number"}
+                        },
+                        "retry_timeout": {"type": "number"}
+                    },
+                    "required": ["url"]
+                }
+            ]
+        },
+        "topology_info": {
+            "type": "object",
+            "properties": {
+                "numa_nodes": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "sockets": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "cores": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "caches": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "type": {"type": "string"},
+                            "size": {"type": "number"},
+                            "linesize": {"type": "number"},
+                            "associativity": {"type": "number"},
+                            "num_cpus": {"type": "number"},
+                            "cpusets": {
+                                "type": "array",
+                                "items": {"type": "string"}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "processor_info": {
+            "type": "object",
+            "properties": {
+                "arch": {"type": "string"},
+                "vendor": {"type": "string"},
+                "model": {"type": "string"},
+                "platform": {"type": "string"},
+                "num_cpus": {"type": "number"},
+                "num_cpus_per_core": {"type": "number"},
+                "num_cpus_per_socket": {"type": "number"},
+                "num_sockets": {"type": "number"},
+                "topology": {"$ref": "#/defs/topology_info"}
+            },
+            "additionalProperties": false
+        },
+        "device_info": {
+            "type": "object",
+            "properties": {
+                "type": {"type": "string"},
+                "arch": {"type": "string"},
+                "model": {"type": "string"},
+                "num_devices": {"type": "number"}
+            }
+        },
+        "devices": {
+            "type": "array",
+            "items": {"$ref": "#/defs/device_info"}
+        }
+    },
+    "type": "object",
+    "properties": {
+        "autodetect_methods": {
+            "type": "array",
+            "items": {"type": "string"}
+        },
+        "systems": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"$ref": "#/defs/alphanum_ext_string"},
+                    "descr": {"type": "string"},
+                    "hostnames": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "max_local_jobs": {"type": "number"},
+                    "modules_system": {
+                        "type": "string",
+                        "enum": ["tmod", "tmod31", "tmod32", "tmod4",
+                                 "lmod", "nomod", "spack"]
+                    },
+                    "modules": {"$ref": "#/defs/modules_list"},
+                    "env_vars": {"$ref": "#/defs/envvar_list"},
+                    "variables": {"$ref": "#/defs/envvar_list"},
+                    "prefix": {"type": "string"},
+                    "stagedir": {"type": "string"},
+                    "outputdir": {"type": "string"},
+                    "resourcesdir": {"type": "string"},
+                    "sched_options": {"$ref": "#/defs/sched_options"},
+                    "partitions": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"$ref": "#/defs/alphanum_ext_string"},
+                                "descr": {"type": "string"},
+                                "scheduler": {
+                                    "type": "string"
+                                },
+                                "sched_options": {"$ref": "#/defs/sched_options"},
+                                "launcher": {
+                                    "type": "string"
+                                },
+                                "access": {
+                                    "type": "array",
+                                    "items": {"type": "string"}
+                                },
+                                "environs": {
+                                    "type": "array",
+                                    "items": {"type": "string"}
+                                },
+                                "container_platforms": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "type": {"type": "string"},
+                                            "modules": {
+                                                "$ref": "#/defs/modules_list"
+                                            },
+                                            "env_vars": {
+                                                "$ref": "#/defs/envvar_list"
+                                            },
+                                            "variables": {
+                                                "$ref": "#/defs/envvar_list"
+                                            },
+                                            "default": {"type": "boolean"}
+                                        },
+                                        "required": ["type"]
+                                    }
+                                },
+                                "modules": {"$ref": "#/defs/modules_list"},
+                                "env_vars": {"$ref": "#/defs/envvar_list"},
+                                "variables": {"$ref": "#/defs/envvar_list"},
+                                "time_limit": {"type": ["string", "null"]},
+                                "max_jobs": {"type": "number"},
+                                "prepare_cmds": {
+                                    "type": "array",
+                                    "items": {"type": "string"}
+                                 },
+                                "processor": {"$ref": "#/defs/processor_info"},
+                                "devices": {"$ref": "#/defs/devices"},
+                                "features": {
+                                    "type": "array",
+                                    "items": {"$ref": "#/defs/alphanum_string"}
+                                },
+                                "extras": {
+                                    "type": "object",
+                                    "propertyNames": {
+                                        "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+                                    }
+                                },
+                                "resources": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {"type": "string"},
+                                            "options": {
+                                                "type": "array",
+                                                "items": {"type": "string"}
+                                            }
+                                        },
+                                        "required": ["name"],
+                                        "additionalProperties": false
+                                    }
+                                }
+                            },
+                            "required": ["name", "scheduler", "launcher"],
+                            "additionalProperties": false
+                        },
+                        "minItems": 1
+                    }
+                },
+                "required": ["name", "hostnames", "partitions"],
+                "additionalProperties": false
+            }
+        },
+        "environments": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"$ref": "#/defs/alphanum_ext_string"},
+                    "modules": {"$ref": "#/defs/modules_list"},
+                    "env_vars": {"$ref": "#/defs/envvar_list"},
+                    "variables": {"$ref": "#/defs/envvar_list"},
+                    "cc": {"type": "string"},
+                    "cxx": {"type": "string"},
+                    "ftn": {"type": "string"},
+                    "nvcc": {"type": "string"},
+                    "cppflags": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "cflags": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "cxxflags": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "fflags": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "ldflags": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "prepare_cmds": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "extras": {
+                        "type": "object",
+                        "propertyNames": {
+                            "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+                        }
+                    },
+                    "features": {
+                        "type": "array",
+                        "items": {"$ref": "#/defs/alphanum_string"}
+                    },
+                    "resources": {
+                        "type": "object",
+                        "propertyNames": {
+                            "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+                        },
+                        "additionalProperties": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "target_systems": {"$ref": "#/defs/system_ref"}
+                },
+                "required": ["name"],
+                "additionalProperties": false
+            }
+        },
+        "logging": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "level": {"$ref": "#/defs/loglevel"},
+                    "perflog_compat": {"type": "boolean"},
+                    "handlers": {
+                        "type": "array",
+                        "items": {
+                            "anyOf": [
+                                {"$ref": "#/defs/file_handler"},
+                                {"$ref": "#/defs/graylog_handler"},
+                                {"$ref": "#/defs/stream_handler"},
+                                {"$ref": "#/defs/syslog_handler"}
+                            ]
+                        }
+                    },
+                    "handlers$": {
+                        "type": "array",
+                        "items": {
+                            "anyOf": [
+                                {"$ref": "#/defs/file_handler"},
+                                {"$ref": "#/defs/graylog_handler"},
+                                {"$ref": "#/defs/stream_handler"},
+                                {"$ref": "#/defs/syslog_handler"}
+                            ]
+                        },
+                        "minItems": 1
+                    },
+                    "handlers_perflog": {
+                        "type": "array",
+                        "items": {
+                            "anyOf": [
+                                {"$ref": "#/defs/file_handler"},
+                                {"$ref": "#/defs/filelog_handler"},
+                                {"$ref": "#/defs/graylog_handler"},
+                                {"$ref": "#/defs/stream_handler"},
+                                {"$ref": "#/defs/syslog_handler"},
+                                {"$ref": "#/defs/httpjson_handler"}
+                            ]
+                        }
+                    },
+                    "target_systems": {"$ref": "#/defs/system_ref"}
+                },
+                "additionalProperties": false
+            }
+        },
+        "modes": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "options": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "target_systems": {"$ref": "#/defs/system_ref"}
+                },
+                "required": ["name"],
+                "additionalProperties": false
+            }
+        },
+        "general": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "check_search_path": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "check_search_recursive": {"type": "boolean"},
+                    "clean_stagedir": {"type": "boolean"},
+                    "colorize": {"type": "boolean"},
+                    "compress_report": {"type": "boolean"},
+                    "failure_inspect_lines": {"type": "integer"},
+                    "flex_alloc_strict": {"type": "boolean"},
+                    "generate_file_reports": {"type": "boolean"},
+                    "git_timeout": {"type": "number"},
+                    "keep_stage_files": {"type": "boolean"},
+                    "module_map_file": {"type": "string"},
+                    "module_mappings": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "non_default_craype": {"type": "boolean"},
+                    "dump_pipeline_progress": {"type": "boolean"},
+                    "perf_info_level": {"$ref": "#/defs/loglevel"},
+                    "perf_report_spec": {"type": "string"},
+                    "pipeline_timeout": {"type": ["number", "null"]},
+                    "purge_environment": {"type": "boolean"},
+                    "remote_detect": {"type": "boolean"},
+                    "remote_install": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "remote_workdir": {"type": "string"},
+                    "report_file": {"type": "string"},
+                    "report_junit": {"type": ["string", "null"]},
+                    "resolve_module_conflicts": {"type": "boolean"},
+                    "save_log_files": {"type": "boolean"},
+                    "target_systems": {"$ref": "#/defs/system_ref"},
+                    "table_format": {"enum": ["csv", "plain", "pretty"]},
+                    "timestamp_dirs": {"type": "string"},
+                    "topology_prefix": {"type": "string"},
+                    "trap_job_errors": {"type": "boolean"},
+                    "unload_modules": {"$ref": "#/defs/modules_list"},
+                    "use_login_shell": {"type": "boolean"},
+                    "user_modules": {"$ref": "#/defs/modules_list"},
+                    "verbose": {"type": "number"}
+                },
+                "additionalProperties": false
+            }
+        },
+        "storage": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "backend": {"type": "string"},
+                    "enable": {"type": "boolean"},
+                    "sqlite_conn_timeout": {"type": "number"},
+                    "sqlite_db_file": {"type": "string"},
+                    "sqlite_db_file_mode": {"type": "string"},
+                    "target_systems": {"$ref": "#/defs/system_ref"}
+                }
+            }
+        }
+    },
+    "required": ["systems", "environments", "logging"],
+    "additionalProperties": false,
+    "defaults": {
+        "autodetect_methods": ["py::socket.gethostname"],
+        "environments/modules": [],
+        "environments/env_vars": [],
+        "environments/variables": [],
+        "environments/cc": "cc",
+        "environments/cxx": "CC",
+        "environments/ftn": "ftn",
+        "environments/nvcc": "nvcc",
+        "environments/cppflags": [],
+        "environments/cflags": [],
+        "environments/cxxflags": [],
+        "environments/fflags": [],
+        "environments/ldflags": [],
+        "environments/extras": {},
+        "environments/features": [],
+        "environments/target_systems": ["*"],
+        "general/check_search_path": ["${RFM_INSTALL_PREFIX}/checks/"],
+        "general/check_search_recursive": false,
+        "general/clean_stagedir": true,
+        "general/colorize": true,
+        "general/compress_report": false,
+        "general/dump_pipeline_progress": false,
+        "general/failure_inspect_lines": 10,
+        "general/flex_alloc_strict": false,
+        "general/generate_file_reports": true,
+        "general/git_timeout": 5,
+        "general/keep_stage_files": false,
+        "general/module_map_file": "",
+        "general/module_mappings": [],
+        "general/non_default_craype": false,
+        "general/perf_info_level": "info",
+        "general/perf_report_spec": "now-1d:now/last:/+job_nodelist+result",
+        "general/pipeline_timeout": 3,
+        "general/purge_environment": false,
+        "general/remote_detect": false,
+        "general/remote_install": [],
+        "general/remote_workdir": ".",
+        "general/report_file": "${HOME}/.reframe/reports/run-report-{sessionid}.json",
+        "general/report_junit": null,
+        "general/resolve_module_conflicts": true,
+        "general/save_log_files": false,
+        "general/table_format": "pretty",
+        "general/target_systems": ["*"],
+        "general/topology_prefix": "${HOME}/.reframe/topology",
+        "general/timestamp_dirs": "%Y%m%dT%H%M%S%z",
+        "general/trap_job_errors": false,
+        "general/unload_modules": [],
+        "general/use_login_shell": false,
+        "general/user_modules": [],
+        "general/verbose": 0,
+        "logging/level": "undefined",
+        "logging/perflog_compat": false,
+        "logging/target_systems": ["*"],
+        "logging/handlers": [],
+        "logging/handlers_perflog": [],
+        "logging/handlers*/*_level": "info",
+        "logging/handlers*/*_format": "%(message)s",
+        "logging/handlers*/*_format_perfvars": "",
+        "logging/handlers*/*_datefmt": "%FT%T",
+        "logging/handlers*/file_append": false,
+        "logging/handlers*/file_name": "",
+        "logging/handlers*/file_timestamp": false,
+        "logging/handlers*/stream_name": "stdout",
+        "logging/handlers*/syslog_socktype": "udp",
+        "logging/handlers*/syslog_facility": "user",
+        "logging/handlers_perflog/filelog_append": true,
+        "logging/handlers_perflog/filelog_basedir": "./perflogs",
+        "logging/handlers_perflog/filelog_ignore_keys": [],
+        "logging/handlers_perflog/graylog_extras": {},
+        "logging/handlers_perflog/httpjson_extras": {},
+        "logging/handlers_perflog/httpjson_ignore_keys": [],
+        "logging/handlers_perflog/httpjson_json_formatter": null,
+        "logging/handlers_perflog/httpjson_extra_headers": {},
+        "logging/handlers_perflog/httpjson_debug": false,
+        "logging/handlers_perflog/httpjson_backoff_intervals": [0.1, 0.2, 0.4, 0.8, 1.6, 3.2],
+        "logging/handlers_perflog/httpjson_retry_timeout": 0,
+        "modes/options": [],
+        "modes/target_systems": ["*"],
+        "storage/enable": false,
+        "storage/backend": "sqlite",
+        "storage/sqlite_conn_timeout": 60,
+        "storage/sqlite_db_file": "${HOME}/.reframe/reports/results.db",
+        "storage/sqlite_db_file_mode": "644",
+        "storage/target_systems": ["*"],
+        "systems/descr": "",
+        "systems/max_local_jobs": 8,
+        "systems/modules_system": "nomod",
+        "systems/modules": [],
+        "systems/env_vars": [],
+        "systems/variables": [],
+        "systems/prefix": ".",
+        "systems/outputdir": "",
+        "systems/resourcesdir": ".",
+        "systems/stagedir": "",
+        "systems/partitions/descr": "",
+        "systems/partitions/access": [],
+        "systems/partitions/environs": [],
+        "systems/partitions/container_runtime": null,
+        "systems/partitions/container_platforms": [],
+        "systems/partitions/container_platforms/*modules": [],
+        "systems/partitions/container_platforms/*env_vars": [],
+        "systems/partitions/container_platforms/*variables": [],
+        "systems/partitions/features": [],
+        "systems/partitions/resources": [],
+        "systems/partitions/resources/options": [],
+        "systems/partitions/modules": [],
+        "systems/partitions/env_vars": [],
+        "systems/partitions/variables": [],
+        "systems/partitions/max_jobs": 8,
+        "systems/partitions/prepare_cmds": [],
+        "systems/partitions/processor": {},
+        "systems/partitions/time_limit": null,
+        "systems/partitions/devices": [],
+        "systems/partitions/extras": {},
+        "systems*/sched_options/ignore_reqnodenotavail": false,
+        "systems*/sched_options/job_submit_timeout": 60,
+        "systems*/sched_options/max_sacct_failures": 3,
+        "systems*/sched_options/sched_access_in_submit": false,
+        "systems*/sched_options/ssh_hosts": [],
+        "systems*/sched_options/resubmit_on_errors": [],
+        "systems*/sched_options/unqualified_hostnames": false,
+        "systems*/sched_options/use_nodes_option": false
+    }
+}

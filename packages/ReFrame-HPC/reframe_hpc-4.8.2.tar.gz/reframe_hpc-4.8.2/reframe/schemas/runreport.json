@@ -1,0 +1,130 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://raw.githubusercontent.com/reframe-hpc/reframe/master/reframe/schemas/runreport.json",
+    "title": "Validation schema for ReFrame's run report",
+    "defs": {
+        "testcase_type": {
+            "type": "object",
+            "properties": {
+                "build_jobid": {"type": ["string", "null"]},
+                "build_stderr": {"type": ["string", "null"]},
+                "build_stdout": {"type": ["string", "null"]},
+                "dependencies_actual": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "dependencies_conceptual": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "environ": {"type": ["string", "null"]},
+                "fail_info": {
+                    "type": ["object", "null"],
+                    "properties": {
+                        "exc_type": {"type": "string"},
+                        "exc_value": {"type": "string"},
+                        "traceback": {
+                            "type": ["array", "null"],
+                            "items": {"type": "string"}
+                        }
+                    },
+                    "required": ["exc_type", "exc_value", "traceback"]
+                },
+                "fail_phase": {"type": ["string", "null"]},
+                "fail_reason": {"type": ["string", "null"]},
+                "fail_severe": {"type": "boolean"},
+                "filename": {"type": "string"},
+                "fixture": {"type": "boolean"},
+                "job_completion_time": {"type": ["string", "null"]},
+                "job_completion_time_unix": {"type": ["number", "null"]},
+                "job_stderr": {"type": ["string", "null"]},
+                "job_stdout": {"type": ["string", "null"]},
+                "name": {"type": "string"},
+                "outputdir": {"type": ["string", "null"]},
+                "perfvalues": {"type": "object"},
+                "partition": {"type": ["string", "null"]},
+                "result": {"type": "string"},
+                "scheduler": {"type": "string"},
+                "system": {"type": "string"},
+                "time_compile": {"type": ["number", "null"]},
+                "time_performance": {"type": ["number", "null"]},
+                "time_run": {"type": ["number", "null"]},
+                "time_sanity": {"type": ["number", "null"]},
+                "time_setup": {"type": ["number", "null"]},
+                "time_total": {"type": ["number", "null"]},
+                "unique_name": {"type": "string"},
+                "uuid": {"type": "string"}
+            },
+            "required": ["environ", "fail_phase", "fail_reason", "filename",
+                         "job_completion_time_unix", "name", "perfvalues",
+                         "partition", "result", "system", "time_total",
+                         "unique_name"]
+        }
+    },
+    "type": "object",
+    "properties": {
+        "session_info": {
+            "type": "object",
+            "properties": {
+                "cmdline": {"type": "string"},
+                "config_files": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "data_version": {"type": "string"},
+                "hostname": {"type": "string"},
+                "log_files": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "num_cases": {"type": "number"},
+                "num_failures": {"type": "number"},
+                "num_aborted": {"type": "number"},
+                "num_skipped": {"type": "number"},
+                "prefix_output": {"type": "string"},
+                "prefix_stage": {"type": "string"},
+                "session_uuid": {"type": "string"},
+                "time_elapsed": {"type": "number"},
+                "time_end": {"type": "string"},
+                "time_end_unix": {"type": "number"},
+                "time_start": {"type": "string"},
+                "time_start_unix": {"type": "number"},
+                "user": {"type": "string"},
+                "uuid": {"type": "string"},
+                "version": {"type": "string"},
+                "workdir": {"type": "string"}
+            },
+            "required": ["data_version", "hostname",
+                         "time_elapsed", "time_end_unix", "time_start_unix",
+                         "uuid"]
+        },
+        "restored_cases": {
+            "type": "array",
+            "items": {"$ref": "#/defs/testcase_type"}
+        },
+        "runs": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "num_aborted": {"type": "number"},
+                    "num_cases": {"type": "number"},
+                    "num_failures": {"type": "number"},
+                    "num_skipped": {"type": "number"},
+                    "run_index": {"type": "number"},
+                    "testcases": {
+                        "type": "array",
+                        "items": {"$ref": "#/defs/testcase_type"}
+                    }
+                },
+                "required": ["num_cases", "num_failures", "testcases"]
+            }
+        }
+    },
+    "required": ["restored_cases", "runs", "session_info"]
+}
