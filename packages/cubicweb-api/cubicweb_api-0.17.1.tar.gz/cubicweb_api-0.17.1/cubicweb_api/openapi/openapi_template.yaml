@@ -1,0 +1,405 @@
+info:
+  description: This cube is the new api which will be integrated in CubicWeb 4.
+  license:
+    name: LGPL
+    url: https://www.gnu.org/licenses/lgpl-3.0.en.html
+  contact:
+    name: LOGILAB S.A. (Paris, FRANCE)
+    url: https://forge.extranet.logilab.fr/cubicweb/cubes/api
+    email: contact@logilab.fr
+  title: CubicWeb API
+  version: 0.1.0
+paths:
+  /schema:
+    x-pyramid-route-name: schema
+    get:
+      description: Returns this instance's Schema
+      responses:
+        '200':
+          description: This instance's Schema
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CWSchema'
+  /binary:
+    x-pyramid-route-name: binary
+    get:
+      description: Downloads the given binary
+      parameters:
+        - in: query
+          name: eid
+          schema:
+            type: integer
+          required: true
+          description: ID of the entity with the Binary data as attribute
+        - in: query
+          name: attribute
+          schema:
+            type: string
+            pattern: '^[a-z_][a-z0-9_]+$'
+          required: true
+          description: Name of the attribute containing the binary
+      responses:
+        '200':
+          description: The binary data
+          content:
+            application/octet-stream: {}
+        '400':
+          description: The parameters are not valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorSchema'
+        '204':
+          description: No file associated with the relation
+  /rql:
+    x-pyramid-route-name: rql
+    parameters:
+      - $ref: '#/components/parameters/client'
+    post:
+      description: |
+        Execute several RQL queries in a single transaction
+        To upload files, send the request using multipart/form-data.
+        The first parameter should be "queries", containing the queries like the json version.
+        All other parameters should be files referenced by your queries.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/RqlTransactionParams'
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                queries:
+                  allOf:
+                    - type: array
+                      items:
+                        $ref: '#/components/schemas/RqlTransactionParams'
+              additionalProperties:
+                type: string
+              required: ["queries"]
+            encoding:
+              queries:
+                contentType: "application/json"
+      responses:
+        '200':
+          description: The RQL result set
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result_sets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ResultSet'
+        '400':
+          description: The given RQL was badly formatted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorSchema'
+  /login:
+    x-pyramid-route-name: login
+    parameters:
+      - $ref: '#/components/parameters/client'
+    post:
+      description: Tries to log in the user. Route may be disabled by the configuration.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginParams'
+      responses:
+        '204':
+          description: Token has been created and returned in set-cookie header
+          headers:
+            Set-Cookie:
+              description: The created JWT
+              schema:
+                type: string
+        '401':
+          description: The given login/password combo was not recognized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorSchema'
+  /logout:
+    x-pyramid-route-name: logout
+    parameters:
+      - $ref: '#/components/parameters/client'
+    post:
+      description: Logs out the user. Route may be disabled by the configuration.
+      responses:
+        '204':
+          description: Token has been invalidated and request asks the browser to delete the cookie
+          headers:
+            Set-Cookie:
+              description: The JWT to delete
+              schema:
+                type: string
+  /current-user:
+    x-pyramid-route-name: current_user
+    get:
+      description: Get information about the user making the request
+      responses:
+        '200':
+          description: This instance's Schema
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUser'
+  /siteinfo:
+    x-pyramid-route-name: siteinfo
+    get:
+      description: Get debug information for the current website
+      responses:
+        '200':
+          description: This instance's Schema
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteInfo'
+openapi: 3.1.0
+components:
+  parameters:
+    client:
+      in: header
+      name: X-Client-Name
+      schema:
+        type: string
+      required: true
+  schemas:
+    CWSchema:
+      type: object
+      properties:
+        entities:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              description:
+                type: string
+              final:
+                type: boolean
+        relations_definitions:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              description:
+                type: string
+              final:
+                type: boolean
+              subject:
+                type: string
+              object:
+                type: string
+              cardinality:
+                type: string
+              constraints:
+                type:
+                  - "array"
+                  - "null"
+              default:
+                type:
+                  - "string"
+                  - "null"
+    RqlTransactionParams:
+      type: object
+      properties:
+        query:
+          type: string
+          minLength: 1
+        params:
+          type: object
+          default: {}
+          additionalProperties:
+            $ref: '#/components/schemas/RqlTransactionParamsValue'
+      required:
+        - query
+    RqlTransactionParamsValue:
+      oneOf:
+        - type: "null"
+        - type: string
+        - type: number
+        - type: boolean
+        - type: object
+          properties:
+            type:
+              type: string
+            queryIndex:
+              type: number
+            row:
+              type: number
+            column:
+              type: number
+          additionalProperties: false
+        - type: object
+          properties:
+            type:
+              type: string
+            ref:
+              type: string
+          additionalProperties: false
+    LoginParams:
+      type: object
+      properties:
+        password:
+          type: string
+          minLength: 1
+        login:
+          type: string
+          minLength: 1
+      required:
+        - login
+        - password
+    ErrorSchema:
+      type: object
+      properties:
+        code:
+          type: integer
+        title:
+          type: string
+        error:
+          type: object
+          properties:
+            data:
+              type: object
+            message:
+              type: string
+            title:
+              type: string
+          required:
+            - message
+            - title
+      required:
+        - code
+        - title
+        - error
+    ResultSet:
+      type: object
+      properties:
+        column_names:
+          type: array
+          items:
+            type: string
+        rows:
+          type: array
+          items:
+            type: array
+            items:
+              oneOf:
+                - type: "null"
+                - type: "string"
+                - type: "number"
+                - type: "boolean"
+    CurrentUser:
+      oneOf:
+        - type: "null"
+        - type: object
+          properties:
+            eid:
+              type: integer
+            login:
+              type: string
+            dcTitle:
+              type: string
+          required:
+            - eid
+            - login
+            - dcTitle
+    SiteInfo:
+      type: object
+      properties:
+        info:
+          type: object
+          properties:
+            pyvalue:
+              properties:
+                base_url:
+                  type: string
+                config_mode:
+                  type: string
+                config_type:
+                  type: string
+                cubes:
+                  type: object
+                cubicweb:
+                  type: array
+                  items:
+                    type: integer
+                datadir_url:
+                  type:
+                    - "null"
+                    - "string"
+                instance_home:
+                  type:
+                    - "null"
+                    - "string"
+              type: object
+            stats:
+              type: object
+              properties:
+                available_cnxsets:
+                  type: integer
+                nb_active_threads:
+                  type: integer
+                rqlt_st_cache_hit:
+                  type: integer
+                rqlt_st_cache_miss:
+                  type: integer
+                rqlt_st_cache_size:
+                  type: object
+                  properties:
+                    maxsize:
+                      type: integer
+                    size:
+                      type: integer
+                sql_cache_hit:
+                  type: integer
+                sql_cache_miss:
+                  type: integer
+                sql_cache_size:
+                  properties:
+                    maxsize:
+                      type: integer
+                    size:
+                      type: integer
+                  type: object
+                sql_no_cache:
+                  type: integer
+                threads:
+                  type: array
+                  items:
+                    type: string
+                type_cache_size:
+                  type: integer
+        registry:
+          type: object
+        gc:
+          type: object
+          properties:
+            lookupclasses:
+              type: array
+              items:
+                type: array
+                items:
+                  type: string
+            referenced:
+              type: array
+              items:
+                type: array
+                items:
+                  type: string
+            unreachable:
+              type: array

@@ -1,0 +1,61 @@
+
+[project]
+name = "cubicweb-api"
+version = "0.17.1"
+description = "This cube is the new api."
+readme = {file = "README.rst", content-type = "text/x-rst"}
+license = {text = "GNU Lesser General Public License v2 or later (LGPLv2+)"}
+requires-python = ">=3.11"
+authors = [
+    {name="Logilab", email="contact@logilab.fr"},
+]
+classifiers = [
+    "Environment :: Web Environment",
+    "Framework :: CubicWeb",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: JavaScript",
+]
+dependencies = [
+    "cubicweb >= 4.1.0, < 6.0.0",
+    "yams >= 0.49.3",
+    "PyJWT >= 2.4.0",
+    "pyramid-openapi3 >= 0.19.1",
+    "openapi-core >= 0.17.0",  # to be removed when pyramid-openapi3 will be compatible
+]
+
+[project.entry-points."cubicweb.cubes"]
+api = "cubicweb_api"
+
+[project.urls]
+Issues = "https://forge.extranet.logilab.fr/cubicweb/cubes/api/-/issues"
+Repository = "https://forge.extranet.logilab.fr/cubicweb/cubes/api"
+
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cubicweb_api*"]
+namespaces = false
+
+[tool.ruff]
+extend-exclude = ["cubicweb_api/migration/"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "UP",   # pyupgrade
+    # "B",    # flake8-bugbear
+    # "SIM",  # flake8-simplify
+    "I",    # isort
+]
+ignore = ["E501"]
+
