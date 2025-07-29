@@ -1,0 +1,183 @@
+[project]
+
+authors = [
+  {name = "James Lamb", email = "jaylamb20@gmail.com"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development",
+    "Topic :: Utilities"
+]
+dependencies = [
+    "click>=8.0",
+    "tomli>=1.1.0 ; python_version < '3.11'"
+]
+description = "Inspect Python package distributions and raise warnings on common problems."
+keywords = [
+    "linter",
+    "python-packaging",
+    "testing"
+]
+license = "BSD-3-Clause"
+license-files = [
+    "LICENSE",
+    "LICENSES/*"
+]
+maintainers = [
+  {name = "James Lamb", email = "jaylamb20@gmail.com"}
+]
+name = "pydistcheck"
+readme = "README.md"
+requires-python = ">=3.9"
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "pydistcheck.__version__"}
+
+[project.scripts]
+pydistcheck = "pydistcheck.cli:check"
+
+[project.optional-dependencies]
+conda = [
+    "zstandard>=0.22.0"
+]
+
+[project.urls]
+homepage = "https://pydistcheck.readthedocs.io/en/latest/"
+documentation = "https://pydistcheck.readthedocs.io/en/latest/"
+repository = "https://github.com/jameslamb/pydistcheck"
+changelog = "https://github.com/jameslamb/pydistcheck/releases"
+
+[build-system]
+
+requires = [
+    "setuptools>=75.3.2",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.coverage.report]
+fail_under = 99.00
+exclude_also = [
+    # skip type-checking blocks when calculating code coverage
+    "if TYPE_CHECKING:"
+]
+
+[tool.isort]
+line_length = 88
+profile = "black"
+
+[tool.mypy]
+exclude = 'docs/conf\.py$|build/*'
+ignore_missing_imports = true
+mypy_path = "./src:./tests/data"
+strict = true
+
+[tool.rstcheck]
+ignore_directives = [
+    # rstcheck does not understand directives from extension 'sphinx-click'
+    "click"
+]
+
+[tool.ruff]
+line-length = 88
+# this should be set to the oldest version of python the project supports
+target-version = "py39"
+
+[tool.ruff.lint]
+ignore = [
+    # (pycodestyle) Line too long
+    "E501",
+    # (pylint) Magic value used in comparison, consider replacing with a constant
+    "PLR2004",
+    # (flake8-pytest-style) scope='function' is implied in @pytest.fixture()
+    "PT003",
+    # (flake8-pytest-style) Wrong values type in @pytest.mark.parametrize expected list of tuple
+    "PT007",
+    # (flake8-bandit) subprocess call: check for execution of untrusted input
+    "S603",
+    # (flake8-simplify) use ternary operator instead of if-else
+    "SIM108"
+]
+select = [
+    # flake8-builtins
+    "A",
+    # flake8-bugbear
+    "B",
+    # flake8-comprehensions
+    "C4",
+    # flake8-datetimez
+    "DTZ",
+    # pycodestyle
+    "E",
+    # eradicate
+    "ERA",
+    # pyflakes
+    "F",
+    # flake8-fixme
+    "FIX",
+    # flynt
+    "FLY",
+    # perflint
+    "PERF",
+    # pygrep-hooks
+    "PGH",
+    # flake8-pie
+    "PIE",
+    # pylint
+    "PL",
+    # flake8-pytest-style
+    "PT",
+    # flake8-pyi
+    "PYI",
+    # flake8-return
+    "RET",
+    # ruff-exclusive checks
+    "RUF",
+    # flake8-bandit
+    "S",
+    # flake8-simplify
+    "SIM",
+    # pyupgrade
+    "UP",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/pydistcheck/*.py" = [
+    # uses of tarfile.extractall()
+    "S202"
+]
+"src/pydistcheck/cli.py" = [
+    # Too many branches
+    "PLR0912",
+    # Too many statements
+    "PLR0915"
+]
+"src/pydistcheck/_distribution_summary.py" = [
+    # Too many branches
+    "PLR0912"
+]
+"tests/*" = [
+    # (flake8-annotations)
+    "ANN",
+    # (pydocstyle)
+    "D",
+    # (flake8-bugbear) Found useless expression
+    "B018",
+    # (flake8-bandit) use of assert detected
+    "S101"
+]
