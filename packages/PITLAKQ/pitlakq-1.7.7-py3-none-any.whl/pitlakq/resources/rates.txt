@@ -1,0 +1,59 @@
+condition: limitedFeOx
+########
+Fe_di_ox
+########
+# Example 8 in the PHREEQC manual shows a somewhat different implementation (OH- instead of H+ dependent)
+# but which is valid for pH > 5 only
+# This implemention is based on :
+# Salmon and Malmström:
+# Steady State, Geochemical Box Model of Tailings impoundmaent:
+# Application to Impoundment 1, Kristineberg, Sweden, and prediction of effect of remediation
+# MiMi Report, March 2000, Stockholm, Sweden. pp. 12- 15
+# microbial and surface effecfs are lumped together to 2.91e-9 (Singer and Stumm , 1970, Science 167)
+-start
+5 if TOT("Sulfid") > 1e-4 then goto 200
+8 if TOT("O(0)") <= 6.25e-5 then goto 200
+10  Fe_di = TOT("Fe_di")
+12  if Fe_di <= 1e-6 then goto 200
+#temperature
+30  kH = 10^(0.0666667*TC-14.6344)
+40  pH = -LOG10(ACT("H+"))
+#pH dependence
+50  if pH <= 2.0 then \
+  	  moles = (kH*ACT("O2")) * Fe_di * TIME
+# lower rate for pH > 5, because the same as for pH < 5
+# compare commented out lines 60 and 70
+60  if pH > 2.0 then \
+		moles = (2.91e-9 + kH*ACT("O2") /ACT("H+")) * Fe_di * TIME
+#60  if (pH > 2.0 and pH <= 5.0) then\
+#		moles = (2.91e-9 + kH*ACT("O2") /ACT("H+")) * Fe_di * TIME
+#70  if pH > 5.0 then \
+#		moles = (2.91e-9 + kH*ACT("O2") /(ACT("H+"))^2) * Fe_di * TIME
+#71  if pH > 5.0 then \
+#		moles = (2.91e-9 + kH*ACT("O2") /ACT("H+")) * Fe_di * TIME
+# alternative formula pH is implicitly included via Fe species distribution
+#50 potentialMoles = (7.9e-6*ACT("Fe_di") + 25*ACT("Fe_diOH+") + 7.9e6*ACT("Fe_di(OH)2"))*ACT("O2") * Fe_di * TIME
+# microbial and surface effects lumped
+# if necessary they can be implemented according to Salmon and Malmstr?m(2000)
+# biological rate according to Pesic(1989)
+80 if pH >= 2.0 then 		\
+	HBio = ACT("H+") 	\
+   else 			\
+	HBio = 1.0
+81 R = 8.3146e-3
+82 Cbact = 0.3
+90 bio = 1.62e11*Cbact*HBio*Fe_di*ACT("O2")*exp(-(58.77/(R*TK))) *TIME
+100 potentialMoles = moles + bio
+#110 if Fe_tri < 1e-5 AND potentialMoles > Fe_tri*2 then \
+#        potentialMoles = Fe_tri*2 + 1e-7
+115 if Fe_tri < 0.0 then \
+        potentialMoles = 0
+120  if Fe_di < potentialMoles then \
+	potentialMoles = 0.5*Fe_di
+125 if potentialMoles < 0 then \
+        potentialMoles = 0
+130 if potentialMoles > 1e-7 then \
+       potentialMoles = 1e-7
+140 moles = potentialMoles
+200 SAVE moles
+-end

@@ -1,0 +1,205 @@
+general:
+    silent:
+        default: False
+    dump_input:
+        default: False
+    save_restart:
+        default: False
+    restart:
+        default: False
+    start:
+        default: 01.01.2001
+        type: date
+    gw_start:
+        default: 01.01.2001
+        type: date
+    gw_time_step:
+        default: 1
+        unit: month
+    lake_time_step:
+        default: .1
+        unit: day
+    number_of_gw_time_steps:
+        default: 24
+phreeqc:
+    lake_active_const_names:
+        default:
+            - na
+            - cl
+    rates:
+        default:
+            -
+    mineral_rates:
+        default:
+            -
+    lake_active_minerals_names:
+        default:
+            -
+    charge:
+        default: Ca
+    parallel_phreeqc:
+        default: False
+    c_as_c:
+        default: True
+    monthly_phreeqc:
+        default: False
+    phreeqc_step:
+        default: False
+    fe_po4_ratio:
+        default: 10
+    phreeqc_database_name:
+        default: phreeqc_w2.dat
+couplings:
+    phreeqc_coupling_lake:
+        default: False
+    dual_porosity_coupling:
+        default: False
+    gw_phreeqc_coupling:
+        default: False
+    gw_lake_coupling:
+        default: False
+lake:
+    lake_calculations:
+        default: True
+    kinetics:
+        default: False
+    max_water_surface:
+        default: 99.0
+    deepest_segment:
+         default: 4
+    settle:
+        default: False
+    precipitation:
+        default: True
+    co2_sat_change_rate:
+        default: 0.1 # not more than 10% change 100 +- 10
+    # next time step between 90 and 110
+    swapped_x_y:
+        value: False
+
+gw:
+    gw_model:
+        default: 'dummy'
+    gw_calculations:
+        default: False
+    gw_migration:
+        default: False
+    precalc_gw:
+        default: False
+    master_pcg_clone_name:
+        default: 'pcg3'
+    precalc_gw_conc:
+        default: False
+    rerun_pcg:
+        default: False
+    save_gw_q:
+        default: False
+    use_saved_gw_q:
+        default: False
+    use_fixed_gw_conc:
+        default: False
+    gwh:
+        default: False
+    gwh_file:
+        default: gwh/gwh.xlsx
+
+loading:
+    loading:
+        default: False
+    loading_file:
+        default: loading/loading.xlsx
+    loading_step:
+        default: 1 # days
+    loading_upper_layers:
+        default: 5 # Layers below the water surface that receive the loading.
+    loading_water_temperature:
+        default: 10 # in C
+
+dual_porosity:
+    exchange_master_species:
+        default: SO4
+modmst:
+    fixed_modmst_water_table:
+        default: False
+    fixed_modmst_temperature:
+        default: 12
+    fixed_modmst_conc:
+        default: False
+    modmst_conc_unmodified:
+        default: False
+    modmst_lake_density:
+        default: True
+erosion:
+    erosion:
+        default: False
+    calculate_erosion:
+        default: False
+    wind_erosion_depth:
+        default: 2.0
+        unit: m
+    wind_erosion_depth_repeated:
+        default: 1.0
+        unit: m
+    rain_erosion_rate_per_hectar:
+        default: 900
+        unit: t/(ha*a)
+    rain_erosion_rate_per_hectar_repeated:
+        default: 300.0
+        unit: t/(ha*a)
+    erosion_density:
+        default: 1800
+        unit: kg/m3
+    erosion_steady_state_mass:
+        default: True
+    interflow:
+        default: False
+    interflow_rate:
+        default: 600.0
+        unit: mm/a
+    bench_porosity:
+        default: 0.3
+    max_ratio_interflow_areas:
+        default: 100
+    association_dict:
+        default:
+            kf1: poly_kf1
+            kf2: poly_kf2
+    half_life:
+        default: 5
+        unit: a
+---
+!File
+    name: leaching.yaml
+    format: yaml
+---
+
+output:
+    w2_output_step:
+        default: 1
+    lake_ex_list:
+        default: ['*ss', '*ssp','*ssgw', 'w2x', 'w2z', 'h', 'b', 'co2sat',
+                  'lpom', 'algaesettling', 'ldom', 'sed', 'algaenosettling',
+                  'rdom', 'limitingFactor', 'tra', 'limitingCause', 'u']
+    lake_inc_list:
+        default: ['']
+treatment:
+    treatment:
+        default: False
+    additions:
+        default:
+            - name: do1
+              molar_masses:
+                  - 16
+              molar_ratios:
+                  - 1
+              constituents: do
+              location: (3,10)
+
+#if halfLife < 1e-20:
+#    config.decayConstant  = 0
+#else:
+#    config.decayConstant = 0.693/(halfLife*86400*365.25)
+#if not config.lakeActiveMineralsNames:
+#    config.settle = 0
+
+
