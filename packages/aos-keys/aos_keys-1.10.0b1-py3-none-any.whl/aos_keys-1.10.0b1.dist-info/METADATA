@@ -1,0 +1,109 @@
+Metadata-Version: 2.4
+Name: aos-keys
+Version: 1.10.0b1
+Summary: AosEdge private keys and certificate manager
+Author: EPAM Systems
+Author-email: support@aoscloud.io
+License: Apache License 2.0
+Platform: any
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+Requires-Dist: rich>=10.13
+Requires-Dist: requests>=2.27.0
+Requires-Dist: importlib-resources>=3.0; python_version < "3.9"
+Requires-Dist: importlib-metadata==4.2.0; python_version < "3.8"
+Requires-Dist: urllib3
+Requires-Dist: chardet<6.0.0,>=3.0.2
+Requires-Dist: cryptography==42.0.4
+Requires-Dist: packaging>=24.0
+Requires-Dist: appdirs>=1.4.4
+Provides-Extra: dev
+Requires-Dist: pylint>=2.13.7; extra == "dev"
+Requires-Dist: flake8>=4.0.1; extra == "dev"
+Requires-Dist: wemake-python-styleguide>=0.16.1; extra == "dev"
+Requires-Dist: pytest>=7.0.1; extra == "dev"
+Requires-Dist: pytest-mock>=3.6.1; extra == "dev"
+Requires-Dist: coverage>=6.2; extra == "dev"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: license
+Dynamic: platform
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+Aos user keys management tool
+=====================
+This tool is part of the AosEdge SDK.
+
+
+Overview
+--------
+This tool will help you manage user certificates for Aos Cloud.
+
+Using this tool you'll be able to:
+* Issue new user certificate in pkcs12 format.
+* Show info about user certificate.
+* Convert PKCS12 certificate to PEM key and certificate files.
+
+
+Prerequisites
+--------------
+* Python 3.7+
+
+
+Installation
+------------
+```bash
+python -m pip install aos-keys
+```
+
+Usage
+------------
+
+### Issue new user certificate:
+```bash
+aos-keys new-user -d {aoscloud.io} -t {token} {--oem|--sp|--fleet}
+```
+>Where: 
+>* **-d** - Aos CLoud domain to register user
+>* **-t** - User Token
+>* **-oem** or **-sp** - Certificate for OEM or SP User 
+
+Example:
+```bash
+aos-keys new-user -d aoscloud.io -t 1111 --oem
+```
+
+### Show info about certificate and related user:
+```bash
+aos-keys info -c {path-to-cert} {--oem|--sp|--fleet}
+```
+>Where: 
+>* **-c** - Path to user certificate
+>* **-sp** - Show info of default Service Provider user
+>* **-oem** - Show info of default OEM user
+>* **-fleet** - Show info of default Fleet Owner user
+ 
+Example:
+Show info about default SP user certificate
+```bash
+aos-keys info --sp
+```
+Show info about default OEM user certificate
+```bash
+aos-keys info --oem
+```
