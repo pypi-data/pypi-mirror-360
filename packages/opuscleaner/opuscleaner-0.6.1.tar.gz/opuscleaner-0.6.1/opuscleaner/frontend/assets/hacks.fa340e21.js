@@ -1,0 +1,1 @@
+import{i as f,A as i}from"./index.0416bff3.js";let l=0;function h(){return++l}function g(n){const e=f();return i(o=>{const s=(t,a)=>{const r=new AbortController;o(()=>r.abort());const c=r.signal;return fetch(t,{...a,signal:c})};Promise.resolve(n(s)).then(t=>{e.value=t})}),e}export{g as f,h as g};
