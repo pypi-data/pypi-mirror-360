@@ -1,0 +1,128 @@
+Metadata-Version: 2.4
+Name: jalali-calendar-qt
+Version: 1.0.0
+Summary: A companion library providing PyQt (PySide6) widgets for the persian-jalali-calendar library.
+Author-email: "Hamid R. Yari" <hryarih@gmail.com>
+License: MIT License
+        
+        Copyright (c) [2025] [Hamid R. Yari]
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+Project-URL: Homepage, https://github.com/hryarih32/jalali-calendar-qt
+Project-URL: Bug Tracker, https://github.com/hryarih32/jalali-calendar-qt/issues
+Keywords: jalali,persian,calendar,shamsi,qt,pyside,datepicker,timepicker,gui
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Software Development :: User Interfaces
+Classifier: Topic :: Software Development :: Widget Sets
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: persian-jalali-calendar>=1.0.2
+Requires-Dist: PySide6
+Dynamic: license-file
+
+# Persian Jalali Calendar - PyQt Widgets
+
+A companion library providing beautiful, modern, and theme-aware PyQt (PySide6) widgets for the `persian-jalali-calendar` library.
+
+This library provides a set of professional date and time selection widgets designed for a native Persian user experience, including Right-to-Left layout, Persian numerals, and a custom Persian font.
+
+## Installation
+
+When you install this library, the core `persian-jalali-calendar` will be installed automatically as a dependency.
+
+```bash
+pip install jalali-calendar-qt
+```
+You will also need to provide the `BNazanin.ttf` font file in a folder like `src/jalali_calendar_qt/assets/` for the custom font to work.
+
+## Widgets
+
+### `JalaliDateEdit`
+A compact input field that shows a popup `JalaliDatePicker`.
+
+```python
+from jalali_calendar_qt import JalaliDateEdit
+
+date_editor = JalaliDateEdit()
+```
+
+### `JalaliTimeEdit`
+A compact input field that shows a popup `AnalogTimePicker`.
+
+```python
+from jalali_calendar_qt import JalaliTimeEdit
+
+time_editor = JalaliTimeEdit()
+```
+
+### `JalaliDateTimeEdit`
+A compact input field that shows a combined popup with both date and time pickers.
+
+```python
+from jalali_calendar_qt import JalaliDateTimeEdit
+
+datetime_editor = JalaliDateTimeEdit()
+```
+
+## Example Usage
+
+```python
+import sys
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget
+from jalali_calendar_qt import JalaliDateEdit, JalaliTimeEdit, JalaliDateTimeEdit
+from jalali_calendar_qt.utils import get_font, translate # For styling
+
+# --- Main Application Window ---
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        # ... setup window ...
+        
+        # Create the widgets
+        date_edit = JalaliDateEdit()
+        time_edit = JalaliTimeEdit()
+        datetime_edit = JalaliDateTimeEdit()
+
+        # Connect to their signals
+        date_edit.dateSelected.connect(self.on_date_selected)
+        time_edit.timeSelected.connect(self.on_time_selected)
+        datetime_edit.dateTimeSelected.connect(self.on_datetime_selected)
+        
+        # ... add widgets to layout ...
+        
+    def on_date_selected(self, jdate):
+        print(f"Date selected: {jdate}")
+        
+# ... (rest of standard application code) ...
+```
+
+## License
+
+This project is licensed under the MIT License.
