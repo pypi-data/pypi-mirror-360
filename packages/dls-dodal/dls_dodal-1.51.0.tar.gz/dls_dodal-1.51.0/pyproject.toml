@@ -1,0 +1,204 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm[toml]>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dls-dodal"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+description = "Ophyd devices and other utils that could be used across DLS beamlines"
+dependencies = [
+    "click",
+    "ophyd",
+    "ophyd-async>=0.10.0a4",
+    "bluesky",
+    "pyepics",
+    "dataclasses-json",
+    "pillow",
+    "zocalo>=1.0.0",
+    "requests",
+    "graypy",
+    "pydantic>=2.0",
+    "opencv-python-headless", # For pin-tip detection.
+    "aioca",                  # Required for CA support with ophyd-async.
+    "p4p",                    # Required for PVA support with ophyd-async.
+    "numpy",
+    "aiofiles",
+    "aiohttp",
+    "redis",
+    "scanspec>=0.7.3",
+    "event-model>=1.23",      # Until bluesky pins it https://github.com/DiamondLightSource/dodal/issues/1278
+    "pyzmq==26.3.0",          # Until we can move to RHEL 8 https://github.com/DiamondLightSource/mx-bluesky/issues/1139
+]
+
+dynamic = ["version"]
+license.file = "LICENSE"
+readme = "README.md"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "diff-cover",
+    "import-linter",
+    "ispyb",
+    "mypy",
+    # Commented out due to dependency version conflict with pydantic 1.x
+    # "copier",
+    "myst-parser",
+    "ophyd_async[sim]",
+    "pipdeptree",
+    "pre-commit",
+    "psutil",
+    "pydata-sphinx-theme>=0.12",
+    "pyright",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-json-report",
+    "pytest-random-order",
+    "ruff",
+    "sphinx<7.4.6",              #  pinned due to https://github.com/sphinx-doc/sphinx/issues/12660
+    "sphinx-autobuild",
+    "sphinx-copybutton",
+    "sphinxcontrib-mermaid",
+    "sphinx-design",
+    "sphinx-autodoc-typehints",
+    "tox-direct",
+    "types-requests",
+    "types-mock",
+    "types-PyYAML",
+    "types-aiofiles",
+]
+
+[project.scripts]
+dodal = "dodal.__main__:main"
+save-panda = "dodal.devices.util.save_panda:main"
+
+[project.urls]
+GitHub = "https://github.com/DiamondLightSource/dodal"
+
+[[project.authors]] # Further authors may be added by duplicating this section
+email = "dominic.oram@diamond.ac.uk"
+name = "Dominic Oram"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+dodal = ["*.txt"]
+
+[tool.setuptools_scm]
+version_file = "src/dodal/_version.py"
+
+[tool.pyright]
+typeCheckingMode = "standard"
+reportMissingImports = false  # Ignore missing stubs in imported modules
+
+[tool.pytest.ini_options]
+# Run pytest with all our checkers, and don't spam us with massive tracebacks on error
+asyncio_mode = "auto"
+markers = [
+    "requires: marks tests as requiring other infrastructure",
+    "skip_in_pycharm: marks test as not working in pycharm testrunner",
+]
+addopts = """
+    --cov=src/dodal --cov=dodal --cov-report term
+    --tb=native -vv --doctest-modules --doctest-glob="*.rst"
+    """
+# https://iscinumpy.gitlab.io/post/bound-version-constraints/#watch-for-warnings
+filterwarnings = [
+    "error",
+    # Ignore deprecation warning from ophyd_async
+    "ignore:dep_util is Deprecated. Use functions from setuptools instead.:DeprecationWarning",
+    # Ignore deprecation warning from zocalo
+    "ignore:.*pkg_resources.*:DeprecationWarning",
+]
+# Doctest python code in docs, python code in src docstrings, test functions in tests
+testpaths = "docs src tests system_tests"
+
+[tool.coverage.report]
+exclude_also = [
+    '^"""', # Ignore the start/end of a file-level triple quoted docstring
+]
+
+[tool.coverage.run]
+data_file = "/tmp/dodal.coverage"
+
+[tool.coverage.paths]
+# Tests are run from installed location, map back to the src directory
+source = ["src", "**/site-packages/"]
+
+# tox must currently be configured via an embedded ini string
+# See: https://github.com/tox-dev/tox/issues/999
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+skipsdist=True
+
+[testenv:{pre-commit,type-checking,tests,docs,unit-report,system-report}]
+# Don't create a virtualenv for the command, requires tox-direct plugin
+direct = True
+passenv = *
+allowlist_externals =
+    pytest
+    pre-commit
+    pyright
+    sphinx-build
+    sphinx-autobuild
+commands =
+    tests: pytest -m 'not requires' {posargs}
+    type-checking: pyright src tests {posargs}
+    pre-commit: pre-commit run --all-files --show-diff-on-failure {posargs}
+    docs: sphinx-{posargs:build -E} -T docs build/html
+    unit-report: pytest --cov-report xml:unit_cov.xml --json-report --json-report-file=unit-report.json tests {posargs}
+    system-report: pytest -m 'not requires(instrument="i04")' --cov-report xml:system_cov.xml --json-report --json-report-file=system-report.json system_tests {posargs}
+"""
+
+[tool.ruff]
+src = ["src", "tests"]
+line-length = 88
+lint.extend-ignore = [
+    "E501", # Line too long
+    "F811", # support typing.overload decorator
+]
+lint.select = [
+    "B",      # flake8-bugbear - https://docs.astral.sh/ruff/rules/#flake8-bugbear-b
+    "C4",     # flake8-comprehensions - https://docs.astral.sh/ruff/rules/#flake8-comprehensions-c4
+    "E",      # pycodestyle errors - https://docs.astral.sh/ruff/rules/#error-e
+    "F",      # pyflakes rules - https://docs.astral.sh/ruff/rules/#pyflakes-f
+    "W",      # pycodestyle warnings - https://docs.astral.sh/ruff/rules/#warning-w
+    "I",      # isort - https://docs.astral.sh/ruff/rules/#isort-i
+    "UP",     # pyupgrade - https://docs.astral.sh/ruff/rules/#pyupgrade-up
+    "SLF",    # self - https://docs.astral.sh/ruff/settings/#lintflake8-self
+    "RUF018", # walrus operators in asserts - https://docs.astral.sh/ruff/rules/assignment-in-assert/
+    "TID251", # banned api - https://docs.astral.sh/ruff/rules/banned-api/
+]
+
+[tool.ruff.lint.per-file-ignores]
+# By default, private member access is allowed in tests
+# See https://github.com/DiamondLightSource/python-copier-template/issues/154
+# Remove this line to forbid private member access, walrus operators, banned api in asserts in tests 
+"tests/**/*" = ["SLF001", "RUF018", "TID251"]
+"system_tests/**/*" = ["SLF001", "RUF018", "TID251"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"time.sleep".msg = "Use bps.sleep or asyncio.sleep instead. # noqa will disable this rule for that line. See https://github.com/DiamondLightSource/mx-bluesky/issues/925"
+
+[tool.importlinter]
+root_package = "dodal"
+
+[[tool.importlinter.contracts]]
+name = "Common cannot import from beamlines"
+type = "forbidden"
+source_modules = ["dodal.common"]
+forbidden_modules = ["dodal.beamlines"]
+
+[[tool.importlinter.contracts]]
+name = "Enforce import order"
+type = "layers"
+layers = ["dodal.plans", "dodal.beamlines", "dodal.devices"]
