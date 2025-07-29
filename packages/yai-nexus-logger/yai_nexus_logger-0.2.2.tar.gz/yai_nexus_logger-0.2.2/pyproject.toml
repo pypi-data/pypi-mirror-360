@@ -1,0 +1,62 @@
+[project]
+name = "yai-nexus-logger"
+version = "0.2.2"
+authors = [
+  { name="Harry", email="harrytang.next@gmail.com" },
+]
+description = "A powerful, structured logger for modern Python applications, with built-in trace_id support for easy request tracking."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/yai-nexus/yai-nexus-logger"
+"Bug Tracker" = "https://github.com/yai-nexus/yai-nexus-logger/issues"
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "pytest-mock",
+  "ruff==0.12.1",
+  "fastapi",
+  "uvicorn[standard]",
+  "httpx",
+  "python-dotenv",
+]
+sls = [
+  "aliyun-log-python-sdk>=0.6.45",
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --cov=src/yai_nexus_logger --cov-report=term-missing"
+testpaths = [
+    "tests",
+]
+norecursedirs = ["examples", "logs", "htmlcov", "venv"]
+pythonpath = [
+  ".",
+  "src",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "S"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "S106", "E501"]
+"examples/**/*.py" = ["E501", "F841", "S104", "F811"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
