@@ -1,0 +1,136 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "eolib"
+dynamic = ["version"]
+description = 'Core library for writing applications related to Endless Online.'
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = ["endless-online"]
+authors = [
+  { name = "Jonah Jeleniewski", email = "cirrasbu@hotmail.com" },
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  "Topic :: Games/Entertainment",
+]
+dependencies = []
+
+[project.urls]
+Documentation = "https://cirras.github.io/eolib-python"
+Issues = "https://github.com/Cirras/eolib-python/issues"
+Source = "https://github.com/Cirras/eolib-python"
+
+[tool.hatch.version]
+path = "src/eolib/__about__.py"
+
+[tool.hatch.build.hooks.custom]
+path = "protocol_build_hook.py"
+
+[tool.hatch.build]
+artifacts = [
+  "src/eolib/protocol/_generated",
+]
+
+[tool.hatch.envs.default]
+dependencies = [
+  "coverage[toml]>=6.5",
+  "pytest",
+]
+[tool.hatch.envs.default.scripts]
+test = [
+  "python protocol.py generate",
+  "coverage run -m pytest --no-header -v {args:tests}",
+  "- coverage combine",
+  "coverage xml",
+]
+
+[[tool.hatch.envs.all.matrix]]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+
+[tool.hatch.envs.lint]
+detached = true
+dependencies = [
+  "black==24.8.0",
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.lint.scripts]
+format = "black {args:.}"
+style = "black --check --diff {args:.}"
+typing = [
+  "python protocol.py generate",
+  "mypy --install-types --non-interactive {args:src}"
+]
+all = [
+  "style",
+  "typing",
+]
+
+[tool.hatch.envs.docs]
+detached = true
+dependencies = [
+  "mike",
+  "mkdocs",
+  "mkdocs-material",
+  "mkdocs-gen-files",
+  "mkdocs-section-index",
+  "mkdocs-literate-nav",
+  "mkdocstrings[python]",
+  "mkdocs-include-markdown-plugin",
+]
+
+[tool.hatch.envs.docs.scripts]
+build = [
+  "python protocol.py generate",
+  "mkdocs build"
+]
+serve = [
+  "python protocol.py generate",
+  "mkdocs serve"
+]
+deploy = [
+  "python protocol.py generate",
+  "mike deploy --update-aliases {args:DEV} latest"
+]
+
+[tool.hatch.envs.release]
+detached = true
+dependencies = [
+  "keepachangelog==1.0.0",
+]
+
+[tool.hatch.envs.release.scripts]
+prepare = [
+  "python prepare_release.py {args}" 
+]
+
+[tool.black]
+target-version = ["py37"]
+line-length = 100
+skip-string-normalization = true
+
+[tool.coverage.run]
+source_pkgs = ["eolib"]
+branch = true
+parallel = true
+relative_files = true
+omit = [
+  "src/eolib/__about__.py",
+]
+
+[tool.coverage.paths]
+eolib = ["src/eolib"]
+tests = ["tests"]
