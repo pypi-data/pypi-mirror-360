@@ -1,0 +1,175 @@
+Metadata-Version: 2.4
+Name: nlp2scryfall
+Version: 0.1.0
+Summary: Translate natural language queries to Scryfall search syntax
+Project-URL: Homepage, https://github.com/raphaelchazelle/nlp2scryfall
+Project-URL: Repository, https://github.com/raphaelchazelle/nlp2scryfall
+Project-URL: Issues, https://github.com/raphaelchazelle/nlp2scryfall/issues
+Author-email: Raphael Chazelle <raphael@example.com>
+License: MIT
+License-File: LICENSE
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Text Processing :: Linguistic
+Requires-Python: >=3.8
+Requires-Dist: requests>=2.25.0
+Requires-Dist: typing-extensions>=4.0.0
+Description-Content-Type: text/markdown
+
+# nlp2scryfall
+
+[![PyPI version](https://badge.fury.io/py/nlp2scryfall.svg)](https://badge.fury.io/py/nlp2scryfall)
+[![Tests](https://github.com/yourusername/nlp2scryfall/workflows/Tests/badge.svg)](https://github.com/yourusername/nlp2scryfall/actions)
+[![Coverage](https://codecov.io/gh/yourusername/nlp2scryfall/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/nlp2scryfall)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A Python package that translates natural language queries to Scryfall search syntax.
+
+## Installation
+
+```bash
+pip install nlp2scryfall
+```
+
+For development:
+```bash
+pip install nlp2scryfall[dev]
+```
+
+## Usage
+
+```python
+from nlp2scryfall import Translator
+
+translator = Translator()
+
+# Simple queries
+query = translator.translate("find all red dragons")
+print(query)  # "c>=r t:dragon"
+
+# Complex queries
+query = translator.translate("show me legendary creatures from dominaria that cost 3 or less")
+print(query)  # "t:legendary t:creature s:dom cmc<=3"
+
+# Power/toughness queries
+query = translator.translate("creatures with power greater than 5")
+print(query)  # "t:creature pow>5"
+
+# Set-specific queries
+query = translator.translate("all cards from the latest set")
+print(query)  # "s:latest"
+
+# Color identity queries
+query = translator.translate("blue and white cards")
+print(query)  # "c>=uw"
+
+# Dynamic set queries
+query = translator.translate("the most recent 5 sets ordered by price asc")
+print(query)  # "s:woe s:mat s:mom s:one s:bro order:usd"
+
+# Land queries (uses color identity)
+query = translator.translate("green lands")
+print(query)  # "t:land id>=g"
+
+# Mono-color queries
+query = translator.translate("mono red creatures")
+print(query)  # "c=r t:creature"
+```
+
+## Features
+
+- **Natural Language Processing**: Converts human-readable queries to Scryfall syntax
+- **Comprehensive Coverage**: Supports most Scryfall search operators
+- **Dynamic Set Recognition**: Automatically fetches and recognizes set names and codes from Scryfall API
+- **Color Support**: Handles color combinations, identities, and mono-color queries
+- **Power/Toughness**: Translates power and toughness comparisons
+- **Type Recognition**: Identifies card types, subtypes, and supertypes
+- **Mana Cost**: Handles mana cost queries and comparisons
+- **Order-Agnostic Matching**: Color codes are matched regardless of order (e.g., "red and blue" = "blue and red")
+- **Smart Land Handling**: Automatically uses color identity (`id`) for land queries instead of card color (`c`)
+
+## Features in Depth
+
+### Color Syntax
+- **General colors**: `c>=r` (cards that can be played with red)
+- **Mono colors**: `c=r` (cards that are only red)
+- **Lands**: `id>=g` (lands with green in their color identity)
+- **Colorless**: `c=c` (colorless cards)
+
+### Dynamic Set Support
+- Set names and codes are fetched dynamically from the Scryfall API
+- Supports "most recent N sets" queries (e.g., "the most recent 5 sets")
+- Caches set data for performance
+- Handles special sets like "latest", "oldest", "The List"
+
+### Query Processing
+- **Order independence**: Components can appear in any order in the query
+- **Case insensitive**: Queries work regardless of capitalization
+- **Filler word removal**: Ignores common words like "find", "show", "get", etc.
+- **Conflict resolution**: Parsers are ordered to avoid conflicts (e.g., type parser runs before color parser)
+
+## Supported Query Types
+
+### Basic Properties
+- Card names
+- Colors and color identity
+- Card types (creature, instant, sorcery, etc.)
+- Rarities
+- Sets and editions
+
+### Advanced Properties
+- Power and toughness
+- Mana cost
+- Oracle text
+- Artist names
+- Flavor text
+- Collector numbers
+
+### Complex Queries
+- Multi-color combinations (guilds, shards, five-color)
+- Set ranges and dynamic set queries
+- Date ranges
+- Format legality
+- Price ranges
+- Ordering (by price, power, CMC, name, etc.)
+
+## Limitations
+
+- **English-only**: Currently only supports English natural language queries
+- **Scryfall dependency**: Requires internet connection to fetch set data
+- **Query complexity**: Very complex nested queries may not be fully supported
+- **Ambiguous queries**: Some queries may have multiple valid interpretations
+- **API rate limits**: Respects Scryfall's API rate limits (100ms between requests)
+
+## Testing
+
+Run the test suite:
+```bash
+pytest
+```
+
+Run with coverage:
+```bash
+pytest --cov=nlp2scryfall
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Run the test suite
+6. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details. 
