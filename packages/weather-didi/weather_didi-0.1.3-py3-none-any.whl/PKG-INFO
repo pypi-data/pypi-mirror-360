@@ -1,0 +1,85 @@
+Metadata-Version: 2.4
+Name: weather-didi
+Version: 0.1.3
+Summary: Add your description here
+Requires-Python: >=3.13
+Requires-Dist: httpx>=0.28.1
+Requires-Dist: mcp[cli]>=1.10.1
+Description-Content-Type: text/markdown
+
+# 天气MCP SERVER
+
+## 安装uv
+
+```
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+重启命令行生效
+
+## 创建并设置项目
+
+```
+# Create a new directory for our project
+uv init weather-didi
+cd weather-didi
+
+# Create virtual environment and activate it
+uv venv
+source .venv/bin/activate
+
+# Install dependencies
+uv add "mcp[cli]" httpx
+
+# Create our server file
+touch weather.py
+```
+
+# Cherry Studio MCP CONFIG
+
+1. 选择stdio，配置命令
+uv --directory /ABSOLUTE/PATH/TO/PARENT/FOLDER/weather-didi run weather.py
+
+
+## 提问
+
+What’s the weather in Sacramento?
+What are the active weather alerts in Texas?
+
+## 打包发布pypi共享
+此方法只能使用stdio方式。
+
+1. 修改pyproject.toml， 添加版本、依赖、构建配置
+2. uv build构建生成dist目录
+```
+dist/目录下生成两个文件：
+.whl 文件（构建分发版）
+.tar.gz 文件（源代码分发版）
+```
+3. uv push发布
+```
+# 发布测试
+uv publish --token 你的PyPI令牌
+uv add -i https://test.pypi.org/simple/ --no-deps 你的包名
+uvx 包名（自动创建虚拟环境，适合单次运行）
+# 发布生产
+uv publish --token 你的PyPI令牌
+uv add 你的包名
+uvx 包名（自动创建虚拟环境，适合单次运行）
+```
+
+## 切换协议
+
+weather.py:main方法：stdio->sse
+
+```
+    mcp.settings.host = '0.0.0.0'
+    mcp.settings.port = 8000
+    mcp.run(transport='sse')
+```
+
+并启动，获取服务器地址：http://{IP}:{PORT}/sse
+
+Cherry Studio配置：
+1. 选择sse，配置mcp server服务器地址：
+http://{IP}:{PORT}/sse
