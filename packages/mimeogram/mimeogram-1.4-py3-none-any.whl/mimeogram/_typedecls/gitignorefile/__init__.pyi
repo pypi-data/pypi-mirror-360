@@ -1,0 +1,6 @@
+class Cache:
+    def __init__( self, ignore_names: list[str] | None = ... ) -> None:
+        ...
+
+    def __call__( self, path: str, is_dir: bool | None = ... ) -> bool:
+        ...
