@@ -1,0 +1,53 @@
+import unittest
+
+import sys
+import os
+
+if True:  # pylint: disable=W0125
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
+
+
+from py_skyrc_charger.checksum import calc_checksum, check_checksum
+
+
+class TestChecksum(unittest.TestCase):
+
+    def test_checksum(self):
+        commands = [
+            ("0f1605010002000a050ce41068000000000000000000007f", 0),  # start
+            ("0f1605010006000a050ce410680000000000000000000083", 0),
+            ("0f160501000600c8050ce410680000000000000000000041", 0),
+            ("0f2255010100010004596903de001900000ee30ee80ee60ee90ee70ee8000000000100d6", 0),  # vals
+            ("0f2255010100010004597103de001900000ee50eea0ee70eea0ee80ee8000000000100e5", 0),
+            ("0f2255010100010005597403de001900000ee50eea0ee80eea0ee90eea000000000100ed", 0),
+            ("0f2255010100010006597f03d8001900000ee80eec0ee90eeb0eea0eea000000000100fb", 0),
+            ("0f225501010000000158f10833001800000eb00eb30eaf0eb70eb10eb200000000010075", 0),
+            ("0f225501010000000258f10068001800000ea90ea90ea40eaf0ea70ea80000000001006b", 0),
+            ("0f2255010100000002592301e2001800000ed30ed70ed30ed90ed60ed700000000010028", 0),
+            ("0f2255010100010003595603e1001800000ee00ee50ee30ee40ee40ee3000000000100ae", 0),
+            ("0f2255010100010004596003d8001800000ee20ee70ee30ee50ee60ee5000000000100b9", 0),
+            ("0f2255010100010004596603d9001800000ee30ee70ee50ee70ee60ee5000000000100c5", 0),
+            ("0f2255010100010005596903d8001800000ee30ee90ee60ee70ee70ee8000000000100cf", 0),
+            ("0f2255010100010005597103d2001900000ee40eea0ee60ee90ee90ee9000000000100d9", 0),
+            ("0f2255010100020006597403da001900000ee50eea0ee80ee90ee90ee9000000000100e9", 0),
+            ("0f2255010100040012599b03d9001800000eeb0ef00eee0ef00ef00ef000000000010043", 0),
+            ("0f22550101003e00e35a1403d7001b00000f000f030f020f030f040f0500000000010047", 0),
+            ("0f22550101013904765b0403d8002000000f280f2c0f2b0f2a0f2b0f2e000000000100c2", 0),
+            ("0f2255010101fa07355bf103d8002300000f500f520f570f500f510f5300000000010020", 0),
+            ("0f03fe01ff06000a050ce410680000000000000000000083", 8),  # stop
+            ("0f03fe01ff02000a050ce41068000000000000000000007f", 8),
+            ("0f03fe01ff06030a050f0a0f0a0000000000000000000050", 8),
+            ("0f0355015603000a050ce410680000000000000000000080", 90),  # poll
+        ]
+
+        for cmd, diff in commands:
+            raw_data = bytes.fromhex(cmd)
+            checksum = calc_checksum(raw_data[:-1])
+            self.assertEqual(checksum, (raw_data[-1] - diff) % 256)
+            print(
+                f"Checksum: {raw_data[-1]:02x} =? {checksum:02x}, diff: {raw_data[-1] - checksum} "
+                + f"ok: {check_checksum(raw_data)}")
+
+
+if __name__ == '__main__':
+    unittest.main()
