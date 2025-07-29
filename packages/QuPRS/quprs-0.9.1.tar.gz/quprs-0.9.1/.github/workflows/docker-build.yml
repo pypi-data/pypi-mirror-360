@@ -1,0 +1,117 @@
+# .github/workflows/docker-build.yml
+#
+# GitHub Actions Workflow: Build, Test, and Push Docker Image
+#
+# This workflow performs the following steps:
+# 1. On push to main or tags (v*), or pull request to main:
+#    - Runs tests by building the Docker image up to the 'tester' stage.
+# 2. On push to main or tags (v*):
+#    - Builds and pushes the final Docker image to GHCR and Docker Hub.
+#
+# Prerequisites:
+# - Repository secrets: DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
+
+name: Build, Test and Push Docker Image
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # Job 1: Run tests by building up to the 'tester' stage
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Build tester image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: tester
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Note: If the build succeeds, tests have passed (pytest runs during build).
+
+  # Job 2: Build and push the final Docker image
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+
+    # Only run on push to main or tags, not on pull requests
+    if: github.event_name != 'pull_request'
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Set lowercase repo name
+        id: set_repo_name
+        run: |
+          echo "lowercase_repo=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+          echo "dockerhub_repo=$(basename '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ steps.set_repo_name.outputs.lowercase_repo }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ steps.set_repo_name.outputs.dockerhub_repo }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push final image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: final
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            ${{ steps.meta.outputs.version != 'latest' && format('SETUPTOOLS_SCM_PRETEND_VERSION={0}', steps.meta.outputs.version) || '' }}

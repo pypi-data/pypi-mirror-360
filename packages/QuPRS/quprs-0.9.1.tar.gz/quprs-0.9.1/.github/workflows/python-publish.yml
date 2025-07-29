@@ -1,0 +1,193 @@
+#.github/workflows/python-publish.yml
+
+name: Build and Publish Python Package
+
+# Workflow Triggers:
+# 1. On push to any branch (e.g., main, feature/xyz): triggers build.
+# 2. On push of tags starting with 'v' (e.g., v1.2.3): triggers build and publish.
+# 3. On pull request to main branch: triggers build.
+# 4. Manual trigger via GitHub Actions UI.
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  # --- Job 1: Build Cross-Platform Wheels ---
+  # This job runs on all triggers and builds binary wheels for multiple platforms.
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          fetch-depth: 0
+      - name: Install build dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y cmake build-essential libgmp-dev libmpfr-dev zlib1g-dev
+
+      - name: Install build dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install gmp mpfr zlib cmake
+
+      - name: Setup MSYS2 and install dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          path-type: inherit
+          install: >-
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-gmp
+            mingw-w64-x86_64-mpfr
+            mingw-w64-x86_64-zlib
+
+      - name: Install Hatch
+        run: pip install hatch hatch-vcs
+
+      - name: Convert pyproject.toml to static version for release builds
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: |
+          PACKAGE_VERSION="${GITHUB_REF_NAME#v}"
+          echo "Converting pyproject.toml to static version: $PACKAGE_VERSION"
+
+          perl -pi -e "s/^dynamic = \[\"version\"\]/version = \"$PACKAGE_VERSION\"/" pyproject.toml
+          perl -pi -e 's/source = "vcs"/source = "static"/' pyproject.toml
+
+          echo "Modified pyproject.toml content:"
+          cat pyproject.toml
+        shell: bash
+
+
+      - name: Clean up existing dist directory
+        run: rm -rf dist/ 
+
+      - name: Build wheel (general purpose or forced version for tags)
+        run: hatch build
+
+      - name: Upload wheel artifacts (for all builds - general purpose)
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-builds-dist-wheels-${{ matrix.os }}
+          path: dist/*.whl
+
+      - name: Upload wheel artifacts (for PyPI release - only on tags)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: pypi-release-wheels-${{ matrix.os }}
+          path: dist/*.whl
+  # --- Job 2: Build Source Distribution (Sdist) ---
+  # This job runs on all triggers and builds the source distribution.
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Hatch
+        run: pip install hatch hatch-vcs
+
+      - name: Convert pyproject.toml to static version for release builds
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: |
+          PACKAGE_VERSION="${GITHUB_REF_NAME#v}"
+          echo "Converting pyproject.toml to static version: $PACKAGE_VERSION"
+
+          perl -pi -e "s/^dynamic = \[\"version\"\]/version = \"$PACKAGE_VERSION\"/" pyproject.toml
+          perl -pi -e 's/source = "vcs"/source = "static"/' pyproject.toml
+
+          echo "Modified pyproject.toml content:"
+          cat pyproject.toml
+        shell: bash
+
+
+      - name: Clean up existing dist directory
+        run: rm -rf dist/
+
+      - name: Build sdist with Hatch (general purpose or forced version for tags)
+        run: hatch build -t sdist
+
+      - name: Upload sdist artifact (for all builds - general purpose)
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-builds-dist-sdist
+          path: dist/*.tar.gz
+
+      - name: Upload sdist artifact (for PyPI release - only on tags)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: pypi-release-sdist
+          path: dist/*.tar.gz
+
+
+  # --- Job 3: Publish to PyPI and Create GitHub Release ---
+  # This job runs only when a 'v*' tag is pushed.
+  # It publishes all built artifacts to PyPI and creates a GitHub Release.
+  publish:
+    name: Publish to PyPI and Create Release
+    # 'needs' ensures this job runs only after all build jobs succeed.
+    needs: [build_wheels, build_sdist]
+    # Condition: Only run when a 'v*' tag is pushed.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    # Uses PyPI Trusted Publishing (OIDC) for secure publishing.
+    permissions:
+      # id-token: write is required for OIDC Trusted Publishing.
+      id-token: write
+      # contents: write is required to create a GitHub Release.
+      contents: write
+
+    steps:
+      - name: Download PyPI release wheels (Linux)
+        uses: actions/download-artifact@v4
+        with:
+          name: pypi-release-wheels-ubuntu-latest
+          path: dist
+
+      - name: Download PyPI release wheels (macOS)
+        uses: actions/download-artifact@v4
+        with:
+          name: pypi-release-wheels-macos-latest
+          path: dist
+      - name: Download PyPI release artifacts (sdist)
+        uses: actions/download-artifact@v4
+        with:
+          name: pypi-release-sdist 
+          path: dist
+      - name: List files in dist directory (for debugging)
+        run: ls -R dist
+
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## 🚀 Release Notes
+            * **📦 Version:** `${{ github.ref_name }}`
+            * **🔗 PyPI Link:** https://pypi.org/project/QuPRS/${{ github.ref_name }}
+            * 🛠️ This release was automatically generated by GitHub Actions.
+          files: dist/*
