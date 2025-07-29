@@ -1,0 +1,112 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arta"
+version = "0.10.2"
+requires-python = ">3.8.0"
+description = "A Python Rules Engine - Make rule handling simple"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "develop-cs"},
+    {name = "HugoPerrier"},
+    {name = "MathisNcl"},
+]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: Apache Software License",
+]
+
+dependencies = [
+    "omegaconf>=2.0.0",
+    "pydantic<3.0.0",
+]
+
+[project.urls]
+Homepage = "https://maif.github.io/arta/"
+Documentation = "https://maif.github.io/arta/home/"
+Repository = "https://github.com/MAIF/arta"
+
+[project.optional-dependencies]
+all = ["arta[test,dev,doc]"]
+test = ["pytest", "tox", "pytest-cov"]
+dev = ["mypy", "pre-commit", "ruff"]
+doc = ["mkdocs-material", "mkdocstrings[python]"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"arta" = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.mypy]
+exclude = ["tests"]
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "W",    # pycodestyle warnings
+    "A",    # flake8-builtins
+    "PLC",  # pylint conventions
+    "PLE",  # pylint errors
+    "PLW",  # pylint warnings
+    "UP",   # pyupgrade
+    "S",    # flake8-bandit,
+    "B",    # flake8-bugbear
+    "I",    # isort
+    "D",    # pydocstyle
+    "NPY",  # NumPy-specific rules
+]
+ignore = ["E501", "D2", "D3", "D4", "D104", "D100", "D106", "S311", "UP045"]
+exclude = ["tests/*"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.coverage.paths]
+source = [
+    "src/arta",
+    "*/.tox/*/lib/python*/site-packages/arta",
+    "*/.tox/pypy*/site-packages/arta",
+    "*/.tox\\*\\Lib\\site-packages\\arta",
+    "*/src/arta",
+    "*\\src\\arta"]
+
+[tool.coverage.run]
+branch = true
+parallel = false
+source = ["arta"]
+omit = ["*/tests/*"]
+
+[tool.coverage.report]
+omit = ["tests"]
