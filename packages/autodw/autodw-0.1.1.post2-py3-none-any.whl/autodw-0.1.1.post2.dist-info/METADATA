@@ -1,0 +1,122 @@
+Metadata-Version: 2.1
+Name: autodw
+Version: 0.1.1.post2
+Summary: Database schema serialization with LLM integration for metadata generation and SQL parsing
+Author: Shaobin Shi
+Author-email: shaobin shi <d7inshi@gmail.com>
+License: MIT
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Database
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.8, <4
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: mysql-connector-python>=8.0.0
+Requires-Dist: psycopg2-binary>=2.9.0
+Requires-Dist: openai>=0.27.0
+Requires-Dist: sqlparse>=0.4.0
+Requires-Dist: tqdm>=4.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: black>=23.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Provides-Extra: llm
+Requires-Dist: langchain>=0.1.0; extra == "llm"
+Requires-Dist: transformers>=4.0.0; extra == "llm"
+
+
+<img src="./images/autodw.png" width="960" height="450" alt="AutoDW">
+
+# AutoDW: Data Warehouse Intelligent Agent 🚀  
+> **Automated schema processing bridge connecting data warehouses with LLMs**  
+
+AutoDW is an LLM-based intelligent agent that enhances data warehouse development efficiency through automated database schema processing, metadata optimization, and ETL generation.  
+
+---  
+
+## ✨ Core Features  
+
+### Schema Parsing Engine  
+| Capability             | Description                                    |  
+|------------------------|-----------------------------------------------|  
+| **Multi-format Export** | Exports to JSON/Spider-JSON/MSchema formats    |  
+| **Intelligent Sampling** | Random value extraction + frequency-based optimization |  
+| **Precision Filtering** | Table/column-level data filtering support      |  
+| **Currently Supported** | SQLite • More DB types coming soon             |  
+
+### Metadata Serializer  
+```python  
+# Complete metadata serialization in 3 steps  
+1. Initialize database connection  
+2. Select serialization format (mschema/json)  
+3. Retrieve structured metadata  
+```  
+
+---  
+
+## 🚧 Development Roadmap  
+
+### ✅ Implemented Features  
+- Database schema interaction engine  
+- DB Schema ↔ JSON bidirectional conversion  
+- DB Schema → MSchema serialization  
+
+### 🚀 Coming Soon  
+- SQL → JSON intelligent converter  
+- LLM-powered query optimization engine  
+- Automated ETL script generator  
+- Schema diff visualization tool  
+- Cloud service support: BigQuery • Snowflake • Redshift  
+- REST API remote access interface  
+
+---  
+
+## ⚙️ Quick Installation  
+```bash  
+pip install autodw  
+```  
+
+## 🎯 Usage Examples  
+
+### Schema Parsing  
+```python  
+from autodw.connectors.sqlite import SQLiteConnector  
+
+db = SQLiteConnector("your_db.sqlite")  
+with db:  
+    schema = db.get_database_schema(  
+        format="json",  
+        sample_type="random",  
+        max_samples=3  
+    )  
+    print(schema)  # Get structured schema data  
+```  
+
+### Metadata Serialization  
+```python  
+from autodw.serializers import DatabaseSchemaSerializer  
+
+db = SQLiteConnector("your_db.sqlite")  
+with db:  
+    serializer = DatabaseSchemaSerializer(  
+        connector=db,  
+        serializer_type="mschema",  
+        exclude_tables=["temp_*"]  
+    )  
+    print(serializer.generate())  # Output MSchema format  
+```  
+
+---  
+
+## 📚 Advanced Documentation  
+Visit `docs/` directory for:  
+- Detailed API reference  
+- Schema parsing configuration guide  
+- LLM integration best practices  
+
+> **Technical Support**: Questions? Submit a GitHub Issue  
+> **Project Lead**: d7inshi@outlook.com  
+> **Project Status**: v0.1.1 (Actively Developed)  
