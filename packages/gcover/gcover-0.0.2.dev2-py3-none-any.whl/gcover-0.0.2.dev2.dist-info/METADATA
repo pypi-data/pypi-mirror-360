@@ -1,0 +1,99 @@
+Metadata-Version: 2.4
+Name: gcover
+Version: 0.0.2.dev2
+Summary: A library and CLI tool to work with geological vector data
+Author-email: Marc Monnerat <geocover@swisstopo.ch>
+Maintainer-email: Marc Monnerat <geocover@swisstopo.ch>
+License: BSD-3-Clause
+Project-URL: Homepage, https://github.com/swisstopo/lg-gcover
+Project-URL: Documentation, https://lg-gcover.readthedocs.io
+Project-URL: Repository, https://github.com/swisstopo/lg-gcover
+Project-URL: Issues, https://github.com/swisstopo/lg-gcover/issues
+Project-URL: Changelog, https://github.com/swisstopo/lg-gcover/blob/main/CHANGELOG.md
+Keywords: geology,gis,geodata,arcpy,geopandas,esri
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Scientific/Engineering :: GIS
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Operating System :: OS Independent
+Classifier: Environment :: Console
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: geopandas>=0.14.0
+Requires-Dist: shapely>=2.0.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: click>=8.0.0
+Requires-Dist: rich>=13.0.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: structlog>=23.0.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: tabulate>=0.9.0
+Requires-Dist: loguru
+Provides-Extra: esri
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0; extra == "dev"
+Requires-Dist: pytest-mock>=3.0; extra == "dev"
+Requires-Dist: black>=23.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Requires-Dist: mypy>=1.0; extra == "dev"
+Requires-Dist: pre-commit>=3.0; extra == "dev"
+Requires-Dist: types-pyyaml; extra == "dev"
+Requires-Dist: types-click; extra == "dev"
+Provides-Extra: docs
+Requires-Dist: sphinx>=6.0; extra == "docs"
+Requires-Dist: sphinx-rtd-theme>=1.0; extra == "docs"
+Requires-Dist: sphinx-click>=4.0; extra == "docs"
+Requires-Dist: myst-parser>=1.0; extra == "docs"
+Provides-Extra: cloud
+Requires-Dist: boto3>=1.26; extra == "cloud"
+Requires-Dist: aioboto3>=11.0; extra == "cloud"
+Provides-Extra: viz
+Requires-Dist: matplotlib>=3.7; extra == "viz"
+Requires-Dist: seaborn>=0.12; extra == "viz"
+Requires-Dist: plotly>=5.0; extra == "viz"
+Provides-Extra: all
+Requires-Dist: gcover[cloud,dev,docs,viz]; extra == "all"
+Dynamic: license-file
+
+# lg-gcover
+
+**A Python library and CLI tool for working with Swiss GeoCover geological vector data**
+
+lg-gcover simplifies the processing and analysis of geological vector datasets from the Swiss national Geological Survey (swisstopo). Built on modern geospatial Python tools like GeoPandas and Shapely, it provides both programmatic APIs and command-line utilities for geological data workflows.
+
+## Key Features
+- **CLI Interface**: Easy-to-use `gcover` command for batch processing
+- **GeoPandas Integration**: Seamless integration with the Python geospatial ecosystem
+- **ESRI Compatibility**: Optional support for ArcGIS Pro workflows via arcpy
+- **Rich Output**: Beautiful terminal output with progress indicators and structured logging
+- **Flexible Data Handling**: Support for various geological vector formats and projections
+
+Perfect for geologists, GIS analysts, and researchers working with Swiss geological datasets who need efficient, reproducible data processing workflows.
+
+
+## Usage
+
+
+### SDE connection
+
+    # Voir vos versions utilisateur
+    gcover sde user-versions
+
+    # Lister toutes les versions de GCOVERP
+    gcover sde versions -i GCOVERP
+
+    # Test de connexion interactif
+    gcover sde connect -i GCOVERP --interactive
+
+    # Export JSON des versions
+    gcover sde versions -f json > versions.json
+
+    # Nettoyer les connexions
+    gcover sde connections --cleanup
