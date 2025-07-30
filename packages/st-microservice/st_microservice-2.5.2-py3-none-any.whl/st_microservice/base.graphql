@@ -1,0 +1,68 @@
+directive @no_authentication on FIELD_DEFINITION | OBJECT
+directive @need_permission(scope: String!, strict: Boolean=false) on FIELD_DEFINITION | OBJECT
+directive @editable(scope: String!) on OBJECT
+directive @db_model(model_name: String!) on OBJECT  # When Object name doesn't match a database Model name
+directive @all_filter on OBJECT
+directive @filter on FIELD_DEFINITION
+directive @no_filter on FIELD_DEFINITION
+directive @field(caption: String = null) on FIELD_DEFINITION
+
+scalar Date
+scalar DateTime
+scalar Json
+
+enum DataType {
+    STRING
+    INT
+    FLOAT
+    BOOLEAN
+    DATE
+    DATETIME
+    JSON
+    OBJECT
+}
+
+enum FieldFilterType {
+    STRING
+    NUMBER
+    DATE
+    BOOLEAN
+}
+
+type FieldDetail {
+    field_name: String!
+    caption: String!
+    is_database: Boolean!
+    is_scalar: Boolean!
+    data_type: String!
+    filter_type: FieldFilterType
+}
+
+type TypeInspectorResult {
+    field_details: [FieldDetail!]!
+    primary_keys: [String!]
+    editable: Boolean!
+}
+
+input FieldFilter {
+    field_name: String!
+    value: String!
+}
+
+input FileUpload {
+    data_url: String
+    filename: String!
+}
+
+input ColumnOrder {
+    name: String!
+    descending: Boolean = false
+}
+
+input TableControls {
+    filters: [FieldFilter!] = []
+    limit: Int = 100  # Can be null
+    offset: Int
+    descending: Boolean = false
+    order_by: [ColumnOrder!] = null  # null for automatic primary key ordering, [] for no ordering
+}
