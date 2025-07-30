@@ -1,0 +1,78 @@
+[build-system]
+requires = [
+  "setuptools==80.9.0",
+  "setuptools-scm==8.3.1",
+  "wheel==0.45.1",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+readme = {file = "README.md", content-type = "text/markdown; charset=UTF-8"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = false
+
+[tool.setuptools_scm]
+version_file = "src/goose/_version.py"
+
+
+[project]
+name = "git-goose"
+authors = [
+  { name="Anton Agestam", email="git@antonagestam.se" },
+]
+description = "A picky and eager Git hook runner."
+license = {text = "BSD 3-Clause"}
+requires-python = ">=3.13,<3.14"
+classifiers = [
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.14",
+  "Development Status :: 4 - Beta",
+  "Typing :: Typed",
+]
+dynamic = ["version", "readme"]
+dependencies = [
+  "uv",
+  "pydantic",
+  "PyYAML",
+  "nodeenv",
+  "identify",
+  "typer",
+  # https://typer.tiangolo.com/#optional-dependencies
+  "rich",
+  # https://typer.tiangolo.com/#optional-dependencies
+  "shellingham",
+]
+
+[project.urls]
+"Source Repository" = "https://github.com/antonagestam/goose"
+
+[project.scripts]
+goose = "goose.__main__:cli"
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "pytest-asyncio",
+]
+docs = [
+  "mkdocs",
+  "mike",
+  "mkdocs-material",
+  "markdown-include",
+]
+
+
+[tool.check-manifest]
+ignore = ["src/goose/_version.py"]
+
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+addopts = "--import-mode=importlib"
