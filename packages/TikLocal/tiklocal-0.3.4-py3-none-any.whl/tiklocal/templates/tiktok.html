@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+html,body {
+  height: 100%;
+  background: black;
+}
+#container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+video {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: none;
+}
+.fab {
+  position: fixed;
+  bottom: 8.5rem;
+  right: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fab svg {
+  width: 40px;
+  height: 40px;
+  color: #e3e3e3;
+}
+.is-active svg {
+  fill: #ff0000;
+}
+</style>
+{% endblock %}
+{% block content %}
+<div id="container">
+  {% for row in files %}
+  <video controls class="video" muted loop data-name="{{row.name}}" data-src="/media?uri={{row}}">
+  </video>
+  {% endfor %}
+  <div class="fab">
+    <a id="favorite-btn" data-value="">
+      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+    </a>
+    <a id="info-btn" href="">
+      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#FFFFFF"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+    </a>
+  </div>
+</div>
+{% endblock %}
+{% block extra_body %}
+<script src="{{url_for('static', filename='hammer.min.js')}}"></script>
+<script>
+  (async() => {
+    const infoBtn = document.querySelector("#info-btn");
+    const favoriteBtn = document.getElementById("favorite-btn");
+    const container = document.querySelector('#container');
+    const videos = container.querySelectorAll('video');
+    let index = 0;
+  
+    videos[0].style.display = 'block';
+    videos[0].src = videos[0].dataset.src;
+    videos[0].load();
+    videos[0].play();
+
+    infoBtn.href = `/detail/${videos[0].dataset.name}`;
+    favoriteBtn.dataset.value = videos[0].dataset.name;
+    const favoriteRes = await checkFavorite(videos[0].dataset.name);
+    if(favoriteRes) {
+      favoriteBtn.classList.add("is-active");
+    } else {
+      favoriteBtn.classList.remove("is-active");
+    }
+
+    var manager = new Hammer.Manager(container);
+    var Swipe = new Hammer.Swipe();
+    manager.add(Swipe);
+    manager.on('swipedown', async(e) => {
+      //previous;
+
+      index -= 1;
+      let previous;
+      if (index == -1) {
+        previous = 0;
+        index = videos.length - 1;
+      } else {
+        previous = index + 1;
+      }
+      videos[previous].style.display = 'none';
+      videos[previous].pause();
+      videos[index].style.display = 'block';
+      videos[index].muted = false;
+      videos[index].play();
+      
+      const value = videos[index].dataset.name;      
+      infoBtn.href = `/detail/${value}`;
+      const favoriteRes = await checkFavorite(value);
+      favoriteBtn.dataset.value = value;
+      if(favoriteRes) {
+        favoriteBtn.classList.add("is-active");
+      } else {
+        favoriteBtn.classList.remove("is-active");
+      }
+    });
+    manager.on('swipeup', async(e) => {
+      //next;
+
+      index += 1;
+      let previous;
+      if (index == videos.length) {
+        previous = videos.length - 1;
+        index = 0;
+      } else {
+        previous = index - 1;
+      }
+      videos[previous].style.display = 'none';
+      videos[previous].pause();
+      videos[index].style.display = 'block';
+      videos[index].src = videos[index].dataset.src;
+      videos[index].load();
+      videos[index].muted = false;
+      videos[index].play();
+      
+      const value = videos[index].dataset.name;      
+      infoBtn.href = `/detail/${value}`;
+      const favoriteRes = await checkFavorite(value);
+      favoriteBtn.dataset.value = value;
+      if(favoriteRes) {
+        favoriteBtn.classList.add("is-active");
+      } else {
+        favoriteBtn.classList.remove("is-active");
+      }
+
+    });
+
+    async function checkFavorite(name) {
+      const res = await fetch(`/api/favorite/${name}`);
+      const resJson = await res.json();
+      return resJson.favorite;
+    }
+
+    favoriteBtn.addEventListener("click", async(e) => {
+      e.preventDefault();
+      const value = favoriteBtn.dataset.value;
+      const res = await fetch(`/api/favorite/${value}`, {
+        method: 'POST'
+      });
+      favoriteBtn.classList.toggle("is-active");
+    });
+  })()
+</script>
+{% endblock %}
