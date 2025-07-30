@@ -1,0 +1,188 @@
+# SinhalaDate
+
+A Python library for parsing and formatting Sinhala dates and times. SinhalaDate makes it easy to work with natural language date expressions in Sinhala, the official language of Sri Lanka.
+
+## Features
+
+- **Natural Language Parsing**: Parse Sinhala date expressions like "හෙට උදේ 10.30ට" (tomorrow morning at 10:30)
+- **Relative Date Support**: Handle expressions like "අද" (today), "හෙට" (tomorrow), "ඊයේ" (yesterday)
+- **Day of Week Parsing**: Parse days like "සඳුදා" (Monday), "ලබන සිකුරාදා" (next Friday)
+- **Ordinal Date Support**: Parse ordinal dates like "පහළොස්වෙනිදා" (15th)
+- **Time Parsing**: Parse time expressions with Sinhala time words
+- **Custom Formatting**: Format dates in Sinhala with custom format strings
+
+## Installation
+
+```bash
+pip install sinhaladate
+```
+
+## Quick Start
+
+```python
+from sinhaladate import parse, format_sinhala_dates
+import datetime
+
+# Parse Sinhala date expressions
+date1 = parse("හෙට උදේ 10.30ට")  # Tomorrow morning at 10:30
+date2 = parse("ලබන සිකුරාදා")    # Next Friday
+date3 = parse("අද")               # Today
+date4 = parse("පහළොස්වෙනිදා")     # 15th of current/next month
+
+# Format dates in Sinhala
+formatted = format_sinhala_dates(datetime.datetime.now())
+print(formatted)  # Output: 2024 දෙසැම්බර් 15 වැනිදා, සිකුරාදා, 02:30 ප.ව.
+```
+
+## Usage Examples
+
+### Parsing Relative Dates
+
+```python
+from sinhaladate import parse
+
+# Today and relative days
+parse("අද")           # Today
+parse("හෙට")           # Tomorrow
+parse("අනිද්දා")       # Day after tomorrow
+parse("ඊයේ")           # Yesterday
+parse("පෙරේදා")        # Day before yesterday
+```
+
+### Parsing Days of Week
+
+```python
+# Days of the week
+parse("සඳුදා")        # Monday
+parse("අඟහරුවාදා")    # Tuesday
+parse("බදාදා")        # Wednesday
+parse("බ්‍රහස්පතින්දා") # Thursday
+parse("සිකුරාදා")      # Friday
+parse("සෙනසුරාදා")     # Saturday
+parse("ඉරිදා")         # Sunday
+
+# With modifiers
+parse("ලබන සිකුරාදා")  # Next Friday
+parse("පසුගිය සඳුදා")   # Last Monday
+```
+
+### Parsing Ordinal Dates
+
+```python
+# Ordinal dates
+parse("පළවෙනිදා")     # 1st
+parse("දෙවෙනිදා")      # 2nd
+parse("පහළොස්වෙනිදා")  # 15th
+parse("තිස්වෙනිදා")    # 30th
+
+# With months
+parse("ජූලි හතරවෙනිදා")  # July 4th
+parse("දෙසැම්බර් විසිපස්වෙනිදා")  # December 25th
+```
+
+### Parsing Time
+
+```python
+# Time expressions
+parse("උදේ 10.30ට")    # 10:30 AM
+parse("සවස 3යි")       # 3:00 PM
+parse("රාත්‍රී 9ට පමණ")  # 9:00 PM
+```
+
+### Formatting Dates
+
+```python
+from sinhaladate import format_sinhala_dates
+import datetime
+
+# Default formatting
+date = datetime.datetime(2024, 12, 25, 19, 30)
+formatted = format_sinhala_dates(date)
+print(formatted)  # 2024 දෙසැම්බර් 25 වැනිදා, බදාදා, 07:30 ප.ව.
+
+# Custom formatting
+custom = format_sinhala_dates(date, "%S_A විතර")  # Just the day name
+print(custom)  # බදාදා විතර
+```
+
+## Format String Codes
+
+When using `format_sinhala_dates()`, you can use these format codes:
+
+- `%Y` - Year (2024)
+- `%S_B` - Sinhala month name (දෙසැම්බර්)
+- `%d` - Day of month (25)
+- `%S_A` - Sinhala day name (බදාදා)
+- `%I` - Hour in 12-hour format (07)
+- `%M` - Minute (30)
+- `%p` - AM/PM in Sinhala (ප.ව.)
+- `%S_Do` - Ordinal suffix (වැනිදා)
+
+## Error Handling
+
+The library gracefully handles parsing errors:
+
+```python
+from sinhaladate import parse, SinhalaDateError
+
+# Invalid expressions return None
+result = parse("invalid text")
+print(result)  # None
+
+# You can check for parsing success
+if result is None:
+    print("Could not parse the date expression")
+```
+
+## Supported Sinhala Expressions
+
+### Relative Days
+- අද (today)
+- හෙට (tomorrow)
+- අනිද්දා (day after tomorrow)
+- ඉන් අනිද්දා (day after tomorrow)
+- ඊයේ (yesterday)
+- පෙරේදා (day before yesterday)
+
+### Days of Week
+- සඳුදා (Monday)
+- අඟහරුවාදා (Tuesday)
+- බදාදා (Wednesday)
+- බ්‍රහස්පතින්දා (Thursday)
+- සිකුරාදා (Friday)
+- සෙනසුරාදා (Saturday)
+- ඉරිදා (Sunday)
+
+### Months
+- ජනවාරි (January)
+- පෙබරවාරි (February)
+- මාර්තු (March)
+- අප්‍රේල් (April)
+- මැයි (May)
+- ජූනි (June)
+- ජූලි (July)
+- අගෝස්තු (August)
+- සැප්තැම්බර් (September)
+- ඔක්තෝබර් (October)
+- නොවැම්බර් (November)
+- දෙසැම්බර් (December)
+
+### Time of Day
+- උදේ / උදෑසන (morning/AM)
+- සවස / හවස (afternoon/PM)
+- රාත්‍රී / රෑ (night/PM)
+- දහවල් (noon/PM)
+- පාන්දර (early morning/AM)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Thanks to the Sinhala language community for inspiration
+- Built with ❤️ for Sri Lanka 
