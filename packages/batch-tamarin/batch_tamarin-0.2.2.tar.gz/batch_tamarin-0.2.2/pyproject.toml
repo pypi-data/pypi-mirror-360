@@ -1,0 +1,103 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "batch-tamarin"
+version = "0.2.2"
+description = "Python wrapper for Tamarin Prover with JSON configuration"
+readme = "README.md"
+license = {text = "GPL-3.0-or-later"}
+authors = [
+    {name = "Luca Mandrelli", email = "luca.mandrelli@icloud.com"}
+]
+keywords = ["tamarin", "prover", "security", "protocol", "verification"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Security",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "typer>=0.15.0",
+    "pydantic>=2.11.0",
+    "psutil>=7.0.0",
+    "tree-sitter>=0.22.0",
+    "py-tree-sitter-spthy>=1.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=25.1.0",
+    "isort>=6.0.1",
+    "autoflake>=2.3.1",
+    "pre-commit>=4.2.0",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.21.0",
+    "build>=1.0.0",
+    "twine>=4.0.0",
+    "setuptools>=61.0",
+    "wheel>=0.40.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/tamarin-prover/batch-tamarin"
+Repository = "https://github.com/tamarin-prover/batch-tamarin"
+Documentation = "https://github.com/tamarin-prover/batch-tamarin#readme"
+"Bug Tracker" = "https://github.com/tamarin-prover/batch-tamarin/issues"
+
+[project.scripts]
+batch-tamarin = "batch_tamarin.main:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+batch_tamarin = ["*.json"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.autoflake]
+in-place = true
+remove-all-unused-imports = true
+remove-unused-variables = true
+remove-duplicate-keys = true
+expand-star-imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-v --tb=short"
