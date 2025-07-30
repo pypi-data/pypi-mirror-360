@@ -1,0 +1,109 @@
+# 🦙 Llamate
+
+A memory-augmented agent framework for LLMs.
+
+## Quick Start
+
+Follow these steps to set up, use, and view data in Llamate with PostgreSQL:
+
+### 1. Install Llamate
+
+```bash
+pip install llamate
+```
+
+### 2. Start PostgreSQL Container
+
+```bash
+docker run --name llamate-postgres -e POSTGRES_USER=llamate -e POSTGRES_PASSWORD=llamate -e POSTGRES_DB=llamate -p 5432:5432 -d ankane/pgvector
+```
+
+### 3. Initialize Llamate
+
+```bash
+llamate --init
+# Select 'postgres' as your vector store backend
+# Enter connection string: postgresql://llamate:llamate@localhost:5432/llamate
+```
+
+### 4. Run a Test Script to Store Data
+
+Create a file `test_llamate.py`:
+
+```python
+from llamate import MemoryAgent, get_vectorstore_from_env
+import os
+
+# Set user ID
+user_id = "test_user"
+
+# Initialize components
+vectorstore = get_vectorstore_from_env(user_id=user_id)
+agent = MemoryAgent(user_id=user_id, vectorstore=vectorstore)
+
+# Add memories
+agent.chat("The capital of France is Paris.")
+agent.chat("The Eiffel Tower is 324 meters tall.")
+agent.chat("Python is a programming language created by Guido van Rossum.")
+
+# Test retrieval
+response = agent.chat("Tell me about Paris.")
+print("Response:", response)
+```
+
+### 5. View Data in PostgreSQL
+
+Connect to the database:
+
+```bash
+docker exec -it llamate-postgres psql -U llamate -d llamate
+```
+
+List tables to find your memory table (it will use your user_id):
+
+```sql
+\dt
+```
+
+View table structure:
+
+```sql
+\d memory_test_user
+```
+
+Display memory records (omitting the large vector field):
+
+```sql
+SELECT id, text FROM memory_test_user;
+```
+
+Count records:
+
+```sql
+SELECT COUNT(*) FROM memory_test_user;
+```
+
+Query specific memories (using text search):
+
+```sql
+SELECT id, text FROM memory_test_user WHERE text LIKE '%Paris%';
+```
+
+Delete test memories (if needed):
+
+```sql
+DELETE FROM memory_test_user WHERE text LIKE '%test%';
+```
+
+Exit the PostgreSQL shell:
+
+```sql
+\q
+```
+
+## Features
+
+- Persistent memory for AI using vector embeddings
+- Multiple vector store backends (FAISS and PostgreSQL)
+- Easy integration into existing applications
+- Simple CLI for testing and demonstration
