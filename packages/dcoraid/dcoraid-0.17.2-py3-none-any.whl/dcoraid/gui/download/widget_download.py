@@ -1,0 +1,288 @@
+import logging
+import threading
+import traceback
+from functools import partial
+import os
+import os.path as os_path
+from importlib import resources
+import platform
+import subprocess
+import webbrowser
+
+from PyQt6 import uic, QtCore, QtGui, QtWidgets
+from PyQt6.QtCore import QStandardPaths
+
+from ...download import DownloadQueue
+
+from ..api import get_ckan_api
+from ..tools import show_wait_cursor
+
+
+logger = logging.getLogger(__name__)
+
+
+class DownloadWidget(QtWidgets.QWidget):
+    download_finished = QtCore.pyqtSignal()
+
+    def __init__(self, *args, **kwargs):
+        """Manage running downloads
+        """
+        super(DownloadWidget, self).__init__(*args, **kwargs)
+        ref_ui = resources.files("dcoraid.gui.download") / "widget_download.ui"
+        with resources.as_file(ref_ui) as path_ui:
+            uic.loadUi(path_ui, self)
+
+        self.settings = QtCore.QSettings()
+
+        #: path to persistent shelf to be able to resume uploads on startup
+        self.shelf_path = os_path.join(
+            QStandardPaths.writableLocation(
+                QStandardPaths.StandardLocation.AppLocalDataLocation),
+            "persistent_download_jobs")
+
+        #: DownloadQueue instance
+        self._jobs = None
+        self._jobs_init_lock = threading.Lock()
+
+        self.setEnabled(False)
+        self.init_timer = QtCore.QTimer(self)
+        self.init_timer.setSingleShot(True)
+        self.init_timer.setInterval(100)
+        self.init_timer.timeout.connect(self.initialize)
+        self.init_timer.start()
+
+    def _jobs_init(self):
+        with self._jobs_init_lock:
+            if self._jobs is None:
+                api = get_ckan_api()
+                if api.is_available(with_correct_version=True):
+                    self._jobs = DownloadQueue(
+                        api=api,
+                        path_persistent_job_list=self.shelf_path)
+                    self.widget_jobs.set_job_list(self._jobs)
+
+    @property
+    def jobs(self):
+        if self._jobs is None:
+            self._jobs_init()
+        if self._jobs is None:
+            logger.error("Could not fetch download job list. Please make "
+                         "sure a connection to DCOR is possible.")
+        return self._jobs
+
+    @show_wait_cursor
+    @QtCore.pyqtSlot()
+    def initialize(self):
+        api = get_ckan_api()
+        if api.is_available(with_correct_version=True):
+            self.setEnabled(True)
+            self._jobs_init()
+        else:
+            # try again
+            self.init_timer.setInterval(1000)
+            self.init_timer.start()
+
+    @QtCore.pyqtSlot(str, bool)
+    def download_resource(self, resource_id, condensed=False):
+        fallback = QStandardPaths.writableLocation(
+                      QStandardPaths.StandardLocation.DownloadLocation)
+        dl_path = self.settings.value("downloads/default path", fallback)
+        self.widget_jobs.jobs.new_job(resource_id, dl_path, condensed)
+
+    def prepare_quit(self):
+        """Should be called before the application quits"""
+        self.init_timer.stop()
+        if self.widget_jobs.timer is not None:
+            self.widget_jobs.timer.stop()
+        if self.jobs is not None:
+            self.jobs.__del__()
+
+
+class DownloadTableWidget(QtWidgets.QTableWidget):
+    download_finished = QtCore.pyqtSignal()
+
+    def __init__(self, *args, **kwargs):
+        self._busy_updating_widgets = False
+        super(DownloadTableWidget, self).__init__(*args, **kwargs)
+        self.jobs = []  # Will become DownloadQueue with self.set_job_list
+
+        settings = QtCore.QSettings()
+        if bool(int(settings.value("debug/without timers", "0"))):
+            self.timer = None
+        else:
+            self.timer = QtCore.QTimer()
+            self.timer.timeout.connect(self.update_job_status)
+            self.timer.start(1000)
+        self._finished_downloads = []
+
+    def set_job_list(self, jobs):
+        """Set the current job list
+
+        The job list can be a `list`, but it is actually
+        a `DownloadQueue`.
+        """
+        # This is the actual initialization
+        self.jobs = jobs
+
+    @QtCore.pyqtSlot(str)
+    def on_job_delete(self, job_id):
+        self.jobs.remove_job(job_id)
+        self.clearContents()
+        self.update_job_status()
+
+    @QtCore.pyqtSlot(str)
+    def on_job_retry(self, job_id):
+        self.jobs.get_job(job_id).retry_download()
+
+    @QtCore.pyqtSlot(str)
+    def on_download_finished(self, job_id):
+        """Triggers download_finished whenever a download is finished"""
+        if job_id not in self._finished_downloads:
+            self._finished_downloads.append(job_id)
+            dj = self.jobs.get_job(job_id)
+            self.jobs.jobs_eternal.set_job_done(dj)
+            self.download_finished.emit()
+
+    @QtCore.pyqtSlot()
+    def update_job_status(self):
+        """Update UI with information from self.jobs (DownloadJobList)"""
+        if not self.parent().parent().isVisible():
+            return
+        if self._busy_updating_widgets:
+            return
+        self._busy_updating_widgets = True
+
+        # make sure the length of the table is long enough
+        self.setRowCount(len(self.jobs))
+        self.setColumnCount(6)
+
+        for row, job in enumerate(self.jobs):
+            if job.job_id in self._finished_downloads:
+                # Widgets of finished downloads have already been drawn.
+                continue
+            try:
+                status = job.get_status()
+                self.set_label_item(row, 0, job.job_id[:5])
+                try:
+                    title = get_download_title(job)
+                except BaseException:
+                    logger.error(traceback.format_exc())
+                    # Probably a connection error
+                    title = "-- error getting dataset title --"
+                self.set_label_item(row, 1, title)
+                self.set_label_item(row, 2, status["state"])
+                self.set_label_item(row, 3, job.get_progress_string())
+                self.set_label_item(row, 4, job.get_rate_string())
+                if status["state"] == "done":
+                    logger.info(f"Download {job.job_id} finished")
+                    self.on_download_finished(job.job_id)
+                self.set_actions_item(row, 5, job)
+            except BaseException:
+                job.set_state("error")
+                job.traceback = traceback.format_exc()
+
+            QtWidgets.QApplication.processEvents(
+                QtCore.QEventLoop.ProcessEventsFlag.AllEvents, 300)
+
+        # spacing (did not work in __init__)
+        header = self.horizontalHeader()
+        header.setSectionResizeMode(
+            0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(
+            1, QtWidgets.QHeaderView.ResizeMode.Stretch)
+
+        self._busy_updating_widgets = False
+
+    def set_label_item(self, row, col, label):
+        """Get/Create a Qlabel at the specified position
+
+        User has to make sure that row and column count are set
+        """
+        label = f"{label}"
+        item = self.item(row, col)
+        if item is None:
+            item = QtWidgets.QTableWidgetItem(label)
+            item.setFlags(QtCore.Qt.ItemFlag.ItemIsEnabled)
+            self.setItem(row, col, item)
+        else:
+            if item.text() != label:
+                item.setText(label)
+
+    def set_actions_item(self, row, col, job):
+        """Set/Create a TableCellActions widget in the table
+
+        Refreshes the widget and also connects signals.
+        """
+        widact = self.cellWidget(row, col)
+        if widact is None:
+            widact = QtWidgets.QWidget(self)
+            horz_layout = QtWidgets.QHBoxLayout(widact)
+            horz_layout.setContentsMargins(2, 0, 2, 0)
+
+            spacer = QtWidgets.QSpacerItem(
+                0, 0,
+                QtWidgets.QSizePolicy.Policy.Expanding,
+                QtWidgets.QSizePolicy.Policy.Minimum
+                )
+            horz_layout.addItem(spacer)
+            if job.state == "error":
+                actions = [
+                    {"icon": "trash",
+                     "tooltip": "delete this job",
+                     "function": partial(self.on_job_delete, job.job_id)
+                     },
+                    {"icon": "redo",
+                     "tooltip": "retry download",
+                     "function": partial(self.on_job_retry, job.job_id)
+                     },
+                ]
+            else:
+                res_dict = job.get_resource_dict()
+                ds_dict = job.get_dataset_dict()
+                dl_path = job.path
+                if not dl_path.is_dir():
+                    dl_path = dl_path.parent
+                actions = [
+                    {"icon": "eye",
+                     "tooltip": f"view dataset {ds_dict['name']} online",
+                     "function": partial(
+                         webbrowser.open,
+                         f"{job.api.server}/dataset/{ds_dict['id']}")
+                     },
+                    {"icon": "folder",
+                     "tooltip": "open local download directory",
+                     "function": partial(open_file, str(dl_path))
+                     },
+                    {"icon": "trash",
+                     "tooltip": f"abort download {res_dict['name']}",
+                     "function": partial(self.on_job_delete, job.job_id)
+                     },
+                ]
+            for action in actions:
+                tbact = QtWidgets.QToolButton(widact)
+                icon = QtGui.QIcon.fromTheme(action["icon"])
+                tbact.setIcon(icon)
+                tbact.setToolTip(action["tooltip"])
+                tbact.clicked.connect(action["function"])
+                horz_layout.addWidget(tbact)
+            self.setCellWidget(row, col, widact)
+
+
+def get_download_title(job):
+    res_dict = job.get_resource_dict()
+    ds_dict = job.get_dataset_dict()
+    title = ds_dict.get("title")
+    if not title:
+        title = ds_dict.get("name")
+    if job.condensed:
+        title += " (condensed)"
+    return f"{res_dict['name']} [{title}]"
+
+
+def open_file(path):
+    if platform.system() == "Windows":
+        os.startfile(path)
+    elif platform.system() == "Darwin":
+        subprocess.Popen(["open", path])
+    else:
+        subprocess.Popen(["xdg-open", path])
