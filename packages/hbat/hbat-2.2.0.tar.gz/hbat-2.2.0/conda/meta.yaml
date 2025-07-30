@@ -1,0 +1,68 @@
+{% set name = "hbat" %}
+{% set version = environ.get('GIT_DESCRIBE_TAG', '0.0.0').lstrip('v') %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  path: ..
+
+build:
+  number: 0
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  entry_points:
+    - hbat = hbat.cli.main:main
+    - hbat-gui = hbat.gui:main
+
+requirements:
+  host:
+    - python >=3.9
+    - pip
+    - setuptools >=45
+    - setuptools-scm >=6.2
+    - wheel
+  run:
+    - python >=3.9
+    - pip
+    - networkx >=2.5.0
+    - matplotlib-base >=3.3.0
+    - tk  # For GUI support
+    # pdbreader, pdbfixer, and mmcif packages will be installed via pip as part of the package installation
+
+test:
+  # Skip imports test since pdbreader, pdbfixer, and mmcif packages are installed via pip
+  commands:
+    - pip list | grep pdbreader || pip install pdbreader>=0.1.0
+    - pip list | grep pdbfixer || pip install "pdbfixer @ git+https://github.com/openmm/pdbfixer.git"
+    - pip list | grep mmcif || pip install mmcif>=0.92.0
+    - pip list | grep mmcif-pdbx || pip install mmcif-pdbx>=2.0.1
+    - python -c "import pdbreader; print('pdbreader:', pdbreader)"
+    - python -c "import pdbfixer; print('pdbfixer:', pdbfixer)"
+    - python -c "import mmcif; print('mmcif:', mmcif)"
+    - python -c "import mmcif; print('mmcif:', mmcif.__version__)"
+    - python -c "import hbat; print(hbat.__version__)"
+    - hbat --help
+    - hbat --version
+  requires:
+    - pip
+    - pytest
+
+about:
+  home: https://github.com/abhishektiwari/hbat
+  license: MIT
+  license_family: MIT
+  license_file: LICENSE
+  summary: 'Hydrogen Bond Analysis Tool for PDB structures'
+  description: |
+    HBAT (Hydrogen Bond Analysis Tool) is a Python package for analyzing 
+    hydrogen bonds, halogen bonds, and X-H...π interactions in protein 
+    structures from PDB files. It provides both GUI and CLI interfaces 
+    for molecular interaction analysis.
+  doc_url: https://hbat.abhishek-tiwari.com
+  dev_url: https://github.com/abhishektiwari/hbat
+
+extra:
+  recipe-maintainers:
+    - abhishektiwari
