@@ -1,0 +1,142 @@
+[build-system]
+requires = [
+    "setuptools>=45",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 88
+target-version = [
+    "py38",
+]
+include = "\\.pyi?$"
+extend-exclude = "/(\n  # directories\n  \\.eggs\n  | \\.git\n  | \\.hg\n  | \\.mypy_cache\n  | \\.pytest_cache\n  | \\.tox\n  | \\.venv\n  | build\n  | dist\n)/\n"
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = [
+    "ocode_python",
+]
+known_third_party = [
+    "click",
+    "rich",
+    "aiohttp",
+    "git",
+    "pytest",
+]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+exclude = [
+    "venv/",
+    ".venv/",
+    "dev-env/",
+    "build/",
+    "dist/",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "git.*",
+    "tree_sitter.*",
+    "psutil.*",
+    "aiofiles.*",
+    "watchdog.*",
+    "pexpect.*",
+    "jsonpath_ng.*",
+    "dotenv.*",
+    "pydantic.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+python_files = "test_*.py"
+python_functions = "test_*"
+python_classes = "Test*"
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--strict-config",
+    "--tb=short",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow tests",
+    "network: Tests requiring network access",
+    "security: Security-related tests",
+    "mcp: MCP protocol tests",
+    "cli: CLI tests",
+    "tools: Tool tests",
+    "performance: Performance tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+asyncio_mode = "strict"
+
+[tool.coverage.run]
+source = [
+    "ocode_python",
+]
+omit = [
+    "tests/*",
+    "*/test_*",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.bandit]
+targets = [
+    "ocode_python",
+]
+exclude_dirs = [
+    "tests",
+    "venv",
+    ".venv",
+    "build",
+    "dist",
+]
+skips = [
+    "B101",
+    "B110",
+    "B112",
+    "B404",
+    "B603",
+    "B604",
+    "B607",
+    "B601",
+    "B608",
+]
