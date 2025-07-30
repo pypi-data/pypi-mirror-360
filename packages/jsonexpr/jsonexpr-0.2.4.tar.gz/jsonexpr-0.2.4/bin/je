@@ -1,0 +1,143 @@
+#!/bin/bash
+
+##############################################################################
+# BOOTSTRAP
+#
+# Include ../lib in the search path then call python3 or python.
+# (Thanks to https://unix.stackexchange.com/questions/20880)
+#
+if "true" : '''\'
+then
+    export PYTHONPATH="$(dirname $0)/../lib:$PYTHONPATH"
+    pythoncmd=python
+
+    if command -v python3 >/dev/null; then
+        pythoncmd=python3
+    fi
+
+    exec "$pythoncmd" "$0" "$@"
+    exit 127
+fi
+'''
+
+##############################################################################
+# PYTHON CODE BEGINS HERE
+
+import os
+import sys
+import json
+import errno
+import getopts
+import jsonexpr as je
+
+__copyright__ = "Copyright 2024-2025 Mark Kim"
+__license__ = "Apache 2.0"
+__version__ = "0.2.4"
+__author__ = "Mark Kim"
+
+
+##############################################################################
+# GLOBALS
+
+SCRIPTNAME = os.path.basename(__file__)
+SCRIPTDIR = os.path.dirname(__file__)
+
+class opts:
+    quiet = 0
+    eval = []
+    files = []
+
+
+##############################################################################
+# USAGE
+
+def usage():
+    """\
+Run a JSONexpr script.
+
+Usage: {SCRIPTNAME} [OPTIONS] [FILES]
+
+Options:
+  FILE                  File(s) to run.
+
+  -e,--eval EXPR        Evaluate EXPR.
+  -q,--quiet            Do not output the result.
+  -v,--version          Display version and quit.
+"""
+
+    print(usage.__doc__.format(**globals()))
+
+
+def version():
+    print(f"jsonexpr {__version__}");
+
+
+##############################################################################
+# MAIN
+
+def main():
+    errcount = 0
+
+    # Process options
+    getopt = getopts.getopts(sys.argv, {
+        "e" : 1, "eval"    : 1,
+        "q" : 0, "quiet"   : 0,
+        "v" : 0, "version" : 0,
+        "h" : 0, "help"    : 0,
+    })
+
+    for c in getopt:
+        if   c in ("-")            : opts.files.append(getopt.optarg)
+        elif c in ("e", "eval")    : opts.eval.append(getopt.optarg)
+        elif c in ("q", "quiet")   : opts.quiet = 1
+        elif c in ("v", "version") : version(); sys.exit(0)
+        elif c in ("h", "help")    : usage(); sys.exit(0)
+        else                       : errcount += 1
+
+    # Sanity check
+    if errcount:
+        sys.stderr.write("Type '{SCRIPTNAME} --help' for help.\n".format(**globals()))
+        sys.exit(1)
+
+    for e in opts.eval:
+        doMyThing(e)
+
+    if len(opts.files) == 0 and len(opts.eval) == 0:
+        doMyFdThing(sys.stdin)
+
+    for f in opts.files:
+        with open(f, mode="rt") as fd:
+            doMyFdThing(fd)
+
+
+def doMyFdThing(fd):
+    code = fd.read()
+
+    return doMyThing(code)
+
+
+def doMyThing(code):
+    instance = je.instance()
+    parsed = instance.parse(code)
+    result = parsed.eval()
+
+    if(not opts.quiet):
+        print(json.dumps(result, cls=je.JsonEncoder))
+
+    return result
+
+
+##############################################################################
+# ENTRY POINT
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("")
+        sys.exit(errno.EOWNERDEAD)
+    except je.Exit as e:
+        print("")
+        sys.exit(e.code)
+
+# vim:ft=python:

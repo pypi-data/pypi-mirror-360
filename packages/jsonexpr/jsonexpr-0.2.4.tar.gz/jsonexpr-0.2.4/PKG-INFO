@@ -1,0 +1,77 @@
+Metadata-Version: 2.4
+Name: jsonexpr
+Version: 0.2.4
+Summary: An expression language.
+Home-page: https://github.com/markuskimius/jsonexpr
+Author: Mark Kim
+Author-email: markuskimius+py@gmail.com
+License: Apache 2.0
+Keywords: expression,language,json
+Description-Content-Type: text/markdown
+Requires-Dist: getopts
+Requires-Dist: wasmtime
+Provides-Extra: faster
+Requires-Dist: wasmer; extra == "faster"
+Requires-Dist: wasmer_compiler_cranelift; extra == "faster"
+Provides-Extra: fastest
+Requires-Dist: wasmer; extra == "fastest"
+Requires-Dist: wasmer_compiler_llvm; extra == "fastest"
+Dynamic: author
+Dynamic: author-email
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: summary
+
+# JSONexpr for Python
+
+This document describes using JSONexpr with Python.
+For the language overview, see the [main page](https://github.com/markuskimius/jsonexpr).
+
+
+## Installation
+
+```sh
+pip3 install jsonexpr
+```
+
+Python 3.8 and later are supported.
+
+
+## Example
+
+```python
+import jsonexpr as je
+
+instance = je.instance()
+parsed = instance.parse("""
+    PRINT("I have " + LEN(grades) + " students");
+    PRINT("Alice's grade is " + grades.alice);
+    grades
+""")
+symmap = instance.symmap({
+    "grades" : {
+        "alice"   : "A",
+        "bob"     : "B",
+        "charlie" : "B",
+    }
+})
+
+result = parsed.eval(symmap)
+```
+
+Output:
+
+```
+I have 2 students
+Alice's grade is A
+```
+
+
+## License
+
+[Apache 2.0](https://github.com/markuskimius/jsonexpr/blob/main/LICENSE)
