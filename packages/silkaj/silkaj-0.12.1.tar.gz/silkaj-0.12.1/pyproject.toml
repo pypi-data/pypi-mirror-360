@@ -1,0 +1,75 @@
+[project]
+name = "silkaj"
+version = "0.12.1"
+description = "Command line client for Ğ1 libre-currency powered by Duniter"
+license = { text = "AGPL-3.0-or-later" }
+readme = "README.md"
+requires-python = ">=3.9,<4.0"
+authors = [
+    { name = "Moul, Maël Azimi", email = "mael.azimi@moul.re"},
+    { name = "Matograine", email = "tom.ngr@zaclys.net"},
+    { name = "Tortue", email = "ucoin@tednet.fr"},
+    { name = "cebash, Sébastien DA ROCHA", email = "sebastien@da-rocha.net"},
+]
+maintainers = [{ name = "Moul, Maël Azimi", email = "mael.azimi@moul.re"}]
+keywords = ["g1", "duniter", "cryptocurrency", "librecurrency", "RTM"]
+dynamic = ["classifiers", "dependencies"]
+
+[project.urls]
+homepage =  "https://silkaj.duniter.org"
+repository = "https://git.duniter.org/clients/python/silkaj"
+documentation = "https://silkaj.duniter.org/latest/"
+"changelog" = "https://silkaj.duniter.org/latest/changelog/"
+
+[project.scripts]
+silkaj = "silkaj.cli:cli"
+
+[tool.poetry]
+requires-poetry = ">=2.0"
+include = [{path="g1_monetary_license/g1_monetary_license_*.rst", format=["sdist", "wheel"]}]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Operating System :: Unix",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: English",
+]
+
+[project.optional-dependencies]
+deathreaper = [ "pydiscourse (>=1.7.0,<2.0)" ]
+
+[tool.poetry.dependencies]
+duniterpy = "~1.2.1"
+rich-click = "^1.8.8"
+texttable = "^1.7.0"
+pendulum = "^3.1.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.5"
+pytest-cov = "^6.0"
+pytest-sugar = "^1.0.0"
+pytest-clarity = "^1.0.1"
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+mkdocs-material = "^9.6.9"
+mike = "^2.1.3"
+mkdocs-coverage = "^1.1.0"
+mkdocs-gitlab-plugin = "^0.1.4"
+mkdocs-click = "0.8.1"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.ruff]
+target-version = "py39"
+lint.select = ["F", "W", "I", "UP", "YTT", "B", "A", "DTZ", "T10",
+"EXE", "ISC", "ICN", "G", "INP", "PIE", "PYI", "Q", "RSE", "SLF", "TID",
+"PL", "C4", "PT", "RET", "SIM", "PTH", "PGH", "PL", "TRY", "RUF"]
+lint.ignore = ["PLR2004", "PLR0913"]
