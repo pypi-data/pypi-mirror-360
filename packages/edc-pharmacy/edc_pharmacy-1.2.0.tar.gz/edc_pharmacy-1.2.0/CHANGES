@@ -1,0 +1,137 @@
+1.2.0
+-----
+- rename model stockconfirmation to confirmation
+- rename model stocktransfirmationconfirmation to
+  confirmation_at_site
+- rename model stocktransfirmationconfirmationitems to
+  confirmation_at_site_items
+- remove boolean fields confirmed, transferred, confirmed_at_site,
+  dispensed from stock model
+- refine admin models and list filters
+- add additional validation for transfer_stock, confirm_at_site
+
+1.1.6
+-----
+- add missing migration
+
+1.1.5
+-----
+- add model to track stock qty (unit qty in) adjustments.
+- compare dates for dataframe filtering (get_next_scheduled_visit_for_subjects_df).
+- calculate `unit_qty_in` in stock post-save signal only (removed from stock.save).
+- move stock_on_post_save logic to utils.update_stock_instance. Add
+  check to insert StockAdjustment unit_qty_in instead of default calculation.
+- update create_prescription func to expect use of medication names not medication
+  instances.
+- wrap allocate_stock update in transaction.atomic. Set allocated boolean here.
+- add option to skip bulk create (bulk_create_stock_request_items).
+- add missing `subject_identifier` col to empty no_stock dataframe.
+- wrap transfer_stock update in transaction.atomic.
+- except InsufficientStockError in AllocateToSubjectView and add to messages.
+- update tests.
+
+1.1.4
+-----
+- update listfilters on stock admin
+- add filter to identify orphaned allocation records as
+  described in notes for 1.1.3.
+
+1.1.3
+-----
+- check for null stock items before printing labels to
+  filter out a record that is allocated but no stock
+  instance. Seems to have occured in a partial db commit.
+- update tests matrix for dj52, djdev, py312, py313
+1.1.2
+-----
+- refactor StockOut model to StockAvailability
+
+1.1.0
+-----
+- add rangefilters to admins
+- convert stock out report to show stock availability with
+  links to stock items and storage bins
+
+1.0.0
+-----
+- fix issue where stock requests incorrectly see dispensed stock as "in stock"
+- update list filters on Stock admin
+
+
+1.0.6
+-----
+- add screen to move stock stored at site from one bin to another
+- automatically increase bin capacity if moving in
+  more items than current capacity can hold
+- set minvaluevalidator=0 for storagebin capacity
+- fix exception raised when attempting to print stock not yet
+  allocated
+
+1.0.4
+----------
+- add stored_at_site boolean to stock table
+- add stockout
+
+1.0.3
+-----
+- precommit
+- PHARMACY_SUPER_ROLE, special case to skip clean with this role on order, receive.
+- Add dummy model to check for scan duplicates (temporary)
+- format_html fixes
+- add more restrictive access through perms
+- update main menu, split central and site
+- add storage bins for the site
+- improve navigation between changelists
+- fix requests and how it selects subjects who need medication
+  - change get next appointment/visit DF
+  - exclude those pending in an existing stock request
+- add stock request status list filter and allow delete for zero totals
+- add additional validation when posting stock codes for a stock request
+
+1.0.2
+-----
+- Lot, add fields; manufacture date, process until, expiration, etc
+- Receive, add field; reference, comment
+- format_html fixes
+- RxForm, confirm field exists
+
+1.0.1
+-----
+- format_html fixes
+- translations
+
+1.0.0
+-----
+- pre-commit
+- remove refs to bootstrap template path
+
+0.3.17
+------
+- minor, process_repack_request returns None
+
+0.3.16
+------
+- restrict perms / codenames between site and central pharmacists
+
+0.3.15
+------
+- major refactor and add stock management
+
+
+0.1.14
+------
+- remove visit_code, visit_code_sequence from rxrefill model
+- add and require refill_end_datetime
+- add utils to update refill_end_datetime if auto-calculating based on
+  time intervals between visits
+- keep rxrefill in-sync with study medication form if study med form
+  is the source of refill data
+- PreviousNextModelMixin
+- update modeladmin, add duration column
+- update form_validator to enforce refill_end_datetime after start
+- fix issue with auths not populating pharmacy codemanes
+- refactor to use utils for next/previous appt from edc-appointment
+- update / expand tests
+
+0.1.13
+------
