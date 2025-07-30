@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# SPDX-FileCopyrightText: Red Hat, Inc.
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+# Usage: genpki [TARGET]
+# Generates PKI files for imageio tests into pki/$TARGET directory.
+# $TARGET is also used as common name (CN) in CA certificate.
+# If no target is provided, "system" is used as a target.
+
+TARGET="${1:-"system"}"
+
+tmpdir="$(mktemp -d pki.XXXXXXXXXX)"
+
+# Create CA private key.
+openssl genrsa -out "$tmpdir/cakey.pem" 2048
+
+# Generate CA cert.
+openssl req \
+    -x509 \
+    -new \
+    -nodes \
+    -key "$tmpdir/cakey.pem" \
+    -sha256 \
+    -days 3650 \
+    -subj "/CN=${TARGET}" \
+    -addext "keyUsage=critical,digitalSignature,keyCertSign" \
+    -out "$tmpdir/ca.pem"
+
+# Create host private key.
+openssl genrsa -out "$tmpdir/key.pem" 2048
+
+# Create a sign request
+openssl req \
+    -new \
+    -key "$tmpdir/key.pem" \
+    -subj "/CN=localhost" \
+    -out "$tmpdir/cert.csr"
+
+# Create configuration file or adding extensions.
+cat > "$tmpdir/cert.conf" <<EOF
+[san]
+subjectAltName = @alt_names
+
+[alt_names]
+IP.1 = ::
+IP.2 = ::1
+IP.3 = 127.0.0.1
+DNS.1 = localhost
+DNS.2 = localhost.localdomain
+EOF
+
+# Create host certificate signed by ca.pem
+openssl x509 \
+    -req \
+    -in "$tmpdir/cert.csr" \
+    -CA "$tmpdir/ca.pem" \
+    -CAkey "$tmpdir/cakey.pem" \
+    -CAcreateserial \
+    -extensions san \
+    -extfile "$tmpdir/cert.conf" \
+    -days 3650 \
+    -sha256 \
+    -out "$tmpdir/cert.pem"
+
+mkdir -p "pki/$TARGET"
+mv "$tmpdir"/{ca.pem,cert.pem,key.pem} "pki/$TARGET"
+
+rm -rf "$tmpdir"

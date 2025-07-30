@@ -1,0 +1,266 @@
+# SPDX-FileCopyrightText: Red Hat, Inc.
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+Name:      @PACKAGE_NAME@
+Version:   @PACKAGE_VERSION@
+Release:   @RELEASE@%{?dist}
+Summary:   oVirt imageio
+
+License:   GPLv2+
+Url:       https://github.com/oVirt/%{name}
+Source0:   https://github.com/oVirt/%{name}/releases/download/v%{version}/%{name}-%{version}.tar.gz
+
+%global ovirtimg_user ovirtimg
+%global srcname ovirt_imageio
+%global logdir %{_localstatedir}/log/%{name}
+%global admin_confdir %{_sysconfdir}/%{name}
+%global vendor_confdir %{_prefix}/lib/%{name}
+
+%description
+Transfer disk images on oVirt system.
+
+%prep
+%setup -q
+
+
+%build
+%define python3_pkgversion 3
+%define __python3 /usr/bin/python3
+%py3_build
+
+
+%install
+%define python3_pkgversion 3
+%define __python3 /usr/bin/python3
+%py3_install
+
+install -D -m 0755 --directory %{buildroot}%{logdir}
+# Create a dummy log file to make rpm happy during build
+touch %{buildroot}%{logdir}/daemon.log
+install -D -m 0755 --directory %{buildroot}%{vendor_confdir}/conf.d
+install -D -m 0755 --directory %{buildroot}%{admin_confdir}/conf.d
+install -D -m 0644 data/README %{buildroot}%{admin_confdir}
+install -D -m 0644 data/%{name}.service %{buildroot}%{_unitdir}/%{name}.service
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+
+%package common
+Summary:   oVirt imageio common resources
+
+# NOTE: keep in sync with docs/development.md
+BuildRequires: gcc
+BuildRequires: python3-devel
+BuildRequires: python3-setuptools
+
+Requires:  python3
+
+%description common
+Common resources used by oVirt imageio server and client
+
+%files common
+%license LICENSES/GPL-2.0-or-later.txt
+%{python3_sitearch}/%{srcname}
+%{python3_sitearch}/%{srcname}-*.egg-info
+%exclude %{python3_sitearch}/%{srcname}/client
+%exclude %{python3_sitearch}/%{srcname}/admin
+
+
+%package client
+Summary:   oVirt imageio client library
+
+Requires:  %{name}-common = %{version}-%{release}
+
+%if 0%{?rhel}
+# RHEL 8.4 version. Some features require qemu-nbd 5.2.0 and are disabled when
+# using older qemu-nbd.
+Requires:  qemu-img >= 15:4.2.0
+Requires:  python3-ovirt-engine-sdk4
+%else
+# Fedora.
+Requires:  qemu-img
+%endif
+
+%description client
+Python client library for accessing imageio server on oVirt hosts.
+
+%files client
+%{python3_sitearch}/%{srcname}/client
+%{_bindir}/ovirt-img
+
+
+%package daemon
+Summary:   oVirt imageio daemon
+
+# NOTE: keep in sync with docs/development.md
+BuildRequires: systemd
+
+Requires:  python3-systemd
+Requires:  %{name}-common = %{version}-%{release}
+
+%description daemon
+Daemon providing image transfer service on oVirt hosts.
+
+%files daemon
+%{python3_sitearch}/%{srcname}/admin
+%{_bindir}/%{name}
+%{_bindir}/%{name}ctl
+%{_unitdir}/%{name}.service
+%dir %{admin_confdir}
+%dir %{admin_confdir}/conf.d
+%dir %{vendor_confdir}
+%dir %{vendor_confdir}/conf.d
+%{admin_confdir}/README
+# The log directory should belong to the daemon so it can create log files.
+# http://rpm.org/max-rpm-snapshot/s1-rpm-inside-files-list-directives.html#S3-RPM-INSIDE-FLIST-ATTR-DIRECTIVE
+%dir %attr(755, %{ovirtimg_user}, %{ovirtimg_user}) %{logdir}
+# The log files belongs to the package, so they will be removed with the package.
+# http://rpm.org/max-rpm-snapshot/s1-rpm-inside-files-list-directives.html#S3-RPM-INSIDE-FLIST-GHOST-DIRECTIVE
+%ghost %attr(644, %{ovirtimg_user}, %{ovirtimg_user}) %{logdir}/daemon.log*
+
+# For more information about the systemd macros, see:
+# https://fedoraproject.org/wiki/Packaging:Scriptlets#New_Packages
+# For info on ordering of the scriplets, see:
+# https://docs.fedoraproject.org/en-US/packaging-guidelines/Scriptlets/#ordering
+
+%pre daemon
+# Create a user and group if needed
+if ! /usr/bin/getent passwd %{ovirtimg_user} >/dev/null; then
+    /usr/sbin/useradd --system \
+        --user-group \
+        --shell /sbin/nologin \
+        --home-dir /run/%{name} \
+        --comment "oVirt imageio" \
+        %{ovirtimg_user}
+fi
+
+%post daemon
+# After installation, synchronize service state with preset files.
+%systemd_post %{name}.service
+
+%preun daemon
+# Before uninstalling, stop and disable the service.
+%systemd_preun %{name}.service
+
+%postun daemon
+# After upgrading, restart the service.
+%systemd_postun_with_restart %{name}.service
+
+%posttrans daemon
+# At the end of the transaction, stop stale ovirt-imageio-daemon service.
+# Needed only when upgrading from ovirt-imageio-daemon < 2.
+if systemctl is-active ovirt-imageio-daemon.service >/dev/null; then
+    echo "Stopping ovirt-imageio-daemon.service";
+    systemctl stop ovirt-imageio-daemon.service
+fi
+
+
+%changelog
+* Tue Jul 08 2025 Jean-Louis Dupond <jean-louis@dupond.be> 2.5.1-1
+- Fix attribute error during timeout cancelling transfer
+- Option for custom disk description implemented
+- Fix qemu_nbd subprocess.communicate timeout
+- Drop deprecated/removed ssl flags
+- Drop python3.11 subpackages
+- Add CentOS 10 builds
+
+* Wed Mar 29 2023 Albert Esteve <aesteve@redhat.com> 2.5.0-1
+- Add Python 3.11 subpackage to be usable in ansible-core 2.14 for el8
+- Fix ovirt-imageioctl without arguments
+
+* Thu Mar 2 2023 Albert Esteve <aesteve@redhat.com> 2.4.8-1
+- Add Python 3.11 subpackage to be usable in ansible-core 2.14
+- Fix ovirt-img --insecure connection
+
+* Fri Nov 25 2022 Albert Esteve <aesteve@redhat.com> 2.4.7-1
+- Handle disk status errors while waiting for disk creation #117
+- Add option for custom disk alias for uploaded disk #121
+- Add --insecure argument to ovirt-img #153
+- ovirt-img: Machine readable progress #154
+- Support downloading block devices via ovirt-imageio container #168
+
+* Wed Aug 3 2022 Albert Esteve <aesteve@redhat.com> 2.4.6-1
+- ovirt-img command line tool #72
+- Speed up upload to new disk #76
+
+* Tue Jun 14 2022 Nir Soffer <nsoffer@redhat.com> 2.4.5-1
+- http: Revert the default timeout to 60 seconds #71
+
+* Sun Apr 3 2022 Nir Soffer <nsoffer@redhat.com> 2.4.3-1
+- Build client and common for python 3.8 BZ2071365
+
+* Sun Mar 27 2022 Nir Soffer <nsoffer@redhat.com> 2.4.2-1
+- http: Increase listen backlog to 40 BZ2066113
+- setup: Fix bug tracker url #45
+- Update RELEASE.md #46
+
+* Sun Mar 13 2022 Nir Soffer <nsoffer@redhat.com> 2.4.1-1
+- Select cache and aio automatically #42
+- Add profiling support #36
+- Fail fast with invalid config directory #33
+- Don't track ranges for read-write ticket #32
+- Inefficient measuring of transferred size #29
+- Replace ticket id with transfer id in logs #26
+- "Backend was closed" error during backup image transfer #23
+- Disable allocation depth for raw format #21
+- Make client socket timeout configurable #14
+
+* Wed Oct 6 2021 Nir Soffer <nsoffer@redhat.com> 2.3.0-1
+- Downloading images much slower than uploading #BZ1990656
+- Downloading prellocated disk created preallocated image #BZ2010067
+
+* Sun Jun 20 2021 Nir Soffer <nsoffer@redhat.com> 2.2.0-1
+- Report zero status in dirty extents response #BZ1971185
+- Use "qemu:allocation-depth" meta context to report holes #BZ1971182
+
+* Wed Oct 21 2020 Nir Soffer <nsoffer@redhat.com> 2.1.1-1
+- Add client.extents() function
+- Add Fedora 33 CI
+
+* Wed Oct 14 2020 Nir Soffer <nsoffer@redhat.com> 2.1.0-1
+- Support upload and download snapshots #BZ1847090
+- Remove python2 leftovers #BZ1862719
+- Faster checkusms using zero hashing
+- Report checksum configuration in client.checksum()
+- Improve logging for easier debugging
+- Improve client online help
+- Silence output from qemu-img create
+- Configurable buffer size per backend
+
+* Wed Aug 5 2020 Nir Soffer <nsoffer@redhat.com> 2.0.10-1
+- Support 3rd party certificates #BZ1862107
+- Imageio low level API #BZ1855047
+- Compute image checksums #BZ1787906
+- Support transfer cancellation #BZ1524184
+- Imporve error reporting in io.copy() #BZ1854550
+- Create configuration directories
+
+* Wed Jul 1 2020 Nir Soffer <nsoffer@redhat.com> 2.0.9-1
+- Fix ipv6 regression in 2.0.8-1 #BZ1851707
+- Fix preallocation on NFS 4.2 and GlusterFS #BZ1851256
+- Support upload disk from ova #BZ1849981
+- Report holes in zero extents
+
+* Mon Jun 15 2020 Nir Soffer <nsoffer@redhat.com> 2.0.8-1
+- Improve performance using multiple connections #BZ1591439
+- Support ipv6 #BZ1805267
+- Fix Cross-Site scripting vulnerabilities #BZ1757066
+
+* Thu Jun 4 2020 Nir Soffer <nsoffer@redhat.com> 2.0.7-0
+- Support showing parsed configuration #BZ1835719
+- Improve performance when using small requests #BZ1836858
+- Use proxy_url if transfer_url is not accessible #BZ1839400
+
+* Wed May 13 2020 Nir Soffer <nsoffer@redhat.com> 2.0.6-0
+- Introduce ovirt-imageio-client package
+- Support drop-in confiugration #BZ1826679, #BZ1738729, #BZ1761960
+- Make private modules private #BZ1818170
+- Log detailed transfer stats #BZ1740489
+- Support platform trusted CA
+
+* Mon Apr 20 2020 Nir Soffer <nsoffer@redhat.com> 2.0.5-0
+- Support closing connections for web clients
+
+* Fri Apr 17 2020 Nir Soffer <nsoffer@redhat.com> 2.0.4-0
+- Support starting as root

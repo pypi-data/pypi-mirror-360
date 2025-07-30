@@ -1,0 +1,323 @@
+#!/usr/bin/python3
+
+# SPDX-FileCopyrightText: Red Hat, Inc.
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+"""
+Show how to stream sparse image extents in backup and restore.
+
+Example usage
+=============
+
+In this example we will download a Fedora 31 image from imageio daemon and
+stream it to disk using sparse format. Then we will stream the image back from
+a file to imageio daemon.
+
+Starting the imageio daemon
+---------------------------
+
+In another shell, start the ovirt-imageio daemon running as current user and
+group:
+
+    $ cd ../daemon
+    $ ./ovit-imageio -c test
+
+We can control the daemon now using ../daemon/test/daemon.sock.
+
+Creating a target image
+-----------------------
+
+Imageio does not manage storage, only imageio transfer. Lets create a target
+image using virt-builder:
+
+    $ virt-builder fedora-31 --format qcow2 -o /var/tmp/disk.qcow2
+
+Install a ticket allowing access to the target image using the nbd protocol:
+
+    $ curl --unix-socket ../daemon/test/daemon.sock \
+        -X PUT \
+        --upload-file nbd.json \
+        http://localhost/tickets/nbd
+
+In another shell, start qemu-nbd, serving the target image using the unix
+socket:
+
+    $ qemu-nbd --socket=/tmp/nbd.sock \
+        --persistent \
+        --shared=8 \
+        --format=qcow2 \
+        --aio=native \
+        --cache=none \
+        --discard=unmap \
+        /var/tmp/disk.qcow2
+
+Downloading image to sparse format
+----------------------------------
+
+Download the image to sparse format:
+
+    $ time ./sparse-stream download https://localhost:54322/images/nbd \
+        > download.sparse
+
+    real    0m2.486s
+    user    0m0.131s
+    sys     0m0.919s
+
+To compress the downloaded image, pipe the image to pigz. pigz is like gzip but
+multithreaded. Compressing with gzip is 3 time slower:
+
+    $ time ./sparse-stream download https://localhost:54322/images/nbd \
+        | pigz -1 -c > download.sparse.gz
+
+    real    0m7.579s
+    user    0m31.141s
+    sys     0m1.607s
+
+Here are the downloaded files:
+
+    $ du -sh download.sparse*
+    1.2G	download.sparse
+    582M	download.sparse.gz
+
+Uploading from file
+-------------------
+
+Upload the sparse image back to target image:
+
+    $ time ./sparse-stream upload https://localhost:54322/images/nbd \
+        < download.sparse
+
+    real    0m2.611s
+    user    0m0.132s
+    sys     0m0.327s
+
+To upload compressed image, pipe via gzip:
+
+    $ time gzip -d -c download.sparse.gz | ./sparse-stream upload \
+        https://localhost:54322/images/nbd
+
+    real    0m8.220s
+    user    0m7.223s
+    sys     0m1.097s
+
+
+Stream format
+=============
+
+Stream is composed of one of more frames.
+
+Meta frame
+----------
+
+Stream metadata, must be the first frame.
+
+"meta" space start length "\r\n" <json-payload> \r\n
+
+Metadata keys in the json payload:
+
+- virtual-size: image virtual size in bytes
+- data-size: number of bytes in data frames
+- date: ISO 8601 date string
+
+Data frame
+----------
+
+The header is followed by length bytes and terminator.
+
+"data" space start length "\r\n" <length bytes> "\r\n"
+
+Zero frame
+----------
+
+A zero extent, no payload.
+
+"zero" space start length "\r\n"
+
+Stop frame
+----------
+
+Marks the end of the stream, no payload.
+
+"stop" space start length "\r\n"
+
+Example
+-------
+
+meta 0000000000000000 0000000000000083\r\n
+{
+    "virtual-size": 6442450944,
+    "data-size": 1288486912,
+    "date": "2020-07-09T20:33:34.349705",
+    "incremental": false
+}\r\n
+data 0000000000000000 00000000000100000\r\n
+<1 MiB bytes>\r\n
+zero 0000000000100000 00000000040000000\r\n
+...
+data 0000000040100000 00000000000001000\r\n
+<4096 bytes>\r\n
+stop 0000000000000000 00000000000000000\r\n
+
+"""
+
+import argparse
+import datetime
+import json
+import logging
+import sys
+
+from ovirt_imageio.client import ImageioClient
+
+META = b"meta"
+DATA = b"data"
+ZERO = b"zero"
+STOP = b"stop"
+TERM = b"\r\n"
+FRAME = b"%s %016x %016x" + TERM
+FRAME_LEN = len(FRAME % (STOP, 0, 0))
+
+
+def download(args):
+    writer = sys.stdout.buffer
+
+    context = "dirty" if args.incremental else "zero"
+
+    with ImageioClient(args.url, secure=False) as client:
+        extents = list(client.extents(context))
+
+        # Write metadata frame.
+        metadata = dump_metadata(extents, args.incremental)
+        write_frame(writer, META, 0, len(metadata))
+        writer.write(metadata)
+        writer.write(TERM)
+
+        # During full backup we want to downlod the data extents and stream
+        # both data and zero extents. When we restore a full backup, we
+        # must write entire image to storage.
+        # During incremental backup we want to download and stream only the
+        # dirty data and zero extents, and skip the rest. When we restore,
+        # we must skip non-existant data.
+
+        # Filter out clean extents.
+        if args.incremental:
+            extents = (e for e in extents if e.dirty)
+
+        for extent in extents:
+            if extent.zero:
+                # Stream zero extent.
+                write_frame(writer, ZERO, extent.start, extent.length)
+            else:
+                # Download and stream data extent.
+                write_frame(writer, DATA, extent.start, extent.length)
+                client.write_to(writer, extent.start, extent.length)
+                writer.write(TERM)
+
+        # Mark the end of the stream.
+        write_frame(writer, STOP, 0, 0)
+
+
+def upload(args):
+    reader = sys.stdin.buffer
+
+    # Read metadata frame.
+    kind, start, length = read_frame(reader)
+    if kind != META:
+        raise RuntimeError("Missing meta frame")
+
+    meta = load_metadata(reader.read(length))
+    assert reader.read(len(TERM)) == TERM
+
+    with ImageioClient(args.url, secure=False) as client:
+
+        # Validate source and destination size.
+        if meta["virtual-size"] > client.size():
+            raise RuntimeError("Target disk is smaller than stream size")
+
+        # Read and process restore frames. This can the exact frame streamed in
+        # download(), or arbritrary stream of frames for restoring a disk to
+        # specific point in time.
+        while True:
+            kind, start, length = read_frame(reader)
+            if kind == ZERO:
+                client.zero(start, length)
+            elif kind == DATA:
+                client.read_from(reader, start, length)
+                assert reader.read(len(TERM)) == TERM
+            elif kind == STOP:
+                break
+            else:
+                raise RuntimeError(
+                    "Invalid frame kind={!r} start={!r} length={!r}"
+                    .format(kind, start, length))
+
+        # Finally flush changes to storage.
+        client.flush()
+
+
+def write_frame(writer, kind, start, length):
+    writer.write(FRAME % (kind, start, length))
+
+
+def read_frame(reader):
+    header = reader.read(FRAME_LEN)
+    kind, start, length = header.split(b" ", 2)
+    return kind, int(start, 16), int(length, 16)
+
+
+def dump_metadata(extents, incremental):
+    meta = {
+        "virtual-size": extents[-1].start + extents[-1].length,
+        "data-size": sum(e.length for e in extents if e.data),
+        "date": datetime.datetime.now().isoformat(),
+        "incremental": incremental,
+    }
+    return json.dumps(meta, indent=4).encode("utf-8")
+
+
+def load_metadata(s):
+    return json.loads(s.decode("utf-8"))
+
+
+parser = argparse.ArgumentParser(description="streaming example")
+
+parser.add_argument(
+    "-v", "--verbose",
+    action="store_true",
+    help="Be more verbose")
+
+commands = parser.add_subparsers(title="commands")
+
+download_parser = commands.add_parser(
+    "download",
+    help="download sparse stream to stdout")
+
+download_parser.set_defaults(command=download)
+
+download_parser.add_argument(
+    "--incremental",
+    action="store_true",
+    help="stream only dirty extents instead of complete disk contents. "
+         "Works only during incremental backup.")
+
+download_parser.add_argument(
+    "url",
+    help="transfer URL")
+
+upload_parser = commands.add_parser(
+    "upload",
+    help="upload sparse stream from stdin")
+
+upload_parser.set_defaults(command=upload)
+
+upload_parser.add_argument(
+    "url",
+    help="transfer URL")
+
+args = parser.parse_args()
+
+logging.basicConfig(
+    level=logging.DEBUG if args.verbose else logging.WARNING,
+    format=("%(asctime)s %(levelname)-7s (%(threadName)s) [%(name)s] "
+            "%(message)s"))
+
+args.command(args)

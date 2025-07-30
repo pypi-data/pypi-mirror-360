@@ -1,0 +1,215 @@
+# SPDX-FileCopyrightText: Red Hat, Inc.
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+# An example for an ovirt-imageio configuration file.
+#
+# Below is a list of available options which can be configured.
+# imageio supports drop-in configuration, which means there can
+# be multiple config files, which are all read in succession to get
+# final configuration.
+#
+# imageio searches the following directories for config files:
+# - /etc/ovirt-imageio/conf.d/ where admins should place their configs.
+#   Also oVirt engine-setup writes there a config file.
+# - /usr/lib/ovirt-imageio/conf.d/ where vendor configs should be placed.
+#
+# Config files have to be in the directories listed above and must have *.conf
+# suffix. Files are read in alphabetical order, taking into account only
+# base name of the config file, not directory name. E.g. if there are two
+# config files, 50-vdsm.conf and 99-admin.conf (see conf.d listing below),
+# config options specified in 99-admin.conf will overwrite corresponding
+# config options in 50-vdsm.conf.
+#
+#     $ tree /etc/ovirt-imageio/conf.d/
+#       /etc/ovirt-imageio/conf.d/
+#       ├── 50-vdsm.conf
+#       └── 99-admin.conf
+#
+# You can check the final configuration by executing
+#
+#     ovirt-imageio --show-config
+
+
+[daemon]
+# Interval in seconds for checking termination conditions.
+# The default internal:
+#   poll_interval = 1.0
+
+# Maximum number of connections for same /image/ticket-id URL. Using more
+# connections improves throughput of a single image transfer. When transferring
+# images concurrently, using more connections per transfer may decrease
+# throughput.
+#
+# Some backends do not support more than 8 connections, regardless of this
+# value set here. Some backends limit the number of writers regardless of the
+# value set here.
+#
+# To disable multiple connections set the value to 1. This will ensure single
+# reader or writer for upload and downloads.
+#
+# The default value:
+#   max_connections = 8
+
+# Number of seconds before inactive connections are disconnected.
+# Clients with special needs can request a larger timeout when
+# creating an image transfer.
+# The default value:
+#   inactivity_timeout = 60
+
+[tls]
+# Enable TLS. Note that without TLS transfer tickets and image data are
+# transferred in clear text. If TLS is enabled, paths to related files
+# with keys/certificates (see lines below) have to be configured as well,
+# otherwise server will fails to start.
+# The default value:
+#   enable = true
+
+# Private key file.
+# There's no default private key and needs to be configured if tls is
+# enabled:
+#   key_file =
+
+# Certificate file.
+# There's no default cert file and needs to be configured if tls is
+# enabled:
+#   cert_file =
+
+# CA certificate file.
+# This should be configured if tls is enabled and cert_file is not
+# signed by a certificate authority trusted by the host. An example is
+# the default self-signed certificate used in oVirt. Leave empty if
+# cert_file is signed by a trusted certificate authority.
+#   ca_file =
+
+# Enable TLSv1.1, for legacy user applications that do not support TLSv1.2.
+# The default value:
+#   enable_tls1_1 = false
+
+[backend_file]
+# Buffer size in bytes for reading and writing using the file backend.
+# The default value seems to give optimal throughput with both low end
+# and high end storage, using iSCSI and FC. Larger values may increase
+# throughput slightly, but may also decrease it significantly. The
+# default value was tested with single connection and requires more
+# testing with multiple connections.
+# The default buffer size:
+#   buffer_size = 8388608
+
+[backend_http]
+# CA certificate file to be used with HTTP backend. Empty value is valid,
+# meaning use CA file configured in TLS section.
+# This option has to be used when the daemon serving as a proxy uses
+# different CA than daemon serving storage backend. In most of the cases
+# these CAs are the same and one would use same value as configured in
+# tls.ca_file option.
+# The default value:
+#   ca_file =
+
+# Buffer size in bytes for handling proxy requests. The default value
+# was copied from the file backend and requires more testing with
+# multiple connections.
+# The default buffer size:
+#   buffer_size = 8388608
+
+[backend_nbd]
+# Buffer size in bytes for reading and writing to the nbd backend. The
+# default value was copied from the file backend and requires more
+# testing with multiple connections.
+# The default buffer size:
+#   buffer_size = 8388608
+
+[remote]
+# Remote service interface. Use "::" to listen on any interface on both
+# IPv4 and IPv6. To listen only on IPv4, use "0.0.0.0".
+# The default value:
+#   host = ::
+
+# Remote service port. Changing this value requires changes in the
+# firewall rules on the host, and changing this value in engine
+# configuration.
+# The defualt value:
+#   port = 54322
+
+[local]
+# Enable local service.
+# The defualt value:
+#   enable = true
+
+# Local service socket for accessing images locally.
+# The default socket:
+#   socket = "\0/org/ovirt/imageio"
+# Set to empty to use random socket:
+#   socket =
+
+[control]
+# Transport be used to communicate with control service socket.
+# Can be either "tcp" or "unix". If "unix" is used, communication will
+# be done over UNIX socket which path is specified in "socket" option.
+# In case of TCP transport, you must specify the port using "port" option.
+# Preferred transport is unix as has better security - only users in
+# ovirtimg group can read/write into the socket.
+# transport = "unix"
+
+# Control service socket path. This socket is used to control the daemon
+# and must be accessible only to the program controlling the daemon.
+# The default value:
+#   socket = /run/ovirt-imageio/sock
+
+# Control service port when run over TCP. Changing this value require
+# changing this value in engine configuration.
+# The default value is not set. If you want to use TCP transport, you
+# must specify port.
+#   port = -1
+
+# Determines if IPv4 address should be preferred when the address of
+# control service is resolved. This option allows compatibility with java
+# clients which may prefer IPv4 address and don't try other addresses on
+# dual stack system.
+#   prefer_ipv4 = true
+
+# Number of seconds to wait when removing a ticket. If ticket cannot be removed
+# within this timeout, the request will fail with "409 Conflict", and the user
+# need to retry the request again. A ticket can be removed only when the number
+# of connections using the ticket is zero.
+# The default value:
+#   remove_timeout = 60
+
+[profile]
+# Filename for storing profile data. Profiling requires the "yappi"
+# package. Version 0.93 is recommended for best performance.
+# The default filename:
+#   filename = /run/ovirt-imageio/profile
+
+
+# Logger configuration.
+# See Python logging documentation for details how to configure loggers.
+# (https://docs.python.org/3/howto/logging.html)
+
+[loggers]
+keys = root
+
+[handlers]
+keys = logfile
+
+[formatters]
+keys = long
+
+[logger_root]
+level = INFO
+handlers = logfile
+propagate = 0
+
+[handler_logfile]
+class = logging.handlers.RotatingFileHandler
+args = ('/var/log/ovirt-imageio/daemon.log',)
+kwargs = {'maxBytes': 20971520, 'backupCount': 10}
+level = DEBUG
+formatter = long
+
+[handler_stderr]
+class = logging.StreamHandler
+level = DEBUG
+formatter = long
+
+[formatter_long]
+format = %(asctime)s %(levelname)-7s (%(threadName)s) [%(name)s] %(message)s

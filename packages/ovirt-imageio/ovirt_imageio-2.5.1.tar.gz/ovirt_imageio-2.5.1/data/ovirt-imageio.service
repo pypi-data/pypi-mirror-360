@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: Red Hat, Inc.
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+[Unit]
+Description=oVirt ImageIO Daemon
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/ovirt-imageio
+KillSignal=SIGTERM
+KillMode=mixed
+Restart=always
+# Run the service under root to e.g. be able to access files owned
+# by root and bind to privileged ports. Root privileges are dropped
+# once the service is running and after that runs as ovirtimg user.
+User=root
+Group=root
+RuntimeDirectory=ovirt-imageio
+RuntimeDirectoryMode=0750
+
+[Install]
+WantedBy=multi-user.target
+
