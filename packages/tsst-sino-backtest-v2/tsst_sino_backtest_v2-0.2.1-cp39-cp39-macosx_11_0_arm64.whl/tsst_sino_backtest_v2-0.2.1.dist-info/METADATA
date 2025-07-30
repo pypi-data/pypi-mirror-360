@@ -1,0 +1,81 @@
+Metadata-Version: 2.4
+Name: tsst-sino-backtest-v2
+Version: 0.2.1
+Summary: Add your description here
+Author-email: Aiaristosit <aiaristosit@gmail.com>
+License: Software License Agreement (Proprietary License)
+        
+        Copyright (c) 2025 Aiaristos Information Technology Co., Ltd.
+        All Rights Reserved.
+        
+        This software and associated files ("Software") are the proprietary property of Aiaristos Information Technology Co., Ltd.. By installing, copying, accessing, or using the Software, you agree to be bound by the terms of this License Agreement.
+        
+        1. GRANT OF LICENSE
+        You are granted a non-exclusive, non-transferable, revocable license to install and use this Software for internal use only, subject to a valid activation or license key issued by Aiaristos Information Technology Co., Ltd..
+        
+        2. RESTRICTIONS
+        You may NOT:
+        - Distribute, sublicense, rent, lease, or lend the Software to any third party.
+        - Reverse engineer, decompile, disassemble, or otherwise attempt to derive the source code of the Software.
+        - Bypass, disable, or tamper with any license verification or activation mechanism.
+        - Use the Software in any manner not expressly authorized by this License.
+        
+        3. LICENSE VERIFICATION
+        This Software contains a license verification mechanism. It may connect to Aiaristos Information Technology Co., Ltd.'s servers to validate your license key before or during use. You agree to allow this verification.
+        
+        4. TERMINATION
+        This License is effective until terminated. Your rights under this License will terminate automatically without notice if you fail to comply with any term(s) of this License.
+        
+        5. NO WARRANTY
+        The Software is provided "AS IS" without warranty of any kind, express or implied. Aiaristos Information Technology Co., Ltd. shall not be liable for any damages arising from the use or inability to use the Software.
+        
+        6. GOVERNING LAW
+        This Agreement shall be governed by the laws of Republic of China (Taiwan), without regard to its conflict of laws provisions.
+        
+        7. CONTACT
+        For license inquiries or commercial use, please contact: aiaristosit@gmail.com
+        
+        ---
+        
+        NOTE: This is a proprietary license. This software is **not open source** and may not be redistributed or modified without express written permission.
+        
+Project-URL: Homepage, https://tsst.docs.aiaristos.com/
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: Microsoft :: Windows :: Windows 10
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: build>=1.2.2.post2
+Requires-Dist: cython>=3.1.1
+Requires-Dist: ipython>=8.18.1
+Requires-Dist: jinja2>=3.1.6
+Requires-Dist: nanoid>=2.0.0
+Requires-Dist: polars>=1.29.0
+Requires-Dist: pyarrow>=20.0.0
+Requires-Dist: python-dotenv>=1.1.0
+Requires-Dist: quantstats-lumi>=0.1.12
+Requires-Dist: requests>=2.32.3
+Requires-Dist: rich>=14.0.0
+Requires-Dist: setuptools>=80.9.0
+Requires-Dist: shioaji[speed]>=1.2.5
+Requires-Dist: pyproject_hooks; sys_platform == "darwin" or sys_platform == "linux"
+Requires-Dist: tomli; sys_platform == "darwin" or sys_platform == "linux"
+Requires-Dist: packaging; sys_platform == "darwin" or sys_platform == "linux"
+Requires-Dist: cryptography>=45.0.4
+Dynamic: license-file
+
+# TSST 回測模組 Version 2
+與第一版的差異在於，第一版將整個回測模組抽出來包成 exe
+而這一版的是改用 Cython 撰寫主要的驗證模組與入口模組，最後打包成 pyd 後再讓使用者使用
+並且棄用 Redis 改用 Queue 與執行緒進行程式間的訊號溝通
+
+## 打包指令
+```bash
+# 生成 pyd 放在 example 下，主要用於測試
+python setup.py build_ext --build-lib  example --inplace
+```
+
+```bash
+# 包成 wheel 檔
+python -m build
+```
