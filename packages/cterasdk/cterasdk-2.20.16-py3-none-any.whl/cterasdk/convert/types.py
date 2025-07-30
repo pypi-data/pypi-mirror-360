@@ -1,0 +1,25 @@
+class XMLTypes:
+    OBJ = 'obj'
+    ATT = 'att'
+    VAL = 'val'
+    LIST = 'list'
+    ID = 'id'
+    CLASS = 'class'
+    UUID = 'uuid'
+    DB = 'db'
+    VERSION = 'version'
+    FIRMWARE = 'firmware'
+    NS = 'xmlns:xsi'
+    LOCATION = 'xsi:noNamespaceSchemaLocation'
+
+
+class DAVTypes:
+    HREF = 'href'
+    PROPSTAT = 'propstat'
+    PROP = 'prop'
+    RESPONSE = 'response'
+    MULTISTATUS = 'multistatus'
+    CREATED_DATE = 'creationdate'
+    LAST_MODIFIED = 'getlastmodified'
+    CONTENT_TYPE = 'getcontenttype'
+    CONTENT_LENGTH = 'getcontentlength'
