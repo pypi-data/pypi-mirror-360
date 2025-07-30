@@ -1,0 +1,14 @@
+from s1_cns_cli.s1graph.terraform.checks.resource.aws import *  # noqa
+from s1_cns_cli.s1graph.terraform.checks.resource.gcp import *  # noqa
+from s1_cns_cli.s1graph.terraform.checks.resource.azure import *  # noqa
+from s1_cns_cli.s1graph.terraform.checks.resource.github import *  # noqa
+from s1_cns_cli.s1graph.terraform.checks.resource.gitlab import *  # noqa
+from s1_cns_cli.s1graph.terraform.checks.resource.linode import *  # noqa
+from s1_cns_cli.s1graph.terraform.checks.resource.oci import *  # noqa
+from s1_cns_cli.s1graph.terraform.checks.resource.openstack import *  # noqa
+from s1_cns_cli.s1graph.terraform.checks.resource.panos import *  # noqa
+from s1_cns_cli.s1graph.terraform.checks.resource.digitalocean import *  # noqa
+from s1_cns_cli.s1graph.terraform.checks.resource.alicloud import *  # noqa
+from s1_cns_cli.s1graph.terraform.checks.resource.kubernetes import *  # noqa
+from s1_cns_cli.s1graph.terraform.checks.resource.yandexcloud import *  # noqa
+from s1_cns_cli.s1graph.terraform.checks.resource.ncp import *  # noqa
