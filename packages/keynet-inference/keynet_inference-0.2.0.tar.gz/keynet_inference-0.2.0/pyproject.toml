@@ -1,0 +1,49 @@
+[project]
+name = "keynet-inference"
+dynamic = ["version"]
+description = "Inference utilities for keynet - Triton Inference Server integration"
+authors = [{name = "hbjs", email = "hbjs97@naver.com"}]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+keywords = ["keynet", "inference", "triton", "deployment", "machine-learning"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "keynet-core",
+    "numpy>=1.25.0,<2.0",  # onnxruntime compatibility
+    "tritonclient[http,grpc]>=2.36.0",
+    "requests==2.32.4",
+    "tqdm==4.67.1",
+    "cryptography>=45.0.4",
+    "mlflow==3.1.1",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/WIM-Corporation/keynet"
+"Bug Tracker" = "https://github.com/WIM-Corporation/keynet/issues"
+
+[project.scripts]
+keynet = "keynet_inference.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "keynet_inference/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["keynet_inference"]
+
+[tool.uv.sources]
+keynet-core = { workspace = true }
