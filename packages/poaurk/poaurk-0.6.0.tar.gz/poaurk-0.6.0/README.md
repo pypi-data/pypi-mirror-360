@@ -1,0 +1,90 @@
+# poaurk
+
+A lightweight Python client library for the Plurk API with OAuth 1.0a authentication and real-time Comet support.
+
+## Features
+
+- Full OAuth 1.0a authentication flow for Plurk API
+- Command-line and customizable user interaction for OAuth verification
+- Real-time updates and notifications via Comet long-polling
+- Asyncio and aiohttp based for asynchronous HTTP requests
+- Example scripts to help you get started quickly
+
+## Requirements
+
+- Python 3.8+
+- aiohttp
+- oauthlib
+
+## Installation
+
+Install the package via pip:
+
+```bash
+pip install poaurk
+```
+
+## Usage
+
+### OAuth Authentication
+
+```python
+import asyncio
+from aiohttp import ClientSession
+from poaurk.oauth import OAuthCred, PlurkOAuth
+
+async def main():
+    async with ClientSession() as session:
+        cred = OAuthCred(
+            customer_key="YOUR_CONSUMER_KEY",
+            customer_secret="YOUR_CONSUMER_SECRET"
+        )
+        client = PlurkOAuth(cred, session)
+        await client.authorize()
+        # Now you can use client to make authenticated API requests
+
+asyncio.run(main())
+```
+
+### Real-time Updates with Comet
+
+```python
+import asyncio
+from aiohttp import ClientSession
+from poaurk.comet import PlurkComet, OAuthCred
+
+async def comet_example():
+    async with ClientSession() as session:
+        cred = OAuthCred(
+            customer_key="YOUR_CONSUMER_KEY",
+            customer_secret="YOUR_CONSUMER_SECRET",
+            token="YOUR_ACCESS_TOKEN",
+            token_secret="YOUR_ACCESS_TOKEN_SECRET"
+        )
+        comet = PlurkComet(cred, session)
+        async for update in comet.connect():
+            print("Received update:", update)
+
+asyncio.run(comet_example())
+```
+
+## Examples
+
+See the [`examples/`](examples/) directory for example scripts, including basic authentication.
+
+### Running the Basic Authentication Example
+
+1. Set environment variables for `POAURK_TEST_KEY` and `POAURK_TEST_SECRET`.
+2. Run the example script:
+
+```bash
+python examples/basic_auth.py
+```
+
+## Contributing
+
+Contributions are welcome! Please open issues or submit pull requests on GitHub.
+
+## License
+
+This project is licensed under the terms of the MIT License. See the [LICENSE](LICENSE) file for details.
