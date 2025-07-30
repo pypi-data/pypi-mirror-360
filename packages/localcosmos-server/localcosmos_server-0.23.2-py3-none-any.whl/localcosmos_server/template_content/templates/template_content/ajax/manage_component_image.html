@@ -1,0 +1,47 @@
+{% extends 'localcosmos_server/ajax/server_content_image_form.html' %}
+{% load i18n localcosmos_tags %}
+
+{% block base_url %}{% if content_image %}{% url 'manage_component_image' request.app.uid content_image.id %}{% else %}{% url 'manage_component_image' request.app.uid content_type.id content_instance.id image_type %}{% endif %}{% endblock %}
+
+{% block footer %}
+	<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">{% trans 'Cancel' %}</button>
+	<button type="submit" class="btn btn-outline-primary">{% trans 'Save' %}</button>
+{% endblock %}
+
+{% block script %}
+
+	{% block extra_script %}{% endblock %}
+
+	<script>
+		(function (){
+			{% if request.method == 'POST' and form.is_valid %}
+
+				{% with content_key=component_key %}
+					{% include 'template_content/ajax/reload_template_content_form_fields.html' %}
+				{% endwith %}
+				var url = "{% url 'manage_component' content_instance.template_content.app.uid content_instance.pk component_key component_uuid %}";
+
+				$.get(url, function(html){
+
+					$("#LargeModalContent").html(html);
+					ajaxify("LargeModalContent");
+				});
+
+				reloadPreview();
+				
+
+			{% else %}
+				{% include 'localcosmos_server/snippets/ckeditor_js_snippet.html' %}
+			{% endif %}
+		})();
+
+	</script>
+
+	<style>
+		.modal-body .ck-editor__editable {
+			min-height: 50px;
+		}
+	</style>
+
+	
+{% endblock %}
