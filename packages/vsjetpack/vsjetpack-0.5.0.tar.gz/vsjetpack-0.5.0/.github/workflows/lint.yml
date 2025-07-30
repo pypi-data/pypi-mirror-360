@@ -1,0 +1,67 @@
+name: Lint Python code with Ruff & mypy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.py'
+  pull_request:
+    paths:
+      - '**.py'
+
+permissions:
+  contents: read
+
+
+env:  
+  VAPOURSYNTH_VERSION: 71  
+  PYTHON_VERSION: "3.13"  
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: qoomon/actions--context@v3
+        id: context
+      - name: Determine branch name
+        id: branch-names
+        run: echo "current_branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Set up VapourSynth ${{ env.VAPOURSYNTH_VERSION }}
+        uses: ./.github/actions/setup-vapoursynth
+        with:
+          vapoursynth-version: ${{ env.VAPOURSYNTH_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          uv sync --locked
+
+      - name: Running ruff
+        run: uv run ruff check .
+
+      - name: Running mypy
+        run: uv run mypy vstools vssource vskernels vsexprtools vsrgtools vsmasktools vsscale vsaa vsdenoise vsdeband vsdeinterlace
+
+      - name: Post webhook for failure
+        if: failure()
+        uses: tsickert/discord-webhook@v6.0.0
+        with:
+          webhook-url: ${{ secrets.WEBHOOK_URL }}
+          embed-url: ${{ steps.context.outputs.job_log_url }}
+          embed-title: "[${{ github.event.repository.name }}] ${{ steps.context.outputs.job }} failed on ${{ steps.branch-names.outputs.current_branch }}"
+          username: "GitHub - ${{ github.repository }}"
+          avatar-url: https://github.githubassets.com/favicons/favicon.png

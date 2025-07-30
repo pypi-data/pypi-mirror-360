@@ -1,0 +1,100 @@
+name: Test Python code
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/actions/**'
+      - '.github/workflows/test.yml'
+      - '**.py'
+  pull_request:
+    paths:
+      - '.github/actions/**'
+      - '.github/workflows/test.yml'
+      - '**.py'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        vs-versions: [67]
+        python-version: ['3.10', '3.13']
+        vszip-version: [7]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: qoomon/actions--context@v3
+        id: context
+      - name: Determine branch name
+        id: branch-names
+        run: echo "current_branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Set up VapourSynth ${{ matrix.vs-versions }}
+        uses: ./.github/actions/setup-vapoursynth
+        with:
+          vapoursynth-version: ${{ matrix.vs-versions }}
+
+      - name: Set up akarin
+        uses: ./.github/actions/setup-akarin
+        with:
+          akarin-version: 6d7c733b3014a42be75299427b5c35f56f02a47a
+
+      - name: Set up vszip
+        uses: ./.github/actions/setup-vszip
+        with:
+          vszip-version: ${{ matrix.vszip-version }}
+
+      - name: Install dependencies
+        run: |
+          uv sync --locked
+
+      - name: Running tests
+        run: uv run pytest --cov-report=term-missing:skip-covered --cov=vskernels --cov=vstools tests
+
+      - name: Convert coverage report to cobertura
+        run: uv run coverage xml
+
+      - name: Coveralls GitHub Action
+        uses: coverallsapp/github-action@v2.3.6
+        with:
+          file: coverage.xml
+          format: cobertura
+          parallel: true
+          flag-name: ${{ join(matrix.*, ' - ') }}
+
+      - name: Post webhook for failure
+        if: failure()
+        uses: tsickert/discord-webhook@v7.0.0
+        with:
+          webhook-url: ${{ secrets.WEBHOOK_URL }}
+          embed-url: ${{ steps.context.outputs.job_log_url }}
+          embed-title: "[${{ github.event.repository.name }}] ${{ steps.context.outputs.job }} failed on ${{ steps.branch-names.outputs.current_branch }}"
+          username: "GitHub - ${{ github.repository }}"
+          avatar-url: https://github.githubassets.com/favicons/favicon.png
+
+  post-test:
+    needs: [test]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Mark Coveralls as finished
+        uses: coverallsapp/github-action@v2.3.6
+        with:
+          parallel-finished: true

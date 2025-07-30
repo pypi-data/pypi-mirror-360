@@ -1,0 +1,69 @@
+name: Publish releases to PyPI
+on:
+  push:
+   tags:
+      - v[0-9]+**
+
+jobs:
+  package_build:
+      name: Build and push to PyPI
+      runs-on: ubuntu-latest
+
+      strategy:
+        matrix:
+          vs-versions:
+            - 71
+          python-version:
+            - "3.13"
+
+      environment:
+        name: pypi
+        url: https://pypi.org/p/vsjetpack
+      permissions:
+        id-token: write
+
+      steps:
+      - uses: actions/checkout@v4
+
+      - uses: qoomon/actions--context@v3
+        id: context
+      - name: Determine branch name
+        id: branch-names
+        run: echo "current_branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+
+      - name: Prep Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up VapourSynth
+        uses: ./.github/actions/setup-vapoursynth
+        with:
+          vapoursynth-version: ${{ matrix.vs-versions }}
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Build
+        run: uv build
+
+      - name: Check the output
+        run: uv run twine check --strict dist/*
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Post webhook for failure
+        if: failure()
+        uses: tsickert/discord-webhook@v6.0.0
+        with:
+          webhook-url: ${{ secrets.WEBHOOK_URL }}
+          embed-url: ${{ steps.context.outputs.job_log_url }}
+          embed-title: "[${{ github.event.repository.name }}] ${{ steps.context.outputs.job }} failed on ${{ steps.branch-names.outputs.current_branch }}"
+          username: "GitHub - ${{ github.repository }}"
+          avatar-url: https://github.githubassets.com/favicons/favicon.png
