@@ -1,0 +1,95 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "attribuutit"
+version = "2025.7.8"
+description = 'Nodes, Edges, Faces, and Attributes (Finnish: "Solmut, reunat, pinnat ja attribuutit").'
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [{ name = "Stefan Hagen", email = "stefan@hagen.link" }]
+maintainers = [{ name = "Stefan Hagen", email = "stefan@hagen.link" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.9",
+]
+keywords = ["attributes", "edges", "faces", "gis-tools", "nodes", "verification"]
+dependencies = [
+    "geotiff >= 0.2.10",
+    "pyshp >= 2.3.1",
+    "typer >= 0.16.0",
+]
+requires-python = ">=3.9"
+
+[project.optional-dependencies]
+dev = ["black", "coverage", "hypothesis", "mypy", "pytest", "pytest-cov", "pytest-flake8", "ruff"]
+
+[project.urls]
+Homepage = "https://git.sr.ht/~sthagen/attribuutit"
+Bug-Tracker = "https://todo.sr.ht/~sthagen/attribuutit"
+Documentation = "https://codes.dilettant.life/docs/attribuutit"
+Source-Code = "https://git.sr.ht/~sthagen/attribuutit"
+Test-Coverage = "https://codes.dilettant.life/coverage/attribuutit"
+
+[project.scripts]
+attribuutit = "attribuutit.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["attribuutit"]
+exclude = ["test*"]
+
+[tool.black]
+line-length = 120
+skip-string-normalization = true
+target-version = [ "py39", "py310", "py311", "py312", "py313" ]
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+precision = 2
+exclude_lines = [ "pragma: no cover", "raise NotImplementedError", "if TYPE_CHECKING:", "@overload" ]
+omit = [ "*/__main__.py" ]
+
+[tool.mypy]
+strict = true
+implicit_reexport = true
+
+[tool.pytest]
+testpaths = "test"
+filterwarnings = "error"
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 120
+exclude = [ ".direnv", ".eggs", ".git", ".mypy_cache", ".ruff_cache", ".venv", "__pypackages__", "bin", "dist", "venv" ]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [ "E", "F", "Q" ]
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "single"
+
+[tool.ruff.lint.flake8-import-conventions.aliases]
+altair = "alt"
+"matplotlib.pyplot" = "plt"
+numpy = "np"
+pandas = "pd"
+seaborn = "sns"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 42
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = [ "E402" ]
