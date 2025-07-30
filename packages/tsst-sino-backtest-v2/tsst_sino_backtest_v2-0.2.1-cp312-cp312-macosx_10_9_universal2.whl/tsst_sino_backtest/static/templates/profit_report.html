@@ -1,0 +1,281 @@
+{% set MAPPER = {'up': '上', 'down': '下', 'stock': '股票', 'future': '期貨'} %}
+{% macro render_fee_setting(type, setting) %}
+<div class="row">
+    <div class="col-12">
+        <h6>{{ MAPPER[type] }}</h6>
+        <hr/>
+    </div>
+    <div class="col-12 col-md-6">
+        <p>手續費: {{ "%.6f"|format(fee_settings[type]["fee"]) }}%</p>
+        <p>交易稅: {{ "%.6f"|format(fee_settings[type]["tax"]) }}%</p>
+        <p>每筆交易固定成本: {{ "{:,.0f}".format(fee_settings[type]["per_trade_cost"]) }}</p>
+        <p>滑價設定: </p>
+        <ul>
+            <li>買入: 滑價方向:{{ MAPPER[fee_settings[type]["slippage"]["buy"]["direction"]] }}, 滑價 Tick 數: {{ "{:,.0f}".format(fee_settings[type]["slippage"]["buy"]["tick_count"]) }}</li>
+            <li>賣出: 滑價方向:{{ MAPPER[fee_settings[type]["slippage"]["sell"]["direction"]] }}, 滑價 Tick 數: {{ "{:,.0f}".format(fee_settings[type]["slippage"]["sell"]["tick_count"]) }}</li>
+        </ul>
+    </div>
+</div>
+{% endmacro %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-Bar Chart</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.2.1/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+            font-family: 'Times New Roman', Times, serif;
+        }
+
+        .cursor-pointer {
+            cursor: pointer;
+        }
+
+        #tooltip {
+            display: none;
+            padding: 10px;
+            background-color: #f4f4f4;
+            height: 100%;
+            overflow-y: auto;
+            border: solid 1px;
+        }
+
+        #tooltip .trade-info{
+            border-top: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container p-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-left">KBar 圖表</h1>
+                <hr/>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-10">
+                <div id="chart" style="width: 100%; height: 500px;"></div>
+            </div>
+            <div class="col-2">
+                <div id="tooltip"></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-left">
+                    <span class="kbar-time"></span>
+                    沖銷明細
+                </h1>
+                <hr/>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <h5>費用設定</h5>
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        {{ render_fee_setting('stock', fee_settings['stock']) }}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        {{ render_fee_setting('future', fee_settings['future']) }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <p>損益皆已「含滑價」的價格計算</p>
+            </div>
+            <div class="col-12">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-hover" id="profit-table">
+                        <thead>
+                            <tr>
+                                <td>標的代號</td>
+                                <td>進場時間</td>
+                                <td>進場價格(不含滑價)</td>
+                                <td>進場價格(含滑價)</td>
+                                <td>進場額外成本</td>
+                                <td>出場時間</td>
+                                <td>出場價格(不含滑價)</td>
+                                <td>出場價格(含滑價)</td>
+                                <td>出場額外成本</td>
+                                <td>交易數量(最小單位)</td>
+                                <td>損益</td>
+                                <td>損益率(%)</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in profit_rows %}
+                                <tr>
+                                    <td>{{ row["code"] }}</td>
+                                    <td>{{ row["entry_dt"] }}</td>
+                                    <td>{{ "%.4f"|format(row["entry_origin_price"]) }}</td>
+                                    <td>{{ "%.4f"|format(row["entry_price"]) }}</td>
+                                    <td>{{ "%.4f"|format(row["trade_cost"]) }}</td>
+                                    <td>{{ row["exit_dt"] }}</td>
+                                    <td>{{ "%.4f"|format(row["exit_origin_price"]) }}</td>
+                                    <td>{{ "%.4f"|format(row["exit_price"]) }}</td>
+                                    <td>{{ "%.4f"|format(row["cover_cost"]) }}</td>
+                                    <td>{{ "%.0f"|format(row["min_qty"]) }}</td>
+                                    <td>{{ "%.4f"|format(row["profit"]) }}</td>
+                                    <td>{{ "%.4f"|format(row["profit_ratio"] * 100) }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-12">
+                <h5>損益統計</h5>
+                <p>進場次數: {{ "{:,.0f}".format(account_info['entry_times']) }} 次</p>
+                <p>沖銷次數: {{ "{:,.0f}".format(account_info['cover_times']) }} 次</p>
+                <p>應收: {{ "{:,.0f}".format(account_info['receive_amount']) }} 元</p>
+                <p>應付: {{ "{:,.0f}".format(account_info['payable_amount']) }} 元</p>
+                <p>收益(不含其他成本): {{ "{:,.0f}".format(account_info['net_profit']) }} 元</p>
+                <p>額外費用: {{ "{:,.0f}".format(account_info['extra_fee']) }} 元</p>
+                <p>最終收益: {{ "{:,.0f}".format(account_info['profit']) }} 元</p>
+            </div>
+        </div>
+    </div>
+    <script>
+        const kbar = JSON.parse(`{{ kbar_df | tojson }}`);
+        const profitRowsAndKbarMapper = JSON.parse(`{{ include_profit_rows | tojson }}`);
+        const fee_settings = JSON.parse(`{{ fee_settings | tojson }}`);
+
+        // 將損益進出明細轉 Map 已減少後續查詢開銷
+        let profitRowsMap = new Map();
+        profitRowsAndKbarMapper.forEach((item) => {
+            const key = new Date(item.dt).valueOf() / 1000;
+
+            if (profitRowsMap.has(key)) {
+                profitRowsMap.get(key).push(item);
+            } else {
+                profitRowsMap.set(key, [item]);
+            }
+        });
+
+        const chartOptions = { 
+            layout: { 
+                textColor: 'black', 
+                background: { 
+                    type: 'solid', color: 'white' 
+                } 
+            },
+            timeScale: {
+                timeVisible: true,
+                tickMarkFormatter: (time) => {
+                    const date = new Date(time * 1000);
+                    return date.toLocaleTimeString('zh-TW', {
+                        timeZone: 'Asia/Taipei',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false, // 24 小時制，不顯示上午/下午
+                    });
+                }
+            },
+            localization: {
+                timeFormatter: (timestamp) => {
+                    return new Date(timestamp * 1000).toLocaleString('zh-TW', {
+                        timeZone: 'Asia/Taipei',
+                    });
+                }
+            }
+        };
+        const chart = LightweightCharts.createChart(document.getElementById('chart'), chartOptions);
+        const candlestickSeries = chart.addCandlestickSeries({ upColor: '#ef5350', downColor: '#26a69a', borderVisible: false, wickUpColor: '#ef5350', wickDownColor: '#26a69a' });
+
+        candlestickSeries.setData(kbar.map((item) => {
+            return {
+                time: (new Date(item.time)).valueOf() / 1000,
+                open: item.open,
+                high: item.high,
+                low: item.low,
+                close: item.close
+            };
+        }));
+
+        let markers = [];
+        // 合併同個時間點下，同樣的進場紀錄
+        for (const [key, rows] of profitRowsMap) {
+            let tmp = {}
+            
+            for (i in rows) {
+                const row = rows[i];
+                if (!tmp.hasOwnProperty(row.type)) {
+                    tmp[row.type] = {
+                        time: key,
+                        position: row.type === 'entry' ? 'belowBar' : 'aboveBar',
+                        color: row.type === 'entry' ? 'red' : 'green',
+                        shape: row.type === 'entry' ? 'arrowUp' : 'arrowDown',
+                        qty: row.qty
+                    };
+                } else {
+                    tmp[row.type].qty += row.qty;
+                }
+            }
+            
+            for (let k in Object.keys(tmp)) {
+                type = Object.keys(tmp)[k];
+                markers.push({
+                    time: tmp[type].time,
+                    position: tmp[type].position,
+                    color: tmp[type].color,
+                    shape: tmp[type].shape,
+                    text: `${type === 'entry' ? '進場' : '出場'} ${tmp[type].qty} 張`
+                });
+            }
+        }
+        candlestickSeries.setMarkers(markers);
+
+        chart.timeScale().fitContent();
+        const tooltip = document.getElementById('tooltip');
+        chart.subscribeCrosshairMove((param) => {
+            if (!param || !param.time) {
+                tooltip.style.display = 'none';
+                return;
+            }
+
+            let html = '';
+            const date = new Date(param.time * 1000);
+            const timeString = date.toLocaleTimeString('zh-TW', {
+                timeZone: 'Asia/Taipei',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+            });
+
+            html = `
+                <div>時間: ${timeString}</div>
+                <div>開盤: ${param.seriesData.get(candlestickSeries).open}</div>
+                <div>最高: ${param.seriesData.get(candlestickSeries).high}</div>
+                <div>最低: ${param.seriesData.get(candlestickSeries).low}</div>
+                <div>收盤: ${param.seriesData.get(candlestickSeries).close}</div>
+            `;
+
+            if (profitRowsMap.has(param.time)) {
+                profitRowsMap.get(param.time).forEach((info) => {
+                    let type = info.type == 'entry' ? '進場' : '出場';
+                    html += `
+                        <div class="trade-info">
+                            <div>標的: ${info.code}</div>
+                            <div>${type}</div>
+                            <div>價格: ${info.price}</div>
+                            <div>原始價格: ${info.origin_price}</div>
+                        </div>
+                    `
+                });
+            }
+
+            tooltip.innerHTML = html;
+            tooltip.style.display = 'block';
+        });
+    </script>
+</body>
+</html>
