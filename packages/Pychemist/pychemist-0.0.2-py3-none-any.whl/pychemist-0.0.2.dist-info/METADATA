@@ -1,0 +1,94 @@
+Metadata-Version: 2.4
+Name: Pychemist
+Version: 0.0.2
+Summary: Transform raw data into insights.
+Author-email: Jeroen van Raak <j.j.f.vanraak@uva.nl>
+License: Copyright (c) 2025 Jeroen van Raak
+        
+        MIT License
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/vanraak/pychemist
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pandas>=2.0
+Dynamic: license-file
+
+# Pychemist
+
+**Transform raw data into insights.**
+
+Pychemist is a lightweight Python library designed to simplify and enrich your data science workflow. Inspired by the ancient craft of alchemy, it helps you turn raw data into analytical gold through expressive, intuitive tools built on top of `pandas`, `statsmodels`, and other popular Python data science libraries.
+
+---
+
+## Features
+
+- Create lagged or lead variables for time-series and panel data
+- Run quick, readable t-tests on treatment groups
+- Filter model summaries to hide fixed effects
+- Conditional mutation of DataFrames (similar to `dplyr::mutate` in R)
+- Pandas accessor (`.pch`) for fluent, chainable workflows
+
+## Installation
+
+```bash
+pip install pychemist
+```
+
+## Usage
+```python
+import pychemist as pch
+```
+
+# Example 1: Lagging a variable
+```python
+df = pch.time_shift(variables=["sales"], dataframe=data, id="company", time="year", shift=1)
+```
+
+# Example 2: Conditional mutation
+```python
+df = pch.mutate(df, query_str='division == 24 & managerID==15014', "bonus", 1000)
+```
+
+# Example 3: Conditional mutation using the DataFrame accessor
+```python
+df=df.pch.mutate('company_id == "8ga62sav" & year==2025', "total_assets", 82000000)
+```
+
+# Example 4: T-test between treated and control groups
+```python
+pch.ttest(df, variable="outcome", treatment="treated")
+```
+
+# Example 5: Model summary without fixed effects
+```python
+import statsmodels.formula.api as smf
+model = smf.ols("y ~ x + C(firm)", data=df).fit()
+print(pch.summary_no_fe(model))
+```
+
+
+MIT License
+Copyright (c) Jeroen van Raak (2025)
