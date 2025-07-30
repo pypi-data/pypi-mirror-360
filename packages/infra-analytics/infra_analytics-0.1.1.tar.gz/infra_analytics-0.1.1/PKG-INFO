@@ -1,0 +1,117 @@
+Metadata-Version: 2.1
+Name: infra_analytics
+Version: 0.1.1
+Summary: Sort description
+Home-page: https://github.com/pypa/sampleproject
+Author: hautx2
+Author-email: hautx2@fpt.com
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Description-Content-Type: text/markdown
+License-File: license
+
+# Infra Analytics
+
+Package Python để xử lý và phân tích dữ liệu hạ tầng, đặc biệt tập trung vào dữ liệu phường xã Việt Nam.
+
+## Tính năng
+
+- Crawl và xử lý thông tin phường xã từ Wikipedia
+- Làm sạch và chuẩn hóa văn bản tiếng Việt
+- Lưu trữ và quản lý dữ liệu trong PostgreSQL
+- Xử lý dữ liệu đa luồng để tăng hiệu suất
+
+## Cài đặt
+
+### Cài đặt từ PyPI
+
+```bash
+pip install infra-analytics
+```
+
+## Sử dụng
+
+### Sử dụng trong code Python
+
+```python
+from infra_analytics.crawler import process_ward_data
+from infra_analytics.database import get_db_connection
+
+# Xử lý dữ liệu phường xã
+process_ward_data()
+
+# Hoặc xử lý với kết nối DB tùy chỉnh
+conn = get_db_connection()
+process_ward_data(conn)
+```
+
+### Sử dụng Command Line
+
+```bash
+# Chạy crawler
+infra-crawler
+
+# Chạy với cấu hình tùy chỉnh
+infra-crawler --config path/to/config.yaml
+```
+
+### Ví dụ xử lý dữ liệu
+
+```python
+from infra_analytics.utils import clean_ward_name, get_province_short
+from infra_analytics.database import upsert_ward_info
+
+# Chuẩn hóa tên phường
+ward_name = clean_ward_name("Phường 1, Quận 1")
+print(ward_name)  # Output: Phường 1
+
+# Lấy tên tỉnh ngắn gọn
+province = get_province_short("Thành phố Hồ Chí Minh")
+print(province)  # Output: Hồ Chí Minh
+
+# Cập nhật thông tin phường
+ward_data = (12345, "Phường 1", "Phường", "Quận 1", "Hồ Chí Minh", 10000, 2.5, 4000, "https://wikipedia.org/...")
+upsert_ward_info(conn, ward_data)
+```
+
+## Cấu trúc Project
+
+```
+infra_analytics/
+├── __init__.py
+├── config.py          # Cấu hình
+├── crawler.py         # Module crawler chính
+├── database.py        # Xử lý database
+└── utils.py          # Các hàm tiện ích
+```
+
+## Yêu cầu hệ thống
+
+- Python >= 3.8
+- PostgreSQL >= 12
+- Đủ quyền truy cập database
+- Kết nối internet để crawl Wikipedia
+
+## Xử lý lỗi thường gặp
+
+1. Lỗi kết nối database:
+   - Kiểm tra thông tin kết nối trong file .env
+   - Đảm bảo PostgreSQL đang chạy
+   - Kiểm tra quyền truy cập
+
+2. Lỗi crawl Wikipedia:
+   - Kiểm tra kết nối internet
+   - Đảm bảo URL Wikipedia hợp lệ
+   - Thử lại sau nếu bị rate limit
+
+3. Lỗi xử lý dữ liệu:
+   - Kiểm tra định dạng file Excel
+   - Đảm bảo encoding UTF-8
+   - Kiểm tra dữ liệu đầu vào
+
+## License
+
+Project này được cấp phép theo MIT License - xem file LICENSE để biết thêm chi tiết.
+
+Author: Hautx2.fpt.com
