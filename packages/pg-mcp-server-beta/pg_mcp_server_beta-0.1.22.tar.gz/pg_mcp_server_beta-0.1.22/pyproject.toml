@@ -1,0 +1,49 @@
+[project]
+name = "pg-mcp-server-beta"
+version = "0.1.22"
+description = "헥토파이낸셜 결제 연동을 위한 MCP 서버입니다. 공식 연동 가이드 문서를 검색하고 조회하여 개발자들이 정확한 정보로 결제 시스템을 구축할 수 있도록 도와줍니다."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [ "mcp>=1.0.0", "fastmcp", "mistune",]
+[[project.authors]]
+name = "chanhee"
+email = "pg_dev@hecto.co.kr"
+
+[build-system]
+requires = [ "setuptools", "wheel",]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+pg-mcp-server-beta = "pg_mcp_server_beta.server:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.uv]
+dev-dependencies = [ "pytest>=7.0.0", "ruff>=0.1.0", "toml", "requests",]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.ruff.lint]
+select = [ "E", "F", "I", "N", "W", "B", "C4", "UP",]
+ignore = [ "E501",]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = [ "tests",]
+python_files = [ "test_*.py",]
+
+[tool.setuptools.packages.find]
+where = [ "src",]
