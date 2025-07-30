@@ -1,0 +1,219 @@
+# This configuration file follows a specific structure for defining groups of system calls with parameters:
+# - Arguments must be defined before groups with "a:" and "()" brackets.
+# - Parameters are allowed only within groups and are specified with "p:" and "[]" brackets.
+# - Each group starts with the system call number on each line and are specified with "g:" and "{}" brackets.
+# - Parameters are asked sequentially, they need to end with "?".
+# - Each grouping can use a default questions for when no match occurs, specified with "d:".
+# - Once all arguments for a system call hit, the question is thrown.
+# - Values for parameter must be declared as arguments and assigned using "=".
+# - "desc:" defines a description of the group that will be shown to the user.
+
+# --- Arguments Normal Files ---
+
+a: open-flags-readonly (
+  O_RDONLY	
+)
+
+a: open-flags-write-normal (
+  O_WRONLY	
+  O_RDWR
+  O_TRUNC
+  O_APPEND
+)
+
+a: open-flags-create (
+  O_CREAT
+  O_RDONLY
+  O_WRONLY	
+  O_RDWR			
+)
+
+# --- Arguments Communication ---
+
+a: socket-domain-internet (
+  AF_INET
+  AF_INET6
+)
+
+a: socket-domain-intern (
+  AF_UNIX
+  AF_FILE
+  AF_NETLINK
+)
+
+a: socket-type-tcp (
+  SOCK_STREAM
+)
+
+a: socket-type-udp (
+  SOCK_DGRAM
+)
+
+a: socket-type-any (
+  SOCK_STREAM 
+  SOCK_DGRAM
+  SOCK_RAW
+)
+
+# --- Grouping Normal Files ---
+
+g: AccessFile {
+  desc: Controls basic file access operations including opening existing files and creating new ones. Manages read and write permissions for files in the filesystem.
+  d: Do you allow access to the following file
+
+  2 open(const char *pathname, int flags, .../* mode_t mode */ );
+  85 creat(const char *pathname, mode_t mode);
+  257 openat(int dirfd, const char *pathname, int flags, .../* mode_t mode */ );
+  437 openat2(int dirfd, const char *pathname, const struct open_how *how, size_t size);
+  303 name_to_handle_at(int dirfd, const char *pathname, struct file_handle *handle, int *mount_id, int flags);
+  
+  p: Do you allow read only access to the following file? [
+    flags = open-flags-readonly
+  ]
+
+  p: Do you allow writing to the following file? [
+    flags = open-flags-write-normal
+  ]
+
+  p: Do you allow the creation and access of the following file? [
+    flags = open-flags-create
+  ]
+}
+
+g: ChangeNameFile {
+  desc: Manages operations that change file names or move files between directories. These operations modify the file location without changing its content.
+  d: Do you allow changing name or location of the following file
+  
+  82 rename(const char *oldpath, const char *newpath);
+  264 renameat(int olddirfd, const char *oldpath, int newdirfd, const char *newpath);
+  316 renameat2(int olddirfd, const char *oldpath, int newdirfd, const char *newpath, unsigned int flags);  
+}
+
+g: CreateHardOrSoftLink {
+  desc: Controls the creation of links between files. Hard links create additional references to the same file, while symbolic links create references that point to another file path.
+  d: Do you allow the creation of a hard link or symbolic link to the following file
+
+  86 link(const char *oldpath, const char *newpath);
+  265 linkat(int olddirfd, const char *oldpath, int newdirfd, const char *newpath, int flags);
+  88 symlink(const char *target, const char *linkpath);
+  266 symlinkat(const char *target, int newdirfd, const char *linkpath);
+}
+
+g: DeleteFile {
+  desc: Manages file deletion operations that remove files from the filesystem. Once deleted, the file contents may no longer be accessible.
+  d: Do you allow the deletion of the following file
+
+  87 unlink(const char *pathname);
+  263 unlinkat(int dirfd, const char *pathname, int flags);
+
+}
+
+g: DirectoryCreateOrDelete {
+  desc: Controls operations that create new directories or remove existing empty directories. These operations modify the filesystem structure.
+  d: Do you allow the creation or deletion of the following directory
+
+  83 mkdir(const char *pathname, mode_t mode);
+  258 mkdirat(int dirfd, const char *pathname, mode_t mode);
+  84 rmdir(const char *pathname);
+}
+
+g: SpecialFiles {
+  desc: Controls the creation of special files such as device nodes, named pipes, or UNIX domain sockets. These files serve as interface points for system resources and IPC mechanisms.
+  d: Do you allow the creation of the following special file
+
+  133 mknod(const char *pathname, mode_t mode, dev_t dev);
+  259 mknodat(int dirfd, const char *pathname, mode_t mode, dev_t dev);
+}
+
+g: HandleFilePermission {
+  desc: Manages operations that modify file permission bits controlling who can read, write, or execute a file. These operations affect the security attributes of files.
+  d: Do you allow changing file permission for the following file
+
+  90 chmod(const char *pathname, mode_t mode);
+  268 fchmodat(int dirfd, const char *pathname, mode_t mode, int flags);
+}
+
+g: HandleFileOwnership {
+  desc: Controls operations that change file ownership, determining which user and group owns a particular file. These permissions affect access control and resource accounting.
+  d: Do you allow changing file ownership for the following file
+
+  92 chown(const char *pathname, uid_t owner, gid_t group);
+  94 lchown(const char *pathname, uid_t owner, gid_t group);
+  260 fchownat(int dirfd, const char *pathname, uid_t owner, gid_t group, int flags);
+}
+
+g: HandleFileTime {
+  desc: Manages operations that modify file timestamps such as access time, modification time, and status change time. These operations affect file metadata but not content.
+  d: Do you allow changing timestamp for the following file
+  
+  132 utime(const char *filename, const struct utimbuf *_Nullable times);
+  235 utimes(const char *filename, const struct timeval times[_Nullable 2]);
+  261 futimesat(int dirfd, const char *pathname, const struct timeval times[2]);
+  280 utimensat(int dirfd, const char *pathname, const struct timespec times[_Nullable 2], int flags);
+}
+
+g: HandleFileAttribute {
+  desc: Controls operations that manage extended attributes for files. Extended attributes store additional metadata beyond standard file properties.
+  d: Do you allow adding or removing attributes to the following file
+
+  188 setxattr(const char *path, const char *name, const void value[.size], size_t size, int flags);
+  189 lsetxattr(const char *path, const char *name, const void value[.size], size_t size, int flags);
+  197 removexattr(const char *path, const char *name);
+  198 lremovexattr(const char *path, const char *name);
+}
+
+g: FileTrunc {
+  desc: Controls operations that resize files, typically by shortening them to a specified length. Truncation permanently removes data beyond the specified point.
+  d: Do you allow resizing of the following file
+
+  76 truncate(const char *path, off_t length);
+}
+
+# --- Grouping Communication ---
+
+g: PipeCommunication {
+  desc: Controls creation and use of pipes for inter-process communication. Pipes allow unidirectional data flow between related processes.
+  d: Do you allow communication between processes using pipes
+  
+  22 pipe(int pipefd[2])
+  293 pipe2(int pipefd[2], int flags)
+}
+
+g: SocketCommunication {
+  desc: Manages socket-based communication for both network and local inter-process communication. Sockets enable data exchange between processes locally or across networks.
+  d: Do you allow communication using sockets
+
+  41 socket(int domain, int type, int protocol)
+  53 socketpair(int domain, int type, int protocol, int sv[2])
+
+  p: Do you allow communication over the internet, connection-oriented? [
+    domain = socket-domain-internet
+    type = socket-type-tcp
+  ]
+
+  p: Do you allow communication over the internet, connectionless? [
+    domain = socket-domain-internet
+    type = socket-type-udp
+  ]
+
+  p: Do you allow local communication using sockets? [
+    domain = socket-domain-intern
+    type = socket-type-any
+  ]
+
+}
+
+g: MessageQueueCommunication {
+  desc: Controls operations for message queue-based inter-process communication. Message queues allow processes to exchange discrete messages in a structured format.
+  d: Do you allow communication using message queue
+
+  68 msgget(key_t key, int msgflg)
+  240 mqd_t mq_open(const char *name, int oflag)
+}
+
+g: SharedMemoryCommunication {
+  desc: Manages operations for shared memory-based inter-process communication. Shared memory allows multiple processes to access the same memory region for efficient data exchange.
+  d: Do you allow communication using shared memory
+  
+  29 shmget(key_t key, size_t size, int shmflg)
+}
