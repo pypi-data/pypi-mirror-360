@@ -1,0 +1,53 @@
+name: Run Pytest
+
+on:
+  push:
+    branches:
+      - "**"
+    paths-ignore:
+      - ".github/workflows/**"
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      log_level:
+        description: "Log level"
+        required: false
+        default: "warning"
+      environment:
+        description: "Environment to run tests in"
+        required: false
+        default: "staging"
+
+jobs:
+  pytests:
+    if: github.event_name == 'pull_request' || github.event.pull_request == null
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log workflow dispatch inputs
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "Log Level: ${{ github.event.inputs.log_level }}"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Read Python version
+        shell: bash
+        run: echo "PYTHON_VERSION=$(cat .python-version | tr -d '\n')" >> $GITHUB_ENV
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Rye
+        uses: eifinger/setup-rye@v4
+        with:
+          version: 'latest'
+
+      - name: Run tests
+        run: |
+          rye sync
+          make test
