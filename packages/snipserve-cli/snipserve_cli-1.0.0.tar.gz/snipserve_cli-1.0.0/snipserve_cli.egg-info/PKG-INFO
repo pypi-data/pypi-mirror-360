@@ -1,0 +1,109 @@
+Metadata-Version: 2.4
+Name: snipserve-cli
+Version: 1.0.0
+Summary: Command-line interface for SnipServe paste service
+Home-page: https://github.com/spkal01/snipserve-cli
+Author: Spkal01
+Author-email: spkal01 <kalligeross@gmail.com>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/spkal01/snipserve-cli
+Project-URL: Bug Reports, https://github.com/spkal01/snipserve-cli/issues
+Project-URL: Source Code, https://github.com/spkal01/snipserve-cli
+Keywords: paste,pastebin,cli,snippets,code-sharing
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+Requires-Dist: click>=8.0.0
+Requires-Dist: requests>=2.25.0
+Dynamic: author
+Dynamic: home-page
+Dynamic: requires-python
+
+# README.md
+# SnipServe CLI
+
+A command-line interface for SnipServe, allowing you to manage pastes from your terminal.
+
+## Installation
+
+```bash
+pip install snipserve-cli
+```
+
+## Quick Start
+
+1. **Configure your API key:**
+   ```bash
+   snipserve config set-key YOUR_API_KEY
+   ```
+
+2. **Set your instance URL (if not using default):**
+   ```bash
+   snipserve config set-url https://snipserve.spkal01.me
+   ```
+
+3. **Create a paste:**
+   ```bash
+   # From command line
+   snipserve create "My Title" --content "Hello, world!"
+   
+   # From file
+   snipserve create "Config File" --file config.json
+   
+   # Using editor
+   snipserve create "My Script" --editor
+   
+   # From stdin
+   echo "Hello, world!" | snipserve create "Piped Content"
+   ```
+
+## Commands
+
+### Configuration
+- `snipserve config set-key <api-key>` - Set your API key
+- `snipserve config set-url <url>` - Set instance URL
+- `snipserve config show` - Show current configuration
+
+### Paste Management
+- `snipserve create <title>` - Create a new paste
+- `snipserve get <paste-id>` - View a paste
+- `snipserve list` - List your pastes
+- `snipserve update <paste-id>` - Update a paste
+- `snipserve delete <paste-id>` - Delete a paste
+
+### User Information
+- `snipserve whoami` - Show current user info
+
+## Examples
+
+```bash
+# Create from file with hidden flag
+snipserve create "Secret Config" --file ~/.ssh/config --hidden
+
+# Update paste content using editor
+snipserve update abc123def --editor
+
+# Create from command output
+ls -la | snipserve create "Directory Listing"
+
+# Quick paste from clipboard (macOS)
+pbpaste | snipserve create "Clipboard Content"
+```
+
+## Environment Variables
+
+- `SNIPSERVE_API_KEY` - Your API key
+- `SNIPSERVE_URL` - Instance URL
+- `EDITOR` - Preferred editor for `--editor` flag
+
+## License
+
+MIT License
