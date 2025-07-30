@@ -1,0 +1,104 @@
+Metadata-Version: 2.3
+Name: icecream_cmri
+Version: 1.2.9
+Summary: A framework for testing yunce offline plan
+License: Apache-2.0
+Author: CMRI Testing Team
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Dist: PyYAML (>5.1.2)
+Requires-Dist: chardet (>=4.0.0,<5.0.0)
+Requires-Dist: jmespath (>=0.9.0,<0.10.0)
+Requires-Dist: jsonpath (>=0.82,<0.83)
+Requires-Dist: jsonschema (>=3.2.0,<4.0.0)
+Requires-Dist: openpyxl (>=3.0.10,<4.0.0)
+Requires-Dist: pandas (>=2.2.3)
+Requires-Dist: psutil (>=6.1.0,<7.0.0)
+Requires-Dist: pycryptodome (>=3.10.1,<4.0.0)
+Requires-Dist: pymongo (>=4.1.1,<5.0.0)
+Requires-Dist: pymysql (>=1.0.2,<2.0.0)
+Requires-Dist: python-docx (>=1.0.1)
+Requires-Dist: python-ulid (>=3.0.0)
+Requires-Dist: redis-py-cluster (>=2.1.3,<3.0.0)
+Requires-Dist: requests (>=2.27.1,<3.0.0)
+Requires-Dist: requests-toolbelt (>=1.0.0)
+Requires-Dist: six (>=1.16.0,<2.0.0)
+Requires-Dist: websocket-client (>=1.3.1,<2.0.0)
+Requires-Dist: websockets (>=12.0)
+Description-Content-Type: text/markdown
+
+# icecream 说明
+
+icecream 用于http相关接口测试，通过类似postman的描述文件进行接口测试，并进行测试结果收集，目前支持yaml描述
+
+## 支持功能
+- 支持yaml文件用例描述
+- 支持全局变量，环境变量，局部变量
+- 支持如postman的prerequest, test
+- 支持python自定义函数
+- 支持python全系统语法及所有第三方包
+- 支持常用assert断言格式
+
+## 使用方法
+- code方案
+  - http请求（区分上层yaml）
+    - ice.request 主请求，可以使用ice.response进行响应
+    - ice.send_request, 用于直接返回的请求，不可以使用ice.response进行响应
+  - 变量应用
+    - ice.environment.set() get
+    - ice.variables.set() get
+    - ice.globals.set() get
+  - 断言使用
+    - ice.test.less
+    - ice.test.eq
+- yaml组织方案
+  - 查看samples样例
+
+
+## 离线报告
+```commandline
+计划目录结构
+│─tesp_plan
+│   ├─测试111
+│   └─测试222
+└─start_test.py
+```
+
+- 安装云测执行包：pip install icecream_cmri
+- 命令行执行
+  - 指定计划执行 icecream_hrunner --plan_dir=plan --plan_name=testname
+  - 所有计划执行 icecream_hrunner --plan_dir=plan
+- 代码执行
+```python
+
+import os
+from datetime import datetime
+from icecream.core.html_runner import Html_Runner
+
+
+def main():
+    plan_dir = 'tesp_plan'
+    report_dir = os.path.join(os.getcwd(), 'report', datetime.now().strftime('%Y%m%d%H%M%S'))
+    plan_names = os.listdir(plan_dir)
+    for plan_name in plan_names:
+        html_runner = Html_Runner(plan_path=os.path.join(plan_dir, plan_name), report_dir=report_dir)
+        html_runner.run()
+        html_runner.generat_report()
+
+
+if __name__ == '__main__':
+    main()
+
+```
