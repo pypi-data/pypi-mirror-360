@@ -1,0 +1,85 @@
+Metadata-Version: 2.3
+Name: tableplot
+Version: 0.0.2
+Summary: A Python tool for creating interactive and dynamic tableplot-style visualizations.
+License: MIT
+Keywords: tableplot,visualization,data,interactive,plotly,pandas,data analysis
+Author: Antonio Rodrigues
+Author-email: antonioazam@gmail.com
+Requires-Python: >=3.7,<3.14
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Scientific/Engineering :: Visualization
+Requires-Dist: numpy (>=1.18.0,<3.0.0)
+Requires-Dist: pandas (>=1.0.0,<3.0.0)
+Requires-Dist: plotly (>=5.0.0,<7.0.0)
+Project-URL: Homepage, https://github.com/antoniorodrigues428/tabplot-python
+Project-URL: Repository, https://github.com/antoniorodrigues428/tabplot-python
+Description-Content-Type: text/markdown
+
+Markdown
+
+# Interactive Python Tableplot
+
+A Python package for generating interactive tableplot-style visualizations, inspired by the `tabplot` functionality in R. Visualize the distribution and behavior of your variables along an ordering axis, with support for both numerical and categorical data.
+
+## Installation
+
+You can install `tableplot` directly via pip:
+
+```bash
+pip install tableplot
+How to Use
+Here is a basic example of how to use the package to generate a complete tableplot with a single call:
+
+Python
+
+import pandas as pd
+import numpy as np # Necessary for the dummy data example
+
+# Import the main function from your package.
+from tableplot import tableplot
+
+# 1. Load your data (example with a dummy DataFrame)
+# df = pd.read_excel("path/to/your_data.xlsx")
+# If you have a CSV file, use: df = pd.read_csv("path/to/your_data.csv")
+# Or create an example DataFrame for testing:
+data = {
+    'ID_Cliente': range(1, 1001),
+    'Valor_Compra': np.random.rand(1000) * 1000,
+    'Idade': np.random.randint(18, 70, 1000),
+    'Regiao': np.random.choice(['North', 'South', 'East', 'West'], 1000),
+    'Subscriber': np.random.choice([True, False, np.nan], 1000, p=[0.45, 0.45, 0.1]),
+    'Product_Category': np.random.choice(['Electronics', 'Clothing', 'Food', 'Services', 'Others'], 1000)
+}
+df_exemplo = pd.DataFrame(data)
+
+# 2. Generate and display the interactive tableplot
+# sort_by: Numerical or categorical column to order the bins.
+# nbins: Number of slices (bins) into which the dataset will be divided (for numerical columns).
+# decreasing: True to sort in decreasing order, False for increasing.
+# max_levels: Category limit for categorical columns (less frequent categories will be grouped into 'Others').
+# title: The title that will appear at the top of your chart.
+tableplot(
+    df_exemplo,
+    sort_by="Valor_Compra",
+    nbins=100,
+    decreasing=False,
+    max_levels=10,
+    title="Example Dataset Tableplot (Ordered by Purchase Value)"
+)
+Contribution
+Contributions are welcome! If you have suggestions, find issues, or want to add new features, please open an issue or pull request on the project's GitHub repository.
+
+License
+This project is licensed under the MIT License. See the LICENSE file for more details.
