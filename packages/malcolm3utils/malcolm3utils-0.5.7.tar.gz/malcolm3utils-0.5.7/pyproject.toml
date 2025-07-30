@@ -1,0 +1,116 @@
+[tool.poetry]
+name = "malcolm3utils"
+version = "0.5.7"
+description = "Collection of Utility Scripts and Packages"
+authors = [
+    "Malcolm E. Davis <mnjjunk@comcast.net>",
+]
+license = "BSD-3-Clause"
+readme = "README.md"
+
+documentation = "https://malcolm-3.github.io/malcolm3utils"
+homepage = "https://malcolm-3.github.io/malcolm3utils"
+repository = "https://github.com/malcolm-3/malcolm3utils"
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Desktop Environment",
+  "Typing :: Typed",
+]
+
+packages = [
+    { include = "malcolm3utils", from = "src" }
+]
+
+[tool.poetry.dependencies]
+python = ">=3.9, <4.0"
+click-logging = "^1.0.1"
+requests = ">=2.32.4"
+urllib3 = ">=2.5.0"
+
+[tool.poetry.group.dev.dependencies]
+autoflake = "*"
+black = {version = ">=24.3.0"}
+flake8 = "*"
+flake8-bugbear = "*"
+flake8-builtins = "*"
+flake8-comprehensions = "*"
+flake8-debugger = "*"
+flake8-eradicate = "*"
+flake8-logging-format = "*"
+isort = "*"
+mkdocstrings = {version = ">=0.18", extras = ["python"]}
+mkdocs-material = "*"
+mkdocs-click = "*"
+mypy = "*"
+pep8-naming = "*"
+pre-commit = "*"
+pymdown-extensions = "*"
+pytest = "*"
+pytest-github-actions-annotate-failures = "*"
+pytest-cov = "*"
+python-kacl = "*"
+pyupgrade = "*"
+tryceratops = "*"
+setuptools = "*"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+src_paths = ["src", "tests"]
+
+[tool.black]
+target-version = ["py310"]
+include = '\.pyi?$'
+
+[tool.pytest.ini_options]
+pythonpath = [
+    "src"
+]
+addopts = """\
+    --cov malcolm3utils \
+    --cov tests \
+    --cov-report term-missing \
+    --no-cov-on-fail \
+"""
+
+[tool.coverage.report]
+fail_under = 100
+exclude_lines = [
+    'if TYPE_CHECKING:',
+    'pragma: no cover'
+]
+
+[tool.mypy]
+disallow_any_unimported = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+strict_equality = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_return_any = true
+check_untyped_defs = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = "click_logging"
+ignore_missing_imports = true
+
+[tool.poetry_bumpversion.file."src/malcolm3utils/__init__.py"]
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
+
+[tool.poetry.scripts]
+touch_latest = 'malcolm3utils.scripts.touch_latest:touch_latest'
+getcol = 'malcolm3utils.scripts.getcol:getcol'
+merge = 'malcolm3utils.scripts.merge:merge'
