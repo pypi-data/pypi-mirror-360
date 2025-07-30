@@ -1,0 +1,141 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hypothesis-torch"
+description = "Hypothesis strategies for various Pytorch structures, including tensors and modules."
+
+dynamic = ["version"]
+dependencies = [
+    "hypothesis>=6.0.0",
+    "torch>=2.1.0,<3",
+]
+requires-python = ">=3.9,<3.14"
+authors=[{name="Andrew P. Sansom", email="andrew@euleriancircuit.com"}]
+readme="README.md"
+license={file="LICENSE"}
+keywords = ["hypothesis", "torch", "pytorch", "testing", "property-based testing", "deep learning", "tensor", "neural network", "artificial intelligence", "machine learning"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+
+    "Intended Audience :: Developers",
+    "Framework :: Hypothesis",
+
+    "License :: OSI Approved :: MIT License",
+
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+
+    "Topic :: Software Development :: Testing",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+[project.entry-points."hypothesis"]
+_ = "hypothesis_torch.register_random_torch_state:_register_random_torch_state"
+
+[project.optional-dependencies]
+huggingface = [
+  "transformers>=4.42.3,<=4.50.3",
+]
+dev = [
+  "mypy==1.16.1",
+  "ruff==0.12.2",
+  "pyright==1.1.402",
+  "pytest==8.4.1",
+  "pytest-cov==6.2.1"
+]
+docs = [
+  "mkdocs==1.6.1",
+  "mkdocstrings[python]==0.29.1",
+  "mkdocs-autolinks-plugin==0.7.1",
+  "mkdocs-material==9.6.15",
+  "mkdocs-snippets==1.3.2",
+  "mkdocs-exclude==1.0.2",
+]
+numpy=[
+    "numpy==2.0.1 ; python_version=='3.9'",
+    "numpy==2.1.2 ; python_version>='3.10'",
+]
+old-numpy=["numpy==1.26.4",]
+torch = [
+  "torch",
+  "numpy"
+]
+"torch2.3.1"=[
+  "torch==2.3.1+cpu",
+  "hypothesis_torch[numpy]"
+]
+"torch2.4.1"=[
+  "torch==2.4.1",
+  "hypothesis_torch[numpy]"
+]
+"torch2.5.1"=[
+  "torch==2.5.1",
+  "hypothesis_torch[numpy]"
+]
+"torch2.6.0"=[
+  "torch==2.6.0",
+  "hypothesis_torch[numpy]"
+]
+"torch2.7.0"=[
+  "torch==2.7.0",
+  "hypothesis_torch[numpy]"
+]
+
+[project.urls]
+Homepage = "https://github.com/qthequartermasterman/hypothesis-torch"
+Documentation = "https://hypothesis-torch.readthedocs.io/en/stable/"
+Repository = "https://github.com/qthequartermasterman/hypothesis-torch.git"
+Issues = "https://github.com/qthequartermasterman/hypothesis-torch/issues"
+
+[tool.ruff]
+line-length = 120
+preview = true
+
+[tool.semantic_release]
+major_on_zero = true
+version_variables = [
+    "hypothesis_torch/__init__.py:__version__",
+]
+build_command = "python -m pip install build && python -m build"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = [
+    "build",
+    "chore",
+    "ci",
+    "docs",
+    "feat",
+    "fix",
+    "perf",
+    "style",
+    "refactor",
+    "test",
+]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf", "build"]
+
+[tool.setuptools.dynamic]
+version = {attr = "hypothesis_torch.__version__"}
+
+
+[tool.ruff.lint]
+select = ["ANN", "D", "E", "F", "FURB", "I", "N", "PERF", "PTH", "RUF", "YTT", "UP", "W"]
+ignore = ["D205", "F401", "PT009", "S101"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[[tool.mypy.overrides]]
+module = ["transformers", "transformers.activations", "transformers.models", "annotated_types"]
+ignore_missing_imports = true
