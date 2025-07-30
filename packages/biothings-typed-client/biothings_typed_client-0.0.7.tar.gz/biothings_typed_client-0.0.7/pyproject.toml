@@ -1,0 +1,38 @@
+[project]
+name = "biothings-typed-client"
+version = "0.0.7"
+description = "A strongly-typed Python wrapper around the BioThings Client library, providing type safety and better IDE support through Python's type hints and Pydantic models."
+readme = "README.md"
+authors = [
+    { name = "antonkulaga", email = "antonkulaga@gmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "biothings-client[caching]>=0.4.1",
+    "pydantic>=2.11.4",
+    "pandas>=2.1.1",
+    "PyLD>=2.0.4",
+    "typer>=0.16.0",
+    "rich>=14.0.0",
+]
+
+[project.scripts]
+biothings-typed-client = "biothings_typed_client:main"
+biothings = "biothings_typed_client:main"
+clear-cache = "biothings_typed_client.clear_cache:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "logs/",
+    "images/",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-asyncio>=1.0.0",
+]
