@@ -1,0 +1,105 @@
+[build-system]
+requires = [
+    "setuptools",
+    "setuptools-scm",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "clingexplaid"
+authors = [
+    { name = "Hannes Weichelt", email = "hweichelt@uni-potsdam.de" },
+    { name = "Susana Hahn", email = "susuhahnml@yahoo.com.mx" }
+]
+maintainers = [{ name = "Hannes Weichelt", email = "hweichelt@uni-potsdam.de" }]
+description = "Tools to aid the development of explanation systems using clingo"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+dynamic = [ "version" ]
+readme = "README.md"
+dependencies = [
+	"clingo>=5.7.1",
+    "autoflake",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/potassco/clingo-explaid"
+Source = "https://github.com/potassco/clingo-explaid"
+"Issues" = "https://github.com/potassco/clingo-explaid/issues"
+
+[project.optional-dependencies]
+format = [ "black", "isort", "autoflake" ]
+lint_pylint = [ "pylint" ]
+typecheck = [ "types-setuptools", "mypy" ]
+test = [ "coverage[toml]" ]
+doc = [ "sphinx", "furo", "nbsphinx", "sphinx_copybutton", "myst-parser" ]
+dev = [ "clingexplaid[test,typecheck,lint_pylint]" ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools_scm]
+version_scheme = "python-simplified-semver"
+local_scheme = "no-local-version"
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.black]
+line-length = 120
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.design]
+max-args = 10
+max-attributes = 7
+max-bool-expr = 5
+max-branches = 12
+max-locals = 30
+max-parents = 7
+max-public-methods = 20
+max-returns = 10
+max-statements = 50
+min-public-methods = 1
+
+[tool.pylint.similarities]
+ignore-comments = true
+ignore-docstrings = true
+ignore-imports = true
+ignore-signatures = true
+
+[tool.pylint.basic]
+argument-rgx = "^[a-z][a-z0-9]*((_[a-z0-9]+)*_?)?$"
+variable-rgx = "^[a-z][a-z0-9]*((_[a-z0-9]+)*_?)?$"
+good-names = ["_"]
+
+[tool.coverage.run]
+source = ["clingexplaid", "tests"]
+omit = [
+    "*/clingexplaid/propagators/*",
+    "*/clingexplaid/transformers/__init__.py",
+    "*/clingexplaid/muc/__init__.py",
+    "*/clingexplaid/unsat_constraints/__init__.py",
+    "*/tests/*",
+    "*/constants.py",
+    "*/clingexplaid/utils/match.py",
+]
+
+[tool.coverage.report]
+exclude_lines = ["assert", "nocoverage"]
