@@ -1,0 +1,107 @@
+_include:
+  - genesis/cult-cargo-base.yml
+
+cabs:
+  quartical:
+    name: quartical
+    image:
+      _use: vars.cult-cargo.images
+      name: quartical
+    _use: lib.misc.numba.cache-cab-settings  # pull in numba cache dir settings
+    command: goquartical
+    info: QuartiCal calibration package (https://github.com/ratt-ru/QuartiCal)
+    policies:
+      key_value: true
+      repeat: '[]'
+      prefix: ''
+    inputs:
+      _include: genesis/quartical/argument_schema.yaml
+    dynamic_schema: cultcargo.genesis.quartical.external.make_stimela_schema
+
+  quartical-backup:
+    name: quartical-backup
+    image:
+      _use: vars.cult-cargo.images
+      name: quartical
+
+    command: goquartical-backup
+    info: QuartiCal column backup script
+
+    policies:
+      prefix: '--'
+
+    inputs:
+      ms_path:
+        dtype: URI
+        must_exist: true
+        required: true
+        policies:
+          positional: true
+        info: 'Path to input measurement set, e.g. path/to/dir/foo.MS.'
+      zarr_dir:
+        dtype: URI
+        mkdir: true
+        must_exist: false
+        required: true
+        policies:
+          positional: true
+        info: Path to desired backup location. Note that this only allows
+              the user to specify a directory and not the name of the backup
+              zarr that will be created, e.g. path/to/dir.
+      column:
+        dtype: str
+        required: true
+        policies:
+          positional: true
+        info: Name of column to be backed up.
+      label:
+        dtype: str
+        info: An explicit label to include in the backup name. Defaults to
+              datetime at which the backup was created. Full name will be
+              given by [label]-[msname]-[column].bkp.qc.
+      nthread:
+        dtype: int
+        info: Number of threads to use.
+      field-id:
+        dtype: int
+        info: Field ID to back up.
+
+
+  quartical-restore:
+    name: quartical-restore
+    image:
+      _use: vars.cult-cargo.images
+      name: quartical
+      # version: # Optionally.
+    command: goquartical-restore
+    info: QuartiCal column restoring script
+
+    policies:
+      prefix: '--'
+
+    inputs:
+      zarr_path:
+        dtype: URI
+        must_exist: true
+        required: true
+        policies:
+          positional: true
+        info: Path to backup zarr column e.g. path/to/dir/20211201-154457-foo.MS-FLAG.bkp.qc.
+              Also accepts valid s3 urls.
+      ms_path:
+        dtype: URI
+        must_exist: true
+        required: true
+        policies:
+          positional: true
+        info: Path to measurement set, e.g. path/to/dir/foo.MS. Also accepts valid s3 urls.
+      column_name:
+        dtype: str
+        required: True
+        policies:
+          positional: true
+        info: Name of column to populate using the backup.
+              Note that this does not have to be the same column as was used to create the backup.
+      nthread:
+        dtype: int
+        info: Number of threads to use.
