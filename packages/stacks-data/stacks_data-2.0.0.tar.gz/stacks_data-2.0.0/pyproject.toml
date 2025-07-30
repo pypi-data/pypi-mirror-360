@@ -1,0 +1,97 @@
+[tool.poetry]
+name = "stacks-data"
+version = "2.0.0"
+description = "A suite of utilities to support data engineering workloads within an Ensono Stacks data platform."
+authors = [
+    "Ensono Stacks <stacks@ensono.com>"
+]
+readme = "README.md"
+homepage = "https://github.com/Ensono/stacks-data"
+packages = [
+    { include = "stacks" },
+]
+
+[tool.commitizen]
+# Use the Conventional Commits standard to parse commits and decide how to bump versions.
+name = "cz_conventional_commits"
+tag_format = "v$version"
+version_provider = "poetry"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+# Core dependencies
+azure-identity = "^1.17.1"
+azure-mgmt-datafactory = "^3.1.0"
+azure-storage-file-datalake = "^12.16.0"
+pyspark = "^3.4.3"
+delta-spark = "^2.4.0"
+pydantic = "^1.10.18"
+jsonschema = "^4.23.0"
+colorlog = "^6.8.2"
+pyyaml = "^6.0.2"
+
+# Optional dependencies
+behave = { version = "^1.2.6", optional = true }
+polling2 = { version = "^0.5.0", optional = true }
+click = { version = "^8.1.7", optional = true }
+click-loglevel = { version = "^0.4.0.post1", optional = true }
+jinja2 = { version = "^3.1.4", optional = true }
+great-expectations = { version = "^0.17.23", optional = true }
+
+[tool.poetry.extras]
+# Additional dependency groups
+behave = ["behave", "polling2"]
+cli = ["click", "click-loglevel", "jinja2"]
+data-quality = ["great-expectations"]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.4"
+black = ">=23.12.1,<25.0.0"
+pre-commit = "^3.8.0"
+flake8 = "^6.1.0"
+flake8-docstrings = "^1.7.0"
+pydocstyle = "^6.3.0"
+tomli = "^2.0.1"
+pytest-mock = "^3.14.0"
+coverage = "^7.6.1"
+commitizen = "^4.8.3"
+
+[tool.poetry.scripts]
+datastacks = "stacks.data.cli.datastacks_cli:cli"
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+filterwarnings = [
+    # Ignore warning for use of typing.io in Pyspark
+    "ignore: typing.io is deprecated:DeprecationWarning",
+
+    # Ignore warnings for deprecated modules in Great expectations
+    "ignore: module 'sre_constants' is deprecated:DeprecationWarning",
+    "ignore: module 'sre_parse' is deprecated:DeprecationWarning",
+]
+
+[tool.black]
+    line-length = 120
+    target-version = ['py310']
+    exclude = '''
+    /(
+        \.git
+      | \.venv
+    )/
+    '''
+
+[tool.flake8]
+max-line-length = "120"
+exclude = ".venv,.git"
+
+[tool.pydocstyle]
+convention = "google"
+add-ignore = "D100,D101,D104"
+match = "(?!test_|conftest).*\\.py"
+match_dir = "^(?!(tests)).*"
