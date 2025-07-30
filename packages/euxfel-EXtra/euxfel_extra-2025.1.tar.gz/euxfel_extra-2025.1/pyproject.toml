@@ -1,0 +1,69 @@
+[build-system]
+requires = [
+    "setuptools>=61",
+    "wheel",
+    "setuptools_scm[toml]==7.1.0",
+    "numpy",
+    "cython !=3.1.0,!=3.1.1",  # Avoiding https://github.com/cython/cython/issues/6855
+                               # and https://github.com/cython/cython/issues/6897
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = { attr = "get_version.version" }
+
+[tool.setuptools.exclude-package-data]
+"*" = ["get_version.py"]
+
+[project]
+name = "euxfel-EXtra"
+dynamic = ["version"]
+description = "European XFEL toolkit for research and analysis"
+authors = [{name = "European XFEL", email = "da@xfel.eu"}]
+dependencies = [
+    "damnit",
+    "euxfel_bunch_pattern",
+    "extra_data>=1.13",
+    "extra_geom",
+    "h5py",
+    "karabo_bridge",
+    "lmfit",
+    "oauth2-xfel-client >=6.1",
+    "pandas",
+    "xarray",
+    "mpl_interactions",
+    "pasha",
+    "pint",
+    "requests",
+    "scipy",
+    "tabulate",
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "BSD-3-Clause"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+[project.urls]
+Homepage = "https://github.com/European-XFEL/EXtra"
+Documentation = "https://extra.readthedocs.io/en/latest/"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+    "pytest-recording",
+]
+docs = [
+    "mkdocs-material",
+    "mkdocstrings",
+    "mkdocstrings-python>=1.2.0",
+    "pymdown-extensions",
+]
