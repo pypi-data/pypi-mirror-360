@@ -1,0 +1,89 @@
+{#- OZI
+# ozi/templates/project.array.meson.options
+# SPDX-License-Identifier: MIT-0
+-#}
+option(
+    'namespace',
+    type: 'array',
+    value: [
+{%- for suite in spec.python.ci.checkpoint.suites %}
+        '{{ suite }}',
+{%- endfor %}
+        'docs',
+    ]
+)
+option(
+    'python-dependencies', 
+    type: 'array',
+    value: [
+{%- for requires in spec.python.build.requires.keys() %}
+    '{{ requires }}',
+{%- endfor %}
+{%- if project.enable_uv %}
+    'uv',
+{%- endif %}
+    ]
+)
+option(
+    'variables',
+    type: 'array',
+    value: [
+        'python',
+        'namespace',
+        'should-fail',
+        'unhashable',
+        'plugin-only',
+        'no-version',
+        'dist-exclude-suites',
+        'lint-exclude-suites',
+        'test-exclude-suites'
+    ]
+)
+{%- for suite in spec.python.ci.checkpoint.suites %}
+option(
+    '{{ suite }}-suite',
+    type: 'array',
+    value: [
+{%- for utility in spec.python.get(suite).utility.keys() %}
+        '{{ utility }}',
+{%- endfor %}
+{%- for plugin in spec.python.get(suite).plugin.keys() %}
+        '{{ plugin }}',
+{%- endfor %}
+    ]
+)
+{%- endfor %}
+
+{%- if project.enable_uv %}
+option(
+    'compile-requirements-command',
+    type: 'array',
+    value: ['uv', 'pip', 'compile'],
+)
+option(
+    'install-requirements-command',
+    type: 'array',
+    value: ['uv', 'pip'],
+)
+option(
+    'install-tools-command',
+    type: 'array',
+    value: ['uv', 'pip', 'install'],
+)
+{%- else %}
+option(
+    'compile-requirements-command',
+    type: 'array',
+    value: ['pip-compile'],
+)
+option(
+    'install-requirements-command',
+    type: 'array',
+    value: ['pip'],
+)
+option(
+    'install-tools-command',
+    type: 'array',
+    value: ['pipx'],
+)
+{%- endif %}

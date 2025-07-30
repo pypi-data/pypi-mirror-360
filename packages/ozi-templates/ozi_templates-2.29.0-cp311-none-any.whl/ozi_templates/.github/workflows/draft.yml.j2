@@ -1,0 +1,28 @@
+{#- OZI
+# ozi/templates/.github/workflows/draft.yml
+# SPDX-License-Identifier: MIT-0
+#}
+  draft:
+    needs: checkpoint
+    runs-on: ubuntu-latest
+    concurrency: draft
+    strategy:
+      fail-fast: true
+    permissions:
+      contents: write
+      id-token: write
+    outputs:
+{%- raw %}
+      drafted: ${{ steps.draft.outputs.drafted }}
+      tag: ${{ steps.draft.outputs.tag }}
+{%- endraw %}
+    steps:
+{%- if project.github_harden_runner %}
+{% include "github_workflows/harden_runner.yml.j2" %}
+        allowed-endpoints: >
+        {%- for endpoint in spec.python.ci.github.harden_runner.endpoints.draft.split(' ') %}
+            {{ endpoint }}
+        {%- endfor %}
+{%- endif %}
+      - uses: OZI-Project/draft@{{ spec.python.ci.draft.version }}
+        id: draft

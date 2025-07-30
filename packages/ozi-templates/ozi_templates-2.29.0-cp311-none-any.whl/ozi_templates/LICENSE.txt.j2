@@ -1,0 +1,36 @@
+{#- OZI0
+# ozi/templates/LICENSE.txt.j2
+# SPDX-License-Identifier: MIT-0
+-#}
+-----------------------------------------------------------------------
+{{ project.name }} is licensed {{ project.license_expression }}:
+-----------------------------------------------------------------------
+
+{%- block body %}
+{%- for component in project.license_expression.split(' ')|map('trim')|list %}
+{%- if component|lower not in ['and', 'or', 'with'] and loop.previtem|lower != 'with' %}
+{#- {%- set license_template = project.license.split('::')|map('trim')|map('underscorify')|join('/') %} #}
+{%- set filename = component|lower ~ '.txt'%}
+{%- set path = ['license', filename]|join('/') %}
+{% include path %}
+{%- endif %}
+{%- endfor %}
+{%- endblock %}
+{%- set license_components = project.license_expression.split(' ')|map('trim') %}
+{%- block exceptions %}
+{%- if 'with' in license_components|map('lower')|list %}
+{%- for component in project.license_expression.split(' ')|map('trim')|list %}
+{%- if component|lower == 'with' %}
+{%- set license_term = loop.previtem %}
+{%- set exception = loop.nextitem %}
+{%- set filename = exception~'.txt' %}
+{%- set path = ['license', 'exceptions', filename]|join('/') %}
+
+---- Exceptions to the {{ license_term }} License ----
+
+{% include path ignore missing %}
+
+{%- endif %}
+{%- endfor %}
+{%- endif %}
+{%- endblock %}
