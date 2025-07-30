@@ -1,0 +1,290 @@
+---
+- hosts: "{{IM_HOST}}"
+  become: yes
+  become_method: sudo
+  gather_facts: false
+  vars:
+    # Ansible specific Version or "latest"
+    ANSIBLE_VERSION: 4.10.0
+    VENV_PATH: /var/tmp/.ansible
+  tasks:
+  ############## To avoid some issues with cloud-init and unattended upgrades ###############
+    - name: Avoid unattended upgrades
+      raw: |
+        sudo touch /var/lib/apt/periodic/upgrade-stamp; \
+        sudo touch /var/lib/apt/periodic/update-stamp; \
+        sudo touch /var/lib/apt/periodic/download-upgradeable-stamp;
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Wait for the VM to boot
+      raw: systemctl is-system-running --wait
+      ignore_errors: yes
+      changed_when: false
+
+  ################### Some OSs does not have python by default #########################
+    - name: Check Python is installed
+      raw: python3 -c 'import sys; print(sys.version_info[1])'
+      ignore_errors: yes
+      register: python3_version
+      changed_when: false
+
+    - name: Bootstrap with python Debian/Ubuntu
+      raw: sudo apt update && sudo apt install -y python3.5; sudo apt install -y python3
+      ignore_errors: yes
+      register: python_install
+      changed_when: python_install.stdout_lines|length > 1
+      when: python3_version is failed or python3_version.stdout|int < 5
+
+    - name: Bootstrap with python RedHat/CentOS
+      raw: sudo yum install -y python3
+      ignore_errors: yes
+      register: python_install
+      changed_when: python_install.stdout_lines|length > 1
+      when: python3_version is failed
+
+    - name: Bootstrap with python SUSE
+      raw: sudo zypper -n install python3 python3-xml
+      ignore_errors: yes
+      register: python_install
+      changed_when: python_install.stdout_lines|length > 1
+      when: python3_version is failed
+
+     # In some cases python link is not created
+    - name: Link python 3 or 2 in case is needed
+      raw: ls /usr/bin/python || { ls /usr/bin/python3 && ln -s /usr/bin/python3 /usr/bin/python; } || { ls /usr/bin/python2 && ln -s /usr/bin/python2 /usr/bin/python; }
+      ignore_errors: yes
+
+    # In case of redhat systems libselinux-python3 is needed
+    - name: Install libselinux-python3 on RH systems
+      raw: yum -y install libselinux-python3
+      ignore_errors: yes
+
+  ################### Some basic OSs operations #########################
+    - name: Get Facts
+      setup:
+
+    - name: Install EPEL
+      command: yum install -y epel-release
+      args:
+        creates: /etc/yum.repos.d/epel.repo
+      when: ansible_os_family == "RedHat" and ansible_distribution != "Fedora"
+
+    - name: Fix EPEL
+      lineinfile:
+        path: /etc/yum.repos.d/epel.repo
+        regexp: '^metalink=https:\/\/mirrors\.fedoraproject\.org\/metalink\?repo=epel-\$releasever&arch=\$basearch&infra=\$infra&content=\$contentdir'
+        insertafter: '^#baseurl '
+        line: 'baseurl=https://dl.fedoraproject.org/pub/archive/epel/8.5.2022-05-10/Everything/x86_64/'
+      when: ansible_os_family == "RedHat" and ansible_distribution != "Fedora" and ansible_distribution_major_version|int < 9
+
+    - name: Ensure to Enable EPEL repo
+      ini_file:
+        dest: /etc/yum.repos.d/epel.repo
+        section: epel
+        option: enabled
+        value: "1"
+      when: ansible_os_family == "RedHat" and ansible_distribution != "Fedora" and ansible_distribution_major_version|int < 9
+      ignore_errors: yes
+
+    - name: Ubuntu/Debian apt update
+      apt: update_cache=yes
+      when: ansible_os_family == "Debian"
+      ignore_errors: yes
+      register: apt_update
+
+    - name: Ubuntu/Debian force apt update (avoid apt lock)
+      command: apt update
+      when: ansible_os_family == "Debian" and apt_update is failed
+
+  ################### Install Ansible/pip requisites #########################
+
+    - name: Debian/Ubuntu install requisites with apt
+      apt: name=python3-pip,wget,python3-setuptools,sshpass,openssh-client,unzip install_recommends=no
+      when: ansible_os_family == "Debian"
+
+    - name: Yum install requisites RH 7/8 or Fedora
+      command: yum install -y python3-pip python3-setuptools sshpass openssh-clients
+      when: ansible_os_family == "RedHat"
+
+    - name: Zypper install requirements Suse
+      zypper: name=python3-pip,python3-setuptools,wget,python3-cryptography state=present
+      when: ansible_os_family == "Suse"
+
+    - name: Install python-setuptools
+      package: name=python-setuptools
+      when: ansible_python_version is version('3', '<')
+
+  ######################################### Use pip to enable to set the version #############################################
+
+    - name: Set extra_args var
+      set_fact:
+        extra_args: ''
+
+    - name: Set extra_args var in py3.11
+      set_fact:
+        extra_args: --break-system-packages
+      when: ansible_python_version is version('3.11', '>=')
+
+    - name: Install virtualenv with pip
+      pip:
+        name: virtualenv
+        executable: pip3
+        extra_args: "{{ extra_args }}"
+
+    - name: Create virtualenv link in PATH
+      file:
+        state: link
+        src: /usr/local/bin/virtualenv
+        dest: /usr/local/sbin/virtualenv
+      when: ansible_os_family == "RedHat"
+      ignore_errors: yes
+
+    - name: Create Ansible virtualenv
+      command:
+        cmd: virtualenv --system-site-packages {{ VENV_PATH }}
+        creates: "{{ VENV_PATH }}"
+ 
+    # Version over 21 does not work with python 3.6 or older
+    - name: Upgrade pip in py3.6-
+      pip:
+        name: pip>18.0,<21.0
+        virtualenv: "{{ VENV_PATH }}"
+        # in some old distros we need to trust in the pypi to avoid SSL errors
+        extra_args: --trusted-host files.pythonhosted.org --trusted-host pypi.org --trusted-host pypi.python.org
+      when: ansible_python_version is version('3.7', '<')
+
+    - name: Upgrade pip in py3.7-py3.8
+      pip:
+        name: pip>20.0
+        virtualenv: "{{ VENV_PATH }}"
+      when: ansible_python_version is version('3.7', '>=') and ansible_python_version is version('3.9', '<')
+
+    - name: Upgrade pip in py3.9-py3.10
+      pip:
+        name: pip>=22.0
+        virtualenv: "{{ VENV_PATH }}"
+      when: ansible_python_version is version('3.9', '>=') and ansible_python_version is version('3.11', '<')
+
+    # Version 66 (#2497) fails
+    - name: Upgrade setuptools with Pip in py3.11-
+      pip:
+        name: setuptools<66.0.0
+        virtualenv: "{{ VENV_PATH }}"
+      when: ansible_python_version is version('3.11', '<')
+
+    - name: Set extra_args var
+      set_fact:
+        extra_args: --prefer-binary
+
+    - name: Install psutil
+      pip:
+        name: psutil
+        virtualenv: "{{ VENV_PATH }}"
+        extra_args: "{{ extra_args }}"
+
+    - name: Install cryptography & pyOpenSSL in py3.11-
+      pip:
+        name:
+          - cryptography>36.0.0,<39.0.0
+          - pyOpenSSL>20.0,<22.1.0
+        virtualenv: "{{ VENV_PATH }}"
+        extra_args: "{{ extra_args }}"
+      when: ansible_python_version is version('3.11', '<')
+
+    - name: Install cryptography & pyOpenSSL in py3.11+
+      pip:
+        name: 
+          - cryptography>36.0.0
+          - pyOpenSSL>20.0
+        virtualenv: "{{ VENV_PATH }}"
+        extra_args: "{{ extra_args }}"
+      when: ansible_python_version is version('3.11', '>=')
+
+    - name: Install pyyaml, wheel, paramiko and packaging
+      pip:
+        name:
+          - wheel
+          - pyyaml
+          - paramiko>=2.9.5
+          - packaging
+        virtualenv: "{{ VENV_PATH }}"
+        extra_args: "{{ extra_args }}"
+
+    - name: Set Ansible newer version for python 3.8+
+      set_fact:
+        ANSIBLE_VERSION:  6.7.0
+      when:
+        - ansible_python_version is version('3.8', '>=')
+
+    - name: Set Ansible newer version for python 3.9+
+      set_fact:
+        ANSIBLE_VERSION:  8.7.0
+      when:
+        - ansible_python_version is version('3.9', '>=')
+
+    - name: Set Ansible version from env if defined
+      set_fact: ANSIBLE_VERSION={{ lookup('env','ANSIBLE_VERSION') }}
+      when: lookup('env','ANSIBLE_VERSION') != ""
+
+    - name: Install ansible {{ ANSIBLE_VERSION }} with Pip
+      pip:
+        name: ansible
+        version: "{{ ANSIBLE_VERSION }}"
+        virtualenv: "{{ VENV_PATH }}"
+        extra_args: "{{ extra_args }}"
+      when: ANSIBLE_VERSION != "latest"
+
+    - name: Install latest ansible version with Pip
+      pip:
+        name: ansible
+        virtualenv: "{{ VENV_PATH }}"
+        extra_args: "{{ extra_args }}"
+      when: ANSIBLE_VERSION == "latest"
+
+#################################### Now install scp, jmespath and pywinrm with pip  ##################################
+
+    - name: Install jmespath & scp with Pip
+      pip:
+        name:
+          - jmespath
+          - scp
+        virtualenv: "{{ VENV_PATH }}"
+        extra_args: "{{ extra_args }}"
+
+    - name: Install pywinrm with Pip
+      pip:
+        name: pywinrm
+        virtualenv: "{{ VENV_PATH }}"
+        extra_args: "{{ extra_args }}"
+      ignore_errors: yes
+
+################################################ Configure Ansible  ###################################################
+
+    - name: Create /etc/ansible
+      file: path=/etc/ansible state=directory
+
+    - name: Create /etc/ansible/ansible.cfg
+      file: path=/etc/ansible/ansible.cfg state=touch owner=root group=root mode=0644
+
+    - name: Set Ansible config file values
+      ini_file: dest=/etc/ansible/ansible.cfg section={{ item.section }} option={{ item.option }} value="{{ item.value }}"
+      with_items:
+      - { section: 'defaults', option: 'host_key_checking', value: 'False' }
+      - { section: 'defaults', option: 'nocolor', value: '1' }
+      - { section: 'ssh_connection', option: 'pipelining', value: 'True' }
+      - { section: 'defaults', option: 'jinja2_extensions', value: 'jinja2.ext.do' }
+      - { section: 'defaults', option: 'allow_world_readable_tmpfiles', value: 'True' }
+      - { section: 'defaults', option: 'fact_caching', value: 'jsonfile' }
+      - { section: 'defaults', option: 'fact_caching_connection', value: '/var/tmp/facts_cache' }
+      - { section: 'defaults', option: 'fact_caching_timeout', value: '86400' }
+      - { section: 'defaults', option: 'gathering', value: 'smart' }
+      - { section: 'defaults', option: 'roles_path', value: '/etc/ansible/roles' }
+      - { section: 'defaults', option: 'collections_paths', value: '/etc/ansible' }
+      - { section: 'defaults', option: 'timeout', value: '30' }
+      - { section: 'defaults', option: 'ansible_python_interpreter', value: 'auto' }
+      - { section: 'defaults', option: 'transport', value: 'ssh' }
+      - { section: 'ssh_connection', option: 'ssh_args', value: '-o ControlMaster=auto -o ControlPersist=900s -o UserKnownHostsFile=/dev/null' }
+      - { section: 'galaxy', option: 'server_list', value: 'galaxy, oldgalaxy' }
+      - { section: 'galaxy_server.galaxy', option: 'url', value: 'https://galaxy.ansible.com/api/' }
+      - { section: 'galaxy_server.oldgalaxy', option: 'url', value: 'https://old-galaxy.ansible.com/api/' }
