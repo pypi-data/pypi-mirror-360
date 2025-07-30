@@ -1,0 +1,90 @@
+[project]
+name = "aceparse"
+description = "Improved argparse.ArgumentParser that works with dataclasses"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pyyaml>=6.0.2",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+test = [
+    "flake8",
+    "hatch",
+    "pydantic>=2.10.4",
+    "pytest",
+]
+
+[tool.hatch.envs.default]
+installer = "uv"
+
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.13", "3.12", "3.11", "3.10"]
+[tool.hatch.envs.hatch-test]
+dependencies = [
+    "pydantic>=2.10.4",
+    "pytest",
+]
+
+[build-system]
+requires = ["hatchling", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_scheme = "post-release"
+local_scheme = "no-local-version"
+write_to = "aceparse/_version.py"
+
+[tool.black]
+line-length = 120
+
+[tool.mypy]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+enable_error_code = ["ignore-without-code", "truthy-bool"]
+follow_imports = "normal"
+# ignore_missing_imports = true
+pretty = true
+show_column_numbers = true
+warn_unused_ignores = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = [
+    "*.hatchling.*",
+    "*.hatch.utils.*",
+]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+warn_no_return = true
+
+[tool.hatch.envs.lint]
+detached = true
+dependencies = [
+    "black>=23.1.0",
+    "flake8",
+    "mypy>=1.0.0",
+    "pydantic>=2.10.4",
+    "pytest",
+    "ruff>=0.0.243",
+    "types-PyYAML",
+]
+[[tool.hatch.envs.lint.matrix]]
+python = ["3.13", "3.12", "3.11", "3.10"]
+
+[tool.hatch.envs.lint.scripts]
+typing = "mypy --exclude aceparse/py311.py {args:aceparse tests}"
+style = [
+  "ruff check {args:.}",
+  "black --check --diff {args:.}",
+]
+fmt = [
+  "black {args:.}",
+  "ruff check --fix {args:.}",
+  "style",
+]
+all = [
+  "style",
+  "typing",
+]
