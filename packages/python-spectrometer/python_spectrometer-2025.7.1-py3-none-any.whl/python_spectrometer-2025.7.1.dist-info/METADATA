@@ -1,0 +1,193 @@
+Metadata-Version: 2.4
+Name: python-spectrometer
+Version: 2025.7.1
+Summary: Package to acquire time traces and compute and plot their power spectra
+Project-URL: Homepage, https://git.rwth-aachen.de/qutech/python-spectrometer
+Author: Quantum Technology Group, RWTH Aachen University
+License-Expression: GPL-3.0
+License-File: LICENSE
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Scientific/Engineering :: Physics
+Classifier: Topic :: Utilities
+Requires-Python: >=3.9
+Requires-Dist: dill
+Requires-Dist: lazy-loader
+Requires-Dist: matplotlib>=3.7
+Requires-Dist: numpy
+Requires-Dist: packaging
+Requires-Dist: qutech-util>=2025.05.1
+Requires-Dist: scipy
+Requires-Dist: typing-extensions>=4.5.0
+Provides-Extra: audio-playback
+Requires-Dist: pyaudio>=0.2.14; extra == 'audio-playback'
+Provides-Extra: complete
+Requires-Dist: jupytext; extra == 'complete'
+Requires-Dist: myst-parser; extra == 'complete'
+Requires-Dist: pyaudio>=0.2.14; extra == 'complete'
+Requires-Dist: pydata-sphinx-theme; extra == 'complete'
+Requires-Dist: pytest; extra == 'complete'
+Requires-Dist: qcodes; extra == 'complete'
+Requires-Dist: qcodes-contrib-drivers; extra == 'complete'
+Requires-Dist: qopt; extra == 'complete'
+Requires-Dist: sphinx; extra == 'complete'
+Requires-Dist: zhinst-toolkit>=0.5.0; extra == 'complete'
+Provides-Extra: doc
+Requires-Dist: jupytext; extra == 'doc'
+Requires-Dist: myst-parser; extra == 'doc'
+Requires-Dist: pydata-sphinx-theme; extra == 'doc'
+Requires-Dist: sphinx; extra == 'doc'
+Provides-Extra: qcodes
+Requires-Dist: qcodes; extra == 'qcodes'
+Requires-Dist: qcodes-contrib-drivers; extra == 'qcodes'
+Provides-Extra: simulator
+Requires-Dist: qopt; extra == 'simulator'
+Provides-Extra: tests
+Requires-Dist: pytest; extra == 'tests'
+Provides-Extra: zurich-instruments
+Requires-Dist: zhinst-toolkit>=0.5.0; extra == 'zurich-instruments'
+Description-Content-Type: text/markdown
+
+# python-spectrometer
+This package implements data acquisition, processing, and visualization for estimating power spectral densities using [Welch's method](https://en.wikipedia.org/wiki/Welch%27s_method). It provides the `Spectrometer` class that serves as a central interface which acquires and manges the data. Several processing steps can be applied to the raw timeseries data, for instance to convert from a voltage signal to an acceleration given a known calibration from a signal conditioning unit.
+
+To demonstrate the basic features, here is some example code using the Keysight DMM `qcodes` driver for data acquisition. For a more detailed walkthrough, see the [notebook script](doc/walkthroughs/walkthrough.py) in `doc/walkthroughs`.
+
+```python
+from python_spectrometer import Spectrometer, daq
+from qcodes.instrument_drivers.Keysight.Keysight_34465A_submodules import Keysight_34465A
+dmm = Keysight_34465A('dmm', 'some_tcpip_address')
+
+# Pre-defined functions that set up and execute a measurement using a DMM
+spect = Spectrometer(daq.qcodes.Keysight344xxA(dmm),
+                     procfn=lambda V: V*1000,
+                     processed_unit='mV')
+settings = {'f_min': 0.1, 'f_max': 1000, 'phase_of_the': 'moon'}  # any other settings or metadata
+spect.take('a comment', n_avg=5, **settings)
+spect.hide(0)
+spect.show('a comment')  # same as spect.show(0)
+# Save and recall functionality
+spect.serialize_to_disk('./foo')
+spect_loaded = Spectrometer.recall_from_disk('./foo')  # read-only because no DAQ given
+spect_loaded.show_keys()
+# (0, 'a comment')
+```
+
+You can also play around with simulated noise (requires `qopt`):
+```python
+from python_spectrometer import Spectrometer, daq
+spect = Spectrometer(daq.simulator.QoptColoredNoise(lambda f, A, **_: A/f))
+spect.take('foobar', n_avg=10, n_seg=5, A=42)
+```
+
+Leveraging `qutil.plotting.live_view`, the package also allows continuous acqusition and plotting of data:
+```python
+spect = Spectrometer(daq, plot_timetrace=True)
+freq_live_view, time_live_view = spect.live_view(fs=100e3)
+```
+This opens two figures which continuously update as new data is acquired in a background thread.
+
+## Installing
+If you just want to use it you can install the latest "released" version via
+```sh
+python -m pip install python-spectrometer[complete]
+```
+However, this package profits from everybody's work and the releases are infrequent. Please make a development install
+and contribute your changes. You can do this via
+```sh
+python -m pip install -e git+https://git.rwth-aachen.de/qutech/python-spectrometer.git#egg=python-spectrometer[complete]
+```
+This will download the source code (i.e. clone the git repository) into a subdirectory of the `./src` argument and link the files into your environment instead of copying them. If you are on Windows you can use [SourceTree](https://www.sourcetreeapp.com/) which is a nice GUI for git.
+You can specify the source code directory with the `--src` argument (which needs to be BEFORE `-e`):
+```sh
+python -m pip install --src some_directory/my_python_source -e git+https://git.rwth-aachen.de/qutech/python-spectrometer.git#egg=python-spectrometer[complete]
+```
+If you have already downloaded/cloned the package yourself you can use `python -m pip install -e .[complete]`.
+
+Please file an issue if any of these instructions does not work.
+
+## Documentation
+Some of the development of this package took place during a course taught at the II. Institute of Physics at RWTH Aachen University in the winter semester 2022/23. Targeting applied research topics too specific for lectures but too general for lab courses, several modules intended for self-learning were developed, one of which focuses on "characterizing and avoiding noise and interference in instrumentation". The material can be found here:
+- [Part 1](https://iffmd.fz-juelich.de/s/6sxq2OgNO),
+- [Part 2](https://iffmd.fz-juelich.de/s/7LQ7xCCNJ).
+
+For a walkthrough of the main features and interaction with the tool, see the [`doc/walkthroughs` directory](doc/walkthroughs). The `python_spectrometer` package has an auto-generated documentation that can be found at [the Gitlab Pages](https://qutech.pages.rwth-aachen.de/python-spectrometer/index.html).
+
+To build the documentation locally, navigate to `doc/` and run
+```sh
+make html
+```
+or
+```bat
+sphinx-build -b html source build
+```
+Make sure the dependencies are installed via
+```sh
+python -m pip install -e .[doc]
+```
+in the top-level directory.
+
+To check if everything works for a clean install (requires hatch to be installed), run
+```sh
+python -m hatch run doc:build
+```
+
+## Tests
+There are some basic tests in `tests/` as well as a couple of [`doctests`](https://docs.python.org/3/library/doctest.html).
+
+You can run the tests either via
+```sh
+python -m pytest --doctest-modules
+```
+or to check if everything works for a clean install (requires hatch to be installed)
+```sh
+python -m hatch run tests:run
+```
+
+
+### Docker
+
+0. Make sure docker is installed and running:
+    1. `pamac install docker docker-buildx`
+    2. `(sudo) docker buildx install`
+    2. `(sudo) systemctl status docker`
+
+        Example output:
+
+   		```sh
+         ● docker.service - Docker Application Container Engine
+               Loaded: loaded (/usr/lib/systemd/system/docker.service; disabled; preset: disabled)
+               Active: active (running) since Tue 2025-02-11 20:09:55 CET; 1 week 1 day ago
+         Invocation: 609d5a409daf4e99b7b3b8da9305776d
+         TriggeredBy: ● docker.socket
+               Docs: https://docs.docker.com
+            Main PID: 54128 (dockerd)
+               Tasks: 22
+               Memory: 38.8M (peak: 1.2G, swap: 21.3M, swap peak: 23.9M)
+                  CPU: 1min 2.133s
+               CGroup: /system.slice/docker.service
+                     └─54128 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+         ```
+
+1. Build the docker image:
+   ```sh
+   (sudo) docker build -t pyspeck-dev .
+   ```
+2. Run the image...
+   - ... either running the tests and exiting:
+      ```sh
+	  (sudo) docker run --rm pyspeck-dev
+	  ```
+   - ... or entering an interactive console:
+      ```sh
+      (sudo) docker run --rm -it pyspeck-dev /bin/bash
+      ```
+
+## Releases
+Releases on Gitlab, PyPI, and Zenodo are automatically created and pushed whenever a commit is tagged matching [CalVer](https://calver.org/) in the form `vYYYY.MM.MICRO` or `vYYYY.0M.MICRO`.
