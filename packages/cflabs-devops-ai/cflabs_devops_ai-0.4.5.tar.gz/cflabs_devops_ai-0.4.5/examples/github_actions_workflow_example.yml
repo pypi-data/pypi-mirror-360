@@ -1,0 +1,83 @@
+name: Deploy to AWS Lambda with Secrets
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  AWS_REGION: ap-south-1
+  STACK_NAME: my-app-stack
+  LAMBDA_NAME: my-app
+  MEMORY_SIZE: 512
+  TIMEOUT: 30
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+    
+    - name: Run tests
+      run: |
+        pytest --cov=. --cov-report=xml
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Install devops-ai
+      run: |
+        python -m pip install --upgrade pip
+        pip install cflabs-devops-ai
+    
+    - name: Deploy with devops-ai and GitHub secrets
+      run: |
+        cflabs-devops-ai serverless deploy \
+          --name ${{ env.LAMBDA_NAME }} \
+          --region ${{ env.AWS_REGION }} \
+          --memory ${{ env.MEMORY_SIZE }} \
+          --timeout ${{ env.TIMEOUT }} \
+          --environment prod \
+          --env-vars "UploadsBucketName=${{ secrets.S3_DATA_BUCKET }},DbHost=${{ secrets.DB_HOST }},DbPort=${{ secrets.DB_PORT }},DbUser=${{ secrets.DB_USER }},DbPassword=${{ secrets.DB_PASSWORD }},DbName=${{ secrets.DB_NAME }},PineconeApiKey=${{ secrets.PINECONE_API_KEY }},OpenaiApiKey=${{ secrets.OPENAI_API_KEY }},VoyageApiKey=${{ secrets.VOYAGE_API_KEY }}"
+    
+    - name: Display deployment info
+      run: |
+        echo "✅ Deployment successful!"
+        echo "🌐 App deployed using cflabs-devops-ai serverless deploy"
+        echo "🔧 Check AWS Console for deployment details"
+        echo "🔐 Environment variables loaded from GitHub secrets" 
