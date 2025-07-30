@@ -1,0 +1,110 @@
+Metadata-Version: 2.4
+Name: fleet-python
+Version: 0.1.0
+Summary: Python SDK for Fleet environments
+Author-email: Fleet AI <nic@fleet.so>
+License: Apache-2.0
+Project-URL: Homepage, https://fleetai.com
+Project-URL: Documentation, https://docs.fleetai.com
+Project-URL: Repository, https://github.com/fleet-ai/fleet-sdk
+Project-URL: Issues, https://github.com/fleet-ai/fleet-sdk/issues
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: aiohttp>=3.8.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: typing-extensions>=4.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: black>=22.0.0; extra == "dev"
+Requires-Dist: isort>=5.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Dynamic: license-file
+
+# Fleet SDK
+
+The Fleet Python SDK provides programmatic access to Fleet's environment infrastructure.
+
+## Installation
+
+Install the Fleet SDK using pip:
+
+```bash
+pip install fleet-python
+```
+
+## API Key Setup
+
+Fleet requires an API key for authentication. You can obtain one from the [Fleet Platform](https://fleetai.com/dashboard/api-keys).
+
+Set your API key as an environment variable:
+
+```bash
+export FLEET_API_KEY="sk_your_key_here"
+```
+
+## Basic Usage
+
+```python
+import fleet as flt
+
+# Create environment by key
+env = await flt.env.make("fira")
+
+# Reset environment with seed and options
+await env.reset(
+    seed=42,
+    timestamp=datetime.now()
+)
+
+# Access environment state ('crm' is the resource id for a sqlite database)
+sql = env.state("sqlite://crm")
+await sql.exec("UPDATE customers SET status = 'active' WHERE id = 123")
+
+# Clean up
+await env.close()
+```
+
+## Environment Management
+
+### Creating Instances
+
+```python
+# Create environment instance with explicit version
+env = await flt.env.make("fira:v1.2.5")
+
+# Create environment instance with default (latest) version
+env = await flt.env.make("fira")
+
+```
+
+### Connecting to Existing Instances
+
+```python
+# Connect to a running instance
+env = await flt.env.get("env_instance_id")
+
+# List all running instances
+instances = await flt.env.list_instances()
+for instance in instances:
+    print(f"Instance: {instance.instance_id}")
+    print(f"Type: {instance.environment_type}")
+    print(f"Status: {instance.status}")
+
+# Filter instances by status (running, pending, stopped, error)
+running_instances = await flt.env.list_instances(status_filter="running")
+
+# List available environment types
+available_envs = await flt.env.list_envs()
+```
