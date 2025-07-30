@@ -1,0 +1,182 @@
+[project]
+name = "process-improve"
+version = "0.9.91"
+description = 'Designed Experiments; Latent Variables (PCA, PLS, multivariate methods with missing data); Process Monitoring; Batch data analysis.'
+readme = "README.md"
+license = {text = "MIT license"}
+requires-python = ">=3.11"
+keywords = ["Designed Experiments", "Latent Variables", "PCA", "PLS", "Multivariate Data Analysis", "Batch data analysis"]
+authors = [
+    { name = "Kevin Dunn", email = "kgdunn@gmail.com" },
+]
+dependencies = [
+    "bokeh>=3.6.3",
+    "matplotlib>=3.10.0",
+    "numba>=0.61.0",
+    "numpy>=1.26.4",
+    "openpyxl>=3.1.5",
+    "pandas>=2.2.3",
+    "patsy>=1.0.1",
+    "plotly>=6.0.0",
+    "pydantic>=2.10.6",
+    "scikit-image>=0.25.2",
+    "scikit-learn>=1.6.1",
+    "scipy<=1.15.3",
+    "seaborn>=0.13.2",
+    "statsmodels>=0.14.4",
+    "tqdm>=4.67.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/kgdunn/process_improve"
+Repository = "https://github.com/kgdunn/process_improve"
+Issues = "https://github.com/kgdunn/process_improve/issues"
+
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+
+# Enable ALL Pyflakes codes by default.
+select = ["ALL"]
+extend-ignore = [
+    "C408",   # Unnecessary <dict/list/tuple> call - rewrite as a literal. Disagree with this.
+
+    # Arguments
+    "ARG001", # Unusued argument
+
+    # Annotations not required
+    "ANN002", # Missing type annotation for `*args`
+    "ANN003", # Missing type annotation for `**kwargs`
+    "ANN204", # Missing return type annotation for special method `__init__`
+
+    # Docstrings
+    "D100",   # Missing docstring in public module.
+    "D101",   # don't require docstrings everywhere.
+    "D107",
+    "D202",
+    "D203",
+    "D205", # KGD: added this: the style of starting immediately is tough to read
+    "D212",
+    "D213",
+    "D402",
+    "D405", # Section name should be properly capitalized ("RETURN"): confused with Cypher queries
+    "D407", # Missing dashed underline after section ("RETURN"): confused with Cypher queries
+    "D413",
+    "D415",
+    "D416",
+    "D417",
+
+    "N803", # we don't mind mixed case variable names
+    "N806", # we don't mind mixed case variable names
+
+    "RET505", # Unnecessary `else` after `return` statement. Not convinced this is bad style.
+
+    # Pandas:
+    "PD011", # Don't agree that .values is bad style.
+    "PD901", # Don't agree that df is a bad variable name.
+
+    # Commented out code
+    "ERA001", # This is tough-one: commented out code does have its uses in debugging/testing
+
+    # Boolean traps. I don't necessarily agree that these are traps in Python.
+    "FBT001",
+    "FBT002",
+    "FBT003",
+
+    # Controversial: but let's exclude assert testing. It is useful for unit testing,
+    # and disabling ruff on all files that start with `**/*test_*.py` means many other useful
+    # checks are disabled.
+    "S101",   # Use of assert detected.
+
+    # Testing
+    "TID252", # we do need relative imports for the unit tests
+
+    # Refactoring
+    "PLR2004", # Don't agree that this is a bad style. It leads to overly verbose code in many cases.
+
+    # Stop it with the trailing commas.
+    "COM812", # Trailing comma is not always needed - doesn't lead to more readable code.
+
+    # Ignore certain flake8-type-checking (TCH) codes.
+    "TC001", # Don't agree that this is a bad style. It leads to overly verbose code.
+    "TC002", # Don't agree that this is a bad style. It leads to overly verbose code.
+    "TC003", # Don't agree that this is a bad style. It leads to overly verbose code.
+
+    # Access private functions.
+    "SLF001", # Sometimes we  need to access private functions
+
+    # Don't require that Exceptions have string literals
+    "EM101", # Ugly redundant code otherwise
+
+    # Issues and TODO
+    "TD002",  # Not necessary that every todo has a username,
+    "TD003",  # Not necessary that every todo has an issuelink
+    "TD004",  # Not necessary that every todo has a colon
+    "TD005",  # Not necessary that every todo has a description
+    "FIX002", # Not necessary that every fixme has to be removed
+
+    # OK to use f-strings in errors as far as we are concerned here
+    "TRY003",
+    "EM102",
+]
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    "__pypackages__",
+    #"**/*test_*.py",
+]
+
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+
+[tool.ruff.lint.isort]
+known-third-party=["pytest", "pandas"]
+
+[tool.uv]
+dev-dependencies = [
+    "black>=25.1.0",
+    "coverage>=7.6.10",
+    "flake8>=7.1.1",
+    "isort>=6.0.0",
+    "matplotlib-stubs>=0.1.0",
+    "mypy>=1.15.0",
+    "pandas-stubs>=2.2.3.241126",
+    "plotly-stubs>=0.0.4",
+    "pre-commit>=4.1.0",
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "pytest-runner>=6.0.1",
+    "pytest-xdist>=3.6.1",
+    "sphinx>=8.1.3",
+    "tox>=4.24.1",
+    "tqdm-stubs>=0.2.1",
+    "twine>=6.1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.black]
+line-length = 120
+# skip-string-normalization = true
+# Prevent Black from being too aggressive with parentheses
+# magic-trailing-comma = false
+
+[tool.mypy]
+ignore_missing_imports = true
+disallow_untyped_defs = false
+# Disable import-untyped warnings
+warn_unused_ignores = false
+# Specifically disable import-untyped errors
+disable_error_code = ["import-untyped"]
