@@ -1,0 +1,421 @@
+# TetraScience IDS Artifact Validator <!-- omit in toc -->
+
+## Version <!-- omit in toc -->
+
+v1.2.0
+
+## Table of Contents <!-- omit in toc -->
+
+- [Overview](#overview)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Validate an IDS](#validate-an-ids)
+  - [Validate IDS compatibility with previous versions from TDP](#validate-ids-compatibility-with-previous-versions-from-tdp)
+  - [Validate IDS compatibility with previous versions from git tags](#validate-ids-compatibility-with-previous-versions-from-git-tags)
+- [IDS Artifact Validation](#ids-artifact-validation)
+  - [Tetra Data Platform compatibility](#tetra-data-platform-compatibility)
+    - [`schema.json`](#schemajson)
+    - [`elasticsearch.json`](#elasticsearchjson)
+    - [`athena.json`](#athenajson)
+    - [`expected.json`](#expectedjson)
+  - [Versioning validation](#versioning-validation)
+  - [Tetra Data validation](#tetra-data-validation)
+- [IDS Instance Validation](#ids-instance-validation)
+  - [JSON Schema Validation](#json-schema-validation)
+  - [Datacube Dimensionality](#datacube-dimensionality)
+- [Changelog](#changelog)
+
+## Overview
+
+The TetraScience IDS Validator checks that IDS artifacts & instances follow a set of rules which
+make them compatible with the Tetra Data Platform, and optionally validates that they are
+compatible with additional IDS design conventions.
+The validator either passes or fails with a list of the checks which led to the failure.
+
+Artifact validation checks that the IDS artifact (the schema & other files used by TDP) will work on TDP.
+This validation happens before a new or updated IDS artifact is uploaded to the platform.
+The artifact validator checks these files in an IDS folder:
+
+- schema.json
+- expected.json
+- elasticsearch.json
+- athena.json
+
+IDS instance validation checks that IDS data follows the schema, as well as:
+
+- The dimensionality of datacubes in the IDS instance is valid
+
+This happens during pipeline workflow execution before writing IDS data to TDP.
+
+## Installation
+
+```sh
+pip install ts-ids-validator
+```
+
+Alternatively, to install with [pipx](https://pipx.pypa.io/stable/), which makes the CLI tool available globally with the benefit of isolated installation environments:
+
+```sh
+pipx install ts-ids-validator
+```
+
+Alternatively, install with a package manager such as [poetry](https://python-poetry.org/):
+
+```sh
+poetry add --dev ts-ids-validator
+```
+
+After installation, the `validate-ids-artifact` CLI script can be used, see the usage instructions below.
+
+## Usage
+
+This section explains the `validate-ids-artifact` command and its options.
+For more detail about what is being validated, see the [Validation](#validation) section.
+
+Run `validate-ids-artifact -h` to see the help for this command.
+
+### Validate an IDS
+
+In the root of an IDS folder, run:
+
+```sh
+validate-ids-artifact
+```
+
+Or to validate an IDS which is in a different folder, run:
+
+```sh
+validate-ids-artifact --ids-dir path/to/ids/folder
+```
+
+This will validate whether the entire IDS artifact is compatible with the Tetra Data Platform.
+
+An important part of IDS validation is checking for compatibility with existing versions of the same IDS, which can be done using either the `--download` or `--git` flags described in the next section.
+
+### Validate IDS compatibility with previous versions from TDP
+
+Use the `--download` (`-d`) flag to validate a local IDS against other IDS versions downloaded from the Tetra Data Platform.
+
+To use this, the first step is to configure TDP API authentication, see <https://developers.tetrascience.com/reference/authentication> for instructions.
+
+There are two options for storing API configuration: environment variables, or a JSON config file.
+
+For environment variables, set `TS_API_URL`, `TS_ORG` and `TS_AUTH_TOKEN` environment variables using any method, then run the validator with the `--download` flag:
+
+```sh
+# Omit these environment variables if they are already set elsewhere
+export TS_ORG=your-org
+export TS_API_URL=https://api.tetrascience.com/v1
+export TS_AUTH_TOKEN=your-token
+
+# Command to run once environment variables are set
+validate-ids-artifact --download
+
+# Alternative with shorter syntax
+validate-ids-artifact -d
+```
+
+To use a JSON config file, create a JSON file with the following structure, named for example `cfg.json` (the name can be anything):
+
+```json
+{
+    "api_url": "https://api.tetrascience.com/v1",
+    "auth_token": "your-token",
+    "org": "your-org"
+}
+```
+
+Then use both the `--download` flag and the `--config` option:
+
+```sh
+validate-ids-artifact --download --config cfg.json
+
+# Alternative with shorter syntax
+validate-ids-artifact -d -c cfg.json
+```
+
+Downloaded IDS Artifact files are cached so that repeatedly running this command doesn't re-download them each time.
+
+#### Ignore SSL certificate verification for TDP API usage <!-- omit in toc -->
+
+It is possible to ignore verifying the SSL certificate for the TDP API requests used to identify and download the previous IDS artifact.
+The default functionality is to verify SSL certificates.
+
+To do this, add `"ignore_ssl": true` to the JSON config file. It is false by default, which can also be set explicitly with `"ignore_ssl": false`.
+
+Or set the environment variable `TS_IGNORE_SSL` to any of the following values (case insensitive): `true`, `True`, `1`. It is false by default, which can also be set explicitly with one of the following values:  `false`, `False`, `0`.
+
+When ignore SSL is True, API requests will accept any TLS certificate presented by the server, and will ignore hostname mismatches or expired certificates.
+This makes requests vulnerable to man-in-the-middle (MitM) attacks.
+Setting it to True may be useful during local development or testing.
+This is handled by the `requests` package, with `ignore_ssl=True` corresponding to `verify=False`, documented [here](https://requests.readthedocs.io/en/latest/user/advanced/#ssl-cert-verification).
+
+### Validate IDS compatibility with previous versions from git tags
+
+Use the `--git` (`-g`) flag to validate a local IDS against other local IDS versions fetched from git tags.
+
+```sh
+validate-ids-artifact --git
+
+# Alternative with shorter syntax
+validate-ids-artifact -g
+```
+
+This is an alternative to the `--download` flag and it doesn't require configuring TDP credentials.
+
+Using git tags requires the following to avoid incorrect validation results:
+
+- Tags must have the format `vM.m.p` or `vM.m.p.B` where `M` (major), `m` (minor), `p` (patch) and the optional `B` (build) are integers, for example `v1.10.2`.
+- The version in the tag must correspond to the version in `schema.json`'s `@idsVersion` property, ignoring the build number.
+- All IDS artifact files at each tag must match the artifact available in TDP.
+
+For these reasons, it is recommended to use `--git` only for local development or CI/CD checks when there is another system in place to make sure the version tags are in sync with the IDS artifacts in TDP.
+
+## IDS Artifact Validation
+
+This is an overview of the validation which is run by this IDS Artifact validator.
+
+### Tetra Data Platform compatibility
+
+`schema.json`, `expected.json`, `elasticsearch.json` and `athena.json` must be present in the IDS artifact.
+The validation of each of them is described below.
+
+#### `schema.json`
+
+`schema.json` is validated against the JSON Schema draft 7 specification using `jsonschema`'s [Validator.check_schema](https://python-jsonschema.readthedocs.io/en/latest/api/jsonschema/protocols/#jsonschema.protocols.Validator.check_schema) method.
+This ensures that the JSON Schema vocabulary is being used correctly, including some format validation like the root `$id` and `$schema` being valid URIs.
+
+Additional validation makes sure the schema meets other TDP requirements:
+
+- The top-level IDS object must contain properties `"@idsType"`, `"@idsVersion"` and `"@idsNamespace"`.
+  - `"@idsType"` must be a constant with a value consisting of a "v" followed by a valid [semantic version](https://semver.org/), such as `"v1.0.0"`.
+- `"$id"` at the root of the schema must follow the format `https://ids.tetrascience.com/<namespace>/<type>/<version>/schema.json` where namespace, type and version are the constant values of the `@idsNamespace`, `@idsType` and `@idsVersion` properties.
+- `"$schema"` at the root of the schema must be the URI `"http://json-schema.org/draft-07/schema#"`: draft 7 is the version of JSON Schema supported by TDP.
+- All objects must have `additional_properties` set to `false`
+- All properties must have a valid JSON Schema type
+- An object's `required` properties must be defined in the object's `properties` definition.
+
+`datacubes` must have a schema which is compatible with the platform's requirements:
+
+- `datacubes` type must be an array of objects.
+- The properties `name`, `dimensions` and `measures` are present and `required`.
+- `minItems == maxItems` for `dimensions` and `measures`.
+- `measures.value`:
+  - Contains nested arrays so that it is an `N`-dimensional array, with `N` being the number of `dimensions`.
+  - The innermost type is either `"number"`, `["number", "null"]`, `"string"`, or `["string", "null"]` (or equivalent).
+- `dimensions.scale` must be an array of `number`s.
+
+All properties in the schema must have valid names for mapping to Tetra SQL tables:
+
+- No leading underscores
+- No more than 1 consecutive underscore anywhere in the property
+- No special characters (allowed characters follow the regular expression `[a-zA-Z0-9_]`).
+  - Exceptions to this rule are `@idsNamespace`, `@idsType`, `@idsVersion`, and `@idsConventionVersion` at the root level of the schema, and `@link` anywhere in the schema.
+- No two properties in `schema.json` may normalize to the same Athena column name.
+  - For example, a property called `name` inside an object `person` will correspond to an Athena column of `person_name`.
+    This means there cannot be another property called `person_name` defined at the same level as `person`, because `person_name` would clash with `person.name` when mapping the data to Athena.
+- No property may have the name `uuid` or `parent_uuid` because these are reserved for use as Athena column names in TDP.
+- When properties are normalized to Athena column names, no column name can exceed 255 characters
+
+#### `elasticsearch.json`
+
+All fields defined under `mapping.properties` in `elasticsearch.json` must exist within the IDS.
+There can only be up to 50 nested fields defined in the IDS.
+
+#### `athena.json`
+
+- Partition paths must correspond to valid properties in `schema.json`
+- Partition paths cannot point to properties anywhere inside an array
+- `partition.name` cannot clash with any normalized property name from `schema.json`. For example, when `schema.json` properties are mapped to Athena, a property `name` inside an object `person` gets a normalized Athena column name of `person_name`, meaning `partition.name` cannot be `person_name` because it would clash with the `person_name` Athena column.
+
+#### `expected.json`
+
+`expected.json` must be a valid instance of `schema.json` using a JSON Schema draft 7 validator.
+
+### Versioning validation
+
+#### Schema evolution - merge compatibility <!-- omit in toc -->
+
+Schema evolution refers to backwards-compatible updates to a schema, where data following the new schema can be merged with data following the old schema as long as certain "merge compatibility" conditions are met.
+A common case is adding a new property anywhere in a schema to capture additional data (at the root level, in an object, in an array of objects, etc.).
+
+The new schema will be checked for merge compatibility with all existing IDSs with the same namespace, type and major version.
+For example, if versions `v1.0.0` and `v1.1.0` already exist, then when validating an update to `v1.2.0`, the new schema must be merge compatible with the existing merged schemas from `v1.0.0` and `v1.1.0`.
+
+This validation tool checks for merge compatibility according to [Delta.io](https://delta.io/)'s schema evolution logic.
+Read more about Delta’s [schema validation rules here](https://docs.delta.io/latest/delta-update.html#schema-validation).
+
+The existing versions can be retrieved from TDP using the `--download` (`-d`) flag, or from git tags using the `--git` (`-g`) flag.
+One of these must be used in order for merge compatibility checks to run.
+
+Instead of making a breaking change, typically it is possible to make schema updates which are merge compatible by adding or removing fields without changing the type of any existing field.
+This brings the benefit that new and old data can be written to the same Lakehouse table, meaning existing integrations may be unaffected if they don't depend on the new or removed fields.
+
+In cases where a merge incompatible change is necessary, bump the IDS major version.
+
+#### Athena configuration breaking changes <!-- omit in toc -->
+
+Any change to the configuration in `athena.json` is a breaking change requiring a major version bump.
+This is because changes will only be applied when new CSV-backed Athena tables are created, which only happens for new major versions.
+To make a change to the Athena configuration file, bump the major version of the IDS.
+
+### Tetra Data validation
+
+These checks validate that Tetra Data conventions are being followed in this IDS's `schema.json`.
+These checks are enabled by including the top-level metadata field `is_tetra_data_schema` with a value of `true` or by adding the property `@idsConventionVersion` with a `const` value of `v1.0.0` in `schema.json`.
+
+WARNING: `@idsConventionVersion` will be deprecated in a future release. Please use `"is_tetra_data_schema": true` instead.
+
+Note that this Tetra Data specific validation will be removed from this package in a future version, so that it will only validate Tetra Data Platform requirements for IDS Artifacts.
+
+- Property names should use snake case: entirely lower-case or numeric characters separated by single consecutive underscores.
+  - `related_files.pointer`'s `fileId` and `fileKey` properties are excluded from this check. So are any properties whose name starts with `@`.
+- For standard Tetra Data components, there is validation that the schema matches the expected component structure, including property names, types and `required` properties. This applies to `samples`, `users`, `systems` and `related_files`.
+  The validator output will explain any differences from the expected component structure if this check fails.
+
+## IDS Instance Validation
+
+This package also includes functions which can be used to validate an IDS JSON instance against the IDS, as well as other useful IDS instance validation functions.
+
+The instance validator takes a python dictionary containing the IDS JSON instance and a dictionary containing the IDS JSON schema as input, and performs all validations outlined below.
+
+### JSON Schema Validation
+
+The IDS JSON instance is validated against the IDS JSON schema using the `jsonschema` package.
+This validation is performed such that if an IDS JSON instance is invalid, the validation will report all errors in the instance, not just the first error encountered.
+
+### Datacube Dimensionality
+
+This function checks that the shape of the `measures[*].value` array is homogenous and matches the length of the `dimensions[*].scale` array(s) for each datacube in the IDS JSON instance.
+
+This additional validation is necessary as it is not performed by the JSON schema validation, as the number of values in a particular dimension can be dynamic.
+
+This check ensures that datacubes have the valid n-dimensional structure required for downstream usage.
+
+## Changelog
+
+### v1.2.0 <!-- omit in toc -->
+
+- Broaden Python package dependency ranges for better compatibility with other packages
+- Drop support for the end-of-life Python 3.8, add testing for Python 3.13
+
+### v1.1.1 <!-- omit in toc -->
+
+- Fixed bug in `ids_validator.instance.validate_ids_instance` so that mixed null and non-null values in datacube measures are now allowed
+
+### v1.1.0 <!-- omit in toc -->
+
+- Add `ids_validator.instance.validate_ids_instance` function to validate:
+  - An IDS JSON instance against the IDS
+  - That the dimensionality of `datacubes[*].measures[*].value` matches the dimensionality of `datacubes[*].dimensions[*].scale`
+
+### v1.0.3 <!-- omit in toc -->
+
+- Update to use [`typer`](https://typer.tiangolo.com/) for the CLI, which provides a more user-friendly interface with better help messages and tab completion.
+
+### v1.0.2 <!-- omit in toc -->
+
+- Fix import errors when a `git` executable is not available. The GitPython `git` module is now only imported when using `git`-related features.
+
+### v1.0.1 <!-- omit in toc -->
+
+- Fix the interface for `ts-sdk` and `ts-cli` to download TDP artifacts for validation when publishing an IDS
+
+### v1.0.0 <!-- omit in toc -->
+
+- Add schema merge compatibility validation for Lakehouse schema evolution
+  - Schema evolution allows for a limited set of schema changes like adding or removing fields without bumping the IDS major version, with data from the combined previous versions and the new version all being available in the same table in Lakehouse under the same major version.
+  - This is enabled for all IDSs and requires using either the `--download` (`-d`) flag or `--git` (`-g`) flag to compare against existing IDS versions. See the updated `ts-ids-validator` Readme for complete details.
+  - The previous CSV-backed Athena versioning validation has been changed to emit warning logs without failing validation. For users of CSV-backed Athena, the information in these logs is still relevant when updating an IDS to determine whether a major version bump is needed, otherwise it can be ignored.
+- Update Tetra Data validation to remove prefix check which validates that properties of an object do not start with the name of the field whose definition is the object (e.g. the field `method` of type object cannot contain a property named `method_name`)
+- Update Tetra Data validation to be triggered off of the top-level `schema.json` metadata `"is_tetra_data_schema": true`
+  - Add deprecation warning for the `@idsConventionVersion` property which is no longer necessary
+- Allow dashes as well as underscores in CLI argument names, for example both `--ids-dir` and `--ids_dir` may now be used equivalently.
+
+### v0.10.5 <!-- omit in toc -->
+
+- Add `elasticsearch.json` validation to enforce a maximum of 50 nested fields
+- Add column resolution validation to ensure normalized Athena columns do not exceed 255 characters
+
+### v0.10.4 <!-- omit in toc -->
+
+- Update the `--download` option to accept an `ignore_ssl` configuration (either an `"ignore_ssl"` key in the JSON config, or the `TS_IGNORE_SSL` environment variable).
+  This makes the API configuration the same as what `ts-sdk` accepts.
+  See "Ignore SSL certificate verification" in the Readme for more information.
+
+### v0.10.3 <!-- omit in toc -->
+
+- Update validation so it is mandatory to include `samples` and `users` fields along with specific definitions of each at the top level of Tetra Data IDSs to match documented conventions. This enables downstream use cases which depend on these fields always being present, even if they are not populated by any Tetra Data protocol.
+- Add ability to download previous IDS artifacts from the Tetra Data Platform for versioning validation, as an alternative to the `--previous-ids-dir` CLI option.
+  This adds a `--download`/`-d` flag to the CLI, to specify that the previous IDS artifact should be downloaded from TDP.
+  API configuration can be set using environment variables, or the `--config`/`-c` CLI option which takes a path to an API configuration JSON file.
+  See the README for details.
+
+### v0.10.2 <!-- omit in toc -->
+
+- Improve readability of versioning requirements and breaking change validation in validation output.
+
+### v0.10.1 <!-- omit in toc -->
+
+- Remove unused dependencies which caused installation to fail in some Python versions.
+
+### v0.10.0 <!-- omit in toc -->
+
+- Update how to use this package: add a CLI script `validate-ids-artifact` which is equivalent to the previous approach of running `python -m ids_validator`. This previous approach still works as before but may be deprecated in a future version, so switching to the CLI script is recommended.
+- Add validation that property names do not contain special characters.
+- Add validation for breaking changes between IDS versions which would be incompatible with the Tetra Data Platform
+  - Add the new CLI argument `--previous-ids-dir` (which may be omitted) which is the folder containing the previous version of the same IDS namespace and type. Without this CLI argument, breaking change validation does not run.
+- Add validation that `expected.json` is a valid instance of `schema.json` using a JSON Schema validator.
+- Remove `--version` CLI argument because this information can be retrieved from the IDS artifact being validated.
+
+### v0.9.16 <!-- omit in toc -->
+
+- Remove the upper bound of what properties `samples` may contain for Tetra Data validation. This means the `samples` schema can now include properties other than the ones in the `samples` Tetra Data component, such as primary and foreign key fields.
+
+### v0.9.15 <!-- omit in toc -->
+
+- Limit version of `typing-extensions` in dependencies to avoid a bug which causes the validator to always fail in Python 3.10 or later.
+
+### v0.9.14 <!-- omit in toc -->
+
+- Update `samples[*]` check to optionally allow for it to contain a property `pk_samples` of type `"string"`.
+
+### v0.9.13 <!-- omit in toc -->
+
+- `related_files` is no longer checked against annotation fields like "description".
+
+### v0.9.12 <!-- omit in toc -->
+
+- Update check for `samples[*].labels[*].source.name` type: previously the type was
+  required to be `"string"`, now it is required to be either `["string", "null"]` or
+  `"string"`, with `"string"` leading to a deprecation warning. This change makes this
+  `source` definition the same as `samples[*].properties[*].source` in a
+  backward-compatible way.
+
+### v0.9.11 <!-- omit in toc -->
+
+- Fix bug in `AthenaChecker` to allow root level IDS properties as partition paths.
+- Update `TypeChecker` to catch errors related to undefined/misspelled `type` key.
+- Update `jsonschema` version to fix package installation error
+
+### v0.9.10 <!-- omit in toc -->
+
+- Modify `V1SnakeCaseChecker` to ignore checks for keys present in `definitions` object.
+- Add temporary allowance for `@link` in `*.properties`
+
+### v0.9.9 <!-- omit in toc -->
+
+- Lock `jsonschema` version in requirements.txt
+
+### v0.9.8 <!-- omit in toc -->
+
+- Modify `RulesChecker` to log missing and extra properties
+
+### v0.9.7 <!-- omit in toc -->
+
+- Allow properties with `const` values to have non-nullable `type`
+
+### v0.9.6 <!-- omit in toc -->
+
+- Add checker classes for generic validation
+- Add checker classes for v1.0.0 convention validation
