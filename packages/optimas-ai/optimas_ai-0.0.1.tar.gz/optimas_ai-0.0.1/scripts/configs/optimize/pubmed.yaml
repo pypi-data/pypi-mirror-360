@@ -1,0 +1,41 @@
+# Dataset and pipeline
+dataset: pubmed
+system: pubmed_system
+run_name: iter100-valsize20-trainsize10
+val_size: 20
+per_iteration_input_size: 10
+per_component_search_size: 10
+per_component_train_size: 300
+per_iteration_rm_train_size: -1
+
+# Paths
+output_dir: outputs/optim
+state_dict_path: outputs/reward_model/pubmed_system/full-256/state_dict.pth # an example path
+preference_dataset: snap-stanford/pubmed_system
+
+# LoRA
+lora_r: 32
+lora_alpha: 16
+lora_dropout: 0.0
+
+# Iteration & optimization
+iterations: 100
+num_prompt_candidates: 3
+
+# Replay buffer
+use_replay_buffer: true
+replay_buffer_size: 200
+max_sample_workers: 4
+num_repeat: 1
+
+# PPO
+weight_optimizer: ppo
+ppo_epochs: 3
+ppo_train_steps: 3
+ppo_batch_size: 16
+ppo_learning_rate: 0.0001
+ppo_save_epoch_ratio: 0.25
+ppo_base_model_name: Qwen/Qwen2.5-1.5B-Instruct
+
+# Environment
+dotenv_path: .env
