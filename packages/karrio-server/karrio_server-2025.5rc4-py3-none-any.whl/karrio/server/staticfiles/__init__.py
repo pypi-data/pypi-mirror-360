@@ -1,0 +1,3 @@
+"""
+Karrio api staticfiles package
+"""
