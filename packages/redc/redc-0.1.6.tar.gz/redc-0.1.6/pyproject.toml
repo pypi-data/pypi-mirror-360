@@ -1,0 +1,32 @@
+[build-system]
+requires = ["scikit-build-core >=0.10", "nanobind >=2.2.0"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "redc"
+version = "0.1.6"
+description = "RedC is a high-performance, asynchronous HTTP client library for Python, built on top of the powerful curl library"
+readme = "README.md"
+authors = [{ name = "AYMEN Mohammed", email = "let.me.code.safe@gmail.com" }]
+license = { text = "MIT" }
+requires-python = ">=3.9"
+keywords = ["asyncio", "http", "client", "http-client", "curl", "libcurl"]
+
+[project.urls]
+Source = "https://github.com/AYMENJD/redc"
+Tracker = "https://github.com/AYMENJD/redc/issues"
+
+[tool.scikit-build]
+build-dir = "build/{wheel_tag}"
+wheel.py-api = "cp312"
+
+[tool.cibuildwheel]
+build-verbosity = 1
+build = "cp39* cp310* cp311* cp312* cp313*"
+enable = ["cpython-freethreading"]
+skip = "*musllinux*"
+archs = ["x86_64"]
+
+[tool.cibuildwheel.linux]
+before-all = ".github/workflows/before-all.sh"
+manylinux-x86_64-image = "manylinux2014"
