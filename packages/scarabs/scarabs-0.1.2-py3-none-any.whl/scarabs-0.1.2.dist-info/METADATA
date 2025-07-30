@@ -1,0 +1,606 @@
+Metadata-Version: 2.1
+Name: scarabs
+Version: 0.1.2
+Summary: scarab: llm training paradigm
+Home-page: https://github.com/zhu2856061/scarabs
+Author: merlin
+Author-email: zhipeng19930220@gmail.com
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: scikit-learn >=1.6.0
+Requires-Dist: datasets >=2.16.1
+Requires-Dist: torch >=2.3.0
+Requires-Dist: transformers >=4.47.1
+Requires-Dist: evaluate >=0.4.3
+Requires-Dist: einops >=0.8.0
+Requires-Dist: sentencepiece >=0.2.0
+Requires-Dist: accelerate >=1.2.1
+Requires-Dist: peft >=0.7.1
+Requires-Dist: ipywidgets >=8.1.5
+Requires-Dist: tensorboardX ==2.6.2.2
+Requires-Dist: torchinfo >=1.8.0
+Requires-Dist: prettytable >=3.12.0
+Requires-Dist: trl >=0.15.2
+Requires-Dist: numpy >=1.26.4
+Requires-Dist: colorlog >=6.9.0
+
+# scarabs平台: 一款基于 transformers 的 通用模型训练框架，
+可以tabular data训练，text data训练，image data训练，LLM训练
+
+![scarabs平台](doc/scarabs.jpg)
+
+
+### 📘 core:
+  - ✅ Training of tabular data, For example, CTR used in recommendation systems
+  - Training of text data, For example, text classification
+  - Training of image data, For example, image classification
+  - Training of LLM, For example, llm pretrain
+
+### 📘 very easy to use
+``` shell
+pip install scarabs
+```
+
+### 📘 In detail
+
+✅ 1. Tabular Data
+You can refer to tabular_ctr in the examples folder
+
+2. Text Data
+You can refer to llm_classification in the examples folder
+
+3. LLM
+You can refer to llm_pretrain in the examples folder
+
+4. refer to github https://github.com/zhu2856061/scarabs
+
+#### 📘 arguments
+ℹ️ task_name_or_path: 任务名，所有训练产生的中间结果和最终结果都会在该目录下
+
+ℹ️ data_format: 数据的格式，包含[text, csv, json, parquet], tabular数据推荐用parquet格式-平时将自己的数据准备成parquet格式， 文本类数据推荐采用json格式
+
+ℹ️ train_file: 训练数据的路径，可以给数据的文件夹(会读取文件夹内的文件)，也可以给数据的文件路径，
+
+ℹ️ valid_file: 评估数据的路径，可以给数据的文件夹(会读取文件夹内的文件)，也可以给数据的文件路径，
+
+ℹ️ test_file: 训练数据的路径，可以给数据的文件夹(会读取文件夹内的文件)，也可以给数据的文件路径，
+
+ℹ️ preprocessing_num_workers: 对数据进行处理的时候，启动几个进程worker进行并行处理数据
+
+ℹ️ labels: 数据的Y标，⚠️是一个列表，方便-【多目标的模型】
+
+ℹ️ load_resume_from_checkpoint: 检查点的路径-文件夹，用于导入检查点，并继续训练，会先加载模型-> 再进行训练
+
+ℹ️ incremental_resume_from_checkpoint: 对embedding层进行增量训练，基于先前的模型，其中的特征值/token数量是固定的，一旦基于先前模型进行下次的继续训练的时候，出现全新的特征值/token的时候，就会出现无法识别，被当作UNK对待了，故需要设置这个检查点的路径，会启动增量训练
+
+#### 🔔 ctr训练 [update]
+
+##### 正常训练
+[参考examples/tabular]
+|_ arguments.yaml 训练所需设置的参数
+|_ config.json 模型参数
+|_ main.py 训练主程序
+
+其中 arguments.yaml 文件中参数设置如下：
+```yaml
+task_name_or_path: "encode"
+
+overwrite_output_dir: true
+output_dir: "model"
+
+# data
+data_format: "csv"
+train_file: "../data/movielens/train"
+valid_file: "../data/movielens/valid"
+preprocessing_num_workers: 2
+
+# model
+# load_resume_from_checkpoint: "./encode/model/checkpoint-1029"
+# incremental_resume_from_checkpoint: "./encode/model/checkpoint-1029"
+
+# runtimes metric
+do_train: true
+seed: 2025
+use_cpu: false
+report_to: "tensorboard"
+save_safetensors: true
+save_total_limit: 1
+early_stopping_patience: 3
+early_stopping_threshold: 1.0e-7
+remove_unused_columns: false
+metric_for_best_model: "eval_roc_auc"
+greater_is_better: true
+
+# optim
+optim: "adamw_torch"
+learning_rate: 1.0e-3
+lr_scheduler_type: "reduce_lr_on_plateau"
+lr_scheduler_kwargs: 
+  mode: "max"
+  factor: 0.1
+  patience: 1
+  verbose: true
+weight_decay: 0
+max_grad_norm: 10.0
+gradient_accumulation_steps: 1
+
+# data
+label_names: ["label"]
+per_device_train_batch_size: 4096
+per_device_eval_batch_size: 4096
+dataloader_num_workers: 4
+
+# view
+eval_strategy: "epoch"
+logging_strategy: "epoch"
+save_strategy: "epoch"
+load_best_model_at_end: True
+```
+
+config.json文件设置参考具体模型的config[scarabs/nova/models]
+
+main.py文件如下：
+```python
+from __future__ import absolute_import, division, print_function
+import os
+from transformers.hf_argparser import HfArgumentParser
+from scarabs.nova.models.ctr_with_dnn import CtrWithDNN, CtrWithDNNConfig
+from scarabs.task_factory import TaskArguments, TaskFactoryWithTabularCtr
+
+
+def feature_engineering(args):
+    config = CtrWithDNNConfig.from_pretrained("config.json")
+    task = TaskFactoryWithTabularCtr(args, config=config)
+    task.create_feature2meta_in_config()
+
+def train(args):
+    # # Train
+    config = CtrWithDNNConfig.from_pretrained(
+        os.path.join(
+            args.task_name_or_path,
+            "data/meta/config.json",
+        )
+    )
+    task = TaskFactoryWithTabularCtr(args, config)
+    task.train(model=CtrWithDNN(config))
+
+def continue_train(args):
+    # # Train
+    config = CtrWithDNNConfig.from_pretrained(
+        os.path.join(
+            args.load_resume_from_checkpoint,
+            "config.json",
+        )
+    )
+    task = TaskFactoryWithTabularCtr(args, config)
+    task.train(model=CtrWithDNN(config))
+
+def incremental_continue_feature_engineering(args):
+    config = CtrWithDNNConfig.from_pretrained(
+        os.path.join(
+            args.incremental_resume_from_checkpoint,
+            "config.json",
+        )
+    )
+    task = TaskFactoryWithTabularCtr(args, config=config)
+    task.create_feature2meta_in_config()
+
+def incremental_continue_train(args):
+    # # Train
+    config = CtrWithDNNConfig.from_pretrained(
+        os.path.join(
+            args.task_name_or_path,
+            "data/meta/config.json",
+        )
+    )
+    task = TaskFactoryWithTabularCtr(args, config)
+    task.train(model=CtrWithDNN(config))
+
+def eval():
+    # Predict
+    task = TaskFactoryWithTabularCtr()
+    model_path = "./encode/model"
+    task.inference_with_load_model(model_path, CtrWithDNN)
+
+    import pandas as pd
+    from sklearn.metrics import roc_auc_score
+
+    preds = []
+    label = []
+    ds = pd.read_csv("../../data/movielens/valid/valid.csv")
+    for line in ds.to_dict("records"):
+        label.append(line["label"])
+        res = task.inference(X=line)
+        preds.append(res["logits"][0].item())
+    print(roc_auc_score(label, preds))
+
+if __name__ == "__main__":
+    parser = HfArgumentParser(TaskArguments)  # type: ignore
+    args = parser.parse_yaml_file("arguments.yaml")[0]
+    # # feature
+    feature_engineering(args)
+    # # Train
+    train(args)
+
+
+```
+
+
+##### 继续训练
+[参考examples/tabular]
+|_ arguments.yaml 训练所需设置的参数
+|_ model/ 模型文件夹 - 检查点checkpoint-**** - config.json 和 models.safetensors
+|_ main.py 训练主程序
+
+其中 arguments.yaml 文件中参数设置如下：
+```yaml
+task_name_or_path: "encode"
+
+overwrite_output_dir: true
+output_dir: "model"
+
+# data
+data_format: "csv"
+train_file: "../data/movielens/train"
+valid_file: "../data/movielens/valid"
+preprocessing_num_workers: 2
+
+# model
+load_resume_from_checkpoint: "./model/checkpoint-1029"
+# incremental_resume_from_checkpoint: "./encode/model/checkpoint-1029"
+
+# runtimes metric
+do_train: true
+seed: 2025
+use_cpu: false
+report_to: "tensorboard"
+save_safetensors: true
+save_total_limit: 1
+early_stopping_patience: 3
+early_stopping_threshold: 1.0e-7
+remove_unused_columns: false
+metric_for_best_model: "eval_roc_auc"
+greater_is_better: true
+
+# optim
+optim: "adamw_torch"
+learning_rate: 1.0e-3
+lr_scheduler_type: "reduce_lr_on_plateau"
+lr_scheduler_kwargs: 
+  mode: "max"
+  factor: 0.1
+  patience: 1
+  verbose: true
+weight_decay: 0
+max_grad_norm: 10.0
+gradient_accumulation_steps: 1
+
+# data
+label_names: ["label"]
+per_device_train_batch_size: 4096
+per_device_eval_batch_size: 4096
+dataloader_num_workers: 4
+
+# view
+eval_strategy: "epoch"
+logging_strategy: "epoch"
+save_strategy: "epoch"
+load_best_model_at_end: True
+```
+
+main.py文件如下：
+```python
+from __future__ import absolute_import, division, print_function
+import os
+from transformers.hf_argparser import HfArgumentParser
+from scarabs.nova.models.ctr_with_dnn import CtrWithDNN, CtrWithDNNConfig
+from scarabs.task_factory import TaskArguments, TaskFactoryWithTabularCtr
+
+
+def feature_engineering(args):
+    config = CtrWithDNNConfig.from_pretrained("config.json")
+    task = TaskFactoryWithTabularCtr(args, config=config)
+    task.create_feature2meta_in_config()
+
+def train(args):
+    # # Train
+    config = CtrWithDNNConfig.from_pretrained(
+        os.path.join(
+            args.task_name_or_path,
+            "data/meta/config.json",
+        )
+    )
+    task = TaskFactoryWithTabularCtr(args, config)
+    task.train(model=CtrWithDNN(config))
+
+def continue_train(args):
+    # # Train
+    config = CtrWithDNNConfig.from_pretrained(
+        os.path.join(
+            args.load_resume_from_checkpoint,
+            "config.json",
+        )
+    )
+    task = TaskFactoryWithTabularCtr(args, config)
+    task.train(model=CtrWithDNN(config))
+
+def incremental_continue_feature_engineering(args):
+    config = CtrWithDNNConfig.from_pretrained(
+        os.path.join(
+            args.incremental_resume_from_checkpoint,
+            "config.json",
+        )
+    )
+    task = TaskFactoryWithTabularCtr(args, config=config)
+    task.create_feature2meta_in_config()
+
+def incremental_continue_train(args):
+    # # Train
+    config = CtrWithDNNConfig.from_pretrained(
+        os.path.join(
+            args.task_name_or_path,
+            "data/meta/config.json",
+        )
+    )
+    task = TaskFactoryWithTabularCtr(args, config)
+    task.train(model=CtrWithDNN(config))
+
+def eval():
+    # Predict
+    task = TaskFactoryWithTabularCtr()
+    model_path = "./encode/model"
+    task.inference_with_load_model(model_path, CtrWithDNN)
+
+    import pandas as pd
+    from sklearn.metrics import roc_auc_score
+
+    preds = []
+    label = []
+    ds = pd.read_csv("../../data/movielens/valid/valid.csv")
+    for line in ds.to_dict("records"):
+        label.append(line["label"])
+        res = task.inference(X=line)
+        preds.append(res["logits"][0].item())
+    print(roc_auc_score(label, preds))
+
+if __name__ == "__main__":
+    parser = HfArgumentParser(TaskArguments)  # type: ignore
+    args = parser.parse_yaml_file("arguments.yaml")[0]
+    # # Train
+    continue_train(args)
+```
+
+
+
+##### 增量inputs ids embedding继续训练
+[参考examples/tabular]
+|_ arguments.yaml 训练所需设置的参数
+|_ model/ 模型文件夹 - 检查点checkpoint-**** - config.json 和 models.safetensors
+|_ main.py 训练主程序
+
+其中 arguments.yaml 文件中参数设置如下：
+```yaml
+task_name_or_path: "encode"
+
+overwrite_output_dir: true
+output_dir: "model"
+
+# data
+data_format: "csv"
+train_file: "../data/movielens/train"
+valid_file: "../data/movielens/valid"
+preprocessing_num_workers: 2
+
+# model
+# load_resume_from_checkpoint: "./model/checkpoint-1029"
+incremental_resume_from_checkpoint: "./encode/model/checkpoint-1029"
+
+# runtimes metric
+do_train: true
+seed: 2025
+use_cpu: false
+report_to: "tensorboard"
+save_safetensors: true
+save_total_limit: 1
+early_stopping_patience: 3
+early_stopping_threshold: 1.0e-7
+remove_unused_columns: false
+metric_for_best_model: "eval_roc_auc"
+greater_is_better: true
+
+# optim
+optim: "adamw_torch"
+learning_rate: 1.0e-3
+lr_scheduler_type: "reduce_lr_on_plateau"
+lr_scheduler_kwargs: 
+  mode: "max"
+  factor: 0.1
+  patience: 1
+  verbose: true
+weight_decay: 0
+max_grad_norm: 10.0
+gradient_accumulation_steps: 1
+
+# data
+label_names: ["label"]
+per_device_train_batch_size: 4096
+per_device_eval_batch_size: 4096
+dataloader_num_workers: 4
+
+# view
+eval_strategy: "epoch"
+logging_strategy: "epoch"
+save_strategy: "epoch"
+load_best_model_at_end: True
+```
+
+main.py文件如下：
+```python
+from __future__ import absolute_import, division, print_function
+import os
+from transformers.hf_argparser import HfArgumentParser
+from scarabs.nova.models.ctr_with_dnn import CtrWithDNN, CtrWithDNNConfig
+from scarabs.task_factory import TaskArguments, TaskFactoryWithTabularCtr
+
+
+def feature_engineering(args):
+    config = CtrWithDNNConfig.from_pretrained("config.json")
+    task = TaskFactoryWithTabularCtr(args, config=config)
+    task.create_feature2meta_in_config()
+
+def train(args):
+    # # Train
+    config = CtrWithDNNConfig.from_pretrained(
+        os.path.join(
+            args.task_name_or_path,
+            "data/meta/config.json",
+        )
+    )
+    task = TaskFactoryWithTabularCtr(args, config)
+    task.train(model=CtrWithDNN(config))
+
+def continue_train(args):
+    # # Train
+    config = CtrWithDNNConfig.from_pretrained(
+        os.path.join(
+            args.load_resume_from_checkpoint,
+            "config.json",
+        )
+    )
+    task = TaskFactoryWithTabularCtr(args, config)
+    task.train(model=CtrWithDNN(config))
+
+def incremental_continue_feature_engineering(args):
+    config = CtrWithDNNConfig.from_pretrained(
+        os.path.join(
+            args.incremental_resume_from_checkpoint,
+            "config.json",
+        )
+    )
+    task = TaskFactoryWithTabularCtr(args, config=config)
+    task.create_feature2meta_in_config()
+
+def incremental_continue_train(args):
+    # # Train
+    config = CtrWithDNNConfig.from_pretrained(
+        os.path.join(
+            args.task_name_or_path,
+            "data/meta/config.json",
+        )
+    )
+    task = TaskFactoryWithTabularCtr(args, config)
+    task.train(model=CtrWithDNN(config))
+
+def eval():
+    # Predict
+    task = TaskFactoryWithTabularCtr()
+    model_path = "./encode/model"
+    task.inference_with_load_model(model_path, CtrWithDNN)
+
+    import pandas as pd
+    from sklearn.metrics import roc_auc_score
+
+    preds = []
+    label = []
+    ds = pd.read_csv("../../data/movielens/valid/valid.csv")
+    for line in ds.to_dict("records"):
+        label.append(line["label"])
+        res = task.inference(X=line)
+        preds.append(res["logits"][0].item())
+    print(roc_auc_score(label, preds))
+
+if __name__ == "__main__":
+    parser = HfArgumentParser(TaskArguments)  # type: ignore
+    args = parser.parse_yaml_file("arguments.yaml")[0]
+    # # Train
+    incremental_continue_feature_engineering(args)
+    incremental_continue_train(args)
+```
+进行增量训练，在训练的日志部分会有增量模型部分矩阵改变的日志打印，请留意
+```python
+logger.warning(f"{v} shape mismatched, current: {model_dict[v].shape} != history:{state_dict[k].shape}")
+```
+给出当前模型矩阵和历史模型矩阵的形状不一致，请留意
+```python
+logger.warning(f"{key} is updated from history:{history_size} to current:{current_size}")
+```
+给出历史模型矩阵已经修正成新的矩阵大小
+
+
+#### 🔔 大模型训练 [update]
+
+##### 1 纯预训练， 从0-1，另起一座山峰 ， 以训练一个qwen3-0.1b的模型为例
+第一步，先选定一个模型，比如 qwen3-0.6b 或者 qwen3-7b都可以,以 [qwen3-0.6b](https://huggingface.co/Qwen/Qwen3-0.6B/tree/main)] 为例，找到模型文件中
+tokenizer.json 和 tokenizer_config.json 和 config.json 文件
+
+第二步，创建一个文件夹比如： qwen3-0.1b ， 然后修改config.json 文件，将其中的一些影响模型大小的参数改为小一些，比如：
+```json
+{
+  "architectures": [
+    "Qwen3ForCausalLM"
+  ],
+  "attention_bias": false,
+  "attention_dropout": 0.0,
+  "bos_token_id": 151643,
+  "eos_token_id": 151645,
+  "head_dim": 32,
+  "hidden_act": "silu",
+  "hidden_size": 128,
+  "initializer_range": 0.02,
+  "intermediate_size": 3072,
+  "max_position_embeddings": 4096,
+  "max_window_layers": 28,
+  "model_type": "qwen3",
+  "num_attention_heads": 8,
+  "num_hidden_layers": 6,
+  "num_key_value_heads": 4,
+  "rms_norm_eps": 1e-06,
+  "rope_scaling": null,
+  "rope_theta": 1000000,
+  "sliding_window": null,
+  "tie_word_embeddings": true,
+  "torch_dtype": "bfloat16",
+  "transformers_version": "4.51.0",
+  "use_cache": true,
+  "use_sliding_window": false,
+  "vocab_size": 151936
+}
+```
+第三步： 准备数据，数据样式如下：
+{"text": "根据描述，..."}
+{"text": "对于一名60岁男性患者，..."}
+
+第四步： 准备训练参数文件，参照 [arguments.yaml](./examples/pretrain/arguments.yaml)
+
+第五步：写训练脚本，参照 [train.py](./examples/pretrain/train.py)
+
+第六步： 执行训练， 
+``` shell
+torchrun --standalone --nnodes=1 --nproc_per_node=1 main.py
+```
+
+
+##### 2 继续预训练， 以训练一个qwen3-0.1b的模型为例
+第一步，先选定一个模型，比如 qwen3-0.6b 或者 qwen3-7b都可以,以 [qwen3-0.6b](https://huggingface.co/Qwen/Qwen3-0.6B/tree/main)] 为例，需要下载模型的所有文件，并保存在指定的目录下，比如：这里可以拿纯预训练的那个模型来进行继续预训练[qwen3-0.1b](./examples/continue_pretrain/qwen3-0.2b/)
+其他步骤（去掉上述的第二步）同上
+**特别** 需要对train.py进行修改，参照 [train.py](./examples/continue_pretrain/train.py)
+
+
+##### 2 微调训练，以训练一个qwen3-0.1b的模型为例
+第一步，先选定一个模型，比如 qwen3-0.6b 或者 qwen3-7b都可以,以 [qwen3-0.6b](https://huggingface.co/Qwen/Qwen3-0.6B/tree/main)] 为例，需要下载模型的所有文件，并保存在指定的目录下，比如：这里可以拿纯预训练的那个模型来进行继续预训练[qwen3-0.1b](./examples/continue_pretrain/qwen3-0.2b/)
+
+第二步： 准备数据，数据样式如下- 这里采用 prompt + completion 样式（该方式最好管理）：
+{"prompt": [{"role": "user", "content": "What color is the sky?"}],"completion": [{"role": "assistant", "content": "It is blue."}]}
+{"prompt": [{"role": "user", "content": "What color is the sky?"}],"completion": [{"role": "assistant", "content": "It is blue."}]}
+
+第四步： 准备训练参数文件，参照 [arguments.yaml](./examples/sft/arguments.yaml)
+
+第五步：写训练脚本，参照 [train.py](./examples/sft/train.py)
+
+第六步： 执行训练， 
+``` shell
+torchrun --standalone --nnodes=1 --nproc_per_node=1 main.py
+```
