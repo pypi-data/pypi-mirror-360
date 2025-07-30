@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aiida_gui_workgraph"
+# This 'version' is now dynamic, read from your __init__.py
+dynamic = ["version"]
+description = "Design flexible node-based workflow for AiiDA calculation."
+authors = [{name = "Xing Wang", email = "xingwang1991@gmail.com"}]
+readme = "README.md"
+dependencies = [
+    "aiida-gui",
+]
+license = {file = "LICENSE"}
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Framework :: AiiDA",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering"
+]
+
+[project.urls]
+Documentation = "https://aiida-gui-workgraph.readthedocs.io"
+Source = "https://github.com/aiidateam/aiida-gui-workgraph"
+
+[project.optional-dependencies]
+pre-commit = [
+    "pre-commit~=2.2",
+    "pylint~=2.17.4",
+]
+
+[project.entry-points."aiida_gui.plugins"]
+workgraph = "aiida_gui_workgraph:plugin"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["aiida_gui_workgraph", "aiida_gui_workgraph.*"]
+
+[tool.setuptools.package-data] # Corrected from [tool.uptools.package-data]
+aiida_gui_workgraph = ["static/*", "static/**/*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "aiida_gui_workgraph.__version__" }
