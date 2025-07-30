@@ -1,0 +1,3 @@
+COL_FOR_FUND_PRICE = '수정기준가'
+KEYS_TO_PROJECT_FOR_FUND_PRICE = ['일자', '수정기준가']
+DEFAULT_COLS_FOR_BM_PRICE = ['KOSPI Index', 'KOSDAQ Index', 'KOSPI2 Index', 'SPX Index']
