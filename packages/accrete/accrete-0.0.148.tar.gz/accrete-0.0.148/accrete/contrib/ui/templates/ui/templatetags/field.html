@@ -1,0 +1,27 @@
+{% load ui %}
+{% load partials %}
+
+{% partialdef form_field %}
+    <label class="label mt-2 mb-5">
+        {{ field }}
+        <span class="has-text-danger is-size-6">{{ field.errors }}</span>
+        <span class="helptext {% if field.field.required %}has-text-weight-bold{% endif %}">{% if label %}{{ label }}{% else %}{{ field.help_text|default_if_falsy:field.label }}{% endif %}</span>
+    </label>
+{% endpartialdef %}
+
+{% partialdef textarea %}
+    <label class="label mt-2 mb-5">
+        <span class="helptext {% if field.field.required %}has-text-weight-bold{% endif %}">{% if label %}{{ label }}{% else %}{{ field.help_text|default_if_falsy:field.label }}{% endif %}</span>
+        <span class="has-text-danger is-size-6">{{ field.errors }}</span>
+        {{ field }}
+    </label>
+{% endpartialdef %}
+
+{% partialdef model_field %}
+    <label class="label mt-2 mb-5">
+        <span class="field has-addons mb-0">
+            <span class="control input has-text-weight-normal">{{ value|default_if_none:'' }}</span>
+        </span>
+        <span class="helptext {% if required %}has-text-weight-bold{% endif %}">{{ label }}</span>
+    </label>
+{% endpartialdef %}
