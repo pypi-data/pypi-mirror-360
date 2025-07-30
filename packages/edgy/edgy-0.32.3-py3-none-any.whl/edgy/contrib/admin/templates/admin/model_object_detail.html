@@ -1,0 +1,86 @@
+{% extends "admin/base.html" %}
+
+{% block header %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="bg-white border border-gray-200 rounded-lg shadow-sm w-full px-6 py-6">
+
+    <div class="space-y-6">
+        {% for field, field_info in marshall_class.model_fields.items() %}
+        {% if not field_info.exclude %}
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                <dt class="text-sm {% if field_info.primary_key  %}font-extrabold{% else %}font-semibold{% endif %} text-gray-800 w-full sm:w-1/4">
+                    {{ field.replace('_', ' ') | title }}
+                </dt>
+                <dd class="text-sm text-gray-900 bg-gray-50 px-4 py-2 rounded-md border border-gray-100 w-full sm:w-3/4 break-words">
+                    {% set value = values[field] %}
+                    {% set rel_type = relationship_fields.get(field) %}
+
+                    {% if rel_type == "many_to_many" or rel_type == "related_field" %}
+                        {% set related_model = field_info.get_related_model_for_admin() %}
+                        {% if value %}
+                            {% if related_model %}
+                                {% for item in value %}
+                                    <a href="{{ url_prefix }}/models/{{ related_model.__name__ }}/{{ create_object_pk(item) }}" class="text-blue-600">
+                                        {{ item }}
+                                    </a>{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                {% for item in value %}
+                                    {{ item }}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        {% else %}
+                            —
+                        {% endif %}
+
+                    {% elif rel_type == "foreign_key" %}
+                        {% set related_model = field_info.get_related_model_for_admin() %}
+                        {% if value %}
+                            {% if related_model %}
+                                <a href="{{ url_prefix }}/models/{{ field_info.target.__name__ }}/{{ create_object_pk(value) }}" class="text-blue-600">
+                                    {{ value }}
+                                </a>
+                            {% else %}
+                                {{ value}}
+                            {% endif %}
+                        {% else %}
+                            —
+                        {% endif %}
+
+                    {% else %}
+                        {% if value is not none %}
+                            {% if isinstance(field_info, ConcreteFileField) and value.storage.base_url %}
+                                <a href="{{ value.storage.url(value.name) }}" class="text-blue-600">
+                                    {{ value }}
+                                </a>
+                            {% else %}
+                                {{ value }}
+                            {% endif %}
+                        {% else %}
+                            —
+                        {% endif %}
+                    {% endif %}
+                </dd>
+            </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+
+    <div class="mt-8 flex flex-wrap gap-4 border-t pt-6">
+        <a href="{{ url_prefix }}/models/{{ model_name }}/{{ object_pk }}/edit"
+           class="inline-block px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700">
+            Edit
+        </a>
+        <form method="post"
+              action="{{ url_prefix }}/models/{{ model_name }}/{{ object_pk }}/delete"
+              onsubmit="return confirm('Are you sure you want to delete this?');">
+            <button type="submit"
+                    class="px-5 py-2 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700">
+                Delete
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
