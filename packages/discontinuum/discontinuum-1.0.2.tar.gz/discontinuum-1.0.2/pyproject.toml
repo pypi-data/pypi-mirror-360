@@ -1,0 +1,94 @@
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "discontinuum"
+description = "Estimate discontinuous timeseries from continuous covariates."
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["timeseries", "Gaussian processes", "discontinuous"]
+license = {file = "LICENSE.md"}
+maintainers = [
+  {name = "Timothy Hodson", email = "thodson@usgs.gov"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+
+dependencies = [
+    "gpytorch",
+    "matplotlib",
+    "scikit-learn",
+    "tqdm",
+    "xarray",
+]
+
+dynamic = ["version"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+# packages = ["discontinuum","discontinuum.providers","discontinuum.models", "discontinuum.tests"]
+
+[project.optional-dependencies]
+dev = [
+  "flake8",
+  "ruff",
+  "pytest-cov[all]",
+  "requests_mock",
+  "dataretrieval",
+]
+
+doc = [
+  "sphinx",
+  "sphinx-book-theme",
+  "myst-nb",
+  "sphinxcontrib-mermaid",
+  "sphinx-copybutton",
+  "ipython",
+  "ipykernel",
+]
+
+# engines
+
+gpytorch = [
+  "gpytorch",
+]
+
+pymc = [
+  "pymc >= 5.0.0",
+]
+
+# models
+
+loadest_gp = [
+  "dataretrieval",
+]
+
+rating_gp = [
+  "dataretrieval",
+]
+
+[project.urls]
+homepage = "https://github.com/thodson-usgs/discontinuum"
+repository = "https://github.com/thodson-usgs/discontinuum.git"
+
+[tool.setuptools_scm]
+write_to = "src/discontinuum/_version.py"
+
+[tool.ruff]
+line-length = 127 # 79
+
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-format = true
+docstring-code-line-length = 72
+
+[tool.ruff.lint]
+preview = true
+# Default ["E4", "E7", "E9", and "F"] --> Pyflakes ("F") and pycodestyle ("E")
+extend-select = [
+  "B", "I", "Q",
+  "W291", "W292", "W293", "W605",
+  "E231", "E252", "E261", "E262", "E303", "E501",
+]
