@@ -1,0 +1,193 @@
+{% extends "_base.html" %}
+
+{% block title %}Verbindung wechseln - Solr Helper{% endblock %}
+
+{% block content %}
+<div class="p-8">
+        <div class="max-w-2xl mx-auto" x-data="connectionSwitcher('{{ connection_id }}')">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Verbindung wechseln
+            </h1>
+            <p class="text-base-content/70">Wechsle zu einer gespeicherten Solr-Verbindung</p>
+        </div>
+
+        <!-- Connection Info Card -->
+        <div x-show="connection" class="card bg-base-100 shadow-xl mb-6">
+            <div class="card-body">
+                <h2 class="card-title">Ausgewählte Verbindung</h2>
+                <div x-show="connection">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <strong>Name:</strong> <span x-text="connection?.name"></span>
+                        </div>
+                        <div>
+                            <strong>URL:</strong> <span x-text="connection?.url"></span>
+                        </div>
+                        <div>
+                            <strong>Core:</strong> <span x-text="connection?.core"></span>
+                        </div>
+                        <div>
+                            <strong>Status:</strong> 
+                            <span x-show="connection?.status === 'testing'" class="badge badge-warning">
+                                <span class="loading loading-spinner loading-xs mr-1"></span>
+                                Teste...
+                            </span>
+                            <span x-show="connection?.status === 'success'" class="badge badge-success">✓ Verbunden</span>
+                            <span x-show="connection?.status === 'error'" class="badge badge-error">✗ Fehler</span>
+                            <span x-show="!connection?.status" class="badge badge-ghost">Nicht getestet</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div x-show="!connection && !loading" class="alert alert-error mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Verbindung nicht gefunden. Möglicherweise wurde sie gelöscht.</span>
+        </div>
+
+        <!-- Loading State -->
+        <div x-show="loading" class="flex justify-center py-12">
+            <span class="loading loading-spinner loading-lg"></span>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-4 justify-center">
+            <a href="/connections" class="btn btn-outline">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Zurück zu Verbindungen
+            </a>
+            
+            <button x-show="connection && connection.status !== 'testing'" 
+                    @click="testConnection()" 
+                    class="btn btn-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Verbindung testen
+            </button>
+            
+            <button x-show="connection"
+                    @click="switchToConnection()"
+                    class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Zu dieser Verbindung wechseln
+            </button>
+        </div>
+
+        <!-- Info Box -->
+        <div class="alert alert-info mt-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+                <strong>Hinweis:</strong> Das Wechseln der Verbindung erfolgt sofort ohne Neustart der Anwendung.
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <script>
+        function connectionSwitcher(connectionId) {
+            return {
+                connection: null,
+                loading: true,
+
+                init() {
+                    this.loadConnection(connectionId);
+                },
+
+                loadConnection(id) {
+                    const connections = JSON.parse(localStorage.getItem('solr_connections') || '[]');
+                    this.connection = connections.find(conn => conn.id == id);
+                    this.loading = false;
+                },
+
+                async testConnection() {
+                    if (!this.connection) return;
+                    
+                    this.connection.status = 'testing';
+                    try {
+                        const response = await fetch('/api/test-connection', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                url: this.connection.url, 
+                                core: this.connection.core 
+                            })
+                        });
+                        const result = await response.json();
+                        this.connection.status = result.success ? 'success' : 'error';
+                        
+                        if (!result.success) {
+                            alert('Verbindungstest fehlgeschlagen: ' + result.error);
+                        }
+                    } catch (error) {
+                        this.connection.status = 'error';
+                        alert('Fehler beim Testen der Verbindung: ' + error.message);
+                    }
+                },
+
+                async switchToConnection() {
+                    if (!this.connection) {
+                        alert('Keine Verbindung ausgewählt!');
+                        return;
+                    }
+
+                    // Zeige Bestätigungsdialog
+                    if (!confirm(`Möchtest Du zur Verbindung "${this.connection.name}" wechseln?`)) {
+                        return;
+                    }
+
+                    try {
+                        // API-Call zum Wechseln der Verbindung
+                        const response = await fetch('/api/switch-connection', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                url: this.connection.url,
+                                core: this.connection.core,
+                                name: this.connection.name
+                            })
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            // Erfolg -> Toast anzeigen und zur Hauptseite weiterleiten
+                            if (window.showToast) {
+                                window.showToast(`Erfolgreich zu "${this.connection.name}" gewechselt!`, 'success');
+                            }
+                            setTimeout(() => window.location.href = '/', 500);
+                        } else {
+                            if (window.showToast) {
+                                window.showToast('Fehler beim Wechseln der Verbindung: ' + result.error, 'error');
+                            } else {
+                                alert('Fehler beim Wechseln der Verbindung: ' + result.error);
+                            }
+                        }
+                    } catch (error) {
+                        if (window.showToast) {
+                            window.showToast('Fehler beim Wechseln der Verbindung: ' + error.message, 'error');
+                        } else {
+                            alert('Fehler beim Wechseln der Verbindung: ' + error.message);
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</div>
+{% endblock %}

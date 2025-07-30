@@ -1,0 +1,402 @@
+{% extends "_base.html" %}
+
+{% block title %}Solr Verbindungen verwalten{% endblock %}
+
+{% block content %}
+<div class="p-8">
+        <div class="max-w-4xl mx-auto" x-data="connectionManager()">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                </svg>
+                Solr Verbindungen
+            </h1>
+            <p class="text-base-content/70">Verwalte Deine Solr-Server-Verbindungen</p>
+        </div>
+
+        <!-- Connection List -->
+        <div class="card bg-base-100 shadow-xl mb-6">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="card-title">Gespeicherte Verbindungen</h2>
+                    <button @click="showAddForm = true" class="btn btn-primary btn-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Neue Verbindung
+                    </button>
+                </div>
+
+                <!-- Empty State -->
+                <div x-show="connections.length === 0" class="text-center py-12">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                    </svg>
+                    <h3 class="text-lg font-semibold text-gray-600 mb-2">Keine Verbindungen gespeichert</h3>
+                    <p class="text-gray-500 mb-4">Erstelle Deine erste Solr-Verbindung um zu beginnen.</p>
+                    <button @click="showAddForm = true" class="btn btn-primary">Erste Verbindung erstellen</button>
+                </div>
+
+                <!-- Connection Cards -->
+                <div x-show="connections.length > 0" class="grid gap-4">
+                    <template x-for="(connection, index) in connections" :key="connection.id">
+                        <div class="card bg-base-200 border" :class="connection.isDefault ? 'border-primary' : 'border-base-300'">
+                            <div class="card-body p-4">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <h3 class="font-semibold" x-text="connection.name"></h3>
+                                            <div x-show="connection.isDefault" class="badge badge-primary badge-sm">Standard</div>
+                                            <div x-show="connection.status === 'testing'" class="badge badge-warning badge-sm">
+                                                <span class="loading loading-spinner loading-xs mr-1"></span>
+                                                Test läuft...
+                                            </div>
+                                            <div x-show="connection.status === 'success'" class="badge badge-success badge-sm">✓ Verbunden</div>
+                                            <div x-show="connection.status === 'error'" class="badge badge-error badge-sm">✗ Fehler</div>
+                                        </div>
+                                        <div class="text-sm text-base-content/70">
+                                            <div><strong>URL:</strong> <span x-text="connection.url"></span></div>
+                                            <div><strong>Core:</strong> <span x-text="connection.core"></span></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <!-- Verwenden Button -->
+                                        <button @click="useConnection(connection)" class="btn btn-primary btn-sm">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                            </svg>
+                                            Verwenden
+                                        </button>
+
+                                        <!-- Test Button -->
+                                        <button @click="testConnection(connection)" class="btn btn-ghost btn-sm" :disabled="connection.status === 'testing'" title="Verbindung testen">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </button>
+
+                                        <!-- Edit Button -->
+                                        <button @click="editConnection(index)" class="btn btn-ghost btn-sm" title="Bearbeiten">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </button>
+
+                                        <!-- Als Standard setzen Button -->
+                                        <button @click="setAsDefault(connection.id)" class="btn btn-ghost btn-sm" :disabled="connection.isDefault" title="Als Standard setzen">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                            </svg>
+                                        </button>
+
+                                        <!-- Löschen Button -->
+                                        <button @click="deleteConnection(index)" class="btn btn-ghost btn-sm text-error" title="Löschen">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add/Edit Form Modal -->
+        <div x-show="showAddForm || editingIndex !== null" class="modal modal-open" x-transition>
+            <div class="modal-box">
+                <h3 class="font-bold text-lg mb-4" x-text="editingIndex !== null ? 'Verbindung bearbeiten' : 'Neue Verbindung'"></h3>
+                
+                <form @submit.prevent="saveConnection()">
+                    <div class="form-control mb-4">
+                        <label class="label">
+                            <span class="label-text">Name</span>
+                        </label>
+                        <input type="text" x-model="form.name" class="input input-bordered" placeholder="z.B. Produktions-Server" required>
+                    </div>
+
+                    <div class="form-control mb-4">
+                        <label class="label">
+                            <span class="label-text">Solr URL</span>
+                        </label>
+                        <input type="url" x-model="form.url" class="input input-bordered" placeholder="http://localhost:8983" required>
+                        <label class="label">
+                            <span class="label-text-alt">Basis-URL des Solr-Servers (ohne Core)</span>
+                        </label>
+                    </div>
+
+                    <div class="form-control mb-4">
+                        <label class="label">
+                            <span class="label-text">Core Name</span>
+                        </label>
+                        <input type="text" x-model="form.core" class="input input-bordered" placeholder="testing" required>
+                    </div>
+
+                    <div class="form-control mb-6">
+                        <label class="cursor-pointer label">
+                            <span class="label-text">Als Standard-Verbindung setzen</span>
+                            <input type="checkbox" x-model="form.isDefault" class="checkbox checkbox-primary">
+                        </label>
+                    </div>
+
+                    <div class="modal-action">
+                        <button type="button" @click="cancelForm()" class="btn btn-ghost">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span x-text="editingIndex !== null ? 'Aktualisieren' : 'Hinzufügen'"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-between items-center">
+            <div>
+                <button @click="exportConnections()" class="btn btn-outline btn-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Exportieren
+                </button>
+                <input type="file" @change="importConnections($event)" accept=".json" class="hidden" x-ref="importFile">
+                <button @click="$refs.importFile.click()" class="btn btn-outline btn-sm ml-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                    </svg>
+                    Importieren
+                </button>
+            </div>
+            <div x-show="getDefaultConnection()">
+                <button @click="useDefaultConnection()" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Standard-Verbindung verwenden
+                </button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <script>
+        function connectionManager() {
+            return {
+                connections: [],
+                showAddForm: false,
+                editingIndex: null,
+                form: {
+                    name: '',
+                    url: '',
+                    core: '',
+                    isDefault: false
+                },
+
+                init() {
+                    this.loadConnections();
+                },
+
+                loadConnections() {
+                    const stored = localStorage.getItem('solr_connections');
+                    if (stored) {
+                        this.connections = JSON.parse(stored);
+                    }
+                },
+
+                saveConnections() {
+                    localStorage.setItem('solr_connections', JSON.stringify(this.connections));
+                },
+
+                saveConnection() {
+                    const connection = {
+                        id: this.editingIndex !== null ? this.connections[this.editingIndex].id : Date.now(),
+                        name: this.form.name,
+                        url: this.form.url.replace(/\/+$/, ''), // Remove trailing slashes
+                        core: this.form.core,
+                        isDefault: this.form.isDefault,
+                        status: null
+                    };
+
+                    // If setting as default, unset others
+                    if (connection.isDefault) {
+                        this.connections.forEach(conn => conn.isDefault = false);
+                    }
+
+                    if (this.editingIndex !== null) {
+                        this.connections[this.editingIndex] = connection;
+                    } else {
+                        this.connections.push(connection);
+                    }
+
+                    this.saveConnections();
+                    this.cancelForm();
+                },
+
+                editConnection(index) {
+                    const connection = this.connections[index];
+                    this.form = { ...connection };
+                    this.editingIndex = index;
+                },
+
+                deleteConnection(index) {
+                    if (confirm('Verbindung wirklich löschen?')) {
+                        this.connections.splice(index, 1);
+                        this.saveConnections();
+                    }
+                },
+
+                setAsDefault(id) {
+                    this.connections.forEach(conn => {
+                        conn.isDefault = conn.id === id;
+                    });
+                    this.saveConnections();
+                },
+
+                cancelForm() {
+                    this.showAddForm = false;
+                    this.editingIndex = null;
+                    this.form = { name: '', url: '', core: '', isDefault: false };
+                },
+
+                async testConnection(connection) {
+                    connection.status = 'testing';
+                    try {
+                        const response = await fetch('/api/test-connection', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: connection.url, core: connection.core })
+                        });
+                        const result = await response.json();
+                        connection.status = result.success ? 'success' : 'error';
+                    } catch (error) {
+                        connection.status = 'error';
+                    }
+                },
+
+                getDefaultConnection() {
+                    return this.connections.find(conn => conn.isDefault);
+                },
+
+                exportConnections() {
+                    const dataStr = JSON.stringify(this.connections, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'solr_connections.json';
+                    link.click();
+                    URL.revokeObjectURL(url);
+                },
+
+                async importConnections(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    try {
+                        const text = await file.text();
+                        const imported = JSON.parse(text);
+                        if (Array.isArray(imported)) {
+                            this.connections = imported;
+                            this.saveConnections();
+                            alert('Verbindungen erfolgreich importiert!');
+                        } else {
+                            alert('Ungültiges Dateiformat!');
+                        }
+                    } catch (error) {
+                        alert('Fehler beim Importieren: ' + error.message);
+                    }
+                    event.target.value = '';
+                },
+
+                async useDefaultConnection() {
+                    const defaultConn = this.getDefaultConnection();
+                    if (!defaultConn) {
+                        alert('Keine Standard-Verbindung gefunden!');
+                        return;
+                    }
+
+                    try {
+                        // API-Call zum Wechseln der Verbindung
+                        const response = await fetch('/api/switch-connection', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                url: defaultConn.url,
+                                core: defaultConn.core,
+                                name: defaultConn.name
+                            })
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            // Erfolg -> Toast anzeigen und zur Hauptseite weiterleiten
+                            if (window.showToast) {
+                                window.showToast(`Erfolgreich zu "${defaultConn.name}" gewechselt!`, 'success');
+                            }
+                            setTimeout(() => window.location.href = '/', 500);
+                        } else {
+                            if (window.showToast) {
+                                window.showToast('Fehler beim Wechseln der Verbindung: ' + result.error, 'error');
+                            } else {
+                                alert('Fehler beim Wechseln der Verbindung: ' + result.error);
+                            }
+                        }
+                    } catch (error) {
+                        if (window.showToast) {
+                            window.showToast('Fehler beim Wechseln der Verbindung: ' + error.message, 'error');
+                        } else {
+                            alert('Fehler beim Wechseln der Verbindung: ' + error.message);
+                        }
+                    }
+                },
+
+                async useConnection(connection) {
+                    if (!connection) {
+                        alert('Keine Verbindung ausgewählt!');
+                        return;
+                    }
+
+                    try {
+                        // API-Call zum Wechseln der Verbindung
+                        const response = await fetch('/api/switch-connection', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                url: connection.url,
+                                core: connection.core,
+                                name: connection.name
+                            })
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            // Erfolg -> Toast anzeigen und zur Hauptseite weiterleiten
+                            if (window.showToast) {
+                                window.showToast(`Erfolgreich zu "${connection.name}" gewechselt!`, 'success');
+                            }
+                            setTimeout(() => window.location.href = '/', 500);
+                        } else {
+                            if (window.showToast) {
+                                window.showToast('Fehler beim Wechseln der Verbindung: ' + result.error, 'error');
+                            } else {
+                                alert('Fehler beim Wechseln der Verbindung: ' + result.error);
+                            }
+                        }
+                    } catch (error) {
+                        if (window.showToast) {
+                            window.showToast('Fehler beim Wechseln der Verbindung: ' + error.message, 'error');
+                        } else {
+                            alert('Fehler beim Wechseln der Verbindung: ' + error.message);
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</div>
+{% endblock %}

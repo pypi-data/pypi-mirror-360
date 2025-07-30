@@ -1,0 +1,193 @@
+{% extends "_base.html" %}
+
+{% block title %}Suchergebnisse - Solr Helper{% endblock %}
+
+{% block content %}
+<div class="p-8">
+        <div class="max-w-6xl mx-auto">
+        <!-- Header mit Zurück-Button -->
+        <div class="mb-6">
+            <div class="breadcrumbs text-sm">
+                <ul>
+                    <li><a href="/" class="link link-hover">Startseite</a></li>
+                    <li>Suchergebnisse</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Suchergebnisse Card -->
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <div class="flex justify-between items-center mb-4">
+                    <h1 class="card-title text-2xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Suchergebnisse
+                    </h1>
+                    <a href="/" class="btn btn-outline btn-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Neue Suche
+                    </a>
+                </div>
+
+                <!-- Suchinfo -->
+                <div class="alert alert-info mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <strong>{{ results.numFound }}</strong> Ergebnisse für "<strong>{{ query }}</strong>"
+                        {% if field %}
+                            in Feld "<strong>{{ field }}</strong>"
+                        {% endif %}
+                        {% if results.numFound > results.rows %}
+                            ({{ results.start + 1 }}-{{ results.start + results.docs|length }} von {{ results.numFound }})
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if error %}
+                    <div class="alert alert-error mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>{{ error }}</span>
+                    </div>
+                {% endif %}
+
+                {% if results.docs %}
+                    <!-- Ergebnistabelle -->
+                    <div class="overflow-x-auto">
+                        <table class="table table-zebra">
+                            <thead>
+                                <tr>
+                                    <th>{{ unique_key_field }}</th>
+                                    <th>Relevante Felder</th>
+                                    <th class="text-center">Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for doc in results.docs %}
+                                <tr class="hover">
+                                    <td>
+                                        <div class="font-mono text-sm">
+                                            {{ doc[unique_key_field] }}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="space-y-1">
+                                            {% set doc_id = doc[unique_key_field] %}
+                                            {% if results.highlighting and results.highlighting.get(doc_id) %}
+                                                <!-- Solr Highlighting Snippets -->
+                                                {% for field_name, snippets in results.highlighting[doc_id].items() %}
+                                                    {% if snippets %}
+                                                        {% for snippet in snippets[:2] %}
+                                                            <div class="text-xs">
+                                                                <span class="badge badge-outline badge-xs mr-1">{{ field_name }}</span>
+                                                                <span class="text-gray-600">{{ snippet|safe }}</span>
+                                                            </div>
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                                <!-- Fallback: Manuelle Suche nach Treffern -->
+                                                {% for field_name, field_value in doc.items() %}
+                                                    {% if field_name != unique_key_field and field_name != '_version_' and field_value %}
+                                                        {% if field_value is string and query.lower() in field_value.lower() %}
+                                                            <div class="text-xs">
+                                                                <span class="badge badge-outline badge-xs mr-1">{{ field_name }}</span>
+                                                                <span class="text-gray-600">{{ field_value[:100] }}{% if field_value|length > 100 %}...{% endif %}</span>
+                                                            </div>
+                                                        {% elif field_value is iterable and field_value is not string %}
+                                                            {% set found_match = false %}
+                                                            {% for item in field_value %}
+                                                                {% if not found_match and item is string and query.lower() in item.lower() %}
+                                                                    <div class="text-xs">
+                                                                        <span class="badge badge-outline badge-xs mr-1">{{ field_name }}</span>
+                                                                        <span class="text-gray-600">{{ item[:100] }}{% if item|length > 100 %}...{% endif %}</span>
+                                                                    </div>
+                                                                    {% set found_match = true %}
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% endif %}
+
+                                            <!-- Fallback wenn keine Highlights gefunden -->
+                                            {% if not results.highlighting or not results.highlighting.get(doc_id) %}
+                                                {% set has_highlights = false %}
+                                                {% for field_name, field_value in doc.items() %}
+                                                    {% if field_name != unique_key_field and field_name != '_version_' and field_value and not has_highlights %}
+                                                        <div class="text-xs text-gray-500">
+                                                            <span class="badge badge-outline badge-xs mr-1">{{ field_name }}</span>
+                                                            Keine Textvorschau verfügbar
+                                                        </div>
+                                                        {% set has_highlights = true %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="/record/{{ doc[unique_key_field] }}" class="btn btn-primary btn-sm">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                            Bearbeiten
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginierung -->
+                    {% if results.numFound > results.rows %}
+                        <div class="flex justify-center mt-6">
+                            <div class="join">
+                                {% if results.start > 0 %}
+                                    <a href="/search-results?query={{ query }}{% if field %}&field={{ field }}{% endif %}&start={{ results.start - results.rows }}" class="join-item btn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                        Vorherige
+                                    </a>
+                                {% endif %}
+
+                                <span class="join-item btn btn-disabled">
+                                    Seite {{ (results.start // results.rows) + 1 }} von {{ ((results.numFound - 1) // results.rows) + 1 }}
+                                </span>
+
+                                {% if results.start + results.rows < results.numFound %}
+                                    <a href="/search-results?query={{ query }}{% if field %}&field={{ field }}{% endif %}&start={{ results.start + results.rows }}" class="join-item btn">
+                                        Nächste
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <!-- Keine Ergebnisse -->
+                    <div class="text-center py-12">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.5-.9-6.134-2.379M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">Keine Ergebnisse gefunden</h3>
+                        <p class="text-gray-500 mb-4">Für den Suchbegriff "{{ query }}" wurden keine Dokumente gefunden.</p>
+                        <a href="/" class="btn btn-primary">Neue Suche starten</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
