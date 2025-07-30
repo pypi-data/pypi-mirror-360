@@ -1,0 +1,40 @@
+name: Sanity
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  sanity:
+    strategy:
+      matrix:
+        python: ["3.9", "3.10", "3.11", "3.12"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Update pip
+        run: python3 -m pip install --upgrade pip
+
+      - name: Install in editable mode
+        run: python3 -m pip install -e .
+
+      - name: Install in development mode
+        run: python3 -m pip install .[dev]
+
+      - name: Run compileall
+        run: python3 -m compileall src/**/*.py tests/*.py
+
+      - name: Check version through Python
+        run: python3 -m cwhy --version
+
+      - name: Check version
+        run: cwhy --version
