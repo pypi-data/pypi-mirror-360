@@ -1,0 +1,114 @@
+[project]
+name = "torch-named-linops"
+description = "A flexible linear operator abstraction in pytorch."
+authors = [
+    { name = "Mark Nishimura", email = "nishimuramarky@gmail.com" }
+]
+dependencies = [
+    "triton>=3.0; sys_platform != 'darwin'",
+    "jaxtyping>=0.2.36",
+    "setuptools>=75.6.0", # For triton
+    # Torch on mac (intel)
+    "torch>1.13,<2.3; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "torchvision<0.22.1; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "torchaudio>1.13,<2.3; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    # Torch on other platforms
+    "torch>=2.5.1; sys_platform != 'darwin' or platform_machine != 'x86_64'",
+    "torchvision>=0.20.1; sys_platform != 'darwin' or platform_machine != 'x86_64'",
+    "torchaudio>=2.5.1; sys_platform != 'darwin' or platform_machine != 'x86_64'",
+    # "torch>=2.5.1",
+    # "torchvision>=0.20.1",
+    # "torchaudio>=2.5.1",
+    "einops>=0.8.0",
+    "tqdm>=4.67.1",
+    "scipy>=1.15.2",
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dynamic = ["version"]
+license-files = ["LICENCE"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+
+[dependency-groups]
+dev = [
+    "furo>=2024.8.6",
+    "ipykernel>=6.29.5",
+    "isort>=6.0.1",
+    "jupyterlab>=4.4.3",
+    "marimo>=0.12.0",
+    "markdown-pytest>=0.3.2",
+    "matplotlib>=3.10.1",
+    "myst-nb>=1.2.0",
+    "myst-parser>=3.0.1",
+    "pre-commit>=4.0.1",
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.8.4",
+    "sphinx>=8.0",
+    "sphinx-autobuild>=2024.10.3",
+]
+sigpy = [
+    "numba>=0.60.0",
+    "llvmlite>=0.43.0",
+    "easydict>=1.13",
+    "sigpy>=0.1.27",
+    "cupy-cuda12x>=13.4.1; sys_platform != 'darwin'",
+    "numpy<=2.0",
+]
+all = [{include-group="dev"}, {include-group="sigpy"}]
+
+
+# [tool.ruff]
+# target-version = "py310"
+
+[tool.ruff.lint]
+ignore = [
+    "F403", # from ___ import *
+    "F401", # unused imports
+    "F541", # f-string without placeholders
+    "F722", # Allow jaxtyping annotations syntax (e.g. Float[Tensor, "B ..."])
+]
+exclude = [
+    "**/tests/**",
+    "dev/**",
+]
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = """
+-ra -q \
+-m 'not slow'
+"""
+# --ignore libraries --ignore notebooks"
+filterwarnings = [
+    "ignore::DeprecationWarning:sigpy.*",
+    "ignore::DeprecationWarning:cupy.*",
+]
+markers = [
+    "slow: tests that are slow (deselect with '-m \"not slow\"')",
+    "big: tests that require large memory (cpu or gpu)",
+    "gpu: tests that require a gpu",
+    "plot: tests that involve plotting",
+]
+
+[tool.coverage.run]
+omit = ["*/tests/*"] # Both test/ and tests/
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/torchlinops"]
+
+[tool.hatch.version]
+path = "src/torchlinops/__init__.py"
