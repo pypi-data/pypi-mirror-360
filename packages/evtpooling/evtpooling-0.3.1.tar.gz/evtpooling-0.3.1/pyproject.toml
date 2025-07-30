@@ -1,0 +1,144 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evtpooling"
+version = "0.3.1"
+description = "evtpooling contains the framework needed to improve tail risk forecasts"
+readme = "README.rst"
+authors = [
+  { name = "J.T. Kim", email = "567233jk@eur.nl" }
+]
+maintainers = [
+  { name = "J.T. Kim", email = "567233jk@eur.nl" }
+]
+classifiers = []
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+dependencies = [
+  "pandas",
+  "chardet",
+  "openpyxl",
+  "pyarrow",
+  "rapidfuzz"
+]
+
+[project.optional-dependencies]
+dev = [
+  "coverage",
+  "mypy",
+  "pytest",
+  "ruff"
+]
+
+[project.urls]
+bugs = "https://github.com/JTKimQF/evtpooling/issues"
+changelog = "https://github.com/JTKimQF/evtpooling/blob/master/changelog.md"
+homepage = "https://github.com/JTKimQF/evtpooling"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.package-data]
+"*" = ["*.*"]
+
+[tool.mypy]
+files = "src/evtpooling"
+ignore_missing_imports = true
+strict_optional = true
+disallow_untyped_defs = true
+strict = true
+warn_unreachable = true
+warn_no_return = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+allow_untyped_defs = true
+disable_error_code = "attr-defined"
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = "evtpooling"
+known_third_party = "pandas,numpy,scikit-learn,fuzzywuzzy"
+
+[tool.coverage.run]
+branch = true
+source = ["evtpooling"]
+
+[tool.bumpversion]
+current_version = "0.2.1"
+commit = true
+tag = true
+
+[tool.ruff]
+line-length = 100
+exclude = [
+  ".git",
+  "__pycache__",
+  "build",
+  "dist",
+  "venv",
+  ".venv",
+  ".tox",
+  "docs"
+]
+target-version = "py312"
+
+[tool.ruff.format]
+docstring-code-format = true
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.ruff.lint]
+# ------------------------------------------------------------------------------
+# Rule Set Reference (prefixes used in `select` and `ignore`):
+#
+# Plugin           | Description                          | Rule Prefix
+# ----------------|--------------------------------------|-------------
+# flake8-bugbear   | Best practices, likely bugs          | B
+# pep8-naming      | Enforce naming conventions           | N
+# isort            | Sort imports                         | I
+# pyupgrade        | Suggest modern syntax (Python >= 3.9)| UP
+# pylint           | Style and design hints               | PL
+# flake8-bandit    | Security linting                     | S
+# ------------------------------------------------------------------------------
+select = ["B", "C", "E", "F", "W", "I", "N", "UP", "S", "B9"]
+ignore = ["E203", "S101", "S301"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
+"etl.py" = ["F401", "F403", "F405"]
+"etl_defaults.py" = ["F403", "F405"]
+"extract.py" = ["F403", "F405"]
+"iid.py" = ["F403"]
+"plots.py" = ["F401", "C901", "F403"]
+"transform.py" = ["F403", "F405", "C901"]
+"test_etl.py" = ["F403", "F405"]
+"test_extract.py" = ["F403", "F405"]
+"test_iid.py" = ["F403", "F405"]
+"test_transform.py" = ["F403", "F405"]
+"utils.py" = ["F401"]
+"hmix.py" = ["C901"]
+"rmtc.py" = ["C901"]
+"test_backtesting.py" = ["C416"]
+"testing_script.py" = ["C416"]
+"backtesting.py" = ["C901"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+# CODE REVIEW COMMANDS
+# ruff check src/ tests/ --> to check the src and tests directories
+# ruff check src/ tests/ --fix --> checks directories and fixes
+# ruff check src/ tests/ --fix --diff --> shows fixes before fixing it
+
+# FORMAT REVIEW COMMANDS
+# ruff format src/ tests/ --> Enables Ruff's formatter to tidy up code
+# ruff format src/ tests/ --check --diff --> shows format fixes before fixing it
