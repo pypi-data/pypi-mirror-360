@@ -1,0 +1,105 @@
+[project]
+version = "0.3.61"
+name = "agilab"
+description = "AGILAB a datascience IDE for engineering to explore AI"
+requires-python = ">=3.11"
+readme = "README.md"
+authors = [
+    { name = "Jean-Pierre Morard", email = "focus@thalesgroup.com" }
+]
+
+classifiers = [
+    "Intended Audience :: Developers",
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+]
+
+keywords = [
+    "jupyter", "mlflow", "asyncio", "dask", "rapids",
+    "streamlit", "distributed", "cython", "cluster", "dataframe",
+    "dataset", "load balancing", "gen ai", "copilot", "agi",
+    "pycharm", "datascience"
+]
+
+dependencies = [
+    "build",
+    "pip",
+    "setuptools",
+    "twine",
+    "wheel",
+    "agi-core",
+    "pylint",
+]
+
+[project.urls]
+Documentation = "https://thalesgroup.github.io/agilab"
+Source = "https://github.com/ThalesGroup/agilab"
+Tracker = "https://github.com/ThalesGroup/agilab/issue"
+
+[dependency-groups]
+dev = ["black", "pytest", "licensecheck", "pytest-local-badge"]
+sphinx = [
+    "sphinx-autodoc-typehints",
+    "sphinx-pyreverse",
+    "sphinx-design",
+    "sphinx_tabs",
+    "myst-parser[linkify]",
+    "sphinxcontrib-plantuml",
+    "sphinx-rtd-theme",
+    "pylint",
+    "setuptools",
+    "graphviz",
+    "docutils",
+    "geopy",
+    "requests",
+    "licensecheck",
+]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.uv.sources.agilab]
+workspace = true
+
+[tool.uv.sources.agi-core]
+path = "src/fwk/core"
+
+[tool.uv.sources.agi-gui]
+path = "src/fwk/gui"
+
+[tool.uv.workspace]
+members = ["apps", "views"]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["agi*", "apps*", "views*"]
+exclude = [
+    "fwk.core*",
+    ".idea*",
+    "test*",
+    "fwk.apps.flight_project.build*",
+    "fwk.apps.mycode_project.build*"
+]
+
+[tool.mypy]
+mypy_path = ["stubs"]
+disallow_untyped_defs = false
+ignore_missing_imports = true
+
+[tool.pyment]
+source_dir = "src"
+format = "google"
