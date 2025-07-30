@@ -1,0 +1,62 @@
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simple-http-checker"
+version = "0.1.5"
+description = "A simple CLI tool to check the status of URLs."
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{ name = "Lauro Fialho Müller", email = "contact@lauromueller.com" }]
+license = { text = "MIT License" }
+dependencies = [
+    "requests>=2.28,<3.0",        # We require at least version 2.28 of requests
+    "click>=8.0,<9.0",            # We require click version 8.0 or higher, but less than 9.0
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-mock",
+    "ruff",
+    "black",
+    "mypy",
+    "bandit",
+    "types-requests",
+    "build",
+    "twine",
+]
+
+[tool.ruff]
+# Enable a base set of rules.
+# E/W: pycodestyle (PEP 8)
+# F: PyFlakes (logical errors like unused imports)
+# I: isort (import sorting)
+# N: pep8-naming (naming conventions)
+# B: bandit (security checks, we will cover this more later)
+line-length = 88
+exclude = [".venv", "__pycache__", "build", "dist"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "B"]
+
+[tool.black]
+line-length = 88
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true        # Warns if a function returns Any
+warn_unused_configs = true
+ignore_missing_imports = true # Crucial for libraries without type stubs
+
+[tool.bandit]
+exclude_dirs = [".venv", "__pycache__", "build", "dist"]
+skips = [
+    "B101",  # Use of assert detected; use of assert detected; use of assert detected; use of assert detected
+]
+
+[project.scripts]
+# This creates the 'check-urls' command when the package is installed
+check-urls = "simple_http_checker.cli:main"
