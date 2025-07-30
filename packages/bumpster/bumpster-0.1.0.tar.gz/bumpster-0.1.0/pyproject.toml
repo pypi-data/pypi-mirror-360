@@ -1,0 +1,54 @@
+[project]
+name = "bumpster"
+version = "0.1.0"
+description = "A CLI tool for semantic version management"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [ "click>=8.1.0", "rich>=13.0.0", "inquirer>=3.1.0", "tomlkit>=0.12.0", "packaging>=23.0",]
+[[project.authors]]
+name = "AI App Base"
+
+[build-system]
+requires = [ "hatchling",]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [ "pytest>=7.0.0", "pytest-cov>=4.0.0", "pyright>=1.1.0", "ruff>=0.1.0", "pre-commit>=3.5.0",]
+
+[project.license]
+text = "ISC"
+
+[project.scripts]
+bump = "bump_version.cli:main"
+bump-py = "bump_version.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/yarnovo/bumpster-py"
+Repository = "https://github.com/yarnovo/bumpster-py.git"
+Issues = "https://github.com/yarnovo/bumpster-py/issues"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportUnknownParameterType = false
+reportUnknownVariableType = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportMissingParameterType = false
+
+[tool.ruff.lint]
+select = [ "E", "W", "F", "I", "B", "UP", "RUF",]
+ignore = [ "E501", "RUF001", "RUF002", "RUF003",]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.hatch.build]
+include = [ "bump_version/**/*.py", "bump_version/py.typed",]
