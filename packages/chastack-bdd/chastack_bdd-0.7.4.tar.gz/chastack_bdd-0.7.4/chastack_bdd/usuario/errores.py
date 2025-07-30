@@ -1,0 +1,3 @@
+from chastack_bdd.errores import ErrorBDD, ErrorMalaSolicitud
+
+class ErrorAccesoIncorrecto(ErrorMalaSolicitud): ...
