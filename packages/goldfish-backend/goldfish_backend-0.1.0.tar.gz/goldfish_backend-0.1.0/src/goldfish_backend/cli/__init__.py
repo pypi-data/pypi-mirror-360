@@ -1,0 +1,3 @@
+"""
+Goldfish CLI module
+"""
