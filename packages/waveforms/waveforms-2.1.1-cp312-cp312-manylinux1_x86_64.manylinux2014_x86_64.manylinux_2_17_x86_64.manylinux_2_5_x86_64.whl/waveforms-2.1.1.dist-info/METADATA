@@ -1,0 +1,104 @@
+Metadata-Version: 2.4
+Name: waveforms
+Version: 2.1.1
+Summary: Edit waveforms used in experiment
+Author-email: feihoo87 <feihoo87@gmail.com>
+Maintainer-email: feihoo87 <feihoo87@gmail.com>
+License: MIT License
+Project-URL: Homepage, https://github.com/feihoo87/waveforms
+Project-URL: Bug Reports, https://github.com/feihoo87/waveforms/issues
+Project-URL: Source, https://github.com/feihoo87/waveforms/
+Keywords: signal,waveform,experiment,laboratory
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: click>=7.1.2
+Requires-Dist: dill>=0.3.6
+Requires-Dist: numpy>=1.13.3
+Requires-Dist: antlr4-python3-runtime>=4.11.1
+Requires-Dist: scipy>=1.0.0
+Provides-Extra: full
+Requires-Dist: msgpack>=1.0.5; extra == "full"
+Provides-Extra: test
+Requires-Dist: pytest>=7.4.0; extra == "test"
+Requires-Dist: pytest-asyncio>=0.21.1; extra == "test"
+Provides-Extra: docs
+Requires-Dist: Sphinx; extra == "docs"
+Requires-Dist: sphinxcontrib-napoleon; extra == "docs"
+Requires-Dist: sphinxcontrib-zopeext; extra == "docs"
+Dynamic: license-file
+
+# waveforms
+[![View build status](https://github.com/feihoo87/waveforms/actions/workflows/workflow.yml/badge.svg)](https://github.com/feihoo87/waveforms/)
+[![Coverage Status](https://coveralls.io/repos/github/feihoo87/waveforms/badge.svg?branch=master)](https://coveralls.io/github/feihoo87/waveforms?branch=master)
+[![PyPI version](https://badge.fury.io/py/waveforms.svg)](https://pypi.org/project/waveforms/)
+
+Form waveforms used in experiment.
+
+## Installation
+We encourage installing waveforms via the pip tool (a python package manager):
+```bash
+python -m pip install waveforms
+```
+
+To install from the latest source, you need to clone the GitHub repository on your machine.
+```bash
+git clone https://github.com/feihoo87/waveforms.git
+```
+
+Then dependencies and `waveforms` can be installed in this way:
+```bash
+cd waveforms
+python -m pip install numpy
+python -m pip install -e .
+```
+
+## Usage
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+from waveforms import *
+
+pulse = cosPulse(20e-9)
+
+x_wav = zero()
+y_wav = zero()
+
+I, Q = mixing(0.5*pulse, freq=-20e6, DRAGScaling=0.2)
+x_wav += I
+y_wav += Q
+
+I, Q = mixing(pulse >> 1e-6, freq=-20e6, phase=np.pi/2, DRAGScaling=0.2)
+x_wav += I
+y_wav += Q
+
+I, Q = mixing((0.5 * pulse) >> 2e-6, freq=-20e6, DRAGScaling=0.2)
+x_wav += I
+y_wav += Q
+
+
+t = np.linspace(-1e-6, 9e-6, 10001)
+plt.plot(t, x_wav(t))
+plt.plot(t, y_wav(t))
+plt.show()
+```
+
+## Reporting Issues
+Please report all issues [on github](https://github.com/feihoo87/waveforms/issues).
+
+## License
+
+[MIT](https://opensource.org/licenses/MIT)
