@@ -1,0 +1,39 @@
+[build-system]
+# uv build doesn't support dynamic version yet
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+[project]
+name = "ewok"
+description = "Education Warehouse Octopus Kit - Extensible CLI framework with plugin support"
+readme = "README.md"
+authors = [
+    { name = "Robin van der Noord", email = "robin.vdn@educationwarehouse.nl" },
+    { name = "Remco Boerma", email = "remco.b@educationwarehouse.nl" },
+]
+requires-python = ">=3.12"
+dynamic = ["version"]
+dependencies = [
+    "docstring_parser < 1", # better help
+    "fabric >= 3.1, < 4", # invoke but remote
+    "invoke >= 2.1, < 3", # base cli tool
+    "termcolor < 3", # improved ansi colored print (v3 removes Color type)
+    "typing-extensions < 5", # using modern typing features in older python versions
+]
+
+[project.urls]
+Documentation = "https://github.com/educationwarehouse/ewok#readme"
+Issues = "https://github.com/educationwarehouse/ewok/issues"
+Source = "https://github.com/educationwarehouse/ewok"
+
+[tool.hatch.version]
+path = "src/ewok/__about__.py"
+
+[tool.semantic_release]
+branch = "master"
+version_variable = "src/ewok/__about__.py:__version__"
+change_log = "CHANGELOG.md"
+upload_to_repository = false
+upload_to_release = false
+build_command = "uv build"
