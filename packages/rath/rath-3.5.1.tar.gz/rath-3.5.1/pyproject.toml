@@ -1,0 +1,117 @@
+[project]
+name = "rath"
+version = "3.5.1"
+description = "async transport-agnostic graphql client"
+authors = [{ name = "jhnnsrs", email = "jhnnsrs@gmail.com" }]
+requires-python = ">=3.11"
+readme = "README.md"
+dependencies = [
+    "koil>=2.0.3",
+    "graphql-core>=3.2.0,<4",
+    "pydantic>2",
+]
+
+[project.optional-dependencies]
+websockets = ["websockets~=10.2"]
+aiohttp = [
+    "aiohttp>=3.8.2,<4",
+    "certifi>2021",
+]
+httpx = ["httpx>=0.23.0,<0.24"]
+signing = ["cryptography>=41.0.3,<42"]
+
+[tool.uv]
+dev-dependencies = [
+    "httpx>=0.23.0,<0.24",
+    "autoflake>=1.7.7,<2",
+    "pytest>=7.2.0,<8",
+    "testcontainers>=3.7.0,<4",
+    "pytest-qt>=4.2.0,<5",
+    "pytest-asyncio>=0.20.2,<0.21",
+    "aiohttp>=3.8.3,<4",
+    "websockets~=10.4",
+    "black>=22.10.0,<23",
+    "pytest-cov>=4.0.0,<5",
+    "ruff>0.11",
+    "cryptography>=41.0.3,<42",
+    "pyjwt>=2.8.0,<3",
+    "fakts==1.0.0",
+    "herre==1.0.0",
+    "mypy>=1.7.1,<2",
+    "pyqt5==5.15.11",
+    "python-semantic-release>=9.21.1",
+]
+
+[tool.hatch.build.targets.sdist]
+include = ["rath"]
+
+[tool.hatch.build.targets.wheel]
+include = ["rath"]
+
+[tool.hatch.build]
+include = [
+    "rath/py.typed"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+exclude = ["venv/", "tests/", "examples/"]
+ignore_missing_imports = true
+
+[tool.ruff]
+extend-select = ["ANN", "D1"]
+extend-ignore = ["ANN101", "ANN002", "ANN003", "D100", "ANN401"]
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "tests",
+    "examples",
+]
+
+# Same as Black.
+line-length = 300
+
+[[tool.pydoc-markdown.loaders]]
+type = "python"
+search_path = ["rath"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+qt_api = "pyqt5"
+markers = [
+    "integration: marks tests that require a running server",
+    "qt: marks tests that require a running qt application",
+    "public: marks tests that require a public api",
+]
+
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+upload_to_pypi = true
+branch = "main"
+build_command = "uv build"
+
