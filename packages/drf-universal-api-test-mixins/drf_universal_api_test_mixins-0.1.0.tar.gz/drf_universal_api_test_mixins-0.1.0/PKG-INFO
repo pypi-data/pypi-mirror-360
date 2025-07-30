@@ -1,0 +1,102 @@
+Metadata-Version: 2.3
+Name: drf-universal-api-test-mixins
+Version: 0.1.0
+Summary: Универсальные миксины для тестирования DRF API
+License: MIT
+Author: Eduard Slobodyanik
+Author-email: slobodyanik.ed@gmail.com
+Requires-Python: >=3.12,<4.0
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Dist: django (>=5.2.4,<6.0.0)
+Requires-Dist: djangorestframework (>=3.16.0,<4.0.0)
+Description-Content-Type: text/markdown
+
+# DRF Universal API Test Mixins
+
+**Универсальные миксины для автоматизации тестирования REST API на Python/Django REST Framework.**
+
+## Описание
+
+Этот пакет содержит три миксина, которые:
+
+- **Сокращают количество ручного кода в тестах**
+- **Увеличивают покрытие тестами**
+- **Облегчают поддержку тестов при изменениях в проекте**
+- **Могут применяться в любом проекте на Django/DRF**
+
+## Основные миксины
+
+1. **CRUDAPITestMixin**  
+   Автоматизирует тесты для CRUD-эндпоинтов: проверяет разрешённые/запрещённые HTTP-методы, разрешение URL, аутентификацию, поведение при пустых данных.
+
+2. **ResponseStructureMixin**  
+   Проверяет структуру и содержимое ответов API для list/retrieve-запросов.
+
+3. **ValidationErrorTestMixin**  
+   Стандартизирует проверку ошибок валидации для POST/PUT/PATCH-запросов.
+
+## Пример использования
+
+```python
+from mixins import CRUDAPITestMixin, ResponseStructureMixin
+from rest_framework.test import APITestCase
+
+class MyModelListView:
+   ...
+
+
+class MyModelAPITestCase(CRUDAPITestMixin, ResponseStructureMixin, APITestCase):
+    list_url_name = "my-model-list"
+    list_view_class = MyModelListView
+    allowed_list_methods = ["get"]
+    model = MyModel
+    expected_item_fields = {"id", "name", "created_at"}
+
+    def setUp(self):
+        MyModel.objects.create(name="Test 1")
+        MyModel.objects.create(name="Test 2")
+```
+
+## Установка
+
+> Пакет можно устанавливать как через Poetry, так и через pip.
+
+### Через Poetry
+
+```bash
+poetry add drf-universal-api-test-mixins
+```
+
+### Через pip
+
+```bash
+pip install drf-universal-api-test-mixins
+```
+
+**или напрямую из репозитория:**
+
+```bash
+pip install git+https://github.com/Altair788/drf-universal-api-test-mixins.git
+```
+
+## Почему это удобно?
+
+- **Миксины универсальны** — подходят для любого DRF-проекта.
+- **Минимум кода** — только настройка атрибутов и минимум ручных тестов.
+- **Лёгкая поддержка** — изменения в API требуют правки только в одном месте.
+
+**Автор:** Eduard Slobodyanik  
+**Telegram:** [@eslobodyanik](https://t.me/eslobodyanik)  
+**GitHub:** [Altair788](https://github.com/Altair788)
+
+### Дополнительно (по желанию)
+
+- Можно добавить раздел "Лицензия" (например, MIT).
+- Можно добавить "Системные требования" (Python >= 3.12, Django >= 5.2.4, DRF >= 3.16.0).
+- Можно добавить "Contributing" — как предлагать улучшения.
+
+**Ваш README уже отлично подходит для публикации и использования!**  
+Если потребуется расширенный шаблон или дополнительные разделы — дайте знать!
