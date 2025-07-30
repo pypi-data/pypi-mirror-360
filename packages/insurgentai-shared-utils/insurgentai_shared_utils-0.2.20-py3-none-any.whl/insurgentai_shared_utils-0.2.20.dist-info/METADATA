@@ -1,0 +1,64 @@
+Metadata-Version: 2.4
+Name: insurgentai_shared_utils
+Version: 0.2.20
+Summary: A collection of shared utility functions for InsurgentAI microservices.
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi[standard]>=0.115.12
+Requires-Dist: psycopg[binary,pool]>=3.2.6
+Requires-Dist: pydantic>=2.11.7
+Requires-Dist: sqlmodel>=0.0.24
+Requires-Dist: redis
+Requires-Dist: boto3==1.39.1
+
+# Knowledge Graph Shared Utils
+
+Shared utilities for the Knowledge Graph system, providing database clients, SQL models, and query utilities for both regular PostgreSQL operations and Apache AGE graph database operations.
+
+## Features
+
+- **Dual Database Support**: Separate clients for PostgreSQL (SQLModel) and Apache AGE (psycopg)
+- **Type-Safe Models**: SQLModel-based SQL models with proper relationships
+- **Query Utilities**: Modular query functions for different data types
+- **Connection Management**: Scoped and persistent session support
+- **Event Contracts**: Standardized event definitions for system communication
+
+## Quick Start
+
+```python
+from shared_utils.clients.db_client import create_db_client
+from shared_utils.clients.age_client import create_age_client
+from shared_utils.queries import documents, apache_age
+
+# Regular database operations
+db_client = create_db_client()
+with db_client.scoped_session() as session:
+    doc = documents.get_document(session, document_id)
+
+# Graph database operations  
+age_client = create_age_client()
+with age_client.scoped_session() as conn:
+    nodes = apache_age.find_nodes(conn, age_client.get_graph_name(), "Person")
+```
+
+## Documentation
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed documentation on:
+- Database client architecture
+- SQL models and relationships
+- Query module organization
+- Environment configuration
+- Best practices and migration notes
+
+## Installation
+
+Install with your package manager:
+```bash
+pip install -e .
+```
+
+Required dependencies are specified in `pyproject.toml`.
+
+## Environment Variables
+
+See the architecture guide for complete environment variable requirements for both PostgreSQL and Apache AGE connections.
