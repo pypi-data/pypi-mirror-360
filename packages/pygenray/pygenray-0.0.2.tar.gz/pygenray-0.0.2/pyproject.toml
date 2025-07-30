@@ -1,0 +1,76 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pygenray"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "John Ragland", email = "john.ragland@whoi.edu" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "numpy",
+  "scipy",
+  "xarray",
+  "matplotlib",
+  "numba",
+  "tqdm",
+]
+[project.optional-dependencies]
+docs = [
+  "furo",
+  "myst_parser >=0.13",
+  "sphinx >=4.0",
+  "sphinx-copybutton",
+  "sphinx-autodoc-typehints",
+]
+
+[project.urls]
+Documentation = "https://github.com/John Ragland/pygenray#readme"
+Issues = "https://github.com/John Ragland/pygenray/issues"
+Source = "https://github.com/John Ragland/pygenray"
+
+[tool.hatch.version]
+path = "src/pygenray/__about__.py"
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/pygenray tests}"
+
+[tool.coverage.run]
+source_pkgs = ["pygenray", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/pygenray/__about__.py",
+]
+
+[tool.coverage.paths]
+pygenray = ["src/pygenray", "*/pygenray/src/pygenray"]
+tests = ["tests", "*/pygenray/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
