@@ -1,0 +1,39 @@
+Bootstrap: docker
+From: alpine:3.20
+
+
+%post
+
+    # update and install python/bach
+    apk update && apk add --no-cache bash python3 py3-pip
+
+    apk add --no-cache gcc make 
+
+    apk add perl-xml-simple
+
+
+    # Download and install HMMER compatible with rnammer
+    VERSION=2.3.2
+    NAME="TEST"
+    wget http://eddylab.org/software/hmmer/hmmer-${HMMER_VERSION}.tar.gz
+    tar -xzf ${NAME}-${VERSION}.tar.gz
+    cd ${NAME}-${VERSION}
+    ./configure --prefix=/usr/local --enable-threads
+    make
+    make install
+    #make check
+    cd ..
+    rm -rf ${NAME}-${VERSION}*
+
+
+    apk del gcc make 
+    rm -rf /var/cache/apk*
+
+
+%environment
+    export LC_ALL=C
+
+
+%runscript
+    exec NAME "$@"
+
