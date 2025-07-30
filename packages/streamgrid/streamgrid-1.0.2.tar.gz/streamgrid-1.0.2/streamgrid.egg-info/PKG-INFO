@@ -1,0 +1,74 @@
+Metadata-Version: 2.1
+Name: streamgrid
+Version: 1.0.2
+Summary: Ultra-fast multi-stream video display
+Author: Muhammad Rizwan Munawar
+Project-URL: Homepage, https://github.com/RizwanMunawar/streamgrid
+Project-URL: Repository, https://github.com/RizwanMunawar/streamgrid
+Project-URL: Issues, https://github.com/RizwanMunawar/streamgrid/issues
+Project-URL: Documentation, https://github.com/RizwanMunawar/streamgrid#readme
+Keywords: video,streaming,display,multi-stream,opencv,real-time,python,ultralytics
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Multimedia :: Video :: Display
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: ultralytics
+
+# StreamGrid ⚡
+
+https://github.com/user-attachments/assets/67bbb880-c412-4d99-af35-9a3bc1163c5e
+
+[![Publish to PyPI](https://github.com/RizwanMunawar/streamgrid/actions/workflows/publish.yml/badge.svg)](https://github.com/RizwanMunawar/streamgrid/actions/workflows/publish.yml)
+
+
+**Ultra-fast multi-stream video display** - Display multiple video sources with object detection simultaneously using the CPU 
+or GPU device.
+
+## Installation
+
+```bash
+pip install streamgrid
+```
+
+## Quick Start
+
+### Python
+
+```python
+from ultralytics import YOLO
+from streamgrid import StreamGrid
+
+# Use assets videos for testing
+model = YOLO("yolo11n.pt")
+StreamGrid(model=model)  
+
+# Use your own videos
+sources = ["video1.mp4", "video2.mp4", "video3.mp4", "video4.mp4"]
+StreamGrid(sources=sources, model=model)
+
+```
+
+## Performance (Beta, final benchmarks will be released soon)
+
+StreamGrid automatically optimizes performance based on the number of streams:
+
+- **1-2 streams**: 640×360 resolution, up to 15 FPS per stream
+- **3-4 streams**: 480×270 resolution, up to 10 FPS total (CPU processing)
+- **5-9 streams**: 320×180 resolution, up to 5 FPS per stream
+- **10+ streams**: 240×135 resolution, up to 3 FPS per stream
+
+*Note: Performance benchmarks are based on CPU processing. GPU acceleration can significantly improve throughput.*
+
+## Contributing
+
+We welcome contributions! Please feel free to submit a Pull Request or open an issue for discussion.
