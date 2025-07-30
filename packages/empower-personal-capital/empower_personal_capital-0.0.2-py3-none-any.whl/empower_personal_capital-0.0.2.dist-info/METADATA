@@ -1,0 +1,163 @@
+Metadata-Version: 2.4
+Name: empower_personal_capital
+Version: 0.0.2
+Summary: A Python library for interacting with the Personal Capital API. Easily log in, handle two-factor authentication, and fetch financial data like account details and net worth. Simplify automation and data retrieval from your Personal Capital account with this lightweight and user-friendly package.
+Home-page: https://github.com/haochi/personalcapital
+Download-URL: https://github.com/haochi/personalcapital/tarball/1.0.1
+Author: chocotonic
+Author-email: pypi@ihaochi.com
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/ChocoTonic/personalcapital-py
+Project-URL: Issues, https://github.com/ChocoTonic/personalcapital-py/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: author-email
+Dynamic: download-url
+Dynamic: home-page
+Dynamic: license-file
+
+# Empower Personal Capital
+
+A modern Python library for accessing your Personal Capital (Empower) data, with built-in support for session persistence, two-factor authentication, and convenient account and transaction retrieval.
+
+## Features
+
+- Simple login: Email/password authentication
+- Two-factor authentication: SMS and email support
+- Session persistence: Avoids 2FA every run
+- Fetch financial data: Account details, transactions, net worth
+- Easy automation: Ideal for scripts and data analysis
+
+## Installation
+
+### With pip
+
+```bash
+pip install empower_personal_capital
+```
+
+### From Source
+
+Clone the repo:
+
+```bash
+git clone https://github.com/ChocoTonic/personalcapital-py.git
+cd personalcapital-py
+```
+
+Install dependencies and the package:
+
+```bash
+pip install -r requirements.txt
+python setup.py install
+```
+
+## Usage
+
+### Quick Example
+
+```python
+from personalcapital import PersonalCapital, RequireTwoFactorException, TwoFactorVerificationModeEnum
+
+pc = PersonalCapital()
+email, password = "you@example.com", "your_password"
+
+try:
+    pc.login(email, password)
+except RequireTwoFactorException:
+    pc.two_factor_challenge(TwoFactorVerificationModeEnum.SMS)
+    code = input("Enter 2FA code: ")
+    pc.two_factor_authenticate(TwoFactorVerificationModeEnum.SMS, code)
+    pc.authenticate_password(password)
+
+accounts_response = pc.fetch('/newaccount/getAccounts')
+accounts = accounts_response.json()['spData']
+print('Net worth:', accounts['networth'])
+```
+
+### Session Persistence
+
+You can avoid having to enter 2FA every time by storing your session:
+
+```python
+session = pc.get_session()
+# Save session to a file
+
+# Later...
+pc.set_session(session)
+```
+
+See `main.py` for a complete script with persistent sessions.
+
+### Running the Example Script
+
+The included [`main.py`](main.py) script provides a full working example with session saving/loading.
+
+To run:
+
+```bash
+python main.py
+```
+
+You can also set environment variables to avoid entering your email and password each time:
+
+```bash
+PEW_EMAIL="you@example.com" PEW_PASSWORD="your_password" python main.py
+```
+
+If you do not set environment variables, the script will prompt for your credentials.
+
+Absolutely. Here’s a clear section you can add to your README that explains the `.env` file usage and lists the required variables.
+
+## Environment Variables and the .env File
+
+You can define your credentials in a `.env` file at the root of your project to avoid entering your email and password every time you run the script. The package will automatically load these using [`python-dotenv`](https://pypi.org/project/python-dotenv/).
+
+Create a file named `.env` and add your credentials:
+
+```
+PEW_EMAIL=your_email@example.com
+PEW_PASSWORD=your_password
+```
+
+`.env.example` is included as a template. Never commit your real `.env` file with credentials to version control.
+
+If these variables are set, the script will use them and will not prompt for your email or password.
+
+### Fetching Transactions
+
+You can fetch transactions by making an API call. For example, to get transactions from the past 90 days (as shown in `main.py`):
+
+```python
+from datetime import datetime, timedelta
+
+now = datetime.now()
+start_date = (now - timedelta(days=91)).strftime('%Y-%m-%d')
+end_date = (now - timedelta(days=1)).strftime('%Y-%m-%d')
+
+transactions_response = pc.fetch(
+    '/transaction/getUserTransactions',
+    {
+        "sort_cols": "transactionTime",
+        "sort_rev": "true",
+        "page": "0",
+        "rows_per_page": "100",
+        "startDate": start_date,
+        "endDate": end_date,
+        "component": "DATAGRID",
+    },
+)
+transactions = transactions_response.json()['spData']['transactions']
+print(f"Found {len(transactions)} transactions")
+```
+
+## Advanced Usage
+
+- Handling two-factor via Email:
+  Replace `TwoFactorVerificationModeEnum.SMS` with `TwoFactorVerificationModeEnum.EMAIL` in the challenge and authenticate methods.
+
+- Other API endpoints:
+  You can inspect your browser’s network requests while using Personal Capital, or refer to the code and experiment with additional endpoints using `pc.fetch(endpoint, data)`.
