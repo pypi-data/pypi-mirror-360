@@ -1,0 +1,93 @@
+Metadata-Version: 2.4
+Name: lakecoin
+Version: 0.1.0
+Summary: Простая и удобная Python-библиотека для работы с API мерчантов LakeCoin.
+Author: The LakeCoin Team
+License: MIT License
+        
+        Copyright (c) 2025 admin
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+Project-URL: Homepage, https://lakecoin.ru
+Project-URL: Documentation, https://lakecoin.ru/api-docs
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Office/Business :: Financial
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: requests>=2.25.0
+Dynamic: license-file
+
+# LakeCoin Python API Wrapper
+
+Простая и удобная Python-библиотека для работы с API мерчантов [LakeCoin](https://lakecoin.ru).
+
+## Установка
+
+Установить библиотеку можно через pip:
+```bash
+pip install lakecoin
+```
+
+## Быстрый старт
+
+Вот простой пример использования:
+
+```python
+import lakecoin
+import os
+
+# Рекомендуется хранить токен в переменных окружения, а не в коде
+MERCHANT_TOKEN = "ВАШ_API_ТОКЕН"
+
+# Инициализация клиента
+api = lakecoin.LakeCoinAPI(merchant_token=MERCHANT_TOKEN)
+
+try:
+    # 1. Проверим баланс
+    balance_info = api.get_balance()
+    print(f"Текущий баланс: {balance_info['balance']} LKC")
+
+    # 2. Создадим счет на оплату
+    print("\nСоздаем счет на 100 LKC...")
+    payment_request = api.create_payment_request(
+        amount=100,
+        description="Оплата заказа #12345"
+    )
+    request_id = payment_request['payment_request_id']
+    print(f"Счет создан! ID: {request_id}")
+    print(f"Ссылка для оплаты: {payment_request['payment_url']}")
+
+except lakecoin.AuthenticationError as e:
+    print(f"Ошибка аутентификации: {e}. Проверьте ваш API-токен.")
+except lakecoin.LakeCoinError as e:
+    print(f"Произошла ошибка API: {e}")
+
+```
+
+## Обратная связь и поддержка
+
+Если вы обнаружили ошибку или у вас есть предложения по улучшению, пожалуйста, свяжитесь с нами по почте или через форму обратной связи на [нашем сайте](https://lakecoin.ru/api-docs).
+
+## Лицензия
+Этот проект распространяется под лицензией MIT.
