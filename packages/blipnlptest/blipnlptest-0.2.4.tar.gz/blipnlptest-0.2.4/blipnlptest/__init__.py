@@ -1,0 +1,2 @@
+from .blipnlptest import contentchecker
+
