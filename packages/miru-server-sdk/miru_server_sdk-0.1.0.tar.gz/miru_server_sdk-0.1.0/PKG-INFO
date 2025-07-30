@@ -1,0 +1,68 @@
+Metadata-Version: 2.4
+Name: miru_server_sdk
+Version: 0.1.0
+Summary: Miru callback verification library
+Home-page: https://docs.miruml.com
+Author: Miru
+Author-email: ben@miruml.com
+License: MIT
+Keywords: miru,miru_server_sdk,callbacks
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Information Technology
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python
+Classifier: Topic :: Software Development :: Libraries :: Application Frameworks
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Software Development
+Classifier: Typing :: Typed
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-python
+Dynamic: summary
+
+# Miru Python SDK
+This repository contains the [Miru](https://docs.miruml.com/) Python SDK for verifying Miru callbacks. 
+
+## Installation
+
+```sh
+pip install miru-server-sdk
+```
+
+## Verify a Callback
+Please refer to [the official documentation](https://docs.miruml.com/) for more usage instructions.
+
+```python
+from miru.webhooks import Webhook
+
+secret = "cbsec_WrtItCFkZWrP8h9q4FgnoZsS3QlwUt3o/7juCWkGc1c="
+
+# These were all sent from the server
+headers = {
+  "miru-id": "evt_p5jXN8AQM9LWM0D4loKWxJek",
+  "miru-timestamp": "1614265330",
+  "miru-signature": "v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE=",
+}
+payload = '{"test": 2432232314}'
+
+wh = Webhook(secret)
+# Throws on error, returns the verified content on success
+wh.verify(payload, headers)
+```
