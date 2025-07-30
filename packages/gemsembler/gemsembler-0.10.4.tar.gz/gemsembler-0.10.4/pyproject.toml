@@ -1,0 +1,90 @@
+[build-system]
+requires = ["setuptools>=64.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gemsembler"
+version = "0.10.4"
+description = "A tool for assembling and comparing several types of Genome-Scale Metabolic Models."
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    { name = "Elena Matveishina", email = "elena.matveishina@embl.de" },
+    { name = "Bartosz Bartmanski", email = "bartosz.bartmanski@embl.de" }
+]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+keywords = ["genome scale metabolic models", "metabolism", "biology"]
+requires-python = ">=3.9"
+dependencies = [
+    "cobra",
+    "metquest",
+    "dill",
+    "ncbi-genome-download",
+    "numpy",
+    "scipy",
+    "networkx",
+    "pandas>=2.0",
+    "pyarrow",
+    "seaborn",
+    "pyvis",
+    "h5py",
+    "platformdirs",
+    "pyyaml",
+    "scipy<=1.14" #TODO Temrprory solution for clustering issue, check why in 1.15 looks different
+]
+
+[project.scripts]
+gemsembler = "gemsembler.__main__:main"
+
+[project.urls]
+"Homepage" = "https://git.embl.de/grp-zimmermann-kogadeeva/GEMsembler"
+"Bug tracker" = "https://git.embl.de/grp-zimmermann-kogadeeva/GEMsembler/issues"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+namespaces = true
+where = ["src"]
+
+[tool.bumpver]
+current_version = "0.10.4"
+version_pattern = "MAJOR.MINOR.PATCH"
+commit_message  = "Bump version {old_version} -> {new_version}"
+commit          = true
+tag             = true
+push            = false
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = ['current_version = "{version}"', 'version = "{version}"']
+"src/gemsembler/__init__.py" = ['^__version__ = "{version}"$']
+
+[tool.isort]
+profile = "black"
+src_paths = ["src", "tests"]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+filterwarnings = [
+    "ignore::UserWarning"
+]
+
+[tool.uv.sources]
+gemsembler = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "gemsembler",
+    "sphinx>=7.4.7",
+]
+testing = [
+    "jupyterlab>=4.3.5",
+]
