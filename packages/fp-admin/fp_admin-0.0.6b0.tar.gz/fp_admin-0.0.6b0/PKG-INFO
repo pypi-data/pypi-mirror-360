@@ -1,0 +1,651 @@
+Metadata-Version: 2.4
+Name: fp-admin
+Version: 0.0.6b0
+Summary: FastAPI Admin
+Author-email: Adel ESMAIRI <esmairi.github@gmail.com>
+Maintainer: Rahma Bader
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/esmairi/fp-admin
+Project-URL: Repository, https://github.com/esmairi/fp-admin
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: fastapi[standard]
+Requires-Dist: pydantic-settings
+Requires-Dist: sqlmodel
+Requires-Dist: alembic
+Requires-Dist: passlib[bcrypt]
+Requires-Dist: uvicorn
+Provides-Extra: dev
+Requires-Dist: black==25.1.0; extra == "dev"
+Requires-Dist: build==1.2.2.post1; extra == "dev"
+Requires-Dist: flake8==7.3.0; extra == "dev"
+Requires-Dist: httpx==0.28.1; extra == "dev"
+Requires-Dist: mypy==1.16.1; extra == "dev"
+Requires-Dist: mypy-extensions==1.1.0; extra == "dev"
+Requires-Dist: pre-commit==4.2.0; extra == "dev"
+Requires-Dist: pytest==8.4.1; extra == "dev"
+Requires-Dist: pytest-cov==5.0.0; extra == "dev"
+Requires-Dist: twine==6.1.0; extra == "dev"
+Requires-Dist: bandit==1.7.8; extra == "dev"
+Dynamic: license-file
+
+# fp-admin
+
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Development Status](https://img.shields.io/badge/status-beta-orange.svg)](https://github.com/esmairi/fp-admin)
+
+> ⚠️ **Beta Version**: This project is currently under active development and is in beta. APIs may change between versions. We recommend testing thoroughly in development environments before using in production.
+
+A modern, FastAPI-based admin framework that provides automatic CRUD interfaces and admin panels for SQLModel-based applications.
+
+## 🎨 UI Framework
+
+The admin interface is powered by a separate React-based UI project:
+
+- **UI Repository**: [fp-admin-ui](https://github.com/esmairi/fp-admin-ui)
+- **Features**: Modern React interface with TypeScript, responsive design, and rich components
+- **Integration**: Seamlessly integrates with the fp-admin backend API
+
+## 🚀 Features
+
+- **🔧 Automatic Admin Interface**: Generate beautiful admin panels from SQLModel models
+- **📊 Rich Field Types**: Support for text, email, password, number, date, checkbox, textarea, file uploads, and more
+- **🎨 Advanced Widgets**: Select dropdowns, radio buttons, checkbox groups, autocomplete, toggles, sliders, rich text editors
+- **🔗 Relationship Support**: Handle foreign keys and many-to-many relationships
+- **✅ Validation**: Built-in field validation with custom error messages
+- **🎯 Multi-Choice Fields**: Tags, chips, multi-select dropdowns with constraints
+- **📝 File Uploads**: Secure file upload handling with validation and thumbnails
+- **🔐 Authentication**: Built-in user management and authentication system
+- **📱 CLI Tools**: Command-line interface for project management and database operations
+- **⚡ FastAPI Integration**: Seamless integration with FastAPI applications
+- **🧪 Comprehensive Testing**: Full test suite with unit, integration, and e2e tests
+- **🎨 Modern UI**: React-based frontend with TypeScript and responsive design
+
+## 📦 Installation
+
+### Using pip
+
+```bash
+pip install fp-admin
+```
+
+
+## 🔧 Dev Installation
+
+### Using uv (Recommended)
+
+```bash
+# Install with all dependencies
+uv sync --all-extras --dev
+
+# Install git hooks
+uv run pre-commit install
+```
+
+### Using pip
+
+```bash
+pip install fp-admin[dev]
+```
+
+## 🛠️ Quick Start
+
+### 1. Create a New Project
+
+```bash
+# Create a new fp-admin project
+fp-admin startproject myapp
+cd myapp
+```
+
+### 2. Create an App
+
+```bash
+# Create a new app (e.g., blog)
+fp-admin startapp blog
+```
+
+### 3. Set Up Database
+
+```bash
+# Create initial migration
+fp-admin make-migrations initial
+
+# Apply migrations
+fp-admin migrate
+```
+
+### 4. Create Admin User
+
+```bash
+# Create a superuser account
+fp-admin createsuperuser
+```
+
+### 5. Run the Application
+
+```bash
+# Start the development server
+fp-admin run
+```
+
+Visit `http://localhost:8000/admin` to access your admin interface!
+
+## 📚 Core Concepts
+
+### FieldView System
+
+The core of fp-admin is the `FieldView` system, which provides a flexible way to define form fields:
+
+```python
+from fp_admin.admin.fields import FieldView
+
+# Basic text field
+name_field = FieldView.text_field("name", "Full Name", required=True)
+
+# Email field with validation
+email_field = FieldView.email_field("email", "Email Address")
+
+# Multi-choice field
+tags_field = MultiChoicesField.multi_choice_tags_field(
+    "tags", "Tags", choices=choices, max_selections=5
+)
+```
+
+### Admin Model Configuration
+
+Define admin interfaces for your SQLModel models:
+
+```python
+from fp_admin.admin.models import AdminModel
+from fp_admin.admin.fields import FieldView
+
+class PostAdmin(AdminModel):
+    model = Post
+    label = "Blog Posts"
+
+    # Define list view fields
+    list_fields = ["title", "author", "status", "created_at"]
+    search_fields = ["title", "content"]
+
+    # Custom field configurations
+    field_configs = {
+        "content": FieldView.richtext_field("content", "Content"),
+        "tags": MultiChoicesField.multi_choice_tags_field(
+            "tags", "Tags", choices=tag_choices
+        ),
+        "featured_image": FieldView.file_field("featured_image", "Featured Image")
+    }
+```
+
+### Field Types and Widgets
+
+fp-admin supports a wide variety of field types and widgets:
+
+#### Basic Field Types
+- `text` - Regular text input
+- `email` - Email input with validation
+- `password` - Password input
+- `number` - Numeric input
+- `date` - Date picker
+- `checkbox` - Boolean checkbox
+- `textarea` - Multi-line text area
+- `file` - File upload
+
+#### Advanced Widgets
+- `select` - Dropdown selection
+- `radio` - Radio button group
+- `checkbox-group` - Multiple checkbox selection
+- `autocomplete` - Autocomplete input
+- `toggle` - Toggle switch
+- `switch` - Switch component
+- `range` - Range slider
+- `slider` - Slider input
+- `richtext` - Rich text editor
+- `markdown` - Markdown editor
+
+#### Multi-Choice Widgets
+- `multi-select` - Multi-select dropdown
+- `tags` - Tag input with chips
+- `chips` - Chip selection
+- `checkbox-group` - Checkbox group for multiple selection
+
+## 🏗️ Project Structure
+
+```
+fp-admin/
+├── fp_admin/                    # Main package
+│   ├── admin/                   # Admin interface
+│   │   ├── fields/             # Field definitions and widgets
+│   │   ├── views/              # View configurations
+│   │   ├── models/             # Admin model definitions
+│   │   └── apps/               # App configurations
+│   ├── api/                    # REST API endpoints
+│   ├── cli/                    # Command-line interface
+│   ├── core/                   # Core functionality
+│   ├── apps/                   # Built-in apps (auth, etc.)
+│   └── services/               # Business logic services
+├── examples/                    # Example applications
+│   └── blog_app/              # Complete blog example
+├── tests/                      # Test suite
+├── docs/                       # Documentation
+└── migrations/                 # Database migrations
+```
+
+## 📖 Examples
+
+### Blog Application
+
+A complete blog application demonstrating fp-admin's capabilities:
+
+```bash
+# Navigate to the blog example
+cd examples/blog_app
+
+# Install dependencies
+pip install fp-admin sqlmodel fastapi uvicorn
+
+# Set up the database
+fp-admin make-migrations initial
+fp-admin migrate
+
+# Create sample data
+python scripts/sample_data.py
+
+# Run the application
+python app.py
+```
+
+Features demonstrated:
+- User management with authentication
+- Blog post creation with rich text editor
+- Category and tag management
+- Comment system with moderation
+- File uploads for featured images
+- Admin interface customization
+
+### Custom Field Configuration
+
+```python
+from fp_admin.admin.fields import FieldView, MultiChoicesField, FieldChoices
+
+# Define choices for a select field
+status_choices = [
+    FieldChoices(title="Draft", value="draft"),
+    FieldChoices(title="Published", value="published"),
+    FieldChoices(title="Archived", value="archived")
+]
+
+# Configure admin model with custom fields
+class PostAdmin(AdminModel):
+    model = Post
+    label = "Posts"
+
+    field_configs = {
+        "title": FieldView.text_field("title", "Title", required=True),
+        "content": FieldView.richtext_field("content", "Content"),
+        "status": FieldView.select_field("status", "Status", options=status_choices),
+        "tags": MultiChoicesField.multi_choice_tags_field(
+            "tags", "Tags", choices=tag_choices, max_selections=5
+        ),
+        "featured_image": FieldView.file_field("featured_image", "Featured Image"),
+        "published_at": FieldView.date_field("published_at", "Published Date")
+    }
+```
+
+## 🛠️ CLI Commands
+
+### Project Management
+
+```bash
+# Create new project
+fp-admin startproject myproject
+
+# Create new app
+fp-admin startapp blog
+
+# Show project info
+fp-admin info
+```
+
+### Running the Application
+
+```bash
+# Run the development server
+fp-admin run
+
+# Run with custom host and port
+fp-admin run --host 0.0.0.0 --port 8080
+
+# Run without auto-reload
+fp-admin run --no-reload
+
+# Run with different log level
+fp-admin run --log-level info
+
+# Run with custom app module
+fp-admin run --app main:app
+```
+
+### Database Operations
+
+```bash
+# Create migration
+fp-admin make-migrations create_tables
+
+# Apply migrations
+fp-admin migrate
+
+# Show migration status
+fp-admin database status
+```
+
+### User Management
+
+```bash
+# Create superuser
+fp-admin createsuperuser
+
+# Create regular user
+fp-admin user create
+```
+
+### System Commands
+
+```bash
+# Show version
+fp-admin version
+
+# Check system status
+fp-admin system status
+```
+
+## 🧪 Testing
+
+Run the comprehensive test suite:
+
+```bash
+# Run all tests
+pytest
+
+# Run specific test categories
+pytest -m unit
+pytest -m integration
+pytest -m e2e
+
+# Run with coverage
+pytest --cov=fp_admin
+```
+
+## 🔧 Development
+
+### Setup Development Environment
+
+```bash
+# Install development dependencies
+uv sync --all-extras --dev
+
+# Install pre-commit hooks
+uv run pre-commit install
+
+# Run pre-commit on all files
+uv run pre-commit run --all-files
+```
+
+### Code Quality
+
+The project uses several tools for code quality:
+
+- **Black**: Code formatting
+- **isort**: Import sorting
+- **flake8**: Linting
+- **mypy**: Type checking
+- **pre-commit**: Git hooks
+
+### Running Tests
+
+```bash
+# Run all tests
+pytest
+
+# Run specific test file
+pytest tests/unit/admin/fields/test_base.py
+
+# Run with verbose output
+pytest -v
+
+# Run with coverage
+pytest --cov=fp_admin --cov-report=html
+```
+
+## 📄 API Reference
+
+### FieldView Factory Methods
+
+```python
+# Basic fields
+FieldView.text_field(name, title, **kwargs)
+FieldView.email_field(name, title, **kwargs)
+FieldView.password_field(name, title, **kwargs)
+FieldView.number_field(name, title, **kwargs)
+FieldView.date_field(name, title, **kwargs)
+FieldView.checkbox_field(name, title, **kwargs)
+FieldView.textarea_field(name, title, **kwargs)
+FieldView.file_field(name, title, **kwargs)
+
+# Widget-specific fields
+FieldView.select_field(name, title, **kwargs)
+FieldView.radio_field(name, title, **kwargs)
+FieldView.checkbox_group_field(name, title, **kwargs)
+FieldView.autocomplete_field(name, title, **kwargs)
+FieldView.toggle_field(name, title, **kwargs)
+FieldView.switch_field(name, title, **kwargs)
+FieldView.range_field(name, title, **kwargs)
+FieldView.slider_field(name, title, **kwargs)
+FieldView.richtext_field(name, title, **kwargs)
+FieldView.markdown_field(name, title, **kwargs)
+```
+
+### MultiChoicesField Factory Methods
+
+```python
+# Multi-choice fields
+MultiChoicesField.multi_choice_select_field(name, title, choices, **kwargs)
+MultiChoicesField.multi_choice_tags_field(name, title, choices, **kwargs)
+MultiChoicesField.multi_choice_chips_field(name, title, choices, **kwargs)
+MultiChoicesField.multi_choice_checkbox_group_field(name, title, choices, **kwargs)
+```
+
+### AdminModel Configuration
+
+```python
+class MyAdmin(AdminModel):
+    model = MyModel
+    label = "My Models"
+
+    # List view configuration
+    list_fields = ["field1", "field2", "field3"]
+    search_fields = ["field1", "field2"]
+    list_per_page = 20
+
+    # Field configurations
+    field_configs = {
+        "field1": FieldView.text_field("field1", "Field 1"),
+        "field2": FieldView.email_field("field2", "Field 2")
+    }
+
+    # Custom actions
+    actions = ["publish", "archive"]
+```
+
+## 🤝 Contributing
+
+We welcome contributions from the community! This project is in active development and your help is greatly appreciated.
+
+### 🚧 Development Status
+
+- **Current Version**: Beta (0.0.3beta)
+- **Development Phase**: Active development
+- **API Stability**: May change between versions
+- **Production Ready**: Not yet recommended for production use
+
+### 📋 How to Contribute
+
+#### 1. Setup Development Environment
+
+```bash
+# Fork and clone the repository
+git clone https://github.com/your-username/fp-admin.git
+cd fp-admin
+
+# Install dependencies
+uv sync --all-extras --dev
+
+# Install pre-commit hooks
+uv run pre-commit install
+
+# Set up the database
+fp-admin make-migrations initial
+fp-admin migrate
+```
+
+#### 2. Choose an Area to Contribute
+
+- **Backend Development**: Core framework, field types, validation, API endpoints
+- **Frontend Development**: React UI components, TypeScript interfaces
+- **Documentation**: Code docs, tutorials, examples
+- **Testing**: Unit tests, integration tests, e2e tests
+- **Bug Fixes**: Issue triage and resolution
+- **Feature Requests**: New field types, widgets, or functionality
+
+#### 3. Development Workflow
+
+```bash
+# Create a feature branch
+git checkout -b feature/your-feature-name
+
+# Make your changes
+# ... edit files ...
+
+# Run tests
+pytest
+
+# Run linting and formatting
+uv run pre-commit run --all-files
+
+# Commit your changes
+git add .
+git commit -m "feat: add your feature description"
+
+# Push to your fork
+git push origin feature/your-feature-name
+```
+
+#### 4. Code Quality Standards
+
+- **Python**: Follow PEP 8, use type hints, write docstrings
+- **JavaScript/TypeScript**: Follow ESLint rules, use TypeScript
+- **Tests**: Maintain >90% code coverage
+- **Documentation**: Update docs for new features
+- **Commits**: Use conventional commit messages
+
+#### 5. Testing Guidelines
+
+```bash
+# Run all tests
+pytest
+
+# Run specific test categories
+pytest -m unit
+pytest -m integration
+pytest -m e2e
+
+# Run with coverage
+pytest --cov=fp_admin --cov-report=html
+
+# Run linting
+uv run pre-commit run --all-files
+```
+
+#### 6. Submitting Changes
+
+1. **Create a Pull Request** from your feature branch
+2. **Add a description** of your changes
+3. **Link any related issues** using keywords (fixes #123, closes #456)
+4. **Wait for review** from maintainers
+5. **Address feedback** if requested
+6. **Merge** once approved
+
+### 🐛 Reporting Issues
+
+When reporting issues, please include:
+
+- **Environment**: Python version, OS, dependencies
+- **Steps to reproduce**: Clear, step-by-step instructions
+- **Expected behavior**: What should happen
+- **Actual behavior**: What actually happens
+- **Error messages**: Full error traces
+- **Code examples**: Minimal code to reproduce the issue
+
+### 💡 Feature Requests
+
+For feature requests:
+
+- **Describe the feature** clearly and concisely
+- **Explain the use case** and why it's needed
+- **Provide examples** of how it would be used
+- **Consider alternatives** and discuss trade-offs
+
+### 📚 Documentation Contributions
+
+We welcome documentation improvements:
+
+- **Code examples**: Clear, working examples
+- **Tutorials**: Step-by-step guides
+- **API documentation**: Comprehensive API reference
+- **Best practices**: Development guidelines
+
+### 🏷️ Issue Labels
+
+- `bug`: Something isn't working
+- `enhancement`: New feature or request
+- `documentation`: Improvements or additions to documentation
+- `good first issue`: Good for newcomers
+- `help wanted`: Extra attention is needed
+- `question`: Further information is requested
+
+### 🎯 Development Priorities
+
+Current development priorities:
+
+1. **API Stability**: Stabilizing the core API
+2. **Field Types**: Expanding field type support
+3. **UI Components**: Enhancing React components
+4. **Documentation**: Comprehensive guides and examples
+5. **Testing**: Improving test coverage
+6. **Performance**: Optimizing for large datasets
+
+### 📞 Getting Help
+
+- **GitHub Issues**: [Report bugs and request features](https://github.com/esmairi/fp-admin/issues)
+- **GitHub Discussions**: [Ask questions and share ideas](https://github.com/esmairi/fp-admin/discussions)
+- **Code of Conduct**: [Community guidelines](CODE_OF_CONDUCT.md)
+
+### 🙏 Acknowledgments
+
+Thanks to all contributors who have helped shape fp-admin:
+
+- **Core Contributors**: [List of major contributors]
+- **Community Members**: Everyone who reports issues and suggests improvements
+- **Open Source Projects**: FastAPI, SQLModel, Pydantic, and other dependencies
+
+---
+
+**Made with ❤️ by the fp-admin team**

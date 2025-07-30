@@ -1,0 +1,82 @@
+[project]
+name = "fp-admin"
+version = "0.0.6beta"
+description = "FastAPI Admin"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+authors = [{ name = "Adel ESMAIRI", email = "esmairi.github@gmail.com" }]
+maintainers = [
+    { name = "Rahma Bader" }
+]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent"
+]
+
+dependencies = [
+    "fastapi[standard]",
+    "pydantic-settings",
+    "sqlmodel",
+    "alembic",
+    "passlib[bcrypt]",
+    "uvicorn",
+]
+[project.scripts]
+fp-admin = "fp_admin.cli:admin_cli"
+
+[project.optional-dependencies]
+dev = [
+    "black==25.1.0",
+    "build==1.2.2.post1",
+    "flake8==7.3.0",
+    "httpx==0.28.1",
+    "mypy==1.16.1",
+    "mypy-extensions==1.1.0",
+    "pre-commit==4.2.0",
+    "pytest==8.4.1",
+    "pytest-cov==5.0.0",
+    "twine==6.1.0",
+    "bandit==1.7.8",
+]
+
+[project.urls]
+Homepage = "https://github.com/esmairi/fp-admin"
+Repository = "https://github.com/esmairi/fp-admin"
+
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["fp_admin*"]
+exclude = ["tests*", "examples*", "docs*", ".venv*", ".git*", "*.egg-info*"]
+
+[tool.setuptools.package-data]
+fp_admin = ["*.py", "*.pyi", "*.txt", "*.md"]
+
+[tool.setuptools.dynamic]
+version = {attr = "fp_admin.__version__"}
+
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+addopts = "-ra -q"
+testpaths = ["tests"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "e2e: End-to-end tests",
+    "slow: Slow running tests",
+]
