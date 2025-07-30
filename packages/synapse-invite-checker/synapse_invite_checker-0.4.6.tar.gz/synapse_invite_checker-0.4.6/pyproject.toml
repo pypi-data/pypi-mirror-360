@@ -1,0 +1,116 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "synapse-invite-checker"
+description = 'Synapse module to handle TIM contact management and invite permissions'
+readme = "README.md"
+requires-python = ">=3.11"
+license = "AGPL-3.0-only"
+keywords = []
+authors = [
+  { name = "Nicolas Werner", email = "n.werner@famedly.com" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "twisted",
+  "cachetools",
+  "asyncache",
+  "jwcrypto",
+  "pyopenssl",
+  # For the emoji reaction restrictions
+  "emoji",
+  # We need to pin this because of https://github.com/element-hq/synapse/issues/17882
+  # TODO: Remove this dependency when we can
+  "Twisted==24.7.0"
+]
+version = "0.4.6"
+
+[project.urls]
+Documentation = "https://github.com/famedly/synapse-invite-checker#synapse-invite-checker"
+Issues = "https://github.com/famedly/synapse-invite-checker/-/issues"
+Source = "https://github.com/famedly/synapse-invite-checker/"
+
+[tool.hatch.envs.default]
+dependencies = [
+  "black",
+  "pytest",
+  "pytest-cov",
+  "mock",
+  "parameterized",
+  "psycopg2",
+  # we don't depend on synapse directly to prevent pip from pulling the wrong synapse,
+  # when we just want to install the module
+  "matrix-synapse @ git+https://github.com/famedly/synapse.git@master"
+]
+
+[tool.hatch.envs.default.scripts]
+cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=synapse_invite_checker --cov=tests"
+format = "black ."
+lint = "ruff check . --fix"
+
+# For CI use
+[tool.hatch.envs.ci.scripts]
+cov = "pytest --cov-report=lcov:lcov.info --cov-report=xml --cov-report=term-missing --cov-config=pyproject.toml --cov=synapse_invite_checker --cov=tests"
+
+[[tool.hatch.envs.ci.matrix]]
+database = [ "postgres", "sqlite"]
+
+[tool.hatch.envs.ci.overrides]
+matrix.database.env-vars = [
+  { key = "SYNAPSE_POSTGRES", value = "1", if = ["postgres"] },
+  { key = "SYNAPSE_POSTGRES_USER", value = "postgres", if = ["postgres"] },
+  { key = "SYNAPSE_POSTGRES_PASSWORD", value = "postgres", if = ["postgres"] },
+]
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+
+[tool.hatch.envs.types.scripts]
+check = "mypy"
+
+[tool.coverage.run]
+branch = true
+parallel = true
+omit = ["tests/*"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+ignore = [
+  "FBT001",
+  "FBT002",
+  "TRY002",
+  "TRY003",
+  "PLW0603",
+  "N802",
+  "N815"
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["RUF012", "S101", "PLR2004", "N803", "SLF001", "S105", "UP035", "PT"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.mypy]
+ignore_missing_imports = true
+install_types = true
+non_interactive = true
+files = ["synapse_invite_checker"]
