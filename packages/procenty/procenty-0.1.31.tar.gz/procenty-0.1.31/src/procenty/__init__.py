@@ -1,0 +1,1 @@
+"""Pakiet do obliczeń finansowych."""
