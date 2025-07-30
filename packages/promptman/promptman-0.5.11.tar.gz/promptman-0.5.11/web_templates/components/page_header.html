@@ -1,0 +1,60 @@
+<!-- Enhanced Page Header Component -->
+<div class="page-header">
+    <div class="container">
+        <!-- Header Content -->
+        <div class="page-header-content">
+            <div class="page-header-title">
+                {% if header_icon %}
+                <div class="page-header-icon">
+                    <i class="{{ header_icon }}"></i>
+                </div>
+                {% endif %}
+                <div class="page-header-text">
+                    <h1>{{ header_title }}</h1>
+                    {% if header_subtitle %}
+                    <p>{{ header_subtitle }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if header_actions %}
+            <div class="page-header-actions">
+                {% for action in header_actions %}
+                    {% if action['type'] == 'button' %}
+                        {% if action.get('onclick') %}
+                            <button onclick="{{ action['onclick'] }}" class="btn btn-{{ action['style']|default('primary') }}">
+                                {% if action['icon'] %}<i class="{{ action['icon'] }} mr-2"></i>{% endif %}
+                                {{ action['text'] }}
+                            </button>
+                        {% else %}
+                            <a href="{{ action['url'] }}" class="btn btn-{{ action['style']|default('primary') }}">
+                                {% if action['icon'] %}<i class="{{ action['icon'] }} mr-2"></i>{% endif %}
+                                {{ action['text'] }}
+                            </a>
+                        {% endif %}
+                    {% elif action['type'] == 'dropdown' %}
+                        <div class="relative">
+                            <button onclick="toggleHeaderDropdown(this)" class="btn btn-{{ action['style']|default('secondary') }}">
+                                {% if action['icon'] %}<i class="{{ action['icon'] }} mr-2"></i>{% endif %}
+                                {{ action['text'] }}
+                                <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                            </button>
+                            <div class="absolute right-0 z-50 mt-2 w-48 origin-top-right rounded-xl shadow-xl hidden header-dropdown"
+                                 style="background-color: var(--surface-primary); border: 1px solid var(--border-light);">
+                                <div class="p-2">
+                                    {% for item in action['items'] %}
+                                    <a href="{{ item['url'] }}" class="flex items-center px-3 py-2 text-sm rounded-lg transition-colors duration-200 hover:bg-gray-50" style="color: var(--text-primary);">
+                                        {% if item['icon'] %}<i class="{{ item['icon'] }} mr-3"></i>{% endif %}
+                                        {{ item['text'] }}
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
