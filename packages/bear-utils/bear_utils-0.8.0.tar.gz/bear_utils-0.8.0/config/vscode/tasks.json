@@ -1,0 +1,76 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "clean",
+            "type": "shell",
+            "command": "mask",
+            "args": ["clean"],
+            "group": "build"
+        },
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "mask",
+            "args": ["build"],
+            "group": "build"
+        },
+        {
+            "label": "test",
+            "type": "shell",
+            "command": "mask",
+            "args": ["test"],
+            "group": "test"
+        },
+        {
+            "label": "lint (ruff check)",
+            "type": "shell",
+            "command": "nox",
+            "args": ["-s", "ruff_check"],
+            "group": "build"
+        },
+        {
+            "label": "lint (ruff fix)",
+            "type": "shell",
+            "command": "nox",
+            "args": ["-s", "ruff_fix"],
+            "group": "build"
+        },
+        {
+            "label": "typecheck (pyright)",
+            "type": "shell",
+            "command": "nox",
+            "args": ["-s", "pyright"],
+            "group": "build"
+        },
+        {
+            "label": "test (nox)",
+            "type": "shell",
+            "command": "nox",
+            "args": ["-s", "tests"],
+            "group": "test"
+        },
+        {
+            "label": "bump version",
+            "type": "shell",
+            "command": "mask",
+            "args": ["bump", "${input:patch_version}"],
+            "group": "build"
+        },
+        {
+            "label": "publish",
+            "type": "shell",
+            "command": "mask",
+            "args": ["publish"],
+            "group": "build"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "patch_version",
+            "type": "pickString",
+            "description": "Version bump type",
+            "options": ["patch", "minor", "major"]
+        }
+    ]
+}
