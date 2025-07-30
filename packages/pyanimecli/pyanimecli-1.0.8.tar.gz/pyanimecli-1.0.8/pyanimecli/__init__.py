@@ -1,0 +1,1 @@
+from .pyanimecli import main
