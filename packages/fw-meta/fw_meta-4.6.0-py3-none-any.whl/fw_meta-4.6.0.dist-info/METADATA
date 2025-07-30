@@ -1,0 +1,264 @@
+Metadata-Version: 2.4
+Name: fw-meta
+Version: 4.6.0
+Summary: Flywheel metadata extraction.
+Project-URL: Repository, https://gitlab.com/flywheel-io/tools/lib/fw-meta
+Project-URL: Documentation, https://gitlab.com/flywheel-io/tools/lib/fw-meta
+Author-email: Flywheel <support@flywheel.io>
+License-Expression: MIT
+License-File: LICENSE
+Keywords: DICOM,Flywheel,extract,metadata
+Classifier: Topic :: Scientific/Engineering :: Medical Science Apps.
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: ~=3.9
+Requires-Dist: fw-utils>=4.2.5
+Requires-Dist: pydantic<3,>=2.1.1
+Description-Content-Type: text/markdown
+
+# fw-meta
+
+Extract [Flywheel](https://flywheel.io/) upload metadata from
+[fw_file](https://gitlab.com/flywheel-io/tools/lib/fw-file) `File` objects or
+any mapping that has a dict-like interface.
+
+The most common use case is scraping Flywheel group and project information from
+DICOM tags where it was entered by a researcher at scan time through a scanner's
+UI.
+
+The group and project is required for placing (aka. routing) uploaded files
+correctly within the Flywheel hierarchy.
+
+## Installation
+
+Add as a `poetry` dependency to your project:
+
+```bash
+poetry add fw-meta
+```
+
+## Usage
+
+Given
+
+- `DICOM` context
+- `PatientID` being an available and unused field on the scanner's UI
+- `"neuro/Amnesia"` being entered in `PatientID`
+- using the recommended extraction pattern
+`"[fw://]{group}[/{project}[/{subject}[/{session}[/{acquisition}]]]]"`
+
+The extracted metadata should be `{"group._id": "neuro", "project.label": "Amnesia"}`:
+
+```python
+from fw_meta import extract_meta
+
+pattern = "[fw://]{group}[/{project}[/{subject}[/{session}[/{acquisition}]]]]"
+data = dict(PatientID="neuro/Amnesia")
+meta = extract_meta(data, mappings={"PatientID": pattern})
+meta == {"group._id": "neuro", "project.label": "Amnesia"}
+```
+
+### Source fields
+
+Metadata can be extracted from any source field such as the tag values in the
+case of DICOMs. Selecting an appropriate DICOM tag comes down to ones that are:
+
+- available fields on the scanner UI
+- allow entering the routing string (ie. long / versatile enough)
+- not currently used by researchers (or repurposable)
+
+Some recommended tags that worked well previously:
+
+- `PatientID`
+- `PatientComments`
+- `StudyComments`
+- `ReferringPhysicianName`
+
+### Extraction pattern mappings
+
+Extraction patterns are simplified python regexes tailored for scraping Flywheel
+metadata [fields](fw_meta/imports.py) like `group._id` and `project.label` from
+a string using capture groups.
+
+The pattern syntax is shown through a series of examples below. All cases assume
+the following context:
+
+```python
+from fw_meta import extract_meta
+data = dict(PatientID="neuro_amnesia")
+```
+
+**Extracting a whole string as-is** is the simplest use case. For example, get
+`"neuro_amnesia"` - the value of `PatientID` into a single Flywheel field like
+`group._id` - here the pattern simply becomes the target field, `group._id`:
+
+```python
+meta = extract_meta(data, mappings={"PatientID": "group._id"})
+meta == {"group._id": "neuro_amnesia"}
+```
+
+The **simplified capture group notation using {curly braces}** gives more
+flexibility to the patterns, allowing substrings to be ignored for example:
+
+```python
+meta = extract_meta(data, mappings={"PatientID": "{group}_*"})
+meta == {"group._id": "neuro"}  # "_amnesia" was not captured in the group
+```
+
+Note how the pattern `group` resulted in the extraction of `group._id`. This
+is because Flywheel groups are most commonly routed to by their `_id` field, and
+two [**aliases**](fw_meta/aliases.py), `group` and `group.id` are configured
+to allow for simpler and more legible capture patterns.
+
+The **simplified optional notation using [square brackets]** allows patterns
+to match with or without an optional part:
+
+```python
+# the PatientID doesn't contain 2 underscores - the pattern matches w/o subject
+pattern = "{group}_{project}[_{subject}]"
+meta = extract_meta(data, mappings={"PatientID": pattern})
+meta == {"group._id": "neuro", "project.label": "amnesia"}
+
+# the PatientID contains the optional part thus the subject also gets extracted
+data = dict(PatientID="neuro_amnesia_subject")
+meta = extract_meta(data, mappings={"PatientID": pattern})
+meta == {"group._id": "neuro", "project.label": "amnesia", "subject.label": "subject"}
+```
+
+The **recommended extraction pattern** has both capture curlies and optional
+brackets: `"[fw://]{group}[/{project}[/{subject}[/{session}[/{acquisition}]]]]"`
+This pattern is:
+
+- prefix-consistent with the `fw://group/Project` as displayed on the UI
+- usable as an opt-in filter only including data if the value starts with `fw://`
+- flexible enough to route to the correct group without the project
+- flexible enough to specify custom subject/session/acquisition labels
+
+**Extracting multiple meta fields from a single value** can be done by adding
+multiple groups with curly braces in the pattern. The following example captures
+the group _and_ the project separated by an underscore:
+
+```python
+meta = extract_meta(data, mappings={"PatientID": "{group}_{project}"})
+meta == {"group._id": "neuro", "project.label": "amnesia"}
+```
+
+**Extracting a single meta field from multiple values** is also possible by
+treating the left-hand-side as an f-string template to be formatted. This
+example extracts `acquisition.label` as the concatenation of `SeriesNumber` and
+`SeriesDescription`:
+
+```python
+data = dict(SeriesNumber="3", SeriesDescription="foo")
+meta = extract_meta(data, mappings={"{SeriesNumber} - {SeriesDescription}": "acquisition"})
+meta == {"acquisition.label": "3 - foo"}
+```
+
+Note that if any of the values appearing in the template are missing, then the
+whole pattern is considered non-matching and will be skipped.
+
+The **same capture group may appear in multiple patterns providing a fallback**
+mechanism where the first non-empty match wins. For example to extract
+`session.label` from `StudyComments` when it's available, but fall back to using
+`StudyDate` if it isn't:
+
+```python
+data = dict(StudyDate="20001231", StudyComments="foo")
+meta = extract_meta(data, mappings=[("StudyComments", "session"), ("StudyDate", "session")])
+meta == {"session.label": "foo"}
+
+data = dict(StudyDate="20001231")  # no StudyComments
+meta = extract_meta(data, mappings=[("StudyComments", "session"), ("StudyDate", "session")])
+meta == {"session.label": "20001231"}  # fall back to StudyDate
+```
+
+**Capture groups may have a regex** defining what substrings the group should
+match on:
+
+```python
+# match whole string into subject IF it starts with an "s" and is digits after
+pattern = "{subject:s\d+}"
+data = dict(PatientID="s123")  # should match
+meta = extract_meta(data, mappings={"PatientID": pattern})
+meta == {"subject.label": "s123"}
+
+data = dict(PatientID="foobar")  # should not match
+meta = extract_meta(data, mappings={"PatientID": pattern})
+meta == {}
+```
+
+**Timestamps are parsed with
+[`dateutil.parser`](https://dateutil.readthedocs.io/en/stable/parser.html)**.
+This allows extracting the `session.timestamp` and `acquisition.timestamp`
+metadata fields with minimal configuration:
+
+```python
+data = dict(path="/data/20001231133742/file.txt")
+pattern = "/data/{acquisition.timestamp}/*"
+meta = extract_meta(data, mappings={"path": pattern})
+meta == {
+    "acquisition.timestamp": "2000-12-31T13:37:42+01:00",
+    "acquisition.timezone": "Europe/Budapest",
+}
+```
+
+Note that the timezone was auto-populated and the timestamp got localized - see
+the config section below for more details and options.
+
+**Timestamps may be parsed using an
+[`strptime`](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes)
+pattern** to enable loading any formats that might not be handled via
+`dateutil.parser`:
+
+```python
+data = dict(path="/data/20001231_133742_12345/file.txt")
+pattern = "/data/{acquisition.timestamp:%Y%m%d_%H%M%S_%f}/*"
+meta = extract_meta(data, mappings={"path": pattern})
+meta == {
+    "acquisition.timestamp": "2000-12-31T13:37:42.123450+01:00",
+    "acquisition.timezone": "Europe/Budapest",
+}
+```
+
+### Defaults
+
+Some scenarios benefit from **setting a default metadata value as a fallback**
+even if one could not be extracted via a pattern. An example is routing any
+DICOM from scanner "A" that doesn't have a routing string to a group/project
+pre-created and designated for the data instead of the `Unknown` group and/or
+`Unsorted` project.
+
+```python
+meta = extract_meta({}, mappings={"PatientID": "group"})
+meta == {}  # PatientID is empty - no group._id extracted
+
+meta = extract_meta({}, mappings={"PatientID": "group"}, defaults={"group": "default"})
+meta == {"group._id": "default"}  # group._id defaulted
+```
+
+### Configuration
+
+Timestamp metadata fields `session.timestamp` and `acquisition.timestamp` are
+always accompanied by a timezone (`session.timezone` / `acquisition.timezone`).
+
+When dealing with zone-naive timestamps, `fw-meta` assumes they belong to the
+the currently configured local timezone which is common practice with DICOMs and
+other medical data. The local timezone is retrieved using `tzlocal` and defaults
+to `UTC` if it's not available.
+
+Setting the environment variable `TZ` to a timezone name from the
+[tz database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
+can be used to explicitly override the timezone used to localize any tz-naive
+timestamps with.
+
+## Development
+
+Install the package and it's dependencies using `poetry` and enable `pre-commit`:
+
+```bash
+poetry install
+pre-commit install
+```
+
+## License
+
+[![MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
