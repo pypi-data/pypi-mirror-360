@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ cnf.projectName }}</title>
+    <link rel="apple-touch-icon" sizes="180x180"
+          href="{{ url_for(cnf.blueprint_static, filename='assets/skin/favicon/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32"
+          href="{{ url_for(cnf.blueprint_static, filename='assets/skin/favicon/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16"
+          href="{{ url_for(cnf.blueprint_static, filename='assets/skin/favicon/favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ url_for(cnf.blueprint_static, filename='assets/skin/favicon/site.webmanifest') }}">
+    <link rel="mask-icon"
+          href="{{ url_for(cnf.blueprint_static, filename='assets/skin/favicon/safari-pinned-tab.svg') }}"
+          color="#0066b1">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="theme-color" content="#ffffff">
+    <link href="{{ url_for('static', filename='assets/css/bootstrap-grid.min.css') }}?v={{ cnf.version }}"
+          rel="stylesheet" type="text/css">
+    <link href="{{ url_for(cnf.blueprint_static, filename='assets/skin/css/ks-general.css') }}?v={{ cnf.version }}"
+          rel="stylesheet" type="text/css">
+    <link href="{{ url_for('static', filename='assets/css/style.css') }}?v={{ cnf.version }}" rel="stylesheet"
+          type="text/css">
+    <link href="{{ url_for('static', filename='assets/css/widgets/loader.css') }}?v={{ cnf.version }}" rel="stylesheet"
+          type="text/css">
+    <link href="{{ url_for('static', filename='assets/css/login.css') }}?v={{ cnf.version }}"
+          rel="stylesheet" type="text/css">
+    <style>
+
+        .left-pane {
+        {% if cnf.loginLeftSideImages and cnf.loginLeftSideImages|length > 0 %}
+            {% set random_image = cnf.loginLeftSideImages|random %}
+            width: 50%;
+            background: url('{{ url_for(cnf.blueprint_static, filename="assets/skin/images/" + random_image) }}') center/cover
+            ;
+        {% else %}
+            width: 0%;
+        {% endif %}
+        }
+
+    </style>
+</head>
+<body>
+<div class="left-pane"></div>
+<div class="{% if cnf.loginLeftSideImages and cnf.loginLeftSideImages|length > 0 %}right-pane{% else %}full-pane{% endif %}">
+    <div class="login-container">
+        <div class="logo">
+            {% if cnf.loginPageLogoImage %}
+                <img src="{{ url_for(cnf.blueprint_static, filename='assets/skin/images/' + cnf.loginPageLogoImage) }}"
+                     alt="Logo">
+            {% endif %}
+        </div>
+        <div class="form-title">{{ cnf.loginPageLoginFormText or '' }}</div>
+        <form action="login" method="POST">
+            {% if message and message != '' %}
+                <div class="form-group">
+                    <div style="color:red; text-align:center;">{{ message }}</div>
+                </div>
+            {% endif %}
+            <div class="form-group">
+                <label for="username">{{ cnf.loginPageUsernameLabelText or 'Username' }}</label>
+                <input name="username" id="username" type="text"
+                       placeholder="{{ cnf.loginPageUsernamePlaceholderText or 'Enter your username' }}">
+            </div>
+            <div class="form-group">
+                <label for="password">{{ cnf.loginPagePasswordLabelText or 'Password' }}</label>
+                <input name="password" id="password" type="password"
+                       placeholder="{{ cnf.loginPagePasswordPlaceholderText or 'Enter your password' }}">
+            </div>
+            <div class="form-group">
+                <input type="submit" value="{{ cnf.loginPageLoginButtonText or 'Login' }}"
+                       style="width: 100%; background-color: #007AFF; color: white; padding: 10px;font-size:14px; border: none; border-radius: 8px; cursor: pointer;">
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
