@@ -1,0 +1,17 @@
+```python
+from gui_decorator import gui
+
+@gui(title="The Title",
+     width=600,
+     height=400,
+     input_filter=[("Excel files", ".xlsx")],
+     output_filter=[("Excel files", ".xlsx"))])
+def foo(input_path, output_path):
+  # use `yield` to send logs to the GUI
+  yield f"Got input_path: {input_path}"
+  yield f"Got output_path: {output_path}"
+
+foo()
+```
+
+Decorator `gui` treats function `foo` as a generator and fetches logs from `foo` to its logging box. The wrapped function must include at least one `yield` to be treated as a generator.
