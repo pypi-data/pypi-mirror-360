@@ -1,0 +1,40 @@
+- project:
+    templates:
+      - openstack-cover-jobs
+      - openstack-python3-jobs
+      - publish-openstack-docs-pti
+      - check-requirements
+      - lib-forward-testing-python3
+      - release-notes-jobs-python3
+      - openstackclient-plugin-jobs
+    experimental:
+      jobs:
+        - neutronclient-grenade-neutron-lib:
+            irrelevant-files:
+              - ^(test-|)requirements.txt$
+              - ^setup.cfg$
+
+- job:
+    name: neutronclient-grenade-neutron-lib
+    parent: grenade
+    description: |
+      neutron-lib grenade job.
+      The version of this job on the current branch is py3 based,
+      while any branch before ussuri needs to use the py2 version,
+      which is defined in openstack-zuul-jobs with the old name
+      (legacy-grenade-dsvm-neutron-libs).
+      Users of this job needs to pay attention of the version used.
+      Former names for this job were:
+        * legacy-grenade-dsvm-neutron-libs
+        * neutron-lib-grenade-dsvm
+    required-projects:
+      - openstack/keystoneauth
+      - openstack/neutron
+      - openstack/neutron-lib
+      - openstack/os-client-config
+      - openstack/python-cinderclient
+      - openstack/python-glanceclient
+      - openstack/python-ironicclient
+      - openstack/python-keystoneclient
+      - openstack/python-neutronclient
+      - openstack/python-novaclient
