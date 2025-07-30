@@ -1,0 +1,87 @@
+[project]
+
+name = "invrs_gym"
+version = "v1.6.0"
+description = "A collection of inverse design challenges"
+keywords = ["topology", "optimization", "jax", "inverse design"]
+readme = "README.md"
+requires-python = ">=3.7"
+license = {file = "LICENSE"}
+
+authors = [
+    {name = "Martin F. Schubert", email = "mfschubert@gmail.com"},
+]
+maintainers = [
+    {name = "Martin F. Schubert", email = "mfschubert@gmail.com"},
+]
+
+dependencies = [
+    "agjax",
+    "ceviche_challenges",
+    "fmmax >= 1.4.0",
+    "jax",
+    "jaxlib",
+    "numpy",
+    "refractiveindex2",
+    "totypes",
+]
+
+[project.optional-dependencies]
+examples = [
+    "invrs-opt",
+    "invrs-utils",
+    "scikit-image",
+]
+docs = [
+    "ccmaps",
+    "imageruler",
+    "invrs_gym[examples]",
+    "matplotlib",
+    "jupyter-book",
+    "sphinx-autodoc-typehints",
+    "sphinx-click",
+]
+tests = [
+    "optax",
+    "parameterized",
+    "pytest",
+    "pytest-cov",
+    "pytest-subtests",
+]
+dev = [
+    "bump-my-version",
+    "darglint",
+    "invrs_gym[docs,examples,tests]",
+    "mypy",
+    "pre-commit",
+]
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+"invrs_gym" = [
+    "py.typed",
+    "challenges/library/data/nk_tio2.csv",
+]
+
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]  # Allow tests with same name in different dirs.
+pythonpath = ["src"]
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.mypy]
+follow_imports = "normal"
+
+[tool.isort]
+multi_line_output = 3
+line_length = 88
+include_trailing_comma = true
+
+[tool.pydocstyle]
+inherit = false
+convention = "google"
