@@ -1,0 +1,17 @@
+#!/bin/bash
+
+export PYTHON_VENV_BIN_DIR=$(dirname "$(realpath "$0")")
+export PYTHON_VENV_DIR=$PYTHON_VENV_BIN_DIR/..
+
+export MUFEM_DIR=$PYTHON_VENV_DIR/lib/python3.12/site-packages/mufem
+
+export LD_LIBRARY_PATH=$MUFEM_DIR/lib:$LD_LIBRARY_PATH
+export OPAL_PREFIX=$MUFEM_DIR
+
+if [[ $1 =~ ^[0-9]+$ ]]; then
+    # $1 is a number, use it as the argument for -n in mpiexec
+    $MUFEM_DIR/bin/mpiexec --allow-run-as-root -n "$1" python "${@:2}"
+else
+    # $1 is not a number, forward all arguments to python
+    $MUFEM_DIR/bin/mpiexec --allow-run-as-root python "$@"
+fi
