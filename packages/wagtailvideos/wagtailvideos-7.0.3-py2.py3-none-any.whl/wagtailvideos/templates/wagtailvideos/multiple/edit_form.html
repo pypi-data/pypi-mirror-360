@@ -1,0 +1,14 @@
+{% load i18n %}
+
+{% include "wagtailadmin/generic/multiple_upload/edit_form.html" %}
+
+{# little bit of js ran to update the video thumbnail #}
+<div data-video-thumb="{{ video.id }}" class="thumb icon icon-media hasthumb">
+    {% if video.thumbnail %}
+    <img src="{{ video.thumbnail.url }}" alt="{% trans 'Video thumbnail' %}" />
+    {% endif %}
+</div>
+<script>
+    var thumb = $("[data-video-thumb=\"" + {{ video.id }} + "\"]");
+    $("[data-thumb-target=\"" + {{ video.id }} + "\"]").append(thumb);
+</script>

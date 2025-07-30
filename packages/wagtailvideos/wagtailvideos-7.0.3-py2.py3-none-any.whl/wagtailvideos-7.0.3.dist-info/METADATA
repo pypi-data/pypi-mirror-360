@@ -1,0 +1,238 @@
+Metadata-Version: 2.4
+Name: wagtailvideos
+Version: 7.0.3
+Summary: A wagtail module for uploading and displaying videos in various codecs.
+Home-page: https://github.com/neon-jungle/wagtailvideos
+Author: Neon Jungle
+Author-email: developers@neonjungle.studio
+License: BSD License
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Framework :: Django
+Classifier: Framework :: Wagtail
+Classifier: Framework :: Wagtail :: 6
+Classifier: License :: OSI Approved :: BSD License
+License-File: LICENSE
+Requires-Dist: wagtail>=6.1
+Requires-Dist: Django>=3.2
+Requires-Dist: bcp47==0.0.4
+Requires-Dist: wagtail-modeladmin>=2.0.0
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: home-page
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: summary
+
+wagtailvideos
+=============
+
+.. image:: https://gitlab.com/neonjungle/wagtailvideos/badges/master/pipeline.svg
+    :target: https://gitlab.com/neonjungle/wagtailvideos/pipelines?ref=master
+
+
+Based on wagtailimages. The aim was to have feature parity with images
+but for html5 videos. Includes the ability to transcode videos to a
+html5 compliant codec using ffmpeg.
+
+Requirements
+------------
+
+-  Wagtail >= 6.1 (for older wagtail version see the tags)
+-  `ffmpeg <https://ffmpeg.org/>`__ (optional, for transcoding)
+
+Installing
+----------
+
+Install using pypi
+
+.. code:: bash
+
+    pip install wagtailvideos
+
+Add `wagtailvideos` to your installed apps.
+
+.. code:: python
+
+    INSTALLED_APPS = [
+        'wagtailvideos',
+    ]
+
+Using
+-----
+
+On a page model:
+~~~~~~~~~~~~~~~~
+
+Implement as a ``ForeignKey`` relation, same as wagtailimages.
+
+.. code:: python
+
+    from django.db import models
+
+    from wagtail.admin.edit_handlers import FieldPanel
+    from wagtail.core.fields import RichTextField
+    from wagtail.core.models import Page
+
+    from wagtailvideos.edit_handlers import VideoChooserPanel
+
+
+    class HomePage(Page):
+        body = RichtextField()
+        header_video = models.ForeignKey('wagtailvideos.Video',
+                                         related_name='+',
+                                         null=True,
+                                         on_delete=models.SET_NULL)
+
+        content_panels = Page.content_panels + [
+            FieldPanel('body'),
+            VideoChooserPanel('header_video'),
+        ]
+
+In a Streamfield:
+~~~~~~~~~~~~~~~~~
+
+A VideoChooserBlock is included
+
+.. code:: python
+
+  from wagtail.admin.edit_handlers import StreamFieldPanel
+  from wagtail.core.fields import StreamField
+  from wagtail.core.models import Page
+
+  from wagtailvideos.blocks import VideoChooserBlock
+
+
+  class ContentPage(Page):
+    body = StreamField([
+        ('video', VideoChooserBlock()),
+    ])
+
+    content_panels = Page.content_panels + [
+        StreamFieldPanel('body'),
+    ]
+
+In template:
+~~~~~~~~~~~~
+
+The video template tag takes one required postitional argument, a video
+field. All extra attributes are added to the surrounding ``<video>``
+tag. The original video and all extra transcodes are added as
+``<source>`` tags.
+
+.. code:: django
+
+    {% load wagtailvideos_tags %}
+    {% video self.header_video autoplay controls width=256 %}
+
+Jinja2 extensions are also included.
+
+How to transcode using ffmpeg:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using the video collection manager from the left hand menu. In the video
+editing section you can see the available transcodes and a form that can
+be used to create new transcodes. It is assumed that your compiled
+version of ffmpeg has the matching codec libraries required for the
+transcode.
+
+
+Disable transcode:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Transcode can be disabled using the ``WAGTAIL_VIDEOS_DISABLE_TRANSCODE`` setting.
+
+.. code:: django
+
+    # settings.py
+    WAGTAIL_VIDEOS_DISABLE_TRANSCODE = True
+
+Modify maximum file size:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Maximum file size that can be uploaded is defaulted to 1GB. This can be overriden using the
+``WAGTAILVIDEOS_MAX_UPLOAD_SIZE`` setting
+
+.. code:: django
+
+    # settings.py
+    WAGTAILVIDEOS_MAX_UPLOAD_SIZE = 1024*1024*1024
+
+Modify Thumbnail extension:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The automatically generated Thumbnail extension can be modified  using the ``WAGTAIL_VIDEOS_THUMBNAIL_EXTENSION`` setting. Default value is jpg
+
+.. code:: django
+
+    # settings.py
+    WAGTAIL_VIDEOS_THUMBNAIL_EXTENSION = 'webp'
+
+Custom Video models:
+~~~~~~~~~~~~~~~~~~~~
+
+Same as Wagtail Images, a custom model can be used to replace the built in Video model using the
+``WAGTAILVIDEOS_VIDEO_MODEL`` setting.
+
+.. code:: django
+
+    # settings.py
+    WAGTAILVIDEOS_VIDEO_MODEL = 'videos.AttributedVideo'
+
+    # app.videos.models
+    from django.db import models
+    from modelcluster.fields import ParentalKey
+    from wagtailvideos.models import AbstractVideo, AbstractVideoTranscode
+
+    class AttributedVideo(AbstractVideo):
+        attribution = models.TextField()
+
+        admin_form_fields = (
+            'title',
+            'attribution',
+            'file',
+            'collection',
+            'thumbnail',
+            'tags',
+        )
+
+    class CustomTranscode(AbstractVideoTranscode):
+        video = models.ForeignKey(AttributedVideo, related_name='transcodes', on_delete=models.CASCADE)
+
+        class Meta:
+            unique_together = (
+                ('video', 'media_format')
+            )
+
+    # Only needed if you are using the text tracks feature
+    class CustomTrackListing(AbstractTrackListing):
+        video = models.OneToOneField(AttributedVideo, related_name='track_listing', on_delete=models.CASCADE)
+
+    class CustomVideoTrack(AbstractVideoTrack):
+        listing = ParentalKey(CustomTrackListing, related_name='tracks', on_delete=models.CASCADE)
+
+
+Video text tracks:
+~~~~~~~~~~~~~~~~~~
+
+To enable the uploading and displaying of VTT tracks (e.g. subtitles, captions) you'll need to add ``wagtail_modeladmin`` to your installed apps.
+Once added, there will be an new area in the admin for attaching VTT files to videos with associaled metadata.
+
+Future features
+---------------
+
+-  Some docs
+-  Richtext embed
+-  Transcoding via external service rather than ffmpeg
+-  Remove wagtail-modeladmin dependency
