@@ -1,0 +1,136 @@
+name: Cut New Release (Major or Minor)
+
+on:  # yamllint disable-line rule:truthy
+  workflow_dispatch:
+    inputs:
+      expected_major_minor_version:
+        description: 'Expected major and minor version (vX.Y)'
+        required: true
+        type: string
+
+env:
+  REGISTRY_USER: kumo+kumo_internal
+  GH_TOKEN: ${{ github.token }}
+  NEW_VERSION_INPUT: ${{ inputs.expected_major_minor_version }}
+
+
+jobs:
+  cut-release:
+    name: Cut New Release of Kumo API
+    runs-on: ubuntu-22.04
+    outputs:
+      release_success: ${{ steps.set-output.outputs.success }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Clone Kumo repository
+        uses: actions/checkout@v4
+        with:
+          repository: kumo-ai/kumo-api
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: master
+
+      - name: Setup git user
+        run: |
+          git config --global user.email "github-action@users.noreply.github.com"
+          git config --global user.name "GitHub Action"
+
+      - name: Validate expected major and minor version
+        run: |
+          cd /home/runner/work/kumo-api/kumo-api
+          VERSION=$(awk '/^\[project\]/{p=1;next} p&&/^version/{gsub(/[^0-9.]/, "", $3);print $3;exit}' pyproject.toml)
+          echo "Current version from pyproject.toml: $VERSION"
+          # Extract vX.Y from vX.Y.Z using parameter expansion
+          BRANCH_NAME=v${VERSION%.*}
+          echo "Branch name from pyproject.toml: $BRANCH_NAME"
+          git fetch origin
+          # Check if the branch in pyproject.toml exists
+          if [[ -z  $(git branch -r | grep -E "origin/${BRANCH_NAME}$") ]]; then
+            echo "Branch origin/$BRANCH_NAME does not exist"
+            exit 1
+          fi
+          # verify next version does not exist (since we check it matches the input version next,
+          # this also covers that input version branch does not exist) - next version is based on pyproject.toml value
+          NEW_PYPROJECT_VERSION=$(echo ${BRANCH_NAME} | awk -F. -v OFS=. '{$NF += 1 ; print}')
+          # if new major version, check for that
+          if [[ "$NEW_VERSION_INPUT" =~ ^v[0-9]+\.0$ ]];
+          then
+            NEW_PYPROJECT_VERSION=$NEW_VERSION_INPUT
+          fi
+          echo "New major version: $NEW_PYPROJECT_VERSION checking if it exists"
+          if [[ -n $(git branch -r | grep -E "origin/${NEW_PYPROJECT_VERSION}$") ]]; then
+            echo "Error: new major version based on pyproject.toml origin/$NEW_PYPROJECT_VERSION exists"
+            exit 1
+          fi
+          if [[ $NEW_PYPROJECT_VERSION != ${{ inputs.expected_major_minor_version }} ]]; then
+            echo "Error: expected major version ${{ inputs.expected_major_minor_version }} does not match next version $NEW_PYPROJECT_VERSION"
+            exit 1
+          fi
+          echo "Ready to create major/minor version $NEW_PYPROJECT_VERSION for kumo-api."
+
+
+      - name: Update pyproject.toml
+        run: |
+          cd /home/runner/work/kumo-api/kumo-api
+          git checkout -b "update-version-$NEW_VERSION_INPUT"
+          awk -v version_line="version = \"${NEW_VERSION_INPUT#v}.0\"" -i inplace '/^\[project\]/{p=1} p&&/^version/{if(!done){sub(/^version = .*/,version_line);done=1}} 1' pyproject.toml
+          awk -v version_line="version = \"${NEW_VERSION_INPUT#v}.0\"" -i inplace '/^\[tool.poetry\]/{p=1} p&&/^version/{if(!done){sub(/^version = .*/,version_line);done=1}} 1' pyproject.toml
+          git add pyproject.toml
+          git commit -m "Update version to $NEW_VERSION_INPUT.0"
+          git pull origin master
+          git push origin "update-version-$NEW_VERSION_INPUT"
+          gh pr create --title "Update pyproject.toml: $NEW_VERSION_INPUT" --body "Update pyproject.toml: $NEW_VERSION_INPUT" --label github-actions
+
+
+      - name: Cut Release
+        run: |
+          cd /home/runner/work/kumo-api/kumo-api
+          if [[ "$NEW_VERSION_INPUT" =~ ^v[0-9]+\.0$ ]];
+          then
+            PREV_PREFIX=$(echo ${NEW_VERSION_INPUT} | awk -F. '{print "v" substr($1, 2) - 1}')
+            PREV_VERSION=$(git tag -l | grep -E $PREV_PREFIX |  grep -E "^v[0-9]+\.[0-9]+\.[0]$" | sort -V | tail -n 1)
+          else
+            PREV_VERSION=$(echo ${NEW_VERSION_INPUT} | awk -F. -v OFS=. '{$NF -= 1 ; print}').0
+          fi
+          echo "PREV_VERSION for notes: $PREV_VERSION"
+          NOTES_ARG="--notes-start-tag ${PREV_VERSION}"
+
+
+          TAG=${NEW_VERSION_INPUT}.0
+          # will be based on the update-version-${NEW_VERSION_INPUT} branch:
+          git checkout -b ${NEW_VERSION_INPUT}
+          git push origin ${NEW_VERSION_INPUT}
+          git tag $TAG
+          git push origin $TAG
+          gh release create $TAG --verify-tag --generate-notes --title $TAG $NOTES_ARG
+
+
+      - name: publish to pypi
+        run: |
+          cd /home/runner/work/kumo-api/kumo-api
+          if [ -n "$GITHUB_TOKEN" ];
+          then
+            echo 'GITHUB_TOKEN is set, not safe to publish to pypi'
+            exit 1
+          fi
+          pipx install twine
+          pipx install build
+          echo [pypi] > $HOME/.pypirc
+          echo 'username = __token__' >> $HOME/.pypirc
+          echo 'password = ${{ secrets.PYPI_TOKEN }}' >> $HOME/.pypirc
+          pipx run build
+          TWINE_CHECK=$(twine check dist/* | grep "PASSED" | wc -l)
+          if [ $TWINE_CHECK -ne 2 ]; then
+            echo "twine check failed"
+            exit 1
+          fi
+          twine upload dist/*
+
+
+      - name: Set output
+        if: ${{ success() }}
+        id: set-output
+        run: echo "success=true" >> $GITHUB_OUTPUT
