@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attention Pattern Viewer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="header">
+        <a href="https://github.com/mivanit/pattern-lens/" class="source-link" title="Pattern Lens GitHub Repository"> pattern-lens $$PATTERN_LENS_VERSION$$ </a>
+        <div id="info" class="info-center"></div>
+        <div class="help-menu" title="Help & Controls">
+            <span class="help-button">?</span>
+            <div class="help-content">
+                <h3>Controls</h3>
+                <ul>
+                    <li><strong>Mouse:</strong> Hover to highlight attention patterns</li>
+                    <li><strong>Click:</strong> Enter keyboard mode for precise navigation</li>
+                    <li><strong>Arrow keys:</strong> Navigate in keyboard mode</li>
+                    <li><strong>Ctrl + arrows:</strong> Move faster in keyboard mode</li>
+                    <li><strong>Escape:</strong> Exit keyboard mode</li>
+                    <li><strong>Token clicks:</strong> Left click sets K-axis, right click sets Q-axis</li>
+                </ul>
+                <h3>Color Legend</h3>
+                <ul>
+                    <li><span class="color-demo k-color"></span> K-axis (Key tokens)</li>
+                    <li><span class="color-demo q-color"></span> Q-axis (Query tokens)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div id="controls">
+        <div class="cell-info" id="cellInfo"></div>
+    </div>
+    <div class="main-content">
+        <div class="canvas-section">
+            <div class="heatmap-container" id="heatmapContainer">
+                <canvas id="heatmapCanvas"></canvas>
+                <div class="x-labels" id="xLabels"></div>
+                <div class="y-labels" id="yLabels"></div>
+                <div class="tooltip" id="tooltip"></div>
+            </div>
+        </div>
+        <div class="tokens-display" id="tokensDisplay"></div>
+    </div>
+    <script src="config.js"></script>
+    <script src="matrix_png.js"></script>
+    <script src="dataLoader.js"></script>
+    <script src="viewer.js"></script>
+    <script>
+        // Initialize configuration system first
+        initConfig().then(() => {
+            // Set CSS variables from config
+            const root = document.documentElement;
+            root.style.setProperty('--k-axis', CONFIG.visualization.colors.kAxis);
+            root.style.setProperty('--q-axis', CONFIG.visualization.colors.qAxis);
+            root.style.setProperty('--k-axis-light', CONFIG.visualization.colors.kAxisLight);
+            root.style.setProperty('--q-axis-light', CONFIG.visualization.colors.qAxisLight);
+
+            // Parse URL parameters with defaults from config
+            const urlParams = new URLSearchParams(window.location.search);
+            const promptHash = urlParams.get('prompt') || CONFIG.data.defaults.promptHash;
+            const headParam = urlParams.get('head') || CONFIG.data.defaults.head;
+
+            // Parse head parameter: {model}.L{layer}.H{head}
+            const parts = headParam.split('.');
+            const model = parts[0];
+
+            const layerIdx = parseInt(parts[1].substring(1));
+            const headIdx = parseInt(parts[2].substring(1));
+
+            // Update info (will be updated with token count after pattern loads)
+            const updateInfo = (tokenCount = null) => {
+                const tokenInfo = tokenCount ? ` | Prompt tokens: ${tokenCount}` : '';
+                
+                // Get link templates from config
+                const headLinkTemplate = getConfigValue('data.links.head', '');
+                const promptLinkTemplate = getConfigValue('data.links.prompt', '');
+                
+                // Helper function to replace all placeholders in a template
+                const replacePlaceholders = (template) => {
+                    return template
+                        .replace(/{model}/g, model)
+                        .replace(/{layer}/g, layerIdx)
+                        .replace(/{head}/g, headIdx)
+                        .replace(/{prompt_hash}/g, promptHash);
+                };
+                
+                // Generate links
+                const headLink = headLinkTemplate ? replacePlaceholders(headLinkTemplate) : '';
+                const promptLink = promptLinkTemplate ? replacePlaceholders(promptLinkTemplate) : '';
+                
+                // Build the info HTML with links
+                let infoHTML = '<p>';
+                
+                if (headLink) {
+                    infoHTML += `Head: <a href="${headLink}" target="_blank">${model}:L${layerIdx}:H${headIdx}</a>`;
+                } else {
+                    infoHTML += `Head: ${model}:L${layerIdx}:H${headIdx}`;
+                }
+                
+                infoHTML += ' | ';
+                
+                if (promptLink) {
+                    infoHTML += `Prompt hash: <a href="${promptLink}" target="_blank">${promptHash}</a>`;
+                } else {
+                    infoHTML += `Prompt hash: ${promptHash}`;
+                }
+                
+                infoHTML += tokenInfo + '</p>';
+                
+                document.getElementById('info').innerHTML = infoHTML;
+            };
+            updateInfo();
+
+            // Initialize viewer and load data
+            const viewer = new AttentionPatternViewer('heatmapContainer');
+            const dataLoader = new AttentionDataLoader();
+
+            viewer.displayPattern(dataLoader, model, promptHash, layerIdx, headIdx).then(() => {
+                // Update info with token count after pattern loads
+                updateInfo(viewer.n);
+            });
+        }).catch(error => {
+            console.error('Failed to initialize config:', error);
+            // Continue with defaults if config fails
+            const viewer = new AttentionPatternViewer('heatmapContainer');
+            const dataLoader = new AttentionDataLoader();
+            // ... rest of fallback initialization
+        });
+    </script>
+</body>
+
+</html>
