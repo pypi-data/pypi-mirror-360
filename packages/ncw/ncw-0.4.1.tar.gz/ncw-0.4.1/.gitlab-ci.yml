@@ -1,0 +1,89 @@
+# ==============================================================================
+# Python pipeline for ncw
+# using components
+# ==============================================================================
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+
+
+include:
+  - component: $CI_SERVER_FQDN/blackstream-x/generic-components/meta-gitlab-security@~latest
+  - component: $CI_SERVER_FQDN/blackstream-x/python-components/meta-uv-pipeline@feature/uv-version
+    inputs:
+      uv-version: "0.7.19"
+      mypy-args: "--exclude tools/"
+      python-version: "3.13"
+      python-variant: "alpine"
+      pylint-args: "--disable=fixme --report=yes"
+      ty-args: "--ignore unresolved-import"
+      relax-pylint: true
+      pytest-rules:
+        - if: $CI_COMMIT_TAG == null
+      pytest-matrix:
+        - TEST_PYTHON_VERSION: ["3.10", "3.11", "3.12", "3.14-rc"]
+      pypi-project-name: ncw
+
+
+stages:
+  - codestyle
+  - test
+  - pre-build
+  - build
+  - upload
+  - bump-prepare
+  - bump-push
+
+
+bump-version:
+  stage: 'bump-prepare'
+  extends: .uv:patch-version
+  rules:
+    # Run in the default branch only
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - uv version --bump patch
+    - new_version="$(uv version --short)"
+    - |-
+      cat <<EOT | tee new-version.env
+      NEW_PACKAGE_VERSION=${new_version}
+      EOT
+  artifacts:
+    reports:
+      dotenv: new-version.env
+    paths:
+      - pyproject.toml
+
+
+push-new-version:
+  image: 'registry.gitlab.com/blackstream-x/saki/alpine:latest'
+  stage: 'bump-push'
+  rules:
+    # Run in the default branch only
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  dependencies:
+    - bump-version
+  script:
+    # Configure user data and cretdentials, and set origin URL
+    - git config --global user.name "$GITLAB_USER_NAME"
+    - git config --global user.email "$GITLAB_USER_EMAIL"
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+    - chmod 600 ~/.ssh/id_ed25519
+    - 'echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+    - 'git remote set-url origin git@gitlab.com:blackstream-x/ncw.git'
+    # Test the configuration (should echo "up dto date")
+    - git fetch --prune
+    - git checkout $CI_DEFAULT_BRANCH
+    - git pull
+    # Commit pyproject.toml changes and push
+    - git status --porcelain
+    - new_branch_name=update/${NEW_PACKAGE_VERSION}
+    - echo "Creating new branch ${new_branch_name} ..."
+    - git checkout -b ${new_branch_name}
+    - git add pyproject.toml
+    - git status
+    - git commit -m "Bump version to ${NEW_PACKAGE_VERSION}"
+    - git push -o ci.skip --set-upstream origin ${new_branch_name}
+  allow_failure: true
