@@ -1,0 +1,1 @@
+from yololang.yolo import yolo
