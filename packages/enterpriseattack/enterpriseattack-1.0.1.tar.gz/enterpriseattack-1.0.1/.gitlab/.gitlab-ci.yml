@@ -1,0 +1,194 @@
+# ----------------------------------------------------------------------------#
+
+image: python:3.13
+
+# ----------------------------------------------------------------------------#
+
+stages:
+  - deps
+  - test
+  - lint
+  - tox
+  - release
+
+# ----------------------------------------------------------------------------#
+
+include:
+  - template: Jobs/Dependency-Scanning.gitlab-ci.yml
+  - template: Jobs/SAST.gitlab-ci.yml
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+
+# ----------------------------------------------------------------------------#
+# SBOM:
+# ----------------------------------------------------------------------------#
+
+dependency-setup:
+  stage: deps
+  script:
+    - make install
+    - make sbom
+  artifacts:
+    when: on_success
+    paths: ["**/pipdeptree.json"]
+    access: developer
+  rules:
+    - when: always
+
+# ----------------------------------------------------------------------------#
+# Linting tests:
+# ----------------------------------------------------------------------------#
+
+# commitlint
+commit:
+  stage: lint
+  image: node:latest
+  script:
+    - npm install -g @commitlint/cli @commitlint/config-angular
+    # get a copy of main
+    - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    # ensure that the angular commit msg type is followed
+    - git log --pretty=format:%s $CI_MERGE_REQUEST_DIFF_BASE_SHA..$CI_COMMIT_SHA | commitlint --config .commitlintrc
+  only:
+    - merge_requests
+
+# renovate
+renovate:
+  stage: lint
+  image: node:23
+  script:
+    - npm install -g renovate
+    - renovate-config-validator
+  rules:
+    - changes:
+        - renovate.json
+  allow_failure: true
+
+# flake8
+lint:
+  stage: test
+  interruptible: true
+  script:
+    - pip install -r dev_requirements.txt
+    - flake8 .
+  allow_failure: true
+
+# ----------------------------------------------------------------------------#
+# Security tests:
+# ----------------------------------------------------------------------------#
+
+sast:
+  stage: test
+  interruptible: true
+  script:
+    - []
+
+# ----------------------------------------------------------------------------#
+
+pytest:
+  stage: test
+  interruptible: true
+  script:
+    - pip install -r dev_requirements.txt
+    - pip install -r requirements.txt
+    - pytest tests
+
+# ----------------------------------------------------------------------------#
+
+coverage:
+  stage: test
+  interruptible: true
+  script:
+    - pip install -r dev_requirements.txt
+    - pip install -r requirements.txt
+    - pytest --cov=enterpriseattack --cov-report term-missing
+  coverage: '/TOTAL.*\s+(\d+\%)/'
+  allow_failure: true
+
+# ----------------------------------------------------------------------------#
+
+py312:
+  stage: tox
+  image: python:3.12
+  script:
+    - pip install -r dev_requirements.txt
+    - tox -e py312 --parallel auto
+
+py311:
+  stage: tox
+  image: python:3.11
+  script:
+    - pip install -r dev_requirements.txt
+    - tox -e py311 --parallel auto
+
+py310:
+  stage: tox
+  image: python:3.10
+  script:
+    - pip install -r dev_requirements.txt
+    - tox -e py310 --parallel auto
+
+py39:
+  stage: tox
+  image: python:3.9
+  script:
+    - pip install -r dev_requirements.txt
+    - tox -e py39 --parallel auto
+
+# ----------------------------------------------------------------------------#
+# Pypi & GitLab Releases:
+# ----------------------------------------------------------------------------#
+
+# deploy:
+#   stage: deploy
+#   script:
+#     - pip install twine
+#     - python3 setup.py sdist bdist_wheel --universal
+#     - twine upload dist/*
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "merge_request_event"
+#       changes:
+#         - setup.py
+#         - enterpriseattack/*
+
+# -----------------------------------------------------------------------------
+# GitLab & Pypi release using python-semantic-release
+# -----------------------------------------------------------------------------
+
+release:
+  variables:
+    GIT_DEPTH: 0
+    GIT_STRATEGY: "clone"
+    TWINE_USERNAME: __token__
+    TWINE_PASSWORD: $PYPI_TOKEN
+  stage: release
+  script:
+    # ensure we don't have a detatched head in the pipeline
+    # and that there is no untracked files in the dir
+    # remove previous build files as we will overwrite if there's a new version:
+    - git stash -u && git checkout main && git fetch --all
+
+    # install release deps
+    - make install
+
+    # publish a new release (only if the commit msg matches)
+    - venv/bin/semantic-release version && venv/bin/semantic-release publish
+
+    # Check if there are files in the /dist folder
+    # this only will occur if semantic-release wants to publish a new version:
+    - if [ -z "$(ls -A dist)" ]; then
+        echo "No version to publish";
+        exit 0;
+      else
+        echo "Publishing new version";
+        venv/bin/twine upload --config-file .pypirc --repository pypi --verbose dist/*;
+        export TWINE_USERNAME="gitlab-ci-token" && export TWINE_PASSWORD="$CI_JOB_TOKEN";
+        venv/bin/twine upload --config-file .pypirc --repository gitlab --verbose dist/*;
+      fi
+
+  rules:
+    # only run on main branch
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    # skip the job if it's triggered by a release commit
+    - if: '$CI_COMMIT_MESSAGE =~ /^chore\(release\): bump version/'
+      when: never
