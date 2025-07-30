@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blockbrain-api"
+version = "0.1.3"
+description = "A Python client for the BlockBrain API with model selection, chat, file upload, and streaming support"
+authors = [
+    {name = "BlockBrain", email = "support@blockbrain.ai"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+keywords = ["blockbrain", "api", "chat", "ai", "streaming", "nlp", "model-selection", "llm"]
+dependencies = [
+    "requests>=2.25.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov",
+    "black",
+    "flake8",
+    "mypy",
+]
+
+[project.urls]
+Homepage = "https://github.com/blockbrain/blockbrain-api-python"
+Documentation = "https://docs.blockbrain.ai"
+Repository = "https://github.com/blockbrain/blockbrain-api-python"
+"Bug Reports" = "https://github.com/blockbrain/blockbrain-api-python/issues"
+
+[tool.setuptools]
+packages = ["blockbrain_api"]
+
+[tool.black]
+line-length = 120
+target-version = ['py38']
+
+[tool.flake8]
+max-line-length = 120
+extend-ignore = ["E203", "W503"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers --disable-warnings"
+testpaths = ["tests"]
+markers = [
+    "e2e: marks tests as end-to-end (deselect with '-m \"not e2e\"')",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+timeout = 300
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = false
+exclude = ["examples.py", "setup.py"]
