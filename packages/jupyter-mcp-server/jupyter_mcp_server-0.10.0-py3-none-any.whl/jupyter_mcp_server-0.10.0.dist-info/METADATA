@@ -1,0 +1,201 @@
+Metadata-Version: 2.4
+Name: jupyter_mcp_server
+Version: 0.10.0
+Project-URL: Home, https://github.com/datalayer/jupyter-mcp-server
+Author-email: Datalayer <info@datalayer.io>
+License: BSD 3-Clause License
+        
+        Copyright (c) 2025, Datalayer
+        All rights reserved.
+        
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+        
+        1. Redistributions of source code must retain the above copyright notice, this
+           list of conditions and the following disclaimer.
+        
+        2. Redistributions in binary form must reproduce the above copyright notice,
+           this list of conditions and the following disclaimer in the documentation
+           and/or other materials provided with the distribution.
+        
+        3. Neither the name of the copyright holder nor the names of its
+           contributors may be used to endorse or promote products derived from
+           this software without specific prior written permission.
+        
+        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+        AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+        FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+        DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+        SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+        CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+        OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+        OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+License-File: LICENSE
+Keywords: Jupyter
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.10
+Requires-Dist: click
+Requires-Dist: fastapi
+Requires-Dist: jupyter-kernel-client>=0.7.3
+Requires-Dist: jupyter-nbmodel-client>=0.13.4
+Requires-Dist: mcp[cli]>=1.10.1
+Requires-Dist: pydantic
+Requires-Dist: uvicorn
+Provides-Extra: lint
+Requires-Dist: mdformat-gfm>=0.3.5; extra == 'lint'
+Requires-Dist: mdformat>0.7; extra == 'lint'
+Requires-Dist: ruff; extra == 'lint'
+Provides-Extra: test
+Requires-Dist: ipykernel; extra == 'test'
+Requires-Dist: jupyter-server<3,>=1.6; extra == 'test'
+Requires-Dist: pytest>=7.0; extra == 'test'
+Provides-Extra: typing
+Requires-Dist: mypy>=0.990; extra == 'typing'
+Description-Content-Type: text/markdown
+
+<!--
+  ~ Copyright (c) 2023-2024 Datalayer, Inc.
+  ~
+  ~ BSD 3-Clause License
+-->
+
+[![Datalayer](https://assets.datalayer.tech/datalayer-25.svg)](https://datalayer.io)
+
+[![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=1ABC9C)](https://github.com/sponsors/datalayer)
+
+# 🪐✨ Jupyter MCP Server
+
+[![PyPI - Version](https://img.shields.io/pypi/v/jupyter-mcp-server)](https://pypi.org/project/jupyter-mcp-server)
+[![smithery badge](https://smithery.ai/badge/@datalayer/jupyter-mcp-server)](https://smithery.ai/server/@datalayer/jupyter-mcp-server)
+
+> 🚨 **BREAKING CHANGE**
+> Since version `0.6.0`, the configuration has changed.
+> [Read more in the release notes.](https://jupyter-mcp-server.datalayer.tech/releases)
+
+**Jupyter MCP Server** is a [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server implementation that provides interaction with 📓 Jupyter notebooks running in any JupyterLab or Notebook>=7.
+
+This works also with your 💻 local Jupyter and with [Datalayer](https://datalayer.ai/) hosted Notebooks.
+
+## 🚀 Key Features
+
+- ⚡ **Real-time control:** Instantly view notebook changes as they happen.
+- 🔁 **Smart execution:** Automatically adjusts when a cell run fails thanks to cell output feedback.
+- 🤝 **MCP-Compatible:** Works with any MCP client, such as Claude Desktop, Cursor, Windsurf, and more.
+
+![Jupyter MCP Server Demo](https://assets.datalayer.tech/jupyter-mcp/jupyter-mcp-server-claude-demo.gif)
+
+🛠️ This MCP offers multiple tools such as `insert_execute_code_cell`, `append_markdown_cell`, `get_notebook_info`, `read_cell`, and more, enabling advanced interactions with Jupyter notebooks. Explore our [tools documentation](https://jupyter-mcp-server.datalayer.tech/tools) to learn about all the tools powering Jupyter MCP Server.
+
+## 🏁 Getting Started
+
+For comprehensive setup instructions—including `Streamable HTTP` transport and advanced configuration—check out [our documentation](https://jupyter-mcp-server.datalayer.tech/). Or, get started quickly with `JupyterLab` and `stdio` transport here below.
+
+### 1. Set Up Your Environment
+
+```bash
+pip install jupyterlab==4.4.1 jupyter-collaboration==4.0.2 ipykernel
+pip uninstall -y pycrdt datalayer_pycrdt
+pip install datalayer_pycrdt==0.12.17
+```
+
+### 2. Start JupyterLab
+
+```bash
+# make jupyterlab
+jupyter lab --port 8888 --IdentityProvider.token MY_TOKEN --ip 0.0.0.0
+```
+
+### 3. Configure Your Preferred MCP Client
+
+> [!NOTE]
+>
+> Ensure the `port` of the `ROOM_URL` and `RUNTIME_URL` match those used in the `jupyter lab` command.
+>
+> The `ROOM_ID` which is the path to the notebook you want to connect to, should be relative to the directory where JupyterLab was started.
+>
+> In a basic setup, `ROOM_URL` and `RUNTIME_URL` are the same. `ROOM_TOKEN`, and `RUNTIME_TOKEN` are also the same.
+
+#### MacOS and Windows
+
+```json
+{
+  "mcpServers": {
+    "jupyter": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "ROOM_URL",
+        "-e",
+        "ROOM_TOKEN",
+        "-e",
+        "ROOM_ID",
+        "-e",
+        "RUNTIME_URL",
+        "-e",
+        "RUNTIME_TOKEN",
+        "datalayer/jupyter-mcp-server:latest"
+      ],
+      "env": {
+        "ROOM_URL": "http://host.docker.internal:8888",
+        "ROOM_TOKEN": "MY_TOKEN",
+        "ROOM_ID": "notebook.ipynb",
+        "RUNTIME_URL": "http://host.docker.internal:8888",
+        "RUNTIME_TOKEN": "MY_TOKEN"
+      }
+    }
+  }
+}
+```
+
+#### Linux
+
+```json
+{
+  "mcpServers": {
+    "jupyter": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "ROOM_URL",
+        "-e",
+        "ROOM_TOKEN",
+        "-e",
+        "ROOM_ID",
+        "-e",
+        "RUNTIME_URL",
+        "-e",
+        "RUNTIME_TOKEN",
+        "--network=host",
+        "datalayer/jupyter-mcp-server:latest"
+      ],
+      "env": {
+        "ROOM_URL": "http://localhost:8888",
+        "ROOM_TOKEN": "MY_TOKEN",
+        "ROOM_ID": "notebook.ipynb",
+        "RUNTIME_URL": "http://localhost:8888",
+        "RUNTIME_TOKEN": "MY_TOKEN"
+      }
+    }
+  }
+}
+```
+
+For detailed instructions on configuring various MCP clients—including [Claude Desktop](https://jupyter-mcp-server.datalayer.tech/clients/claude_desktop), [VS Code](https://jupyter-mcp-server.datalayer.tech/clients/vscode), [Cursor](https://jupyter-mcp-server.datalayer.tech/clients/cursor), [Cline](https://jupyter-mcp-server.datalayer.tech/clients/cline), and [Windsurf](https://jupyter-mcp-server.datalayer.tech/clients/windsurf) — see the [Clients documentation](https://jupyter-mcp-server.datalayer.tech/clients).
+
+## 📚 Resources
+
+Looking for blog posts, videos, or other materials about Jupyter MCP Server?
+
+👉 Visit the [Resources section](https://jupyter-mcp-server.datalayer.tech/resources).
