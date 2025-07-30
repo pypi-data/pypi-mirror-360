@@ -1,0 +1,210 @@
+Metadata-Version: 2.4
+Name: llamate
+Version: 0.1.0
+Summary: A memory-augmented framework for LLMs
+Author: Andy Thompson
+Author-email: Andy Thompson <andyt338@gmail.com>
+License: MIT
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: openai>=1.0.0
+Requires-Dist: faiss-cpu
+Requires-Dist: numpy
+Requires-Dist: python-dotenv
+Requires-Dist: psycopg2-binary
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Dynamic: author
+Dynamic: license-file
+Dynamic: requires-python
+
+# 🦙 Llamate
+
+A memory-augmented agent framework for LLMs.
+
+## Quick Start
+
+### 1. Install Llamate
+
+```bash
+pip install llamate
+```
+
+### 2. PostgreSQL Setup
+
+To use Llamate with PostgreSQL:
+
+```bash
+# Run PostgreSQL with pgvector extension using Docker
+docker run --name llamate-postgres -e POSTGRES_USER=llamate -e POSTGRES_PASSWORD=llamate -e POSTGRES_DB=llamate -p 5432:5432 -d ankane/pgvector
+```
+
+### 3. Verifying PostgreSQL Installation
+
+Check if the container is running:
+```bash
+docker ps | grep llamate-postgres
+```
+
+Check PostgreSQL logs:
+```bash
+docker logs llamate-postgres
+```
+
+### 4. Accessing PostgreSQL Container
+
+Connect to PostgreSQL:
+```bash
+docker exec -it llamate-postgres psql -U llamate -d llamate
+```
+
+Useful PostgreSQL Commands:
+```sql
+-- List all tables
+\dt
+
+-- Check if pgvector extension is installed
+\dx
+
+-- List all schemas
+\dn
+
+-- Exit PostgreSQL shell
+\q
+```
+
+### 5. Initialize Llamate config
+
+```bash
+llamate --init
+```
+
+When prompted, choose `postgres` as your vector backend and enter this connection string:
+
+```
+postgresql://llamate:llamate@localhost:5432/llamate
+```
+
+### 6. Basic Usage
+
+```python
+from llamate import MemoryAgent, get_vectorstore_from_env
+
+# Create an agent with your config settings
+user_id = "test_user"
+vectorstore = get_vectorstore_from_env(user_id=user_id)
+agent = MemoryAgent(user_id=user_id, vectorstore=vectorstore)
+
+# Add a memory
+response = agent.chat("The capital of France is Paris")
+
+# Retrieve memory later
+response = agent.chat("What's the capital of France?")
+print(response)  # Will include information about Paris
+
+### 7. Interactive CLI
+
+```bash
+llamate
+```
+
+## Complete PostgreSQL End-to-End Flow
+
+Follow these steps to set up, use, and view data in Llamate with PostgreSQL:
+
+### 1. Start PostgreSQL Container
+
+```bash
+docker run --name llamate-postgres -e POSTGRES_USER=llamate -e POSTGRES_PASSWORD=llamate -e POSTGRES_DB=llamate -p 5432:5432 -d ankane/pgvector
+```
+
+### 2. Initialize Llamate
+
+```bash
+llamate --init
+# Select 'postgres' as your vector store backend
+# Enter connection string: postgresql://llamate:llamate@localhost:5432/llamate
+```
+
+### 3. Run a Test Script to Store Data
+
+Create a file `test_llamate.py`:
+
+```python
+from llamate import MemoryAgent, get_vectorstore_from_env
+import os
+
+# Set user ID
+user_id = "test_user"
+
+# Initialize components
+vectorstore = get_vectorstore_from_env(user_id=user_id)
+agent = MemoryAgent(user_id=user_id, vectorstore=vectorstore)
+
+# Add memories
+agent.chat("The capital of France is Paris.")
+agent.chat("The Eiffel Tower is 324 meters tall.")
+agent.chat("Python is a programming language created by Guido van Rossum.")
+
+# Test retrieval
+response = agent.chat("Tell me about Paris.")
+print("Response:", response)
+```
+
+### 4. View Data in PostgreSQL
+
+Connect to the database:
+
+```bash
+docker exec -it llamate-postgres psql -U llamate -d llamate
+```
+
+List tables to find your memory table (it will use your user_id):
+
+```sql
+\dt
+```
+
+View table structure:
+
+```sql
+\d memory_test_user
+```
+
+Display memory records (omitting the large vector field):
+
+```sql
+SELECT id, text FROM memory_test_user;
+```
+
+Count records:
+
+```sql
+SELECT COUNT(*) FROM memory_test_user;
+```
+
+Query specific memories (using text search):
+
+```sql
+SELECT id, text FROM memory_test_user WHERE text LIKE '%Paris%';
+```
+
+Delete test memories (if needed):
+
+```sql
+DELETE FROM memory_test_user WHERE text LIKE '%test%';
+```
+
+Exit the PostgreSQL shell:
+
+```sql
+\q
+```
+
+## Features
+
+- Persistent memory for AI using vector embeddings
+- Multiple vector store backends (FAISS and PostgreSQL)
+- Easy integration into existing applications
+- Simple CLI for testing and demonstration
