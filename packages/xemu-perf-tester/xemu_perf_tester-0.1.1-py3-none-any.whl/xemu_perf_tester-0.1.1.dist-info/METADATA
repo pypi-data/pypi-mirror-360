@@ -1,0 +1,105 @@
+Metadata-Version: 2.4
+Name: xemu-perf-tester
+Version: 0.1.1
+Summary: Benchmark orchestrator for the xemu original Microsoft Xbox emulator
+Project-URL: Documentation, https://github.com/abaire/xemu-perf-tester#readme
+Project-URL: Issues, https://github.com/abaire/xemu-perf-tester/issues
+Project-URL: Source, https://github.com/abaire/xemu-perf-tester
+Author-email: Erik Abair <erik.abair@bearbrains.work>
+License: This is free and unencumbered software released into the public domain.
+        
+        Anyone is free to copy, modify, publish, use, compile, sell, or
+        distribute this software, either in source code form or as a compiled
+        binary, for any purpose, commercial or non-commercial, and by any
+        means.
+        
+        In jurisdictions that recognize copyright laws, the author or authors
+        of this software dedicate any and all copyright interest in the
+        software to the public domain. We make this dedication for the benefit
+        of the public at large and to the detriment of our heirs and
+        successors. We intend this dedication to be an overt act of
+        relinquishment in perpetuity of all present and future rights to this
+        software under copyright law.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+        EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+        IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+        OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+        ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+        OTHER DEALINGS IN THE SOFTWARE.
+        
+        For more information, please refer to <https://unlicense.org>
+License-File: LICENSE
+Keywords: xbox,xemu
+Classifier: Development Status :: 3 - Alpha
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.10
+Requires-Dist: distro~=1.9.0
+Requires-Dist: gitpython~=3.1.44
+Requires-Dist: nxdk-pgraph-test-runner>=0.1.13
+Requires-Dist: psutil~=7.0.0
+Requires-Dist: py-cpuinfo~=9.0.0
+Requires-Dist: py-machineid~=0.8.0
+Requires-Dist: pyfatx~=0.0.7
+Requires-Dist: python-xiso-repacker>=0.1.0
+Requires-Dist: requests~=2.32.3
+Description-Content-Type: text/markdown
+
+xemu-perf-tester
+===
+
+Orchestrates running [xemu](xemu.app) benchmarks
+using [xemu-perf-tests](https://github.com/abaire/xemu-perf-tests).
+
+# Installation
+
+Install from [Pypi](https://pypi.org/project/xemu-perf-tester/)
+
+```shell
+pip install xemu-perf-tester
+```
+
+# Use
+
+## Running benchmarks
+
+Run `xemu-perf-run -h` for detailed information on executing the benchmarks.
+
+One time setup: `xemu-perf-run --import-install <path_to_your_xemu.toml_file>`
+
+### Test the latest xemu with the latest benchmark release
+
+The default behavior is to download the latest xemu-perf-tests iso and xemu
+release and run the benchmarks using the OpenGL backend. You may pass the
+`--use-vulkan` parameter to use Vulkan instead.
+
+```shell
+xemu-perf-run
+```
+
+### Testing against specific xemu and/or xemu-perf-tests releases
+
+```shell
+xemu-perf-run \
+  --xemu-tag v0.8.7 \
+  --test-tag v12345
+```
+
+### Reusing existing xemu-perf-tests ISO and/or xemu binary
+
+You can use the `--iso` and `--xemu` flags to specify existing artifacts. This
+will skip the automated check against the GitHub API for the `latest` tagged
+artifacts.
+
+```shell
+xemu-perf-run \
+  --xemu ~/bin/xemu \
+  --iso ~/special_perf_tests.xiso
+```
