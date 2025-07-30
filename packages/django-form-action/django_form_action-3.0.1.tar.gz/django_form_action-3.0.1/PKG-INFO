@@ -1,0 +1,107 @@
+Metadata-Version: 2.4
+Name: django-form-action
+Version: 3.0.1
+Summary: Django action with an intermediate page to parse data from a form
+Author-email: Pradish Bijukchhe <pradish@sandbox.com.np>
+License: Copyright (c) 2024 Pradish Bijukchhe
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/sandbox-pokhara/django-form-action
+Project-URL: Issues, https://github.com/sandbox-pokhara/django-form-action/issues
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: django
+Dynamic: license-file
+
+# django-form-action
+
+Django action with an intermediate page to parse data from a form
+
+## Installation
+
+You can install the package via pip:
+
+```
+pip install django-form-action
+```
+
+Add `django_form_action` to `INSTALLED_APPS`.
+
+## Demo
+
+![Step 1](docs/step1.png)
+![Step 2](docs/step2.png)
+![Step 3](docs/step3.png)
+
+## Usage
+
+Example usage showing an action in UserAdmin which has an intermediate form that parses data on how to perform that action.
+
+```python
+from typing import Any
+
+from django.contrib import admin
+from django.contrib import messages
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
+from django.db.models import QuerySet
+from django.forms import CharField
+from django.forms import Form
+from django.http import HttpRequest
+
+from django_form_action import form_action
+
+admin.site.unregister(User)
+
+
+class ChangeFirstName(Form):
+    first_name = CharField()
+
+
+@form_action(
+    User,
+    ChangeFirstName,
+    "Change selected users' first name",
+)
+def change_first_name(
+    modeladmin: "admin.ModelAdmin[User]",
+    request: HttpRequest,
+    queryset: QuerySet[User],
+    form: ChangeFirstName,
+):
+    queryset.update(first_name=form.cleaned_data["first_name"])
+    messages.add_message(
+        request,
+        messages.INFO,
+        "Successfully changed the first name of selected users.",
+    )
+
+
+@admin.register(User)
+class CustomUserAdmin(UserAdmin):
+    actions = [change_first_name]
+
+```
+
+## License
+
+This project is licensed under the terms of the MIT license.
