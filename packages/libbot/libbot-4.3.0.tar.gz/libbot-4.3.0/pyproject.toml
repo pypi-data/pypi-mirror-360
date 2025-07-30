@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=77.0.3", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "libbot"
+dynamic = ["version", "dependencies", "optional-dependencies"]
+authors = [{ name = "Profitroll" }]
+description = "Universal bot library with functions needed for basic Discord/Telegram bot development."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "GPL-3.0"
+license-files = ["LICENSE"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "libbot.__version__" }
+dependencies = { file = "requirements/_.txt" }
+
+[tool.setuptools.dynamic.optional-dependencies]
+dev = { file = "requirements/dev.txt" }
+pycord = { file = "requirements/pycord.txt" }
+pyrogram = { file = "requirements/pyrogram.txt" }
+speed = { file = "requirements/speed.txt" }
+cache = { file = "requirements/cache.txt" }
+
+[project.urls]
+Source = "https://git.end-play.xyz/profitroll/LibBotUniversal"
+Documentation = "https://git.end-play.xyz/profitroll/LibBotUniversal/wiki"
+Tracker = "https://git.end-play.xyz/profitroll/LibBotUniversal/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 108
+target-version = ["py311", "py312", "py313"]
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+python_files = ["test_*.py"]
+pythonpath = "."
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.mypy]
+namespace_packages = true
+install_types = true
+strict = true
+show_error_codes = true
+
+[tool.pylint]
+disable = ["line-too-long"]
+
+[tool.pylint.main]
+extension-pkg-whitelist = ["ujson"]
+py-version = 3.11
+
+[tool.coverage.run]
+source = ["libbot"]
