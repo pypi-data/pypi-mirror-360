@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        
+    - name: Install UV
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+        
+    - name: Install dependencies
+      run: |
+        uv sync --extra dev
+        
+    - name: Build package
+      run: |
+        uv run python -m build
+        
+    - name: Generate changelog
+      id: changelog
+      run: |
+        echo "## Changes in this release" > CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        # You can add more sophisticated changelog generation here
+        echo "See full changelog at: https://github.com/guzus/bible-cli/compare/$(git describe --tags --abbrev=0 HEAD~1)...${GITHUB_REF_NAME}" >> CHANGELOG.md
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          dist/*.tar.gz
+          dist/*.whl
+        body_path: CHANGELOG.md
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
