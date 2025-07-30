@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
+
+
+# exit on error
+set -e
+
+
+cd "$ROOT_DIR"
+
+
+# files
+# when listed in alphabetical order,
+# latest version is last two files
+BDIST_FILE="dist/$(ls -1 dist | tail -n 2 | head -n 1)"  # N-2
+SDIST_FILE="dist/$(ls -1 dist | tail -n 1)"              # N-1
+
+
+# are you sure? [Yy=yes]
+# see: https://stackoverflow.com/a/1885534
+read -p "upload $SDIST_FILE and $BDIST_FILE? " -n 1 -r  # read one character
+echo ""  # newline
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+  [[ "$0" = "$BASH_SOURCE" ]] && exit 1 || return 1 # handle exits from shell or function but don't exit interactive shell
+fi
+
+
+# upload
+twine upload "$BDIST_FILE" "$@"
+twine upload "$SDIST_FILE" "$@"
