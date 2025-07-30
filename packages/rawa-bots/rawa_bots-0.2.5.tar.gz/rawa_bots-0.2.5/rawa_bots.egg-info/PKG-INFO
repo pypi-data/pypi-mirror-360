@@ -1,0 +1,111 @@
+Metadata-Version: 2.4
+Name: rawa_bots
+Version: 0.2.5
+Summary: A Python library to easily build Gemini-powered chatbots and generate images.
+Author: Your Name or Organization
+Author-email: Your Name or Organization <your@email.com>
+License: MIT License
+        
+        Copyright (c) 2024 Your Name or Organization
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE. 
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: requests
+Requires-Dist: Pillow
+Dynamic: author
+Dynamic: license-file
+Dynamic: requires-python
+
+# rawa_bots
+
+A simple Python library for interacting with Google Gemini and OpenAI chat and image generation APIs using direct HTTP requests (no official SDKs required).
+
+## Features
+- Unified interface for Gemini and OpenAI bots
+- Text and image generation
+- Easy to switch between providers
+- No official SDKs required (uses `requests`)
+
+## Installation
+
+```bash
+pip install -r requirements.txt
+# or if using pyproject.toml
+pip install .
+```
+
+## Requirements
+- Python 3.8+
+- `requests`
+- `Pillow` (for image display)
+
+## Usage
+
+### GeminiBot Example
+```python
+from rawa_bots import GeminiBot
+
+gemini = GeminiBot(api_key="YOUR_GEMINI_API_KEY", allow_image_gen=True)
+
+# Text generation
+response = gemini.ask("Tell me a joke about robots.")
+print("GeminiBot says:", response)
+
+# Image generation
+image_path = gemini.generate_image(
+    "A futuristic cityscape at sunset",
+    output_path="gemini_image.png"
+)
+print("GeminiBot image saved to:", image_path)
+```
+
+### OpenAIBot Example
+```python
+from rawa_bots import OpenAIBot
+
+openai = OpenAIBot(api_key="YOUR_OPENAI_API_KEY", allow_image_gen=True)
+
+# Text generation
+response = openai.ask("Tell me a joke about robots.")
+print("OpenAIBot says:", response)
+
+# Image generation
+image_path = openai.generate_image(
+    "A futuristic cityscape at sunset",
+    output_path="openai_image.png"
+)
+print("OpenAIBot image saved to:", image_path)
+```
+
+## Error Handling
+All errors are raised as custom exceptions (e.g., `AuthenticationError`, `ImageGenAPIError`).
+
+## Switching Providers
+Just change the import and class name:
+```python
+# For Gemini
+from rawa_bots import GeminiBot
+# For OpenAI
+from rawa_bots import OpenAIBot
+```
+
+## License
+MIT 
