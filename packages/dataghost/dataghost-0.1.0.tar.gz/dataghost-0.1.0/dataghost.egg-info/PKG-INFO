@@ -1,0 +1,506 @@
+Metadata-Version: 2.4
+Name: dataghost
+Version: 0.1.0
+Summary: Time-Travel Debugger for Data Pipelines
+Home-page: https://github.com/dataghost/dataghost
+Author: DataGhost Contributors
+Author-email: contributors@dataghost.dev
+License: MIT
+Project-URL: Homepage, https://github.com/dataghost/dataghost
+Project-URL: Repository, https://github.com/dataghost/dataghost
+Project-URL: Documentation, https://github.com/dataghost/dataghost/docs
+Project-URL: Bug Tracker, https://github.com/dataghost/dataghost/issues
+Keywords: debugging,data-pipelines,time-travel,airflow,data-engineering
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Software Development :: Debuggers
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: cloudpickle>=2.0.0
+Requires-Dist: duckdb>=0.8.0
+Requires-Dist: lz4>=4.0.0
+Requires-Dist: pandas>=1.5.0
+Requires-Dist: psutil>=5.9.0
+Requires-Dist: typer[all]>=0.9.0
+Requires-Dist: rich>=13.0.0
+Provides-Extra: deepdiff
+Requires-Dist: deepdiff>=6.0.0; extra == "deepdiff"
+Provides-Extra: airflow
+Requires-Dist: apache-airflow>=2.5.0; extra == "airflow"
+Provides-Extra: s3
+Requires-Dist: boto3>=1.26.0; extra == "s3"
+Requires-Dist: fsspec>=2023.1.0; extra == "s3"
+Provides-Extra: dashboard
+Requires-Dist: fastapi>=0.104.0; extra == "dashboard"
+Requires-Dist: uvicorn[standard]>=0.24.0; extra == "dashboard"
+Requires-Dist: jinja2>=3.1.0; extra == "dashboard"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: isort>=5.12.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Requires-Dist: pre-commit>=3.0.0; extra == "dev"
+Provides-Extra: all
+Requires-Dist: deepdiff>=6.0.0; extra == "all"
+Requires-Dist: apache-airflow>=2.5.0; extra == "all"
+Requires-Dist: boto3>=1.26.0; extra == "all"
+Requires-Dist: fsspec>=2023.1.0; extra == "all"
+Requires-Dist: fastapi>=0.104.0; extra == "all"
+Requires-Dist: uvicorn[standard]>=0.24.0; extra == "all"
+Requires-Dist: jinja2>=3.1.0; extra == "all"
+Dynamic: author-email
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# DataGhost 👻
+
+> Time-Travel Debugger for Data Pipelines
+
+DataGhost enables precise debugging, inspection, and simulation of historical pipeline runs. Debug your data pipelines like you debug your code.
+
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+pip install dataghost
+```
+
+### Basic Usage
+
+```python
+from ttd import snapshot
+
+@snapshot(task_id="process_data")
+def process_data(data: list, multiplier: int = 2) -> dict:
+    processed = [x * multiplier for x in data]
+    return {
+        "processed_data": processed,
+        "count": len(processed)
+    }
+
+# Run your function normally
+result = process_data([1, 2, 3, 4, 5], multiplier=3)
+```
+
+### CLI Commands
+
+```bash
+# List all snapshots
+dataghost snapshot --list
+
+# Replay a specific task
+dataghost replay process_data
+
+# Compare two runs
+dataghost diff process_data
+
+# List all replayable tasks
+dataghost tasks
+
+# Show comprehensive overview
+dataghost overview
+
+# Launch interactive web dashboard
+dataghost dashboard
+```
+
+## ✨ Features
+
+- **🎯 Zero-config snapshot capture** - Just add the `@snapshot` decorator
+- **🔄 Deterministic replay** - Re-execute tasks with historical inputs
+- **📊 Structured diffing** - Compare outputs, inputs, and metadata across runs
+- **💾 Pluggable storage** - DuckDB by default, S3 support planned
+- **🏗️ Framework integration** - First-class Apache Airflow support
+- **🎨 Rich CLI** - Beautiful command-line interface with tables and colors
+- **📱 Web Dashboard** - Interactive dashboard with real-time monitoring
+- **⚡ Fast & lightweight** - Minimal overhead on your pipelines
+
+## 🛠️ Core Components
+
+### Snapshot Decorator
+
+Capture complete execution context with a simple decorator:
+
+```python
+from ttd import snapshot
+
+@snapshot(
+    task_id="my_custom_task",     # Optional: defaults to function name
+    capture_env=True,             # Capture environment variables
+    capture_system=True           # Capture system information
+)
+def my_data_task(input_data):
+    # Your task logic here
+    return processed_data
+```
+
+### Replay Engine
+
+Replay any historical execution:
+
+```python
+from ttd import ReplayEngine
+
+engine = ReplayEngine()
+
+# Replay latest run of a task
+result = engine.replay(task_id="process_data")
+
+# Replay specific run
+result = engine.replay(task_id="process_data", run_id="20241201_143022_12345")
+
+# Replay with validation
+result = engine.replay(task_id="process_data", validate_output=True)
+```
+
+### Diff Engine
+
+Compare executions with structured diffing:
+
+```python
+from ttd import DiffEngine
+
+diff_engine = DiffEngine()
+
+# Compare latest two runs
+diff = diff_engine.diff_task_runs("process_data")
+
+# Compare specific snapshots
+diff = diff_engine.diff_snapshots(snapshot_id1, snapshot_id2)
+
+# Generate human-readable report
+report = diff_engine.generate_diff_report(diff, format="text")
+print(report)
+```
+
+## 🌊 Airflow Integration
+
+DataGhost provides seamless Apache Airflow integration:
+
+```python
+from ttd.integrations.airflow import DataGhostPythonOperator, create_datahost_dag
+from datetime import datetime
+
+# Create a DAG with DataGhost enabled
+dag = create_datahost_dag(
+    dag_id='my_etl_pipeline',
+    default_args={'owner': 'data-team'},
+    schedule_interval='@daily'
+)
+
+# Use DataGhost-enabled operators
+extract_task = DataGhostPythonOperator(
+    task_id='extract_data',
+    python_callable=extract_data_function,
+    dag=dag
+)
+
+transform_task = DataGhostPythonOperator(
+    task_id='transform_data',
+    python_callable=transform_data_function,
+    dag=dag
+)
+
+# Set dependencies
+extract_task >> transform_task
+```
+
+## 📱 Web Dashboard
+
+DataGhost includes a beautiful web dashboard for interactive monitoring and analysis:
+
+```bash
+# Launch dashboard (auto-opens browser)
+dataghost dashboard
+
+# Specify custom port and host
+dataghost dashboard --port 3000 --host 0.0.0.0
+
+# Launch without auto-opening browser
+dataghost dashboard --no-browser
+```
+
+**Dashboard Features:**
+- 📊 **Real-time Overview**: Live statistics and health metrics
+- 🎯 **Task Health Monitoring**: Success rates and performance trends
+- ⚡ **Recent Activity**: Latest pipeline executions
+- 📋 **Task Management**: Interactive task listing with actions
+- 🔄 **One-click Replay**: Replay tasks directly from the UI
+- 📊 **Visual Diffs**: Compare runs with structured diff visualization
+- 🔍 **Snapshot Explorer**: Detailed snapshot inspection
+- 📈 **Performance Analytics**: Execution time trends and statistics
+
+**Installation:**
+```bash
+# Install with dashboard dependencies
+pip install dataghost[dashboard]
+```
+
+### Command-line Overview
+
+For a comprehensive overview in your terminal:
+
+```bash
+# Show detailed overview with tables
+dataghost overview
+
+# Get overview data as JSON
+dataghost overview --format json
+```
+
+## 📋 CLI Reference
+
+### Snapshot Management
+
+```bash
+# List all snapshots
+dataghost snapshot --list
+
+# List snapshots for specific task
+dataghost snapshot --task-id my_task
+
+# Output as JSON
+dataghost snapshot --list --format json
+```
+
+### Task Replay
+
+```bash
+# Replay latest run
+dataghost replay my_task
+
+# Replay specific run
+dataghost replay my_task --run-id 20241201_143022
+
+# Replay with sandbox isolation
+dataghost replay my_task --sandbox
+
+# Skip output validation
+dataghost replay my_task --no-validate
+```
+
+### Diff Analysis
+
+```bash
+# Compare latest two runs
+dataghost diff my_task
+
+# Compare specific runs
+dataghost diff my_task --run-id1 run1 --run-id2 run2
+
+# Compare outputs only
+dataghost diff my_task --outputs-only
+
+# Get JSON output
+dataghost diff my_task --format json
+```
+
+### Task Management
+
+```bash
+# List all replayable tasks
+dataghost tasks
+
+# Initialize storage
+dataghost init
+
+# Clean up storage
+dataghost clean --confirm
+```
+
+## 🗄️ Storage Backends
+
+### DuckDB (Default)
+
+```python
+from ttd.storage import DuckDBStorageBackend
+
+# Default local storage
+storage = DuckDBStorageBackend()
+
+# Custom database location
+storage = DuckDBStorageBackend(
+    db_path="custom_path.db",
+    data_dir="custom_data"
+)
+```
+
+### S3 (Coming Soon)
+
+```python
+from ttd.storage import S3StorageBackend
+
+storage = S3StorageBackend(
+    bucket="my-dataghost-bucket",
+    prefix="snapshots/"
+)
+```
+
+## 🔧 Configuration
+
+DataGhost can be configured via:
+
+1. **Environment variables**
+2. **Configuration files**
+3. **Direct instantiation**
+
+### Environment Variables
+
+```bash
+export DATAGHOST_DB_PATH="./my_snapshots.db"
+export DATAGHOST_DATA_DIR="./my_data"
+export DATAGHOST_CAPTURE_ENV="true"
+export DATAGHOST_CAPTURE_SYSTEM="true"
+```
+
+### Global Configuration
+
+```python
+from ttd import set_storage_backend
+from ttd.storage import DuckDBStorageBackend
+
+# Set global storage backend
+set_storage_backend(DuckDBStorageBackend("global.db"))
+```
+
+## 📊 Use Cases
+
+### 🔍 Debug Data Pipeline Failures
+
+When a pipeline fails, replay the exact conditions:
+
+```python
+# Check what happened during the failure
+result = engine.replay(task_id="failing_task", run_id="failure_run_id")
+
+if not result['replay_success']:
+    print(f"Error: {result['replay_error']}")
+    print(f"Original inputs: {result['original_inputs']}")
+```
+
+### 📈 Compare Pipeline Performance
+
+Track how your pipeline behavior changes over time:
+
+```bash
+# Compare performance between runs
+dataghost diff my_etl_task --run-id1 yesterday --run-id2 today
+
+# See execution time changes, output differences, etc.
+```
+
+### 🧪 Test Pipeline Changes
+
+Before deploying changes, compare against historical runs:
+
+```python
+# Test new logic against historical data
+new_result = new_function(historical_inputs)
+diff = diff_engine.compare_outputs(historical_output, new_result)
+```
+
+### 📋 Data Quality Auditing
+
+Track data quality metrics over time:
+
+```python
+@snapshot(task_id="data_quality_check")
+def check_data_quality(df):
+    return {
+        "row_count": len(df),
+        "null_count": df.isnull().sum().sum(),
+        "duplicate_count": df.duplicated().sum(),
+        "completeness": 1 - (df.isnull().sum().sum() / df.size)
+    }
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/dataghost/dataghost.git
+cd dataghost
+
+# Install development dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Run linting
+black .
+isort .
+flake8
+```
+
+### Running Examples
+
+```bash
+# Run basic example
+python examples/basic_example.py
+
+# Test Airflow DAG locally
+python examples/airflow_dag.py
+```
+
+## 🗺️ Roadmap
+
+### ✅ Milestone 1: Core Engine (Completed)
+- [x] Snapshot decorator with metadata capture
+- [x] DuckDB storage backend
+- [x] CLI with basic commands
+- [x] Replay engine
+- [x] Diff engine
+
+### 🚧 Milestone 2: Enhanced Features (In Progress)
+- [ ] S3 storage backend
+- [ ] Advanced diff algorithms
+- [ ] Performance optimizations
+- [ ] Extended Airflow integration
+
+### 📋 Milestone 3: Ecosystem Integration
+- [ ] Prefect integration
+- [ ] Dagster integration
+- [ ] Jupyter notebook support
+- [ ] VS Code extension
+
+### 🎨 Milestone 4: UI & Visualization
+- [ ] Web UI for snapshot browsing
+- [ ] Interactive diff visualization
+- [ ] Pipeline timeline view
+- [ ] Performance dashboards
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with love by the DataGhost team
+- Inspired by time-travel debugging concepts from software engineering
+- Thanks to the Apache Airflow community for pipeline orchestration patterns
+
+---
+
+**Happy Time-Travel Debugging! 👻✨**
+
+For more examples and detailed documentation, visit our [documentation site](https://github.com/dataghost/dataghost/docs).
