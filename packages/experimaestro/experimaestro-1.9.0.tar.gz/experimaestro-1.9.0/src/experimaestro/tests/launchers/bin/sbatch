@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# slurm test suite
+
+pwd 1>&2
+CURDIR="$(realpath "$(dirname "$0")"/..)"
+
+# Where we store the jobs
+XPM_SLURM_DIR="${CURDIR}/slurm"
+if ! test -d "$XPM_SLURM_DIR"; then
+    echo "Directory $XPM_SLURM_DIR does not exist" 1>&2
+    exit 1
+fi
+
+mkdir -p "$XPM_SLURM_DIR/jobs"
+echo "Slurm directory: $XPM_SLURM_DIR" >&2
+
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+
+if ! which flock > /dev/null; then
+    echo -e "[${RED}ERROR${NC}] flock is not installed on this system" 1>&2
+    exit 1
+fi
+
+
+lockpath() {
+    fid="$1"
+    path="$2"
+
+    echo "Locking $path..." 1>&2
+    eval exec "$fid<>" $path
+    if ! flock --timeout 2 $fid; then
+        echo Could not lock "$path" - stopping 1>&2
+        exit 017
+    fi
+}
+
+lockpath 9 "$XPM_SLURM_DIR/slurm.lock"
+
+echo "Command line: $@" >&2
+args=()
+parsable=0
+stdout="/dev/stdout"
+stderr="/dev/stdout"
+while true; do
+    case "$1" in
+        --parsable) shift; parsable=1;;
+        -o) shift; stdout="$1"; shift;;
+        -e) shift; stderr="$1"; shift;;
+        --*) args+=("$1"); shift;;
+        *) break 2;;
+    esac
+done
+
+chdir=$(pwd)
+while IFS= read -r line; do
+    case "$line" in
+        "#SBATCH --output="*)stdout=${line#*#SBATCH --output=};;
+        "#SBATCH --error="*) stderr=${line#*#SBATCH --error=};;
+        "#SBATCH --chdir="*) chdir=${line#*#SBATCH --chdir=};;
+    esac
+done < "$1"
+
+cd "$chdir"
+echo "Starting $@ ${args[@]} > $stdout 2> $stderr" >&2
+(
+    export PATH="${CURDIR}/bin:$PATH"
+    eval "$@" "${args[@]}"
+    echo $? > "$XPM_SLURM_DIR/jobs/$$.status"
+) > $stdout 2> $stderr &
+JOBID="$$"
+date > "$XPM_SLURM_DIR/jobs/$JOBID.start"
+disown
+
+if test "$parsable" == 0; then
+    echo "Submitted batch job ${JOBID}"
+else
+    echo "${JOBID};cluster"
+fi

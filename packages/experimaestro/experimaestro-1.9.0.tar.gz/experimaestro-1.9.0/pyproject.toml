@@ -1,0 +1,128 @@
+[tool.poetry]
+name = "experimaestro"
+authors = ["Benjamin Piwowarski <benjamin@piwowarski.fr>"]
+description = '"Experimaestro is a computer science experiment manager"'
+readme = "README.md"
+license = "GPL-3"
+keywords = ["experiment manager"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+include = [
+    "src/experimaestro/server/data/*",
+    "src/experimaestro/sphinx/static/experimaestro.css",
+    "src/experimaestro/mkdocs/style.css",
+    { path="src/experimaestro/server/data/*", format=['sdist', 'wheel']}
+]
+version = "1.9.0"
+repository = "https://github.com/experimaestro/experimaestro-python"
+documentation = "https://experimaestro-python.readthedocs.io/"
+
+[tool.poetry-dynamic-versioning]
+enable = false
+vcs = "git"
+style = "semver"
+dirty = true
+format-jinja = """{%- set pre = [] -%}{%- set metadata = [] -%}
+{%- if revision is not none -%}{{ pre.append("rc" + revision|string) or "" }}{%- endif -%}
+{%- if distance > 0 -%}{{ metadata.append(distance|string) or "" }}{%- endif -%}
+{{ serialize_semver(base, pre, metadata)}}"""
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+click = ">=8"
+omegaconf = "^2.3"
+typing-extensions = {version = ">=4.2", markers = "python_version < \"3.12\""}
+attrs = "^23.1.0"
+fasteners = "^0.19"
+pyyaml = "^6.0.1"
+psutil = ">=7"
+pytools = "^2023.1.1"
+tqdm = "^4.66.1"
+docstring-parser = "^0.15"
+termcolor = ">=2.3"
+requests = "^2.31"
+sortedcontainers = "^2.4"
+pyparsing = "^3.1"
+humanfriendly = "^10"
+huggingface-hub = ">0.17"
+gevent = "^24.11.1"
+gevent-websocket = "^0.10"
+flask = "^2.3"
+flask-socketio = "^5.3"
+arpeggio = "^2"
+watchdog = "^2"
+marshmallow = "^3.20"
+decorator = "^5"
+rpyc = ">=5,<7"
+
+[tool.poetry.group.ssh]
+optional = true
+
+[tool.poetry.group.ssh.dependencies]
+paramiko = "^3.3"
+fabric = "^3"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+docutils = "^0.18"
+Pygments = "^2.15"
+
+[tool.poetry.scripts]
+experimaestro = "experimaestro.__main__:main"
+
+[tool.poetry.plugins."mkdocs.plugins"]
+experimaestro = "experimaestro.mkdocs:Documentation"
+
+[tool.poetry.plugins."experimaestro.process"]
+local = "experimaestro.connectors.local:LocalProcess"
+slurm = "experimaestro.launchers.slurm:BatchSlurmProcess"
+
+[tool.poetry.plugins."experimaestro.connectors"]
+local = "experimaestro.connectors.local:LocalConnector"
+ssh = "experimaestro.connectors.ssh:SshConnector"
+
+[tool.poetry.plugins."experimaestro.tokens"]
+unix = "experimaestro.tokens:CounterToken"
+
+
+[tool.distutils.bdist_wheel]
+universal = true
+
+[tool.distutils.sdist]
+formats = "zip"
+
+[tool.pydocstyle]
+match-dir = '(?!tests)(?!resources)(?!docs)[^\.].*'
+match = '(?!test)(?!setup)[^\._].*\.py'
+inherit = "false"
+ignore = "D200, D203, D213, D406, D407   # Google conventions"
+
+[tool.flake8]
+doctests = "True"
+exclude = ".git, .eggs, __pycache__, tests/, docs/, build/, dist/, app/"
+max-line-length = "88"
+# See https://github.com/PyCQA/pycodestyle/issues/373
+extend-ignore = "E203"
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_ignores = true
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "1.9.0"
+changelog_start_rev = "v1.0.0"
+tag_format = "v$major.$minor.$patch$prerelease"
+# update_changelog_on_bump = true
