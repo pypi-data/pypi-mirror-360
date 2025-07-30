@@ -1,0 +1,187 @@
+from datetime import datetime
+from importlib.metadata import version
+from typing import Literal, Optional, Union
+from unittest.mock import patch
+
+import pytest
+from pydantic import BaseModel
+
+from airflow_pydantic import Dag, DagArgs
+from airflow_pydantic.migration import _airflow_3
+
+
+class TestDag:
+    def test_dag_args(self, dag_args):
+        d = dag_args
+        # Test roundtrips
+        assert d == DagArgs.model_validate(d.model_dump(exclude_unset=True))
+        assert d == DagArgs.model_validate_json(d.model_dump_json(exclude_unset=True))
+
+    def test_dag(self):
+        if _airflow_3() is None:
+            return pytest.skip("apache-airflow not installed")
+
+        d = Dag(
+            dag_id="a-dag",
+            default_args=None,
+            tasks={},
+        )
+
+        # Test roundtrips
+        assert d == Dag.model_validate(d.model_dump(exclude_unset=True))
+        assert d == Dag.model_validate_json(d.model_dump_json(exclude_unset=True))
+
+    def test_dag_context(self, dag_args):
+        if _airflow_3() is None:
+            return pytest.skip("apache-airflow not installed")
+
+        # Test direct context manager usage
+        with Dag(dag_id="test-dag", **dag_args.model_dump(exclude_unset=True)) as dag:
+            assert "owner" not in dag.default_args
+
+        # Test instantiation context manager usage
+        model = Dag(dag_id="test-dag", **dag_args.model_dump(exclude_unset=True))
+
+        with model.instantiate() as dag:
+            assert "owner" not in dag.default_args
+
+    def test_dag_selection(self, dag_args, airflow_config_instance):
+        if _airflow_3() is None:
+            return pytest.skip("apache-airflow not installed")
+
+        from airflow.models import DAG as AirflowDAG
+        from airflow_config import DAG as AirflowConfigDAG
+
+        # NOTE: we will use the log as a sentinel to check that things
+        # are only called once, since airflow_config will call
+        # instantiate() itself
+        with patch("airflow_pydantic.core.instantiate.dag._log") as _log:
+            model = Dag(dag_id="test-dag", **dag_args.model_dump(exclude_unset=True))
+            with model.instantiate() as dag:
+                assert isinstance(dag, AirflowDAG)
+                assert "owner" not in dag.default_args
+            assert _log.info.call_count == 1
+            assert _log.info.call_args_list[0][0][0] == "Available tasks: %s\nInstantiating tasks for DAG: %s"
+
+        with patch("airflow_pydantic.core.instantiate.dag._log") as _log:
+            with model.instantiate(config=airflow_config_instance) as dag:
+                assert isinstance(dag, AirflowConfigDAG)
+                assert dag.default_args["owner"] == "test"
+                assert "test" in dag.tags
+            assert _log.info.call_count == 5
+            assert _log.info.call_args_list[0][0][0] == "Using airflow_config.Configuration instance: %s"
+            assert _log.info.call_args_list[1][0][0] == "DAG %s found in airflow_config.Configuration instance, applying its settings."
+            assert _log.info.call_args_list[2][0][0] == "DAG %s overriding %s with value: %s"
+            assert _log.info.call_args_list[2][0][2] == "default_args"
+            assert _log.info.call_args_list[2][0][3] == {"owner": "test"}
+            assert _log.info.call_args_list[3][0][0] == "DAG %s overriding %s with value: %s"
+            assert _log.info.call_args_list[3][0][2] == "tags"
+            assert _log.info.call_args_list[3][0][3] == ["test"]
+            assert _log.info.call_args_list[4][0][0] == "Available tasks: %s\nInstantiating tasks for DAG: %s"
+            assert _log.info.call_args_list[4][0][1] == []
+            assert _log.info.call_args_list[4][0][2] == "test-dag"
+
+        with pytest.raises(TypeError):
+            with model.instantiate(config="wrong"):
+                ...
+
+    def test_dag_none_schedule(self, dag_none_schedule):
+        if _airflow_3() is None:
+            return pytest.skip("apache-airflow not installed")
+
+        d = dag_none_schedule
+        # Test roundtrips
+        assert d == Dag.model_validate(d.model_dump(exclude_unset=True))
+        assert d == Dag.model_validate_json(d.model_dump_json(exclude_unset=True))
+
+        inst = d.instantiate()
+        assert inst.dag_id == "a-dag"
+
+        if version("apache-airflow") >= "3.0.0":
+            assert inst.schedule is None
+        else:
+            assert inst.schedule_interval is None
+
+    def test_dag_convert_params(self, bash_sensor_args):
+        d = Dag(
+            dag_id="a-dag",
+            start_date=datetime(2020, 1, 1),
+            schedule=None,
+            default_args={},
+            params=bash_sensor_args,
+        )
+
+        assert "bash_command" in d.params
+        assert "env" in d.params
+        assert "output_encoding" in d.params
+        assert "retry_exit_code" in d.params
+        assert (
+            d.render()
+            == """# Generated by airflow-config
+from datetime import datetime
+
+from airflow.models import DAG
+from airflow.models.param import Param
+
+with DAG(
+    schedule=None,
+    start_date=datetime.fromisoformat("2020-01-01T00:00:00"),
+    params={
+        "bash_command": Param("test", title="Bash Command", description="bash command string, list of strings, or model", type="string"),
+        "env": Param(None, title="Env", description=None, type=["null", "object"]),
+        "output_encoding": Param(
+            None, title="Output Encoding", description="Output encoding for the command, default is 'utf-8'", type=["null", "string"]
+        ),
+        "retry_exit_code": Param(None, title="Retry Exit Code", description=None, type=["null", "boolean"]),
+    },
+    dag_id="a-dag",
+    default_args={},
+) as dag:
+    ...
+"""
+        )
+        if _airflow_3() is not None:
+            d.instantiate()
+            exec(d.render())
+
+    def test_dag_convert_params_regressions(self):
+        class MyParams(BaseModel):
+            a: Optional[Union[int, BaseModel]] = None
+            b: Optional[Literal["a", "b"]] = None
+
+        d = Dag(
+            dag_id="a-dag",
+            start_date=datetime(2020, 1, 1),
+            schedule=None,
+            default_args={},
+            params=MyParams,
+        )
+
+        assert (
+            d.render()
+            == """# Generated by airflow-config
+from datetime import datetime
+
+from airflow.models import DAG
+from airflow.models.param import Param
+
+with DAG(
+    schedule=None,
+    start_date=datetime.fromisoformat("2020-01-01T00:00:00"),
+    params={
+        "a": Param(None, title="A", description=None, type=["null", "integer"]),
+        "b": Param(None, title="B", description=None, type=["null", "string"]),
+    },
+    dag_id="a-dag",
+    default_args={},
+) as dag:
+    ...
+"""
+        )
+        if _airflow_3() is not None:
+            d.instantiate()
+            exec(d.render())
+
+    def test_dag_with_attribute_dependencies(self, dag_with_attribute_dependencies):
+        d = dag_with_attribute_dependencies.instantiate()
+        assert len(d.tasks) == 12
