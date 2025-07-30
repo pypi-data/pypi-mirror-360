@@ -1,0 +1,181 @@
+[project]
+name = "html2rss-ai"
+dynamic = ["version"]
+description = "🚀 AI-powered web scraping with modern CSS support. Extract content from any website using GPT-4, handles CSS Grid/Flexbox layouts, Tailwind CSS, and complex selectors automatically."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Saverio Mazza", email = "saverio3107@gmail.com" }
+]
+maintainers = [
+    { name = "Saverio Mazza", email = "saverio3107@gmail.com" }
+]
+license = { text = "MIT" }
+keywords = [
+    "web-scraping", "ai-extraction", "css-grid", "flexbox", "tailwind-css",
+    "gpt-4", "openai", "modern-css", "content-extraction", "css-sanitization",
+    "rss", "atom", "html-to-rss", "feed-generation", "smart-scraping", 
+    "website-to-rss", "rss-generator", "article-extraction", "job-scraping",
+    "css-selectors", "spa-scraping", "javascript-sites"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop", 
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Text Processing :: Markup :: HTML",
+    "Topic :: Text Processing :: Markup :: XML",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+]
+
+dependencies = [
+    "requests>=2.32.3",
+    "beautifulsoup4>=4.12.3",
+    "pydantic>=2.9.0",
+    "click>=8.1.7",
+    "lxml>=5.2.2",
+    "feedparser>=6.0.10",
+    "url2md4ai>=0.1.2",
+    "typer[all]>=0.12.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.12.0",
+    "pytest-asyncio>=0.23.0",
+    "black>=24.4.2",
+    "ruff>=0.12.2",
+    "mypy>=1.14.0",
+    "pre-commit>=4.0.0",
+    "jupyter>=1.0.0",
+    "ipykernel>=6.29.0",
+    "url2md4ai",
+]
+playwright = [
+    "playwright>=1.40.0",
+]
+
+[project.scripts]
+html2rss-ai = "html2rss_ai.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/mazzasaverio/html2rss-ai"
+Repository = "https://github.com/mazzasaverio/html2rss-ai"
+Documentation = "https://github.com/mazzasaverio/html2rss-ai#readme"
+"Bug Tracker" = "https://github.com/mazzasaverio/html2rss-ai/issues"
+Changelog = "https://github.com/mazzasaverio/html2rss-ai/blob/main/CHANGELOG.md"
+"Source Code" = "https://github.com/mazzasaverio/html2rss-ai"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/html2rss_ai/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/html2rss_ai"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.12.0",
+    "pytest-asyncio>=0.23.0",
+    "black>=24.4.2",
+    "ruff>=0.12.2",
+    "mypy>=1.14.0",
+    "pre-commit>=4.0.0",
+    "jupyter>=1.0.0",
+    "ipykernel>=6.29.0",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py313']
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "ANN", "S", "B", "A", "COM", "C4", "DTZ", "T10", "EM", "EXE", "ISC", "ICN", "G", "INP", "PIE", "T20", "PYI", "PT", "Q", "RSE", "RET", "SLF", "SIM", "TID", "TCH", "INT", "ARG", "PTH", "ERA", "PD", "PGH", "PL", "TRY", "NPY", "RUF"]
+ignore = [
+    "S101",     # assert detected
+    "PLR0913",  # too many arguments
+    "PLR2004",  # magic value used in comparison
+    "ANN001",   # missing type annotation for function argument (tests)
+    "ANN201",   # missing return type annotation for public function
+    "ANN204",   # missing return type annotation for special method
+    "ANN401",   # dynamically typed expressions (typing.Any) disallowed
+    "SLF001",   # private member access (needed for testing)
+    "G004",     # logging statement uses f-string (acceptable)
+    "TRY400",   # use logging.exception instead of logging.error
+    "TID252",   # prefer absolute imports (relative imports OK for internal modules)
+    "INP001",   # implicit namespace package (test directories)
+    "F841",     # local variable assigned but never used (tests)
+    "W293",     # blank line contains whitespace
+    "W291",     # trailing whitespace
+    "TRY003",   # avoid specifying long messages outside exception class
+    "TRY301",   # abstract raise to inner function
+    "TRY300",   # consider moving statement to else block
+    "EM102",    # exception must not use f-string literal
+    "PTH123",   # open() should be replaced by Path.open()
+    "C401",     # unnecessary generator
+    "DTZ005",   # datetime.now() called without tz argument
+    "E501",     # line too long (will fix critical ones only)
+    "SIM117",   # use single with statement
+    "PLC0415",  # import should be at top level
+    "ANN206",   # missing return type annotation for classmethod
+    "EM101",    # exception must not use string literal
+    "PLR0911",  # too many return statements
+    "PLR0912",  # too many branches  
+    "PLR0915",  # too many statements
+]
+
+[tool.mypy]
+python_version = "3.13"
+strict = false
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = [
+    "--cov=src/html2rss_ai",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-fail-under=30",
+    "-v"
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*", 
+    "*/test_*", 
+    "*/cli.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
