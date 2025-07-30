@@ -1,0 +1,36 @@
+name: Check version bump
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history
+
+      - name: Fetch main branch
+        run: git fetch origin main
+
+      - name: Check version bump
+        id: check-version
+        run: |
+          # Extract version from pyproject.toml in main
+          git show origin/main:pyproject.toml > old.toml
+          old_version=$(python3 -c "import tomllib; print(tomllib.load(open('old.toml', 'rb'))['project']['version'])")
+
+          # Extract version from current branch
+          new_version=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+
+          echo "Old version: $old_version"
+          echo "New version: $new_version"
+
+          if [ "$old_version" = "$new_version" ]; then
+            echo "❌ Version was not bumped in pyproject.toml"
+            exit 1
+          else
+            echo "✅ Version was bumped from $old_version to $new_version"
+          fi
