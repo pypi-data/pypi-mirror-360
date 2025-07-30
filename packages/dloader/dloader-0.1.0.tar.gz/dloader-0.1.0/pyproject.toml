@@ -1,0 +1,62 @@
+[project]
+name = "dloader"
+version = "0.1.0"
+description = "DataLoader implementation for Python asyncio"
+authors = [{ name = "Tomek Paczkowski", email = "tomek@hauru.eu" }]
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "cachetools>=6.1.0",
+    "pyright>=1.1.402",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.0.0",
+    "ruff>=0.12.1",
+    "uvloop>=0.21.0; sys_platform != 'win32'",
+]
+
+
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib", "--doctest-modules"]
+pythonpath = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+asyncio_default_test_loop_scope = "function"
+
+
+[tool.pyright]
+include = ["src", "tests"]
+exclude = ["**/__pycache__", "**/.pytest_cache"]
+extraPaths = ["tests"]
+typeCheckingMode = "strict"
+pythonVersion = "3.11"
+
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "F",     # Pyflakes - finds errors like undefined names, unused imports
+    "E",     # pycodestyle errors - essential style violations
+    "I",     # isort - import sorting
+    "UP",    # pyupgrade - modernize Python syntax
+    "FA",    # flake8-future-annotations
+    "B",     # flake8-bugbear - finds likely bugs and design problems
+    "SIM",   # flake8-simplify - suggests simpler code
+    "RUF",   # Ruff-specific rules - additional quality checks
+    "ASYNC", # flake8-asyncio - checks for asyncio-related issues
+    "PERF",  # Perflint - performance-related checks
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dloader"]
