@@ -1,0 +1,84 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "easyfea"
+version = "1.4.8"
+description = "User-friendly Python library that simplifies finite element analysis."
+authors = [{ name = "Matthieu Noel", email = "matthieu.noel7@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["finite-element-analysis", "phase-field", "python", "easy", "fem"]
+license = { file = "LICENSE.txt" }
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "numba",
+    "numpy",
+    "gmsh>=4.12",
+    "scipy",
+    "matplotlib",
+    "pyvista",
+    "pandas",
+    "imageio",
+    "imageio[ffmpeg]",
+    "meshio",
+]
+
+[project.optional-dependencies]
+fast = ["pypardiso", "petsc", "petsc4py", "mpi4py"]
+dic = ["opencv-python"]
+dev = [
+    "mypy",
+    "black",
+    "ruff",
+    "pytest",    
+]
+
+[project.urls]
+Documentation = "https://easyfea.readthedocs.io/en/latest/"
+Repository = "https://github.com/matnoel/EasyFEA"
+Issues = "https://github.com/matnoel/EasyFEA/issues"
+Changelog = "https://github.com/matnoel/EasyFEA/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+include = ["EasyFEA", "EasyFEA.*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.11"
+disable_error_code = [
+    "safe-super",
+    "import-untyped",
+    "override",
+    "union-attr",
+    "import-not-found",
+    "assignment",
+]
+
+[tool.ruff]
+target-version = "py311"
+include = ["pyproject.toml", "EasyFEA/**/*.py", "examples/**/*.py"]
+
+[tool.ruff.lint]
+ignore = ["E731", "E741", "F402"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"Geoms.py" = ["F401"]
+"Materials.py" = ["F401"]
+"Simulations.py" = ["F401"]
