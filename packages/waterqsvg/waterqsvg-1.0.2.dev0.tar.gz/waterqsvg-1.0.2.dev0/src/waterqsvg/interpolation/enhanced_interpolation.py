@@ -1,0 +1,418 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+增强插值算法模块
+集成边界检测和高分辨率插值，包含邻域分析功能
+"""
+import logging
+import numpy as np
+import pandas as pd
+from scipy.interpolate import griddata
+from scipy.ndimage import gaussian_filter, distance_transform_edt
+from typing import Optional, Tuple, Union
+
+from .alpha_shape import compute_alpha_shape
+from .convex_hull import compute_convex_hull, create_convex_hull_mask
+from .density_boundary import compute_density_based_boundary
+
+logger = logging.getLogger(__name__)
+
+def enhanced_interpolation_with_boundary(
+    data: Union[pd.DataFrame, np.ndarray],
+    indicator_col: Optional[str] = None,
+    grid_resolution: int = 200,
+    method: str = 'linear',
+    neighborhood_radius: int = 2,
+    boundary_method: str = 'alpha_shape',
+    fixed_bounds: Optional[list] = None
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray]]:
+    """
+    基于智能边界的高分辨率插值，包含邻域分析
+    
+    Args:
+        data: 包含坐标和指标数据的DataFrame或numpy数组
+        indicator_col: 指标列名，如果为None则使用第一个非坐标列
+        grid_resolution: 网格分辨率
+        method: 插值方法 ('linear', 'cubic', 'nearest')
+        neighborhood_radius: 邻域分析半径(像素)
+        boundary_method: 边界检测方法 ('convex_hull', 'alpha_shape', 'density_based')
+        fixed_bounds: 固定的地理边界范围 [min_x, min_y, max_x, max_y]
+        
+    Returns:
+        (插值结果, 网格X坐标, 网格Y坐标, 边界掩码, 边界点)
+    """
+    try:
+        logger.info(f"开始增强插值计算，网格分辨率: {grid_resolution}, 边界方法: {boundary_method}")
+        
+        # 数据预处理
+        points, values = _prepare_data(data, indicator_col)
+        
+        if len(points) < 3:
+            logger.error("数据点数量不足（少于3个点）")
+            return None, None, None, None, None
+        
+        # 计算边界
+        boundary_points, boundary_mask_func = _compute_boundary(points, boundary_method)
+        
+        # 确定插值范围
+        bounds = _determine_interpolation_bounds(points, boundary_points, fixed_bounds)
+        
+        # 创建插值网格
+        grid_x, grid_y = _create_interpolation_grid(bounds, grid_resolution)
+        
+        # 执行插值
+        grid_values = _perform_interpolation(points, values, grid_x, grid_y, method)
+        
+        # 应用边界掩码
+        if boundary_mask_func is not None:
+            boundary_mask = boundary_mask_func(grid_x, grid_y)
+        else:
+            boundary_mask = create_convex_hull_mask(grid_x, grid_y, boundary_points)
+        
+        # 应用边界掩码
+        grid_values[~boundary_mask] = np.nan
+        
+        # 邻域分析和平滑
+        grid_values = _apply_neighborhood_analysis(grid_values, boundary_mask, neighborhood_radius)
+        
+        logger.info(f"插值计算完成，有效网格点数: {np.sum(~np.isnan(grid_values))}")
+        
+        return grid_values, grid_x, grid_y, boundary_mask, boundary_points
+        
+    except Exception as e:
+        logger.error(f"增强插值计算失败: {str(e)}")
+        return None, None, None, None, None
+
+def _prepare_data(data: Union[pd.DataFrame, np.ndarray], indicator_col: Optional[str]) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    准备插值数据
+    
+    Args:
+        data: 输入数据
+        indicator_col: 指标列名
+        
+    Returns:
+        (坐标点数组, 数值数组)
+    """
+    try:
+        if isinstance(data, pd.DataFrame):
+            # DataFrame处理
+            if 'longitude' in data.columns and 'latitude' in data.columns:
+                points = data[['longitude', 'latitude']].values
+            elif 'lon' in data.columns and 'lat' in data.columns:
+                points = data[['lon', 'lat']].values
+            else:
+                # 假设前两列是坐标
+                points = data.iloc[:, :2].values
+            
+            # 获取指标数据
+            if indicator_col is not None:
+                if indicator_col not in data.columns:
+                    raise ValueError(f"指定的指标列 {indicator_col} 不存在")
+                values = data[indicator_col].values
+            else:
+                # 获取第一个非坐标列
+                coord_cols = ['longitude', 'latitude', 'lon', 'lat', 'index']
+                value_cols = [col for col in data.columns if col not in coord_cols]
+                
+                if len(value_cols) == 0:
+                    raise ValueError("未找到有效的指标数据列")
+                
+                values = data[value_cols[0]].values
+                logger.info(f"使用指标列: {value_cols[0]}")
+        
+        elif isinstance(data, np.ndarray):
+            # numpy数组处理
+            if data.shape[1] < 3:
+                raise ValueError("数组至少需要3列（x, y, value）")
+            
+            points = data[:, :2]
+            values = data[:, 2]
+        
+        else:
+            raise ValueError("不支持的数据类型")
+        
+        # 数据验证和清洗
+        valid_mask = ~(np.isnan(points).any(axis=1) | np.isnan(values))
+        points = points[valid_mask]
+        values = values[valid_mask]
+        
+        if len(points) == 0:
+            raise ValueError("没有有效的数据点")
+        
+        logger.debug(f"数据准备完成，有效点数: {len(points)}")
+        
+        return points, values
+        
+    except Exception as e:
+        logger.error(f"数据准备失败: {str(e)}")
+        raise
+
+def _compute_boundary(points: np.ndarray, boundary_method: str) -> Tuple[Optional[np.ndarray], Optional[callable]]:
+    """
+    计算边界
+    
+    Args:
+        points: 点坐标数组
+        boundary_method: 边界计算方法
+        
+    Returns:
+        (边界点, 边界掩码函数)
+    """
+    try:
+        logger.debug(f"计算边界，方法: {boundary_method}")
+        
+        if boundary_method == 'alpha_shape':
+            boundary_points = compute_alpha_shape(points)
+            return boundary_points, None
+            
+        elif boundary_method == 'density_based':
+            boundary_mask_func = compute_density_based_boundary(points)
+            return None, boundary_mask_func
+            
+        else:  # 默认使用凸包
+            boundary_points = compute_convex_hull(points)
+            return boundary_points, None
+        
+    except Exception as e:
+        logger.warning(f"边界计算失败，使用凸包: {str(e)}")
+        try:
+            boundary_points = compute_convex_hull(points)
+            return boundary_points, None
+        except Exception as e2:
+            logger.error(f"凸包计算也失败: {str(e2)}")
+            return None, None
+
+def _determine_interpolation_bounds(
+    points: np.ndarray, 
+    boundary_points: Optional[np.ndarray], 
+    fixed_bounds: Optional[list]
+) -> list:
+    """
+    确定插值范围
+    
+    Args:
+        points: 数据点
+        boundary_points: 边界点
+        fixed_bounds: 固定边界
+        
+    Returns:
+        [min_x, min_y, max_x, max_y]
+    """
+    try:
+        if fixed_bounds is not None:
+            logger.debug("使用固定边界")
+            return fixed_bounds
+        
+        # 使用边界点确定范围
+        if boundary_points is not None and len(boundary_points) > 0:
+            x_min, x_max = boundary_points[:, 0].min(), boundary_points[:, 0].max()
+            y_min, y_max = boundary_points[:, 1].min(), boundary_points[:, 1].max()
+        else:
+            # 使用数据点范围
+            x_min, x_max = points[:, 0].min(), points[:, 0].max()
+            y_min, y_max = points[:, 1].min(), points[:, 1].max()
+        
+        # 添加边距
+        x_range = x_max - x_min
+        y_range = y_max - y_min
+        margin_factor = 0.01  # 1%边距
+        
+        x_min -= x_range * margin_factor
+        x_max += x_range * margin_factor
+        y_min -= y_range * margin_factor
+        y_max += y_range * margin_factor
+        
+        bounds = [x_min, y_min, x_max, y_max]
+        logger.debug(f"插值边界: {bounds}")
+        
+        return bounds
+        
+    except Exception as e:
+        logger.error(f"确定插值范围失败: {str(e)}")
+        # 使用数据点的最小边界
+        x_min, x_max = points[:, 0].min(), points[:, 0].max()
+        y_min, y_max = points[:, 1].min(), points[:, 1].max()
+        return [x_min, y_min, x_max, y_max]
+
+def _create_interpolation_grid(bounds: list, resolution: int) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    创建插值网格
+    
+    Args:
+        bounds: 边界范围
+        resolution: 网格分辨率
+        
+    Returns:
+        (网格X坐标, 网格Y坐标)
+    """
+    try:
+        x_min, y_min, x_max, y_max = bounds
+        
+        # 创建网格
+        grid_y, grid_x = np.mgrid[y_min:y_max:resolution*1j, x_min:x_max:resolution*1j]
+        
+        logger.debug(f"创建网格，形状: {grid_x.shape}")
+        
+        return grid_x, grid_y
+        
+    except Exception as e:
+        logger.error(f"创建插值网格失败: {str(e)}")
+        raise
+
+def _perform_interpolation(
+    points: np.ndarray, 
+    values: np.ndarray, 
+    grid_x: np.ndarray, 
+    grid_y: np.ndarray, 
+    method: str
+) -> np.ndarray:
+    """
+    执行插值计算
+    
+    Args:
+        points: 数据点坐标
+        values: 数据值
+        grid_x: 网格X坐标
+        grid_y: 网格Y坐标
+        method: 插值方法
+        
+    Returns:
+        插值结果数组
+    """
+    try:
+        logger.debug(f"执行插值，方法: {method}")
+        
+        # 使用scipy的griddata进行插值
+        grid_values = griddata(
+            points, 
+            values, 
+            (grid_x, grid_y), 
+            method=method,
+            fill_value=np.nan
+        )
+        
+        # 检查插值结果
+        valid_count = np.sum(~np.isnan(grid_values))
+        total_count = grid_values.size
+        
+        logger.debug(f"插值完成，有效点: {valid_count}/{total_count}")
+        
+        if valid_count == 0:
+            logger.warning("插值结果全为NaN，尝试最近邻插值")
+            grid_values = griddata(
+                points, 
+                values, 
+                (grid_x, grid_y), 
+                method='nearest',
+                fill_value=np.nan
+            )
+        
+        return grid_values
+        
+    except Exception as e:
+        logger.error(f"插值计算失败: {str(e)}")
+        # 返回全NaN数组
+        return np.full_like(grid_x, np.nan)
+
+def _apply_neighborhood_analysis(
+    grid_values: np.ndarray, 
+    boundary_mask: np.ndarray, 
+    neighborhood_radius: int
+) -> np.ndarray:
+    """
+    应用邻域分析和平滑
+    
+    Args:
+        grid_values: 插值结果
+        boundary_mask: 边界掩码
+        neighborhood_radius: 邻域半径
+        
+    Returns:
+        平滑后的插值结果
+    """
+    try:
+        if neighborhood_radius <= 0:
+            return grid_values
+        
+        logger.debug(f"应用邻域分析，半径: {neighborhood_radius}")
+        
+        # 找到有效数据
+        valid_mask = ~np.isnan(grid_values) & boundary_mask
+        
+        if not np.any(valid_mask):
+            logger.warning("没有有效数据进行邻域分析")
+            return grid_values
+        
+        # 创建临时数组进行平滑
+        temp_values = np.copy(grid_values)
+        nan_mask = np.isnan(temp_values)
+        
+        # 使用最近邻有效值填充NaN区域
+        if np.any(nan_mask):
+            try:
+                indices = distance_transform_edt(nan_mask, return_distances=False, return_indices=True)
+                temp_values[nan_mask] = temp_values[tuple(indices[:, nan_mask])]
+            except Exception as e:
+                logger.debug(f"填充NaN值失败: {str(e)}")
+        
+        # 应用高斯滤波
+        try:
+            smoothed_values = gaussian_filter(temp_values, sigma=neighborhood_radius)
+            # 只在有效区域应用平滑结果
+            grid_values[valid_mask] = smoothed_values[valid_mask]
+        except Exception as e:
+            logger.warning(f"高斯平滑失败: {str(e)}")
+        
+        return grid_values
+        
+    except Exception as e:
+        logger.warning(f"邻域分析失败: {str(e)}")
+        return grid_values
+
+def validate_interpolation_result(
+    grid_values: np.ndarray, 
+    original_values: np.ndarray, 
+    tolerance: float = 0.1
+) -> bool:
+    """
+    验证插值结果的合理性
+    
+    Args:
+        grid_values: 插值结果
+        original_values: 原始数据值
+        tolerance: 容差比例
+        
+    Returns:
+        是否合理
+    """
+    try:
+        if grid_values is None or len(original_values) == 0:
+            return False
+        
+        valid_grid = grid_values[~np.isnan(grid_values)]
+        
+        if len(valid_grid) == 0:
+            return False
+        
+        # 检查数值范围是否合理
+        orig_min, orig_max = original_values.min(), original_values.max()
+        grid_min, grid_max = valid_grid.min(), valid_grid.max()
+        
+        # 插值结果应该在原始数据范围的合理扩展内
+        range_tolerance = (orig_max - orig_min) * tolerance
+        
+        range_valid = (
+            grid_min >= orig_min - range_tolerance and
+            grid_max <= orig_max + range_tolerance
+        )
+        
+        # 检查有效数据比例
+        valid_ratio = len(valid_grid) / grid_values.size
+        ratio_valid = valid_ratio >= 0.1  # 至少10%的网格点有效
+        
+        return range_valid and ratio_valid
+        
+    except Exception as e:
+        logger.debug(f"验证插值结果失败: {str(e)}")
+        return False
