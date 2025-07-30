@@ -1,0 +1,41 @@
+name: Kumo API Installation
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - master
+  pull_request:
+  merge_group:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ startsWith(github.ref, 'refs/pull/') || github.run_number }}  # yamllint disable-line
+  # Only cancel intermediate builds if on a PR:
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Kumo API
+        run: |
+          pip install --verbose -e ".[test]"
+        shell: bash
+
+      - name: Verify Kumo API installation
+        run: |
+          python -c "import kumoapi.data_source"
+        shell: bash
+
+      - name: Run test suite
+        run: |
+          pytest
+        shell: bash
