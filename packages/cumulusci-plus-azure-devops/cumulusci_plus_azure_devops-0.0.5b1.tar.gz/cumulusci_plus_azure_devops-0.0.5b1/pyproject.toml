@@ -1,0 +1,88 @@
+[build-system]
+requires = ["hatchling", "hatch-fancy-pypi-readme"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cumulusci-plus-azure-devops"
+dynamic = ["version", "readme"]
+description = "A plugin for cumulusci plus supporting Azure DevOps"
+license = { text = "GNU General Public License v3.0" }
+authors = [{name = "Rupesh J"}]
+requires-python = ">=3.11"
+keywords = ["cumulusci", "salesforce", "azure devops"]
+dependencies = [
+    "cumulusci-plus>=5.0.0",
+    "azure-devops",
+    "requests",
+    "humanfriendly",
+    "distro",
+    "packaging>=23.0"
+]
+# These dependencies are automatically installed when using pip or pipx
+# For conflict prevention, see install.py script and INSTALLATION.md
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+[project.urls]
+Homepage = "https://github.com/jorgesolebur/CumulusCI_AzureDevOps"
+"Bug Tracker" = "https://github.com/jorgesolebur/CumulusCI_AzureDevOps/issues"
+
+[project.entry-points."cumulusci.plugins"]
+azure_devops = "cumulusci_ado.azure_devops:AzureDevOpsPlugin"
+
+[project.scripts]
+cumulusci-ado = "cumulusci_ado.cli.ado:main"
+cci-ado = "cumulusci_ado.cli.ado:main"
+
+[tool.hatch.version]
+path = "cumulusci_ado/__about__.py"
+
+[tool.hatch.build]
+include = [
+    "/cumulusci_ado",
+    "/cumulusci_ado/**/*.*",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/cumulusci_ado",
+    "README.md",
+]
+
+[tool.hatch.build.targets.wheel]
+exclude = ["*.sql", "*.zip"]
+
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/markdown"
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+path = "README.md"
+
+[tool.pyright]
+reportMissingImports = "none"
+typeCheckingMode = "basic"
+exclude = ["**/test_*", "**/tests/**"]
+include = ["**/*.py"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "factory-boy",
+    "responses"
+]
+docs = [
+    "sphinx",
+    "myst-parser"
+]
+lint = [
+    "black",
+    "flake8",
+    "isort",
+    "pre-commit"
+]
