@@ -1,0 +1,41 @@
+Metadata-Version: 2.4
+Name: aceparse
+Version: 0.2.2
+Summary: Improved argparse.ArgumentParser that works with dataclasses
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pyyaml>=6.0.2
+Provides-Extra: test
+Requires-Dist: flake8; extra == "test"
+Requires-Dist: hatch; extra == "test"
+Requires-Dist: pydantic>=2.10.4; extra == "test"
+Requires-Dist: pytest; extra == "test"
+Dynamic: license-file
+
+# aceparse
+
+An argument parser that wraps python's built-in `argparse`, allowing it to parse command lines into
+dataclasses.
+
+Advantages over argparse:
+
+* you get a dataclass so you can use an IDE to find out where your command line options are used
+* nicer specification of default values
+* can be combined with pydantic dataclasses to type check arguments
+
+## Examples
+
+```python
+from dataclasses import dataclass
+from aceparse import AceParser, AceArg
+
+@dataclass
+class Arguments:
+    hello: str = AceArg(help="Name of thing to say hello to")
+
+a = AceParser(Arguments)
+args = a.parse_args_into_dataclasses(["--hello=name"])
+
+print(f"Hello {args.hello}")
+```
