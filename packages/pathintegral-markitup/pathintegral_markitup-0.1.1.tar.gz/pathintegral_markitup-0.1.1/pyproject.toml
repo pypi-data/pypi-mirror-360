@@ -1,0 +1,106 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pathintegral-markitup"
+dynamic = ["version"]
+description = 'Utility tool for converting various files to Markdown'
+requires-python = ">=3.10"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "Path Integral Institute"},
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "beautifulsoup4",
+  "requests",
+  "markdownify",
+  "charset-normalizer",
+  "filetype>=1.2.0",
+  "python-pptx",
+  "mammoth",
+  "pandas",
+  "lxml",
+  "olefile",
+  # "pydub",  <- Removed from here
+  "SpeechRecognition",
+  "pymupdf>=1.25.5",
+  "openpyxl>=3.1.5",
+  "xlrd>=2.0.1",
+  "pymupdf4llm>=0.0.21",
+  "langchain-text-splitters>=0.3.8",
+  "tiktoken>=0.9.0",
+  "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+audio = [
+  "pydub",
+]
+magic = [
+  "python-magic>=0.4.27",
+]
+# Optional: You may want to create an 'all' extra that includes all optional dependencies
+all = [
+  "pydub",
+  "python-magic>=0.4.27",
+]
+
+[tool.hatch.version]
+path = "src/markitup/__about__.py"
+
+[project.scripts]
+markitup = "markitup.__main__:main"
+
+[tool.hatch.envs.default]
+# No features needed since everything is installed by default
+
+[tool.hatch.envs.hatch-test]
+extra-dependencies = [
+  "openai",
+]
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "openai",
+  "mypy>=1.0.0",
+]
+
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive --ignore-missing-imports {args:src/markitup tests}"
+
+[tool.coverage.run]
+source_pkgs = ["markitup", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/markitup/__about__.py",
+]
+
+[tool.coverage.paths]
+markitup = ["src/markitup", "*/markitup/src/markitup"]
+tests = ["tests", "*/markitup/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.hatch.build.targets.sdist]
+only-include = ["src/markitup"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/markitup"]
