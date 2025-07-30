@@ -1,0 +1,173 @@
+[build-system]
+requires = [
+    "setuptools>=60",
+    "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cosmotile"
+description = "Cosmotile"
+authors = [
+    {name="Steven Murray", email="steven.murray@sns.it"}
+]
+readme = "README.md"
+requires-python = ">=3.8,<4.0"
+license = {file = "LICENSE", classifier = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dynamic = ["version"]
+
+
+dependencies = [
+    "click>=8.0.1",
+    "numpy>=1.23.4",
+    "scipy>=1.9.3",
+    "astropy>=5.1.1",
+    "astropy-healpix>=0.7",
+]
+
+[project.urls]
+homepage = "https://github.com/steven-murray/cosmotile"
+documentation = "https://cosmotile.readthedocs.io"
+changelog = "https://github.com/steven-murray/cosmotile/releases"
+
+[project.optional-dependencies]
+perf = [
+    "numba>=0.56.4",
+]
+dev = [
+    "sphinx>=4.3.2",
+    "sphinx-click>=3.0.2",
+    "sphinx-autobuild>=2021.3.14",
+    "myst-parser>=0.16.1",
+    "furo>=2021.11.12",
+    "pytest>=6.2.5",
+    "coverage[toml]>=6.2",
+    "pytest-cov>=3.0.0",
+    "pre-commit",
+    'ruff',
+]
+
+all = [
+    "cosmotile[perf,dev]"
+]
+
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
+tests = ["tests", "*/tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["cosmotile"]
+omit = [
+    "*/_version.py"
+]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 100
+
+[tool.isort]
+profile = "black"
+force_single_line = true
+lines_after_imports = 2
+
+[tool.mypy]
+# Ignore tests because we don't really care.
+exclude=['tests']
+strict = false
+warn_unreachable = true
+pretty = true
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+ignore_missing_imports = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_optional = true
+strict_equality = true
+strict_concatenate = true
+check_untyped_defs = true
+disallow_subclassing_any = true
+disallow_untyped_decorators = true
+disable_error_code = "attr-defined"
+# This one fails on types like `np.ndarray`
+#disallow_any_generics = true
+
+# These next few are various gradations of forcing use of type annotations
+disallow_untyped_calls = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+
+# This one isn't too hard to get passing, but return on investment is lower
+no_implicit_reexport = true
+
+# This one can be tricky to get passing if you use a lot of untyped libraries
+warn_return_any = false
+
+[tool.setuptools_scm]
+write_to = "src/cosmotile/_version.py"
+parentdir_prefix_version = "cosmotile-"
+fallback_version = "0.0.0"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+extend-select = [
+  "UP",   # pyupgrade
+  "E",    # pycodestyle
+  "W",    # pycodestyle warning
+  "C90",  # mccabe complexity
+  "I",    # isort
+  "N",    # pep8-naming
+  "D",    # docstyle
+  # "ANN"   # type annotations
+  "B",    # bugbear
+  "A",    # builtins
+  "C4",   # comprehensions
+  "DTZ",  # datetime
+  "FA",   # future annotations
+  "PIE",  # flake8-pie
+  "T",    # print statements
+  "PT",   # pytest-style
+  "Q",    # quotes
+  "SIM",  # simplify
+  "PTH",  # use Pathlib
+  "ERA",  # kill commented code
+  "NPY",  # numpy-specific rules
+  "PERF", # performance
+  # "FURB", # refurb
+  "RUF",  # ruff-specific rules
+]
+# ignore = [
+#     "B008",     # function call in argument defaults
+# ]
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = [
+    "D103",  # ignore missing docstring in tests
+    "DTZ",   # ignore datetime in tests
+    "T",     # print statements
+]
+"docs/conf.py" = [
+    "A",  # conf.py can shadow builtins
+    "ERA",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = 'numpy'
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
