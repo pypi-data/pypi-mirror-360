@@ -1,0 +1,88 @@
+[project]
+name = "agent-knowledge-mcp"
+version = "1.0.14"
+description = "A comprehensive MCP server for AI knowledge management with Elasticsearch, file operations, and version control"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+keywords = ["mcp", "ai", "knowledge-management", "elasticsearch", "automation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+
+dependencies = [
+    "mcp>=1.10.1",
+    "elasticsearch>=7.0.0,<8.0.0",
+    "docker>=7.0.0",
+    "requests>=2.32.0",
+]
+
+[[project.authors]]
+name = "Agent Knowledge MCP Contributors"
+email = "contributors@agent-knowledge-mcp.dev"
+
+[project.urls]
+Homepage = "https://github.com/itshare4u/AgentKnowledgeMCP"
+Repository = "https://github.com/itshare4u/AgentKnowledgeMCP"
+Documentation = "https://github.com/itshare4u/AgentKnowledgeMCP#readme"
+Issues = "https://github.com/itshare4u/AgentKnowledgeMCP/issues"
+Funding = "https://github.com/sponsors/itshare4u"
+"Buy Me Coffee" = "https://coff.ee/itshare4u"
+Changelog = "https://github.com/itshare4u/AgentKnowledgeMCP/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.5.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/",
+    "README.md",
+    "LICENSE",
+    "requirements.txt",
+]
+
+[project.scripts]
+agent-knowledge-mcp = "src.server:cli_main"
+elasticsearch-mcp = "src.server:cli_main"
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[dependency-groups]
+dev = [
+    "build>=1.2.2.post1",
+    "twine>=6.1.0",
+]
