@@ -1,0 +1,65 @@
+[tool.poetry]
+name = "cr_api_client"
+version = "5.0.17"
+description = "M&NTIS Cyber Range client API"
+readme = "README.md"
+authors = ["AMOSSYS"]
+packages = [
+    { include = "cr_api_client" },
+]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+"ruamel.yaml" = "~0.16.10"
+requests = "^2.24.0"
+colorama = "~0.4.4"
+termcolor = "~1.1.0"
+humanize = "^3.13.1"
+argcomplete = "~1.12.1"
+setuptools = "44.0.0"  # Needed to fix pex issue related to ruamel.yaml dependency
+Jinja2 = "~2.11.3" # Needed to play ./data/scenarios*
+pypsrp = "~0.5.0" # Needed to play ./data/scenarios*
+pydantic = "^2.10.3"
+markupsafe = "2.0.1" # Need to fix version to resolve 'soft_unicode' needed by jinja2
+omegaconf = "^2.2.2"
+types-jinja2 = "^2.11.9" # Needed for typing and mypy, remove when updating to Jinja2 version 3 or more
+jsonschema = "3.0.2" # Needed to fix importlib not found error
+mantis-models = {version = "^3.2.2", source = "gitlab"}
+mantis-logger = {version = "^0.2.0", source = "gitlab"}
+mantis-catalog = {version = "^0.1.2", source = "gitlab"}
+
+[tool.poetry.group.dev.dependencies]
+coverage = "7.2.5"
+pytest = "7.3.1"
+pytest-env = "0.8.1"
+pytest-mock = "3.10.0"
+pytest-cov = "4.0.0"
+sh = "1.14.2"
+commitizen = "~2.35.0"
+mypy = "^1.13.0"
+allure-pytest = "^2.12.0"
+# The dependency below is used from TEST ONLY, triggered by the publish test scripts
+# Moved into this group until the module becomes public
+# This group is only used in internal context, where the private registry is available
+pre-commit = "^3.5.0"
+flake8 = "*"
+types-requests = "*"
+
+[tool.poetry.scripts]
+cyber_range = "cr_api_client.cyber_range:main"
+
+[[tool.poetry.source]]
+name = "gitlab"
+url = "https://gitlab.amossys.fr/api/v4/projects/132/packages/pypi/simple"
+priority = "explicit"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+ignore_missing_imports = true
+exclude = [
+    "test",
+]
