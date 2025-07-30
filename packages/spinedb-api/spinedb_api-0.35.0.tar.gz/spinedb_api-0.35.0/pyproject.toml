@@ -1,0 +1,72 @@
+[project]
+name = "spinedb_api"
+dynamic = ["version"]
+authors = [{name = "Spine Project consortium", email = "spine_info@vtt.fi"}]
+license = {text = "LGPL-3.0-or-later"}
+description = "An API to talk to Spine databases."
+keywords = ["energy system modelling", "workflow", "optimisation", "database"]
+readme = {file = "README.md", content-type = "text/markdown"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "SQLAlchemy >=1.4, <1.5",
+    "alembic >=1.7",
+    "frictionless >=5.18",
+    "python-dateutil >=2.8.1",
+    "numpy >=1.20.2",
+    "scipy >=1.7.1",
+    "openpyxl >=3.0.7, !=3.1.1",
+    "GDX2py >=2.2.0",
+    "ijson >=3.1.4",
+    "chardet >=4.0.0",
+    "PyMySQL >=1.0.2",
+    "psycopg2-binary",
+    "pyarrow >= 19.0",
+    "pandas >= 2.2.3",
+]
+
+[project.urls]
+Repository = "https://github.com/spine-tools/Spine-Database-API"
+
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm[toml]>=6.2", "wheel", "build"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "spinedb_api/version.py"
+version_scheme = "release-branch-semver"
+
+[tool.setuptools]
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools.packages.find]
+exclude = [
+    "bin*",
+    "docs*",
+    "fig*",
+    "tests*",
+]
+
+[tool.coverage.run]
+source = ["spinedb_api"]
+branch = true
+
+[tool.coverage.report]
+ignore_errors = true
+
+[tool.black]
+line-length = 120
+force-exclude = '\.git|version.py'
+
+[tool.isort]
+profile = "black"
+lines_between_sections = 0
+force_sort_within_sections = true
+honor_case_in_force_sorted_sections = true
+skip = [".git", "spinedb_api/version.py"]
+line_length = 120

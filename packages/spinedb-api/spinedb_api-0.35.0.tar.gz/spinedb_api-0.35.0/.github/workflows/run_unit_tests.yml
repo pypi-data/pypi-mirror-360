@@ -1,0 +1,102 @@
+# GitHub Action to run spinedb_api unit tests
+
+name: Unit tests
+
+on:
+  push:
+    paths:
+      - "**.py"
+      - "requirements.txt"
+      - "pyproject.toml"
+      - ".github/workflows/*.yml"
+
+jobs:
+  unit-tests:
+    name: Unit tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        include:
+          - os: macos-latest
+            python-version: "3.13"
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Version from Git tags
+      run: git describe --tags
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: pip
+        cache-dependency-path: |
+          pyproject.toml
+          dev-requirements.txt
+    - name: Display Python version
+      run:
+         python -c "import sys; print(sys.version)"
+    - name: Install unixodbc
+      if: runner.os == 'Linux'
+      run:
+        sudo apt-get install -y unixodbc-dev  # Install to get sql.h headers
+    - name: Install dependencies
+      env:
+        PYTHONUTF8: 1
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -e .
+        python -m pip install -r dev-requirements.txt
+    - name: List packages
+      run:
+        python -m pip list
+    - name: Run tests
+      run:
+        pytest tests/ --cov --verbose
+    - name: Upload coverage report to Codecov
+      uses: codecov/codecov-action@v4
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  call-toolbox-unit-tests:
+    name: Toolbox unit tests
+    uses: spine-tools/Spine-Toolbox/.github/workflows/unit_tests.yml@master
+    with:
+      host-os: ubuntu-latest
+      python-version: "3.10"
+      repository: spine-tools/Spine-Toolbox
+      coverage: false
+      post-installation-command: python -m pip install git+${{ github.server_url }}/${{ github.repository }}.git@${{ github.ref_name }}
+    secrets: inherit
+  call-toolbox-execution-tests:
+    name: Toolbox execution tests
+    uses: spine-tools/Spine-Toolbox/.github/workflows/execution_tests.yml@master
+    with:
+      host-os: ubuntu-latest
+      python-version: "3.10"
+      repository: spine-tools/Spine-Toolbox
+      post-installation-command: python -m pip install git+${{ github.server_url }}/${{ github.repository }}.git@${{ github.ref_name }}
+    secrets: inherit
+  call-spine-interface-test:
+    name: SpineInterface.jl test
+    uses: spine-tools/SpineInterface.jl/.github/workflows/Test.yml@master
+    with:
+      host-os: ubuntu-latest
+      julia-version: "1"
+      python-version: "3.13"
+      repository: spine-tools/SpineInterface.jl
+      spinedb-api-ref-name: ${{ github.ref_name }}
+      coverage: false
+    secrets: inherit
+  call-spine-opt-test:
+    name: SpineOpt.jl test
+    uses: spine-tools/SpineOpt.jl/.github/workflows/Test.yml@master
+    with:
+      host-os: ubuntu-latest
+      julia-version: "1"
+      python-version: "3.13"
+      repository: spine-tools/SpineOpt.jl
+      spinedb-api-ref-name: ${{ github.ref_name }}
+      coverage: false
+    secrets: inherit
