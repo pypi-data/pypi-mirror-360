@@ -1,0 +1,92 @@
+<!--
+Componente: Modal
+Uso: include "components/modal.html" with modal_id="meuModal" title="Título do Modal"
+
+Parâmetros:
+- modal_id: ID único do modal (obrigatório)
+- title: Título do modal
+- size: sm, md, lg, xl (padrão: md)
+- content: Conteúdo do modal (pode ser passado via block)
+
+NOTA: Este componente cria apenas o modal em si. 
+Para abrir o modal, crie um botão com @click="open_{{ modal_id }} = true"
+-->
+<div 
+    x-data="{ open_{{ modal_id }}: false }" 
+    x-show="open_{{ modal_id }}"
+    x-cloak
+    class="fixed inset-0 z-50 overflow-y-auto"
+    aria-labelledby="modal-title-{{ modal_id }}"
+    role="dialog"
+    aria-modal="true"
+>
+    <!-- Overlay de fundo -->
+    <div 
+        x-show="open_{{ modal_id }}"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        @click="open_{{ modal_id }} = false"
+    ></div>
+
+    <!-- Container do modal -->
+    <div class="flex min-h-full items-center justify-center p-4">
+        <div
+            x-show="open_{{ modal_id }}"
+            x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            @click.away="open_{{ modal_id }} = false"
+            class="relative transform overflow-hidden rounded-lg bg-background text-foreground shadow-xl transition-all w-full
+                {% if size == 'sm' %}max-w-sm{% elif size == 'lg' %}max-w-4xl{% elif size == 'xl' %}max-w-6xl{% else %}max-w-lg{% endif %}"
+        >
+            <!-- Header do modal -->
+            <div class="border-b border-border px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold" id="modal-title-{{ modal_id }}">
+                        {{ title|default:"Modal" }}
+                    </h3>
+                    <button
+                        @click="open_{{ modal_id }} = false"
+                        class="btn btn-ghost btn-sm rounded-full p-1"
+                        aria-label="Fechar modal"
+                    >
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Conteúdo do modal -->
+            <div class="px-6 py-4">
+                {% if content %}
+                    {{ content|safe }}
+                {% else %}
+                    {% block modal_content %}
+                    <!-- Conteúdo do modal vai aqui -->
+                    {% endblock %}
+                {% endif %}
+            </div>
+
+            <!-- Footer do modal (opcional) -->
+            {% block modal_footer %}
+            <div class="border-t border-border px-6 py-4 flex justify-end gap-3">
+                <button @click="open_{{ modal_id }} = false" class="btn btn-outline btn-md">
+                    Cancelar
+                </button>
+                <button class="btn btn-primary btn-md">
+                    Confirmar
+                </button>
+            </div>
+            {% endblock %}
+        </div>
+    </div>
+</div> 

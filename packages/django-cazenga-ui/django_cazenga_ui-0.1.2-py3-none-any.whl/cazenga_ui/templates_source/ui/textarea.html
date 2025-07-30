@@ -1,0 +1,46 @@
+<!--
+Componente: Textarea
+Uso: include "components/textarea.html" with name="message" placeholder="Digite sua mensagem"
+
+Parâmetros:
+- name: Nome do campo (obrigatório para formulários)
+- id: ID do elemento (padrão: mesmo que name)
+- placeholder: Texto de placeholder (opcional)
+- value: Valor inicial (opcional)
+- rows: Número de linhas (padrão: 4)
+- disabled: true/false (padrão: false)
+- readonly: true/false (padrão: false)
+- required: true/false (padrão: false)
+- resize: none, vertical, horizontal, both (padrão: vertical)
+- x_model: Modelo Alpine.js para two-way binding (opcional)
+- class: Classes CSS adicionais (opcional)
+- maxlength: Limite máximo de caracteres (opcional)
+- minlength: Limite mínimo de caracteres (opcional)
+-->
+{% with name_value=name|default:"" id_value=id|default:"" %}
+{% with textarea_id=id_value|default:name_value|default:"textarea" rows=rows|default:4 disabled=disabled|default:False readonly=readonly|default:False required=required|default:False resize=resize|default:"vertical" %}
+<textarea
+    {% if name_value %}name="{{ name_value }}"{% endif %}
+    id="{{ textarea_id }}"
+    {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+    {% if required %}required{% endif %}
+    {% if disabled %}disabled{% endif %}
+    {% if readonly %}readonly{% endif %}
+    {% if maxlength %}maxlength="{{ maxlength }}"{% endif %}
+    {% if minlength %}minlength="{{ minlength }}"{% endif %}
+    {% if x_model %}x-model="{{ x_model }}"{% endif %}
+    rows="{{ rows }}"
+    class="placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground 
+        dark:bg-input/30 border-input flex min-h-[60px] w-full rounded-md border 
+        bg-transparent text-base shadow-xs transition-[color,box-shadow] outline-none 
+        px-3 py-2 
+        disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 
+        md:text-sm
+        focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]
+        aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 
+        aria-invalid:border-destructive
+        {% if resize == 'none' %}resize-none{% elif resize == 'horizontal' %}resize-x{% elif resize == 'vertical' %}resize-y{% elif resize == 'both' %}resize{% else %}resize-y{% endif %}
+        {{ class|default:'' }}"
+>{{ value|default:"" }}</textarea>
+{% endwith %}
+{% endwith %}
