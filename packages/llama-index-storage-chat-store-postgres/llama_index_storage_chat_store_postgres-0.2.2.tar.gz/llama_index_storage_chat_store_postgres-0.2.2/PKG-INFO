@@ -1,0 +1,37 @@
+Metadata-Version: 2.4
+Name: llama-index-storage-chat-store-postgres
+Version: 0.2.2
+Summary: llama-index storage-chat-store postgres integration
+Author-email: Your Name <you@example.com>
+License-Expression: MIT
+License-File: LICENSE
+Requires-Python: <4.0,>=3.9
+Requires-Dist: asyncpg<0.31,>=0.30.0
+Requires-Dist: llama-index-core<0.13,>=0.12.0
+Requires-Dist: psycopg<4,>=3.0.0
+Description-Content-Type: text/markdown
+
+# LlamaIndex Chat_Store Integration: Postgres Chat Store
+
+## Installation
+
+`pip install llama-index-storage-chat-store-postgres`
+
+## Usage
+
+Using `PostgresChatStore`, you can store your chat history remotely, without having to worry about manually persisting and loading the chat history.
+
+```python
+from llama_index.storage.chat_store.postgres import PostgresChatStore
+from llama_index.core.memory import ChatMemoryBuffer
+
+chat_store = PostgresChatStore.from_uri(
+    uri="postgresql+asyncpg://postgres:password@127.0.0.1:5432/database",
+)
+
+chat_memory = ChatMemoryBuffer.from_defaults(
+    token_limit=3000,
+    chat_store=chat_store,
+    chat_store_key="user1",
+)
+```
