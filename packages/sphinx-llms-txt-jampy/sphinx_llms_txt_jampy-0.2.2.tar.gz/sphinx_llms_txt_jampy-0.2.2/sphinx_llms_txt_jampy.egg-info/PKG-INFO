@@ -1,0 +1,123 @@
+Metadata-Version: 2.4
+Name: sphinx-llms-txt-jampy
+Version: 0.2.2
+Summary: llms-full.txt generator for Sphinx
+Author-email: Jared Dillard <jared.dillard@gmail.com>
+Maintainer-email: Jared Dillard <jared.dillard@gmail.com>
+License: MIT
+Project-URL: download, https://pypi.org/project/sphinx-llms-txt/
+Project-URL: source, https://github.com/jdillard/sphinx-llms-txt
+Project-URL: changelog, https://github.com/jdillard/sphinx-llms-txt/blob/master/CHANGELOG.rst
+Classifier: Framework :: Sphinx :: Extension
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Documentation :: Sphinx
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: flake8; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: isort; extra == "dev"
+Requires-Dist: pre-commit; extra == "dev"
+Requires-Dist: sphinx; extra == "dev"
+Provides-Extra: test
+Requires-Dist: pytest>=7.0.0; extra == "test"
+Dynamic: license-file
+
+# Sphinx llms.txt generator
+
+A Sphinx extension that generates a summary `llms.txt` file, written in Markdown, and a single combined documentation `llms-full.txt` file, written in reStructuredText.
+
+[![PyPI version](https://img.shields.io/pypi/v/sphinx-llms-txt.svg)](https://pypi.python.org/pypi/sphinx-llms-txt)
+[![Downloads](https://static.pepy.tech/badge/sphinx-llms-txt/month)](https://pepy.tech/project/sphinx-llms-txt)
+
+## Installation
+
+```bash
+pip install sphinx-llms-txt
+```
+
+## Usage
+
+1. Add the extension to your Sphinx configuration (`conf.py`):
+
+```python
+extensions = [
+    'sphinx_llms_txt',
+]
+```
+
+## Configuration Options
+
+### `llms_txt_full_file`
+
+- **Type**: boolean
+- **Default**: `'True'`
+- **Description**: Whether to write the single output file
+
+### `llms_txt_full_filename`
+
+- **Type**: string
+- **Default**: `'llms-full.txt'`
+- **Description**: Name of the single output file
+
+### `llms_txt_full_max_size`
+
+- **Type**: integer or `None`
+- **Default**: `None` (no limit)
+- **Description**: Sets a maximum line count for `llms_txt_full_filename`.
+  If exceeded, the file is skipped and a warning is shown, but the build still completes.
+
+### `llms_txt_file`
+
+- **Type**: boolean
+- **Default**: `True`
+- **Description**: Whether to write the summary information file
+
+### `llms_txt_filename`
+
+- **Type**: string
+- **Default**: `llms.txt`
+- **Description**: Name of the summary information file
+
+### `llms_txt_directives`
+
+- **Type**: list of strings
+- **Default**: `[]`
+- **Description**: List of custom directive names to process for path resolution.
+
+### `llms_txt_title`
+
+- **Type**: string or `None`
+- **Default**: `None`
+- **Description**: Overrides the Sphinx project name as the heading in `llms.txt`.
+
+### `llms_txt_summary`
+
+- **Type**: string or `None`
+- **Default**: `None`
+- **Description**: Optional, but recommended, summary description for `llms.txt`.
+
+### `llms_txt_exclude`
+
+- **Type**: list of strings
+- **Default**: `[]`
+- **Description**: A list of pages to ignore  (e.g., `["page1", "page_with_*"]`).
+
+## Features
+
+- Creates `llms.txt` and `llms-full.txt`
+- Automatically add content from `include` directives
+- Resolves relative paths in directives like `image` and `figure` to use full paths
+  - Ability to add list of custom directives with `llms_txt_directives`
+  - Optionally, prepend a base URL using Sphinx's `html_baseurl`
+- Ability to exclude pages
+
+## License
+
+MIT License - see LICENSE file for details.
