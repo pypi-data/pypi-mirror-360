@@ -1,0 +1,63 @@
+name: Test
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+env:
+  CARGO_TERM_COLOR: always
+on:
+  pull_request:
+    branches: main
+permissions: {}
+jobs:
+  Checks:
+    strategy:
+      fail-fast: true
+      matrix:
+        features: [math, mechanics, constitutive, fem]
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        toolchain: [beta, nightly, stable]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Toolchain
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746
+        with:
+          components: clippy, rustfmt
+          toolchain: ${{ matrix.toolchain }}
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --release --features ${{ matrix.features }} -- -D warnings
+      - name: Clippy tests
+        run: cargo clippy --release --features ${{ matrix.features }} --tests -- -D warnings
+      - name: Test
+        run: cargo test --release --features ${{ matrix.features }}
+  Coverage:
+    strategy:
+      fail-fast: true
+      matrix:
+        features: [math, mechanics, constitutive, fem]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Toolchain
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746
+        with:
+          toolchain: nightly
+      - name: Install
+        run: cargo install cargo-llvm-cov
+      - name: Coverage
+        run: rustup run nightly cargo llvm-cov --profile release --features ${{ matrix.features }} --fail-under-functions 65 --fail-under-lines 70 --fail-under-regions 66
+      - name: Tree
+        run: $([[ $(cargo tree --color always --edges normal --features ${{ matrix.features }} | wc -l) -eq 1 ]])
+  Mutants:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install
+        run: cargo install cargo-mutants
+      - name: Mutants
+        run: cargo mutants --features math --file 'src/math/**/*.rs' --minimum-test-timeout 0.9 --profile release --shard 1/256 || true

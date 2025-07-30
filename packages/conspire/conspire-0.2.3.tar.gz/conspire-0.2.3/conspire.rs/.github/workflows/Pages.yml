@@ -1,0 +1,42 @@
+name: Pages
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+on:
+  pull_request:
+    branches: main
+  push:
+    branches: main
+permissions: {}
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Toolchain
+        uses: actions-rs/toolchain@88dc2356392166efad76775c878094f4e83ff746
+        with:
+          toolchain: stable
+      - name: Dev
+        run: |
+          mkdir -p _site/
+          cargo rustdoc --release --features fem -- --html-in-header .github/katex.html
+          mv target/doc/conspire/ target/doc/latest/
+          cp -r target/doc/* _site/
+      - name: Upload
+        uses: actions/upload-pages-artifact@v3
+  Deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    if: github.event_name != 'pull_request'
+    needs: Build
+    permissions:
+      id-token: write
+      pages: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment
+        id: deployment
+        uses: actions/deploy-pages@v4
