@@ -1,0 +1,56 @@
+[build-system]
+requires = [
+    "scikit-build-core",
+    "setuptools_scm[toml]>=6.2"
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "getcleft-py"
+dynamic = ["version"]
+description = "Python wheels and a wrapper for GetCleft, a tool to find clefts in PDB files"
+authors = [
+    {name = "Thomas DesCôteaux"},
+    {name = "Rafael Najmanovich", email = "rafael.najmanovich@umontreal.ca"},
+]
+# license = {file = "LICENSE"}
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+    'Natural Language :: English',
+    'Operating System :: MacOS :: MacOS X',
+    'Operating System :: POSIX :: Linux',
+    'Operating System :: Microsoft :: Windows',
+    'Topic :: Scientific/Engineering :: Bio-Informatics',
+    'Topic :: Scientific/Engineering :: Chemistry',
+]
+readme = "README.md"
+requires-python = ">=3.9"
+
+[project.urls]
+Homepage = "https://github.com/NRGlab/Get_Cleft"
+Documentation = "https://github.com/ThomasDesc/GetCleft-py/README.md"
+Repository = "https://github.com/ThomasDesc/GetCleft-py"
+Issues = "https://github.com/me/spam/issues"
+
+[tool.scikit-build]
+wheel.install-dir = "getcleftpy"
+wheel.py-api = "py3"
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+cmake.build-type = "Release"
+
+[tool.setuptools.packages.find]
+include = ["getcleftpy","getcleftpy.*"]
+
+[tool.setuptools_scm]
+
+[tool.cibuildwheel]
+build = "cp39-*"
+skip = [
+    "*-win32",
+    "*-manylinux_i686",
+    "*-musllinux*",
+]
+
+environment-pass = ["CIBW_BUILD"]
