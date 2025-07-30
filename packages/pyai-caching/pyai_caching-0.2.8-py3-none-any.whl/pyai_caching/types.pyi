@@ -1,0 +1,6 @@
+from typing import Protocol, Any
+
+class ExpenseRecorder(Protocol):
+    async def __call__(self, model: str, task_name: str, cost: float) -> None: ...
+
+async def noop_expense_recorder(model: str, task_name: str, cost: float) -> None: ... 
