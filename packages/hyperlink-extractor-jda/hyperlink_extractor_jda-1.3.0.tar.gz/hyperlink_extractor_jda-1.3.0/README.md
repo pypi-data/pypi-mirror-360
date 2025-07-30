@@ -1,0 +1,105 @@
+**# extract-links**
+
+
+
+\*\*extract-links\*\* is a command-line tool for extracting text-label + hyperlink pairs from `.docx`, `.odt`, `.html`, and `.pdf` files.
+
+
+
+\- PDF support includes intelligent bounding-box text parsing
+
+\- Outputs formats: `txt`, `csv`, `md`, `json`, `xlsx`
+
+\- Optional deduplication and sorting
+
+\- Works across Windows, Linux, macOS
+
+
+
+---
+
+
+
+\## **Install**
+
+
+
+Clone and install locally:
+
+
+
+```bash
+
+pip install .
+
+Or use the CLI directly from source:
+
+python -m extract\\\_links.cli \\\[file]
+
+**Usage**
+
+extract-links input.docx -o output --format csv --dedupe --sort
+
+**Arguments**
+
+| Flag       | Description                                   |
+
+| ---------- | --------------------------------------------- |
+
+| `input`    | Input file (`.docx`, `.odt`, `.html`, `.pdf`) |
+
+| `-o`       | Output file prefix (no extension)             |
+
+| `--format` | `txt`, `csv`, `md`, `json`, `xlsx`            |
+
+| `--dedupe` | Deduplicate URLs                              |
+
+| `--sort`   | Sort by label                                 |
+
+
+**Example**
+
+extract-links report.pdf -o links --format xlsx --dedupe --sort
+
+**Output Example**
+
+CSV
+
+
+Text,URL
+
+Project Plan,https://example.com/plan
+
+Resources,https://example.com/resources
+
+**Markdown**
+
+
+\[Project Plan](https://example.com/plan)
+
+
+**Supported Formats**
+
+.docx → via python-docx
+.odt → via odfpy
+.html → via BeautifulSoup
+.pdf → via PyMuPDF (bounding box + OCR-style matching)
+
+
+## Windows Standalone `.exe`
+
+For Windows users without Python, download the `.exe` from the [Releases](https://github.com/pqexpert/extract-links/releases) page.
+
+### Example:
+```powershell
+extract-links.exe project_plan.docx -o pp_links_out --format csv
+
+### Notes for `.exe` usage:
+Place `extract-links.exe` in the same folder as your input file  
+Or provide the full path to your input file when running  
+
+
+
+
+
+
