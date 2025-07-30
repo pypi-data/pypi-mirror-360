@@ -1,0 +1,186 @@
+Execute (Setup conversion output vimwiki/html, etc.):
+  call chdir(g:vimdir)
+  let s:tmpdir = tempname()
+  let g:mddir = s:tmpdir .. '/markdown'
+  execute '! mkdir -p ' .. g:mddir
+  Log resolve(g:mddir)
+
+  let g:html = s:tmpdir .. '/vimwiki_html/html'
+  execute '! mkdir -p ' .. g:html
+  Log resolve(g:html)
+
+  let g:docx = s:tmpdir .. '/vimwiki_html/docx'
+  execute '! mkdir -p ' .. g:docx
+  Log resolve(g:docx)
+
+  let g:vimwiki_autowriteall = 0
+
+  for s:file in ['wikilink_markdown.md', 'reference_citation.md']
+    execute 'edit ' .. s:file
+    execute 'saveas ' .. g:mddir .. '/' .. s:file
+    Log resolve(expand('%'))
+    Log 'Default Filetype: ' .. string(&filetype)
+    set filetype=vimwiki
+    Log 'Edit Filetype: ' .. string(&filetype)
+  endfor
+
+Execute (VimwikiReference):
+  execute 'buffer ' .. g:mddir .. '/' .. 'reference_citation.md'
+  VimwikiReference
+  edit!
+
+Expect markdown (Append references):
+  ---
+  date: 2023-09-16
+  link-citations: true
+  references:
+    - author:
+        - family: Bloggs
+          given: A. J.
+        - family: Jones
+          given: X. Y.
+      container-title: Journal journal journal
+      id: bloggs-jones
+      issued: 1959
+      title: Title title title title title title title title title title
+      type: article-journal
+    - author:
+        - family: Chomsky
+          given: N.
+      container-title: A festschrift for Morris Halle
+      editor:
+        - family: Anderson
+          given: S. R.
+        - family: Kiparsky
+          given: P.
+      id: chomsky-73
+      issued: 1973
+      publisher: Holt, Rinehart & Winston
+      publisher-place: New York
+      title: Conditions on transformations
+      type: paper-conference
+  tags: Zettelkasten
+  title: Try ZettelNew
+  type: note
+  ---
+
+  Hey [Adding to the House of Dude](230916-1043)
+
+  ```bash
+  # To convert BibLaTeX to Markdown Yaml Header above:
+  pandoc --from=biblatex --to=markdown default.bib --standalone
+
+  # To convert this file to expected output:
+  pandoc --citeproc \
+    --from=markdown+wikilinks_title_after_pipe-task_lists \
+    --standalone \
+    --to=commonmark_x+wikilinks_title_after_pipe  \
+    --wrap=none \
+    tests/func/reference_citation.md |
+    wikilink_markdown > tests/func/reference_citation.out.md
+  ```
+
+  Bloggs and Jones ([1959](#ref-bloggs-jones))
+
+  ([Chomsky 1973](#ref-chomsky-73))
+
+  [[vimwiki]]
+
+  - [ ] task 1
+  - [X] task 2
+  - [.] task 3
+    - [.] task 3.1
+    - [.] task 3.2
+  - [[20231106-1619|Wiki Internal Link]]
+  - [[wn.home:index|Another's wiki cross-reference]]
+
+  * [S] Taskwiki task #aa945200
+
+  ```bash
+  pandoc --from=markdown+wikilinks_title_after_pipe-task_lists \
+    --standalone \
+    --wrap=none \
+    --to=markdown
+  ```
+
+  ---
+
+  House of Dude
+
+  ::::: {#refs .references .csl-bib-body .hanging-indent entry-spacing="0"}
+  ::: {#ref-bloggs-jones .csl-entry}
+  Bloggs, A. J., and X. Y. Jones. 1959. "Title Title Title Title Title Title Title Title Title Title." *Journal Journal Journal*.
+  :::
+
+  ::: {#ref-chomsky-73 .csl-entry}
+  Chomsky, N. 1973. "Conditions on Transformations." In *A Festschrift for Morris Halle*, edited by S. R. Anderson and P. Kiparsky. New York: Holt, Rinehart & Winston.
+  :::
+  :::::
+  
+
+Execute (VimwikiMarkdownFormat):
+  execute 'buffer ' .. g:mddir .. '/' .. 'wikilink_markdown.md'
+  VimwikiMarkdownFormat
+  edit!
+
+Expect markdown (WikilinkMarkdown):
+  # wikilink_markdown
+
+  - [ ] task 1
+    line 1.2
+  - [X] task 2
+  - [.] task 3
+    line 3.2
+    - [.] task 3.1
+    - [.] task 3.2
+  - [Wiki Internal Link](20231106-1619)
+  - [Another's wiki cross-reference](wn.home:index)
+
+  ```bash
+  cat wikilink_markdown.md |
+  pandoc \
+    --from=commonmark_x+wikilinks_title_after_pipe \
+    --standalone \
+    --wrap=preserve \
+    --to=commonmark_x |
+  mdformat --number \
+    --extensions=wikilink \
+    --extensions=myst \
+    --extensions=simple_breaks - |
+  wikilink_markdown
+  ```
+
+  @bloggs-jones discusses [@chomsky-73, p. 74].
+
+  Required `mdformat` extensions:
+
+  1. mdformat_wikilink: wikilink
+  2. mdformat_myst: myst installs,
+     - mdformat_frontmatter: frontmatter
+     - mdformat_footnote: footnote
+     - mdformat_tables: tables
+  3. mdformat_simple_breaks: simple_breaks
+
+  ---
+
+  ::::: {#refs .references .csl-bib-body .hanging-indent}
+  ::: {#ref-bloggs-jones .csl-entry}
+  Bloggs, A. J., and X. Y. Jones. 1959. "Title Title Title Title Title Title Title Title Title Title." *Journal Journal Journal*.
+  :::
+
+  ::: {#ref-chomsky-73 .csl-entry}
+  Chomsky, N. 1973. "Conditions on Transformations." In *A Festschrift for Morris Halle*, edited by S. R. Anderson and P. Kiparsky. New York: Holt, Rinehart & Winston.
+  :::
+  :::::
+  
+
+Execute (VimwikiConvertMarkdownFormat):
+  execute 'buffer ' .. g:mddir .. '/' .. 'reference_citation.md'
+  edit!
+
+  call SetSyntax('markdown')
+  call vimwiki#vars#set_wikilocal('path_html', g:html)
+  Log resolve(vimwiki#path#path_norm(vimwiki#vars#get_wikilocal('path_html')))
+
+  VimwikiConvert
+  Assert filereadable(g:docx .. '/reference_citation.docx')

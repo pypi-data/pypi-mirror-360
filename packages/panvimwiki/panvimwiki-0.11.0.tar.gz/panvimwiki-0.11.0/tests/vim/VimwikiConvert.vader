@@ -1,0 +1,57 @@
+Before (Setup conversion output vimwiki/html, etc.):
+  call chdir(g:vimdir)
+  let s:tmpdir = tempname()
+  let g:html = s:tmpdir .. '/vimwiki_html/html'
+  call vimwiki#vars#set_wikilocal('path_html', g:html, 0)
+  Log resolve(vimwiki#path#path_norm(vimwiki#vars#get_wikilocal('path_html', 0)))
+
+  let g:docx = s:tmpdir .. '/vimwiki_html/docx'
+  Log resolve(g:docx)
+  call delete($TMP .. "/prepm.docx")
+  call delete($TMP .. "/prepm.wiki")
+  call delete($TMP .. "/prepm.md")
+
+Execute (VimwikiConvert):
+  edit vimwiki/diary/2017-04-24.wiki
+  VimwikiConvert
+  Assert filereadable(g:docx .. '/diary/2017-04-24.docx')
+
+Execute (VimwikiConvert non-diary):
+  edit vimwiki/non-diary.wiki
+  VimwikiConvert
+  Assert filereadable(g:docx .. '/non-diary.docx')
+
+Execute (VimwikiConvertWeek non-diary):
+  edit vimwiki/non-diary.wiki
+  AssertThrows VimwikiConvertWeek
+
+Execute (VimwikiConvertWeek):
+  edit vimwiki/diary/2017-04-26.wiki
+  VimwikiConvertWeek
+  Assert filereadable($TMP .. "/prepm.docx")
+
+Execute (extra_args is empty):
+  unlet g:panvimwiki_settings.extra_args
+  edit vimwiki/diary/2017-04-24.wiki
+  VimwikiConvert
+  Assert filereadable(g:docx .. '/diary/2017-04-24.docx')
+
+Execute (wiki2pandoc concatenate no dates):
+  edit vimwiki/diary/2017-04-24.wiki
+  AssertThrows Wiki2pandoc("1", "1", "docx", "", "", "0")
+
+Execute (wiki2pandoc concatenate start/end dates):
+  edit vimwiki/diary/2017-04-24.wiki
+  Log Wiki2pandoc("1", "1", "docx", "2017-04-26", "2017-04-24", "0")
+  Assert filereadable($TMP .. "/prepm.docx")
+
+Execute (wiki2pandoc concatenate without end date):
+  edit vimwiki/diary/2017-04-24.wiki
+  Log Wiki2pandoc("1", "1", "docx", "", "2017-04-24", "0")
+  Assert filereadable($TMP .. "/prepm.docx")
+
+Execute (VimwikiConvertWeek without g:panvimwiki_settings):
+  unlet g:panvimwiki_settings
+  edit vimwiki/diary/2017-04-26.wiki
+  VimwikiConvertWeek
+  Assert filereadable($TMP .. "/prepm.docx")
