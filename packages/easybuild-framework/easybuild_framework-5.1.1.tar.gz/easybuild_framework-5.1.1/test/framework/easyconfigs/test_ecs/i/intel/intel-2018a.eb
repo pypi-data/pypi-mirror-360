@@ -1,0 +1,24 @@
+easyblock = "Toolchain"
+
+name = 'intel'
+version = '2018a'
+
+homepage = 'http://software.intel.com/en-us/intel-cluster-toolkit-compiler/'
+description = """Intel Cluster Toolkit Compiler Edition provides Intel C/C++ and Fortran compilers, Intel MPI & Intel MKL."""
+
+toolchain = SYSTEM
+
+local_compver = '2016.1.150'
+local_gccver = '4.9.3'
+local_binutilsver = '2.25'
+local_gccsuff = '-GCC-%s-%s' % (local_gccver, local_binutilsver)
+# fake intel toolchain easyconfig, no dependencies (good enough for testing)
+local_fake_dependencies = [
+    ('GCCcore', local_gccver),
+    ('binutils', local_binutilsver, '-GCCcore-%s' % local_gccver),
+    ('icc', local_compver, local_gccsuff),
+    ('ifort', local_compver, local_gccsuff),
+    ('impi', '5.1.2.150', '', ('iccifort', '%s%s' % (local_compver, local_gccsuff))),
+]
+
+moduleclass = 'toolchain'

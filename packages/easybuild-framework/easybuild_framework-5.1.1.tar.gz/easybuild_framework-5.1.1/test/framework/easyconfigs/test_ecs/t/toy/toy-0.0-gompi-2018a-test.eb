@@ -1,0 +1,66 @@
+name = 'toy'
+version = '0.0'
+versionsuffix = '-test'
+
+homepage = 'https://easybuilders.github.io/easybuild'
+description = "Toy C program, 100% toy."
+
+toolchain = {'name': 'gompi', 'version': '2018a'}
+toolchainopts = {'pic': True, 'opt': True, 'optarch': True}
+
+sources = [SOURCE_TAR_GZ]
+checksums = [[
+    '44332000aa33b99ad1e00cbd1a7da769220d74647060a10e807b916d73ea27bc',  # default (SHA256)
+    ('sha512',
+     '3c9dc629e1f2fd01a15c68f9f2a328b5da045c2ec1a189dc72d7195642f32e0'
+     'ff59275aba5fa2a78e84417c7645d0ca5d06aff39e688a8936061ed5c4c600708'),
+    {SOURCE_TAR_GZ: '44332000aa33b99ad1e00cbd1a7da769220d74647060a10e807b916d73ea27bc',
+     'bar.tgz': '33ac60685a3e29538db5094259ea85c15906cbd0f74368733f4111eab6187c8f'},
+]]
+patches = ['toy-0.0_fix-silly-typo-in-printf-statement.patch']
+
+exts_default_options = {
+    'source_urls': ['http://example.com/%(name)s'],
+}
+
+local_bar_buildopts = " && gcc bar.c -o anotherbar && "
+# used to check whether $TOY_LIBS_PATH is defined even when 'lib' subdirectory doesn't exist yet
+local_bar_buildopts += 'echo "TOY_EXAMPLES=$TOY_EXAMPLES" > %(installdir)s/toy_libs_path.txt'
+
+exts_list = [
+    'ulimit',  # extension that is part of "standard library"
+    ('bar', '0.0', {
+        'buildopts': local_bar_buildopts,
+        'checksums': ['f3676716b610545a4e8035087f5be0a0248adee0abb3930d3edb76d498ae91e7'],  # checksum for
+        # custom extension filter to verify use of stdin value being passed to filter command
+        'exts_filter': ("cat | grep '^bar$'", '%(name)s'),
+        'patches': [
+            'bar-0.0_fix-silly-typo-in-printf-statement.patch',
+            'bar-0.0_fix-very-silly-typo-in-printf-statement.patch',
+        ],
+        'toy_ext_param': "mv anotherbar bar_bis",
+        'unknowneasyconfigparameterthatshouldbeignored': 'foo',
+        # set boolean value (different from default value) to trigger (now fixed) bug with --inject-checksums
+        # cfr. https://github.com/easybuilders/easybuild-framework/pull/3034
+        'keepsymlinks': False,
+    }),
+    ('barbar', '1.2', {
+        'start_dir': 'src',
+    }),
+    (name, version, {
+        'sanity_check_paths': {'files': ['lib/libtoy.a'], 'dirs': []},
+        'exts_filter': ("ls -l lib/libtoy.a", ''),
+        'checksums': ['44332000aa33b99ad1e00cbd1a7da769220d74647060a10e807b916d73ea27bc']
+    }),
+]
+
+sanity_check_paths = {
+    'files': [('bin/yot', 'bin/toy'), 'bin/bar', 'bin/bar_bis', 'lib/libtoy.a', 'lib/libbar.a'],
+    'dirs': [],
+}
+
+modextravars = {'TOY_EXAMPLES': 'examples'}
+
+postinstallcmds = ["echo TOY > %(installdir)s/README"]
+
+moduleclass = 'tools'
