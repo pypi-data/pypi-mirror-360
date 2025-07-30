@@ -1,0 +1,79 @@
+Metadata-Version: 2.4
+Name: spiceitup
+Version: 1.0.3
+Summary: Quicklook tool for level 2 SPICE imaging
+Home-page: https://git.ias.u-psud.fr/spice/data_quicklook
+Author: David Picard
+Author-email: david.picard@universite-paris-saclay.fr
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+Requires-Dist: PyQt5
+Requires-Dist: sunraster
+Requires-Dist: pyqtgraph
+Requires-Dist: qdarkgraystyle
+Requires-Dist: scipy
+Requires-Dist: opencv-python-headless
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# SPICE data quicklook in PyQt5 / PyQtGraph
+
+This graphical user interface (GUI) allows you to have a quick look in the SPICE data (provide level 2 '.fits' files in input). You will be able to navigate dynamically in the data thanks to sliders which update the maps I(x,y) ; I(lambda,y), the curve I(lambda) and more.
+
+Also, you can draw a gaussian fit on the profile I(lambda) and generate the maps related to the gaussian parameters.
+
+## - Documentation
+
+`docs/user_manual/user_documentation.pdf`
+
+## - Installation
+
+### 0) If you don't already have a python3/pip3 environment:
+
+`sudo apt-get install build-essential libssl-dev libffi-dev python-dev`  
+`sudo apt install python3-pip`  
+
+Optional: install and run a virtual env (an IDE like Pycharm would be also fine)   
+`sudo apt-get install python3-venv`  
+`python3 -m venv env`  
+`. env/bin/activate`  
+
+### A - Using official package
+`pip install spiceitup`
+Run with `spiceitup`
+
+### B - Manually from project
+#### B.1) Install the requirements  
+`pip install -r requirements.txt`  
+**Think to upgrade numpy to > 1.20 for nanpercentile usage.** (Then reboot your IDE)  
+`pip install numpy --upgrade`
+
+#### B.2) Run the app  
+`python3 spiceitup/main.py` or use an IDE like pycharm (which will install the requirements automatically), open this folder as a project and run `run.py`
+
+#### B.3) Troubleshooting
+Error known:  
+  
+**"qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "" even though it was found. [...] Aborted (core dumped)"**
+In this case, try to do: `sudo apt-get install --reinstall libxcb-xinerama0`  
+  
+**spiceitup: command not found**
+In this case check if spiceitup is here: `$(python -m site --user-base)/bin"`
+Then add it to $PATH: `export PATH="$PATH:$(python -m site --user-base)/bin"`
+Run again `spiceitup`  
+  
+**No module spiceitup**  
+In this case you should use a virtual environment (see python virtual environment)
+
+#### B.4) For developers
+- See docs/code_conventions.txt before adding some codes  
+- Watch logs with `watch tail logs/debug.log` or `logs/show_debug_console.sh`  
