@@ -1,0 +1,1 @@
+SECRET_FILE = '/media/user/Projects/python/secret.yaml'
