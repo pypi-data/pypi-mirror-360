@@ -1,0 +1,68 @@
+[tool.poetry]
+name = "asltk"
+version = "0.4.0"
+description = "A quick to use library to process images for MRI Arterial Spin Labeling imaging protocols."
+authors = ["Antonio Senra Filho <acsenrafilho@alumni.usp.br>"]
+readme = "README.md"
+license = "MIT"
+packages = [{include = "asltk"}]
+classifiers = [
+    "Intended Audience :: Healthcare Industry",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+
+[tool.poetry.urls]
+"Documentation" = "https://asltk.readthedocs.io/en/latest"
+"Code" = "https://github.com/LOAMRI/asltk"
+"Code Issues" = "https://github.com/LOAMRI/asltk/issues"
+
+
+[tool.poetry.dependencies]
+python = "^3.9"
+SimpleITK = "^2.4.0"
+numpy = "^1.22.4"
+rich = "^13.8.1"
+scipy = "^1.13.1"
+dill = "^0.3.9"
+pybids = "^0.17.2"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.2"
+pytest-cov = "^5.0.0"
+blue = "^0.9.1"
+isort = "^5.13.2"
+taskipy = "^1.13.0"
+
+
+[tool.poetry.group.doc.dependencies]
+mkdocs-material = "^9.5.34"
+mkdocstrings = "^0.26.1"
+mkdocstrings-python = "^1.11.1"
+pymdown-extensions = "^10.11.2"
+
+[tool.pytest.ini_options]
+pythonpath = "."
+addopts = "--doctest-modules"
+
+[tool.isort]
+profile = "black"
+line_length = 79
+
+[tool.taskipy.tasks]
+lint = "blue . && isort ."
+lint-check = "blue --check . && isort --check ."
+docs = "mkdocs serve"
+pre_test="task lint-check"
+test = "pytest --ignore-glob='./asltk/scripts/*.py' -s -x --cov=asltk -vv --disable-warnings"
+post_test = "coverage html"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
