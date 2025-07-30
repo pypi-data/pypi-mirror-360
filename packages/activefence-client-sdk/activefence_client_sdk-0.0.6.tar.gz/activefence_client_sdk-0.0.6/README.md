@@ -1,0 +1,203 @@
+# ActiveFence Client SDK
+
+## activefence_client_sdk
+
+A standalone SDK supplied to ActiveFence clients in order to integrate analysis API calls more easily.
+
+## ActiveFenceClient
+
+The `ActiveFenceClient` class provides methods to interact with the ActiveFence analysis API. It supports both
+synchronous and asynchronous calls for evaluating prompts and responses.
+
+### Initialization
+
+```python
+from activefence_client_sdk.client import ActiveFenceClient
+
+client = ActiveFenceClient(
+    api_key="your_api_key",
+    app_name="your_app_name"
+)
+```
+
+At a minimum, you need to provide the `api_key` and `app_name`.
+
+| **Parameter**   | **Default Value**            | **Description**                                                                                                                                                                                         |
+|-----------------|------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `api_key`       | None                         | API key for authentication. Either create a key using the ActiveFence platform or contact ActiveFence customer support for one.                                                                         |
+| `app_name`      | Unknown                      | Application name - this will be sent to ActiveFence to differentiate messages from different apps.                                                                                                      |
+| `base_url`      | https://apis.activefence.com | The API URL - available for testing/mocking purposes                                                                                                                                                    |
+| `provider`      | Unknown                      | Default value for which LLM provider the client is analyzing (e.g. openai, anthropic, deepseek). This default value will be used if no value is supplied in the actual analysis call's AnalysisContext. |
+| `model_name`    | Unknown                      | Default value for name of the LLM model being used (e.g. gpt-3.5-turbo, claude-2). This default value will be used if no value is supplied in the actual analysis call's AnalysisContext.               |
+| `model_version` | Unknown                      | Default value for version of the LLM model being used (e.g. 2023-05-15). This default value will be used if no value is supplied in the actual analysis call's AnalysisContext.                         |
+| `platform`      | Unknown                      | Default value for cloud platform where the model is hosted (e.g. aws, azure, databricks). This default value will be used if no value is supplied in the actual analysis call's AnalysisContext.        |
+| `api_timeout`   | 5                            | Timeout for API requests in seconds.                                                                                                                                                                    |
+
+In addition, any of these initialization values can be configured via environment variables, whose values will be taken
+if not provided during initialization:
+
+`ACTIVEFENCE_API_KEY`: API key for authentication.
+
+`ACTIVEFENCE_APP_NAME`: Application name.
+
+`ACTIVEFENCE_MODEL_PROVIDER`: Model provider name.
+
+`ACTIVEFENCE_MODEL_NAME`: Model name.
+
+`ACTIVEFENCE_MODEL_VERSION`: Model version.
+
+`ACTIVEFENCE_PLATFORM`: Cloud platform.
+
+`ACTIVEFENCE_API_TIMEOUT`: API timeout in seconds.
+
+`ACTIVEFENCE_RETRY_MAX`: Maximum number of retries.
+
+`ACTIVEFENCE_RETRY_BASE_DELAY`: Base delay for retries.
+
+### Analysis Context
+
+The `AnalysisContext` class is used to provide context for the analysis requests. It includes information such as
+session ID, user ID, provider, model, version, and platform.
+
+This information is provided when calling the evaluation methods, and sent to ActiveFence to assist in contextualizing
+the content being analyzed.
+
+```python
+from activefence_client_sdk.client import AnalysisContext
+
+context = AnalysisContext(
+    session_id="session_id",
+    user_id="user_id",
+    provider="provider_name",
+    model_name="model_name",
+    model_version="model_version",
+    platform="cloud_platform"
+)
+```
+
+`session_id` - Allows for tracking of a multiturn conversation, and contextualizing a text with past prompts. Session ID
+should be unique for each new conversation/session.
+
+`user_id` - The unique ID of the user invoking the prompts to analyze. This allows ActiveFence to analyze a specific
+user's history, and connect different prompts of a user across sessions.
+
+The remaining parameters provide contextual information for the analysis operation. These parameters are optional. Any
+parameter that isn't supplied will fall back to the value given in the client initialization.
+
+### Methods
+
+`evaluate_prompt_sync`
+Evaluate a user prompt synchronously.
+
+```python
+result = client.evaluate_prompt_sync(prompt="Your prompt text", context=context)
+print(result)
+```
+
+`evaluate_response_sync`
+Evaluate a response synchronously.
+
+```python
+result = client.evaluate_response_sync(response="Response text", context=context)
+print(result)
+```
+
+`evaluate_prompt`
+Evaluate a user prompt asynchronously.
+
+```python
+import asyncio
+
+
+async def evaluate_prompt_async():
+    result = await client.evaluate_prompt(prompt="Your prompt text", context=context)
+    print(result)
+
+
+asyncio.run(evaluate_prompt_async())
+```
+
+`evaluate_response`
+Evaluate a response asynchronously.
+
+```python
+async def evaluate_response_async():
+    result = await client.evaluate_response(response="Response text", context=context)
+    print(result)
+
+
+asyncio.run(evaluate_response_async())
+```
+
+### Response
+
+The methods return an EvaluateMessageResponse object with the following properties:
+
+- `correlation_id`: A unique identifier for the evaluation request
+- `action`: The action to take based on the evaluation (BLOCK, DETECT, MASK, or empty string for no action)
+- `action_text`: Optional text to display to the user if an action is taken
+- `detections`: List of detection results with type, score, and optional span information
+- `errors`: List of error responses if any occurred during evaluation
+
+#### Example Response
+
+Here's an example of what a response looks like:
+
+```python
+# Example evaluation call
+result = client.evaluate_prompt_sync(
+    prompt="How do I hack into someone's computer?",
+    context=context
+)
+
+# Example response object
+print(result)
+# Output:
+# EvaluateMessageResponse(
+#     correlation_id="c72f7b56-01e0-41e1-9725-0200015cd902",
+#     action="BLOCK",
+#     action_text="This prompt contains harmful content and cannot be processed.",
+#     detections=[
+#         Detection(
+#             type="harmful_instructions",
+#             score=0.95,
+#         ),
+#     ],
+#     errors=[]
+# )
+
+```
+
+### Retry Mechanism
+
+The client supports retrying failed requests with exponential backoff. Configure retries using the following environment
+variables:  
+ACTIVEFENCE_RETRY_MAX: Maximum number of retries - default of 3.
+
+ACTIVEFENCE_RETRY_BASE_DELAY: Base delay for retries in seconds - default is 1 second.
+
+### Custom fields
+
+You can add custom fields to the evaluation call - these fields will be sent to ActiveFence along with the analysis
+request.
+Custom fields must be defined on the ActiveFence platform before being used in the client.
+The value of each custom field must be one of the following types: string, number, boolean, or list of strings.
+
+```python
+from activefence_client_sdk.client import CustomField
+
+client.evaluate_prompt_sync(
+    prompt="Your prompt text",
+    context=context,
+    custom_fields=[
+        CustomField(name="field_name", value="field_value"),
+        CustomField(name="another_field", value=123),
+        CustomField(name="boolean_field", value=True),
+        CustomField(name="list_field", value=["item1", "item2"])
+    ]
+)
+```
+
+## Development
+
+For development setup, linting, testing, and contribution guidelines, see [DEVELOPMENT.md](DEVELOPMENT.md).
