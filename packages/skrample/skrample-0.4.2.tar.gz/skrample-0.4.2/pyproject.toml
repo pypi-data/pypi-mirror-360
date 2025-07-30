@@ -1,0 +1,99 @@
+[project]
+name = "skrample"
+version = "0.4.2"
+description = "Composable sampling functions for diffusion models"
+readme = "README.md"
+authors = [{ name = "Beinsezii", email = "beinsezii@gmail.com" }]
+requires-python = ">=3.12"
+dependencies = ["numpy>=2.0"]
+license = "Apache-2.0"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.optional-dependencies]
+beta-schedule = ["scipy>=1.12"]
+cdf-schedule = ["scipy>=1.12"]
+brownian-noise = ["torchsde>=0.2.6"]
+diffusers-wrapper = ["torch>=2.5"]
+pytorch = ["torch>=2.5"]
+
+all = ["skrample[beta-schedule,brownian-noise,cdf-schedule,diffusers-wrapper,pytorch]"]
+
+scripts = ["skrample[all]", "matplotlib>=3.10.1"]
+
+test = [
+    "skrample[scripts]",
+    "accelerate>=1.3",
+    "diffusers>=0.32",
+    "protobuf>=5.29",
+    "pyright>=1.1.400",
+    "pytest-xdist>=3.6.1",
+    "pytest>=8.3",
+    "ruff>=0.12.1",
+    "sentencepiece>=0.2",
+    "transformers>=4.48",
+]
+
+dev = ["skrample[test]"]
+
+[tool.ruff]
+line-length = 120
+namespace-packages = ["tests"]
+
+[tool.ruff.lint]
+select = [
+    "A",      # std types
+    "ANN",    # annotations
+    "BLE",    # blanket except
+    "C4",     # comprehension
+    "E",      # style errors
+    "EM",     # error messages
+    "EXE",    # shebangs
+    "F",      # format
+    "FA",     # future
+    "FLY",    # expr fstring
+    "FURB",   # syn upgrades
+    "G",      # log messages
+    "I",      # imports
+    "ICN",    # import conventions
+    "INP001",
+    "ISC",    # str cat
+    "LOG",    # logging
+    "NPY",    # numpy
+    "PERF",   # perflint
+    "PIE",    # misc
+    "PL",     # pylint
+    "PT",     # pytest
+    "Q",      # quotes
+    "RUF",    # variety
+    "T10",    # pdb.trace
+    "T20",    # print
+    "TC",     # type checking
+    "TD",     # todos
+    "TRY",    # try/catch
+    "UP",     # syn upgrades
+    "W",      # style warnings
+]
+ignore = [
+    "PIE808",  # range start 0
+    "PLR",     # silly
+    "PLC0415", # imports inside functions
+    "TD003",   # todo require link
+    "UP015",   # open() mode='r'
+]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*.py" = ["T201"]
+
+[tool.pytest.ini_options]
+python_files = "tests/*.py"
+
+[tool.pyright]
+exclude = [
+    "**/.*",
+    "**/__pycache__",
+    "build",
+    "tests/diffusers*.py"
+]

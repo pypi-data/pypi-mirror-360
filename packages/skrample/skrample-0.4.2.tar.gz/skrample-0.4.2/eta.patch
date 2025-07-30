@@ -1,0 +1,18 @@
+diff --git a/skrample/sampling.py b/skrample/sampling.py
+index 9a80cc6..dd268b4 100644
+--- a/skrample/sampling.py
++++ b/skrample/sampling.py
+@@ -269,9 +269,10 @@ class DPM(HighOrderSampler, StochasticSampler):
+         h = abs(lambda_n1 - lambda_)
+ 
+         if noise is not None and self.add_noise:
+-            exp1 = math.exp(-h)
+-            hh = -2 * h
+-            noise_factor = signorm_n1 * math.sqrt(1 - math.exp(hh)) * noise
++            eta = 0.8
++            exp1 = math.exp(-h) / math.exp(eta)
++            hh = -h * (1 + eta)
++            noise_factor = signorm_n1 * math.sqrt(1 - math.exp(hh)) * noise * eta
+         else:
+             exp1 = 1
+             hh = -h
