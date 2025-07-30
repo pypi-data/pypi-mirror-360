@@ -1,0 +1,498 @@
+#!/usr/bin/env python3
+
+# to override print <= can be a big problem with exceptions
+from __future__ import print_function # must be 1st
+import builtins
+
+import sys
+
+from fire import Fire
+
+from pyfromroot.version import __version__
+from pyfromroot import unitname
+
+#----------copy from abatchme-------------------
+from  pyfromroot import  prun
+import ROOT
+import time
+import sys
+from fire import Fire
+
+import os
+import numpy as np
+
+
+
+#-------------------------------------------------------------------
+def plot(fname,xy):
+    """
+    plot any column based thing
+    """
+
+    if type(xy) is tuple:
+        xy = ",".join(xy)
+
+    # loading
+    prun.loadpy("load",f"{fname} {xy}")
+
+    # fitting
+    # hname = os.path.splitext(fname)[0]
+    #res = prun.loadpy("fit",f"{hname} pol1")  #print(res.keys() )
+
+
+#-------------------------------------------------------------------
+def calib(fname, xy, pol=1):
+
+
+    if type(xy) is tuple:
+        xy = ",".join(xy)
+
+    # loading
+    prun.loadpy("load",f"{fname} {xy}")
+
+    hname = os.path.splitext(fname)[0]
+
+    ROOT.gDirectory.ls()
+    ROOT.gROOT.GetListOfSpecials().ls()
+
+
+    g = ROOT.gROOT.GetListOfSpecials().FindObject( hname )
+
+    g.Print()
+
+    # fitting
+    res = prun.loadpy("fit",f"{hname} pol{pol}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+#-------------------------------------------------------------------
+def calibloglog(fname, xy):
+    """
+    game with loglog pol1
+    """
+    if type(xy) is tuple:
+        xy = ",".join(xy)
+
+    # loading
+    prun.loadpy("load",f"{fname} {xy}")
+
+    hname = os.path.splitext(fname)[0]
+    g = ROOT.gROOT.GetListOfSpecials().FindObject( hname )
+    g.Print()
+    for i in range( g.GetN() ):
+        g.SetPoint(i, np.log(g.GetX()[i]),  np.log(g.GetY()[i])  )
+    g.Print()
+
+
+    # fitting
+    res = prun.loadpy("fit",f"{hname} pol1")
+
+#-------------------------------------------------------------------
+def calibloglog2(fname, xy):
+    """
+    game with loglog pol2
+    """
+    if type(xy) is tuple:
+        xy = ",".join(xy)
+
+    # loading
+    prun.loadpy("load",f"{fname} {xy}")
+
+    hname = os.path.splitext(fname)[0]
+    g = ROOT.gROOT.GetListOfSpecials().FindObject( hname )
+    g.Print()
+    for i in range( g.GetN() ):
+        g.SetPoint(i, np.log(g.GetX()[i]),  np.log(g.GetY()[i])   )
+        #g.SetPointError(i,  np.log(g.GetEX()[i]),  np.log(g.GetEY()[i])  )
+    g.Print()
+
+
+    # fitting
+    res = prun.loadpy("fit",f"{hname} pol2")
+
+
+
+
+#-------------------------------------------------------------------
+def caliblogx(fname, xy):
+    """
+    game with logx pol1
+    """
+    if type(xy) is tuple:
+        xy = ",".join(xy)
+
+    # loading
+    prun.loadpy("load",f"{fname} {xy}")
+
+    hname = os.path.splitext(fname)[0]
+    g = ROOT.gROOT.GetListOfSpecials().FindObject( hname )
+    g.Print()
+    for i in range( g.GetN() ):
+        g.SetPoint(i, np.log(g.GetX()[i]),  g.GetY()[i]  )
+    g.Print()
+
+
+    # fitting
+    res = prun.loadpy("fit",f"{hname} pol1")
+
+
+
+
+#-------------------------------------------------------------------
+def caliblogxy(fname, xy, pol):
+    """
+    game with loglog
+    """
+    print("i... using logxy from repo")
+    if type(xy) is tuple:
+        xy = ",".join(xy)
+
+    # loading
+    prun.loadpy("load",f"{fname} {xy}")
+
+    hname = os.path.splitext(fname)[0]
+    # g = ROOT.gROOT.GetListOfSpecials().FindObject( hname )
+    # g.Print()
+    # for i in range( g.GetN() ):
+    #     g.SetPoint(i, np.log(g.GetX()[i]),  g.GetY()[i]  )
+    #g.Print()
+
+
+    # fitting
+    print(  f"{hname} logxy{pol}" )
+    res = prun.loadpy("fit",f"{hname} logxy{pol}")
+
+
+
+
+#-------------------------------------------------------------------
+def caliblogx2(fname, xy):
+    """
+    game with logx pol2
+    """
+    if type(xy) is tuple:
+        xy = ",".join(xy)
+
+    # loading
+    prun.loadpy("load",f"{fname} {xy}")
+
+    hname = os.path.splitext(fname)[0]
+    g = ROOT.gROOT.GetListOfSpecials().FindObject( hname )
+    g.Print()
+    for i in range( g.GetN() ):
+        g.SetPoint(i, np.log(g.GetX()[i]),  g.GetY()[i]  )
+    g.Print()
+
+
+    # fitting
+    res = prun.loadpy("fit",f"{hname} pol2")
+
+#-------------------------------------------------------------------
+def caliblogx3(fname, xy):
+    """
+    game with logx pol3
+    """
+    if type(xy) is tuple:
+        xy = ",".join(xy)
+
+    # loading
+    prun.loadpy("load",f"{fname} {xy}")
+
+    hname = os.path.splitext(fname)[0]
+    g = ROOT.gROOT.GetListOfSpecials().FindObject( hname )
+    g.Print()
+    for i in range( g.GetN() ):
+        g.SetPoint(i, np.log(g.GetX()[i]),  g.GetY()[i]  )
+    g.Print()
+
+
+    # fitting
+    res = prun.loadpy("fit",f"{hname} pol3")
+
+
+
+
+
+#-------------------------------------------------------------------
+def caliblogy(fname, xy):
+    """
+    game with logy pol1
+    """
+    if type(xy) is tuple:
+        xy = ",".join(xy)
+
+    # loading
+    prun.loadpy("load",f"{fname} {xy}")
+
+    hname = os.path.splitext(fname)[0]
+    g = ROOT.gROOT.GetListOfSpecials().FindObject( hname )
+    g.Print()
+    for i in range( g.GetN() ):
+        print(i,g.GetY()[i] )
+        g.SetPoint(i, g.GetX()[i], np.log( g.GetY()[i] ) )
+    g.Print()
+
+
+    # fitting
+    res = prun.loadpy("fit",f"{hname} pol1")
+
+#-------------------------------------------------------------------
+def caliblogy2(fname, xy):
+    """
+    game with logy pol2
+    """
+    if type(xy) is tuple:
+        xy = ",".join(xy)
+
+    # loading
+    prun.loadpy("load",f"{fname} {xy}")
+
+    hname = os.path.splitext(fname)[0]
+    g = ROOT.gROOT.GetListOfSpecials().FindObject( hname )
+    g.Print()
+    for i in range( g.GetN() ):
+        print(i,g.GetY()[i] )
+        g.SetPoint(i, g.GetX()[i], np.log( g.GetY()[i] ) )
+    g.Print()
+
+
+    # fitting
+    res = prun.loadpy("fit",f"{hname} pol2")
+
+
+#-------------------------------------------------------------------
+def caliblogy3(fname, xy):
+    """
+    game with logy pol3
+    """
+    if type(xy) is tuple:
+        xy = ",".join(xy)
+
+    # loading
+    prun.loadpy("load",f"{fname} {xy}")
+
+    hname = os.path.splitext(fname)[0]
+    g = ROOT.gROOT.GetListOfSpecials().FindObject( hname )
+    g.Print()
+    for i in range( g.GetN() ):
+        print(i,g.GetY()[i] )
+        g.SetPoint(i, g.GetX()[i], np.log( g.GetY()[i] ) )
+    g.Print()
+
+
+    # fitting
+    res = prun.loadpy("fit",f"{hname} pol3")
+
+
+#-------------------------------------------------------------------
+def showh(fname):
+    """
+    load histo from : 1column : file {fname}; calibration included for now
+    """
+
+    # loading histogram
+    hname = os.path.splitext(fname)[0]
+    #start = int(hname.split("_")[-1])
+
+    prun.loadpy("load",f"{fname} h,cala=0.6763,calb=1.0783")
+
+#-------------------------------------------------------------------
+def showg(fname,xy):
+    """
+    show column file as TGraph(Errors)
+    """
+    print(xy)
+    if type(xy)==tuple:
+        xy = [str(x) for x in xy ]
+        xy = ",".join( xy )
+    print(xy)
+    # loading histogram
+    hname = os.path.splitext(fname)[0]
+    #start = int(hname.split("_")[-1])
+
+    prun.loadpy("load",f"{fname} {xy}")
+
+
+
+
+
+
+
+#------------------------------------ ORGINAL---------------------------------------
+class Bcolors:
+    HEADER = '[95m'
+    OKBLUE = '[94m'
+    OKGREEN = '[92m'
+    WARNING = '[93m'
+    FAIL = '[91m'
+    ENDC = '[0m'
+    BOLD = '[1m'
+    UNDERLINE = '[4m'
+
+
+
+def main(cmd = "usage",  *args, **kwargs):
+    ''' Main function of the project
+    '''
+    debug=False
+    if 'debug' in kwargs: debug = kwargs['debug']
+
+    #------------------------- I CANNOT USE THIS---------------------
+    # if not debug:
+    #     _print = print # keep a local copy of the original print
+    #     builtins.print =lambda *args, **kwargs:  None  if (isinstance(args[0], str)) and (args[0].find("D...")==0) else  _print( *args, **kwargs) if ('file' in kwargs) else _print( "{}".format(Bcolors.FAIL   if ((isinstance(args[0], str)) and (args[0].find("X...")>=0)) else Bcolors.ENDC) , *args, Bcolors.ENDC, **kwargs, file=sys.stderr)
+    # else:
+    #     # debug - show all + colors
+    #     _print = print # keep a local copy of the original print
+    #     builtins.print =lambda *args, **kwargs:   _print( *args, **kwargs) if ('file' in kwargs) else _print( "{}".format(Bcolors.FAIL   if ((isinstance(args[0], str)) and (args[0].find("X...")>=0)) else Bcolors.OKGREEN if  ((isinstance(args[0], str)) and (args[0].find("i...")>=0)) else Bcolors.ENDC  ), *args, Bcolors.ENDC, **kwargs, file=sys.stderr)
+
+
+
+    print("D... version:",__version__)
+    #print("i... testing info  message",1,2)
+    #print("D... testing debug message",3,4)
+    #print("X... testing alert message",5,6)
+    #print(7,8)
+    if cmd == "usage":
+        print(''' ... usage:
+        pyfromroot plot   calib.txt   x,y
+        pyfromroot plot   calib.txt   _,x,_,_,_,y,dy
+        pyfromroot calib  calib.txt   x,y
+        pyfromroot showh  calib.txt
+            for 1column histogram
+
+
+        other valid commands:  calib1, calib2, calib3, (testbed: caliblogy, caliblogy2 .. caliblogx ...)
+
+        (this is just a mockup for now, e.g. energy-coeff are not included correctly)
+        ''')
+        sys.exit(0)
+
+
+    elif cmd == "showg":
+        print(cmd, debug, args, kwargs)
+        if len(args)<2: sys.exit(1)
+        fname = args[0]
+        xy = args[1]
+        showg( fname, xy )
+
+
+    elif cmd == "showh":
+        if len(args)<2: sys.exit(1)
+        fname = args[0]
+        xy = args[1]
+        showh( fname )
+
+    elif cmd == "plot":
+        print(cmd, debug, args, kwargs)
+        if len(args)<2: sys.exit(1)
+        fname = args[0]
+        xy = args[1]
+        plot( fname, xy )
+
+
+
+
+
+    elif (cmd.find("calib")==0) and (len(cmd)==6):
+        if len(args)<2: sys.exit(1)
+        fname = args[0]
+        xy = args[1]
+        pol = cmd[-1]
+        if pol=='b': pol = 1
+        calib( fname, xy , pol )
+
+
+
+
+    elif cmd.find("caliblogxy")==0:
+        if len(args)<2: sys.exit(1)
+        fname = args[0]
+        xy = args[1]
+        pol = cmd[-1]
+        if pol=='y': pol = 1
+        caliblogxy( fname, xy , pol)
+
+
+
+
+
+    elif cmd == "caliblogx":
+        if len(args)<2: sys.exit(1)
+        fname = args[0]
+        xy = args[1]
+        caliblogx( fname, xy )
+
+    elif cmd == "caliblogx2":
+        if len(args)<2: sys.exit(1)
+        fname = args[0]
+        xy = args[1]
+        caliblogx2( fname, xy )
+
+    elif cmd == "caliblogx3":
+        if len(args)<2: sys.exit(1)
+        fname = args[0]
+        xy = args[1]
+        caliblogx3( fname, xy )
+
+
+
+
+    elif cmd == "caliblogy":
+        if len(args)<2: sys.exit(1)
+        fname = args[0]
+        xy = args[1]
+        caliblogy( fname, xy )
+
+    elif cmd == "caliblogy2":
+        if len(args)<2: sys.exit(1)
+        fname = args[0]
+        xy = args[1]
+        caliblogy2( fname, xy )
+
+    elif cmd == "caliblogy3":
+        if len(args)<2: sys.exit(1)
+        fname = args[0]
+        xy = args[1]
+        caliblogy3( fname, xy )
+
+
+
+
+    elif cmd == "calibloglog":
+        if len(args)<2: sys.exit(1)
+        fname = args[0]
+        xy = args[1]
+        calibloglog( fname, xy )
+
+    elif cmd == "calibloglog2":
+        if len(args)<2: sys.exit(1)
+        fname = args[0]
+        xy = args[1]
+        calibloglog2( fname, xy )
+
+
+
+
+    else:
+        print("X... I dont know this command ... ")
+        sys.exit(0)
+        #unitname.func()
+
+if __name__=="__main__":
+    Fire(main)
+
+    # wait closing
+    time.sleep(1)
+    while ROOT.addressof(ROOT.gPad)!=0: time.sleep(0.2)
+    sys.exit(0)
