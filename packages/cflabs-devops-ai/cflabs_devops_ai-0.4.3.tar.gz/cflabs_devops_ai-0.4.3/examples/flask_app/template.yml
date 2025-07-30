@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Flask application deployed with devops-ai
+
+Parameters:
+  ImageUri:
+    Type: String
+    Description: URI of the container image
+  Stage:
+    Type: String
+    Description: The deployment stage (e.g., dev, prod, staging)
+    AllowedValues: [dev, prod, staging]
+    Default: dev
+  
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Environment:
+      Variables:
+        PORT: 8000
+        STAGE: !Ref Stage
+        
+
+Resources:
+  FlaskFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      CodeUri: .
+      ImageUri: !Ref ImageUri
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          PORT: 8000
+          STAGE: !Ref Stage
+          
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+        RootEvent:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+
+Outputs:
+  FlaskApi:
+    Description: "API Gateway endpoint URL for Flask function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/prod/"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiUrl"
+
+  FlaskFunction:
+    Description: "Flask Lambda Function ARN"
+    Value: !GetAtt FlaskFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-FunctionArn"
+
+  FlaskFunctionRole:
+    Description: "Implicit IAM Role created for Flask function"
+    Value: !GetAtt FlaskFunctionRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-FunctionRoleArn"
