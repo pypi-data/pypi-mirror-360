@@ -1,0 +1,65 @@
+[project]
+name = "milatools"
+description = "Tools to work with the Mila cluster"
+authors = [
+    { name = "Olivier Breuleux", email = "breuleux@gmail.com" },
+    { name = "Fabrice Normandin", email = "fabrice.normandin@gmail.com" },
+]
+dynamic = ["version"]
+readme = "README.md"
+homepage = "https://github.com/mila-iqia/milatools"
+repository = "https://github.com/mila-iqia/milatools"
+license = "MIT"
+requires-python = ">=3.9"
+dependencies = [
+    "blessed>=1.20.0",
+    "fabric>=3.2.2",
+    "questionary>=2.0.1",
+    "rich>=13.9.4",
+    "sshconf>=0.2.7",
+    "tqdm>=4.67.1",
+    "typing-extensions>=4.12.2",
+]
+
+[project.scripts]
+mila = "milatools.cli.__main__:main"
+
+[dependency-groups]
+dev = [
+    "pytest-mock>=3.14.0",
+    "pytest>=8.3.4",
+    "pytest-asyncio>=0.25.0",
+    "pytest-cov>=6.0.0",
+    "pytest-regressions>=2.6.0",
+    "pytest-socket>=0.7.0",
+    "pytest-skip-slow>=0.0.5",
+]
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules"
+
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+
+[tool.ruff.lint]
+# Add the pyupgrade and isort options in addition to the defaults.
+select = ["E4", "E7", "E9", "F", "I", "UP"]
+
+[tool.docformatter]
+wrap-summaries = 88
+wrap-descriptions = 88
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[tool.uv-dynamic-versioning]
+enable = true
+vcs = "git"
+style = "semver"
+
+
+[build-system]
+requires = ["hatchling", "uv-dynamic-versioning"]
+build-backend = "hatchling.build"

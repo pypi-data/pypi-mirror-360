@@ -1,0 +1,124 @@
+name: Python package
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - 'README.md'
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+
+# https://stackoverflow.com/a/72408109/6388696
+# https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-concurrency-to-cancel-any-in-progress-job-or-run
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linting:
+    name: Run linting/pre-commit checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: pip install "pre-commit<4.0.0"
+      - run: pre-commit --version
+      - run: pre-commit install
+      - run: pre-commit run --all-files --show-diff-on-failure
+
+  unit-tests:
+    needs: [linting]
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      max-parallel: 4
+      matrix:
+        platform: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+    env:
+      PLATFORM: ${{ matrix.platform }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install the latest version of uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+        enable-cache: true
+        # https://github.com/astral-sh/setup-uv?tab=readme-ov-file#github-authentication-token
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        cache-suffix: ${{ matrix.python-version }}
+    - name: Pin Python version to ${{ matrix.python-version }}
+      run: uv python pin ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: uv sync
+    - name: Setup passwordless SSH access to localhost for tests
+      # Adapted from https://stackoverflow.com/a/60367309/6388696
+      if: runner.os == 'Linux'
+      run: |
+        ssh-keygen -t ed25519 -f ~/.ssh/testkey -N ''
+        cat > ~/.ssh/config <<EOF
+          Host localhost
+            User $USER
+            HostName 127.0.0.1
+            IdentityFile ~/.ssh/testkey
+        EOF
+        echo -n 'from="127.0.0.1" ' | cat - ~/.ssh/testkey.pub > ~/.ssh/authorized_keys
+        chmod og-rw ~
+        ssh -o 'StrictHostKeyChecking no' localhost id
+
+    - name: Test with pytest
+      run: uv run pytest --cov=milatools --cov-report=xml --cov-append
+
+    - name: Store coverage report as an artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-reports-unit-${{ matrix.platform }}-${{ matrix.python-version }}
+        path: ./coverage.xml
+
+  real-slurm-integration-tests:
+
+    name: integration tests with a real SLURM cluster
+    needs: [unit-tests]
+
+    strategy:
+      max-parallel: 1
+      matrix:
+        # TODO: We should ideally also run this with Windows/Mac clients and a Linux
+        # server. Unsure how to set that up with GitHub Actions though.
+        python-version: ['3.11']
+        cluster: ['mila']
+    uses: ./.github/workflows/testing.yml
+    with:
+      cluster: ${{ matrix.cluster }}
+      python-version: ${{ matrix.python-version }}
+      timeout-minutes: 30
+
+  # https://about.codecov.io/blog/uploading-code-coverage-in-a-separate-job-on-github-actions/
+  upload-coverage-codecov:
+    needs: [real-slurm-integration-tests]
+    runs-on: ubuntu-latest
+    name: Upload coverage reports to Codecov
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-reports-*
+          merge-multiple: false
+          # download all the artifacts in this directory (each .coverage.xml will be in a subdirectory)
+          # Next step if this doesn't work would be to give the coverage files a unique name and use merge-multiple: true
+          path: coverage_reports
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          # file: ./coverage.xml  # Search for all coverage files from each workflow.
+          # flags: integrationtests
+          # env_vars: PLATFORM,PYTHON
+          # name: codecov-umbrella
+          directory: coverage_reports
+          fail_ci_if_error: true
