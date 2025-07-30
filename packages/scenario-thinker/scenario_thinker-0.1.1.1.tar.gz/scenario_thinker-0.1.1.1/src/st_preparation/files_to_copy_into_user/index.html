@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en-US">
+ 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Scenario Thinker</title>
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    
+    <!-- and it's easy to individually load additional languages -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    
+    <script>hljs.highlightAll();</script>
+</head>
+
+<body>
+    <script src="script.js"></script>
+    <div class="header">
+        <input id="files" style="display: none" type="file" onchange="addFile(this)"/>
+        
+        <label for="files" class="button">Upload file for scenario</label>
+        <div class="input-select">
+            <label for="llm">Choose a AI model:</label>
+            <select name="llm" id="llm">
+                <option value="llama-turbo">Meta-Llama-3.1-70B-Instruct-Turbo</option>
+                <option value="gpt-35">ChatGPT3.5-Turbo</option>
+                <option value="gpt-4">ChatGPT4</option>
+                <option value="claude-haiku">Claude-3-haiku</option>
+                <option value="claude-opus">Claude-3-opus</option>
+                <option value="gpt-4o">ChatGPT-4o</option>
+                <option value="gemma">Google gemma-2b-it</option>
+                <option value="grok">x-ai/grok-beta</option>
+                <option value="mistral-nemo">Mistral-nemo</option>
+            </select> 
+        </div>
+        <button onclick="colorChange()" class="button button__for-formatting">Format scenario file :D</button>
+    </div>
+    <div class="input-container">
+        <span>INPUT</span>
+        <div contenteditable="true" class="input-for-input" id="input-text">
+        </div>
+    </div>
+    <div class="button-styling">
+        <button class="button" onclick="sendScenarioToPython()">
+            Generate execution python script
+        </button>
+    </div>
+    <span>OUTPUT</span>
+    <pre>
+        <code class="python" id="output-text">
+
+        </code>
+    </pre>
+    <div class="button-styling">
+        <button class="button" onclick="download('example.py')">
+            Download the file
+        </button>
+    </div>
+    <p id="response"></p>
+
+    <div id="error-container" style="display: none">
+        <span>ERRORS</span>
+        <pre>
+            <code class="text" class="input-for-input" id="error-text">
+
+            </code>
+        </pre>
+    </div>
+</body>
+ 
+</html>
