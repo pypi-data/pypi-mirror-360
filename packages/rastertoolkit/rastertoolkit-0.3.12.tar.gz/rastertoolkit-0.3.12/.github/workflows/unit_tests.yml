@@ -1,0 +1,29 @@
+name: Run unit tests
+
+on:
+  pull_request:
+
+  # Allows manual run from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [ '3.9', '3.10', '3.11', '3.12' ]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install packages
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install .
+          python3 -m pip install -r tests/requirements-test.txt --extra-index-url=https://packages.idmod.org/api/pypi/pypi-production/simple
+      - name: Run unit-tests
+        run: pytest -m unit -v
