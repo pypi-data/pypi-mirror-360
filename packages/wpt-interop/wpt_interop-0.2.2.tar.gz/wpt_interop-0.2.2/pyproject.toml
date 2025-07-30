@@ -1,0 +1,50 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "wpt-interop"
+requires-python = ">=3.9"
+description = "web-platform-tests Interop Project helpers"
+author = "James Graham"
+author_email = "james@hoppipolla.co.uk"
+license = "BSD-3-Clause"
+version = "0.2.2"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "requests==2.32.4"
+]
+
+
+[project.optional-dependencies]
+test = [
+  "mypy==1.16.1",
+  "ruff==0.12.2",
+  "types-requests==2.32.4.20250611",
+]
+
+
+[project.scripts]
+interop-score = "wpt_interop:interop_score.main"
+interop-regressions = "wpt_interop:regressions.main"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+python-source = "python"
+module-name = "wpt_interop._wpt_interop"
+manifest-path = "python/Cargo.toml"
+
+[tool.ruff]
+line-length = 100
+
+[tool.flake8]
+max-line-length = 100
+
+[tool.mypy]
+files = "python/wpt_interop/**/*.py"
+check_untyped_defs = true
+disallow_untyped_defs = true
