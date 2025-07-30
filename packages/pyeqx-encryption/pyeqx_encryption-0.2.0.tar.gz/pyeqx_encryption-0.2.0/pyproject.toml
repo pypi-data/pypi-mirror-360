@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyeqx-encryption"
+version = "0.2.0"
+description = "Python library for encryption use in PyEQX ecosystem."
+authors = [{ name = "ESBM Cronus" }]
+dependencies = []
+requires-python = ">=3.12"
+readme = "README.md"
+classifiers = ["Programming Language :: Python :: 3"]
+
+[project.optional-dependencies]
+dev = [
+  "black",
+  "ruff",
+  "build",
+  "twine",
+  "python-dotenv",
+  "pytest",
+  "pytest-cov",
+  "pytest-mock",
+  "pytest-watch",
+]
+
+[project.scripts]
+pyeqx-encryption-cli = "pyeqx.encryption.cli:main"
+
+[tool.setuptools]
+package-dir = { "pyeqx" = "src/pyeqx", "pyeqx.common" = "src/pyeqx/encryption" }
+packages = ["pyeqx", "pyeqx.encryption"]
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+pythonpath = ["src", "."]
+addopts = [
+  "--color=yes",
+  "-v",
+  "--tb=short",
+  "--cov=src",
+  "--cov-report=term-missing",
+]
+
+[tool.pytest-watch]
+nobeep = true
+ext = "py"
+runner = "pytest"
