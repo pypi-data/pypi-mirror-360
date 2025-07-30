@@ -1,0 +1,66 @@
+[project]
+name = "sdmxabs"
+version = "0.1.2"
+description = "Download data from the Australian Bureau of Statistics (ABS) using its SDMX API"
+readme = "README.md"
+requires-python = ">=3.13"
+
+dependencies = [
+    # - system
+    "typing",
+    "pathlib",
+    "importlib",
+
+    # - internet
+    "requests",
+    "types-requests",
+    "defusedxml",
+    "types-defusedxml",
+
+    # - data science
+    "pandas",
+    "tabulate",
+]
+
+[dependency-groups]
+dev = [
+    # - tools
+    "black",
+    "mypy",
+    "pdoc",
+    "pylint",
+    "ruff",
+    
+    # - typing
+    "pandas-stubs",
+    "types-tabulate",
+
+    # --- testing
+    "ipython",
+    "ipykernel",
+    "watermark",
+    "mgplot",
+]
+
+[project.urls]
+Repository = "https://github.com/bpalmer4/sdmxabs"
+Homepage = "https://github.com/bpalmer4/sdmxabs"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length=110
+lint.select = [ "ALL" ]  # Aggresively select all rules
+lint.ignore = [
+    # --- specific rules to ignore
+    "COM812",  # missing or trailing comma - recommended by ruff format
+    "D203",    # Incorrect blank line before class - recommended by ruff check
+    "D213",    # Multi-line docstring summary should start at the first line - recommended by ruff
+    "EM101",   # Exception must not use a string literal
+    "EM102",   # Exception must not use an f-string literal
+    "T201",    # Remove `print` - I use print to alert the user
+    "TRY003",  # Long exception messages.
+]
+
