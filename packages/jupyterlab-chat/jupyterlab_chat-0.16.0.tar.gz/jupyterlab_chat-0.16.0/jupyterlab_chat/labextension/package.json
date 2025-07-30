@@ -1,0 +1,131 @@
+{
+  "name": "jupyterlab-chat-extension",
+  "version": "0.16.0",
+  "description": "A chat extension based on shared documents",
+  "keywords": [
+    "jupyter",
+    "jupyterlab",
+    "jupyterlab-extension"
+  ],
+  "homepage": "https://github.com/jupyterlab/jupyter-chat",
+  "bugs": {
+    "url": "https://github.com/jupyterlab/jupyter-chat/issues"
+  },
+  "license": "BSD-3-Clause",
+  "author": {
+    "name": "Jupyter Development Team",
+    "email": "jupyter@googlegroups.com"
+  },
+  "files": [
+    "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
+    "style/**/*.{css,js,eot,gif,html,jpg,json,png,svg,woff2,ttf}",
+    "src/**/*.{ts,tsx}",
+    "schema/*.json"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "style": "style/index.css",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jupyterlab/jupyter-chat.git"
+  },
+  "scripts": {
+    "build": "jlpm build:lib && jlpm build:labextension:dev",
+    "build:prod": "jlpm clean && jlpm build:lib:prod && jlpm build:labextension",
+    "build:labextension": "jupyter labextension build .",
+    "build:labextension:dev": "jupyter labextension build --development True .",
+    "build:lib": "tsc --sourceMap",
+    "build:lib:prod": "tsc",
+    "clean": "jlpm clean:lib",
+    "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
+    "clean:lintcache": "rimraf .eslintcache .stylelintcache",
+    "clean:labextension": "rimraf jupyterlab_chat/labextension jupyterlab_chat/_version.py",
+    "clean:all": "jlpm clean:lib && jlpm clean:labextension && jlpm clean:lintcache",
+    "install:extension": "jlpm build",
+    "watch": "run-p watch:src watch:labextension",
+    "watch:src": "tsc -w --sourceMap",
+    "watch:labextension": "jupyter labextension watch ."
+  },
+  "dependencies": {
+    "@jupyter-notebook/application": "^7.4.0",
+    "@jupyter/collaborative-drive": "^4.0.2",
+    "@jupyter/ydoc": "^3.0.0",
+    "@jupyterlab/application": "^4.4.0",
+    "@jupyterlab/apputils": "^4.5.0",
+    "@jupyterlab/codemirror": "^4.4.0",
+    "@jupyterlab/coreutils": "^6.4.0",
+    "@jupyterlab/docregistry": "^4.4.0",
+    "@jupyterlab/filebrowser": "^4.4.0",
+    "@jupyterlab/launcher": "^4.4.0",
+    "@jupyterlab/notebook": "^4.4.0",
+    "@jupyterlab/rendermime": "^4.4.0",
+    "@jupyterlab/services": "^7.4.0",
+    "@jupyterlab/settingregistry": "^4.4.0",
+    "@jupyterlab/translation": "^4.4.0",
+    "@jupyterlab/ui-components": "^4.4.0",
+    "@lumino/commands": "^2.3.2",
+    "@lumino/coreutils": "^2.2.1",
+    "@lumino/signaling": "^2.1.4",
+    "@lumino/widgets": "^2.7.0",
+    "jupyterlab-chat": "^0.16.0",
+    "react": "^18.2.0",
+    "y-protocols": "^1.0.5",
+    "yjs": "^13.5.40"
+  },
+  "devDependencies": {
+    "@jupyterlab/builder": "^4.2.0",
+    "@types/json-schema": "^7.0.11",
+    "@types/react": "^18.2.0",
+    "@types/react-addons-linked-state-mixin": "^0.14.22",
+    "css-loader": "^6.7.1",
+    "mkdirp": "^1.0.3",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^5.0.1",
+    "source-map-loader": "^1.0.2",
+    "style-loader": "^3.3.1",
+    "typescript": "~5.5.4",
+    "yjs": "^13.5.0"
+  },
+  "sideEffects": [
+    "style/*.css",
+    "style/index.js"
+  ],
+  "styleModule": "style/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "jupyterlab": {
+    "discovery": {
+      "server": {
+        "managers": [
+          "pip"
+        ],
+        "base": {
+          "name": "jupyterlab_chat"
+        }
+      }
+    },
+    "extension": true,
+    "outputDir": "../../python/jupyterlab-chat/jupyterlab_chat/labextension",
+    "schemaDir": "schema",
+    "sharedPackages": {
+      "@jupyter/chat": {
+        "bundled": true,
+        "singleton": true
+      },
+      "@jupyter/collaborative-drive": {
+        "bundled": false,
+        "singleton": true
+      },
+      "jupyterlab-chat": {
+        "bundled": true,
+        "singleton": true
+      }
+    },
+    "_build": {
+      "load": "static/remoteEntry.9fea99daa09992e8caed.js",
+      "extension": "./extension",
+      "style": "./style"
+    }
+  }
+}
