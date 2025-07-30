@@ -1,0 +1,91 @@
+name: "Custom Journal Template"
+description: "A template demonstrating all available customization options"
+
+# Frequency settings for the entire prompt set
+frequency:
+  type: "custom"  # Options: daily, weekly, custom, random, spaced_repetition
+  settings:
+    # For type: custom
+    days: [1, 3, 5]  # Specific days (1-7 for weekdays)
+    
+    # For type: random
+    prompts_per_session: 5  # How many prompts to show each time
+    exclude_recent: 3  # Don't show prompts used in last N sessions
+    
+    # For type: spaced_repetition
+    initial_interval: 1  # Days until first review
+    ease_factor: 2.5  # Multiplication factor for intervals
+    max_interval: 30  # Maximum days between reviews
+
+prompts:
+  # Core prompts that form the main exercise set
+  core:
+    - prompt: "Today I am grateful for..."
+      tags: ["gratitude"]
+      recurring: "daily"  # This prompt appears daily
+      
+    - prompt: "My biggest challenge right now is..."
+      tags: ["challenges", "growth"]
+      recurring: "weekly"  # Appears once every week
+      
+    - prompt: "Monthly goal check-in..."
+      tags: ["goals"]
+      recurring: "monthly"  # Appears once every month
+      
+    - prompt: "Yearly reflection on my growth..."
+      tags: ["reflection", "growth"]
+      recurring: "yearly"  # Appears once every year
+      
+    - prompt: "Deep dive into my current project..."
+      tags: ["projects"]
+      recurring: 10  # Appears every 10 days
+      
+    - prompt: "One thing I could do differently today is..."
+      tags: ["improvement"]
+      random_weight: 2.0  # Higher weight = more likely to be selected in random mode
+    
+    # More prompts...
+
+  # Optional morning-specific prompts
+  morning:
+    - prompt: "My main focus for today is..."
+      recurring: "daily"
+    - prompt: "I feel energized when..."
+      recurring: "weekly"
+      
+  # Optional evening-specific prompts
+  evening:
+    - prompt: "Today I accomplished..."
+      recurring: "daily"
+    - prompt: "Tomorrow I will..."
+      recurring: 3  # Every 3 days
+
+# Reflection settings
+reflection:
+  frequency: "weekly"  # When to trigger reflection prompts
+  day: 7  # Day of week for reflection (7 = Sunday)
+  prompts:
+    review:
+      - prompt: "Looking back at my responses, I notice..."
+      - prompt: "A pattern I see in my answers is..."
+    
+    synthesis:
+      - prompt: "The most significant insight from this week was..."
+      - prompt: "Based on these reflections, next week I will..."
+  
+  # Optional: Include specific prompts from the period in reflection
+  include_in_review:
+    - tags: ["gratitude", "challenges"]  # Show these categories in reflection
+    - recurring: "daily"  # Include all daily prompts in reflection
+
+# Progress tracking settings
+progress:
+  track_metrics:
+    - "completion_rate"  # % of prompts completed
+    - "response_length"  # Track answer length over time
+    - "mood"  # If prompts are tagged with mood indicators
+  
+  visualizations:
+    - "weekly_summary"
+    - "trend_analysis"
+    - "tag_cloud" 
