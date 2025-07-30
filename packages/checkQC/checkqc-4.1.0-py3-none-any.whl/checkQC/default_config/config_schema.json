@@ -1,0 +1,72 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "CheckQC Configuration",
+    "type": "object",
+    "definitions": {
+        "view": {
+            "type": "string",
+            "enum": [ "illumina_data_view", "illumina_short_view", "basic_view" ]
+        },
+        "handler": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "enum": [
+                        "UndeterminedPercentageHandler", "undetermined_percentage_handler",
+                        "UnidentifiedIndexHandler", "unidentified_index_handler",
+                        "ClusterPFHandler", "cluster_pf",
+                        "Q30Handler", "q30",
+                        "ErrorRateHandler", "error_rate",
+                        "ReadsPerSampleHandler", "reads_per_sample_handler"
+                    ]
+                },
+                "warning": {"oneOf": [{"type": "number"}, {"const": "unknown"}]},
+                "error": {"oneOf": [{"type": "number"}, {"const": "unknown"}]}
+            },
+            "if": {
+                "properties": {
+                    "name": {
+                        "oneOf": [
+                            {"const": "UnidentifiedIndexHandler" },
+                            {"const": "unidentified_index_handler"}
+                        ]
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "significance_threshold": { "type": "number" },
+                    "white_listed_indexes": {
+                        "type": "array",
+                        "item": { "type": "string" }
+                    }
+                },
+                "required": ["significance_threshold"]
+            }
+        }
+    },
+    "properties": {
+        "parser_configurations": { "type": "object" },
+        "default_handlers": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/handler" }
+        },
+        "default_view": { "$ref": "#/definitions/view" }
+    },
+    "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+            "type": "object",
+            "properties": {
+                "view": { "$ref": "#/definitions/view" },
+                "handlers": {
+                    "type": "array",
+                    "items": { "$ref": "#/definitions/handler" }
+                }
+            },
+            "required": ["handlers"]
+        }
+    }
+}
