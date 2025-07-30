@@ -1,0 +1,88 @@
+Metadata-Version: 2.4
+Name: botobuddy
+Version: 0.3.1
+Summary: A Collection of Extension Functions Based on Boto3
+Project-URL: Homepage, https://github.com/scartill/botobuddy
+Project-URL: Changelog, https://github.com/scartill/botobuddy/blob/main/CHANGELOG.md
+Author-email: Boris Resnick <boris.resnick@gmail.com>
+License: MIT License
+        
+        Copyright (c) 2025 Boris Resnick
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+License-File: LICENSE
+Requires-Python: >=3.12
+Requires-Dist: boto3>=1.38.15
+Requires-Dist: click>=8.2.0
+Requires-Dist: randomname>=0.2.1
+Requires-Dist: rich>=14.0.0
+Requires-Dist: types-boto3[cognito-idp,essential,route53,sagemaker,sts]>=1.38.35
+Description-Content-Type: text/markdown
+
+# A Collection of Extension Functions Based on Boto3
+
+## Supported CLI Commands
+
+### DynamoDB Commands
+- **truncate-table**: Truncate a DynamoDB table by deleting all its items.
+
+### S3 Commands
+- **delete-bucket**: Clean and delete an S3 bucket completely, including all objects and versions.
+- **ls**: List all objects in an S3 bucket. The same as `aws s3 ls`, but useful with `--assume-role`.
+
+### Route 53 Commands
+- **export-hosted-zone**: Export all resource record sets from a specified hosted zone.
+- **import-hosted-zone**: Import resource record sets into a specified hosted zone from a file, skipping NS and SOA records.
+
+
+### SageMaker Commands
+- **human-effort**: Generate a report on the human effort that a SageMaker job required.
+
+
+## Noteable Functions and Classes
+
+### `botobuddy.utils.dslice`
+
+This function is used to slice a dictionary into a new dictionary, using the keys to define the slice.
+Each key can be a string, or a dictionary with the following keys:
+- `k`: the key to slice
+- `c`: the cast or conversion function
+- `d`: the default value
+- `n`: the name of the key in the result dictionary
+
+### `botobuddy.s3.S3Uri`
+
+This class is used to represent an S3 URI, and provides methods to parse and manipulate it.
+
+## Development Environment Quickstart
+
+```pwsh
+uv sync
+uv run botobuddy --help
+```
+
+## Session Configuration
+
+This library uses the `session_config` transversely for AWS Session configuration and other general configuration parameters, generally supplied to the CLI.
+
+This is a dictionary with the following keys, all optional:
+
+- `profile`: The AWS profile to use.
+- `region`: The AWS region to use.
+- `assume_role`: The AWS role to assume.
