@@ -1,0 +1,103 @@
+# =============================================================================
+# Insight Ingenious Configuration - Hello World Template
+# =============================================================================
+# This template provides configuration for the "Hello World" workflow (bike-insights)
+# and simple text processing (classification-agent).
+#
+# bike-insights is the recommended starting point - it showcases multi-agent
+# coordination and demonstrates what Ingenious can do.
+#
+# Copy this file to config.yml and set your Azure OpenAI credentials in .env
+
+# =============================================================================
+# PROFILE CONFIGURATION
+# =============================================================================
+profile: dev
+# =============================================================================
+# MODEL CONFIGURATION
+# =============================================================================
+models:
+  - model: ${AZURE_OPENAI_MODEL_NAME:gpt-4.1-nano}
+    api_type: azure
+    api_version: ${AZURE_OPENAI_API_VERSION:2024-12-01-preview}
+    deployment: ${AZURE_OPENAI_DEPLOYMENT:gpt-4.1-nano}
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+logging:
+  root_log_level: info
+  log_level: info
+# =============================================================================
+# CHAT HISTORY CONFIGURATION
+# =============================================================================
+chat_history:
+  database_type: sqlite
+  database_path: ./.tmp/chat_history.db
+  database_name: ChatHistory
+  memory_path: ./.tmp
+# =============================================================================
+# SERVICE CONFIGURATION
+# =============================================================================
+chat_service:
+  type: multi_agent
+tool_service:
+  enable: false
+# =============================================================================
+# WEB CONFIGURATION
+# =============================================================================
+web_configuration:
+  type: fastapi
+  ip_address: ${WEB_IP_ADDRESS:0.0.0.0}
+  port: ${WEB_PORT:80}
+  authentication:
+    enable: false
+    type: basic
+# =============================================================================
+# AZURE SEARCH SERVICES (Optional - only needed for knowledge-base workflows)
+# =============================================================================
+# Comment out or remove this section if not using Azure Search
+# azure_search_services:
+#   - service: default
+#     endpoint: ${AZURE_SEARCH_ENDPOINT:https://placeholder.search.windows.net}
+
+# =============================================================================
+# AZURE SQL SERVICES (Optional - only needed for sql-manipulation workflows)
+# =============================================================================
+# Comment out or remove this section if not using Azure SQL
+# azure_sql_services:
+#   database_name: ${AZURE_SQL_DATABASE_NAME:placeholder_db}
+#   table_name: ${AZURE_SQL_TABLE_NAME:placeholder_table}
+# =============================================================================
+# CHAINLIT CONFIGURATION (Web UI - Optional)
+# =============================================================================
+chainlit_configuration:
+  enable: false
+# =============================================================================
+# PROMPT TUNER CONFIGURATION
+# =============================================================================
+prompt_tuner:
+  mode: "fast_api"
+  enable: true
+# =============================================================================
+# LOCAL SQL DATABASE (Optional)
+# =============================================================================
+local_sql_db:
+  database_path: ${LOCAL_SQL_DB_PATH:./.tmp/local.db}
+  sample_csv_path: ${LOCAL_SQL_CSV_PATH:./sample_data.csv}
+  sample_database_name: ${LOCAL_SQL_DB_NAME:sample_data}
+# =============================================================================
+# FILE STORAGE (Using local storage - safe for all environments)
+# =============================================================================
+file_storage:
+  revisions:
+    enable: true
+    storage_type: local
+    container_name: revisions
+    path: .files
+    add_sub_folders: true
+  data:
+    enable: true
+    storage_type: local
+    container_name: data
+    path: .files
+    add_sub_folders: true
