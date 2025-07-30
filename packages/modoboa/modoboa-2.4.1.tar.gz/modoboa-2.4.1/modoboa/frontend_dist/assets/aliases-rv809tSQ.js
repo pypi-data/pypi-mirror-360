@@ -1,0 +1,1 @@
+import{_ as t}from"./index-6uM3C9QJ.js";const r="aliases",n={getAll(){return t.get(`${r}/`)},get(e){return t.get(`${r}/${e}/`)},getRandomAddress(){return t.get(`${r}/random_address/`)},validate(e){return t.post(`${r}/validate/`,e)},create(e){return t.post(`${r}/`,e)},patch(e,a){return t.patch(`${r}/${e}/`,a)},delete(e){return t.delete(`${r}/${e}/`)}};export{n as a};
