@@ -1,0 +1,83 @@
+site_name: Engin
+site_description: A lightweight application framework for modern Python.
+site_url: !ENV READTHEDOCS_CANONICAL_URL
+
+theme:
+    name: 'material'
+    custom_dir: 'docs/overrides'
+    features:
+      - navigation.instant
+      - content.code.copy
+    palette:
+      - scheme: 'default'
+        media: '(prefers-color-scheme: light)'
+        toggle:
+          icon: 'material/lightbulb'
+          name: "Switch to dark mode"
+      - scheme: 'slate'
+        media: '(prefers-color-scheme: dark)'
+        primary: 'blue'
+        toggle:
+          icon: 'material/lightbulb-outline'
+          name: 'Switch to light mode'
+
+repo_name: invokermain/engin
+repo_url: https://github.com/invokermain/engin/
+edit_uri: ""
+
+nav:
+  - Home: "index.md"
+  - Concepts:
+      - Engin: "concepts/engin.md"
+      - Providers: "concepts/providers.md"
+      - Invocations: "concepts/invocations.md"
+      - Lifecycle: "concepts/lifecycle.md"
+      - Blocks: "concepts/blocks.md"
+  - Guides:
+      - FastAPI: "guides/fastapi.md"
+  - Reference: "reference.md"
+
+extra_javascript:
+  - js/readthedocs.js
+
+plugins:
+- mkdocstrings:
+    default_handler: python
+    handlers:
+      python:
+        paths: [.]
+        options:
+          members_order: source
+          separate_signature: true
+          filters: ["!^_"]
+          docstring_options:
+            ignore_init_summary: true
+          merge_init_into_class: true
+          show_signature_annotations: true
+          show_source: false
+          signature_crossrefs: true
+        inventories:
+          - url: https://docs.python.org/3/objects.inv
+            domains: [py, std]
+- search
+
+watch:
+  - src
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.blocks.caption
+  - pymdownx.details
+  - pymdownx.highlight:
+        anchor_linenums: true
+        line_spans: __span
+        pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path: [!relative $config_dir]
+      check_paths: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
