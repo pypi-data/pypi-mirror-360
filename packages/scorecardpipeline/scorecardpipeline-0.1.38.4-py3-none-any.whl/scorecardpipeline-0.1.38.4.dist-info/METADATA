@@ -1,0 +1,772 @@
+Metadata-Version: 2.1
+Name: scorecardpipeline
+Version: 0.1.38.4
+Summary: =?unknown-8bit?b?6K+E5YiG5Y2hcGlwZWxpbmXlu7rmqKHljIXvvIzlsIHoo4V0b2Fk44CBc2NvcmVjYXJkcHnjgIFvcHRiaW5uaW5n562J6K+E5YiG5Y2h5bu65qih55u45YWz57uE5Lu277yMQVBJ6aOO5qC85LiOc2tsZWFybumrmOW6puS4gOiHtO+8jOiHquaMgeiHquWumuS5ieaooeWei+aKpeWRiui+k+WHug==?=
+Home-page: https://github.com/itlubber/scorecardpipeline
+Author: itlubber
+Author-email: itlubber@qq.com
+License: MIT
+Classifier: Operating System :: POSIX
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: Cython
+Requires-Dist: wget
+Requires-Dist: numpy (<1.24.0,>1.23.1)
+Requires-Dist: pandas
+Requires-Dist: matplotlib
+Requires-Dist: seaborn (>=0.10.0)
+Requires-Dist: scipy (>=1.6.0)
+Requires-Dist: statsmodels (<0.14,>=0.13.2)
+Requires-Dist: scikit-learn (>=1.3.1)
+Requires-Dist: toad
+Requires-Dist: scorecardpy
+Requires-Dist: ortools (<9.8.0,>=9.7.0)
+Requires-Dist: ropwr (>=0.4.0)
+Requires-Dist: optbinning
+Requires-Dist: CairoSVG (>=2.7.0)
+Requires-Dist: graphviz (>=0.20.1)
+Requires-Dist: dtreeviz (>=2.2.1)
+Requires-Dist: reportlab
+Requires-Dist: svglib
+Requires-Dist: category-encoders (>=2.6.0)
+Requires-Dist: sklearn-pandas
+Requires-Dist: sklearn2pmml
+Requires-Dist: pypmml
+Requires-Dist: joblib (>=0.12)
+Requires-Dist: six (>=1.15.0)
+Requires-Dist: openpyxl (>=3.0.10)
+Requires-Dist: sweetviz
+Requires-Dist: numexpr
+Requires-Dist: cvxpy (>=1.4.1)
+Requires-Dist: protobuf (>=5.27.0)
+Requires-Dist: dill
+
+# ���������pipeline���������
+
+<img src="https://itlubber.art/upload/scorecardpipeline.png" alt="itlubber.png" width="100%" border=0/> 
+
+`scorecardpipeline`������������������������������������������������������������������API������������`sklearn`���������`pipeline`���������������������������������������������������������������������������������������������������������������`excel`������������������������`PMML`���������������������������������������������������������
+
+> ���������https://itlubber.art/upload/scorecardpipeline.html
+> 
+> pipy������https://pypi.org/project/scorecardpipeline
+>
+> ���������������https://github.com/itlubber/scorecardpipeline
+> 
+> ���������������https://itlubber.art/archives/itlubber-scorecard-end2end
+> 
+> ������������������������https://mp.weixin.qq.com/s/eCTp4h0fau77xOgf_V28wQ
+
+
+## ������
+
+|  ������ |  ��������������� |
+| :---: | :----: |
+| <img src="https://itlubber.art//upload/itlubber.png" alt="itlubber.png" width="50%" border=0/> | <img src="https://itlubber.art//upload/itlubber_art.png" alt="itlubber_art.png" width="50%" border=0/> |
+|  itlubber  | itlubber_art |
+
+
+## ������
+
+���������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������
+
+������������������������������������������GITHUB������������������������������������������������������������������star������������������������������������������
+
+���������������������toad���scorecardpy���optbinning������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������
+
+
+## ������������
+
+### ������������
+
+https://github.com/itlubber/scorecardpipeline
+
+### ������������
+
+������������������������������������������������������������������������������������������
+
+```base
+>> tree
+.
+��������� LICENSE                         # ������������
+��������� README.md                       # ������������������
+��������� requirements.txt                # ���������������
+��������� setup.py                        # ������������
+��������� examples                        # ������������
+���   ��������� scorecard_samples.ipynb
+��������� scorecardpipeline               # scorecardpipeline ���������
+    ��������� excel_writer.py             # ������ excel ���������������
+    ��������� template.xlsx               # excel ������������
+    ��������� matplot_chinese.ttf         # ������������
+    ��������� processing.py               # ������������������������
+    ��������� model.py                    # ������������������
+    ��������� utils.py                    # ������������
+```
+
+### ������������
+
++ `processing` ������������������������������������������������������������������`FeatureSelection`���`StepwiseSelection`���������������������������`Combiner`���������������������������������������`WOETransformer`������������������`sklearn.base`������`BaseEstimator`���`TransformerMixin`���������������������`pipeline`������������������
++ `model`������������������`sklearn.linear_model.LogisticRegression`���������`ITLubberLogisticRegression`������������������`toad.ScoreCard`���������������������������������������
++ `excel_writer` ������������������ `excel` ������������������������������������������������������������������������������������������������������������������������`insert_value2sheet`���������������������������`insert_pic2sheet`������������`dataframe`���������������`insert_df2sheet`������������`excel`���������`save`������������
+
+### `scorecardpipeline` ������
+
++ `pipy` ������
+
+```bash
+>> pip install scorecardpipeline -i https://pypi.Python.org/simple/
+
+Looking in indexes: https://pypi.Python.org/simple/
+Collecting scorecardpipeline
+  Downloading scorecardpipeline-0.1.5-py3-none-any.whl (36 kB)
+  ......
+Installing collected packages: sklearn-pandas, scorecardpy, sklearn2pmml, scorecardpipeline
+Successfully installed scorecardpipeline-0.1.5 scorecardpy-0.1.9.2 sklearn-pandas-2.2.0 sklearn2pmml-0.92.2
+```
+
++ ������������
+
+```bash
+python setup.py sdist bdist_wheel
+pip install dist/scorecardpipeline-0.1.11-py3-none-any.whl
+# twine upload dist/*
+```
+
++ ������������
+
+`���������` ��� `PMML` ������������������ `java` ������������������������������������������������������ `jdk` ��������������� `jdk 1.8 +`
+
+������ `windows` ������������������������������������ `Microsoft Visual C++` ��������������������������������������� [`Latest Supported Visual C++ Redistributable`](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-microsoft-visual-c-redistributable-version) ������������������
+
+
+## ���������������
+
+### ������������
+
+������������������������������������������������������������`scorecardpy`���������������`germancredit`������������������������������������������������������������������������������������������������������`1000`���������������������������������������������������������������������������������������������������������������������������������������������������������
+
+```python
+target = "creditability"
+data = sc.germancredit()
+data[target] = data[target].map({"good": 0, "bad": 1})
+```
+
+### ���������������
+
+������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������
+
+���������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������Out of Time���OOT������������������������������������������������������������
+
+���������������������������������������������������������������OOT������������������������������������������������������������
+
++ ���������������������
+
+
+```python
+train, test = train_test_split(data, test_size=0.3, shuffle=True, stratify=data[target])
+oot = data.copy()
+```
+
+### ������������������������
+
+������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������`IV���`���`Information Value`���������������������
+
++ ������������
+
+```python
+class FeatureSelection(TransformerMixin, BaseEstimator):
+    
+    def __init__(self, target="target", empty=0.95, iv=0.02, corr=0.7, exclude=None, return_drop=True, identical=0.95, remove=None, engine="scorecardpy", target_rm=False):
+        """
+        ITLUBBER���������������������������
+
+        Args:
+            target: ��������������������������������� target
+            empty: ������������������ 0.95, ��������������������� 95% ���������������������
+            iv: IV������������ 0.02������iv��������� 0.02 ���������������������
+            corr: ������������������ 0.7��������������������������������� 0.7 ������������iv���������������
+            identical: ������������������������ 0.95��������������������������������������� 95% ������������������������
+            engine: ������������������������������������ "toad", "scorecardpy" ��������������� scorecardpy
+            remove: ������������ scorecardpy ���������������������������������������������
+            return_drop: ��������������������������������� True������������������������������������
+            target_rm: ��������������������������� False���������������
+            exclude: ������������������������������������
+        """
+```
+
++ ������������
+
+
+```python
+# ������������������
+selection = FeatureSelection(target=target, engine="toad", return_drop=True, corr=0.9, iv=0.01)
+train = selection.fit_transform(train)
+
+# pipeline ������������
+feature_pipeline = Pipeline([
+        ("preprocessing_select", FeatureSelection(target=target, engine="scorecardpy")),
+        ......
+    ])
+feature_pipeline.fit(train)
+```
+
+### ������������
+
+���������������������������������������������������������������������������������������������������������������
+
+���������������������������������������������������������������������������������������������������������������������KS������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������
+
+���������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������
+
+���������������������������������������������������toad���optbinning���������������������������������������������processing.Combiner���������������������������������������U������������������optbinning������������������������������������������������������������������������������������������������������������������������������������������������������������������������
+
++ ������������
+
+```python
+class Combiner(TransformerMixin, BaseEstimator):
+    
+    def __init__(self, target="target", method='chi', engine="toad", empty_separate=False, min_samples=0.05, min_n_bins=2, max_n_bins=3, max_n_prebins=10, min_prebin_size=0.02, min_bin_size=0.05, max_bin_size=None, gamma=0.01, monotonic_trend="auto_asc_desc", rules={}, n_jobs=1):
+        """
+        ������������������������
+
+        Args:
+            target: ��������������������������������� target
+            method: ��������������������������� "chi", "dt", "quantile", "step", "kmeans", "cart", "mdlp", "uniform", ������ toad.Combiner & optbinning.OptimalBinning
+            engine: ��������������������� "optbinning", "toad"
+            empty_separate: ������������������������, ������ False������������������ True
+            min_samples: ������������������������������������������������������������������������ 5%
+            min_n_bins: ������������������������ 2������������������2���
+            max_n_bins: ������������������������ 3������������������3������������������ 3 ��� 5������������������������������ optbinning ������������
+            max_n_prebins: ������ optbinning ������������������
+            min_prebin_size: ������ optbinning ��������������������������������������������������������������� 2%
+            min_bin_size: ������ optbinning ��������������������������������������������������������������������� 5%
+            max_bin_size: ������ optbinning ��������������������������������������������������������������������� None
+            gamma: ������ optbinning ��������������������������������������������������������������������������� 0���01
+            monotonic_trend: ������ optbinning ��������������������������������������� auto��������� "auto", "auto_heuristic", "auto_asc_desc", "ascending", "descending", "convex", "concave", "peak", "valley", "peak_heuristic", "valley_heuristic"
+            rules: ������������������������toad.Combiner ���������������������
+            n_jobs: ������������������������worker������������������������
+        """
+```
+
++ ������������
+
+
+```python
+combiner = Combiner(min_samples=0.2, empty_separate=True, target=target)
+combiner.fit(train)
+train = combiner.transform(train)
+
+# pipeline
+feature_pipeline = Pipeline([
+......
+        ("combiner", Combiner(target=target, min_samples=0.2)),
+        ......
+    ])
+feature_pipeline.fit(train)
+
+# save all bin_plot
+_combiner = feature_pipeline.named_steps["combiner"]
+for col in woe_train.columns:
+    if col != target:
+        _combiner.bin_plot(train, col, labels=True, save=f"outputs/bin_plots/train_{col}.png")
+        _combiner.bin_plot(test, col, labels=True, save=f"outputs/bin_plots/test_{col}.png")
+        _combiner.bin_plot(oot, col, labels=True, save=f"outputs/bin_plots/oot_{col}.png")
+```
+
+### ������������
+
+���������������������������������������������������������������������������������������������������������������0���1���2���3���...������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������
+
+������������������������������������������������������������ONE-HOT������������������������TARGET���������COUNT������������������������������������������������������������������������������������WOE���������������������������������������������WOE���������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������(odds)������������������������������������������������
+
++ ������������toad.transform.WOETransformer������������������������������������������
+
+
+```python
+class WOETransformer(TransformerMixin, BaseEstimator):
+    
+    def __init__(self, target="target", exclude=None):
+        """
+        WOE���������
+
+        Args:
+            target: ��������������������������������� target
+            exclude: ��������������� woe ������
+        """
+```
+
++ ������������
+
+```python
+# ������������������
+transformer = WOETransformer(target=target)
+train = transformer.fit_transform(train)
+
+# pipeline
+feature_pipeline = Pipeline([
+    ......
+    ("transformer", WOETransformer(target=target)),
+    ......
+])
+feature_pipeline.fit(train)
+```
+
+### ������������
+
+���������������`WOE`���������������������������������������������������������������������������������������`IV`������������������������������������������`IV`���������������������������������������`���������������`���`���������������������`���`IV������`������������������������������������������������������������������������������������������������������������������������������������������������������������������
+
+���������������������������������������������������������
+
+
+### ������������������������
+
+���������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������
+
++ ������������toad.selection.stepwise���������������StepwiseSelection������������toad���������������������������������������������
+
+
+```python
+class StepwiseSelection(TransformerMixin, BaseEstimator):
+    
+    def __init__(self, target="target", estimator="ols", direction="both", criterion="aic", max_iter=None, return_drop=True, exclude=None, intercept=True, p_value_enter=0.2, p_remove=0.01, p_enter=0.01, target_rm=False):
+        """
+        ������������������������
+
+        Args:
+            target: ��������������������������������� target
+            estimator: ������������������ ols��������� "ols", "lr", "lasso", "ridge"���������������������
+            direction: ���������������������������both��������� "forward", "backward", "both"���������������������
+            criterion: ��������������������� aic��������� "aic", "bic"���������������������
+            max_iter: ���������������������sklearn������������������������������ None
+            return_drop: ��������������������������������������� True
+            exclude: ���������������������������
+            intercept: ������������������������������ True
+            p_value_enter: ��������������� p ���������������������������������������������������������
+            p_remove: ��������������� p ������������������������������������������������������
+            p_enter: ������ p ������������������������������������������������������������������
+            target_rm: ��������������������������������������������� False���������������������������������
+        """
+```
+
++ ������������
+
+```python
+# ������������������
+stepwise = StepwiseSelection(target=target)
+train = stepwise.fit_transform(train)
+
+# pipeline
+feature_pipeline = Pipeline([
+        ......
+        ("stepwise", StepwiseSelection(target=target, target_rm=False)),
+        ......
+    ])
+feature_pipeline.fit(train)
+```
+
+## ������������������
+
+������������������������������������`sklearn.linear_model`������������`LogisticRegression`(���������)������`statsmodels.api`���������`Logit`(���������)������������������������`sklearn`���������������������������������������������������������������`statsmodels`���������������������������������������������������������������������������������������������
+
+���������������������������������������������������������������������������`skorecard.liner_model`���`LogisticRegression`���������������������������������������������������������������������������������������`statsmodels`������������������������������������������`sklearn`���`LogisticRegression`������������������������������������������������������������������������������������������������������������������`statsmodels`���������`Logit`������������������������������������������������������������`pipeline`������������������������������������������������������������������
+
++ ������������
+
+```python
+class ITLubberLogisticRegression(LogisticRegression):
+    """
+    Extended Logistic Regression.
+    Extends [sklearn.linear_model.LogisticRegression](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html).
+    This class provides the following extra statistics, calculated on `.fit()` and accessible via `.summary()`:
+    - `cov_matrix_`: covariance matrix for the estimated parameters.
+    - `std_err_intercept_`: estimated uncertainty for the intercept
+    - `std_err_coef_`: estimated uncertainty for the coefficients
+    - `z_intercept_`: estimated z-statistic for the intercept
+    - `z_coef_`: estimated z-statistic for the coefficients
+    - `p_value_intercept_`: estimated p-value for the intercept
+    - `p_value_coef_`: estimated p-value for the coefficients
+    
+    Example:
+    ```python
+    feature_pipeline = Pipeline([
+        ("preprocessing_select", FeatureSelection(target=target, engine="scorecardpy")),
+        ("combiner", Combiner(target=target, min_samples=0.2)),
+        ("transform", WOETransformer(target=target)),
+        ("processing_select", FeatureSelection(target=target, engine="scorecardpy")),
+        ("stepwise", StepwiseSelection(target=target)),
+        # ("logistic", LogisticClassifier(target=target)),
+        ("logistic", ITLubberLogisticRegression(target=target)),
+    ])
+    
+    feature_pipeline.fit(train)
+    summary = feature_pipeline.named_steps['logistic'].summary()
+    ```
+    
+    An example output of `.summary()`:
+    
+    | | Coef. | Std.Err | z | P>|z| | [ 0.025 | 0.975 ] | VIF |
+    |:------------------|----------:|----------:|---------:|------------:|-----------:|----------:|--------:|
+    | const | -0.844037 | 0.0965117 | -8.74544 | 2.22148e-18 | -1.0332 | -0.654874 | 1.05318 |
+    | duration.in.month | 0.847445 | 0.248873 | 3.40513 | 0.000661323 | 0.359654 | 1.33524 | 1.14522 |
+    """
+
+    def __init__(self, target="target", penalty="l2", calculate_stats=True, dual=False, tol=0.0001, C=1.0, fit_intercept=True, intercept_scaling=1, class_weight=None, random_state=None, solver="lbfgs", max_iter=100, multi_class="auto", verbose=0, warm_start=False, n_jobs=None, l1_ratio=None,):
+        """
+        Extends [sklearn.linear_model.LogisticRegression.fit()](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html).
+        
+        Args:
+            target (str): your dataset's target name
+            calculate_stats (bool): If true, calculate statistics like standard error during fit, accessible with .summary()
+        """
+```
+
++ ������������
+
+```python
+# ������������������
+logistic = ITLubberLogisticRegression(target=target)
+logistic.fit(woe_train)
+
+logistic.plot_weights(save="outputs/logistic_train.png")
+summary = logistic.summary().reset_index().rename(columns={"index": "Features"})
+train_corr = logistic.corr(woe_train, save="outputs/train_corr.png")
+train_report = logistic.report(woe_train)
+
+# pipeline
+feature_pipeline = Pipeline([
+    ......
+    ("logistic", ITLubberLogisticRegression(target=target)),
+])
+
+feature_pipeline.fit(train)
+y_pred_train = feature_pipeline.predict(train.drop(columns=target))
+```
+
+
+### ���������������
+
+���������������`toad.ScoreCard`���������`pipeline`������������������������������������������������������������������������������������������������������������������������������������������������������
+
++ ������������������
+
+```python
+class ScoreCard(toad.ScoreCard, TransformerMixin):
+    
+    def __init__(self, target="target", pdo=60, rate=2, base_odds=35, base_score=750, combiner={}, transer=None, pretrain_lr=None, pipeline=None, **kwargs):
+        """
+        ���������������������
+
+        Args:
+            target: ��������������������������������� target
+            pdo: odds ��������� rate ������������ pdo ������������ 60
+            rate: ������
+            base_odds: ������ odds���������������������������������������������������������������/������������������������������������1-������������������������/������������������������ 35������ 35:1 => 0.972 => ������������ 2.8%
+            base_score: ������ odds ������������������������ 750
+            combiner: ������������������������ pipeline ������������None
+            transer: woe������������������ pipeline ������������None
+            pretrain_lr: ������������������������������������������������
+            pipeline: ������������ pipeline��������������� Combiner ��� WOETransformer
+            **kwargs: ��������������������������������� toad.ScoreCard
+        """
+```
+
++ ������������
+
+```python
+# ������������
+feature_pipeline = Pipeline([
+        ("preprocessing_select", FeatureSelection(target=target, engine="scorecardpy")),
+        ("combiner", Combiner(target=target, min_samples=0.2)),
+        ("transformer", WOETransformer(target=target)),
+        ("processing_select", FeatureSelection(target=target, engine="scorecardpy")),
+        ("stepwise", StepwiseSelection(target=target, target_rm=False)),
+    ])
+woe_train = feature_pipeline.fit_transform(train)
+
+combiner = feature_pipeline.named_steps['combiner'].combiner
+transformer = feature_pipeline.named_steps['transformer'].transformer
+
+score_card = ScoreCard(target=target, combiner=combiner, transer=transformer, )
+score_card.fit(woe_train)
+
+data["score"] = score_card.transform(data)
+
+# ������������
+clip = 50
+clip_start = max(math.ceil(train["score"].min() / clip) * clip, math.ceil(train["score"].quantile(0.01) / clip) * clip)
+clip_end = min(math.ceil(train["score"].max() / clip) * clip, math.ceil(train["score"].quantile(0.99) / clip) * clip)
+score_clip = [i for i in range(clip_start, clip_end, clip)]
+
+train_score_rank = feature_bin_stats(train, "score", target=target, rules=score_clip, verbose=0, method="step", ks=True)
+ks_plot(train["score"], train[target], title="Train Dataset", save="model_report/train_ksplot.png")
+score_hist(train["score"], train[target], save="model_report/train_scorehist.png", bins=30, figsize=(13, 10))
+```
+
+
+### ���������������
+
+������������`sklearn.pipeline`������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������`pipeline`������������������������������
+
++ ������������
+
+```python
+feature_pipeline = Pipeline([
+    ("preprocessing_select", FeatureSelection(target=target, engine="scorecardpy")),
+    ("combiner", Combiner(target=target, min_samples=0.2)),
+    ("transformer", WOETransformer(target=target)),
+    ("processing_select", FeatureSelection(target=target, engine="scorecardpy")),
+    ("stepwise", StepwiseSelection(target=target, target_rm=False)),
+    # ("logistic", StatsLogisticRegression(target=target)),
+    ("logistic", ITLubberLogisticRegression(target=target)),
+])
+
+# pipeline ������������������������{pipeline_step_name}__{param}
+params_grid = {
+    "logistic__C": [i / 1. for i in range(1, 10, 2)],
+    "logistic__penalty": ["l2"],
+    "logistic__class_weight": [None, "balanced"], # + [{1: i / 10.0, 0: 1 - i / 10.0} for i in range(1, 10)],
+    "logistic__max_iter": [100],
+    "logistic__solver": ["sag"] # ["liblinear", "sag", "lbfgs", "newton-cg"],
+    "logistic__intercept": [True, False],
+}
+
+clf = GridSearchCV(feature_pipeline, params_grid, cv=5, scoring='roc_auc', verbose=-1, n_jobs=2, return_train_score=True)
+clf.fit(train, train[target])
+
+y_pred_train = clf.best_estimator_.predict(train)
+print(clf.best_params_)
+```
+
+## ������������
+
+### ������������
+
+������������������������������������������������������������������������������������������������������������������������
+
+������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������`openpyxl`������������`excel`���������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������`excel`���������������������������������������������������������������
+
++ ������������������
+
+```python
+class ExcelWriter:
+
+    def __init__(self, style_excel='������������������.xlsx', style_sheet_name="���������", fontsize=10, font='������', theme_color='2639E9'):
+        """
+        excel ������������������������������
+        
+        :param style_excel: ��������������������������������������������� ������������������.xlsx ������������������������������������������������������
+        :param style_sheet_name: ���������������������������sheet���������������������
+        :param fontsize: ������excel��������������������������������������� 10
+        :param font: ������excel��������������������������������� ������
+        :param theme_color: ������������������ 2639E9������������������ #
+        """
+
+    def add_conditional_formatting(self, worksheet, start_space, end_space):
+        """
+        ������������������
+
+        :param worksheet: ���������������������������������sheet
+        :param start_space: ���������������������
+        :param end_space: ���������������������
+        """
+
+    @staticmethod
+    def set_column_width(worksheet, column, width):
+        """
+        ������excel������
+
+        :param worksheet: ���������������������������sheet
+        :param column: ������������������������ index ������ ������
+        :param width: ������������������
+        """
+
+    @staticmethod
+    def set_number_format(worksheet, space, _format):
+        """
+        ������������������������
+
+        :param worksheet: ���������������������������������������sheet
+        :param space: ���������������
+        :param _format: ��������������������� openpyxl
+        """
+
+    def get_sheet_by_name(self, name):
+        """
+        ������sheet���������name���������������������������������������������������������������������������������name���sheet
+        
+        :param name: ������������������������������
+        """
+
+    def insert_value2sheet(self, worksheet, insert_space, value="", style="content", auto_width=False):
+        """
+        ���sheet������������������������������������������������
+
+        :param worksheet: ���������������������sheet
+        :param insert_space: ������������������������������������������ "B2" ������ (2, 2) ������������������
+        :param value: ���������������������
+        :param style: ������������������������ init_style ������������������������
+        :param auto_width: ������������������������������
+        """
+
+    def insert_pic2sheet(self, worksheet, fig, insert_space, figsize=(600, 250)):
+        """
+        ���excel���������������������
+        
+        :param worksheet: ���������������������sheet
+        :param fig: ���������������������������
+        :param insert_space: ������������������������������
+        :param figsize: ������������������
+        """
+
+    def insert_df2sheet(self, worksheet, data, insert_space, merge_column=None, header=True, index=False, auto_width=False):
+        """
+        ���excel������������������������������dataframe������
+
+        :param worksheet: ���������������������sheet
+        :param data: ���������������dataframe
+        :param insert_space: ������������������������������������
+        :param merge_column: ���������������������������index������������
+        :param header: ������������dataframe���header���������������������������
+        :param index: ������������dataframe���index
+        :param auto_width: ������������������������
+        :return ������������������������������������������������������������������
+        """
+
+    def save(self, filename):
+        """
+        ������excel������
+        
+        :param filename: ������������ excel ���������������
+        """
+```
+
++ ������������
+
+```python
+writer = ExcelWriter(style_excel="./utils/������������������.xlsx", theme_color="2639E9")
+
+# ���������������
+scorecard_kedu = pd.DataFrame(
+    [
+        ["base_odds", card.base_odds, "������������������������������������������������������/������������������������������������1-������������������������/���������������"],
+        ["base_score", card.base_score, "������ODDS���������������"],
+        ["rate", card.rate, "���������������������"],
+        ["pdo", card.pdo, "������������������PDO������ODDS������������RATE���"],
+        ["B", card.offset, "���������������������������pdo / ln(rate)"],
+        ["A", card.factor, "������������������������base_score - B * ln(base_odds)"],
+    ],
+    columns=["���������", "���������", "������"],
+)
+
+worksheet = writer.get_sheet_by_name("���������������")
+start_row, start_col = 2, 2
+end_row, end_col = writer.insert_value2sheet(worksheet, (start_row, start_col), value="���������������", style="header")
+end_row, end_col = writer.insert_df2sheet(worksheet, scorecard_kedu, (end_row + 1, start_col))
+
+end_row, end_col = writer.insert_value2sheet(worksheet, (end_row + 2, start_col), value="���������������������������������", style="header")
+ks_row = end_row
+end_row, end_col = writer.insert_pic2sheet(worksheet, "model_report/train_ksplot.png", (ks_row, start_col))
+end_row, end_col = writer.insert_pic2sheet(worksheet, "model_report/train_scorehist.png", (ks_row, end_col))
+end_row, end_col = writer.insert_df2sheet(worksheet, train_score_rank, (end_row + 1, start_col))
+
+for c in ["������������", "LIFT���", "������KS���"]:
+    conditional_column = get_column_letter(start_col + train_score_rank.columns.get_loc(c))
+    writer.add_conditional_formatting(worksheet, f'{conditional_column}{end_row - len(train_score_rank)}', f'{conditional_column}{end_row}')
+```
+
+### ������������
+
+������������������������������������������������������������������������������������������������������������������������������������
+
+### LR������������
+
+���������������������������������������`LR`������������������������������������������`AUC`���`KS`������������
+
+### ������������������
+
+������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������
+
+### ���������������
+
+���������������������������������������������������������������������������������������������`AUC`���`KS`���������������������������������������������������������������������������������������
+
+### ������������
+
+������������������������������`shap`���`bad case`���������������������������������`lightgbm`���`catboost`���`xgboost`���������������������������
+
+
+## ���������PMML������
+
+### ������������
+
+������������������������������������������������������������������
+
++ ������������������������������������������
++ ���������������������������`pickle`������������������������
++ ������������`python`������`api������`������������������������
++ ������������`PMML`������������
+
+������������������������������`API������`���������������������������������������������������������������������������������������`PMML`������������������������������������������������������������������������������������������������������������������`PMML`������������������������������
+
++ ������������������
+
+```python
+
+class ScoreCard(toad.ScoreCard, TransformerMixin):
+    
+    ......
+
+    def scorecard2pmml(self, pmml: str = 'scorecard.pmml', debug: bool = False):
+        """export a scorecard to pmml
+
+        Args:
+            pmml (str): io to write pmml file.
+            debug (bool): If true, print information about the conversion process.
+        """
+```
+
++ ������������
+
+```python
+# ������ PMML ���������������
+card.scorecard2pmml(pmml='scorecard.pmml', debug=True)
+
+# ������������
+from pypmml import Model
+
+model = Model.fromFile("scorecard.pmml")
+data["score"] = model.predict(data[model.inputNames]).values
+```
+
+
+## ������������
+
+> https://github.com/itlubber/LogisticRegressionPipeline
+>
+> https://github.com/itlubber/itlubber-excel-writer
+>
+> https://github.com/itlubber/openpyxl-excel-style-template
+>
+> https://github.com/itlubber/scorecard2pmml
+>
+> https://pypi.org/project/pdtr/
+>
+> https://github.com/amphibian-dev/toad
+>
+> https://github.com/ShichenXie/scorecardpy
+>
+> https://github.com/ing-bank/skorecard
+>
+> http://gnpalencia.org/optbinning
+>
+> https://github.com/yanghaitian1/risk_control
