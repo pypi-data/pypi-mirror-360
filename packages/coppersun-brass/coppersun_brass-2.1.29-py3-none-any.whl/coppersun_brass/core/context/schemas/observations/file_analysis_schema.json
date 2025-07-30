@@ -1,0 +1,77 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://devmind.ai/schemas/observation/file_analysis",
+    "title": "File Analysis Observation Schema",
+    "description": "Schema for file analysis observations",
+    "allOf": [
+        {
+            "$ref": "base_schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "const": "file_analysis"
+                },
+                "data": {
+                    "type": "object",
+                    "required": ["file", "language", "metrics"],
+                    "properties": {
+                        "file": {
+                            "type": "string"
+                        },
+                        "language": {
+                            "type": "string",
+                            "enum": ["python", "javascript", "typescript", "java", "go", "rust", "cpp", "c", "other"]
+                        },
+                        "metrics": {
+                            "type": "object",
+                            "properties": {
+                                "lines_of_code": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                },
+                                "complexity": {
+                                    "type": "number",
+                                    "minimum": 0
+                                },
+                                "functions": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                },
+                                "classes": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                },
+                                "imports": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                }
+                            }
+                        },
+                        "issues": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "required": ["type", "message", "line"],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": ["complexity", "duplication", "style", "bug", "security", "performance"]
+                                    },
+                                    "message": {
+                                        "type": "string"
+                                    },
+                                    "line": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
