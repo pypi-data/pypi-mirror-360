@@ -1,0 +1,29 @@
+{"query_select_user_by_ip":"""
+        SELECT u.id,
+               u.username,
+               ui.first_seen,
+               ui.last_seen,
+               ui.hit_count
+        FROM users u
+        LEFT JOIN user_ips ui
+            ON ui.user_id = u.id
+        WHERE ui.ip_address = %s
+    """,
+ "query_insert_user_ip":"""
+        INSERT INTO user_ips (user_id, ip_address)
+        VALUES (%s, %s)
+    """,
+ "query_update_user_ip":"""
+        UPDATE user_ips
+        SET last_seen = %s,
+            hit_count = hit_count + 1
+        WHERE user_id = %s
+        AND ip_address = %s
+    """,
+ "query_select_user_ip":"""
+        SELECT 1
+        FROM user_ips
+        WHERE user_id = %s
+        AND ip_address = %s
+    """
+ }
