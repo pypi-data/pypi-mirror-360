@@ -1,0 +1,34 @@
+# Example Transport Protocol
+# The system that implements this protocol has three values it can get/set: x, y, and z.
+
+- command_id: 1
+  description: "Set the value of x"
+  parameters:
+    - {description: "Set the value of x", length: 1, type: "bool"}
+
+- command_id: 2
+  description: "Set the value of both y and z"
+  parameters:
+    - description: "Set the value of y"
+      length: 4
+      type: "int"
+      values:
+        - {value: 0x00000001, description: "one"}
+        - {value: 0x00000002, description: "two"}
+        - {value: 0x00000003, description: "three"}
+
+    - description: "Set the value of z"
+      length: "variable"
+      type: "str"
+      values:
+        - {value: "uno", description: "one"}
+        - {value: "dos", description: "two"}
+        - {value: "tres", description: "three"}
+
+- command_id: 3
+  description: "Get all values"
+  parameters:
+    - description: "Get the current value of x, y, and z"
+      length: 0
+      type: null
+

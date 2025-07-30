@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "bear-tools"
+version = "0.1.23"
+description = "An assortment of QA/Automation related tools"
+authors = ["Sean Foley <sean.foley.engr@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "bear_tools", from = "src" },
+]
+include = ["src/bear_tools/py.typed"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pytest = "^8.2.0"
+ruamel-yaml = "^0.18.6"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+pytest-cov = "^6.1.1"
+pytest-mock = "^3.14.0"
+pytest-watch = "^4.2.0"
+poethepoet = "^0.34.0"
+mkdocs-material = "^9.6.12"
+mypy = "^1.15.0"
+pylint = "^3.3.7"
+flake8 = "^7.2.0"
+ruff = "^0.11.12"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q"
+testpaths = "tests"
+python_files = ["test_*.py"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# MyPy Configuration
+[tool.mypy]
+show_error_context = true
+pretty = true
+
+# Pylint configuration
+[tool.pylint."MESSAGES CONTROL"]
+max-line-length = 120
+disable = [
+    "C0114",  # Missing module docstring
+]
+
+# Ruff configuration
+[tool.ruff]
+line-length = 120
+lint.select = ["E", "F", "I", "T"]
+ignore = ["T201"]
