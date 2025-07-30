@@ -1,0 +1,118 @@
+# PISCES
+
+Python package enabling enhanced <i>de novo</i> peptide identification from mass spectrometry.
+
+<img src="https://raw.githubusercontent.com/QuantSysBio/pisces/master/img/pisces-logo.png" alt="drawing" width="200"/>
+
+# Download and execution
+
+Note, PISCES is available via interact-ms version 2.0rc1 (see https://github.com/QuantSysBio/interact-ms). If you do not wish to use interact-ms follow the steps below.
+
+## Set Up
+
+### Before Downloading
+
+We recommend working with PISCES through conda.
+
+### Setting up your environment:
+
+For basic PISCES use.
+
+1) To start with create a new conda environment with python version 3.11:
+
+```
+conda create --name pisces python=3.11 -c conda-forge
+```
+
+2) Activate this environment
+
+```
+conda activate pisces
+```
+
+3) You will then need to install the PISCES package (this also installs inSPIRE and PEPSeek):
+
+```
+pip install pisces-ms==0.1
+```
+
+4) To check your installation, run the following command (it is normal for this call to hang for a few seconds on first execution)
+
+```
+pisces -h
+```
+
+5) You will require Percolator for rescoring. On Linux, Percolator can be installed via conda with the command below. Otherwise see https://github.com/percolator/percolator.
+
+```
+conda install -c bioconda percolator
+```
+
+6) If you are working with immunopeptidomics samples we also recommend installing netMHCpan, see [here](https://services.healthtech.dtu.dk/services/NetMHCpan-4.1/).
+
+7) Once you have successfully installed PISCES you should run it specifying your config file:
+
+```
+pisces --config_file path-to-config-file
+```
+
+where the config file is a yaml file specifying the configuration of your PISCES run as described in the next section.
+
+### PISCES config Files:
+
+An example config file is shown in the example/ folder. Details of all possible configs are provided below:
+
+| Key   | Description   |
+|-------|---------------|
+| experimentTitle  | A title for the experiment.  |
+| enzyme | Either trypsin or None. Describes whether nonspecific digestion is used (e.g. in immunopeptidomics) or tryptic digestion. |
+| dbSearchResults (optional)  | The file path(s) to search results from PEAKS DB for canonical peptides identified. Can be omitted if PISCES is run in a pure de novo scenario. |
+| deNovoResults  | The file path(s) to results from Casanovo or PEAKS <i>de novo</i> for noncanonical peptides identified. |
+| deNovoMethod | The initial <i>de novo</i> method to be rescored with PISCES. Either casanovo or peaksDeNovo. |
+| outputFolder     | Specify an output folder location which PISCES should write to. |
+| scansFolder      | Specify a folder containing the experimental spectra files in RAW, mgf, or mzML format. |
+| scansFormat      | Specify the format of the spectra file (must be either mgf or mzML). If uploading RAW files specify mgf. |
+| alleles (optional) | Specify the a list of MHC-I alleles present in the cell if immunopeptidomics being analysed and binding affinity prediction is in use. |
+| mzUnits          | The units used for the m/z accuracy either Da for Daltons or ppm for Parts Per Million (default=Da). |
+| mzAccuracy       | The mz accuracy of the mass spectrometer in Daltons or ppm(default=0.02, default unit is Da). |
+| ms1Accuracy (optional) | The mass error tolerance of the MS1 scan (only needed if running MSFragger searches or quantification). |
+| nCores  | The number of CPU cores you wish PISCES to use (default=1). |
+| useCase | Description of what PISCES is being used to accomplish. Either nonCanonicalDiscovery or proteomeAssembly. |
+| convertFiles | True/False flag if RAW files need to be converted to mgf |
+| proteome | Canonical proteins to be considered. Can be omitted if PISCES is being run as a pure de novo tool or for proteome annotation. |
+| collisionEnergy (optional) | If the collision energy setting is already known it cat be provided, otherwise PISCES will be calibrated. |
+| pValue (optional) | Cut off for the p-value cut off on PSMs that will be considered when generating the PISCES report (default 0.85). PSMs must have a PISCES probability greater than the cut off. |
+| qValue (optional) | Cut off for the q-value (peptide & PSM level) cut off on PSMs that will be considered when generating the PISCES report (default 0.05). PSMs must have a PISCES probability less than the cut off. |
+| additionalConfigs (optional) | Optionally a dictionary can be provided passing specific inSPIRE configs for the inSPIRE executions. |
+| netMHCpan (optional) | Command which enable execution of netMHCpan (e.g ```tcsh /data/inSPIRE-Server/netMHCpan-4.1/netMHCpan```)
+| useBindingAffinity (optional) | Set to 'asFeature' if predicted binding affinity is to be used. |
+| slurmScript (optional) | Can provide the path to a slurm script which enables running PISCES across multiple compute nodes. |
+
+#### Non-canonical peptide discovery:
+
+| Key   | Description   |
+|-------|---------------|
+| expandedProteomeFolder (optional) | Specify a folder containing fasta files of expanded databases to investigate in use. |
+| contaminantsFolder (optional) | Specify a folder containing fasta files of generic contaminant database(s) in use. |
+| maxIntervening (optional) | Only investigates spliced peptides with a maximum intervening sequence length less than the defined cut off. Defaults to False so all potential spliced peptides are reported.
+| canIsoCut (optional) | Cut off for how canonical isobaric peptides will be used to filter noncanonical PSMs. This value defines the minimum score for which the canonical isobaric peptide will be considered. The value is defined by a quantile of PISCES scores for the canonical t/d identified PSMs (default 0.05).
+
+#### Proteome Annotation:
+
+| Key   | Description   |
+|-------|---------------|
+| fraggerMemory | Specify how much memory can be used for MSFragger searches executed. |
+| fraggerParams (optional) | Params file used for MSFragger search, defaults to the default settings for inSPIRE. |
+| fraggerPath | Path to the MSFragger Jar file used. |
+| genome | The genome of the organism being investigated. |
+
+#### Running Casanovo within PISCES:
+
+These parameters are required if you wish Casanovo within PISCES (requires slurm).
+
+| Key   | Description   |
+|-------|---------------|
+| casaConfig | Config yaml file for running casasnovo. |
+| casaModel | A ckpt Casanovo model. |
+| casaSingImg | A singularity or apptainer image used to run casanovo. |
+
