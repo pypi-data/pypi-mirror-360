@@ -1,0 +1,77 @@
+"""Contains the `MeshSlepianFunctions` class."""
+
+import logging
+
+import numpy as np
+import numpy.typing as npt
+import pydantic
+import typing_extensions
+
+import sleplet._validation
+import sleplet.slepian_methods
+from sleplet.meshes.mesh_slepian_coefficients import MeshSlepianCoefficients
+
+_logger = logging.getLogger(__name__)
+
+
+@pydantic.dataclasses.dataclass(config=sleplet._validation.validation, kw_only=True)
+class MeshSlepianFunctions(MeshSlepianCoefficients):
+    """Create Slepian functions of a given mesh."""
+
+    rank: int = 0
+    """Slepian eigenvalues are ordered in decreasing value. The option `rank`
+    selects a given Slepian function from the spectrum (p in the papers)."""
+
+    def __post_init__(self: typing_extensions.Self) -> None:
+        super().__post_init__()
+
+    def _create_coefficients(
+        self: typing_extensions.Self,
+    ) -> npt.NDArray[np.complex128 | np.float64]:
+        """Compute field on the vertices of the mesh."""
+        msg = (
+            f"Slepian eigenvalue {self.rank}: "
+            f"{self.mesh_slepian.slepian_eigenvalues[self.rank]:e}",
+        )
+        _logger.info(msg)
+        s_p_i = self.mesh_slepian.slepian_functions[self.rank]
+        return sleplet.slepian_methods.slepian_mesh_forward(
+            self.mesh_slepian,
+            u_i=s_p_i,
+        )
+
+    def _create_name(self: typing_extensions.Self) -> str:
+        return (
+            (
+                f"slepian_{self.mesh.name}_rank{self.rank}_"
+                f"lam{self.mesh_slepian.slepian_eigenvalues[self.rank]:e}"
+            )
+            .replace(".", "-")
+            .replace("+", "")
+        )
+
+    def _setup_args(self: typing_extensions.Self) -> None:
+        if isinstance(self.extra_args, list):
+            num_args = 1
+            if len(self.extra_args) != num_args:
+                msg = f"The number of extra arguments should be 1 or {num_args}"
+                raise ValueError(msg)
+            self.rank = self.extra_args[0]
+
+    def _validate_rank(self: typing_extensions.Self) -> None:
+        """Check the requested rank is valid."""
+        if isinstance(self.extra_args, list):
+            limit = self.mesh.mesh_eigenvalues.shape[0]
+            if self.extra_args[0] > limit:
+                msg = f"rank should be less than or equal to {limit}"
+                raise ValueError(msg)
+
+    @pydantic.field_validator("rank")
+    def _check_rank(
+        cls,
+        v: int,
+    ) -> int:
+        if v < 0:
+            msg = "rank cannot be negative"
+            raise ValueError(msg)
+        return v
