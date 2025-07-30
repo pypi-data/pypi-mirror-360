@@ -1,0 +1,105 @@
+[module]
+name = "spfalias2"
+type = "feature"
+info = "Random SPF (TXT) Aliases (Variant 2)"
+short = "SPF (TXT) random alias generator (variant 2)"
+category = "Aliases"
+records = "TXT, SPF"
+tags = "Amplification, Domain Lock-Up, Denial of Service"
+rfc = "RFC4408, RFC7208"
+desc = '''
+This module is designed to generate DNS responses with **SPF (Sender Policy Framework)** records that contain **random aliases**. The SPF protocol is used for authorizing domains during email communication.
+
+This variant can produce multiple SPF entries contained within one or more TXT records. In this case, each SPF entry contains multiple `include:` parameters with randomly generated domain names (aliases). These aliases are in the format `spfalias2#####.yourdomain.com` where `#####` represents a random number.
+
+The idea is that if the client/resolver decides to resolve this further, it will result in the generation of yet another alias, theoretically leading to a resolution of infinite chain of random aliases. In practice, however, most modern resolvers will terminate the resolution after encountering several consecutive alias records.
+
+:warning:**BEWARE**:warning:This can potentially lead to amplification effect (DoS) or domain lock-up (DoS).
+'''
+format = '''
+**`spfalias2.<NUMBER>.yourdomain.com`**
+
+Where:
+
+- The **`<NUMBER>`** parameter defines how many aliases should be generated in the response. Note that the number of aliases is limited by the maximum TXT label size of 255 bytes. If the specified number of aliases cannot fit within a single TXT record, multiple TXT records will be dynamically produced to accomodate all aliases.
+'''
+seealso = "spfloop, spfchain, alias, cnalias, dnalias, htalias, mxalias, nptenumalias, nsalias, ptralias, spfalias1, spfalias2, sralias, svalias"
+
+[[module.example]]
+description = "By default, the module returns a single SPF alias:"
+command = "dig spfalias2.yourdomain.com @127.0.0.1"
+
+[[module.example]]
+description = "Same example as above, but this time we explicitly specify that we want to receive a single SPF record:"
+command = "dig spfalias2.1.yourdomain.com @127.0.0.1"
+
+[[module.example]]
+description = "In this case, we specify that we want to receive 11 (eleven) SPF aliases. These aliases will be fitted within the necessary number of TXT records as required:"
+command = "dig spfalias2.11.yourdomain.com @127.0.0.1"
+append = "We can see that those 11 SPF aliases fit into 3 TXT records."
+
+[[module.example]]
+description = "Here we can see that resolving any of the generated aliases leads to more aliases, potentially causing an infinite recursion:"
+command = "dig spfalias23456.11.yourdomain.com @127.0.0.1"
+
+[module.code]
+python = '''
+           elif req.first_subdomain.startswith("spfalias2"):
+              # Send a single SPF (TXT) record with multiple random aliases included one by one
+              # BEWARE: This could result in multiplication
+              aliases = min(int(req.subdomains[1]), 2048) if req.subdomains[1].isnumeric() else 1
+              buffer = b''
+              answers = []
+              doms = []
+              data = "v=spf1"
+              for i in range(aliases):
+                  dom = name_fuzz(resp.nfz) if hasattr(resp, "nfz") else "spfalias2" + str(random.getrandbits(20) % 100000) + "." + ".".join(req.subdomains_20[1:])
+                  doms.append(dom)
+                  tmpdata = data + " include:" + dom
+                  if len(tmpdata) > 250:
+                     # we need another answer record since
+                     # the max size for TXT label is 255 bytes
+                     data += " ~all"  # the additional 5 bytes
+                     buffer += b'\xc0\x0c' if resp.compress else convDom2Bin(req.full_domain_20)
+                     buffer += getTypeBin("TXT") + getClassBin("IN")
+                     buffer += struct.pack(">L", resp.TTL)      ## TTL
+                     buffer += struct.pack(">H", len(data)+1)   ## Data length (2B)
+                     buffer += struct.pack(">B", len(data))     ## TXT length (1B)
+                     buffer += data.encode("utf-8")             ## TXT SPF value
+                     answers.append(buffer)
+                     data = "v=spf1 include:" + dom
+                     buffer = b''
+                     if i == aliases-1:
+                        # this is also the last alias
+                        data += " ~all"
+                        buffer += b'\xc0\x0c' if resp.compress else convDom2Bin(req.full_domain_20)
+                        buffer += getTypeBin("TXT") + getClassBin("IN")
+                        buffer += struct.pack(">L", resp.TTL)      ## TTL
+                        buffer += struct.pack(">H", len(data)+1)   ## Data length (2B)
+                        buffer += struct.pack(">B", len(data))     ## TXT length (1B)
+                        buffer += data.encode("utf-8")             ## TXT SPF value
+                        answers.append(buffer)
+                     continue
+                  data = tmpdata
+                  if i == aliases-1:
+                     # this is the last alias
+                     data += " ~all"
+                     buffer += b'\xc0\x0c' if resp.compress else convDom2Bin(req.full_domain_20)
+                     buffer += getTypeBin("TXT") + getClassBin("IN")
+                     buffer += struct.pack(">L", resp.TTL)      ## TTL
+                     buffer += struct.pack(">H", len(data)+1)   ## Data length (2B)
+                     buffer += struct.pack(">B", len(data))     ## TXT length (1B)
+                     buffer += data.encode("utf-8")             ## TXT SPF value
+                     answers.append(buffer)
+              ### DNS header ########
+              buffer = prep_dns_header(b'\x84\x00', req.QURR, len(answers), 0, 0)
+              ### QUESTION SECTION ########
+              if resp.noq: buffer += convDom2Bin(req.full_domain_20) + req.type_bin + req.class_bin
+              ### ANSWER SECTION ########
+              for i in range(len(answers)):
+                  buffer += answers[i]
+              # log and send
+              log("%d aliases in %d SPF(TXT) records: %s" % (aliases, len(answers), ', '.join(map(str, doms[:3])) + (', ...' if aliases > 3 else '')))
+              send_buf(self, buffer)
+              #####################################################################
+'''

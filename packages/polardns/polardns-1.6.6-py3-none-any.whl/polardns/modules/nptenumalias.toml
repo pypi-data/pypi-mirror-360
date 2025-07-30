@@ -1,0 +1,101 @@
+[module]
+name = "nptenumalias"
+type = "feature"
+info = "Random NAPTR ENUM Aliases"
+short = "NAPTR ENUM random alias generator"
+category = "Aliases"
+records = "NAPTR"
+tags = "Amplification, Domain Lock-Up, Denial of Service"
+rfc = "RFC2915, RFC3761"
+desc = '''
+This module implements **random aliases** using **NAPTR (Naming Authority Pointer) ENUM** records, which are used to map identifiers like telephone numbers to a variety of service URIs, including SIP addresses, voicemail systems, and web or email addresses.
+
+This module is specifically designed to handle DNS queries that translate telephone numbers into SIP service URIs using the E.164 format. In this format, a phone number such as `1234567890` is transformed into the reversed sequence `0.9.8.7.6.5.4.3.2.1.e164.arpa`. This domain is then queried in DNS to identify the corresponding designated SIP service address.
+
+When this module receives a NAPTR DNS query for translating a telephone number ending with the digit `1`, it will generate a response with a SIP service URI. This URI will point to another (random) phone number, also formatted in the E.164 standard and ending with the digit `1`.
+
+The idea is that if the resolver/client decides to resolve this E.164 address, it will result in the generation of yet another alias, potentially creating an infinite chain of random aliases. Although NAPTR ENUM records do not function as direct aliases like CNAME records, this setup could theoretically produce similar effect by compelling the client to perform consecutive queries to resolve it.
+
+Additionally, this module can respond with multiple NAPTR records. The number of records generated is determined by the second digit of the phone number address. For example, a query for the phone number such as `1234567891` (converted to `1.9.8.7.6.5.4.3.2.1.e164.arpa` in the E.164 format) will generate nine PTR records.
+
+:warning:**BEWARE**:warning:This can potentially lead to amplification effect (DoS) or domain lock-up (DoS).
+'''
+format = '''
+**`1.<NUMBER>.*.e164.arpa`**
+
+Where:
+
+- The **`<NUMBER>`** parameter defines how many aliases should be generated in the response.
+'''
+seealso = "nptenumloop, alias, cnalias, dnalias, htalias, mxalias, nptenumalias, nsalias, ptralias, spfalias1, spfalias2, sralias, svalias"
+
+[[module.example]]
+description = "In this example, when we look up the telephone number `3211`, we receive a response containing a SIP URI. This URI includes a randomly generated phone number, formatted as an E.164 address. If this address is subsequently looked up, it will lead to the generation of another random E.164 address:"
+command = "dig NAPTR 1.1.2.3.e164.arpa @127.0.0.1"
+
+[[module.example]]
+description = "In this example, when we look up the telephone number `1234567891`, we receive a response containing nine SIP URIs. Each URI includes a randomly generated phone number, formatted as an E.164 address:"
+command = "dig NAPTR 1.9.8.7.6.5.4.3.2.1.e164.arpa @127.0.0.1"
+
+[[module.example]]
+description = "In this example, we use the A record type to look up the telephone number `1234567891`. We receive the same response as in the previous example. This demonstrates that it is not necessary to explicitly request NAPTR record types to use this module:"
+command = "dig 1.9.8.7.6.5.4.3.2.1.e164.arpa @127.0.0.1"
+
+[module.code]
+python = '''
+           elif req.first_subdomain == "1" and req.full_domain.endswith(".e164.arpa"):
+              # Requesting to translate an E.164 telephone number ending with the digit 1 (e.g., a NAPTR
+              # record for 1.<anything>.e164.arpa in reverse). The response will be a SIP service URI
+              # pointing to another random E.164 telephone number also ending with the digit 1 (leading
+              # here again, producing another alias). While NAPTR ENUM records do not contain aliases
+              # like CNAME records, this could achieve similar results by prompting the client to
+              # perform consecutive queries to resolve it.
+              # BEWARE: This could result in multiplication
+
+              answers = min(int(req.subdomains[1]), 4096) if req.subdomains[1].isnumeric() else 1
+
+              # figure out the ending part of the domain which is not a number any more
+              # in order to preserve the parameters if any
+              for i, part in enumerate(req.subdomains_20):
+                  if not part.isnumeric():
+                     dom_end = '.' + '.'.join(req.subdomains_20[i:])
+                     break
+              else:
+                  dom_end = req.full_domain_20
+
+              ### DNS header ########
+              buffer = prep_dns_header(b'\x84\x00', req.QURR, answers, 0, 0)
+              ### QUESTION SECTION ########
+              if resp.noq: buffer += convDom2Bin(req.full_domain_20) + req.type_bin + req.class_bin
+              ### ANSWER SECTION ########
+              doms = []
+              for i in range(answers):
+                  random_number = random.getrandbits(30) % 1000000000
+                  new_dom     = '1.' + str(answers) + '.' + '.'.join(str(random_number)) + dom_end
+                  order       = 0
+                  pref        = 0
+                  flags       = b'U'          # Flags = "U" (URI)
+                  service     = b'E2U+sip'    # Service = SIP
+                  regex       = bytes("!^.*$!" + new_dom + "!", "utf-8")
+                  replacement = b'\x00'
+
+                  data_len = 2+2+1+len(flags)+1+len(service)+1+len(regex)+len(replacement)
+                  buffer += b'\xc0\x0c' if resp.compress else convDom2Bin(req.full_domain_20)  ## Name
+                  buffer += getTypeBin("NAPTR") + getClassBin("IN")
+                  buffer += struct.pack(">L", resp.TTL)     ## TTL
+                  buffer += struct.pack(">H", data_len)     ## Data length (2B)
+                  buffer += struct.pack(">H", order)        ## Order (2B)
+                  buffer += struct.pack(">H", pref)         ## Preference (2B)
+                  buffer += struct.pack(">B", len(flags))   ## Flags Length (1B)
+                  buffer += flags                           ## Flags
+                  buffer += struct.pack(">B", len(service)) ## Service Length (1B)
+                  buffer += service                         ## Service
+                  buffer += struct.pack(">B", len(regex))   ## Regex Length (1B)
+                  buffer += regex                           ## Regex
+                  buffer += replacement                     ## Replacement
+                  doms.append(new_dom)
+              # log and send
+              log("%d NAPTR ENUM aliases: %s" % (answers, ', '.join(map(str, doms[:3])) + (', ...' if answers > 3 else '')))
+              send_buf(self, buffer)
+              #####################################################################
+'''
