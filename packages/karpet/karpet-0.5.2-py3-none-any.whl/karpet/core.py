@@ -1,0 +1,691 @@
+try:
+    pass
+except:
+    pass
+
+import asyncio
+from datetime import datetime
+
+import aiohttp
+import cloudscraper
+import numpy as np
+import pandas as pd
+from bs4 import BeautifulSoup
+from requests.adapters import Retry
+
+# from http.client import HTTPConnection
+# import logging
+
+# logging.basicConfig(level=logging.DEBUG)
+# HTTPConnection.debuglevel = 1
+
+
+class Karpet:
+    quick_search_data = []
+    req_retries = 4
+    req_backoff_factor = 3
+    user_agent = (
+        "Mozilla/5.0 (X11; Linux x86_64; rv:103.0) Gecko/20100101 Firefox/103.0"
+    )
+
+    def __init__(self, start=None, end=None):
+        """
+        Constructor.
+
+        :param datetime.date start: History data begining.
+        :param datetime.date end: History data end.
+        """
+
+        self.start = start
+        self.end = end
+        self.req_ses = self.get_session()
+
+    def get_session(self):
+        # Waits for 1.5s, 3s, 6s, 12s, 24s between requests.
+        status_forcelist = (500, 502, 503, 504, 429)
+
+        retry = Retry(
+            total=self.req_retries,
+            read=self.req_retries,
+            connect=self.req_retries,
+            backoff_factor=self.req_backoff_factor,
+            status_forcelist=status_forcelist,
+            # method_whitelist=False,
+        )
+        # adapter = HTTPAdapter(max_retries=retry)
+
+        # session = requests.Session()
+        # session.mount("http://", adapter)
+        # session.mount("https://", adapter)
+        # session.headers.update(
+        #     {
+        #         "User-Agent": self.user_agent,
+        #         "Accept": "*/*",
+        #     }
+        # )
+
+        session = cloudscraper.create_scraper()
+        session.adapters["http://"].max_retries = retry
+        session.adapters["https://"].max_retries = retry
+
+        return session
+
+    def get_quick_search_data(self, symbol):
+        """
+        Downloads JSON from coingecko.com quick search
+        widget. Data contains list of all cryptocurrencies
+        that fit to the given symbol-or-slug parameter
+        where each item has following structure:
+
+        {
+            "thumb": "https://...",
+            "name": "Bitcoin",
+            "symbol": "BTC",
+            "market_cap_rank": 1,
+            "id": "bitcoin",
+            "coin_id": 1,
+            "data": {
+                "price": "$...",
+                "price_btc": "1.0",
+                "price_change_percentage_24h": { ... },
+                "market_cap": "$...",
+                "market_cap_btc": "123",
+                "total_volume": "$...",
+                "total_volume_btc": "123",
+                "sparkline": "https://...",
+                "content": {
+                    "title": "...",
+                    "description": "...",
+                }
+            }
+        }
+
+        :param str symbol: Coin symbol - i.e. BTC, ETH, ...
+        :raises Exception: In case of unreachable data or error during parsing.
+        :return: Downloaded JSON data - for each item structure see above.
+        :rtype: list
+        """
+
+        if not self.quick_search_data:
+            self.quick_search_data = self._get_json(
+                f"https://www.coingecko.com/en/search_v2?query={symbol}&vs_currency=usd"
+            )["coins"]
+
+        return self.quick_search_data
+
+    def fetch_crypto_historical_data(self, symbol, slug=None):
+        """
+        Retrieve basic historical information (by days) for a specific
+        cryptocurrency from coingecko.com.
+        Coin slug can be retreived by get_coin_slugs() method.
+
+        Output dataframe has following columns:
+
+        * price
+        * market_cap
+        * total_volume
+
+        Index is datetime64[ns].
+
+        :param str symbol: Coin symbol - i.e. BTC, ETH, ...
+        :param str slug: Coin slug (based on coingecko.com).
+        :raises Exception: If data couldn't be download form the internet.
+        :return: Dataframe with historical data.
+        :rtype: pd.DataFrame
+        """
+
+        # Get coingecko.com coin internal ID.
+        slug = self._get_coin_slug_from_params(symbol, slug)
+        search_data = self.get_quick_search_data(symbol)
+
+        if not len(search_data):
+            raise Exception("No search data available.")
+
+        found_items = list(filter(lambda item: item["id"] == slug, search_data))
+
+        if 1 < len(found_items):
+            raise Exception(f"Found more than 1 items for coin slug {slug}.")
+
+        # Compile URLs.
+        url = f"https://www.coingecko.com/price_charts/{found_items[0]['id']}/usd/max.json"
+        url_market_cap = (
+            f"https://www.coingecko.com/market_cap/{found_items[0]['id']}/usd/max.json"
+        )
+
+        # Fetch and check the response.
+        data_prices = self._get_json(url)
+        data_market_cap = self._get_json(url_market_cap)
+
+        if (
+            "stats" not in data_prices
+            or "total_volumes" not in data_prices
+            or "stats" not in data_market_cap
+        ):
+            raise Exception("Couldn't download necessary data from the internet.")
+
+        # Assembly the dataframe.
+        prices = np.array(data_prices["stats"])
+        prices = pd.Series(prices[:, 1], index=prices[:, 0], name="price")
+
+        market_caps = np.array(data_market_cap["stats"])
+        market_caps = pd.Series(
+            market_caps[:, 1], index=market_caps[:, 0], name="market_cap"
+        )
+
+        total_volumes = np.array(data_prices["total_volumes"])
+        total_volumes = pd.Series(
+            total_volumes[:, 1], index=total_volumes[:, 0], name="total_volume"
+        )
+        df = pd.concat([prices, market_caps, total_volumes], axis=1)
+        df.index = pd.to_datetime(df.index, unit="ms")
+        df.index = df.index.normalize()
+
+        # Filter out rows with no price.
+        df = df.dropna(how="any")
+
+        # Check if data are limited and if yes drop the unwanted data.
+        if self.start:
+            df = df[df.index.date >= self.start]
+
+        if self.end:
+            df = df[df.index.date <= self.end]
+
+        return df
+
+    def fetch_crypto_live_data(self, symbol=None, slug=None):
+        """
+        Retrieve OHLC price data for past 24 hours for a specific
+        cryptocurrency from coingecko.com.
+        Coin slug can be retreived by get_coin_slugs() method.
+
+        Output dataframe has following columns:
+
+        - open
+        - high
+        - low
+        - close
+
+        Index is datetime64[ns].
+
+        :param str symbol: Coin symbol - i.e. BTC, ETH, ...
+        :param str slug: Coin slug (based on coingecko.com).
+        :raises Exception: If data couldn't be download form the internet.
+        :return: Dataframe with OHLC data.
+        :rtype: pd.DataFrame
+        """
+
+        slug = self._get_coin_slug_from_params(symbol, slug)
+
+        # Fetch data.
+        data = []
+        url = (
+            f"https://api.coingecko.com/api/v3/coins/{slug}/ohlc?vs_currency=usd&days=1"
+        )
+
+        # Fetch and check the response.
+        data = self._get_json(url)
+
+        if not data:
+            raise Exception("Couldn't download necessary data from the internet.")
+
+        # Assembly the dataframe.
+        data = np.array(data)
+        return pd.DataFrame.from_records(
+            data[:, 1:],
+            index=pd.to_datetime(data[:, 0], unit="ms"),
+            columns=["open", "high", "low", "close"],
+        )
+
+    def fetch_crypto_exchanges(self, symbol=None):
+        """
+        Fetches all exchanges where the given symbol
+        is listed.
+
+        :param str symbol: Coin symbol - i.e. BTC, ETH, ...
+        :return: List of exchanges.
+        :rtype: list
+        """
+
+        url = f"https://min-api.cryptocompare.com/data/v4/all/exchanges?fsym={symbol}"
+
+        # Fetch and check the response.
+        response_data = self._get_json(url)
+
+        if "Success" != response_data["Response"]:
+            raise Exception("Couldn't download necessary data from the internet.")
+
+        return list(response_data["Data"]["exchanges"].keys())
+
+    # def fetch_google_trends(
+    #     self,
+    #     kw_list,
+    #     trdays=250,
+    #     overlap=100,
+    #     cat=0,
+    #     geo="",
+    #     tz=360,
+    #     gprop="",
+    #     hl="en-US",
+    #     sleeptime=1,
+    # ):
+    #     """
+    #     Retrieve daily Google trends data for a list of search terms.
+    #
+    #     This method is essentially a highly restricted wrapper for the pytrends package
+    #     Any issues/questions related to its use would probably be more likely resolved
+    #     by consulting the pytrends github page
+    #     https://github.com/GeneralMills/pytrends
+    #
+    #     :param list kw_list: List of search terms (max 5)- see pyTrends for more details.
+    #     :param int trdays: The number of days to pull data for in a search. (the max is around 270, though the website seems to indicate 90)
+    #     :param int overlap: The number of overlapped days when stitching two searches together.
+    #     :param int cat: Category to narrow results - see pyTrends for more details.
+    #     :param str geo: Two letter country abbreviation (e.g 'US', 'UK') default is '', which returns global results.
+    #     :param int tz : Timezone offset - default is 360, which corresponds to US CST.
+    #     :param str gprop: Filter results to specific google property available options are "images", "news", "youtube" or "froogle"
+    #                       default is '', which refers to web searches - see pyTrends for more details.
+    #     :param str hl: Language (e.g. 'en-US' (default), 'es').
+    #     :param int sleeptime: When stiching multiple searches, this sets the period between each.
+    #     :return: Pandas dataframe with all results.
+    #     :rtype: pd.DataFrame
+    #     """
+    #
+    #     try:
+    #         _ = TrendReq
+    #     except NameError:
+    #         raise Exception("Google extension is not installed - see README file.")
+    #
+    #     # Validate params.
+    #     if len(kw_list) > 5 or len(kw_list) == 0:
+    #         raise ValueError("The keyword list can contain at most 5 words")
+    #     if trdays > 270:
+    #         raise ValueError("trdays must not exceed 270")
+    #     if overlap >= trdays:
+    #         raise ValueError("Overlap can't exceed search days")
+    #
+    #     stich_overlap = trdays - overlap
+    #     n_days = (self.end - self.start).days
+    #     pytrends = TrendReq(
+    #         hl=hl,
+    #         tz=tz,
+    #         retries=self.req_retries,
+    #         backoff_factor=self.req_backoff_factor,
+    #     )
+    #
+    #     # Get the dates for each search.
+    #     if n_days <= trdays:
+    #         trend_dates = [
+    #             "{} {}".format(
+    #                 self.start.strftime("%Y-%m-%d"), self.end.strftime("%Y-%m-%d")
+    #             )
+    #         ]
+    #     else:
+    #         trend_dates = [
+    #             "{} {}".format(
+    #                 (self.end - timedelta(i + trdays)).strftime("%Y-%m-%d"),
+    #                 (self.end - timedelta(i)).strftime("%Y-%m-%d"),
+    #             )
+    #             for i in range(0, n_days - trdays + stich_overlap, stich_overlap)
+    #         ]
+    #
+    #     # Try to fetch first batch.
+    #     pytrends.build_payload(
+    #         kw_list, cat=cat, timeframe=trend_dates[0], geo=geo, gprop=gprop
+    #     )
+    #     df = pytrends.interest_over_time().reset_index()
+    #
+    #     if len(df) == 0:
+    #         raise ValueError("Search term returned no results (insufficient data).")
+    #
+    #     # Fetch other batches.
+    #     for date in trend_dates[1:]:
+    #         time.sleep(sleeptime)
+    #         pytrends.build_payload(
+    #             kw_list, cat=cat, timeframe=date, geo=geo, gprop=gprop
+    #         )
+    #
+    #         temp_trend = pytrends.interest_over_time().reset_index()
+    #         temp_trend = temp_trend.merge(df, on="date", how="left")
+    #
+    #         # it's ugly but we'll exploit the common column names
+    #         # and then rename the underscore containing column names
+    #         for kw in kw_list:
+    #             norm_factor = np.ma.masked_invalid(
+    #                 temp_trend[kw + "_y"] / temp_trend[kw + "_x"]
+    #             ).mean()
+    #             temp_trend[kw] = temp_trend[kw + "_x"] * norm_factor
+    #
+    #         temp_trend = temp_trend[temp_trend.isnull().any(axis=1)]
+    #         temp_trend["isPartial"] = temp_trend["isPartial_x"]
+    #         df = pd.concat(
+    #             [df, temp_trend[["date", "isPartial"] + kw_list]], axis=0, sort=False
+    #         )
+    #
+    #     # Reorder columns in alphabetical order.
+    #     df = df[["date", "isPartial"] + kw_list]
+    #
+    #     # Drop "isPartial column".
+    #     df = df.drop("isPartial", axis=1)
+    #
+    #     df = df[df["date"] >= self.start.strftime("%Y-%m-%d")]
+    #
+    #     # The values in each column are relative to other columns
+    #     # so we need to get the maximum value across the search columns.
+    #     max_val = float(df[kw_list].values.max())
+    #
+    #     for col in kw_list:
+    #         df[col] = 100.0 * df[col] / max_val
+    #
+    #     return df.sort_values("date").reset_index(drop=True)
+
+    def fetch_news(self, symbol, limit=10):
+        """
+        Fetches news of the given symbol. Each news contains
+        following params:
+
+        * url
+        * title
+        * description
+        * date
+        * image
+
+        :param str symbol: Coin symbol the news will be fetched for.
+        :param int limit: Limit for news count.
+        """
+
+        def get_news(symbol, limit):
+            """
+            Fetches news from coincodex.com.
+
+            :return: List of news urls.
+            :rtype: list
+            """
+
+            url = (
+                f"https://coincodex.com/api/coincodexicos/get_news/{symbol}/{limit}/1/"
+            )
+            data = self._get_json(url)
+
+            return [{"url": d["url"]} for d in data]
+
+        # Fetch features.
+        news = get_news(symbol, limit)
+        asyncio.run(self._fetch_news_features(news))
+
+        return self._drop_bad_news(news)[:limit]
+
+    def get_coin_slugs(self, symbol):
+        """
+        Returns coin slugs by coin symbol. There are some coins
+        with the same symbol. The only way to dostiguish between
+        them is to use slugs. These slugs are coingecko.com identifiers.
+
+        So this method returns a list of slugs. If you get 2+ slugs
+        you probably want to use `slug` param in one of the `fetch_*`
+        methods.
+
+        :param str symbol: Symbol of the coin.
+        :return: List of slugs.
+        :rtype: list
+        """
+
+        found_slugs = []
+        search_data = self.get_quick_search_data(symbol)
+        symbol = symbol.upper()
+
+        if not len(search_data):
+            raise Exception("No search data available.")
+
+        for item in search_data:
+            if symbol == item["symbol"].upper():
+                found_slugs.append(item["id"])
+
+        return found_slugs
+
+    def get_basic_info(self, symbol=None, slug=None):
+        """
+        Fetches coin/token basic data like:
+
+        - name
+        - current_price
+        - market_cap
+        - rank
+        - reddit_average_posts_48h
+        - reddit_average_comments_48h
+        - reddit_subscribers
+        - reddit_accounts_active_48h
+        - forks
+        - stars
+        - total_issues
+        - closed_issues
+        - pull_request_contributors
+        - commit_count_4_weeks
+        - open_issues
+        - year_low
+        - year_high
+        - yoy_change
+        - price_change_24
+        - price_change_24_percents
+
+        :param str symbol: Coin symbol - i.e. BTC, ETH, ...
+        :param str slug: Coin slug (baed on coingecko.com).
+        :raises Exception: If data couldn't be download form the internet.
+        :return: Baic data as a dict.
+        :rtype: dict
+        """
+
+        slug = self._get_coin_slug_from_params(symbol, slug)
+
+        data = self._get_json(f"https://api.coingecko.com/api/v3/coins/{slug}")
+        data_chart = self._get_json(
+            f"https://api.coingecko.com/api/v3/coins/{slug}/market_chart?vs_currency=usd&days=365"
+        )
+        sorted_chart_by_price = sorted(
+            data_chart["prices"],
+            key=lambda i: i[1],  # i is a list of [timestamp, price]
+        )
+        sorted_chart_by_date = sorted(
+            data_chart["prices"],
+            key=lambda i: i[0],  # i is a list of [timestamp, price]
+        )
+
+        to_return = {
+            "name": data["name"],
+            "current_price": data["market_data"]["current_price"]["usd"],
+            "market_cap": data["market_data"]["market_cap"]["usd"],
+            "rank": data["market_data"]["market_cap_rank"],
+            "reddit_average_posts_48h": data["community_data"][
+                "reddit_average_comments_48h"
+            ],
+            "reddit_average_comments_48h": data["community_data"][
+                "reddit_average_comments_48h"
+            ],
+            "reddit_subscribers": data["community_data"]["reddit_subscribers"],
+            "reddit_accounts_active_48h": float(
+                data["community_data"]["reddit_accounts_active_48h"] or 0
+            ),
+            "forks": data["developer_data"]["forks"],
+            "stars": data["developer_data"]["stars"],
+            "total_issues": data["developer_data"]["total_issues"],
+            "closed_issues": data["developer_data"]["closed_issues"],
+            "pull_request_contributors": data["developer_data"][
+                "pull_request_contributors"
+            ],
+            "commit_count_4_weeks": data["developer_data"]["commit_count_4_weeks"],
+            "year_low": sorted_chart_by_price[0][1],
+            "year_high": sorted_chart_by_price[-1][1],
+            "yoy_change": 100
+            * (sorted_chart_by_date[-1][1] / sorted_chart_by_date[0][1] - 1),
+            "price_change_24": data["market_data"]["price_change_24h"],
+            "price_change_24_percents": data["market_data"][
+                "price_change_percentage_24h"
+            ],
+        }
+
+        # Calculate open issues.
+        if (
+            data["developer_data"]["total_issues"]
+            and data["developer_data"]["closed_issues"]
+        ):
+            to_return["open_issues"] = (
+                data["developer_data"]["total_issues"]
+                - data["developer_data"]["closed_issues"]
+            )
+        else:
+            to_return["open_issues"] = None
+
+        return to_return
+
+    async def _fetch_news_features(self, news):
+        """
+        Asynchronously fetches all news features.
+
+        :param list news: List of news objects.
+        """
+
+        async def fetch_all(session, news):
+            """
+            Fetches all news features.
+
+            :param aiohttp.ClientSession session: Session instance.
+            :param list news: List of news objects.
+            """
+
+            await asyncio.gather(*[fetch_one(session, n) for n in news])
+
+        async def fetch_one(session, news):
+            """
+            Fetches a few features to the given news object. Features
+            are set directly to the news object.
+            Fetched features are:
+
+            * date
+            * image
+            * description
+
+            :param aiohttp.ClientSession session: Session instance.
+            :param object news: News object.
+            """
+
+            try:
+                async with session.get(news["url"]) as response:
+                    html = await response.text()
+                    dom = BeautifulSoup(html, features="lxml")
+
+                    # Title.
+                    try:
+                        news["title"] = dom.find("meta", {"property": "og:title"})[
+                            "content"
+                        ]
+                    except:
+                        news["title"] = None
+
+                    # Date.
+                    try:
+                        d = dom.find("meta", {"property": "article:published_time"})[
+                            "content"
+                        ]
+                        news["date"] = datetime.strptime(d, "%Y-%m-%dT%H:%M:%S%z")
+                    except:
+                        news["date"] = None
+
+                    # Image.
+                    try:
+                        news["image"] = dom.find("meta", {"property": "og:image"})[
+                            "content"
+                        ]
+                    except:
+                        news["image"] = None
+
+                    # Description.
+                    try:
+                        news["description"] = dom.find(
+                            "meta", {"property": "og:description"}
+                        )["content"]
+                    except:
+                        news["description"] = None
+            except (
+                aiohttp.ClientResponseError,
+                aiohttp.ConnectionTimeoutError,
+                UnicodeDecodeError,
+            ):
+                pass
+
+        async with aiohttp.ClientSession() as session:
+            await fetch_all(session, news)
+
+    def _drop_bad_news(self, news):
+        """
+        Drops news that doesn't suit following requirements.
+
+        * must have published date (date)
+
+        :param list news: List of news.
+        :return: Filtered list of news.
+        :rtype: list
+        """
+
+        filtered_news = []
+
+        for n in news:
+            if "date" not in n or not n["date"]:
+                continue
+
+            filtered_news.append(n)
+
+        return filtered_news
+
+    def _get_json(self, url):
+        """
+        Downloads data from the given  URL and parses them as JSON.
+        Handles exception and raises own ones with sane messages.
+
+        :param str url: URL to be scraped.
+        :return: Parsed JSON data.
+        :rtype: object or list
+        """
+
+        # Download.
+        try:
+            response = self.req_ses.get(url)
+        except:
+            raise Exception("Couldn't download necessary data from the internet.")
+
+        response.raise_for_status()
+
+        # Parse.
+        try:
+            return response.json()
+        except:
+            raise Exception("Couldn't parse downloaded data from the internet.")
+
+    def _get_coin_slug_from_params(self, symbol=None, slug=None):
+        """
+        Handles incoming symbol or slug params and returns one and
+        only slug (based on symbol [if only one exists] or the given
+        slug).
+
+        :param str symbol: Coin symbol - i.e. BTC, ETH, ...
+        :param str slug: Coin slug (based on coingecko.com).
+        :raises AttributeError: If symbol and slug params are empty.
+        :return: Coin slug.
+        :rtype: str
+        """
+
+        # Validate input params.
+        if not symbol and not slug:
+            raise AttributeError('Please hand over "symbol" or "slug" param.')
+
+        # Slug -> noop.
+        if slug:
+            return slug
+
+        # Symbol.
+        slugs = self.get_coin_slugs(symbol)
+
+        if 1 < len(slugs):
+            raise Exception(
+                f'Symbol is common for {len(slugs)} coins. Please specify "slug" param instead.'
+            )
+
+        return slugs[0]
