@@ -1,0 +1,66 @@
+[build-system]
+requires = ["poetry-core >=1,<3"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "nitrokey"
+version = "0.3.2"
+description = "Nitrokey Python SDK"
+authors = ["Nitrokey <pypi@nitrokey.com>"]
+license = "Apache-2.0 or MIT"
+readme = "README.md"
+repository = "https://github.com/Nitrokey/nitrokey-sdk-py"
+classifiers = [
+    "Intended Audience :: Developers",
+]
+packages = [
+    { include = "nitrokey", from = "src" },
+]
+
+[tool.poetry.dependencies]
+cryptography = ">=41"
+fido2 = ">=1.1.2, <3"
+python = "^3.9.2"
+requests = "^2"
+semver = "^3"
+tlv8 = "^0.10"
+
+# lpc55
+crcmod = "^1.7"
+hidapi = "^0.14"
+
+# nrf52
+protobuf = "^5.26"
+pyserial = "^3.5"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.3"
+fake-winreg = "^1.6"
+flake8 = "^7.1"
+isort = "^5.13.2"
+mypy = "^1.4"
+rstcheck = { version = "^6", extras = ["sphinx"] }
+sphinx = "^7"
+types-protobuf = "^5.26"
+types-requests = "^2.32"
+typing-extensions = "^4.1"
+
+[tool.black]
+target-version = ["py39"]
+
+[tool.isort]
+py_version = "39"
+profile = "black"
+
+[tool.mypy]
+mypy_path = "stubs"
+show_error_codes = true
+python_version = "3.9"
+strict = true
+
+[tool.rstcheck]
+ignore_directives = ["autoclass", "autofunction", "automodule"]
+ignore_substitutions = ["nitrokey_sdk_version"]
