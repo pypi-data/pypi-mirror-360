@@ -1,0 +1,44 @@
+[build-system]
+requires = [
+    "poetry-core>=1.0.0",
+    "Cython>=3.0.0",
+    "numpy >=1.2.0",
+    "pandas > 1.5.0",
+]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "slow-zigzag"
+version = "0.3.7"
+description = "Zig Zag indicator"
+authors = ["hjkim17 <ouiqdmw17@gmail.com>", "pakchu <gus4734@gmail.com>"]
+readme = "README.md"
+packages = [
+    {include = "zigzag"},
+    {include = "zigzag_cython"},
+]
+
+include = [
+    { path = "zigzag_cython/**/*.so", format = "wheel" },
+    { path = "zigzag_cython/**/*.c", format = "wheel"},
+    { path = "zigzag_cython/**/*.pyx" },
+    { path = "zigzag_cython/**/*.pyd" },
+    { path = "zigzag_cython/**/*.py"  },
+    { path = "zigzag/**/*.py"         },
+]
+
+[tool.poetry.dependencies]
+python = ">=3.9"
+cython = "^3.0.11"
+numpy = ">=1.2.0, < 3.0.0"
+pandas = ">=1.5.0, < 3.0.0"
+twine = "^6.1.0"
+
+
+[tool.poetry.scripts]
+zigzag-build = "build:main"
+
+
+[tool.poetry.build]
+generate-setup-file = false
+script = "build.py"
