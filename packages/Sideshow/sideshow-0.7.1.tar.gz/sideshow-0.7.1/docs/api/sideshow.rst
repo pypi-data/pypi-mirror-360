@@ -1,0 +1,6 @@
+
+``sideshow``
+============
+
+.. automodule:: sideshow
+   :members:

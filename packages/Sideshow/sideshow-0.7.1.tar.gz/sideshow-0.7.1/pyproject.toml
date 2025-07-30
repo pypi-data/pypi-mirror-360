@@ -1,0 +1,81 @@
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "Sideshow"
+version = "0.7.1"
+description = "Case/Special Order Tracker"
+readme = "README.md"
+authors = [
+  {name = "Lance Edgar", email = "lance@wuttaproject.org"}
+]
+maintainers = [
+  {name = "Lance Edgar", email = "lance@wuttaproject.org"}
+]
+classifiers = [
+        "Development Status :: 3 - Alpha",
+        "Environment :: Web Environment",
+        "Framework :: Pyramid",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+        "Natural Language :: English",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Topic :: Office/Business",
+]
+license = {text = "GNU General Public License v3+"}
+requires-python = ">= 3.8"
+dependencies = [
+        "SQLAlchemy<2",         # TODO: should allow 2.x
+        "WuttaWeb>=0.22.0",
+]
+
+[project.optional-dependencies]
+postgres = ["psycopg2"]
+mysql = ["mysql-connector-python"]
+docs = ["Sphinx", "furo", "sphinxcontrib-programoutput", "enum-tools[sphinx]"]
+tests = ["pytest-cov", "tox"]
+
+
+[project.scripts]
+"sideshow" = "sideshow.cli:sideshow_typer"
+
+[project.entry-points."fanstatic.libraries"]
+sideshow_libcache = "sideshow.web.static:libcache"
+
+[project.entry-points."paste.app_factory"]
+"main" = "sideshow.web.app:main"
+
+[project.entry-points."wutta.app.providers"]
+sideshow = "sideshow.app:SideshowAppProvider"
+
+[project.entry-points."wutta.batch.neworder"]
+"sideshow" = "sideshow.batch.neworder:NewOrderBatchHandler"
+
+[project.entry-points."wutta.config.extensions"]
+"sideshow" = "sideshow.config:SideshowConfig"
+
+[project.entry-points."wutta.web.menus"]
+sideshow = "sideshow.web.menus:SideshowMenuHandler"
+
+
+[project.urls]
+Homepage = "https://wuttaproject.org/"
+Repository = "https://forgejo.wuttaproject.org/wutta/sideshow"
+Issues = "https://forgejo.wuttaproject.org/wutta/sideshow/issues"
+Changelog = "https://forgejo.wuttaproject.org/wutta/sideshow/src/branch/master/CHANGELOG.md"
+
+
+[tool.commitizen]
+version_provider = "pep621"
+tag_format = "v$version"
+update_changelog_on_bump = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sideshow"]
