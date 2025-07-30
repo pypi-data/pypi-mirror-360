@@ -1,0 +1,138 @@
+# Datatrack - Lightweight Schema Change Tracker
+
+Datatrack is a minimal open-source CLI tool to **track schema changes** across versions in your data systems. It's built for **Data Engineers** and **Platform Teams** who want **automated schema linting, verification, diffs, and export** across snapshots.
+
+
+
+## Features
+
+- Snapshot schemas from any SQL-compatible DB
+- Lint schema naming issues
+- Enforce verification rules
+- Compare schema snapshots (diff)
+- Export to JSON/YAML for auditing or CI
+- Full pipeline in one command
+
+##  Installation
+
+Option 1: Install from GitHub (for development)
+```bash
+git clone https://github.com/nrnavaneet/datatrack.git
+cd datatrack
+pip install -r requirements.txt
+pip install -e .
+```
+This method is ideal if you want to contribute or modify the tool.
+
+Option 2: Install from PyPI (production use)
+```bash
+pip install dbtracker
+```
+This is the easiest and recommended way to use datatracker as a CLI tool in your workflows.
+
+##  How to Use
+
+### 1. Initialize Tracking
+
+```bash
+datatrack init
+```
+
+Creates `.datatrack/`, `.databases/`, and optional initial files.
+
+
+### 2. Create Example SQLite DB (Optional)
+
+```python
+import sqlite3
+from pathlib import Path
+
+Path(".databases").mkdir(parents=True, exist_ok=True)
+conn = sqlite3.connect(".databases/example.db")
+c = conn.cursor()
+c.execute("CREATE TABLE users (id INTEGER, name TEXT, created_at TEXT)")
+c.execute("CREATE TABLE orders (order_id INTEGER, user_id INTEGER, amount REAL)")
+conn.commit()
+conn.close()
+```
+
+### 3. Take a Schema Snapshot
+
+```bash
+datatrack snapshot --source sqlite:///.databases/example.db
+```
+
+
+### 4. Run Linter
+
+```bash
+datatrack lint
+```
+
+Warns if ambiguous names, overly generic types, etc.
+
+
+### 5. Schema Verification
+
+```bash
+datatrack verify
+```
+
+By default reads rules from `schema_rules.yaml` in project root.
+
+
+### 6. Show Schema Differences
+
+```bash
+datatrack diff
+```
+
+Compares latest 2 snapshots.
+
+
+### 7. Export Snapshot or Diff
+
+```bash
+datatrack export --type snapshot --format json --output output/snapshot.json
+
+datatrack export --type diff --format yaml --output output/diff.yaml
+```
+
+
+### 8. View Snapshot History
+
+```bash
+datatrack history
+```
+
+Lists snapshot filenames.
+
+
+### 9. Run Full Pipeline
+
+```bash
+datatrack pipeline run --source sqlite:///.databases/example.db
+```
+
+This runs:
+
+- `lint`
+- `snapshot`
+- `verify`
+- `diff`
+- `export`
+
+To change export location:
+
+```bash
+datatrack run --source sqlite:///.databases/example.db --export-dir my_output_dir
+```
+
+## 👤 Author
+
+Built with ❤️ by [@nrnavaneet](https://github.com/nrnavaneet)
+
+
+## 📝 License
+
+MIT License
