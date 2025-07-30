@@ -1,0 +1,192 @@
+Metadata-Version: 2.3
+Name: virtualitics-sdk
+Version: 1.30.0
+Summary: Virtualitics SDK
+Author: Virtualitics Engineering
+Author-email: engineering@virtualitics.com
+Requires-Python: >=3.11,<3.12
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Description-Content-Type: text/markdown
+
+# Predict Backend
+![Release Build Status](https://github.virtualitics.com/virtualitics/predict-backend/actions/workflows/deploy-release-branch.yml/badge.svg) ![Playwright E2E Tests](https://github.virtualitics.com/virtualitics/predict-backend/actions/workflows/e2e-tests.yml/badge.svg)
+
+[![Coverage](https://sonarqube.virtualitics.com/api/project_badges/measure?project=predict_backend&metric=coverage&token=sqb_7ae1a7e8a49c883216d3bf45ac4960bc00d5f2b6)](https://sonarqube.virtualitics.com/dashboard?id=predict_backend) [![Maintainability Rating](https://sonarqube.virtualitics.com/api/project_badges/measure?project=predict_backend&metric=software_quality_maintainability_rating&token=sqb_7ae1a7e8a49c883216d3bf45ac4960bc00d5f2b6)](https://sonarqube.virtualitics.com/dashboard?id=predict_backend)
+[![Reliability Rating](https://sonarqube.virtualitics.com/api/project_badges/measure?project=predict_backend&metric=software_quality_reliability_rating&token=sqb_7ae1a7e8a49c883216d3bf45ac4960bc00d5f2b6)](https://sonarqube.virtualitics.com/dashboard?id=predict_backend)
+[![Security Rating](https://sonarqube.virtualitics.com/api/project_badges/measure?project=predict_backend&metric=software_quality_security_rating&token=sqb_7ae1a7e8a49c883216d3bf45ac4960bc00d5f2b6)](https://sonarqube.virtualitics.com/dashboard?id=predict_backend)
+
+
+To run this project locally you will need a secrets.env file in the repository root directory. Somewhat current `secrets.env` files may be found on the shared drive at
+`Z:\Predict_Local_Credentials\backend-env`
+There is also a `public_env.env` included that has environmental variables that are not secrets.
+
+## Table of Contents
+1. [Running the Application](#running-the-application)
+2. [Adding Apps Locally for Fast App Development](#adding-apps-locally-for-fast-app-development)
+3. [Using the CLI](#using-the-cli)
+4. [Using the Virtualitics-SDK](#using-virtualitics_sdk)
+5. [Build Predict Backend Image - Not Required to Run Locally](#build-predict-backend-image---not-required-to-run-locally)
+6. [Running Unit Test](#running-unit-tests)
+7. [Running Integration Tests](#running-integration-tests)
+8. [Running E2E Tests](#running-e2e-tests)
+9. [Documentation](#documentation)
+10. [Running Telemetry Alongside](#running-telemetry-alongside)
+11. [Updating Dependencies](#updating-dependencies)
+12. [How to Install Updated Requirements](#how-to-install-updated-requirements)
+13. [Creating Local S3 Buckets](#creating-local-s3-buckets)
+14. [Predict Config Files](#predict-config-files)
+15. [Releasing](#releasing)
+16. [Updating 3rd Party Licenses](#updating-3rd-party-licenses)
+17. [Running Altenerative Version Containers](#running-alternate-version-containers-instead-of-release-1xx)
+18. [Common Errors When Running Locally](#common-errors-running-locally)
+
+## Running the application
+Be sure Docker is installed.
+
+Before running the script you must have an active AWS Session (MFA). Instructions for creating an AWS CLI session with MFA are here: 
+https://virtualitics.atlassian.net/wiki/spaces/CLOUD/pages/593920290/Setting+up+AWS+Access
+
+For local development, retrieve the `secrets.env` file from Keeper in the shared folder "Predict ENV Files". You will need to ask someone on the dev team (who already has access) to be added to this folder.
+
+You can start the application by running the `start.sh` shell script. 
+This starts up the application via the `docker-compose.yaml` file. Read more about `compose` here: https://docs.docker.com/compose/compose-application-model/
+
+This `start.sh` script will:
+- Login to our container repo on AWS
+- Pull the latest images (disable this line if you do not wish to pull latest images)
+- Launch the containers using `docker-compose.yaml`
+
+If you run docker-compose with the -d flag, it will run in the background and you will not automatically see logs.
+
+If running with the -d flag, you can run `docker logs -f <container name>` to check the logs for a specific container.
+
+The backend and worker containers also copy over your local machine's AWS credentials to access data for specific apps which is stored on AWS servers.
+However, if in your `public_env.env` you have set `S3_URL=http://s3:9000`, "S3" will be Minio which is listed in the `docker-compose.yaml`. Minio functions almost the same as AWS S3.
+You may need to import data (e.g., `fixtures/`) into Minio for certain apps to run locally.
+
+## Adding Apps locally for fast app development 
+1. Decide what you want to call your module.
+2. Add this to the env var PROJECTS_LIST:
+```PROJECTS_LIST = '["projects", "predict_demos", "your_projects"]' ```
+3. Make sure that volume is mounted in the predict-backend and predict-worker containers in `docker-compose.yaml`:
+```    volumes:
+      - .:/opt/app-root/src/
+      - ../predict-demos/predict_demos/:/opt/app-root/src/predict_demos/
+      - ../your_projects/:/opt/app-root/src/your_projects
+      - ~/.aws/:/opt/app-root/src/.aws/
+```
+4. Run `./start.sh` and go to `localhost:3000` and login (it will be whatever your `ACCOUNTS_LOGIN` env var is, probably staging accounts.)
+5. Make and save your custom apps in `../your_projects/`.
+6. You should see your custom apps.
+7. Debugging: If your apps aren’t loading or aren’t visible, check the backend container logs for errors. If your apps error while running, check the worker container logs for errors.
+If you get errors running apps that connect to Explore, check those two containers and websocket container for errors.
+Read more about Docker volume mounts here: https://docs.docker.com/storage/volumes/
+
+## Using the CLI
+You can use the CLI to upload apps locally as well, which you can find here: https://pypi.org/project/virtualitics-cli/
+Ensure you download a compatible virtualitics-cli version for the Predict version you are using.
+
+## Using virtualitics_sdk
+If you want, you can add https://pypi.org/project/virtualitics-sdk/ for intelligent autocompletion while writing apps in Predict.
+
+To install the virtualitics_sdk project as a local pip project, so that you can use type hints running against your local virtualitcs_sdk: 
+* Temporarilly move the top level pyproject.toml to pyproject.toml.bak
+* Copy virtualitics_sdk/pyproject.toml to the top level. 
+* `pip install -e .`
+* revert to the prior pyproject setup. 
+
+## Build Predict Backend image - NOT REQUIRED TO RUN LOCALLY
+For the most part since we have self-service deployments (https://github.virtualitics.com/virtualitics/self-service), 
+GitHubActions on every PR that will build an image, run unit tests and can deploy to dev (and then run integration tests), there is not much of a reason to build images locally.
+
+But if you insist:
+Create file PREDICT_KEY in the root of your project.
+The value to include in the file is located on the Z: drive under /Predict_Local_Credentials/predict-whl-decryption-keys.txt 
+Do not include the variable name in the file.
+
+To build a backend image run docker build . -t 476459316612.dkr.ecr.us-gov-west-1.amazonaws.com/predict-backend:latest-dev --target release --secret id=PREDICT_KEY,src=PREDICT_KEY
+
+## Running Unit Tests
+Unit tests will run if you make a PR in Github, via Github Actions.
+
+To run locally:
+You can run the unit tests for the application in Docker. 
+First, make sure that you have taken down the project if it is running by executing `docker-compose down`
+Then run the helper script `run-tests.sh`. This will run the backend docker image, mount your local code into it, and run the unit tests as the entrypoint.
+The environment in this container is unconfigured, and it is not connected to any other services so this is a better, more representative way to run the tests.
+
+## Running Integration Tests
+Integration tests will run if you make a PR in Github, via Github actions once an image is built, unit tests have passed and you have deployed to dev.
+Please coordinate with other devs during the workday if a lot of people are pushing to dev at once.
+
+To run integration tests locally:
+* update and launch the necessary containers: `./start-integration-tests.sh`
+* create an interactive shell in the backend container `docker exec -it predict-backend bash`
+* install pytest `pip install pytest`
+* run the integration tests `python -m pytest test/integration/` 
+
+## Running E2E Tests
+
+First, run `pip3 install -r test/e2e/requirements.txt` to install the necessary requirements.
+Then, make sure the project is running by running `./start.sh`.
+Finally, locally, you can run `python -m pytest test/e2e` to run the e2e test suite.
+
+If there are issues, ensure there is enough memory allocated in Docker.
+
+## Documentation
+
+Documentation is handled by a separate repo: https://github.virtualitics.com/virtualitics/predict-docs
+
+## Running Telemetry Alongside
+
+* Uncomment the telemetry and Telemetry pg sections in docker compose file, and the "depends on"
+* Set an env var called `TELEMETRY_DIR` to your Telemetry root directory
+* Uncomment the telemetry and postgres-telemetry services in `start.sh`
+* Be sure to switch Telemetry to run on port 6000, and Telemetry pg to run on `5532` (or whatever you prefer)
+
+
+## Updating dependencies
+
+This section only applies if you need to make changes to dependencies.
+
+Uv is a Python dependency management system that we use in Predict.
+https://docs.astral.sh/uv/guides/projects/#managing-dependencies
+There is a script that will run the uv lock update inside of a container which ensures that the proper Linux/intel based lockfile is created:
+`predict-backend/scripts/update-dependencies.sh`
+This must be run after adjusting the `pyproject.toml`.
+
+## Creating local s3 buckets
+If you wish to automatically create s3 buckets in Minio on startup other than `predict-dev`, add them to the `BUCKETS_LIST = '["predict-utilities"]'` `public_env.env` var as a JSON list, similar to `PROJECTS_LIST`.
+Otherwise, DSO takes care of s3 buckets in deployments.
+
+## Predict config files
+These are managed by DevSecOps via Terraform. Consult with them if you need updates.
+
+## Releasing
+Follow the instructions found here: https://virtualitics.atlassian.net/wiki/spaces/EN/pages/2247294978/Virtualitics+AI+Platform+-+Release+Procedures+and+Notes#Predict
+
+Official release notes: https://virtualitics.atlassian.net/wiki/spaces/PROD/pages/2363785239/Virtualitics+AI+Platform+aka+Predict+Release+Notes
+
+Be sure the config file is correct for which projects to download for the deployment is up-to-date. Consult with DevSecOps.
+Be sure that the `PROJECTS_LIST` environmental variable is correct in the production deployment, and matches what should be installed from the project config file. 
+
+## Updating 3rd Party Licenses 
+https://docs.google.com/spreadsheets/d/1fAxzyF9F75VvQ6LtFdut4vQzNhAee3H_f6Jh5HwtQww/edit#gid=1647524638
+
+When a release is set, update the 3rd pary license Google sheet for potential auditing purposes. Create a new sheet with the version number, download and run the release
+backend image, and `pip install pip-licenses`.
+Then run 
+`pip-licenses --summary --format=csv` and
+`pip-licenses --from=mixed --format=csv --with-maintainers --with-authors --with-urls --with-description`
+Combine the two to make a new sheet of 3rd pary licenses.
+
+## Running Alternate Version Containers (Instead of release-1.x.x)
+Replace `release-1.x.x` on each container `image` line in `docker-compose.yaml` with whatever image tag you wish to use.
+Valid image tags tend to be `latest-stg`, `latest-dev-a`, `v1.22.0` (official release tag), etc.
+Be aware that frontend and backed containers should use the same tag, as we do not test differing frontend/backend version compatibility.
+Worker/websocket/backend all must be on the same tag as well.
+
+## Common errors running locally:
+
+
