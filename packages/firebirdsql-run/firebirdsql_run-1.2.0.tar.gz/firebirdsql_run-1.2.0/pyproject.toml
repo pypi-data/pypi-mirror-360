@@ -1,0 +1,96 @@
+[project]
+name            = "firebirdsql-run"
+description     = "Firebirdsql wrapper inspired by subprocess.run"
+readme          = "README.md"
+license         = "MIT"
+authors         = [{ name = "deadnews", email = "deadnewsgit@gmail.com" }]
+classifiers     = ["Operating System :: OS Independent", "Topic :: Database"]
+keywords        = ["firebird", "sql", "api"]
+dynamic         = ["version"]
+requires-python = ">=3.12"
+
+dependencies = ["firebirdsql==1.4.0", "passlib>=1.7.4"]
+
+[dependency-groups]
+dev = [
+  "mypy>=1.15.0",
+  "pyright>=1.1.398",
+  "ruff>=0.11.4",
+  "pytest>=8.3.5",
+  "pytest-cov>=6.1.0",
+  "pytest-mock>=3.14.0",
+  "mkdocs>=1.6.1",
+  "mkdocs-gen-files>=0.5.0",
+  "mkdocs-literate-nav>=0.6.2",
+  "mkdocs-material>=9.6.11",
+  "mkdocstrings>=0.29.1",
+  "mkdocstrings-python>=1.16.10",
+]
+
+[project.urls]
+Repository    = "https://github.com/deadnews/firebirdsql-run"
+Changelog     = "https://github.com/deadnews/firebirdsql-run/CHANGELOG.md"
+Documentation = "https://deadnews.github.io/firebirdsql-run"
+
+[build-system]
+requires      = ["hatchling", "uv-dynamic-versioning"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[tool.uv-dynamic-versioning]
+vcs   = "git"
+style = "semver"
+
+[tool.ruff]
+line-length        = 99
+format.line-ending = "lf"
+
+[tool.ruff.lint]
+flake8-tidy-imports.ban-relative-imports = "all"
+pycodestyle.max-doc-length               = 129
+pycodestyle.max-line-length              = 129
+pydocstyle.convention                    = "google"
+
+select = ["ALL"]
+ignore = [
+  "COM812",  # Trailing comma missing
+  "FBT001",  # Boolean positional arg in function definition
+  "FBT002",  # Boolean default value in function definition
+  "ISC001",  # Checks for implicitly concatenated strings on a single line
+  "PLR0913", # Too many arguments to function call
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*"     = ["ANN", "D", "E501", "PLC1901", "PLR2004", "S"]
+
+[tool.pytest.ini_options]
+addopts   = "--verbose --cov=./src --cov-report=term --cov-report=xml"
+testpaths = ["tests"]
+markers   = ["online: Run tests that require a Firebird server"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "# pragma: no cover",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.mypy]
+disallow_untyped_defs  = true
+follow_imports         = "normal"
+ignore_missing_imports = true
+show_column_numbers    = true
+show_error_codes       = true
+warn_unused_ignores    = true
+
+[[tool.mypy.overrides]]
+module                = ["tests.*"]
+disallow_untyped_defs = false
+
+[tool.pyright]
+include          = ["src"]
+ignore           = ["tests"]
+typeCheckingMode = "standard"
