@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=69.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src", "images"]
+include = ["*"]
+exclude = ["__pycache__"]
+namespaces = true         # true by default
+
+[tool.mypy]
+mypy_path = "src-stubs"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+addopts = "--ignore=tests/test_scripts"
+
+[project.scripts]
+chunknorris = "chunknorris.__main__:main"
+
+[project]
+name = "chunknorris"
+version = "1.1.3"
+authors = [{ name = "Wikit", email = "dev@wikit.ai" }]
+description = "A package for chunking documents from various formats"
+keywords = [
+  "chunk",
+  "document",
+  "split",
+  "html",
+  "markdown",
+  "pdf",
+  "header",
+  "parsing",
+  "RAG",
+]
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.10"
+classifiers = [
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3.11",
+  "Framework :: Pytest",
+  "License :: OSI Approved :: GNU Affero General Public License v3",
+  "Topic :: Text Processing :: Markup :: Markdown",
+  "Topic :: Text Processing :: Markup :: HTML",
+  "Operating System :: OS Independent",
+]
+
+dynamic = ["dependencies", "optional-dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+optional-dependencies.dev = { file = ["requirements.dev.txt"] }
+
+[project.urls]
+Homepage = "https://github.com/wikit-ai/chunknorris"
+Issues = "https://github.com/wikit-ai/chunknorris/issues"
+Documentation = "https://wikit-ai.github.io/chunknorris/"
