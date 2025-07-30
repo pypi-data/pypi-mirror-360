@@ -1,0 +1,236 @@
+[project]
+name = "linalg-zero"
+version = "v0.1.0"
+description = "This repository provides tools to generate a linear algebra dataset and code to train an open-source pre-trained model. Our goal is to explore the model's potential for emergent reasoning, inspired by the Deepseek-R1 paper."
+authors = [{ name = "Razvan Florian Vasile", email = "atomwalk@duck.com" }]
+readme = "README.md"
+keywords = ['python']
+requires-python = ">=3.9,<4.0"
+classifiers = [
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+]
+
+[tool.uv]
+# Instead of using --no-build-isolation from the command line
+no-build-isolation-package = ["flash-attn"]
+
+# PyTorch configuration - users can override by setting UV_TORCH_BACKEND
+# Default: CPU builds for non-Linux, CUDA 12.8 for Linux
+# See: https://docs.astral.sh/uv/guides/integration/pytorch/
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu", marker = "sys_platform != 'linux'" },
+  { index = "pytorch-cu128", marker = "sys_platform == 'linux'" },
+]
+torchvision = [
+  { index = "pytorch-cpu", marker = "sys_platform != 'linux'" },
+  { index = "pytorch-cu128", marker = "sys_platform == 'linux'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[project.urls]
+Homepage = "https://atomwalk12.github.io/linalg-zero/"
+Repository = "https://github.com/atomwalk12/linalg-zero"
+Documentation = "https://atomwalk12.github.io/linalg-zero/"
+
+[dependency-groups]
+dev = [
+    "pytest>=7.2.0",
+    "pre-commit>=2.20.0",
+    "tox-uv>=1.11.3",
+    "deptry>=0.23.0",
+    "mypy>=1.16.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.11.5",
+    "mkdocs>=1.4.2",
+    "mkdocs-material>=8.5.10",
+    "mkdocstrings[python]>=0.26.1",
+    "python-semantic-release>=10.1.0",
+    "types-pyyaml>=6.0.12.20250516",
+    "types-tqdm>=4.67.0.20250516",
+]
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.setuptools]
+py-modules = ["linalg_zero"]
+
+[tool.mypy]
+files = ["linalg_zero"]
+disallow_untyped_defs = true
+disallow_any_unimported = false
+no_implicit_optional = true
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+show_error_codes = true
+
+# PyTorch-specific ignores
+[[tool.mypy.overrides]]
+module = [
+    "torch.*",
+    "torchvision.*",
+    "torchaudio.*",
+    "deepspeed.*",
+    "datasets.*"
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+fix = true
+
+[tool.ruff.lint]
+select = [
+    # flake8-2020
+    "YTT",
+    # flake8-bandit
+    "S",
+    # flake8-bugbear
+    "B",
+    # flake8-builtins
+    "A",
+    # flake8-comprehensions
+    "C4",
+    # flake8-debugger
+    "T10",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # mccabe
+    "C90",
+    # pycodestyle
+    "E", "W",
+    # pyflakes
+    "F",
+    # pygrep-hooks
+    "PGH",
+    # pyupgrade
+    "UP",
+    # ruff
+    "RUF",
+    # tryceratops
+    "TRY",
+]
+ignore = [
+    # LineTooLong
+    "E501",
+    # DoNotAssignLambda
+    "E731",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+[tool.ruff.format]
+preview = true
+
+[tool.coverage.report]
+skip_empty = true
+
+[tool.coverage.run]
+branch = true
+source = ["linalg_zero"]
+omit = [
+    # This file is a thin wrapper around the launch script, it is intended to be very simple.
+    # It is excluded from the coverage report.
+    "*/run_training.py",
+    "*/metrics/accuracy.py",
+    "*/trainers/zero_trainer.py",
+    "*/models/simple_cnn.py",
+]
+
+# Generated with: semantic-release generate-config --pyproject >> pyproject.toml
+[tool.semantic_release]
+assets = []
+build_command_env = []
+commit_message = "chore(release): 📦 v{version} [skip ci]"
+commit_parser = "conventional"
+logging_use_named_masks = false
+major_on_zero = true
+allow_zero_version = true
+repo_dir = "."
+no_git_verify = false
+tag_format = "v{version}"
+
+[tool.semantic_release.branches.main]
+match = "(main|master)"
+prerelease_token = "rc"
+prerelease = false
+
+[tool.semantic_release.changelog]
+exclude_commit_patterns = ["^chore.*"]
+mode = "init"
+insertion_flag = "<!-- version list -->"
+template_dir = "templates"
+
+[tool.semantic_release.changelog.default_templates]
+changelog_file = "CHANGELOG.md"
+output_format = "md"
+mask_initial_release = false
+
+[tool.semantic_release.changelog.environment]
+block_start_string = "{%"
+block_end_string = "%}"
+variable_start_string = "{{"
+variable_end_string = "}}"
+comment_start_string = "{#"
+comment_end_string = "#}"
+trim_blocks = false
+lstrip_blocks = false
+newline_sequence = "\n"
+keep_trailing_newline = false
+extensions = []
+autoescape = false
+
+[tool.semantic_release.commit_author]
+env = "GIT_COMMIT_AUTHOR"
+default = "semantic-release <semantic-release>"
+
+[tool.semantic_release.commit_parser_options]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+other_allowed_tags = ["build", "chore", "ci", "docs", "style", "refactor", "test"]
+allowed_tags = ["feat", "fix", "perf", "build", "chore", "ci", "docs", "style", "refactor", "test"]
+default_bump_level = 0
+parse_squash_commits = false
+ignore_merge_commits = false
+
+[tool.semantic_release.remote]
+name = "origin"
+type = "github"
+ignore_token_for_push = false
+insecure = false
+
+[tool.semantic_release.publish]
+dist_glob_patterns = ["dist/*"]
+upload_to_vcs_release = true
