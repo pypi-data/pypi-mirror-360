@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataGhost Dashboard 👻</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header h1 {
+            color: #4a5568;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card h2 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f7fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #4299e1;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        tr:hover {
+            background: #f7fafc;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .status-failed {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        
+        .progress-bar {
+            background: #e2e8f0;
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            transition: width 0.3s ease;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #718096;
+        }
+        
+        .error {
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #fc8181;
+        }
+        
+        .btn {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background 0.2s ease;
+        }
+        
+        .btn:hover {
+            background: #3182ce;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .timestamp {
+            color: #718096;
+            font-size: 0.875rem;
+        }
+        
+        .refresh-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s ease;
+        }
+        
+        .refresh-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>👻 DataGhost Dashboard</h1>
+    </div>
+    
+    <div class="container">
+        <!-- Overview Statistics -->
+        <div class="card">
+            <h2>📊 Overview</h2>
+            <div class="stats-grid" id="overview-stats">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <!-- Task Health -->
+            <div class="card">
+                <h2>🎯 Task Health</h2>
+                <div id="task-health">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card">
+                <h2>⚡ Recent Activity</h2>
+                <div id="recent-activity">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- All Tasks -->
+        <div class="card">
+            <h2>📋 All Tasks</h2>
+            <div class="table-container" id="tasks-table">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+        
+        <!-- Recent Snapshots -->
+        <div class="card">
+            <h2>📸 Recent Snapshots</h2>
+            <div class="table-container" id="snapshots-table">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+    </div>
+    
+    <button class="refresh-btn" onclick="refreshDashboard()">🔄</button>
+    
+    <script>
+        let dashboardData = {};
+        
+        async function fetchData() {
+            try {
+                const [overviewRes, tasksRes, snapshotsRes] = await Promise.all([
+                    fetch('/api/overview'),
+                    fetch('/api/tasks'),
+                    fetch('/api/snapshots?limit=20')
+                ]);
+                
+                const overview = await overviewRes.json();
+                const tasks = await tasksRes.json();
+                const snapshots = await snapshotsRes.json();
+                
+                dashboardData = { overview, tasks, snapshots };
+                updateDashboard();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                showError('Failed to load dashboard data');
+            }
+        }
+        
+        function updateDashboard() {
+            updateOverview();
+            updateTaskHealth();
+            updateRecentActivity();
+            updateTasksTable();
+            updateSnapshotsTable();
+        }
+        
+        function updateOverview() {
+            const stats = dashboardData.overview.statistics;
+            const container = document.getElementById('overview-stats');
+            
+            container.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-value">${stats.total_snapshots}</div>
+                    <div class="stat-label">Total Snapshots</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.total_tasks}</div>
+                    <div class="stat-label">Tasks</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.successful_runs}</div>
+                    <div class="stat-label">Successful</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.failed_runs}</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${stats.success_rate.toFixed(1)}%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+            `;
+        }
+        
+        function updateTaskHealth() {
+            const taskHealth = dashboardData.overview.task_health;
+            const container = document.getElementById('task-health');
+            
+            if (taskHealth.length === 0) {
+                container.innerHTML = '<p class="loading">No tasks found</p>';
+                return;
+            }
+            
+            const html = taskHealth.map(task => `
+                <div style="margin-bottom: 1rem; padding: 1rem; background: #f7fafc; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <strong>${task.task_id}</strong>
+                        <span class="status-badge ${task.success_rate >= 90 ? 'status-success' : 'status-failed'}">
+                            ${task.success_rate.toFixed(1)}%
+                        </span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${task.success_rate}%"></div>
+                    </div>
+                    <div style="font-size: 0.875rem; color: #718096; margin-top: 0.5rem;">
+                        ${task.total_runs} runs
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = html;
+        }
+        
+        function updateRecentActivity() {
+            const recent = dashboardData.overview.recent_activity;
+            const container = document.getElementById('recent-activity');
+            
+            if (recent.length === 0) {
+                container.innerHTML = '<p class="loading">No recent activity</p>';
+                return;
+            }
+            
+            const html = recent.map(snapshot => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid #e2e8f0;">
+                    <div>
+                        <div style="font-weight: 600;">${snapshot.task_id}</div>
+                        <div class="timestamp">${formatTimestamp(snapshot.timestamp)}</div>
+                    </div>
+                    <span class="status-badge ${snapshot.success ? 'status-success' : 'status-failed'}">
+                        ${snapshot.success ? 'Success' : 'Failed'}
+                    </span>
+                </div>
+            `).join('');
+            
+            container.innerHTML = html;
+        }
+        
+        function updateTasksTable() {
+            const tasks = dashboardData.tasks.tasks;
+            const container = document.getElementById('tasks-table');
+            
+            if (tasks.length === 0) {
+                container.innerHTML = '<p class="loading">No tasks found</p>';
+                return;
+            }
+            
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Task ID</th>
+                            <th>Runs</th>
+                            <th>Success Rate</th>
+                            <th>Avg Time</th>
+                            <th>Latest Run</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tasks.map(task => `
+                            <tr>
+                                <td><strong>${task.task_id}</strong></td>
+                                <td>${task.total_runs}</td>
+                                <td>
+                                    <span class="status-badge ${task.success_rate >= 90 ? 'status-success' : 'status-failed'}">
+                                        ${task.success_rate.toFixed(1)}%
+                                    </span>
+                                </td>
+                                <td>${task.avg_execution_time.toFixed(3)}s</td>
+                                <td class="timestamp">${formatTimestamp(task.latest_run)}</td>
+                                <td>
+                                    <button class="btn btn-sm" onclick="replayTask('${task.task_id}')">Replay</button>
+                                    <button class="btn btn-sm" onclick="diffTask('${task.task_id}')">Diff</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        function updateSnapshotsTable() {
+            const snapshots = dashboardData.snapshots.snapshots;
+            const container = document.getElementById('snapshots-table');
+            
+            if (snapshots.length === 0) {
+                container.innerHTML = '<p class="loading">No snapshots found</p>';
+                return;
+            }
+            
+            const html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Task ID</th>
+                            <th>Run ID</th>
+                            <th>Timestamp</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${snapshots.map(snapshot => `
+                            <tr>
+                                <td><strong>${snapshot.task_id}</strong></td>
+                                <td class="timestamp">${snapshot.run_id.substring(0, 20)}...</td>
+                                <td class="timestamp">${formatTimestamp(snapshot.timestamp)}</td>
+                                <td>${snapshot.execution_time.toFixed(3)}s</td>
+                                <td>
+                                    <span class="status-badge ${snapshot.success ? 'status-success' : 'status-failed'}">
+                                        ${snapshot.success ? 'Success' : 'Failed'}
+                                    </span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        function formatTimestamp(timestamp) {
+            return new Date(timestamp).toLocaleString();
+        }
+        
+        function showError(message) {
+            const container = document.getElementById('overview-stats');
+            container.innerHTML = `<div class="error">${message}</div>`;
+        }
+        
+        async function replayTask(taskId) {
+            try {
+                const response = await fetch(`/api/replay/${taskId}`, { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.replay_result.replay_success) {
+                    alert(`✅ Replay successful for ${taskId}`);
+                } else {
+                    alert(`❌ Replay failed for ${taskId}: ${result.replay_result.replay_error}`);
+                }
+            } catch (error) {
+                alert(`❌ Failed to replay ${taskId}: ${error.message}`);
+            }
+        }
+        
+        async function diffTask(taskId) {
+            try {
+                const response = await fetch(`/api/diff/${taskId}`);
+                const result = await response.json();
+                
+                const summary = result.diff_result.summary;
+                alert(`📊 Diff for ${taskId}:\n\nTotal differences: ${summary.total_differences}\nSections with changes: ${summary.sections_with_changes.join(', ')}\nSuccess changed: ${summary.success_changed}`);
+            } catch (error) {
+                alert(`❌ Failed to diff ${taskId}: ${error.message}`);
+            }
+        }
+        
+        function refreshDashboard() {
+            fetchData();
+        }
+        
+        // Auto-refresh every 30 seconds
+        setInterval(fetchData, 30000);
+        
+        // Initial load
+        fetchData();
+    </script>
+</body>
+</html>
