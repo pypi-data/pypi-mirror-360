@@ -1,0 +1,36 @@
+<<% extends "_lists.base.tex" %>>
+
+<<% set title = "Geburtstage" + ((" " + part.shortname) if part else "") %>>
+
+<<% set num_columns = 4 + (part is none) %>>
+<<% set portrait = True %>>
+
+<<% block table_head %>>
+    \head{Vorname} & \head{Nachname} & \head{Essen}
+    <<% if not part %>>
+        & \head{Teile}
+    <<% endif %>>
+    & \head{Geburtstag}
+<<% endblock %>>
+
+<<% block table_body %>>
+    <<% for registration in registrations %>>
+        <<< registration.name.list_forename|e >>>
+        & <<< registration.name.list_surname|e >>>
+        & <<< registration.fields.get(CONFIG.data.meal_field)|e >>>
+        <<% if not part %>>
+            &
+            <<% for part in EVENT.parts if registration.parts[part].status.is_present %>>
+                <<< part.shortname|e >>>
+                <<%- if not loop.last %>>, <<% endif %>>
+            <<% endfor %>>
+        <<% endif %>>
+        &
+        <<% for birthday in (registration.parts[part] if part else registration).event_birthdays %>>
+            <<< birthday|date('%d.%m.%Y')|e >>> (<<< birthday.year - registration.birthday.year >>>)
+            <<%- if not loop.last %>>, <<% endif %>>
+        <<% endfor %>>
+        \\
+    <<%- endfor %>>
+    \hline
+<<% endblock %>>
