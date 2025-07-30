@@ -1,0 +1,115 @@
+Metadata-Version: 2.3
+Name: shinka
+Version: 0.1.2
+Summary: A high-quality image upscaling package using a genetically-evolved algorithm.
+Author: jordan legg
+Author-email: jordan legg <me@404missing.link>
+License: MIT License
+         
+         Copyright (c) 2024 jordan legg
+         
+         Permission is hereby granted, free of charge, to any person obtaining a copy
+         of this software and associated documentation files (the "Software"), to deal
+         in the Software without restriction, including without limitation the rights
+         to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+         copies of the Software, and to permit persons to whom the Software is
+         furnished to do so, subject to the following conditions:
+         
+         The above copyright notice and this permission notice shall be included in all
+         copies or substantial portions of the Software.
+         
+         THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+         IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+         FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+         AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+         LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+         OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+         SOFTWARE. 
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Multimedia :: Graphics :: Graphics Conversion
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Dist: numpy
+Requires-Dist: pillow
+Requires-Dist: scikit-image
+Requires-Dist: scipy
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+
+# SHINKA Upscaler
+
+This repository provides a Python API for high-quality image upscaling using a specialized, genetically-evolved algorithm. The upscaler is designed for both grayscale and color images, and can be used as a drop-in replacement for traditional interpolation-based upscaling methods.
+
+## Features
+
+- Upscales images by a specified factor (e.g., 2x, 4x)
+- Supports input as file path, PIL Image, or NumPy array
+- Outputs as PIL Image or NumPy array
+- Optionally saves the upscaled image to disk
+
+## Benchmark Results
+
+SHINKA demonstrates state-of-the-art perceptual quality on real-world images. In a benchmark on 1,000 images from the takara-ai/image_captions dataset, SHINKA achieved the highest SSIM (Structural Similarity Index) among common upscaling methods:
+
+| Method   | SSIM   | PSNR (dB) |
+| -------- | ------ | --------- |
+| SHINKA   | 0.9459 | 35.32     |
+| Lanczos  | 0.9432 | 36.07     |
+| Bicubic  | 0.9376 | 35.54     |
+| Bilinear | 0.9206 | 34.16     |
+| Nearest  | 0.9145 | 32.01     |
+
+## How to Use
+
+### Installation
+
+Install from PyPI:
+
+```bash
+pip install shinka
+```
+
+### Basic Usage
+
+```python
+from shinka import upscale
+
+# Upscale an image from file and save the result
+result = upscale("input.jpg", scale=2, save_path="upscaled.png")
+
+# Upscale a NumPy array and get a PIL Image
+import numpy as np
+from PIL import Image
+arr = np.array(Image.open("input.jpg"))
+result = upscale(arr, scale=2, output_type="PIL")
+
+# Upscale and get a NumPy array
+result = upscale("input.jpg", scale=2, output_type="np")
+```
+
+### Command-Line Example
+
+A minimal test script is provided:
+
+```python
+# test_shinka.py
+from shinka import upscale
+
+upscale("DSC00183.jpeg", scale=4, save_path="test_evolved_upscaled.png")
+print("Saved test_evolved_upscaled.png")
+```
+
+## How the Algorithm Was Created
+
+The upscaling algorithm was developed using a genetic optimization process. A population of image processing pipelines was evolved over multiple generations to maximize perceptual quality (measured by SSIM and sharpness) on a diverse set of images. The best-performing pipeline was selected and implemented in `shinka` for efficient, non-ML upscaling.
+
+## License
+
+This project is licensed under the MIT License. See the LICENSE file for details.
