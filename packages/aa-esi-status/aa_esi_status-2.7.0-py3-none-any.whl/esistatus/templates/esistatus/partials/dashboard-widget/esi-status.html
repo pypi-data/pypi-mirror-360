@@ -1,0 +1,30 @@
+{% load i18n %}
+
+<div class="card">
+    <div class="card-body">
+        {% translate "ESI Status" as widget_title %}
+        {% include "framework/dashboard/widget-title.html" with title=widget_title %}
+
+        <div class="row mb-3">
+            {% translate "Red endpoints" as translated_header_red %}
+            {% translate "Red endpoints have a good chance of not responding at all or being completely unavailable." as translated_header_red_explanation %}
+            {% include 'esistatus/partials/endpoints.html' with title=translated_header_red status="red" explanation=translated_header_red_explanation data=esi_endpoint_status.red with_details=False %}
+
+            {% translate "Yellow endpoints" as translated_header_yellow %}
+            {% translate "Yellow endpoints have a good chance of being slow or returning errors." as translated_header_yellow_explanation %}
+            {% include 'esistatus/partials/endpoints.html' with title=translated_header_yellow status="yellow" explanation=translated_header_yellow_explanation data=esi_endpoint_status.yellow with_details=False %}
+
+            {% translate "Green endpoints" as translated_header_green %}
+            {% translate "Green endpoints are responding as expected." as translated_header_green_explanation %}
+            {% include 'esistatus/partials/endpoints.html' with title=translated_header_green status="green" explanation=translated_header_green_explanation data=esi_endpoint_status.green with_details=False %}
+        </div>
+
+        <div class="text-end">
+            <p class="small mb-0">
+                <a href="{% url 'esistatus:index' %}">{% translate "Detailed ESI status" %}</a>
+                |
+                <a href="https://status.eveonline.com/" target="_blank" rel="noopener noreferer">{% translate "EVE Online status" %}</a>
+            </p>
+        </div>
+    </div>
+</div>
