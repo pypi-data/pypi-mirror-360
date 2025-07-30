@@ -1,0 +1,3 @@
+"""
+Category processing package initialization.
+"""
