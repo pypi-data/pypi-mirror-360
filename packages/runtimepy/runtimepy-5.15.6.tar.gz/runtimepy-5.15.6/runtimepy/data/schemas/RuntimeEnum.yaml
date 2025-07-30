@@ -1,0 +1,32 @@
+---
+type: object
+required: [id, type]
+additionalProperties: false
+
+properties:
+  id:
+    type: integer
+    minimum: 1
+
+  default:
+    oneOf:
+      - type: string
+      - type: integer
+      - type: boolean
+
+  type:
+    enum: [bool, int]
+
+  primitive:
+    enum: [int8, int16, int32, int64, uint8, uint16, uint32, uint64]
+    default: uint8
+
+  items:
+    type: object
+    additionalProperties: false
+
+    patternProperties:
+      "^[\\w\\:_.\\-\\/]+$":
+        oneOf:
+          - type: integer
+          - type: boolean
