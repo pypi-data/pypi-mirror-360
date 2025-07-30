@@ -1,0 +1,203 @@
+Metadata-Version: 2.4
+Name: babySql
+Version: 0.1.0.2
+Summary: 基于各数据库连接包的二次开发SQL连接工具
+Home-page: https://github.com/yanshi121/BabySql
+Author: 39
+Author-email: DY39project@outlook.com
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX :: Linux
+Requires-Python: >=3.5
+Description-Content-Type: text/markdown
+Requires-Dist: pymysql
+Requires-Dist: dbutils
+Requires-Dist: psycopg2
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# BabySql 代码库文档
+
+## 概述
+
+`BabySql` 是一个用于简化数据库操作的 Python 代码库，支持多种数据库后端，目前包括 MySQL、MariaDB、PostgreSQL 和
+SQLite。该库通过统一的接口提供了创建表、数据操作、数据库管理等功能。
+## pypi地址：
+```
+https://pypi.org/project/babySql/
+```
+## 包安装：
+```
+pip install babySql
+```
+## 源码下载：
+```
+git clone https://github.com/yourname/babySql.git  
+```
+## 源码地址：
+```
+https://github.com/yanshi121/BabySql
+```
+## 核心类与使用
+
+### 1. 获取连接
+
+```python
+from babySql import BabySql
+
+ms = BabySql(dt_type="mysql", host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+             max_connections=50)
+mds = BabySql(dt_type="mariadb", host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+              max_connections=50)
+sl = BabySql(dt_type="sqlite", db="test.db", max_connections=50)
+ps = BabySql(dt_type="postgresql", host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+             max_connections=50)
+
+```
+
+or
+
+```python
+from babySql import MySQL, MariaDB, PostgreSQL, SqLite
+
+ms = MySQL(host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+           max_connections=50)
+mds = MariaDB(host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+              max_connections=50)
+ps = PostgreSQL(host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+                max_connections=50)
+sl = SqLite(db="test.db", max_connections=50)
+```
+### 2. 方法使用（以MySQL举例）
+#### 1. 数据操作
+数据新增：
+```python
+from babySql import BabySql
+
+ms = BabySql(dt_type="mysql", host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+             max_connections=50)
+# 在test_table表中插入数据
+ms.insert("test_table", ["id", "name", "age"], [1, "Rose", 4])
+```
+数据查询：
+```python
+from babySql import BabySql
+
+ms = BabySql(dt_type="mysql", host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+             max_connections=50)
+# 在test_table表中查询name字段为Rose的人的信息
+dt = ms.select("test_table", ['id', 'name', 'age']).equal("name", "Rose", "and").run()
+```
+数据修改：
+```python
+from babySql import BabySql
+
+ms = BabySql(dt_type="mysql", host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+             max_connections=50)
+# 在test_table表中将name字段中包含R的数据的age字段修改为3
+ms.update("test_table", {"age": 3}).like("name", "R", "and").run()
+```
+数据删除：
+```python
+from babySql import BabySql
+
+ms = BabySql(dt_type="mysql", host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+             max_connections=50)
+# 在test_table表中将age字段小于2或者name字段以B开始的数据删除
+ms.delete("test_table").less("age", 2).like_start("name", "B", "or", "and").run()
+```
+#### 2. 数据库操作（以MySQL举例）
+数据库创建：
+```python
+from babySql import BabySql
+
+ms = BabySql(dt_type="mysql", host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+             max_connections=50)
+# 创建名为test_database的数据库
+ms.create_database("test_database", collate="utf8mb4_general_ci", character="utf8mb4")
+```
+数据库删除：
+```python
+from babySql import BabySql
+
+ms = BabySql(dt_type="mysql", host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+             max_connections=50)
+# 删除名为test_database的数据库
+ms.drop_database("test_database")
+```
+数据库查看：
+```python
+from babySql import BabySql
+
+ms = BabySql(dt_type="mysql", host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+             max_connections=50)
+# 显示所有数据库
+database = ms.show_database()
+```
+#### 3. 数据表操作（以MySQL举例）
+表创建：
+```python
+from babySql import BabySql
+
+ms = BabySql(dt_type="mysql", host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+             max_connections=50)
+# 创建名为test_table的表，并设置注释为测试表
+table = ms.create_table("test_table", "测试表")
+# 新增test_col_1字段，类型为int并自增，注释为测试字段1
+table.column("test_col_1").type("int").auto_increment().comment("测试字段1")
+# 新增test_col_2字段，类型为text，注释为测试字段2
+table.column("test_col_2").type("text").comment("测试字段2")
+# 新增test_col_3字段，类型为varchar长度为255，注释为测试字段3
+table.column("test_col_3").type("varchar", 255).comment("测试字段3")
+# 增加test_col_1的索引并使用默认索引名
+table.add_index("test_col_1")
+# 增加test_col_1的索引并设置索引名为idx_test_col_2
+table.add_index("test_col_2", "idx")
+# 创建表
+table.build()
+```
+表修改：
+```python
+from babySql import BabySql
+
+ms = BabySql(dt_type="mysql", host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+             max_connections=50)
+# 将表名test_table修改为teat_table_new
+ms.alter_table_name("test_table", "teat_table_new")
+# test_table表新增col1字段，类型为varchar，长度为255
+ms.add_column("test_table", "col1", "varchar", 255)
+# test_table表删除col1字段
+ms.drop_column("test_table", "col1")
+# test_table表修改字段名：col1为col1_new，类型为int，长度为16
+ms.alter_column_name("test_table", "col1", "col1_new", "int", 16)
+# test_table表修改字段类型：col1新类型为varchar，长度为255
+ms.alter_column_type("test_table", "col1", "varchar", 255)
+```
+表删除：
+```python
+from babySql import BabySql
+
+ms = BabySql(dt_type="mysql", host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+             max_connections=50)
+# test_table表删除
+ms.drop_table("test_table")
+```
+表查看：
+```python
+from babySql import BabySql
+
+ms = BabySql(dt_type="mysql", host="127.0.0.1", port=3306, user="root", passwd="root123", db="test",
+             max_connections=50)
+# 查看数据库中的所有表
+table1 = ms.show_table()
+# 查看test_database数据库中的所有表
+table2 = ms.show_table_by_database_name("test_database")
+```
