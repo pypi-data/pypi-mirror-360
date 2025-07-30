@@ -1,0 +1,85 @@
+{% extends 'pbx_admin/base.html' %}
+
+{% load i18n %}
+
+{% block title %}{% trans 'Printbox Dashboard' %}{% endblock title %}
+
+{% block panel_heading %}
+Main
+<span class="badge">{{ groups_num }}</span>
+  <span class="panel-heading-action">
+
+    <a class="list-toolbar-btn" href=".">
+      <span title="" data-toggle="tooltip" class="label-tooltip" data-original-title="Refresh list" data-html="true" data-placement="left">
+        <i class="process-icon-refresh "></i>
+      </span>
+    </a>
+
+  </span>
+{% endblock panel_heading %}
+
+{% block content %}
+<table class="table tableDnD">
+    <thead></thead>
+    <tbody>
+        {% for group in groups %}
+        <tr class="{% cycle 'row1' 'row2' %}" data-href="{{ group.url }}">
+            <th class="field-name">
+                <a href="{{ group.url }}">{{ group.plural|title }}</a>
+            </th>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<br />
+<br />
+<br />
+
+{% if can_view_helpkit %}
+    <h3>
+      Help
+      <span class="icon-stack" style="width: 1em; height: 2.2em">
+          <i class="icon-circle icon-stack-1x" style="color: #27ab6b;"></i>
+          <i class="icon-question icon-stack-1x" style="color: #ffffff;"></i>
+      </span>
+    </h3>
+    <div>
+        <a href="{% url 'helpkit' '' %}" target="_blank"><strong>Help</strong></a>
+    </div>
+    <br />
+    <br />
+    <br />
+{% endif %}
+
+{% if can_edit_instance_config %}
+    <h3>Instance config</h3>
+    <div>
+        {% if instance_config %}
+        <a href="{% url 'pbx_admin:instanceconfig:edit' %}"><strong>{{ site_name }}</strong></a>
+        {% else %}
+        <i>No instance config defined - <a href="{% url 'pbx_admin:instanceconfig:add' %}"><stron>Create ...</stron></a></i>
+        {% endif %}
+    </div>
+    <br />
+    <br />
+    <br />
+{% endif %}
+
+{% if can_edit_exchange_rates %}
+    <h3>Exchange rates</h3>
+    <div>
+        <a href="{% url 'pbx_admin:exchange_rates' %}"><strong>Rates</strong></a>
+    </div>
+    <br />
+    <br />
+    <br />
+{% endif %}
+
+{% if can_view_module_management %}
+  <h3>Account Administration</h3>
+  <div>
+        <a href="{% url 'product_panel:module_management' %}"><strong>Module Management</strong></a>
+    </div>
+  {% endif %}
+
+{% endblock content %}
