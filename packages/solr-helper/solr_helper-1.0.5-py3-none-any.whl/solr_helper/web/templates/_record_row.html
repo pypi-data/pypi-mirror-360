@@ -1,0 +1,47 @@
+<tr id="row-{{ field.name }}">
+    <td><strong>{{ field.name }}</strong></td>
+    <td>{{ field.get('type', '-') }}</td>
+    <td>{{ 'Ja' if field.get('multiValued') else 'Nein' }}</td>
+    <td>{{ 'Ja' if field.get('stored') else 'Nein' }}</td>
+    <td>
+        {% if error %}
+            <div style="color: red; border: 1px solid red; padding: 5px; margin-bottom: 5px; background-color: #ffe5e5;">
+                <strong>Fehler beim Speichern:</strong><br>{{ error }}
+            </div>
+        {% endif %}
+        {% set value = doc.get(field.name) %}
+        {% if value is not none %}
+            {% if field.get('multiValued') and value is iterable and value is not string %}
+                <table class="sub-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th>Wert</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in value %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ item }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                {{ value }}
+            {% endif %}
+        {% else %}
+            {% if field.get('stored') %}
+                <span class="no-value">- Leer -</span>
+            {% else %}
+                <span class="no-value" title="Dieses Feld ist im Index, aber der Inhalt wird nicht mit dem Dokument gespeichert.">- Nicht gespeichert -</span>
+            {% endif %}
+        {% endif %}
+    </td>
+    <td>
+        {% if field.get('stored') %}
+        <button class="edit-btn" hx-get="/record/{{ doc.get(unique_key_field) }}/edit-form/{{ field.name }}" hx-target="#modal-container" hx-swap="innerHTML">Bearbeiten</button>
+        {% endif %}
+    </td>
+</tr>
