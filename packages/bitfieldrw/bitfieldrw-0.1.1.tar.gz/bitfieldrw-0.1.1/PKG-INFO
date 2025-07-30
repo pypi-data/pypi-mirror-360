@@ -1,0 +1,238 @@
+Metadata-Version: 2.4
+Name: bitfieldrw
+Version: 0.1.1
+Summary: A Python library for reading and writing bit fields with type annotations
+Project-URL: Homepage, https://github.com/DawnMagnet/bitfieldrw
+Project-URL: Documentation, https://github.com/DawnMagnet/bitfieldrw#readme
+Project-URL: Repository, https://github.com/DawnMagnet/bitfieldrw.git
+Project-URL: Bug Tracker, https://github.com/DawnMagnet/bitfieldrw/issues
+Author-email: DawnMagnet <dawnmagnet@example.com>
+Maintainer-email: DawnMagnet <dawnmagnet@example.com>
+License-Expression: MIT
+License-File: LICENSE
+Keywords: binary,bitfield,embedded,networking,protocol,serialization,struct
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Software Development :: Embedded Systems
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: System :: Networking
+Classifier: Typing :: Typed
+Requires-Python: >=3.8
+Provides-Extra: dev
+Requires-Dist: black; extra == 'dev'
+Requires-Dist: build; extra == 'dev'
+Requires-Dist: mypy; extra == 'dev'
+Requires-Dist: ruff; extra == 'dev'
+Requires-Dist: twine; extra == 'dev'
+Description-Content-Type: text/markdown
+
+# BitFieldRW
+
+[![PyPI version](https://badge.fury.io/py/bitfieldrw.svg)](https://badge.fury.io/py/bitfieldrw)
+[![Python Support](https://img.shields.io/pypi/pyversions/bitfieldrw.svg)](https://pypi.org/project/bitfieldrw/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+一个强大且易于使用的 Python 位字段读写库，支持类型注解和大端序位布局。
+
+## 特性
+
+- 🚀 **类型安全**: 使用 Python 类型注解定义位字段结构
+- 📦 **多种数据类型**: 支持有符号/无符号整数、浮点数
+- 🔧 **嵌套结构**: 支持位字段结构的嵌套
+- 🔄 **字节序支持**: 支持大端序和小端序
+- ✅ **完整测试**: 包含全面的测试用例
+- 📝 **清晰 API**: 直观易懂的接口设计
+
+## 安装
+
+```bash
+pip install bitfieldrw
+```
+
+## 快速开始
+
+### 基本用法
+
+```python
+from bitfieldrw import bitfield, BitFieldMixin, Uint, Int, Float
+
+@bitfield
+class NetworkPacket(BitFieldMixin):
+    version: Uint[4]      # 4位版本号
+    header_len: Uint[4]   # 4位头长度
+    type_of_service: Uint[8]  # 8位服务类型
+    total_length: Uint[16]    # 16位总长度
+
+# 创建实例
+packet = NetworkPacket()
+packet.version = 4
+packet.header_len = 5
+packet.type_of_service = 0
+packet.total_length = 1500
+
+# 转换为字节
+data = packet.to_bytes()  # 默认大端序
+print(f"Packed bytes: {data.hex()}")
+
+# 从字节加载
+new_packet = NetworkPacket()
+new_packet.from_bytes(data)
+print(f"Version: {new_packet.version}")
+print(f"Total length: {new_packet.total_length}")
+```
+
+### 支持的数据类型
+
+```python
+@bitfield
+class DataTypes(BitFieldMixin):
+    unsigned_int: Uint[8]     # 无符号整数 (0-255)
+    signed_int: Int[8]        # 有符号整数 (-128 到 127)
+    float_val: Float[32]      # 32位浮点数
+
+data = DataTypes()
+data.unsigned_int = 255
+data.signed_int = -50
+data.float_val = 3.14159
+```
+
+### 嵌套结构
+
+```python
+@bitfield
+class Header(BitFieldMixin):
+    magic: Uint[16]
+    version: Uint[8]
+
+@bitfield
+class Message(BitFieldMixin):
+    header: Header           # 嵌套的位字段结构
+    payload_length: Uint[16]
+    flags: Uint[8]
+
+msg = Message()
+msg.header.magic = 0xABCD
+msg.header.version = 1
+msg.payload_length = 1024
+msg.flags = 0x80
+```
+
+### 字节序支持
+
+```python
+# 大端序 (默认)
+big_endian_data = packet.to_bytes(byteorder="big")
+
+# 小端序
+little_endian_data = packet.to_bytes(byteorder="little")
+
+# 从字节加载时指定字节序
+packet.from_bytes(data, byteorder="little")
+```
+
+### 与原始整数互转
+
+```python
+# 转换为整数
+raw_value = packet.to_int()
+
+# 从整数加载
+packet.from_int(0x12345678)
+```
+
+## API 参考
+
+### 数据类型
+
+- `Uint[n]`: n 位无符号整数
+- `Int[n]`: n 位有符号整数（二进制补码）
+- `Float[32]`: 32 位 IEEE 754 浮点数
+
+### 主要方法
+
+- `to_bytes(byteorder="big")`: 转换为字节串
+- `from_bytes(data, byteorder="big")`: 从字节串加载
+- `to_int()`: 转换为原始整数
+- `from_int(value)`: 从整数加载
+- `get_bit_length()`: 获取总位长度
+- `get_byte_length()`: 获取字节长度（向上取整）
+
+## 位布局
+
+BitFieldRW 使用大端序位布局，字段按照定义顺序从高位到低位排列：
+
+```python
+@bitfield
+class Example(BitFieldMixin):
+    field_a: Uint[4]  # 位 15-12
+    field_b: Uint[8]  # 位 11-4
+    field_c: Uint[4]  # 位 3-0
+```
+
+## 应用场景
+
+- 📡 **网络协议**: 解析和构造网络数据包
+- 💾 **文件格式**: 处理二进制文件格式
+- 🔧 **硬件接口**: 与嵌入式设备通信
+- 🎮 **游戏开发**: 处理紧凑的数据结构
+- 📊 **数据压缩**: 高效存储标志位和小整数
+
+## 开发
+
+### GitHub Actions 工作流
+
+项目使用 GitHub Actions 进行持续集成和自动发布：
+
+- **测试**: 在多个 Python 版本 (3.8-3.13) 上运行测试
+- **代码质量**: 使用 ruff、mypy 和 black 进行代码检查
+- **自动发布**:
+  - 推送到 `main` 或 `develop` 分支时自动发布到 TestPyPI
+  - 创建 GitHub Release 时自动发布到正式 PyPI
+
+### 本地开发
+
+使用 `uv` 进行依赖管理：
+
+```bash
+# 安装依赖
+uv sync --dev
+
+# 运行测试
+uv run python -m unittest discover tests -v
+
+# 代码检查
+uv run ruff check .
+uv run mypy bitfieldrw
+
+# 格式化代码
+uv run black .
+
+# 构建包
+uv build
+```
+
+## 许可证
+
+MIT License - 详见 [LICENSE](LICENSE) 文件。
+
+## 贡献
+
+欢迎提交 issue 和 pull request！
+
+## 更新日志
+
+### 0.1.0
+
+- 初始版本发布
+- 支持基本位字段操作
+- 支持嵌套结构
+- 完整的测试覆盖
