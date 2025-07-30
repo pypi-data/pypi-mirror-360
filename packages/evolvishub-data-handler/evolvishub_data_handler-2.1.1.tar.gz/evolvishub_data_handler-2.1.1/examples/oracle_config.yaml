@@ -1,0 +1,59 @@
+# Oracle database configuration example
+
+source:
+  type: oracle
+  host: oracle-server.example.com
+  port: 1521
+  database: ORCL  # Service name or SID
+  username: source_user
+  password: source_password
+  watermark:
+    column: UPDATED_AT
+    type: timestamp
+    initial_value: "2024-01-01 00:00:00"
+  # Custom query with Oracle-specific syntax
+  query: >
+    SELECT 
+      ID,
+      NAME,
+      EMAIL,
+      UPDATED_AT,
+      CREATED_AT,
+      CASE
+        WHEN DELETED_AT IS NOT NULL THEN 'delete'
+        WHEN UPDATED_AT > TO_TIMESTAMP(:last_sync, 'YYYY-MM-DD HH24:MI:SS') THEN 'update'
+        ELSE 'insert'
+      END as OPERATION
+    FROM USERS
+    WHERE (UPDATED_AT > TO_TIMESTAMP(:last_sync, 'YYYY-MM-DD HH24:MI:SS') OR :last_sync IS NULL)
+      AND STATUS = 'ACTIVE'
+    ORDER BY UPDATED_AT
+    FETCH FIRST :batch_size ROWS ONLY
+
+destination:
+  type: oracle
+  host: oracle-dest.example.com
+  port: 1521
+  database: DEST_DB
+  username: dest_user
+  password: dest_password
+  table: USERS_SYNC
+
+sync:
+  mode: cron
+  cron_expression: "0 */4 * * *"  # Every 4 hours
+  timezone: "UTC"
+  batch_size: 1000
+  # SQLite watermark storage for Oracle
+  watermark_storage:
+    type: sqlite
+    sqlite_path: "/var/lib/evolvishub/oracle_watermarks.db"
+    table_name: "sync_watermark"
+  error_retry_attempts: 5
+  error_retry_delay: 10
+
+# Oracle-specific configuration options
+additional_params:
+  encoding: "UTF-8"
+  nencoding: "UTF-8"
+  threaded: true

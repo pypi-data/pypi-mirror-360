@@ -1,0 +1,119 @@
+# Multi-CDC with Independent Watermarks
+# Each mapping tracks its own watermark independently
+
+name: customer_analytics_with_watermarks
+description: Sync customer views with independent watermark tracking
+
+global_sync:
+  mode: continuous
+  interval_seconds: 300
+  batch_size: 1000
+
+mappings:
+  # Customer Demographics - timestamp watermark
+  - name: customer_demographics
+    description: Customer demographic information
+    source:
+      type: postgresql
+      host: source-db.company.com
+      database: customer_analytics
+      table: vw_customer_demographics
+    destination:
+      type: postgresql
+      host: warehouse-db.company.com
+      database: data_warehouse
+      table: dim_customer_demographics
+    watermark:
+      column: last_updated
+      type: timestamp
+      storage_type: sqlite
+      storage_path: ./watermarks/customer_demographics.db
+
+  # Purchase Behavior - different timestamp column
+  - name: purchase_behavior
+    description: Customer purchase patterns
+    source:
+      type: postgresql
+      host: source-db.company.com
+      database: customer_analytics
+      table: vw_customer_purchase_behavior
+    destination:
+      type: postgresql
+      host: warehouse-db.company.com
+      database: data_warehouse
+      table: fact_customer_behavior
+    watermark:
+      column: analysis_date
+      type: timestamp
+      storage_type: sqlite
+      storage_path: ./watermarks/purchase_behavior.db
+
+  # Geographic Distribution - integer watermark
+  - name: geographic_distribution
+    description: Customer geographic data
+    source:
+      type: postgresql
+      host: source-db.company.com
+      database: customer_analytics
+      table: vw_customer_geography
+    destination:
+      type: postgresql
+      host: warehouse-db.company.com
+      database: data_warehouse
+      table: dim_customer_geography
+    watermark:
+      column: version_id
+      type: integer
+      storage_type: sqlite
+      storage_path: ./watermarks/geographic_distribution.db
+
+  # Engagement Metrics - timestamp with custom query
+  - name: engagement_metrics
+    description: Customer engagement metrics
+    source:
+      type: postgresql
+      host: source-db.company.com
+      database: customer_analytics
+      table: vw_customer_engagement
+    destination:
+      type: postgresql
+      host: warehouse-db.company.com
+      database: data_warehouse
+      table: fact_customer_engagement
+    watermark:
+      column: metric_date
+      type: timestamp
+      storage_type: sqlite
+      storage_path: ./watermarks/engagement_metrics.db
+    custom_query: |
+      SELECT 
+        customer_id,
+        email_opens,
+        website_visits,
+        app_sessions,
+        metric_date
+      FROM vw_customer_engagement 
+      WHERE metric_date > %(last_sync)s
+      ORDER BY metric_date
+
+  # Lifetime Value - no watermark (full sync each time)
+  - name: lifetime_value
+    description: Customer lifetime value (full sync)
+    source:
+      type: postgresql
+      host: source-db.company.com
+      database: customer_analytics
+      table: vw_customer_ltv
+    destination:
+      type: postgresql
+      host: warehouse-db.company.com
+      database: data_warehouse
+      table: fact_customer_ltv
+    # No watermark - full sync each time
+    sync:
+      mode: continuous
+      interval_seconds: 1800  # Less frequent since it's full sync
+
+parallel_execution: true
+max_workers: 3
+stop_on_error: false

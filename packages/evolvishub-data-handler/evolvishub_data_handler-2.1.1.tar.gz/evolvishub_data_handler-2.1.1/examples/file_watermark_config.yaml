@@ -1,0 +1,30 @@
+# Configuration example with file-based watermark storage
+
+source:
+  type: file
+  file_path: "/data/exports/daily_sales.csv"
+  watermark:
+    column: updated_at
+    type: timestamp
+    initial_value: "2024-01-01T00:00:00Z"
+
+destination:
+  type: postgresql
+  host: localhost
+  port: 5432
+  database: analytics
+  username: user
+  password: password
+  table: daily_sales
+
+sync:
+  mode: cron
+  cron_expression: "0 6 * * *"  # Daily at 6 AM
+  timezone: "America/New_York"
+  batch_size: 10000
+  # File-based watermark storage configuration
+  watermark_storage:
+    type: file
+    file_path: "/var/lib/evolvishub/watermarks.json"
+  error_retry_attempts: 5
+  error_retry_delay: 10
