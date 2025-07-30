@@ -1,0 +1,421 @@
+Metadata-Version: 2.4
+Name: spatialstudio
+Version: 1.1.0.28
+Summary: Utilities for creating Spatials (4D videos)
+Author-email: Daniel Elwell <de@true3d.com>, Sumanta Das <sumanta@true3d.com>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/SpatialDeploy/SpatialStudio
+Project-URL: Repository, https://github.com/SpatialDeploy/SpatialStudio
+Project-URL: Issues, https://github.com/SpatialDeploy/SpatialStudio/issues
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+
+# spatialstudio
+SpatialStudio is the fundamental package for creating and editing *Spatials* (4D videos).
+- **Website:** https://spatials.org/
+- **GitHub/Documentation:** https://github.com/SpatialDeploy/SpatialStudio
+- **Hosting/ML Services:** https://true3d.com/
+
+## Installation
+
+```python
+pip install spatialstudio
+python
+
+>>> import spatialstudio as splv
+```
+
+## Classes
+
+### `SPLVframe`
+
+Represents a 3D volume - a structured grid of voxels. This is a single frame of an `splv` file.
+
+#### Constructor
+
+```python
+frame = splv.SPLVframe(width, height, depth)
+```
+
+**Parameters:**
+- `width` (`int`): Frame width in voxels.
+- `height` (`int`): Frame height in voxels.  
+- `depth` (`int`): Frame depth in voxels.
+
+#### Methods
+
+##### `clone()`
+Creates an identical copy of the frame.
+
+```python
+cloned_frame = frame.clone()
+```
+
+##### `resampled(width, height, depth, alphaCutoff=0.25)`
+Creates a resampled (scaled) version with new dimensions.
+
+```python
+resampled = frame.resampled(128, 128, 128, alphaCutoff=0.25)
+```
+
+**Parameters:**
+- `width`, `height`, `depth` (`int`): New dimensions.
+- `alphaCutoff` (`float`): Alpha threshold for resampling (default: `0.25`). Note that lower values (near `0`) work well for downscaling, whereas higher values work better for upscaling.
+
+#### `subregion(xMin, yMin, zMin, xMax, yMax, zMax)`
+Extracts a subregion of the frame as a new `SPLVframe`.
+
+```python
+subregion = frame.subregion(0, 64, 32, 128, 96, 256)
+```
+
+**Parameters:**
+- `xMin`, `yMin`, `zMin` (`int`): The minimum voxel coordinates to be contained in the subregion.
+- `xMax`, `yMax`, `zMax` (`int`): The maximum voxel coordinates to be contained in the subregion.
+
+##### `save(path)`
+Saves the frame to a file.
+
+```python
+frame.save("my_frame.vv")
+```
+**Parameters:**
+- `path` (`str`): Path to save to
+
+##### `save_to_nvdb(path)`
+Saves the frame as a NanoVDB file (`.nvdb`).
+
+```python
+frame.save_to_nvdb("my_nanovdb.nvdb")
+```
+**Parameters:**
+- `path` (`str`): Path to save to
+
+##### `get_dims()`
+Returns the dimensions of the frame as a tuple `(width, height, depth)`.
+
+```python
+width, height, depth = frame.get_dims()
+```
+
+##### `get_num_bricks()`
+Returns the number of nonempty "bricks" in the frame (`BRICK_SIZE`^3 regions of voxels).
+
+```python
+numBricks = frame.get_num_bricks()
+```
+
+##### `get_num_voxels()`
+Returns the number of nonempty voxels in the frame.
+
+```python
+numVoxels = frame.get_num_voxels()
+```
+
+##### `get_voxel(x, y, z)`
+Retrieves voxel color at specified coordinates. Returns `None` if empty, or a tuple `(r, g, b)` of `uint8` color components if filled.
+
+```python
+color = frame.get_voxel(10, 20, 30)
+```
+**Parameters:**
+- `x`, `y`, `z` (`int`): Position within frame.
+
+##### `set_voxel(x, y, z, voxel)`
+Sets voxel color at specified coordinates. Call with 
+
+```python
+frame.set_voxel(10, 20, 30, color)  # Use None to clear voxel
+```
+
+**Parameters:**
+- `x`, `y`, `z` (`int`): Position within frame.
+- `voxel` (`tuple`, optional): The voxel to write. `None` indicates an empty voxel, a tuple `(r, g, b)` of `uint8`s represents a filled voxel of the specified color.
+
+##### `remove_occluded()`
+Removes voxels that are completely hidden by other voxels.
+
+```python
+frame.remove_occluded()
+```
+
+##### `remove_orphaned()`
+Removes isolated voxels with no neighboring voxels.
+
+```python
+frame.remove_orphaned()
+```
+
+##### `add(src, x=0, y=0, z=0, lrAxis="x", udAxis="y", fbAxis="z", flipLR=False, flipUD=False, flipFB=False)`
+Adds another frame to this frame at the specified offset.
+
+```python
+frame.add(otherFrame, x=10, y=0, z=5)
+```
+
+**Parameters:**
+- `src` (`SPLVframe`): The frame to add.
+- `x`, `y`, `z` (`int`): Position within the frame to add `src`. The origin (bottom-left-front) of `src` will end up at `(x, y, z)` in the frame (default: `0`).
+- `lrAxis`, `udAxis`, `fbAxis` (`str`): Axis mapping on `src` for left-right, up-down, front-back. Must each be one of (`"x"`, `"y"`, and `"z"`) and must be distinct. (defalt: `"x"`, `"y"`, and `"z"`, respectively).
+- `flipLR`, `flipUD`, `flipFB` (`bool`): Whether to reflect `src` over each of the axes, applied AFTER the axis mapping (default `False`).
+
+##### `subtract(src, x=0, y=0, z=0, lrAxis="x", udAxis="y", fbAxis="z", flipLR=False, flipUD=False, flipFB=False)`
+Subtracts another frame from this frame at the specified offset.
+
+```python
+frame.subtract(otherFrame, x=10, y=0, z=5)
+```
+
+**Parameters:**
+- `src` (`SPLVframe`): The frame to subtract.
+- `x`, `y`, `z` (`int`): Position within the frame to subtract `src`. The origin (bottom-left-front) of `src` will be subtracted from `(x, y, z)` in the frame (default: `0`).
+- `lrAxis`, `udAxis`, `fbAxis` (`str`): Axis mapping on `src` for left-right, up-down, front-back. Must each be one of (`"x"`, `"y"`, and `"z"`) and must be distinct. (defalt: `"x"`, `"y"`, and `"z"`, respectively).
+- `flipLR`, `flipUD`, `flipFB` (`bool`): Whether to reflect `src` over each of the axes, applied AFTER the axis mapping (default `False`).
+
+##### `clip(xMin, yMin, zMin, xMax, yMax, zMax)`
+Clips the frame to specified bounds.
+
+```python
+frame.clip(0, 0, 0, 100, 100, 100)
+```
+
+**Parameters:**
+- `xMin`, `yMin`, `zMin` (`int`): The minimum voxel coordinates that will remain in the frame after clipping.
+- `xMax`, `yMax`, `zMax` (`int`): The maximum voxel coordinates that will remain in the frame after clipping.
+
+### `SPLVencoder`
+
+Encodes `SPLVframe` objects into `splv` files. Performs all spatial encoding-related tasks.
+
+#### Constructor
+
+```python
+encoder = splv.SPLVencoder(
+    width, height, depth, framerate,
+    audioParams=None,
+    gopSize=30,
+    motionVectors="fast",
+    vqRangeCutoff=0.05,
+    vqMaxCentroids=255,
+    outputPath="my_spatial.splv"
+)
+```
+
+**Parameters:**
+- `width`, `height`, `depth` (`int`): Spatial dimensions.
+- `framerate` (`float`): Target framerate.
+- `audioParams` (`tuple`, optional): Audio parameters as (`channels`, `sampleRate`, `bit_depth`), or `None` for no audio (default: `None`).
+- `gopSize` (`int`): Group of Pictures size (default: `30`).
+- `motionVectors` (`str`): Motion vector algorithm to use. Must be one of `"off"`, `"fast"`, or `"full"` (default: `"fast"`).
+- `vqRangeCutoff` (`float`): Vector quantization range cutoff (default: `0.05`). Must be in the range `[0.0, 1.0]`.
+- `vqMaxCentroids` (`int`): Maximum VQ centroids (default: `255`).
+- `outputPath` (`str`): Output file path.
+
+#### Methods
+
+##### `encode(frame)`
+Encodes a single `SPLVframe`.
+
+```python
+encoder.encode(frame)
+```
+
+**Parameters:**
+- `frame` (`SPLVframe`): The frame to encode.
+
+##### `accept_audio_frames(buf)`
+Inserts audio data if audio encoding is enabled.
+
+```python
+encoder.accept_audio_frames(audioBuf)
+```
+
+**Parameters:**
+- `buf` (`buffer`): The raw PCM samples to encode.
+
+##### `finish()`
+Finalizes encoding and closes the output file.
+
+```python
+encoder.finish()
+```
+
+### `SPLVdecoder`
+
+Decodes `splv` files into their constituent `SPLVframe`s. Performs all spatial decoding-related tasks.
+
+#### Constructor (file)
+
+```python
+decoder = splv.SPLVdecoder("my_spatial.splv")
+```
+
+**Parameters**
+- `path`(`str`): The path to the `splv` to decode from.
+
+#### Constructor (buffer)
+
+```python
+decoder = splv.SPLVdecoder(myBuffer)
+```
+
+**Parameters**
+- `buffer` (`buffer`): The buffer containing an encoded `splv` to decode from. 
+
+##### `get_dims()`
+Returns the dimensions of the decoder's `splv` as a tuple `(width, height, depth)`.
+
+```python
+width, height, depth = decoder.get_dims()
+```
+
+##### `get_framerate()`
+Returns the framerate of the decoder's `splv`.
+
+```python
+framerate = decoder.get_framerate()
+```
+
+##### `get_frame_count()`
+Returns the number of frames in the decoder's `splv`.
+
+```python
+frameCount = decoder.get_frame_count()
+```
+
+## Utility Functions
+
+### Frame Creation
+
+#### `frame_load(path)`
+Loads a frame from file.
+
+```python
+frame = splv.frame_load("my_frame.vv")
+```
+
+**Parameters:**
+- `path` (`str`): The path to load from.
+
+#### `frame_from_numpy(array, lrAxis="x", udAxis="y", fbAxis="z")`
+Creates a frame from a NumPy array (supports float32 and uint8).
+
+```python
+# from float32 array
+frame = splv.frame_from_numpy(floatArr, lrAxis="x", udAxis="y", fbAxis="z")
+
+# from uint8 array  
+frame = splv.frame_from_numpy(uint8Arr, lrAxis="x", udAxis="y", fbAxis="z")
+```
+
+**Parameters:**
+- `array` (`buffer`): NumPy array containing voxel data. Must have shape `(w, h, d, 4)` and be of type `float32` or `uint8`.
+- `lrAxis`, `udAxis`, `fbAxis` (`str`): Axis mapping for left-right, up-down, front-back. Must each be one of (`"x"`, `"y"`, and `"z"`) and must be distinct. (defalt: `"x"`, `"y"`, and `"z"`, respectively).
+
+#### `frame_from_nvdb(path, xMin, yMin, zMin, xMax, yMax, zMax, lrAxis="x", udAxis="y", fbAxis="z")`
+Creates a frame from an NVDB file within specified bounds.
+
+```python
+frame = splv.frame_from_nvdb("data.nvdb", 0, 0, 0, 100, 100, 100)
+```
+
+**Parameters:**
+- `path` (`str`): Path to the NanoVDB file to load.
+- `xMin`, `yMin`, `zMin` (`int`): The minimum voxel coordinates that will be written into the frame.
+- `xMax`, `yMax`, `zMax` (`int`): The maximum voxel coordinates that will be written into the frame.
+- `lrAxis`, `udAxis`, `fbAxis`: Axis mapping for left-right, up-down, front-back. Must each be one of (`"x"`, `"y"`, and `"z"`) and must be distinct. (defalt: `"x"`, `"y"`, and `"z"`, respectively).
+
+### File Operations
+
+#### `concat(paths, outPath)`
+Concatenates multiple `splv` files.
+
+```python
+splv.concat(["spatial1.splv", "spatial2.splv"], "combined.splv")
+```
+
+**Parameters:**
+- `paths` (`array`): Paths to `splv`s to concatenate.
+- `outPath` (`str`): Path to write the concatenated `splv`.
+
+#### `split(path, splitLength, outDir)`
+Splits an `splv` file into chunks of specified duration.
+
+```python
+splv.split("my_long_spatial.splv", 30.0, "output_directory/")
+```
+
+**Parameters:**
+- `path` (`str`): Path to input `splv` file.
+- `splitLength` (float): Duration of each chunk in seconds
+- `outDir` (str): Output directory for split files
+
+#### `upgrade(path, outPath)`
+Upgrades an `splv` file to the current format version.
+
+```python
+splv.upgrade("old_format.splv", "new_format.splv")
+```
+
+**Parameters:**
+- `path` (`str`): Path to input `splv` file
+- `outPath` (`str`): Path for upgraded output file
+
+#### `transcode(path, gopSize=30, motionVectors="fast", vqRangeCutoff=0.05, vqMaxCentroids=255, outPath)`
+Re-encodes an `splv` file with new compression parameters.
+
+```python
+splv.transcode("input.splv", gopSize=60, motionVectors="fast", outPath="transcoded.splv")
+```
+
+**Parameters:**
+- `path` (`str`): Path to input `splv` file
+- `gopSize` (`int`): Group of Pictures size (default: `30`)
+- `motionVectors` (`str`): Motion vector algorithm (default: `"fast"`)
+- `vqRangeCutoff` (`float`): Vector quantization range cutoff (default: `0.05`)
+- `vqMaxCentroids` (`int`): Maximum VQ centroids (default: `255`)
+- `outPath` (`str`): Path for transcoded output file.
+
+#### `resample(path, width, height, depth, alphaCutoff=0.25, outPath)`
+Resizes an `splv` file to new dimensions.
+
+```python
+splv.resample("input.splv", 256, 256, 256, alphaCutoff=0.3, outPath="resized.splv")
+```
+
+**Parameters:**
+- `path` (`str`): Path to input `splv` file.
+- `width`, `height`, `depth` (`int`): New dimensions in voxels.
+- `alphaCutoff` (`float`): Alpha threshold for resampling (default: `0.25`).
+- `outPath` (`str`): Path for resampled output file.
+
+#### `get_metadata(path)`
+Returns metadata dictionary for an `splv` file.
+
+```python
+metadata = splv.get_metadata("my_spatial.splv")
+print(metadata)
+```
+
+**Parameters:**
+- `path` (`str`): Path to `splv` file.
+
+#### `dump(path, outDir)`
+
+Dumps each frame in an `splv` file to disk using `SPLVframe.save`.
+
+```python
+splv.dump("my_spatial.splv", "dump/")
+```
+
+**Parameters**
+- `path` (`str`): The path to the `splv` file to dump.
+- `outDir` (`str`): The directory where each `.vv` will be saved.
