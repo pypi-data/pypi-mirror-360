@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fscm"
+description = "Finally, simple configuration management!"
+requires-python = ">=3.10"
+keywords = []
+readme = "README.md"
+license = {text = "MIT License"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    'importlib-metadata; python_version<"3.10"',
+    'jinja2 >= 3.1',
+]
+dynamic = ["version"]
+
+
+[project.optional-dependencies]
+# Required to provide utilities to execute on remote hosts.
+remote = [
+    'mitogen-plus >= 1.0.0',
+    'clii >= 1.0.0',
+    'pyyaml',
+]
+pki = [
+    'cryptography',
+]
+
+[project.scripts]
+fscm-pki = "fscm.modules.pki:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "fscm.__version__"}
+
+[tool.setuptools.package-data]
+"*" = ["*"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["*.py", "*.pyc", "__pycache__"]
+
+[tool.pytest.ini_options]
+python_functions = ["pytest_*", "_pytest_*", "test_"]
+python_files = ["fscm/fscm.py", "test_*.py"]
+
+[tool.ruff]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    # "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+line-length = 88
+ignore-init-module-imports = true
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.mypy]
+strict = false
+
+[[tool.mypy.overrides]]
+module = "mitogen"
+ignore_missing_imports = true
