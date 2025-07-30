@@ -1,0 +1,53 @@
+- job:
+    name: openstack-tox-py312-with-neutron
+    parent: openstack-tox-py312
+    timeout: 3600
+    vars:
+      zuul_work_dir: "{{ ansible_user_dir }}/{{ zuul.projects['opendev.org/openstack/neutron'].src_dir }}"
+    required-projects:
+      - openstack/neutron
+      - openstack/neutron-lib
+
+- project:
+    templates:
+      - check-requirements
+      - publish-openstack-docs-pti
+      - openstack-cover-jobs
+      - openstack-python3-jobs
+      - lib-forward-testing-python3
+      - release-notes-jobs-python3
+      - neutron-tempest-plugin-jobs
+    check:
+      jobs:
+        - openstack-tox-py312-with-neutron
+        - openstack-tox-py312-with-sqlalchemy-master
+        - neutron-functional: &neutron-functional
+            irrelevant-files:
+              - ^.*\.rst$
+              - ^\.coveragerc$
+              - ^\.git.*$
+              - ^\.pre-commit-config\.yaml$
+              - ^\.pylintrc$
+              - ^api-ref/.*$
+              - ^doc/.*$
+              - ^LICENSE$
+              - ^neutron_lib/locale/.*$
+              - ^releasenotes/.*$
+              - ^tox.ini$
+            required-projects:
+              - openstack/neutron-lib
+            vars:
+              zuul_work_dir: src/opendev.org/openstack/neutron
+        # This job comes from lib-forward-testing-python3 template,
+        # but it is limited to 2h there and we want to set
+        # for it 3h timeout
+        - tempest-full-py3:
+            timeout: 10800
+    gate:
+      jobs:
+        - neutron-functional: *neutron-functional
+        # This job comes from lib-forward-testing-python3 template,
+        # but it is limited to 2h there and we want to set
+        # for it 3h timeout
+        - tempest-full-py3:
+            timeout: 10800
