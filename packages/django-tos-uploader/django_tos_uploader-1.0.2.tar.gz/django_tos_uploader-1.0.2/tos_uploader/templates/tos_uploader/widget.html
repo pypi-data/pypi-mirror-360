@@ -1,0 +1,101 @@
+<div class="tos-uploader-container{% if widget.readonly %} readonly{% endif %}">
+    <!-- 隐藏的实际表单字段 -->
+    <input type="hidden" 
+           name="{{ widget.name }}" 
+           value="{{ widget.value|default:'' }}" 
+           class="tos-uploader-hidden-input"
+           id="id_{{ widget.name }}">
+    
+    <!-- 左右分栏布局 -->
+    <div class="tos-uploader-layout">
+        <!-- 左侧：输入和上传信息 -->
+        <div class="tos-uploader-left">
+            {% if not widget.readonly %}
+            <!-- 上传路径输入框 -->
+            <div class="upload-path-container">
+                <label for="{{ widget.name }}_path" class="upload-path-label">上传路径:</label>
+                <input type="text" 
+                       id="{{ widget.name }}_path"
+                       class="upload-path-input" 
+                       placeholder="例如: 计算机教材/计算机网络"
+                       value="{{ widget.upload_path|default:'user-uploads' }}">
+                <small class="upload-path-help">自定义文件上传的目录路径</small>
+            </div>
+            {% endif %}
+            
+            <!-- 显示用的文本输入框 -->
+            <div style="position: relative;">
+                <input type="text" 
+                       class="tos-uploader-display-input" 
+                       placeholder="{% if widget.readonly %}只读模式 - 仅预览{% else %}文件将上传后自动填入URL{% endif %}"
+                       value="{{ widget.value|default:'' }}"
+                       readonly>
+                
+                {% if not widget.readonly %}
+                <button type="button" class="tos-upload-button" onclick="document.getElementById('{{ widget.name }}_file').click()">
+                    📁 选择文件
+                </button>
+                {% endif %}
+            </div>
+            
+            <!-- 预览控制按钮 -->
+            {% if widget.value %}
+            <div class="preview-controls">
+                <button type="button" class="preview-toggle-button" data-target="{{ widget.name }}">
+                    👁️ 预览文件
+                </button>
+                <span class="preview-status">点击预览按钮查看文件</span>
+            </div>
+            {% endif %}
+            
+            {% if not widget.readonly %}
+            <!-- 隐藏的文件输入 -->
+            <input type="file" 
+                   id="{{ widget.name }}_file"
+                   class="file-input"
+                   data-target-input="#id_{{ widget.name }}"
+                   data-sts-url="{{ get_sts_token_url }}"
+                   data-upload-path="{{ widget.upload_path|default:'user-uploads' }}"
+                   data-path-input="#{{ widget.name }}_path"
+                   {% if widget.accept %}accept="{{ widget.accept }}"{% endif %}
+                   style="display: none;">
+            
+            <!-- 进度条 -->
+            <div class="progress-container" style="display: none;">
+                <div class="progress-label">上传进度</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" style="width: 0%;"></div>
+                </div>
+                <div class="progress-text">准备上传...</div>
+            </div>
+            
+            <!-- 文件信息 -->
+            <div class="file-info" style="display: none;">
+                <div class="file-icon">📄</div>
+                <div class="file-details">
+                    <div class="file-name"></div>
+                    <div class="file-size"></div>
+                </div>
+                <div class="file-status"></div>
+            </div>
+            {% else %}
+            <!-- 只读模式下的文件信息显示 -->
+            {% if widget.value %}
+            <div class="file-info readonly-info" style="display: block;">
+                <div class="file-icon">📄</div>
+                <div class="file-details">
+                    <div class="file-name">已设置文件</div>
+                    <div class="file-size">只读模式</div>
+                </div>
+                <div class="file-status">✓ 只读</div>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+        
+        <!-- 右侧：预览（懒加载） -->
+        <div class="tos-uploader-right">
+            <div class="preview-container" data-lazy="true"></div>
+        </div>
+    </div>
+</div>
