@@ -1,0 +1,59 @@
+<tr id="row-{{ field.name }}" {% if doc.get(field.name) is none %}class="opacity-50"{% endif %}>
+    <td><strong>{{ field.name }}</strong></td>
+    <td><div class="badge badge-neutral">{{ field.get('type', '-') }}</div></td>
+    <td><div class="badge {{ 'badge-success' if field.get('multiValued') else 'badge-ghost' }}">{{ 'Ja' if field.get('multiValued') else 'Nein' }}</div></td>
+    <td><div class="badge {{ 'badge-success' if field.get('stored') else 'badge-ghost' }}">{{ 'Ja' if field.get('stored') else 'Nein' }}</div></td>
+    <td class="max-w-md">
+        {% if error %}
+            <div role="alert" class="alert alert-error p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span><strong>Fehler:</strong> {{ error }}</span>
+            </div>
+        {% endif %}
+        {% set value = doc.get(field.name) %}
+        {% if value is not none %}
+            {% if field.get('multiValued') and value is iterable and value is not string %}
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra table-xs">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Wert</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for item in value %}
+                            <tr>
+                                <th>{{ loop.index }}</th>
+                                <td class="whitespace-normal">{{ item }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <span class="whitespace-normal">{{ value }}</span>
+            {% endif %}
+        {% else %}
+            {% if field.get('stored') %}
+                <span class="badge badge-ghost">- Leer -</span>
+            {% else %}
+                <span class="badge badge-ghost" title="Dieses Feld ist im Index, aber der Inhalt wird nicht mit dem Dokument gespeichert.">- Nicht gespeichert -</span>
+            {% endif %}
+        {% endif %}
+    </td>
+    <td>
+        {% if field.get('stored') %}
+        <button class="btn btn-primary btn-sm btn-square"
+                title="Feld bearbeiten"
+                hx-get="{{ url_for('edit_form', doc_id=doc.get(unique_key_field), field_name=field.name) }}"
+                hx-target="#modal-content"
+                hx-swap="innerHTML"
+                onclick="document.getElementById('edit-modal').showModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z" />
+            </svg>
+        </button>
+        {% endif %}
+    </td>
+</tr>

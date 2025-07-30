@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="valentine">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Details - {{ doc.get(unique_key_field, '-') }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body class="bg-base-200">
+
+    <div class="navbar bg-base-100 shadow-md sticky top-0 z-50">
+        <div class="flex-1">
+            <a href="/" class="btn btn-ghost text-xl">SolrHelper</a>
+        </div>
+        <div class="flex-none">
+            <a href="/" class="btn btn-outline">Neue Suche</a>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 pt-8">
+        <div class="card bg-base-100 shadow-xl mb-8">
+            <div class="card-body">
+                <h1 class="card-title">Details für Record: <span class="badge badge-primary">{{ doc.get(unique_key_field, '-') }}</span></h1>
+                <div class="card-actions justify-end">
+                    <button id="toggle-json" class="btn btn-ghost">Rohes JSON umschalten</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="json-container" style="display: none;" class="mb-8">
+            <div class="mockup-code">
+                <pre><code class="json">{{ doc | tojson(indent=4) }}</code></pre>
+            </div>
+        </div>
+
+        {% if error %}
+            <div role="alert" class="alert alert-error mb-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>Fehler: {{ error }}</span>
+            </div>
+        {% else %}
+            <div class="overflow-x-auto bg-base-100 rounded-box shadow-xl mb-8" style="max-height: 70vh;">
+                <table class="table table-zebra table-pin-rows">
+                    <thead>
+                        <tr>
+                            <th>Feldname</th>
+                            <th>Datentyp</th>
+                            <th>Multivalued</th>
+                            <th>Stored</th>
+                            <th>Wert</th>
+                            <th>Aktion</th>
+                        </tr>
+                    </thead>
+                    <tbody id="record-table-body">
+                        {% for field in schema_fields %}
+                            {% include '_record_row.html' %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h3 class="card-title">Neues Feld hinzufügen</h3>
+                <p>Fügen Sie dem Dokument ein neues Feld hinzu. Dies ist besonders nützlich für dynamische Felder.</p>
+                <form action="{{ url_for('add_field', doc_id=doc[unique_key_field]) }}" method="post" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div class="form-control">
+                        <label class="label" for="new_field_name"><span class="label-text">Feldname</span></label>
+                        <input type="text" id="new_field_name" name="new_field_name" placeholder="z.B. kommentar_str" required class="input input-bordered w-full">
+                    </div>
+                    <div class="form-control">
+                        <label class="label" for="new_field_value"><span class="label-text">Wert</span></label>
+                        <input type="text" id="new_field_value" name="new_field_value" placeholder="Wert des Feldes" required class="input input-bordered w-full">
+                    </div>
+                    <div class="form-control">
+                        <button type="submit" class="btn btn-primary w-full">Hinzufügen</button>
+                    </div>
+                </form>
+                {% if schema.dynamic_fields %}
+                    <div class="divider">Verfügbare dynamische Feldmuster</div>
+                    <div class="flex flex-wrap gap-2">
+                        {% for df in schema.dynamic_fields %}
+                            <div class="badge badge-outline">{{ df.name }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- HTMX Modal Container -->
+    <div id="modal-container"></div>
+
+    <script>
+        // Script for JSON viewer
+        document.getElementById('toggle-json').addEventListener('click', function() {
+            var container = document.getElementById('json-container');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                hljs.highlightAll();
+            } else {
+                container.style.display = 'none';
+            }
+        });
+
+        // HTMX Modal Logic
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            var modal = document.getElementById('modal-container');
+            if (evt.detail.target.id === 'modal-container' && evt.detail.xhr.status === 200) {
+                modal.classList.add('modal', 'modal-open');
+            }
+        });
+
+        function closeModal() {
+            var modal = document.getElementById('modal-container');
+            modal.innerHTML = '';
+            modal.classList.remove('modal', 'modal-open');
+        }
+
+        document.body.addEventListener('htmx:after-request', function(event) {
+            if (event.detail.target.closest('.modal-content')) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
