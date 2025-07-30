@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "realloc"
+version = "0.1.3"
+description = "A modular Python library for multi-account portfolio trade allocation"
+authors = [
+    { name = "Ryeland Gongora", email = "rsgmon@gmail.com" }
+]
+requires-python = ">=3.8"
+license = "MIT"
+readme = "README.md"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["realloc*"]
+exclude = ["tests*", "docs*", "examples*"]  # exclude what you definitely don't want
+
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "black",
+    "flake8",
+    "hypothesis",
+]
+
+[project.scripts]
+portfolio-cli = "realloc.cli.rebalance_main:main"
+rebalance-cli = "realloc.cli.rebalance_main:main"
+partial-rebalance-cli = "realloc.cli.partial_rebalance_main:main"
+list-plugins = "realloc.plugins.core.discovery:list_plugins"
+
+
+[project.entry-points."realloc.plugins"]
+csv = "realloc.plugins.exporters.csv_exporter:CSVExporter"
+max_position = "realloc.plugins.validators.max_position:MaxPositionValidator"
+minimum_value = "realloc.plugins.validators.minimum_value:MinimumValueValidator"
+
