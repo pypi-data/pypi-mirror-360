@@ -1,0 +1,17 @@
+{#- OZI
+# ozi/templates/flake8.pyproject.toml
+# SPDX-License-Identifier: MIT-0
+-#}
+[tool.flake8]
+ban-relative-imports = "parents"
+max-line-length = {{ spec.python.src.format.max_line_length }}
+extend-exclude  = [
+{%- for exclude in spec.python.lint.exclude %}
+    "{{ exclude }}",
+{%- endfor %}
+    "build-env-*",
+    "build*",
+    "*.pyi"
+]
+extend-ignore   = "{{ spec.python.lint.ignore|join(',') }}"
+extend-select   = "B950"

@@ -1,0 +1,44 @@
+{#- OZI
+# ozi/templates/semantic_release.pyproject.toml
+# SPDX-License-Identifier: MIT-0
+-#}
+[tool.semantic_release]
+commit_parser                  = "{{ spec.python.pkg.version.semantic }}"
+major_on_zero                  = false
+tag_format                     = "{{ spec.python.src.format.version_placeholder }}"
+
+[tool.semantic_release.branches."x.x"]
+match = "\\A\\d+\\.\\d+\\Z"
+prerelease_token = "alpha"
+prerelease = false
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = [
+{%- for tag in spec.python.pkg.version.allowed_tags %}
+    "{{ tag }}",
+{%- endfor %}
+]
+minor_tags = [
+{%- for tag in spec.python.pkg.version.minor_tags %}
+    "{{ tag }}",
+{%- endfor %}
+]
+patch_tags = [
+{%- for tag in spec.python.pkg.version.patch_tags %}
+    "{{ tag }}",
+{%- endfor %}
+]
+
+[tool.semantic_release.changelog.default_templates]
+changelog_file = "CHANGELOG.md"
+
+[tool.semantic_release.remote]
+type = "{{ project.ci_provider }}"
+
+[tool.semantic_release.publish]
+dist_glob_patterns = [
+{%- for include in spec.python.ci.publish.include %}
+    "{{ include }}",
+{%- endfor %}
+]
+upload_to_vcs_release = true
