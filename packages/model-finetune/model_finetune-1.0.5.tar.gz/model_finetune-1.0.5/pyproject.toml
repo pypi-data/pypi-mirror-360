@@ -1,0 +1,150 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "model-finetune"
+dynamic = ["version"]
+description = "智能模型微调和自动建模工具包 - 专业的光谱数据处理和机器学习建模解决方案"
+readme = "README.md"
+license = {text = "MIT (Non-Commercial Use Only)"}
+authors = [
+    {name = "周元琦 (Yuan-Qi Zhou)", email = "zyq1034378361@gmail.com"}
+]
+maintainers = [
+    {name = "周元琦 (Yuan-Qi Zhou)", email = "zyq1034378361@gmail.com"}
+]
+keywords = [
+    "model-finetune", "automl", "machine-learning", "fine-tuning",
+    "model-optimization", "automated-modeling", "ml-pipeline",
+    "spectral-analysis", "data-fusion", "geo-matching"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9", 
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Operating System :: OS Independent"
+]
+requires-python = ">=3.10"
+
+dependencies = [
+    "numpy>=2.2.0",
+    "pandas>=2.2.0", 
+    "scikit-learn>=1.6.0",
+    "scipy>=1.15.0",
+    "requests>=2.32.0",
+    "chardet>=5.2.0",
+    "cryptography>=44.0.0",
+    "autowaterqualitymodeler>=4.0.5",  # 核心建模依赖
+    "python-dotenv>=1.0.0",  # .env文件支持
+    "psutil>=6.1.0",  # 系统监控
+    "tqdm>=4.66.0"  # 进度条
+    # "oss2>=2.18.0"  # 已移除OSS SDK依赖（安全考虑）
+]
+
+[project.optional-dependencies]
+# 开发依赖
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=6.0.0",
+    "pytest-xdist>=3.6.0",
+    "black>=24.0.0",
+    "isort>=5.13.0",
+    "flake8>=7.0.0",
+    "mypy>=1.8.0",
+    "pre-commit>=4.0.0"
+]
+
+# 文档依赖
+docs = [
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocstrings[python]>=0.26.0"
+]
+
+# 可视化依赖
+viz = [
+    "matplotlib>=3.8.0",
+    "seaborn>=0.13.0",
+    "plotly>=5.17.0",
+    "folium>=0.15.0"
+]
+
+# 完整安装
+all = [
+    "model-finetune[dev,docs,viz]"
+]
+
+[project.urls]
+Homepage = "https://github.com/1034378361/model-finetune"
+Documentation = "https://github.com/1034378361/model-finetune/blob/main/README.md"
+Repository = "https://github.com/1034378361/model-finetune.git"
+Issues = "https://github.com/1034378361/model-finetune/issues"
+Changelog = "https://github.com/1034378361/model-finetune/blob/main/CHANGELOG.md"
+
+# 使用固定的interface.py文件作为入口点
+# 已移除CLI entry-points，采用固定接口架构
+
+# 如果需要可选的CLI入口，可以添加以下配置：
+# [project.scripts]
+# model-finetune = "model_finetune.unified_interface:main"
+# 但推荐使用固定接口: python interface.py
+
+[tool.setuptools_scm]
+write_to = "src/model_finetune/_version.py"
+version_scheme = "python-simplified-semver"
+local_scheme = "no-local-version"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+model_finetune = [
+    "py.typed",
+    "*.md",
+    "*.txt",
+    "*.json"
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = [
+    "--cov=model_finetune",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+    "-v"
+]
+
+[dependency-groups]
+dev = [
+    "setuptools-scm>=8.3.1",
+]
