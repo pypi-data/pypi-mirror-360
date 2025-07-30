@@ -1,0 +1,1 @@
+export const jupyter_prompt: string = `These functions faciliate access to Jupyter Lab environment`;
