@@ -1,0 +1,422 @@
+Metadata-Version: 2.4
+Name: agent-docstrings
+Version: 1.3.4
+Summary: A command-line tool to auto-generate and update file-level docstrings summarizing classes and functions. Useful for maintaining a high-level overview of your files, especially in projects with code generated or modified by AI assistants.
+Author-email: Artemonim <Artemonim@yandex.ru>
+Maintainer-email: Artemonim <Artemonim@yandex.ru>
+License: MIT License
+        
+        Copyright (c) 2025 Artemonim
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/Artemonim/AgentDocstrings
+Project-URL: Source, https://github.com/Artemonim/AgentDocstrings
+Project-URL: Tracker, https://github.com/Artemonim/AgentDocstrings/issues
+Project-URL: Documentation, https://github.com/Artemonim/AgentDocstrings#readme
+Project-URL: Changelog, https://github.com/Artemonim/AgentDocstrings/blob/master/CHANGELOG.md
+Keywords: docstrings,documentation,ai,developer-tools,automation,code-generator,maintainability,code-quality,static-analysis,pre-commit,linter,summarize-code,code-navigation,refactoring,python,java,kotlin,go,powershell,delphi,typescript,javascript,csharp,c++,c
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Software Development :: Documentation
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Text Processing :: General
+Classifier: Typing :: Typed
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Provides-Extra: dev
+Requires-Dist: pytest>=6.0; extra == "dev"
+Requires-Dist: pytest-cov>=2.0; extra == "dev"
+Requires-Dist: black>=22.0; extra == "dev"
+Requires-Dist: flake8>=4.0; extra == "dev"
+Requires-Dist: mypy>=0.950; extra == "dev"
+Requires-Dist: bump-my-version; extra == "dev"
+Dynamic: license-file
+
+<!-- ain badges -->
+
+[![PyPI version](https://badge.fury.io/py/agent-docstrings.svg)](https://badge.fury.io/py/agent-docstrings)
+[![Python versions](https://img.shields.io/pypi/pyversions/agent-docstrings.svg)](https://pypi.org/project/agent-docstrings/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+<!-- GitHub stats -->
+
+[![GitHub stars](https://img.shields.io/github/stars/Artemonim/AgentDocstrings.svg?style=social&label=Star)](https://github.com/Artemonim/AgentDocstrings)
+[![GitHub forks](https://img.shields.io/github/forks/Artemonim/AgentDocstrings.svg?style=social&label=Fork)](https://github.com/Artemonim/AgentDocstrings)
+[![Build Status](https://github.com/Artemonim/AgentDocstrings/workflows/Publish%20Python%20Package%20to%20PyPI/badge.svg)](https://github.com/Artemonim/AgentDocstrings/actions)
+
+<!-- Code Quality -->
+
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Typed with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
+[![codecov](https://codecov.io/gh/Artemonim/AgentDocstrings/branch/master/graph/badge.svg)](https://codecov.io/gh/Artemonim/AgentDocstrings)
+
+# Agent Docstrings: Automatic Code Summaries
+
+**Agent Docstrings** is a command-line tool that automatically generates and maintains a "Table of Contents" at the top of your source files. It scans for classes, functions, and methods, creating a summary that provides a high-level overview of the file's structure.
+
+<img src="Doc/AgentDocstringsExample130.webp" alt="Agent Docstrings Demo" width="600" style="border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
+
+This is especially useful for AI-Agents, helping them solve the "cold start" problem of quickly understanding and navigating large, unfamiliar codebases.
+
+---
+
+## Table of Contents
+
+-   [Supported Languages](#supported-languages)
+-   [Why Use Agent Docstrings?](#why-use-agent-docstrings)
+-   [Features](#features)
+-   [Examples](#examples)
+-   [Platform Compatibility](#platform-compatibility)
+-   [Installation](#installation)
+-   [Usage](#usage)
+-   [Configuration](#configuration)
+-   [Limitations and Nuances](#limitations-and-nuances)
+-   [Integration with Development Workflow](#integration-with-development-workflow)
+-   [Development](#development)
+-   [Support the Project](#support-the-project)
+-   [Contributing](#contributing)
+-   [License](#license)
+-   [Changelog](#changelog)
+
+---
+
+## Supported Languages
+
+| Language   | File Extensions                     | Features                       |
+| ---------- | ----------------------------------- | ------------------------------ |
+| Python     | `.py`                               | Classes, functions, methods    |
+| Java       | `.java`                             | Classes, methods               |
+| Kotlin     | `.kt`                               | Classes, functions             |
+| Go         | `.go`                               | Functions, methods             |
+| PowerShell | `.ps1`, `.psm1`                     | Functions                      |
+| Delphi     | `.pas`                              | Classes, procedures, functions |
+| C          | `.c`, `.h`                          | Functions                      |
+| C++        | `.cpp`, `.hpp`, `.cc`, `.cxx`, `.h` | Functions, classes             |
+| C#         | `.cs`                               | Classes, methods               |
+| JavaScript | `.js`, `.jsx`                       | Functions, classes             |
+| TypeScript | `.ts`, `.tsx`                       | Functions, classes             |
+
+## Why Use Agent Docstrings?
+
+Imagine an AI agent tasked with modifying a large, unfamiliar codebase. Its first step is to read a file to get its bearings. What if the first thing it saw was a perfect summary?
+
+#### Without Agent Docstrings: The "Blind" Approach
+
+An AI agent opens a file and has no initial context. To understand the file's structure, it must:
+
+1.  Read a large chunk of the file.
+2.  Use tools like `grep_tool` or other search methods to find function and class definitions.
+3.  Analyze and piece together the results to build a mental map of the file.
+    This process is slow, api-intensive, and prone to error.
+
+#### With Agent Docstrings: The "Map-First" Approach
+
+The agent opens the same file. The very first thing it reads is a "Table of Contents" generated by this tool. This provides immediate, critical advantages:
+
+-   **Solves the "Cold Start" Problem**: The agent instantly understands the file's layout, classes, and functions without any prior knowledge. The docstring acts as a "map" for the new territory, providing an immediate entry point for analysis.
+-   **Dramatically Boosts Efficiency**: Gaining this structural overview is a single `read_tool` operation. This is far more efficient than performing multiple searches and analyses to build the same context from scratch.
+-   **Enhances Situational Awareness**: With a clear overview from the start, the agent's subsequent actions (like targeted code searches or modifications) become more precise and intelligent. Knowing that a function `integrate_user_data` exists allows for a much more focused approach than a broad search for "user data".
+
+In short, **Agent Docstrings** gives an AI a crucial head start, turning a slow, investigative process into a quick, informed action.
+
+## Features
+
+-   **Multi-language support**: Works with a wide range of popular programming languages.
+-   **Automatic discovery**: Recursively scans directories for source files to process.
+-   **Smart filtering**: Automatically respects `.gitignore` files and allows for custom ignore (`.agent-docstrings-ignore`) and include (`.agent-docstrings-include`) files for fine-grained control.
+-   **Incremental updates**: Designed to be fast, it only modifies files when changes to the code structure are detected.
+-   **Robust Parsers**: Uses reliable AST (Abstract Syntax Tree) parsers for Python and Go, and intelligent regex-based parsing for other languages.
+-   **CLI interface**: A simple and easy-to-use command-line tool for manual runs or CI/CD integration.
+-   **Extensively Tested**: High reliability is ensured by a comprehensive suite of over 140 tests, covering everything from individual parsers (unit tests) to full command-line behavior (end-to-end tests).
+
+## Examples
+
+### Python Example
+
+Before:
+
+```python
+def calculate_fibonacci(n):
+    if n <= 1:
+        return n
+    return calculate_fibonacci(n-1) + calculate_fibonacci(n-2)
+
+class MathUtils:
+    def add(self, a, b):
+        return a + b
+```
+
+After:
+
+```python
+"""
+    --- AUTO-GENERATED DOCSTRING ---
+    Table of content is automatically generated by Agent Docstrings v1.3.0
+
+    Classes/Functions:
+    - MathUtils (line 18):
+      - add(a, b) (line 19)
+      - Functions:
+        - calculate_fibonacci(n) (line 13)
+    --- END AUTO-GENERATED DOCSTRING ---
+"""
+def calculate_fibonacci(n):
+    if n <= 1:
+        return n
+    return calculate_fibonacci(n-1) + calculate_fibonacci(n-2)
+
+class MathUtils:
+    def add(self, a, b):
+        return a + b
+```
+
+## Platform Compatibility
+
+This tool is compatible with:
+
+-   **Python**: 3.10, 3.11, 3.12, and 3.13
+-   **Go**: >=1.22 (required only for building the Go parser during package development)
+
+-   No dependency on external Python libraries at runtime
+
+## Installation
+
+### From PyPI (recommended)
+
+```bash
+pip install agent-docstrings
+```
+
+### From source
+
+```bash
+git clone https://github.com/Artemonim/agent-docstrings.git
+cd agent-docstrings
+pip install -e .
+```
+
+## Usage
+
+### Processing paths
+
+You can process one or more directories, files, or a mix of both.
+
+Process a directory:
+
+```bash
+agent-docstrings src/
+```
+
+Process a single file:
+
+```bash
+agent-docstrings src/main.py
+```
+
+Process multiple paths:
+
+```bash
+agent-docstrings src/ tests/ lib/utils.py
+```
+
+### With verbose output
+
+```bash
+agent-docstrings src/ --verbose
+```
+
+### Using as a Python module
+
+```python
+from agent_docstrings.core import discover_and_process_files
+
+# Process a mix of files and directories
+discover_and_process_files(["src/", "lib/utils.py"], verbose=True)
+```
+
+## Configuration
+
+### Gitignore Integration
+
+The tool automatically reads and respects `.gitignore` files in your project directory and its parents. Files and directories ignored by git will also be ignored by the docstring generator.
+
+### Blacklist (Ignore files)
+
+You can create a gitignore-like `.agent-docstrings-ignore` file in your project root to specify files and directories to ignore:
+
+### Whitelist (Only process specific files)
+
+You can create a gitignore-like `.agent-docstrings-include` file to only process specific files:
+
+```
+# Only process main source code
+src/*.py
+lib/*.py
+agent_docstrings/*.py
+```
+
+**Note**: If a whitelist file exists and is not empty, ONLY files matching the whitelist patterns will be processed.
+
+## Limitations and Nuances
+
+It is important to understand the nuances of this tool to use it effectively. The quality and method of code parsing vary significantly by language.
+
+-   **Table of Contents, Not Full Documentation**: The generator does not create detailed, explanatory docstrings. Instead, it generates a file-level comment block that acts as a "Table of Contents" listing the functions and classes found in the file. This provides a quick overview of the file's structure.
+
+-   **Language-Dependent Parsing Quality**: The reliability of the parser is highly dependent on the target language.
+
+    -   **Robust AST-Based Parsing (Python, Go)**: For Python and Go, the tool uses native Abstract Syntax Tree (AST) parsers. This approach is highly accurate and robustly handles complex syntax, multiline definitions, and unconventional formatting.
+
+    -   **Regex-Based Parsing (Other Languages)**: For other languages (C++, C#, Java, JavaScript, TypeScript, Kotlin, PowerShell, Delphi), the generator relies on regular expressions and simplified scope analysis (brace counting). This method is inherently more fragile and may fail or produce incorrect results with:
+        -   **Multiline Definitions**: Function or class signatures that span multiple lines.
+        -   **Complex Syntax**: Advanced language features like C++ templates, decorators on separate lines, or complex default parameter values.
+        -   **Unconventional Formatting**: Code that does not follow common formatting standards.
+        -   **Scope Confusion**: The brace-counting mechanism can be easily confused by comments or strings containing `{` or `}` characters, leading to incorrect structure detection.
+
+-   **In-Place File Modification**: The tool modifies files directly. It is designed to correctly remove its own previously generated headers, but it might struggle with files that have very complex, pre-existing header comments, potentially leading to incorrect placement of the new header.
+
+## Integration with Development Workflow
+
+### Pre-commit Hook
+
+Add to your `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+    - repo: local
+      hooks:
+          - id: agent-docstrings
+            name: Generate docstrings
+            entry: agent-docstrings
+            language: system
+            files: \.(py|java|kt|go|ps1|psm1|pas|js|jsx|ts|tsx|cs|cpp|cxx|cc|hpp|h|c)$
+            pass_filenames: false
+            args: [src/]
+```
+
+### CI/CD Integration
+
+```yaml
+# GitHub Actions example
+- name: Generate docstrings
+  run: |
+      pip install agent-docstrings
+      agent-docstrings src/
+      # Check if any files were modified
+      git diff --exit-code || (echo "Docstrings need updating" && exit 1)
+```
+
+## Development
+
+### Setting up development environment
+
+```bash
+git clone https://github.com/Artemonim/agent-docstrings.git
+cd agent-docstrings
+pip install -e .[dev]
+```
+
+### Running tests
+
+```bash
+pytest tests/ -v
+```
+
+### Code formatting
+
+```bash
+black agent_docstrings/
+```
+
+### Type checking
+
+```bash
+mypy agent_docstrings/
+```
+
+### Version Bumping
+
+This project uses [bump-my-version](https://github.com/callowayproject/bump-my-version) for version management. To create a new version, use the following commands after installing the development dependencies (`pip install -e .[dev]`):
+
+-   **Patch release (e.g., 1.0.1 -> 1.0.2):**
+    ```bash
+    bump-my-version patch
+    ```
+-   **Minor release (e.g., 1.0.2 -> 1.1.0):**
+    ```bash
+    bump-my-version minor
+    ```
+-   **Major release (e.g., 1.1.0 -> 2.0.0):**
+    ```bash
+    bump-my-version major
+    ```
+
+The tool is configured in `pyproject.toml` to automatically update the version string in `agent_docstrings/__init__.py`, `pyproject.toml`, and `CHANGELOG.md`.
+
+**Note**: Running `bump-my-version`, you need to create a release branch and a pull request to `master`. The process of tagging, creating a GitHub Release, and publishing to PyPI is automated. For full details, see the [Contribution Guide](CONTRIBUTING.md).
+
+## Support the Project
+
+Agent Docstrings is an independent open-source project. If you find this tool useful and want to support its ongoing development, your help would be greatly appreciated.
+
+Here are a few ways you can contribute:
+
+-   **Give a Star:** The simplest way to show your support is to star the project on [GitHub](https://github.com/Artemonim/AgentDocstrings)! It increases the project's visibility.
+-   **Support My Work:** Your financial contribution helps me dedicate more time to improving this tool and creating other open-source projects. On my [**Boosty page**](https://boosty.to/artemonim), you can:
+    -   Make a **one-time donation** to thank me for this specific project.
+    -   Become a **monthly supporter** to help all of my creative endeavors.
+-   **Try a Recommended Tool:** This project was inspired by my work with LLMs. If you're looking for a great service to work with multiple neural networks, check out [**Syntx AI**](https://t.me/syntxaibot?start=aff_157453205). Using my referral link is another way to support my work at no extra cost to you.
+
+Thank you for your support!
+
+## Contributing
+
+We welcome contributions! Please see our [**Contribution Guide**](CONTRIBUTING.md) for detailed instructions on how to get started, our development workflow, and coding standards.
+
+In short:
+
+1. Fork the repo and create your branch from `dev`.
+2. Add your feature or fix.
+3. Add/update tests.
+4. Update `CHANGELOG.md`.
+5. Submit a pull request to `dev`.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a list of changes and version history.
+
+## Support
+
+-   **Issues**: [GitHub Issues](https://github.com/Artemonim/agent-docstrings/issues)
+-   **Documentation**: [GitHub README](https://github.com/Artemonim/agent-docstrings#readme)
+-   **Source Code**: [GitHub Repository](https://github.com/Artemonim/agent-docstrings)
