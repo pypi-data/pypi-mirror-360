@@ -1,0 +1,43 @@
+# PolicyAgent specific configuration
+# Inherits common settings from src/diagram_to_iac/config.yaml
+# Only agent-specific overrides and unique settings are defined here
+
+# Agent-specific routing tokens
+routing_keys:
+  policy_scan: "ROUTE_TO_POLICY_SCAN"
+  policy_evaluate: "ROUTE_TO_POLICY_EVALUATE"
+  policy_block: "ROUTE_TO_POLICY_BLOCK"
+  policy_report: "ROUTE_TO_POLICY_REPORT"
+  end: "ROUTE_TO_END"
+
+# Policy enforcement settings (unique to PolicyAgent)
+policy:
+  # Security scanning with tfsec
+  tfsec:
+    enabled: true
+    timeout_seconds: 120
+    output_format: "json"
+    # Block apply on these severity levels
+    block_on_severity: ["CRITICAL", "HIGH"]
+    # Create artifacts for these severity levels
+    artifact_on_severity: ["CRITICAL", "HIGH", "MEDIUM"]
+  
+  # Working directory for policy scans
+  working_directory: "/workspace"
+  
+  # Artifact settings
+  artifacts:
+    # Directory to store policy findings
+    output_dir: "/workspace/.policy_findings"
+    # JSON artifact filename pattern
+    json_filename: "policy_findings_{timestamp}.json"
+    # Summary report filename pattern
+    summary_filename: "policy_summary_{timestamp}.txt"
+
+# Override memory settings for PolicyAgent
+memory:
+  max_history: 50
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(threadName)s - %(message)s"

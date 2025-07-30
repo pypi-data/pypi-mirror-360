@@ -1,0 +1,55 @@
+# SupervisorAgent specific configuration
+# Inherits common settings from src/diagram_to_iac/config.yaml  
+# Only agent-specific overrides and unique settings are defined here
+
+# Agent-specific routing tokens
+routing_keys:
+  clone: "ROUTE_TO_CLONE"
+  stack_detect: "ROUTE_TO_STACK_DETECT"
+  terraform: "ROUTE_TO_TERRAFORM"
+  issue: "ROUTE_TO_ISSUE"
+  end: "ROUTE_TO_END"
+
+# R2D workflow settings (unique to SupervisorAgent)
+workflow:
+  timeout_seconds: 600
+  working_directory: "/workspace"
+  auto_branch_naming: true
+  enhanced_terraform: true
+
+# Infrastructure detection patterns (unique to SupervisorAgent)
+stack_patterns:
+  terraform: "*.tf"
+  ansible: "*.yml"
+  powershell: "*.ps1"
+  shell: "*.sh"
+
+# Routing map for LangGraph nodes (unique to SupervisorAgent)
+routing_map:
+  clone_repo_node: "clone_repo_node"
+  stack_detect_node: "stack_detect_node"
+  terraform_workflow_node: "terraform_workflow_node"
+  issue_create_node: "issue_create_node"
+
+# Prompt templates
+prompts:
+  planner_prompt: |
+    User input: "{user_input}"
+
+    Analyze this R2D (Repo-to-Deployment) request and determine the appropriate action:
+
+    **COMPLETE R2D WORKFLOW PATTERNS:**
+    - If the input contains a repository URL (http/https .git URLs), this is a complete R2D workflow request
+    - If requesting "Execute R2D workflow", "Deploy repository", "Process repository", this is a complete workflow
+    - For complete workflows, ALWAYS start with "{route_clone}" regardless of other keywords
+
+    **INDIVIDUAL ACTION PATTERNS:**
+    1. If requesting to clone a repository (keywords: 'clone', 'download', 'git clone'), respond with "{route_clone}"
+    2. If requesting stack detection (keywords: 'detect', 'scan', 'find files', 'infrastructure'), respond with "{route_stack_detect}"
+    3. If requesting Terraform operations (keywords: 'terraform', 'plan', 'apply', 'init'), respond with "{route_terraform}"
+    4. If requesting GitHub issue creation (keywords: 'issue', 'error', 'problem'), respond with "{route_issue}"
+    5. If the request is complete or no action needed, respond with "{route_end}"
+
+    **IMPORTANT:** 
+    - Repository URLs (.git, github.com, gitlab.com) = Complete R2D workflow = Start with "{route_clone}"
+    - Any mention of "R2D workflow", "execute workflow", "deploy repo" = Complete workflow = Start with "{route_clone}"

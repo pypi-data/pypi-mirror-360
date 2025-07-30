@@ -1,0 +1,102 @@
+# Git Tools specific configuration
+# Inherits common settings from src/diagram_to_iac/config.yaml
+# Only tool-specific settings and overrides are defined here
+
+git_executor:
+  # Default clone settings
+  default_clone_depth: 1
+  
+  # Authentication failure detection patterns
+  auth_failure_patterns:
+    - "Authentication failed"
+    - "Permission denied"
+    - "Could not read from remote repository"
+    - "fatal: unable to access"
+    - "403 Forbidden"
+    - "401 Unauthorized"
+    - "Please make sure you have the correct access rights"
+  
+  # Repository path generation
+  repo_path_template: "{workspace}/{repo_name}"
+  sanitize_repo_names: true
+  
+  # Workspace cleanup configuration
+  auto_cleanup_existing_repos: true  # Automatically remove existing repos before cloning
+  cleanup_safety_check: true         # Verify path is within workspace before removal
+  backup_existing_repos: false       # Create backup before removal (future feature)
+  
+  # Git-specific logging configuration
+  enable_detailed_logging: true
+  log_git_commands: true
+  log_auth_failures: true
+  
+  # Memory integration
+  store_operations_in_memory: true
+  store_command_output: true
+  
+  # GitHub CLI configuration
+  github_cli:
+    default_timeout: 60  # GitHub CLI operations timeout
+    require_auth_check: true
+    auth_failure_patterns:
+      - "authentication failed"
+      - "bad credentials"
+      - "token does not have permission"
+      - "Must have admin rights to Repository"
+      - "HTTP 401"
+      - "HTTP 403"
+    issue_creation_patterns:
+      - "title is required"
+      - "body is required"
+      - "repository not found"
+    success_patterns:
+      - "https://github.com/"
+      - "/issues/"
+
+# Error messages following our pattern
+error_messages:
+  invalid_repo_url: "Git executor: Invalid repository URL '{repo_url}'"
+  workspace_not_accessible: "Git executor: Workspace directory '{workspace}' is not accessible"
+  clone_failed: "Git executor: Failed to clone repository '{repo_url}'"
+  auth_failed: "Git executor: Authentication failed for repository '{repo_url}'"
+  timeout_exceeded: "Git executor: Git operation timed out after {timeout} seconds"
+  shell_executor_error: "Git executor: Shell executor error: {error}"
+  repo_already_exists: "Git executor: Repository '{repo_name}' already exists in workspace"
+  repo_cleanup_started: "Git executor: Cleaning up existing repository '{repo_name}' at '{repo_path}'"
+  repo_cleanup_completed: "Git executor: Successfully cleaned up existing repository '{repo_name}'"
+  repo_cleanup_failed: "Git executor: Failed to clean up existing repository '{repo_name}': {error}"
+  cleanup_safety_violation: "Git executor: Repository path '{repo_path}' is outside workspace - cleanup denied for security"
+  
+  # GitHub CLI error messages
+  gh_auth_failed: "GitHub CLI: Authentication failed - please check GITHUB_TOKEN"
+  gh_repo_not_found: "GitHub CLI: Repository '{repo_url}' not found or access denied"
+  gh_issue_creation_failed: "GitHub CLI: Failed to create issue in '{repo_url}'"
+  gh_invalid_repo_format: "GitHub CLI: Invalid repository format '{repo_url}' - expected owner/repo"
+  gh_command_failed: "GitHub CLI: Command failed with exit code {exit_code}"
+
+# Success messages following our pattern
+success_messages:
+  clone_started: "Git executor: Starting clone of '{repo_url}'"
+  clone_completed: "Git executor: Successfully cloned '{repo_url}' to '{repo_path}' in {duration:.2f}s"
+  repo_path_resolved: "Git executor: Repository path resolved to '{repo_path}'"
+  repo_cleanup_success: "Git executor: Successfully cleaned up existing repository before cloning"
+  
+  # GitHub CLI success messages
+  gh_issue_created: "GitHub CLI: Successfully created issue '{title}' in '{repo_url}'"
+  gh_auth_verified: "GitHub CLI: Authentication verified for GitHub operations"
+  gh_repo_accessible: "GitHub CLI: Repository '{repo_url}' is accessible"
+
+# Status codes for structured responses
+status_codes:
+  success: "SUCCESS"
+  auth_failed: "AUTH_FAILED"
+  error: "ERROR"
+  timeout: "TIMEOUT"
+  already_exists: "ALREADY_EXISTS"
+  
+  # GitHub CLI status codes
+  gh_success: "GH_SUCCESS"
+  gh_auth_failed: "GH_AUTH_FAILED"
+  gh_repo_not_found: "GH_REPO_NOT_FOUND"
+  gh_permission_denied: "GH_PERMISSION_DENIED"
+  gh_error: "GH_ERROR"

@@ -1,0 +1,56 @@
+# DemonstratorAgent specific configuration
+# Inherits common settings from src/diagram_to_iac/config.yaml
+# Only agent-specific overrides and unique settings are defined here
+
+# Agent-specific routing tokens
+routing_keys:
+  analyze: "ROUTE_TO_ANALYZE"
+  demonstrate: "ROUTE_TO_DEMONSTRATE"
+  collect_inputs: "ROUTE_TO_COLLECT_INPUTS"
+  retry: "ROUTE_TO_RETRY"
+  create_issue: "ROUTE_TO_CREATE_ISSUE"
+  end: "ROUTE_TO_END"
+
+prompts:
+  planner_prompt: |
+    User request: "{user_input}"
+
+    This is a dry-run demonstration request for error: {error_type}
+    Error message: {error_message}
+
+    Analyze this request and determine the appropriate action:
+    1. If need to analyze the error for user guidance, respond with "{route_analyze}"
+    2. If need to demonstrate the issue to user, respond with "{route_demonstrate}"
+    3. If need to collect user inputs for fixing, respond with "{route_collect_inputs}"
+    4. If need to retry with new information, respond with "{route_retry}"
+    5. If need to create GitHub issue, respond with "{route_create_issue}"
+    6. If demonstration is complete, respond with "{route_end}"
+
+    Important: Focus on being helpful and educational in demonstrating the error and potential fixes.
+
+# Error analysis patterns
+error_patterns:
+  terraform_auth:
+    keywords: ["missing_terraform_token", "auth", "tfe_token"]
+    fixable: true
+    required_inputs: ["TFE_TOKEN", "TF_WORKSPACE"]
+    
+  api_auth:
+    keywords: ["api key", "401", "unauthorized"]
+    fixable: true
+    required_inputs: ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GITHUB_TOKEN"]
+    
+  terraform_init:
+    keywords: ["terraform init", "backend"]
+    fixable: true
+    required_inputs: ["Backend configuration", "Access credentials"]
+    
+  network_error:
+    keywords: ["network", "connection", "timeout"]
+    fixable: true
+    required_inputs: ["Network connectivity", "Proxy settings"]
+    
+  permission_error:
+    keywords: ["permission", "forbidden", "access denied"]
+    fixable: false
+    manual_steps: "Check permissions and access rights"

@@ -1,0 +1,41 @@
+# Shell Tools specific configuration
+# Inherits common settings from src/diagram_to_iac/config.yaml
+# Only tool-specific settings and overrides are defined here
+
+shell_executor:
+  # Allowed binaries for shell execution (security whitelist)
+  allowed_binaries: ["git", "bash", "sh", "gh", "terraform", "tfsec", "ls", "find", "wc"]
+  
+  # Maximum output size before truncation (bytes)
+  max_output_size: 8192
+  
+  # Security and path validation settings
+  allow_relative_paths: true
+  restrict_to_workspace: true
+  
+  # Logging configuration (specific to shell tools)
+  enable_detailed_logging: true
+  log_command_execution: true
+  log_output_truncation: true
+
+# Error messages for consistent user feedback
+error_messages:
+  binary_not_allowed: "Shell executor: Binary '{binary}' is not in the allowed list."
+  invalid_workspace_path: "Shell executor: Path '{path}' is outside the allowed workspace."
+  command_timeout: "Shell executor: Command timed out after {timeout} seconds."
+  execution_failed: "Shell executor: Command failed with exit code {exit_code}."
+  output_truncated: "Shell executor: Output truncated to {size} bytes."
+
+# Success messages for operation feedback
+success_messages:
+  command_executed: "Shell executor: Command completed successfully in {duration:.2f}s."
+  output_captured: "Shell executor: Captured {size} bytes of output."
+
+# Development and testing overrides
+development:
+  # For local development, allow broader workspace access
+  local_workspace_base: "/home/vindpro/Documents/projects/diagram-to-iac"
+  # Extended timeout for development operations
+  extended_timeout: 120
+  # Additional dev binaries (can be enabled for local testing)
+  dev_binaries: ["ls", "pwd", "echo", "cat", "grep"]

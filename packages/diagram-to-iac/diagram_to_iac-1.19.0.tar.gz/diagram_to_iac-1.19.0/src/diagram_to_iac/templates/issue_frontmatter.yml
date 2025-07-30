@@ -1,0 +1,240 @@
+# Issue Frontmatter Template for R2D Umbrella Issues
+# =====================================================
+# This template provides the structured metadata format for GitHub issues
+# created by the DevOps-in-a-Box R2D Action.
+
+# Standard R2D Issue Metadata
+r2d_metadata:
+  # Core identifiers
+  run_key: "{run_key}"
+  repo_url: "{repo_url}"
+  commit_sha: "{commit_sha}"
+  job_name: "{job_name}"
+  
+  # Timestamps
+  created_at: "{created_at}"
+  updated_at: "{updated_at}"
+  
+  # Status tracking
+  status: "{status}"
+  wait_reason: "{wait_reason}"
+  
+  # Associated resources
+  umbrella_issue_id: "{umbrella_issue_id}"
+  linked_pr: "{linked_pr}"
+  branch_name: "{branch_name}"
+  thread_id: "{thread_id}"
+  
+  # Artifacts and outputs
+  artifacts_path: "{artifacts_path}"
+  terraform_summary: "{terraform_summary}"
+  
+  # Retry information
+  retry_count: {retry_count}
+  predecessor_run: "{predecessor_run}"
+  
+  # Agent status summary
+  agent_statuses:
+    supervisor:
+      status: "{supervisor_status}"
+      last_updated: "{supervisor_last_updated}"
+    git_agent:
+      status: "{git_agent_status}"
+      last_updated: "{git_agent_last_updated}"
+    terraform_agent:
+      status: "{terraform_agent_status}"
+      last_updated: "{terraform_agent_last_updated}"
+    shell_agent:
+      status: "{shell_agent_status}"
+      last_updated: "{shell_agent_last_updated}"
+
+# Issue Template Configuration
+issue_template:
+  title: "🚀 R2D Deployment: {repo_name} ({short_sha})"
+  labels:
+    - "r2d-deployment"
+    - "automated"
+    - "infrastructure"
+  assignees:
+    - "github-copilot"  # Auto-assign to GitHub Copilot for AI assistance
+  
+  # Issue body sections
+  body_sections:
+    header:
+      title: "## 🤖 DevOps-in-a-Box: Automated R2D Deployment"
+      content: |
+        This is an automated deployment issue created by the DevOps-in-a-Box R2D Action.
+        
+        **Repository:** {repo_url}
+        **Commit:** `{commit_sha}`
+        **Job:** {job_name}
+        **Started:** {created_at}
+    
+    status:
+      title: "## 📊 Deployment Status"
+      content: |
+        - **Overall Status:** {status}
+        - **Current Phase:** {current_phase}
+        - **Progress:** {progress_percentage}%
+        
+        {status_details}
+    
+    agents:
+      title: "## 🤖 Agent Status"
+      content: |
+        | Agent | Status | Last Updated | Notes |
+        |-------|--------|--------------|-------|
+        | Supervisor | {supervisor_status} | {supervisor_last_updated} | {supervisor_notes} |
+        | Git Agent | {git_agent_status} | {git_agent_last_updated} | {git_agent_notes} |
+        | Terraform Agent | {terraform_agent_status} | {terraform_agent_last_updated} | {terraform_agent_notes} |
+        | Shell Agent | {shell_agent_status} | {shell_agent_last_updated} | {shell_agent_notes} |
+    
+    resources:
+      title: "## 🔗 Related Resources"
+      content: |
+        - **Branch:** {branch_name}
+        - **Thread ID:** {thread_id}
+        - **Artifacts:** {artifacts_path}
+        {linked_resources}
+    
+    terraform:
+      title: "## ⚡ Terraform Operations"
+      content: |
+        ```
+        {terraform_summary}
+        ```
+    
+    logs:
+      title: "## 📋 Deployment Logs"
+      content: |
+        <details>
+        <summary>Click to view detailed logs</summary>
+        
+        ```
+        {deployment_logs}
+        ```
+        </details>
+    
+    commands:
+      title: "## 🔧 Available Commands"
+      content: |
+        You can control this deployment by commenting on this issue:
+        
+        - `retry` - Retry the current step
+        - `cancel` - Cancel the deployment
+        - `status` - Get current status
+        - `logs` - Show recent logs
+        - `help` - Show all available commands
+    
+    footer:
+      title: "## 🤖 Automation Info"
+      content: |
+        This issue is managed by the DevOps-in-a-Box R2D Action.
+        
+        **Run Key:** `{run_key}`
+        **Retry Count:** {retry_count}
+        **Predecessor:** {predecessor_run}
+        
+        ---
+        *Powered by [DevOps-in-a-Box](https://github.com/amartyamandal/diagram-to-iac)*
+
+# Status messages for different phases
+status_messages:
+  created: "🆕 Deployment created and queued"
+  in_progress: "🚀 Deployment in progress"
+  waiting_for_pat: "⏳ Waiting for Personal Access Token configuration"
+  waiting_for_pr: "🔄 Waiting for Pull Request review and merge"
+  completed: "✅ Deployment completed successfully"
+  failed: "❌ Deployment failed"
+  cancelled: "🛑 Deployment cancelled"
+
+# Progress indicators
+progress_indicators:
+  created: 10
+  in_progress: 50
+  waiting_for_pat: 30
+  waiting_for_pr: 80
+  completed: 100
+  failed: 0
+  cancelled: 0
+
+# Command responses
+command_responses:
+  retry: |
+    🔄 **Retry Requested**
+    
+    The deployment will be retried from the current step.
+    This may take a few minutes to start.
+    
+  cancel: |
+    🛑 **Cancellation Requested**
+    
+    The deployment has been marked for cancellation.
+    Any running operations will be stopped gracefully.
+    
+  status: |
+    📊 **Current Status**
+    
+    - **Phase:** {current_phase}
+    - **Progress:** {progress_percentage}%
+    - **Last Updated:** {last_updated}
+    
+    {detailed_status}
+    
+  help: |
+    🔧 **Available Commands**
+    
+    Comment on this issue with any of these commands:
+    
+    - `retry` - Retry the current step
+    - `cancel` - Cancel the deployment  
+    - `status` - Get current status
+    - `logs` - Show recent logs
+    - `help` - Show this help message
+    
+    **Note:** Only repository members can execute commands.
+
+# Error templates
+error_templates:
+  terraform_auth_error: |
+    ❌ **Terraform Authentication Error**
+    
+    The deployment failed because Terraform Cloud authentication is not properly configured.
+    
+    **Required Action:**
+    1. Ensure your `TFE_TOKEN` secret is set in repository settings
+    2. Verify the token has access to the required workspace
+    3. Comment `retry` to restart the deployment
+    
+  git_auth_error: |
+    ❌ **Git Authentication Error**
+    
+    The deployment failed because Git operations require authentication.
+    
+    **Required Action:**
+    1. Ensure your `GITHUB_TOKEN` has sufficient permissions
+    2. Verify repository access settings
+    3. Comment `retry` to restart the deployment
+    
+  missing_terraform_files: |
+    ❌ **Missing Terraform Files**
+    
+    The deployment failed because no Terraform files were found in the repository.
+    
+    **Required Action:**
+    1. Ensure your repository contains `.tf` files
+    2. Check that files are in the expected directory structure
+    3. Update the repository and create a new issue
+    
+  policy_violation: |
+    ❌ **Security Policy Violation**
+    
+    The deployment was blocked by security policies.
+    
+    **Details:**
+    {policy_details}
+    
+    **Required Action:**
+    1. Review and fix the security issues listed above
+    2. Update your Terraform code
+    3. Create a new deployment issue
