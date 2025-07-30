@@ -1,0 +1,66 @@
+Metadata-Version: 2.1
+Name: asyncpg_lock
+Version: 0.0.1
+Summary: Run long-running work exclusively using PostgreSQL advisory locks
+Home-page: https://github.com/Pliner/asyncpg-lock
+Author: Iurii Pliner
+Author-email: yury.pliner@gmail.com
+License: MIT
+Platform: macOS
+Platform: POSIX
+Platform: Windows
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Operating System :: OS Independent
+Classifier: Environment :: Web Environment
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Framework :: AsyncIO
+Classifier: Typing :: Typed
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# asyncpg-lock
+
+Run long-running work exclusively using PostgreSQL advisory locks.
+
+## Usage
+
+```python
+import asyncio
+import asyncpg
+import asyncpg_lock
+
+
+async def worker_func() -> None:
+    # something very long-running
+    while True:
+        await asyncio.sleep(100500)
+
+
+async def main():
+    guard = asyncpg_lock.AdvisoryLockGuard(
+        connect=lambda: asyncpg.connect("postgresql://localhost/db")
+    )
+    # worker_func will not be executed concurrently
+    key = 100500
+    tasks = [
+        asyncio.create_task(guard.run(key, worker_func)),
+        asyncio.create_task(guard.run(key, worker_func)),
+        asyncio.create_task(guard.run(key, worker_func)),
+        asyncio.create_task(guard.run(key, worker_func))
+    ]
+    await asyncio.gather(*tasks)
+
+
+asyncio.run(main())
+```
+
+## v0.0.1 (2025-07-07)
+
+* Initial release
