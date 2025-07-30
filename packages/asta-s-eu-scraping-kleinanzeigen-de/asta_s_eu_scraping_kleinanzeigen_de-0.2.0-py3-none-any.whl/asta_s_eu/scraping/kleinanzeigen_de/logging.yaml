@@ -1,0 +1,47 @@
+version: 1
+formatters:
+  simple:
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: simple
+    stream: ext://sys.stdout
+  file:
+    class: logging.FileHandler
+    level: DEBUG
+    formatter: simple
+    filename: {CONFIG_DIR}/kleinanzeigen.de.log
+  alert:
+    class: logging.FileHandler
+    level: WARNING
+    formatter: simple
+    filename: {CONFIG_DIR}/kleinanzeigen.de.alert.{now:%Y-%m-%d}.log
+
+loggers:
+  "ebay_kleinanzeigen.de":
+    level: DEBUG
+    handlers: [console, file, alert]
+    propagate: no
+  requests:
+    level: DEBUG
+    handlers: [console, file, alert]
+    propagate: no
+  retry:
+    level: DEBUG
+    handlers: [ console, file, alert ]
+    propagate: no
+
+  botocore:
+    level: INFO
+    handlers: [ console, file, alert ]
+    propagate: no
+  boto3:
+    level: INFO
+    handlers: [ console, file, alert ]
+    propagate: no
+
+root:
+  level: INFO # DEBUG
+  handlers: [console, file, alert]
