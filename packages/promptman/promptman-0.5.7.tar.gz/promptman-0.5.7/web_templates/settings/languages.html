@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="{{ current_language }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('settings.languages') }} - {{ t('app.title') }}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="/settings" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-arrow-left mr-2"></i>{{ t('common.back') }}
+                    </a>
+                    <div class="text-xl font-semibold text-gray-900">
+                        {{ t('settings.languages') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">{{ t('settings.languages') }}</h1>
+            <p class="mt-2 text-gray-600">Manage interface languages and create new translations</p>
+        </div>
+
+        <!-- Current Language Section -->
+        <div class="bg-white shadow rounded-lg mb-8">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">{{ t('settings.current_language') }}</h2>
+            </div>
+            <div class="p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-language text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">
+                                {{ available_languages[current_language]['native_name'] }}
+                            </h3>
+                            <p class="text-gray-600">{{ available_languages[current_language]['name'] }} ({{ current_language }})</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <a href="/settings/language/{{ current_language }}" 
+                           class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-edit mr-2"></i>{{ t('settings.edit_language') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Languages -->
+        <div class="bg-white shadow rounded-lg mb-8">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900">{{ t('settings.available_languages') }}</h2>
+                    <button onclick="showNewLanguageModal()" 
+                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>{{ t('settings.new_language') }}
+                    </button>
+                </div>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% for code, info in available_languages.items() %}
+                <div class="p-6 flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                            <span class="text-sm font-semibold text-gray-600">{{ code.upper() }}</span>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-medium text-gray-900">{{ info.native_name }}</h3>
+                            <p class="text-sm text-gray-600">{{ info.name }} • v{{ info.version }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        {% if code == current_language %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {{ t('common.current') }}
+                        </span>
+                        {% else %}
+                        <form method="post" action="/language" class="inline">
+                            <input type="hidden" name="language" value="{{ code }}">
+                            <button type="submit" 
+                                    class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                {{ t('common.switch') }}
+                            </button>
+                        </form>
+                        {% endif %}
+                        
+                        <a href="/settings/language/{{ code }}" 
+                           class="text-gray-600 hover:text-gray-800">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        
+                        {% if code != 'en' %}
+                        <button onclick="deleteLanguage('{{ code }}')" 
+                                class="text-red-600 hover:text-red-800">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Language Statistics -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">{{ t('settings.language_statistics') }}</h2>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-blue-600">{{ available_languages|length }}</div>
+                        <div class="text-sm text-gray-600">{{ t('settings.total_languages') }}</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-600">1</div>
+                        <div class="text-sm text-gray-600">{{ t('settings.complete_translations') }}</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-orange-600">{{ (available_languages|length - 1) }}</div>
+                        <div class="text-sm text-gray-600">{{ t('settings.partial_translations') }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Language Modal -->
+    <div id="newLanguageModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ t('settings.new_language') }}</h3>
+                </div>
+                
+                <form id="newLanguageForm" class="px-6 py-4 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('settings.language_code') }}</label>
+                        <input type="text" 
+                               id="newLangCode" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="e.g., fr, de, ja"
+                               pattern="[a-z]{2,3}"
+                               required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('settings.language_name') }}</label>
+                        <input type="text" 
+                               id="newLangName" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="e.g., French, German, Japanese"
+                               required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('settings.native_name') }}</label>
+                        <input type="text" 
+                               id="newLangNative" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="e.g., Français, Deutsch, 日本語"
+                               required>
+                    </div>
+                </form>
+                
+                <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                    <button onclick="hideNewLanguageModal()" 
+                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
+                        {{ t('common.cancel') }}
+                    </button>
+                    <button onclick="createNewLanguage()" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        {{ t('common.create') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showNewLanguageModal() {
+            document.getElementById('newLanguageModal').classList.remove('hidden');
+        }
+        
+        function hideNewLanguageModal() {
+            document.getElementById('newLanguageModal').classList.add('hidden');
+            document.getElementById('newLanguageForm').reset();
+        }
+        
+        async function createNewLanguage() {
+            const data = {
+                language_code: document.getElementById('newLangCode').value,
+                language_name: document.getElementById('newLangName').value,
+                native_name: document.getElementById('newLangNative').value
+            };
+            
+            if (!data.language_code || !data.language_name || !data.native_name) {
+                alert('{{ t("common.required_fields") }}');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/settings/language/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    hideNewLanguageModal();
+                    window.location.reload();
+                } else {
+                    alert(result.message || '{{ t("settings.generation_failed") }}');
+                }
+            } catch (error) {
+                alert('{{ t("settings.generation_failed") }}: ' + error.message);
+            }
+        }
+        
+        async function deleteLanguage(languageCode) {
+            if (languageCode === 'en') {
+                alert('{{ t("settings.cannot_delete_default") }}');
+                return;
+            }
+            
+            if (!confirm('{{ t("common.delete_language_confirm") }}')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/settings/language/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        language_code: languageCode
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.reload();
+                } else {
+                    alert(result.message || '{{ t("common.delete_failed") }}');
+                }
+            } catch (error) {
+                alert('{{ t("common.delete_failed") }}: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('settings.language_editor') }} - {{ t('app.title') }}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        .editor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            align-items: start;
+        }
+        
+        .translation-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background: white;
+            transition: all 0.2s ease;
+        }
+        
+        .translation-item:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .translation-item.missing {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        
+        .translation-item.completed {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        
+        .key-path {
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            color: #6b7280;
+            background: #f9fafb;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+        }
+        
+        .translation-grid {
+            max-height: calc(100vh - 300px);
+            overflow-y: auto;
+        }
+        
+        .success-animation {
+            animation: successPulse 0.6s ease-in-out;
+        }
+        
+        @keyframes successPulse {
+            0% { background-color: #f0fdf4; }
+            50% { background-color: #dcfce7; }
+            100% { background-color: #f0fdf4; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <a href="/settings" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-arrow-left mr-2"></i>{{ t('common.back') }}
+                    </a>
+                    <div class="text-xl font-semibold text-gray-900">
+                        {{ t('settings.language_editor') }}
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Language Selector -->
+                    <select id="languageSelect" 
+                            class="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            hx-post="/settings/language/switch"
+                            hx-trigger="change">
+                        {% for code, info in available_languages.items() %}
+                        <option value="{{ code }}" 
+                                {% if code == current_language %}selected{% endif %}>
+                            {{ info.native_name }} ({{ info.name }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                    
+                    <!-- Actions -->
+                    <button onclick="showNewLanguageModal()" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>{{ t('settings.new_language') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Language Info Header -->
+        <div class="sticky-header">
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-6">
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-900">
+                                {{ language_info.native_name }}
+                            </h2>
+                            <p class="text-gray-600">{{ language_info.name }} ({{ language_info.code }})</p>
+                        </div>
+                        
+                        <!-- Progress Circle -->
+                        <div class="relative inline-flex items-center justify-center">
+                            <svg class="w-20 h-20 progress-ring" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="45" 
+                                        fill="none" 
+                                        stroke="#e5e7eb" 
+                                        stroke-width="8"/>
+                                <circle cx="50" cy="50" r="45" 
+                                        fill="none" 
+                                        stroke="#10b981" 
+                                        stroke-width="8"
+                                        stroke-dasharray="283"
+                                        stroke-dashoffset="{{ 283 - (283 * validation.coverage / 100) }}"
+                                        stroke-linecap="round"/>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-lg font-semibold text-gray-900">
+                                    {{ "%.1f"|format(validation.coverage) }}%
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Stats -->
+                        <div class="flex space-x-6 text-sm">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-green-600">{{ validation.covered_keys }}</div>
+                                <div class="text-gray-600">{{ t('common.completed') }}</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-red-600">{{ validation.missing_keys|length }}</div>
+                                <div class="text-gray-600">{{ t('settings.missing_keys') }}</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-gray-600">{{ validation.total_keys }}</div>
+                                <div class="text-gray-600">{{ t('common.total') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex space-x-3">
+                        <button onclick="autoTranslateAll()" 
+                                class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
+                                {% if not translation_service %}disabled title="{{ t('settings.select_translation_service') }}"{% endif %}>
+                            <i class="fas fa-magic mr-2"></i>{{ t('settings.translate_all') }}
+                        </button>
+                        
+                        <button onclick="validateLanguage()" 
+                                class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition-colors">
+                            <i class="fas fa-check-circle mr-2"></i>{{ t('settings.validation') }}
+                        </button>
+                        
+                        <button onclick="saveLanguage()" 
+                                class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>{{ t('settings.save_language') }}
+                        </button>
+                        
+                        {% if current_language != 'en' %}
+                        <button onclick="deleteLanguage()" 
+                                class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors">
+                            <i class="fas fa-trash mr-2"></i>{{ t('settings.delete_language') }}
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Translation Editor -->
+        <div id="translationEditor" class="space-y-4">
+            <!-- Filter and Search -->
+            <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-1">
+                        <input type="text" 
+                               id="searchKeys" 
+                               placeholder="{{ t('common.search') }}..." 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                               onkeyup="filterTranslations()">
+                    </div>
+                    
+                    <select id="filterStatus" 
+                            class="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            onchange="filterTranslations()">
+                        <option value="all">{{ t('common.all') }}</option>
+                        <option value="missing">{{ t('settings.missing_keys') }}</option>
+                        <option value="completed">{{ t('common.completed') }}</option>
+                    </select>
+                    
+                    <button onclick="toggleView()" 
+                            class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-th-list mr-2"></i><span id="viewToggleText">Grid View</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Translation Items -->
+            <div id="translationItems" class="translation-grid space-y-4">
+                {% for key in all_keys %}
+                <div class="translation-item {% if key in validation.missing_keys %}missing{% else %}completed{% endif %}" 
+                     data-key="{{ key }}" 
+                     data-status="{% if key in validation.missing_keys %}missing{% else %}completed{% endif %}">
+                    
+                    <div class="key-path">{{ key }}</div>
+                    
+                    <div class="editor-grid">
+                        <!-- English Reference -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ t('common.english') }} ({{ t('common.reference') }})
+                            </label>
+                            <div class="p-3 bg-gray-50 rounded-md text-sm text-gray-700 border">
+                                {{ english_translations.get(key, '') }}
+                            </div>
+                        </div>
+                        
+                        <!-- Target Language -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    {{ language_info.native_name }}
+                                </label>
+                                <button onclick="translateSingle('{{ key }}')" 
+                                        class="text-blue-600 hover:text-blue-800 text-sm"
+                                        {% if not translation_service %}disabled{% endif %}>
+                                    <i class="fas fa-language mr-1"></i>{{ t('settings.translate_key') }}
+                                </button>
+                            </div>
+                            <textarea id="translation_{{ key|replace('.', '_') }}" 
+                                      class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                      rows="3"
+                                      onchange="markAsModified('{{ key }}')"
+                                      placeholder="{{ t('common.enter_translation') }}...">{{ current_translations.get(key, '') }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- New Language Modal -->
+    <div id="newLanguageModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ t('settings.new_language') }}</h3>
+                </div>
+                
+                <form id="newLanguageForm" class="px-6 py-4 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('settings.language_code') }}</label>
+                        <input type="text" 
+                               id="newLangCode" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="e.g., fr, de, ja"
+                               pattern="[a-z]{2,3}"
+                               required>
+                        <p class="text-xs text-gray-500 mt-1">2-3 lowercase letters (ISO 639-1/639-2)</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('settings.language_name') }}</label>
+                        <input type="text" 
+                               id="newLangName" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="e.g., French, German, Japanese"
+                               required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('settings.native_name') }}</label>
+                        <input type="text" 
+                               id="newLangNative" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="e.g., Français, Deutsch, 日本語"
+                               required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('settings.author') }}</label>
+                        <input type="text" 
+                               id="newLangAuthor" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                               value="AI Prompt Manager">
+                    </div>
+                </form>
+                
+                <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                    <button onclick="hideNewLanguageModal()" 
+                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
+                        {{ t('common.cancel') }}
+                    </button>
+                    <button onclick="createNewLanguage()" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        {{ t('common.create') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-40 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
+            <div class="flex items-center space-x-4">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner text-2xl text-blue-600"></i>
+                </div>
+                <div>
+                    <div class="font-semibold text-gray-900" id="loadingTitle">{{ t('common.processing') }}</div>
+                    <div class="text-sm text-gray-600" id="loadingMessage">{{ t('common.please_wait') }}...</div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="bg-gray-200 rounded-full h-2">
+                    <div id="loadingProgress" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let modifiedKeys = new Set();
+        let currentView = 'list';
+        
+        function showNewLanguageModal() {
+            document.getElementById('newLanguageModal').classList.remove('hidden');
+        }
+        
+        function hideNewLanguageModal() {
+            document.getElementById('newLanguageModal').classList.add('hidden');
+            document.getElementById('newLanguageForm').reset();
+        }
+        
+        function showLoading(title, message, progress = 0) {
+            document.getElementById('loadingTitle').textContent = title;
+            document.getElementById('loadingMessage').textContent = message;
+            document.getElementById('loadingProgress').style.width = progress + '%';
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+        
+        function updateLoadingProgress(progress, message) {
+            document.getElementById('loadingProgress').style.width = progress + '%';
+            if (message) {
+                document.getElementById('loadingMessage').textContent = message;
+            }
+        }
+        
+        function markAsModified(key) {
+            modifiedKeys.add(key);
+            
+            // Update visual status
+            const item = document.querySelector(`[data-key="${key}"]`);
+            const textarea = document.getElementById(`translation_${key.replace(/\./g, '_')}`);
+            
+            if (textarea.value.trim()) {
+                item.classList.remove('missing');
+                item.classList.add('completed');
+                item.dataset.status = 'completed';
+            } else {
+                item.classList.remove('completed');
+                item.classList.add('missing');
+                item.dataset.status = 'missing';
+            }
+        }
+        
+        function filterTranslations() {
+            const searchTerm = document.getElementById('searchKeys').value.toLowerCase();
+            const statusFilter = document.getElementById('filterStatus').value;
+            const items = document.querySelectorAll('.translation-item');
+            
+            items.forEach(item => {
+                const key = item.dataset.key.toLowerCase();
+                const status = item.dataset.status;
+                
+                const matchesSearch = key.includes(searchTerm);
+                const matchesStatus = statusFilter === 'all' || status === statusFilter;
+                
+                if (matchesSearch && matchesStatus) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        function toggleView() {
+            const items = document.getElementById('translationItems');
+            const toggleText = document.getElementById('viewToggleText');
+            
+            if (currentView === 'list') {
+                items.classList.add('grid', 'grid-cols-1', 'lg:grid-cols-2', 'gap-6');
+                items.classList.remove('space-y-4');
+                toggleText.textContent = 'List View';
+                currentView = 'grid';
+            } else {
+                items.classList.remove('grid', 'grid-cols-1', 'lg:grid-cols-2', 'gap-6');
+                items.classList.add('space-y-4');
+                toggleText.textContent = 'Grid View';
+                currentView = 'list';
+            }
+        }
+        
+        async function createNewLanguage() {
+            const form = document.getElementById('newLanguageForm');
+            const formData = new FormData(form);
+            
+            const data = {
+                language_code: document.getElementById('newLangCode').value,
+                language_name: document.getElementById('newLangName').value,
+                native_name: document.getElementById('newLangNative').value,
+                author: document.getElementById('newLangAuthor').value
+            };
+            
+            if (!data.language_code || !data.language_name || !data.native_name) {
+                alert('{{ t("common.required_fields") }}');
+                return;
+            }
+            
+            showLoading('{{ t("settings.generating") }}', '{{ t("common.creating_language_file") }}...', 10);
+            
+            try {
+                const response = await fetch('/settings/language/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                updateLoadingProgress(80, '{{ t("common.saving") }}...');
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    updateLoadingProgress(100, '{{ t("common.success") }}!');
+                    setTimeout(() => {
+                        hideLoading();
+                        hideNewLanguageModal();
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    hideLoading();
+                    alert(result.message || '{{ t("settings.generation_failed") }}');
+                }
+            } catch (error) {
+                hideLoading();
+                alert('{{ t("settings.generation_failed") }}: ' + error.message);
+            }
+        }
+        
+        async function translateSingle(key) {
+            const textarea = document.getElementById(`translation_${key.replace(/\./g, '_')}`);
+            const originalText = textarea.value;
+            
+            textarea.value = '{{ t("settings.translating") }}...';
+            textarea.disabled = true;
+            
+            try {
+                const response = await fetch('/settings/language/translate-key', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        key: key,
+                        target_language: '{{ current_language }}'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    textarea.value = result.translation;
+                    markAsModified(key);
+                    
+                    // Success animation
+                    const item = textarea.closest('.translation-item');
+                    item.classList.add('success-animation');
+                    setTimeout(() => item.classList.remove('success-animation'), 600);
+                } else {
+                    textarea.value = originalText;
+                    alert(result.message || '{{ t("settings.translation_failed") }}');
+                }
+            } catch (error) {
+                textarea.value = originalText;
+                alert('{{ t("settings.translation_failed") }}: ' + error.message);
+            } finally {
+                textarea.disabled = false;
+            }
+        }
+        
+        async function autoTranslateAll() {
+            const missingItems = document.querySelectorAll('.translation-item.missing');
+            const totalItems = missingItems.length;
+            
+            if (totalItems === 0) {
+                alert('{{ t("common.no_missing_translations") }}');
+                return;
+            }
+            
+            if (!confirm(`{{ t("common.translate_confirm") }} ${totalItems} {{ t("common.items") }}?`)) {
+                return;
+            }
+            
+            showLoading('{{ t("settings.translating") }}', `0 / ${totalItems} {{ t("common.completed") }}`, 0);
+            
+            let completed = 0;
+            
+            for (const item of missingItems) {
+                const key = item.dataset.key;
+                const progress = Math.round((completed / totalItems) * 100);
+                
+                updateLoadingProgress(progress, `${completed} / ${totalItems} {{ t("common.completed") }}`);
+                
+                try {
+                    const response = await fetch('/settings/language/translate-key', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            key: key,
+                            target_language: '{{ current_language }}'
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        const textarea = document.getElementById(`translation_${key.replace(/\./g, '_')}`);
+                        textarea.value = result.translation;
+                        markAsModified(key);
+                    }
+                } catch (error) {
+                    console.error(`Failed to translate ${key}:`, error);
+                }
+                
+                completed++;
+                
+                // Small delay to prevent overwhelming the server
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            updateLoadingProgress(100, '{{ t("common.completed") }}!');
+            
+            setTimeout(() => {
+                hideLoading();
+                alert(`{{ t("settings.translation_completed") }}! ${completed} {{ t("common.keys_translated") }}.`);
+            }, 1000);
+        }
+        
+        async function validateLanguage() {
+            showLoading('{{ t("settings.validating") }}', '{{ t("common.checking_translations") }}...', 50);
+            
+            try {
+                const response = await fetch('/settings/language/validate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        language_code: '{{ current_language }}'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                updateLoadingProgress(100, '{{ t("common.completed") }}!');
+                
+                setTimeout(() => {
+                    hideLoading();
+                    
+                    if (result.valid) {
+                        alert('{{ t("settings.validation_passed") }}');
+                    } else {
+                        alert(`{{ t("settings.validation_failed") }}`.replace('{count}', result.missing_keys.length));
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                hideLoading();
+                alert('{{ t("common.validation_error") }}: ' + error.message);
+            }
+        }
+        
+        async function saveLanguage() {
+            if (modifiedKeys.size === 0) {
+                alert('{{ t("common.no_changes_to_save") }}');
+                return;
+            }
+            
+            showLoading('{{ t("common.saving") }}', '{{ t("common.preparing_data") }}...', 20);
+            
+            // Collect all translations
+            const translations = {};
+            const textareas = document.querySelectorAll('textarea[id^="translation_"]');
+            
+            textareas.forEach(textarea => {
+                const key = textarea.id.replace('translation_', '').replace(/_/g, '.');
+                translations[key] = textarea.value;
+            });
+            
+            updateLoadingProgress(60, '{{ t("common.saving_to_file") }}...');
+            
+            try {
+                const response = await fetch('/settings/language/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        language_code: '{{ current_language }}',
+                        translations: translations
+                    })
+                });
+                
+                const result = await response.json();
+                
+                updateLoadingProgress(100, '{{ t("common.success") }}!');
+                
+                setTimeout(() => {
+                    hideLoading();
+                    
+                    if (result.success) {
+                        modifiedKeys.clear();
+                        alert('{{ t("settings.language_saved") }}');
+                        
+                        // Refresh page to show updated stats
+                        window.location.reload();
+                    } else {
+                        alert(result.message || '{{ t("common.save_failed") }}');
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                hideLoading();
+                alert('{{ t("common.save_failed") }}: ' + error.message);
+            }
+        }
+        
+        async function deleteLanguage() {
+            if ('{{ current_language }}' === 'en') {
+                alert('{{ t("settings.cannot_delete_default") }}');
+                return;
+            }
+            
+            if (!confirm('{{ t("common.delete_language_confirm") }}')) {
+                return;
+            }
+            
+            showLoading('{{ t("common.deleting") }}', '{{ t("common.removing_language_file") }}...', 50);
+            
+            try {
+                const response = await fetch('/settings/language/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        language_code: '{{ current_language }}'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                updateLoadingProgress(100, '{{ t("common.success") }}!');
+                
+                setTimeout(() => {
+                    hideLoading();
+                    
+                    if (result.success) {
+                        alert('{{ t("settings.language_deleted") }}');
+                        window.location.href = '/settings/language/en';
+                    } else {
+                        alert(result.message || '{{ t("common.delete_failed") }}');
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                hideLoading();
+                alert('{{ t("common.delete_failed") }}: ' + error.message);
+            }
+        }
+        
+        // Auto-save functionality
+        let autoSaveTimeout;
+        function scheduleAutoSave() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                if (modifiedKeys.size > 0) {
+                    console.log('Auto-saving translations...');
+                    saveLanguage();
+                }
+            }, 30000); // Auto-save after 30 seconds of inactivity
+        }
+        
+        // Listen for changes
+        document.addEventListener('change', (e) => {
+            if (e.target.tagName === 'TEXTAREA') {
+                scheduleAutoSave();
+            }
+        });
+        
+        // Warning before leaving with unsaved changes
+        window.addEventListener('beforeunload', (e) => {
+            if (modifiedKeys.size > 0) {
+                e.preventDefault();
+                e.returnValue = '{{ t("common.unsaved_changes_warning") }}';
+                return e.returnValue;
+            }
+        });
+    </script>
+</body>
+</html>

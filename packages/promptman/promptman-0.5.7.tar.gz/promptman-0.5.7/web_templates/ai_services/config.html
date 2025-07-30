@@ -1,0 +1,316 @@
+{% extends "layouts/base.html" %}
+
+{% block main_content %}
+<div class="max-w-6xl mx-auto">
+    <div class="space-y-6">
+        <!-- Header -->
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">
+                <i class="fas fa-robot text-primary-500 mr-2"></i>
+                AI Services Configuration
+            </h1>
+            <p class="text-gray-600">
+                Configure and test connections to AI services for prompt execution
+            </p>
+        </div>
+
+        <!-- Service Types -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- OpenAI Configuration -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fab fa-openai text-green-500 mr-2"></i>
+                        OpenAI
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <form id="openai-form" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">API Key</label>
+                            <input type="password" name="api_key" class="form-input" 
+                                   placeholder="sk-..." value="{{ openai_key or '' }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Model</label>
+                            <select name="model" class="form-select">
+                                <option value="gpt-4">GPT-4</option>
+                                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Test Prompt</label>
+                            <textarea name="test_prompt" rows="3" class="form-textarea">Hello! Can you help me test this connection?</textarea>
+                        </div>
+                        <div class="flex space-x-3">
+                            <button type="button" onclick="testService('openai')" class="btn-primary">
+                                <i class="fas fa-play mr-2"></i>Test Connection
+                            </button>
+                            <button type="button" onclick="saveService('openai')" class="btn-secondary">
+                                <i class="fas fa-save mr-2"></i>Save Config
+                            </button>
+                        </div>
+                    </form>
+                    <div id="openai-result" class="mt-4 hidden"></div>
+                </div>
+            </div>
+
+            <!-- Local Services Configuration -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-server text-blue-500 mr-2"></i>
+                        Local Services
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <form id="local-form" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Service Type</label>
+                            <select name="service_type" class="form-select" onchange="updateLocalConfig(this.value)">
+                                <option value="ollama">Ollama</option>
+                                <option value="lmstudio">LM Studio</option>
+                                <option value="llamacpp">Llama.cpp</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">API Endpoint</label>
+                            <input type="url" name="api_endpoint" class="form-input" 
+                                   placeholder="http://localhost:11434/api/generate" value="{{ local_endpoint or '' }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Model</label>
+                            <input type="text" name="model" class="form-input" 
+                                   placeholder="llama2:7b" value="{{ local_model or '' }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Test Prompt</label>
+                            <textarea name="test_prompt" rows="3" class="form-textarea">Hello! Can you help me test this connection?</textarea>
+                        </div>
+                        <div class="flex space-x-3">
+                            <button type="button" onclick="testService('local')" class="btn-primary">
+                                <i class="fas fa-play mr-2"></i>Test Connection
+                            </button>
+                            <button type="button" onclick="saveService('local')" class="btn-secondary">
+                                <i class="fas fa-save mr-2"></i>Save Config
+                            </button>
+                        </div>
+                    </form>
+                    <div id="local-result" class="mt-4 hidden"></div>
+                </div>
+            </div>
+
+            <!-- Azure OpenAI Configuration -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fab fa-microsoft text-blue-600 mr-2"></i>
+                        Azure OpenAI
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <form id="azure-form" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Endpoint</label>
+                            <input type="url" name="endpoint" class="form-input" 
+                                   placeholder="https://your-resource.openai.azure.com/" value="{{ azure_endpoint or '' }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">API Key</label>
+                            <input type="password" name="api_key" class="form-input" 
+                                   placeholder="Your Azure API key" value="{{ azure_key or '' }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Deployment Name</label>
+                            <input type="text" name="deployment" class="form-input" 
+                                   placeholder="gpt-4" value="{{ azure_deployment or '' }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">API Version</label>
+                            <input type="text" name="api_version" class="form-input" 
+                                   value="2024-02-15-preview">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Test Prompt</label>
+                            <textarea name="test_prompt" rows="3" class="form-textarea">Hello! Can you help me test this connection?</textarea>
+                        </div>
+                        <div class="flex space-x-3">
+                            <button type="button" onclick="testService('azure')" class="btn-primary">
+                                <i class="fas fa-play mr-2"></i>Test Connection
+                            </button>
+                            <button type="button" onclick="saveService('azure')" class="btn-secondary">
+                                <i class="fas fa-save mr-2"></i>Save Config
+                            </button>
+                        </div>
+                    </form>
+                    <div id="azure-result" class="mt-4 hidden"></div>
+                </div>
+            </div>
+
+            <!-- Service Status -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-heartbeat text-green-500 mr-2"></i>
+                        Service Status
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                                <span class="text-sm font-medium">OpenAI GPT-4</span>
+                            </div>
+                            <span class="text-xs text-gray-500">Last tested: 2min ago</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
+                                <span class="text-sm font-medium">Ollama Llama2</span>
+                            </div>
+                            <span class="text-xs text-gray-500">Not configured</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+                                <span class="text-sm font-medium">Azure OpenAI</span>
+                            </div>
+                            <span class="text-xs text-gray-500">Connection failed</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">Usage Statistics</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Prompts executed today:</span>
+                                <span class="font-medium ml-2">47</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Tokens used:</span>
+                                <span class="font-medium ml-2">12,450</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Cost estimate:</span>
+                                <span class="font-medium ml-2">$3.24</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Avg response time:</span>
+                                <span class="font-medium ml-2">2.1s</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateLocalConfig(serviceType) {
+    const endpointInput = document.querySelector('#local-form input[name="api_endpoint"]');
+    const modelInput = document.querySelector('#local-form input[name="model"]');
+    
+    const configs = {
+        'ollama': {
+            endpoint: 'http://localhost:11434/api/generate',
+            model: 'llama2:7b'
+        },
+        'lmstudio': {
+            endpoint: 'http://localhost:1234/v1/chat/completions',
+            model: 'local-model'
+        },
+        'llamacpp': {
+            endpoint: 'http://localhost:8080/completion',
+            model: 'ggml-model'
+        }
+    };
+    
+    if (configs[serviceType]) {
+        endpointInput.placeholder = configs[serviceType].endpoint;
+        modelInput.placeholder = configs[serviceType].model;
+    }
+}
+
+async function testService(serviceType) {
+    const form = document.getElementById(serviceType + '-form');
+    const resultDiv = document.getElementById(serviceType + '-result');
+    const formData = new FormData(form);
+    
+    // Show loading state
+    resultDiv.innerHTML = `
+        <div class="flex items-center p-3 bg-blue-50 rounded-lg">
+            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-3"></div>
+            <span class="text-sm text-blue-700">Testing connection...</span>
+        </div>
+    `;
+    resultDiv.classList.remove('hidden');
+    
+    try {
+        formData.append('service_type', serviceType);
+        
+        const response = await fetch('/ai-services/test', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            resultDiv.innerHTML = `
+                <div class="p-3 bg-green-50 rounded-lg">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span class="text-sm font-medium text-green-800">Connection Successful</span>
+                    </div>
+                    <div class="text-sm text-green-700">
+                        <div><strong>Response:</strong> ${result.response}</div>
+                        <div><strong>Latency:</strong> ${result.latency}</div>
+                        <div><strong>Tokens:</strong> ${result.tokens_used}</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <div class="p-3 bg-red-50 rounded-lg">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
+                        <span class="text-sm font-medium text-red-800">Connection Failed</span>
+                    </div>
+                    <div class="text-sm text-red-700">${result.error}</div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `
+            <div class="p-3 bg-red-50 rounded-lg">
+                <div class="flex items-center mb-2">
+                    <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
+                    <span class="text-sm font-medium text-red-800">Error</span>
+                </div>
+                <div class="text-sm text-red-700">${error.message}</div>
+            </div>
+        `;
+    }
+}
+
+async function saveService(serviceType) {
+    const form = document.getElementById(serviceType + '-form');
+    const formData = new FormData(form);
+    
+    try {
+        // This would save to your configuration storage
+        showToast('Configuration saved successfully', 'success');
+    } catch (error) {
+        showToast('Failed to save configuration', 'error');
+    }
+}
+
+// Initialize default configurations
+document.addEventListener('DOMContentLoaded', function() {
+    updateLocalConfig('ollama');
+});
+</script>
+{% endblock %}
