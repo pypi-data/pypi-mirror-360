@@ -1,0 +1,136 @@
+# SPDX-FileCopyrightText: 2024 DESY and the Constellation authors
+# SPDX-License-Identifier: CC0-1.0
+
+[build-system]
+build-backend = "mesonpy"
+requires = ["meson-python"]
+
+[project]
+name = "ConstellationDAQ"
+authors = [{name = "Constellation Authors"}]
+description = "The Autonomous Control and Data Acquisition System for Dynamic Experimental Setups"
+readme = "README.md"
+license = {text = "EUPL-1.2"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: C++",
+    "Operating System :: Unix",
+    "License :: OSI Approved",
+    "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+]
+dynamic = ["version"]
+requires-python = ">=3.11"
+dependencies = [
+    "pyzmq",
+    "msgpack",
+    "python-statemachine>=2.3.3",
+    "numpy",
+    "coloredlogs",
+    "psutil",
+]
+
+[project.scripts]
+Controller = "constellation.core.controller:main"
+Monitor = "constellation.core.monitoring:main"
+DemoDataSender = "constellation.core.datasender:main"
+# 3rd-party Satellites
+SatelliteCaenHV = "constellation.satellites.CaenHV.__main__:main"
+SatelliteH5DataWriter = "constellation.satellites.H5DataWriter.__main__:main"
+SatelliteInflux = "constellation.satellites.Influx.__main__:main"
+SatelliteKeithley = "constellation.satellites.Keithley.__main__:main"
+SatelliteLakeShore218 = "constellation.satellites.LakeShore218.__main__:main"
+SatelliteLeCroy = "constellation.satellites.LeCroy.__main__:main"
+SatelliteMariner = "constellation.satellites.Mariner.__main__:main"
+
+[project.urls]
+Homepage = "https://constellation.pages.desy.de/"
+Repository = "https://gitlab.desy.de/constellation/constellation"
+
+[project.optional-dependencies]
+# Dev components
+dev = [
+    "build",
+    "black",
+    "flake8", "flake8-pyproject",
+    "mypy", "types-psutil",
+    "isort",
+]
+test = [
+    "pytest",
+    "pytest-cov",
+    "pytest-sugar",
+]
+docs = [
+    "sphinx",
+    "sphinx-autobuild",
+    "pydata_sphinx_theme",
+    "myst-parser",
+    "ablog",
+    "breathe",
+    "sphinxcontrib-plantuml",
+    "sphinxcontrib-spelling",
+    "sphinx_design",
+    "sphinx-favicon",
+    "sphinx-copybutton",
+    "PyYAML",
+    "python-slugify",
+]
+# Feature components
+cli = ["ipython"]
+# Satellite components
+caenhv = ["pycaenhv>=0.03", "pyserial"]
+hdf5 = ["h5py"]
+influx = ["influxdb-client"]
+keithley = ["pyserial"]
+lecroy = ["lecrunch3>=3.0.3", "numpy"]
+visa = ["pyvisa", "pyvisa-py", "pyserial", "zeroconf"]
+
+[tool.meson-python.args]
+setup = ["--wrap-mode=forcefallback", "-Dimpl_py=enabled", "-Dimpl_cxx=disabled"]  # disable C++ for now
+dist = ["--include-subprojects"]
+
+[tool.flake8]
+max-line-length = 125
+ignore = ["E203", "E731", "W503"]
+
+[tool.black]
+line-length = 125
+
+[tool.isort]
+profile = "black"
+line_length = 125
+skip_gitignore = true
+
+[tool.pytest.ini_options]
+testpaths = ["python/tests"]
+markers = [
+    "constellation: specify, which Constellation group name to use (not supported by all fixtures yet)",
+]
+
+[tool.coverage.run]
+source = ["constellation"]
+
+[tool.mypy]
+python_version = "3.11"
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_unused_configs = true
+# force specific ignores:
+enable_error_code = ['ignore-without-code']
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+files = "./python/constellation/core"
+exclude = [
+    "^test_",
+]
