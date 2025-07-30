@@ -1,0 +1,2 @@
+INLINE_SCRIPT_PREFIX = "exec"
+SCRIPT_PREFIX = "script"
