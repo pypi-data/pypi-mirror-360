@@ -1,0 +1,43 @@
+/*
+The command below will only work from inside of the PIVPipelineUtility directory.
+The compiled package will end up in a dir called "piv_build", one step up from
+PIVPipelineUtility. Use the force=true arg to replace an existing piv_build directory.
+The precompile_execution_file argument is pretty important to speed up the time 
+needed to spin up new Julia processes.
+*/
+
+using PackageCompiler
+create_app("/Users/robinshindelman/repos/juliaPIV/src/PIVPipelineUtility", 
+        "piv_build"; 
+        precompile_execution_file="precompile.jl",
+        force=true)
+
+/*
+To create a library instead.
+*/
+
+using PackageCompiler
+create_library("{pivpipelineutility_path}",
+                "src/juliaPIV/piv_build";
+                lib_name="pivbuild",
+                precompile_execution_file="{precompile_script_path}",
+                force=true
+            )
+
+/* Example call from docs */
+create_library("MyLib", "MyLibCompiled";
+                lib_name="libinc",
+                precompile_execution_file="MyLib/build/generate_precompile.jl",
+                precompile_statements_file="MyLib/build/additional_precompile.jl",)
+
+
+/* 
+Once compiled, make these system wide adjustments to be able to use python cytpes.CDLL
+However, this is very finnicky and not necessary. Much better to find the appropriate
+.dylib files in piv_build and link them with CDLL.
+*/
+
+[zsh]-> find ~/.julia/juliaup -name libjulia-internal.dylib
+/Users/robinshindelman/.julia/juliaup/julia-1.11.5+0.aarch64.apple.darwin14/lib/julia/libjulia-internal.dylib
+
+[zsh]-> export DYLD_FALLBACK_LIBRARY_PATH=/Users/robinshindelman/.julia/juliaup/julia-1.11.5+0.aarch64.apple.darwin14/lib/julia/:$DYLD_FALLBACK_LIBRARY_PATH
