@@ -1,0 +1,550 @@
+Metadata-Version: 2.4
+Name: spinetoolbox
+Version: 0.10.0
+Summary: An application to define, manage, and execute various energy system simulation models
+Author-email: Spine Project consortium <spine_info@vtt.fi>
+License: LGPL-3.0-or-later
+Project-URL: Documentation, https://spine-toolbox.readthedocs.io/
+Project-URL: Repository, https://github.com/spine-tools/Spine-Toolbox
+Keywords: energy system modelling,workflow,optimisation,database
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: COPYING
+License-File: COPYING.LESSER
+Requires-Dist: PySide6!=6.5.3,!=6.6.3,!=6.7.0,!=6.8.0,>=6.5.0
+Requires-Dist: jupyter_client>=6.0
+Requires-Dist: qtconsole>=5.1
+Requires-Dist: spinedb_api>=0.35.0
+Requires-Dist: spine_engine>=0.26.0
+Requires-Dist: numpy>=1.20.2
+Requires-Dist: matplotlib>=3.5
+Requires-Dist: scipy>=1.7.1
+Requires-Dist: networkx>=2.6
+Requires-Dist: pandas>=1.3.2
+Requires-Dist: Pygments>=2.8
+Requires-Dist: jill>=0.9.2
+Requires-Dist: pyzmq>=21.0
+Requires-Dist: spine_items>=0.24.0
+Dynamic: license-file
+
+# Spine Toolbox
+Link to the documentation: [https://spine-toolbox.readthedocs.io/en/latest/?badge=latest](https://spine-toolbox.readthedocs.io/en/latest/?badge=latest)
+
+[![Python](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12%20|%203.13-blue.svg)](https://www.python.org/downloads/release/python-3120/)
+[![Documentation Status](https://readthedocs.org/projects/spine-toolbox/badge/?version=latest)](https://spine-toolbox.readthedocs.io/en/latest/?badge=latest)
+[![Test suite](https://github.com/spine-tools/Spine-Toolbox/actions/workflows/test_runner.yml/badge.svg)](https://github.com/spine-tools/Spine-Toolbox/actions/workflows/test_runner.yml)
+[![codecov](https://codecov.io/gh/spine-tools/Spine-Toolbox/branch/master/graph/badge.svg)](https://codecov.io/gh/spine-tools/Spine-Toolbox)
+[![PyPI version](https://badge.fury.io/py/spinetoolbox.svg)](https://badge.fury.io/py/spinetoolbox)
+[![Join the chat at https://gitter.im/spine-tools/Spine-Toolbox](https://badges.gitter.im/spine-tools/Spine-Toolbox.svg)](https://gitter.im/spine-tools/Spine-Toolbox?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+Spine Toolbox is an open source Python package to manage data, scenarios and workflows for modelling and simulation. 
+You can have your local workflow, but work as a team through version control and SQL databases.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./fig/spinetoolbox_logo.svg" width="50%">
+    <img alt="Spine Toolbox" src="./fig/spinetoolbox_on_wht.svg" width="50%">
+  </picture>
+</p>
+
+## License
+
+Spine Toolbox is released under the GNU Lesser General Public License (LGPL) license. 
+All accompanying documentation, original graphics and other material are released under the 
+[Creative Commons BY-SA 4.0 license](https://creativecommons.org/licenses/by-sa/4.0/).
+Licenses of all packages used by Spine Toolbox are listed in the Spine Toolbox User 
+Guide.
+
+## Attribution
+
+If you use Spine Toolbox in a published work, please cite the following publication (Chicago/Turabian Style).
+
+Kiviluoma Juha, Pallonetto Fabiano, Marin Manuel, Savolainen Pekka T., Soininen Antti, Vennström Per, Rinne Erkka, 
+Huang Jiangyi, Kouveliotis-Lysikatos Iasonas, Ihlemann Maren, Delarue Erik, O’Dwyer Ciara, O’Donnel Terence, 
+Amelin Mikael, Söder Lennart, and Dillon Joseph. 2022. "Spine Toolbox: A flexible open-source workflow management 
+system with scenario and data management" SoftwareX, Vol. 17, 100967, https://doi.org/10.1016/j.softx.2021.100967.
+
+## Installation
+
+We provide multiple options for installing Spine Toolbox. The first two options also require that you **follow 
+the Pre-installation steps**: 
+- [Python/pipx](#installation-with-python-and-pipx) (we intend to make stable releases every month or so)
+- [From source files](#installation-from-sources-using-git) (this is the cutting edge - and more likely to have bugs)
+- [Windows executable as .zip bundle](https://spine-tools.github.io/Downloads/) (requires only unzipping the downloaded .zip file - however, the embedded Python is likely not usable for the Python tools you might want to run)
+- [Windows installation package](#windows-64-bit-installer-package) (these are quite old - not recommended)
+- [MacOS from source files using Homebrew](#macos-installation-from-sources-with-homebrew) (to work around some rough edges on Macs)
+
+### Pre-installation
+
+These steps apply to both [Python/pipx](#installation-with-python-and-pipx) option and to 
+[From source files](#installation-from-sources-using-git) option.
+
+1. If you don't have Python installed, please install it e.g. from 
+[Python.org](https://www.python.org/downloads/).
+Please note that we support Python versions from 3.10 to 3.13.
+
+2. Test that python is now in your PATH. Open a new terminal (e.g. Command Prompt) window and type 
+
+       python --version
+
+    The output should be the Python version. If it did not work (e.g. the output is *'python' command not found* or 
+similar or the [Microsoft Store opens](https://learn.microsoft.com/en-us/windows/python/faqs#why-does-running-python-exe-open-the-microsoft-store-)),
+you need to add the Python installation folder into the PATH environment variable. On Windows, this can be done 
+from Windows Control Panel (use search with 'environment').
+[See specific instructions for all operating systems from this link](https://realpython.com/add-python-to-path/).
+
+3. Install Git. Windows version can be found here: https://git-scm.com/download/win.
+
+4. Test that Git is now in your PATH. Open a new terminal after installing Git and type
+
+       git --version
+
+    If the output from this command is not the Git version, you need to add  `<git-install-path>/Git/cmd` into 
+your PATH environment variable.
+
+5. Upgrade `pip` to the latest version (pip is a package manager for Python)
+
+       python -m pip install --upgrade pip
+
+### Installation with Python and pipx
+
+This works best for users that just want to use Spine Toolbox and keep it updated 
+with new releases.
+
+Once you have completed the [Pre-installation](#pre-installation) steps, do the following:
+
+1. Install [pipx](https://pypa.github.io/pipx/). pipx helps in creating an isolated environment for Spine 
+Toolbox to avoid package conflicts. Open a terminal and run
+
+        python -m pip install --user pipx
+
+    After pipx has been installed, run
+
+        python -m pipx ensurepath
+
+2. **Restart the terminal** or re-login for the changes of the latest command to take effect.
+
+3. Choose which Spine Toolbox version to install. Latest *release* version from PyPi is installed using 
+
+        python -m pipx install spinetoolbox
+
+   or the latest *development* version using
+
+        python -m pipx install git+https://github.com/spine-tools/spinetoolbox-dev
+
+That’s it! To launch Spine Toolbox, open a terminal and run
+
+    spinetoolbox
+
+If for some reason the command is not found, the executable can be found under `~/.local/bin` 
+(`%USERPROFILE%\.local\bin` on Windows).
+
+### Upgrade when using pipx
+
+To upgrade Spine Toolbox to the latest *release*, open a terminal and run
+
+    python -m pipx upgrade spinetoolbox
+
+or upgrade the *development* version with
+
+    python -m pipx upgrade spinetoolbox-dev
+
+
+### Installation from sources using Git
+
+This option is for developers and other contributors who want to debug or edit Spine Toolbox source code. Once 
+you have completed the [Pre-installation](#pre-installation) steps, do the following:
+
+1. Clone this repository. Open a terminal, use the `cd` command to change the current directory to some data 
+directory (preferably not a OneDrive folder on Windows), and run
+
+       git clone https://github.com/spine-tools/Spine-Toolbox.git
+
+    This creates a `Spine-Toolbox` directory into your current directory.
+
+2. Use the `cd` command to go to `Spine-Toolbox` dir
+
+       cd ./Spine-Toolbox
+
+3. Create a Python virtual environment using
+
+        python -m venv .venv
+
+    This creates a `.venv` directory into the `Spine-Toolbox` directory, but you can create the virtual environment 
+anywhere on your system. <br><br>
+
+    Optional: Instead of venv, one can also use a
+[miniconda](https://docs.conda.io/projects/conda/en/stable/glossary.html#miniconda-glossary) environment. 
+You can [download miniconda from here](https://docs.conda.io/en/latest/miniconda.html). **Note: Anaconda 
+environments are not supported.** Create a new Python 3.12 (check the supported Python versions above) miniconda environment without linking packages from the 
+base environment using
+
+        conda create -n spinetoolbox python=3.12
+
+4. Activate the venv environment on Windows (provided that you are in `Spine-Toolbox` directory) using
+
+       cd ./.venv/Scripts
+       activate
+
+    Or on bash, zsh 
+
+       source .venv/bin/activate
+
+    or on a Conda prompt (if you are using a miniconda environment instead of venv)
+
+       conda activate spinetoolbox 
+
+    **Make sure that the terminal prompt now indicates the active environment.**
+
+5. Use the `cd ..` command to go back to the `Spine-Toolbox` directory (the one that 
+contains `requirements.txt`) if needed.
+
+6. Install Spine Toolbox along with its dependencies with
+
+        python -m pip install -r requirements.txt
+    
+7. (Optional) Install additional development packages with
+
+        python -m pip install -r dev-requirements.txt
+
+8. Once the installation has finished, you can now launch Spine Toolbox using
+
+       spinetoolbox
+
+### Upgrade when using git
+
+**To upgrade**, pull the latest changes from the Spine Toolbox repository (while in `Spine-Toolbox` directory)
+
+    git pull
+    git fetch --tags origin
+
+and run (to upgrade the other Spine Toolbox packages)
+
+    python -m pip install -U -r requirements.txt
+
+**NOTE:** The version number of Spine packages are automatically
+generated from Git tags during the `python -m pip install ...` step. 
+This makes it important to fetch new tags from GitHub before running the 
+`python -m pip install ...` when upgrading. This is true also for editable 
+installations.
+
+### MacOS installation from sources with Homebrew
+
+1. Open Terminal.
+2. Install [Homebrew](https://brew.sh).
+3. Install Python with
+
+        brew install python
+
+4. Restart Terminal. Ensure your Python is the one from Homebrew by checking that the following command gives `/opt/homebrew/bin/python3`
+
+        which python3
+
+5. Clone this repository with
+
+        git clone https://github.com/spine-tools/Spine-Toolbox.git
+
+6. Use the `cd` command to go to `Spine-Toolbox` dir that was just created
+
+        cd Spine-Toolbox
+
+7. Create a Python virtual environment
+
+        python3 -m venv venv
+
+8. Activate the virtual environment (yes, the next command starts with a `.` and a space)
+
+        . venv/bin/activate
+
+9. Install Spine Toolbox along with its dependencies with
+
+        python -m pip install -r requirements.txt
+
+10. Once the installation has finished, you can now launch Spine Toolbox using
+
+        spinetoolbox
+
+Successully installed Spine Toolbox can be launched from Terminal with
+
+    cd Spine-Toolbox
+    . venv/bin/activate
+    spinetoolbox
+
+See [Upgrade when using git](#upgrade-when-using-git) on how to upgrade the installation.
+
+#### Additional comments for developers
+
+If you are alternating between multiple branches, you should repeat
+the `pip install -e .` step after switching a branch.  This ensures
+the version number is updated correctly.  On the other hand if you do
+not need the version number to be precise, it is okay to skip the
+step.
+
+To illustrate with an example, consider there are two feature branches
+`P` and `Q` that you are working on. Both are based on `master` after
+the release `0.6.18`.
+
+```
+ 0.6.18
+---o----o--o--o  P
+    \
+     o--o--o--o  Q
+```
+
+Then the versions are:
+- `P`: `0.7.0.dev3+g<commit-hash-P>.d<commit-date-P>`,
+- `Q`: `0.7.0.dev4+g<commit-hash-Q>.d<commit-date-Q>`.
+
+The version should be available inside Python as:
+```python
+from spinetoolbox.version import version_tuple
+
+print(version_tuple)
+# P: (0, 7, 0, 'dev3', 'g<commit-hash-P>.d<commit-date-P>')
+# Q: (0, 7, 0, 'dev4', 'g<commit-hash-Q>.d<commit-date-Q>')
+```
+
+So if your code uses any of the components of the `version_tuple` that
+might change, you should re-run `pip install`, otherwise this can be 
+ignored safely.
+
+### Windows 64-bit installer package
+
+There are old Windows installer packages available for a quick install, but they are
+at this point (26.1.2023) quite obsolete and cannot be recommended for anything but 
+a quick look at how Spine Toolbox looks and feels (although even that has changed).
+Download the installer package from 
+[here](https://github.com/spine-tools/Spine-Toolbox/releases),
+run it, and follow the instructions to install Spine Toolbox.
+
+### About requirements
+
+Python 3.10 or later is required (check above for supported Python versions).
+
+See the files `pyproject.toml` and `requirements.txt` for packages required to run Spine Toolbox.
+(Additional packages needed for development are listed in `dev-requirements.txt`.)
+
+The requirements include three packages ([`spinedb_api`](https://github.com/spine-tools/Spine-Database-API),
+[`spine_engine`](https://github.com/spine-tools/spine-engine), and 
+[`spine_items`](https://github.com/spine-tools/spine-items)), developed by the Spine project consortium.
+
+### Building the User Guide
+
+You can find the latest documentation on [readthedocs](https://spine-toolbox.readthedocs.io/en/latest/index.html).
+If you want to build the documentation yourself,
+source files for the User Guide can be found in `docs/source` directory. In order to 
+build the HTML docs, you need to install the *development requirements* (see section 
+'About requirements' above). This installs Sphinx (among other things), which 
+is required in building the documentation. When Sphinx is installed, you can build the 
+HTML pages from the user guide source files by using the `bin/build_doc.bat` script on 
+Windows or the `bin/build_doc.py` script on Linux and Mac. After running the script, the 
+index page can be found in `docs/build/html/index.html`. The User Guide can also 
+be opened from Spine Toolbox menu Help->User Guide (F1).
+
+### Troubleshooting
+
+#### Obscure crashes that may produce a traceback related to PySide6's model classes
+
+The first thing is to make sure that you are not using Anaconda. Only Miniconda is supported. Anaconda's base 
+environment includes Qt related packages and we suspect that they leak some shared Qt libraries into environments,
+even when specifically requesting that base environment packages should not be linked to environment packages. See
+also [Problems in starting the application](#problems-in-starting-the-application) below.
+
+#### Installation fails
+
+Please make sure you are using Python 3.10 or later to install the requirements (check above for supported Python versions).
+
+#### 'No Python' error when installing with pipx
+
+If you see the following error when running the command `python -m pipx install spinetoolbox`
+
+```
+No Python at 'c:\python38\python.exe'
+Fatal error from pip prevented installation. Full pip output in file:
+```
+
+Where c:\python38\python.exe may be some other path. To fix this, delete the folder 
+`C:\Users\<user name>\.local\pipx\shared` and run the `python -m pipx install spinetoolbox` command again.
+
+#### Installation fails on Linux
+If Python runs into errors while installing on Linux systems, running the 
+following command in a terminal may help:
+
+```shell
+$ sudo apt install libpq-dev
+```
+
+#### Problems in starting the application
+
+If there are problems in starting Spine Toolbox, the chances are that the required 
+packages were not installed successfully. In case this happens, the first thing you 
+should check is that you don't have `Qt`, `PyQt4`, `PyQt5`, `PySide`, `PySide2`, and 
+`PySide6` packages installed in the same environment. These do not play nice together 
+and may introduce conflicts. In addition, make sure that you do not have multiple versions 
+of these `Qt` related packages installed in the same environment. The easiest way 
+to solve this problem is to create a blank (e.g. venv virtual environment) Python 
+environment just for `PySide6` applications and installing the requirements again.
+
+**Warning: Using the *conda-forge* channel for installing the requirements is not 
+recommended.**
+
+The required `qtconsole` package from the ***conda-forge*** channel also
+installs `qt` and `PyQt` packages. Since this is a `PySide6` application, those 
+are not needed and there is a chance of conflicts between the packages.
+
+## Recorded Webinars showing the use of Spine Tools
+
+### Spine Toolbox: Data, workflow and scenario management for modelling
+*Wednesday Sep 8, 17:00-18:30 CEST (11:00-12:30 EDT) - Organized together with G-PST*
+
+Spine Toolbox is an open source software to manage data, scenarios and workflows for modelling and simulation. You can have your local workflow, but work as a team through version control and SQL databases. This webinar gives a quick overview of the different functionalities and showcases them through two examples.
+
+Recording Chapters:
+- [00:00-00:05](https://www.youtube.com/watch?v=jaDIxonOmfY) Relation to G-PST Pillar 5 (Clayton Barrows, NREL)
+- [00:05-00:35](https://youtu.be/jaDIxonOmfY?t=1350) Building a workflow in Spine Toolbox [PDF](http://www.spine-model.org/pdf/webinar/Spine%20Toolbox%20-%20Building%20a%20workflow%20in%20Toolbox%20by%20Juha%20Kiviluoma.pdf), *(Juha Kiviluoma, VTT)*
+- [00:35-00:55](https://youtu.be/jaDIxonOmfY?t=2445) Example workflow from Canada to manage lots of input sources [PDF](http://www.spine-model.org/pdf/webinar/Spine%20Toolbox%20-%20Case%20in%20energy%20system%20integration%20with%20Toolbox%20by%20Madeleine%20McPherson%20and%20Jacob%20Monroe.pdf), *(Madeleine McPherson and Jake Monroe, University of Victoria)*
+- [01:05-01:15](https://youtu.be/jaDIxonOmfY?t=3722) Example workflow from EU project TradeRES to serve
+multiple models *(Milos Cvetkovic and Jim Hommes, TU Delft)*
+- [01:15-01:30](https://youtu.be/jaDIxonOmfY?t=4500) Moderated Q&A 
+
+### SpineOpt: A flexible energy system modelling framework in Julia
+*Tuesday Sep 7, 14:00-15:30 CEST (8:00-9:30 EDT) - Organized together with EERA ESI*
+
+The importance of operational details in planning future energy systems has been rapidly increasing. One driver for this is the increasing role of variable power generation, which requires that the energy system models consider higher temporal granularity, longer time series and new aspects in power system stability. Another important driver is a consequence of sector coupling through the electrification of transport, space heating and industries. As the other sectors become more integrated with electricity, they need to be modelled at a granularity that is sufficient for describing the potential flexibility they can bring to the power system dominated by variable and uncertain power generation.
+
+This webinar will present the open source Julia based energy system modelling framework SpineOpt, which has been built with these challenges in mind. It can represent different energy sectors using representation typically available only in sector specific models and with highly adaptable temporal and stochastic structures available both for planning and operations. More information at https://spine-project.github.io/SpineOpt.jl/latest/index.html.
+
+Recording Chapters:
+- [00:00-00:08](https://www.youtube.com/watch?v=FiiqZNcx7Ds) Introduction [PDF](http://www.spine-model.org/pdf/webinar/SpineOpt_Introduction%20by%20Erik%20Delarue.pdf)
+- [00:08-00:31](https://www.youtube.com/watch?v=FiiqZNcx7Ds&t=475s) Basic elements of SpineOpt and the flexible spatial structure [PDF](http://www.spine-model.org/pdf/webinar/SpineOpt_Basic%20elements%20of%20SpineOpt%20by%20Maren%20Ihlemann.pdf)
+- [00:31-00:40](https://youtu.be/FiiqZNcx7Ds?t=1876) Adaptable temporal and stochastic structures [PDF](http://www.spine-model.org/pdf/webinar/SpineOpt_Flexible%20temporal%20and%20stochastic%20structure%20by%20Topi%20Rasku.pdf)
+- [00:50-01:30](https://youtu.be/FiiqZNcx7Ds?t=3608) Representation of different energy sectors &
+Attempts to make the model faster [PDF](http://www.spine-model.org/pdf/webinar/SpineOpt_Different%20energy%20sectors%20and%20accomodating%20complexity%20by%20Jody%20Dillon.pdf)
+- [01:25-01:35](https://youtu.be/FiiqZNcx7Ds?t=5065) Q&A + Step-by-step 10 minute demo on how to build a simple model with SpineOpt using Spine Toolbox
+
+### Demonstration of Spine modelling tools through selected case studies
+*Thursday Sep 9, 14:00-16:00 CEST (8:00-10:00 EDT)*
+
+[Full recording](https://youtu.be/i2fxDwsMuF8), all presentations slides [PDF](http://www.spine-model.org/pdf/webinar/Case_Studies_all_presentations.pdf)
+
+Over the past 4 years, the EU project Spine has developed a set of open-source tools for modelling complex energy systems. This webinar demonstrates the Spine software through six selected case studies, covering topics such as sector coupling, co-optimization of operation and investments, stochastic modelling, and rolling horizon optimization. Each subsection described below consists of a brief introduction followed by a live demonstration of the particular case, where some of the outstanding features of Spine are highlighted and discussed.
+
+Recording Chapters:
+- [00:05-00:15](https://youtu.be/i2fxDwsMuF8?t=252) Introduction to Spine: This section uses a simple example to demonstrate the SpineOpt modelling principle. First, the user defines the different objects in their system, such as units and nodes, as well as the relationships between them, such as which units are connected to which nodes. Then, they specify values for certain pre-defined parameters such as node demand, unit capacity, cost, and conversion ratio. The resulting dataset is passed to SpineOpt which generates the corresponding optimisation model, optimizes it, and delivers the results.
+- [00:15-00:30](https://youtu.be/i2fxDwsMuF8?t=939) Hydro: This section demonstrates hydropower modelling in Spine as performed in Case study A5. The objective is to model part of the Swedish hydropower system, namely the Skellefte river with its 15 power stations, by coupling the river system with the power system. The model maximizes income from electricity supply over one week with an hourly resolution, while respecting basic hydrological constraints.
+- [00:29-00:45](https://youtu.be/i2fxDwsMuF8?t=1745) Building heating: This section demonstrates building heating modelling in Spine as performed in Case study A4. The objective is to model the Finnish power and district heating system coupled with an electrically heated residential building stock. The result is a rolling unit commitment and economic dispatch model, that optimizes system performance over one year at hourly resolution.  
+- [00:45-00:57] Break
+- [00:57-01:06](https://youtu.be/i2fxDwsMuF8?t=3411) Gas grid: This section demonstrates gas grid modelling in Spine as performed in Case study A2. The objective is to model a natural gas transmission system with pressure-driven gas and couple it with an electricity system to capture the flexibility provided by the gas network. The result is a dispatch model that co-optimizes operations in both systems over a day at hourly resolution.
+- [01:06-01:22](https://youtu.be/i2fxDwsMuF8?t=3992) Stochastic: This section demonstrates stochastic modelling in Spine using a simple example system. Three different stochastic structures are demonstrated: purely deterministic, stochastic fan, and converging fan.
+- [01:22-01:35](https://youtu.be/i2fxDwsMuF8?t=4970) Power grid investments: This section demonstrates power grid investment modelling in Spine as performed in case study C2. The objective is twofold: (i) to model the Nordic synchronous power system (Norway, Sweden, Finland, and Denmark) with high operational detail; and (ii) to find optimal transmission line investment decisions over a long-term horizon of 10 years, for three different wind penetration scenarios.      
+- [01:35-01:40](https://youtu.be/i2fxDwsMuF8?t=5652) Q&A 
+
+### SpineInterface: How to quickly and easily create new optimization models in Julia Friday
+*Friday Sep 10, 14:00-15:30 CEST (8:00-9:30 EDT)*
+
+[Full recording](https://youtu.be/cUopRUTzXpY), all presentations [PDF](http://www.spine-model.org/pdf/webinar/SpineInterface_all_presentations.pdf)
+
+Creation of new optimisation models requires a lot of work to get the data to the models and the results out of the models. Spine Toolbox is an open source data and workflow management tool to assist with these tasks and can work with models written in any language. Meanwhile, SpineInterface is a Julia package that links the data management capabilities of Spine Toolbox with Julia/JuMP modelling environment in a very direct way.
+
+The data interfaces of Spine Toolbox together with SpineInterface simplifies the process of developing optimization models by allowing the model developer to focus on the constraint equations. The required data structures and data are defined with a graphical interface in Spine Toolbox and are immediately available to the model developer inside the constraint equation code without any action or code required by the model developer. SpineInterface supports the full range of data parameter types supported by Toolbox and provides a mechanism for representation of time and time-based data, either time series, time patterns or arbitrarily varying temporal data.
+
+This session will be of interest to model developers and/or students who want a significant head start in developing optimization models. The sessions will also be of interest to model developers who may wish to translate existing models developed in other platforms such as GAMS, into the Spine framework using SpineInterface. The power of SpineInterface will be demonstrated in an interactive session where the full modelling workflow will be illustrated from data structure design and implementation to constraint equation development.
+
+Agenda:
+- Overview of SpineInterface
+- Toolbox concepts and data structures including the Spine data API
+- SpineInterface: convenience functions and accessing Spine Toolbox data in Julia
+- Defining a model data structure in Spine Toolbox
+- Building and solving an optimization model using SpineInterface
+- Q&A + live demo [00:45-01:21](https://youtu.be/cUopRUTzXpY?t=2737)
+
+## Contribution Guide
+
+All are welcome to contribute!
+
+See detailed instructions for contribution in 
+[Spine Toolbox User Guide](https://spine-toolbox.readthedocs.io/en/latest/contribution_guide.html).
+
+Below are the bare minimum things you need to know.
+
+### Setting up development environment
+
+1. Install the developer requirements:
+
+        python -m pip install -r dev-requirements.txt
+
+2. It is also recommended to run `pre-commit install` in the respective root directories of spine-toolbox, spinedb_api,
+   spine-engine and spine-items. This sets up git hooks for auto-formatting the files before committing.
+
+### Coding style
+
+- [Black](https://github.com/python/black) is used for Python code formatting.
+  The project's GitHub page includes instructions on how to integrate Black in IDEs.
+- [isort](https://pycqa.github.io/isort/) is used for formatting the Python import statements.
+- Google style docstrings
+
+Running the following line in the project root will take care of sorting the imports:
+
+    isort .
+
+### Linting
+
+It is advisable to run [`pylint`](https://pylint.readthedocs.io/en/latest/) 
+regularly on files that have been changed.
+The project root includes a configuration file for `pylint`.
+`pylint`'s user guide includes instructions on how to 
+[integrate the tool in IDEs](https://pylint.readthedocs.io/en/latest/user_guide/ide-integration.html#pylint-in-pycharm).
+
+### Unit tests
+
+Unit tests are located in the `tests` directory.
+You can run the entire test suite from project root by
+
+    python -m unittest
+
+### Reporting bugs
+If you think you have found a bug, please check the following before creating a new 
+issue:
+1. **Make sure you’re on the latest version.** 
+2. **Try older versions.**
+3. **Try upgrading/downgrading the dependencies**
+4. **Search the project’s bug/issue tracker to make sure it’s not a known issue.**
+
+What to put in your bug report:
+1. **Python version**. What version of the Python interpreter are you using? 32-bit 
+    or 64-bit?
+2. **OS**. What operating system are you on?
+3. **Application Version**. Which version or versions of the software are you using? 
+    If you have forked the project from Git, which branch and which commit? Otherwise, 
+    supply the application version number (Help->About menu).
+4. **How to recreate**. How can the developers recreate the bug? A screenshot 
+    demonstrating the bug is usually the most helpful thing you can report. Relevant 
+    output from the Event Log and debug messages from the console of your run, should 
+    also be included.
+
+### Feature requests
+The developers of Spine Toolbox are happy to hear feature requests or ideas for improving 
+existing functionality. The format for requesting new features is free. Just fill 
+out the required fields on the issue tracker and give a description of the new feature. 
+A picture accompanying the description is a good way to get your idea into development
+faster. But before you make a new issue, please check that there isn't a related idea 
+already open in the issue tracker.
+
+&nbsp;
+<hr>
+<table width=500px frame="none">
+<tr>
+<td valign="middle" width=100px>
+<img src=fig/eu-emblem-low-res.jpg alt="EU emblem" width=100%></td>
+<td valign="middle">This work has been partially supported by EU project Mopo (2023-2026), which has received funding 
+from European Climate, Infrastructure and Environment Executive Agency under the European Union’s HORIZON Research and 
+Innovation Actions under grant agreement N°101095998.</td>
+<tr>
+<td valign="middle" width=100px>
+<img src=fig/eu-emblem-low-res.jpg alt="EU emblem" width=100%></td>
+<td valign="middle">This work has been partially supported by EU project Spine (2017-2021), which has received funding 
+from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 774629.</td>
+</table>
