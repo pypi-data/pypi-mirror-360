@@ -1,0 +1,61 @@
+# kxy-codew
+
+**kxy-codew** is a lightweight Python profiling tool that makes it easy to measure the performance of your entire application or specific functions. Results are sent to [https://codew.es](https://codew.es), where you get a detailed performance report via a sharable link.
+
+## Features
+
+- Profile your entire Python application with a single call.
+- Decorator to profile any function on every call.
+- Get performance reports with one-click access.
+- Simple to integrate with your code.
+
+---
+
+## Installation
+
+```python
+
+pip install kxy-codew
+
+```
+
+
+## Usage
+
+
+### Profile the entire application
+
+```python
+from kxy_codew.performance import init_kxy
+init_kxy()
+# Your application code here
+```
+
+When the program ends, it will print a link to the profiling report like:
+
+```bash
+Profile report available at: https://7176.codew.es/profile_g2dot/3884a9eb-c74c-4aac-8443-4536629d82c4
+```
+
+
+### Profile a specific function
+```python
+
+from kxy_codew.performance import profile
+
+@profile
+def busy_wait(duration):
+    x = 0
+    for i in range(duration * 10000000):
+        x = duration * 100 - 20 / 12
+        x += 1
+    return x
+
+busy_wait(10)
+busy_wait(30)
+busy_wait(100)
+```
+
+A profiling link will be printed each time the decorated function is called and finishes execution.
+
+
