@@ -1,0 +1,124 @@
+# safeiofile
+
+Safely perform file I/O operations in Python — with built-in backups, smart appends, and automatic rotation.
+
+---
+
+## Table of Contents
+- [What is it?](#what-is-it)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Class: File](#class-file)
+- [Tips](#tips)
+
+---
+
+## What is it?
+
+`safeiofile` is a Python library that makes it easier and safer to work with files — especially when you're dealing with logs, configuration files, or any content that might be written to or read from repeatedly.
+
+It provides:
+- Clean and chainable syntax
+- Automatic timestamped backups
+- Safe appending and reading
+- File rotation when size exceeds a limit
+
+Unlike traditional Python file operations, this library abstracts away common pitfalls like overwriting, file collisions, and manual rotation.
+
+---
+
+## Installation
+
+Install via pip:
+
+```bash
+pip install safeiofile
+```
+
+## Usage
+
+```python
+from safeiofile import File
+
+log = File("logs/activity.log")
+
+log.write("Session started")
+log.append("User logged in")
+log.backup()
+log.rotate_if_large(max_mb=1)
+
+print(log.read())
+```
+
+---
+
+
+## Object
+
+### `File(path)`
+
+A safe, cross-platform object to handle common file operations like reading, writing, appending, backups, and rotation — all in one clean interface.
+
+---
+## Methods
+
+### File(path)
+
+A safe file object for basic and extended file operations.
+
+---
+
+**read()**  
+*Reads and returns full file content as a string.*
+
+---
+
+**write(data)**  
+*Overwrites the file with the provided content.*  
+Returns the File object for chaining.
+
+---
+
+**append(data)**  
+*Appends the provided data to the file with a newline.*  
+Returns the File object for chaining.
+
+---
+
+**backup()**  
+*Creates a timestamped `.bak` backup file in the same directory.*  
+Example: `log.txt.20250708_120045.bak`  
+Returns the path to the backup.
+
+---
+
+**rotate_if_large(max_mb=1)**  
+*If file size exceeds `max_mb` (default 1MB), creates a backup and truncates the original.*  
+Returns the File object for chaining.
+
+
+Returns the `File` object for chaining.
+
+---
+
+## Tips
+
+You can easily integrate safeiofile in your scripting workflows:
+
+```python 
+log = File("system.log")
+
+if condition_met:
+    log.append("New entry detected")
+
+log.rotate_if_large(max_mb=2)
+```
+
+---
+
+## Credits 
+
+```
+safeiofile by Omkar D. Dorugade
+© Omkar D. Dorugade — 2025
+```
