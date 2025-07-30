@@ -1,0 +1,703 @@
+from collections import namedtuple, defaultdict
+from datetime import datetime
+from enum import Enum
+from time import time
+
+import ayeaye
+from ayeaye.exception import SubTaskFailed
+from ayeaye.connectors.base import DataConnector
+from ayeaye.connect_resolve import connector_resolver
+from ayeaye.runtime.knowledge import RuntimeKnowledge
+from ayeaye.runtime.multiprocess import LocalProcessPool
+from ayeaye.runtime.task_message import TaskComplete, TaskFailed, TaskLogMessage, TaskPartition
+from ayeaye.ignition import EngineUrlCase, EngineUrlStatus
+
+
+class LockingMode(Enum):
+    """
+    How to capture context around datasets in a model. This is used to track data provenance and
+    to make model repeatability possible.
+
+    @see :meth:`Model.lock`
+    """
+
+    CONTEXT = "context"  # just the ayeaye.connector_resolver context
+    ALL_DATASETS = "all_datasets"  # the engine_urls for all datasets
+
+
+class Model:
+    """
+    Do the thing!
+
+    Abstract class
+
+    The thing is probably an ETL (Extract, Transform and Load) task which is at the minimum
+    the :meth:`build`. It could optionally also have a :meth:`pre_build_check`, which is run
+    first and must succeed. After the :meth:`build` an optional :meth:`post_build_check`
+    can be used to see if build worked.
+    """
+
+    def __init__(self):
+        self._connections = {}  # see :class:`ayeaye.Connect` 'descriptors' in doc string.
+
+        self.log_to_stdout = True
+        self.external_loggers = []
+        self.progress_log_interval = 20  # minimum seconds between progress messages to log
+
+        # stats
+        self.start_build_time = None
+        self.progress_logged = None  # time last logged
+        # subclasses can store counters etc. here. When used, the model will log these when
+        # it finishes
+        self.stats = defaultdict(int)
+
+    def go(self):
+        """
+        Run the model.
+
+        The steps to run a model are
+        1. :meth:`pre_build_check` - Optional conditional check if model's pre-conditions have been
+        met.
+        2. :meth:`build` - The main modelling stage
+        3. :meth:`post_build_check` - Optional check if the outputs are valid. e.g. a data
+        validation check that is simple and concise. It's like a unit test but on changable data.
+
+        Datasets are closed after each stage. This ensures the connections don't have a state, for
+        example a position within a file.
+
+        @return: boolean for success
+
+        """
+        self.start_build_time = time()
+        if not self.pre_build_check():
+            self.log("Pre-build check failed", "ERROR")
+            self.close_datasets()
+            return False
+        self.close_datasets()
+
+        self._build()
+        self.close_datasets()
+
+        if not self.post_build_check():
+            self.log("Post-build check failed", "ERROR")
+            self.close_datasets()
+            return False
+        self.close_datasets()
+
+        if len(self.stats) > 0:
+            for stat_field, stat_value in self.stats.items():
+                self.log(f"Statistic: {stat_field} = {stat_value}", "INFO")
+
+        return True
+
+    def pre_build_check(self):
+        """
+        Optionally implemented by subclasses to check any conditions that must be met before
+        running :meth:`build`.
+
+        For example, assumptions :meth:`build` makes on on the format or values within the data
+        could be checked here in order to keep code in build simple.
+
+        @return: boolean. If False is returned :meth:`build` won't be run.
+        """
+        return True
+
+    def _build(self):
+        """
+        Internal stub to allow :class:`Model` and :class:`PartitionedModel` to do different things.
+        """
+        self.build()
+
+    def build(self):
+        """
+        Do the thing! - build/process/transform - whatever the model does starts here.
+
+        Must be implemented by subclasses. Don't change method argument in subclass as this is
+        called by :meth:`go` when running the full model execution.
+        """
+        raise NotImplementedError("All models must implement the build() method")
+
+    def post_build_check(self):
+        """
+        This is an optional method that will be run after :meth:`build`. It can be used to check
+        the validity of the build process.
+
+        @return: boolean. If False is returned the model is considered to have failed.
+        """
+        return True
+
+    @classmethod
+    def connects(cls):
+        """
+        :returns (dict) of :class:`Connect` classes declared as class variables for this model.
+                key is class variable name
+                value is :class:`ayeaye.Connect`
+        """
+        # find :class:`ayeaye.Connect` connections to datasets
+        connects = {}
+        for obj_name in dir(cls):
+            obj = getattr(cls, obj_name)
+            if isinstance(obj, ayeaye.Connect):
+                connects[obj_name] = obj
+
+        return connects
+
+    def datasets(self):
+        """
+        Find all :class:`DataConnector` object, both those made directly (not recommended practice)
+        and those built by :class:`ayeaye.Connect`.
+
+        WARNING - this method uses introspection (i.e. :func:`dir`) to examine attributes of the
+        instance. This can have unintended side effects, for example running code attached to
+        properties.
+
+        :returns (dict) of dataset connections for this model.
+                key is class variable name
+                value is :class:`ayeaye.DataConnector`
+        """
+        # find :class:`ayeaye.Connect` connections to datasets
+
+        connections = {}
+        for obj_name in dir(self):
+            obj = getattr(self, obj_name)
+            if isinstance(obj, DataConnector):
+                connections[obj_name] = obj
+
+        return connections
+
+    def open_datasets(self):
+        """
+        The problem with :meth:`datasets` is that it connects all the datasets and
+        resolves all the context. So the act of closing all datasets was opening them
+        first.
+
+        This method only finds those :class:`DataConnector` object built by :class:`ayeaye.Connect`.
+
+        :returns (dict) of dataset connections for this model that are currently connected.
+                key is class variable name
+                value is :class:`ayeaye.DataConnector`
+        """
+        datasets = {}
+        for ds_name, ds_connect in self.__class__.connects().items():
+
+            # `ds_connect._parent_model == self` because the class could have multiple instances
+            # which share a `Connect` but not the resulting subclass of :class:`DataConnector`.
+            if ds_connect._parent_model is not None and ds_connect._parent_model == self:
+
+                # _parent_model is set when the dataset is accessed by the descriptor
+                # :meth:`Connect.__get__`
+                #
+                # getting the `Connect` will prepare the connection and produce a dataset
+                ds = getattr(self, ds_name)
+                if ds.is_connected:
+                    datasets[ds_name] = ds
+
+        return datasets
+
+    def close_datasets(self):
+        """
+        Call :meth:`close_connection` on all datasets.
+        """
+
+        for dataset_connection in self.open_datasets().values():
+            dataset_connection.close_connection()
+
+    def set_logger(self, logger):
+        """
+        Also log to something with a :meth:`write`.
+        e.g. StringIO
+        """
+        self.external_loggers.append(logger)
+
+    def log(self, msg, level="INFO"):
+        """
+        @param level: (str) DEBUG, PROGRESS, INFO, WARNING, ERROR or CRITICAL
+        """
+        if not (self.log_to_stdout or len(self.external_loggers) > 0):
+            return
+
+        date_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        msg = "{} {}{}".format(date_str, level.ljust(10), msg)
+
+        if self.external_loggers:
+            for ext_logger in self.external_loggers:
+                ext_logger.write(msg)
+
+        if self.log_to_stdout:
+            print(msg)
+
+    def log_progress(self, position_pc, msg=None):
+        """
+        Externally provided indication of position through build is used to calculate the remaining
+        time until this model completes. A `PROGRESS` log message is issued a maximum of every
+        `self.progress_log_interval` seconds (default is 20 seconds) so this method can be called
+        more frequently and the output log wont be swamped.
+
+        @param position_pc: (float) or None meaning ignore - between 0.0 and 1.0 (complete)
+        @param msg: (str) additional user friendly info
+        """
+        time_now = time()
+
+        if position_pc > 0.0001 and (
+            self.progress_logged is None
+            or self.progress_logged + self.progress_log_interval < time_now
+        ):
+            if msg is None:
+                msg = ""
+
+            progress_pc = "{:.2f}%".format(position_pc * 100)
+            running_secs = time_now - self.start_build_time
+            eta = "{:.2f}".format((running_secs / position_pc) - running_secs)
+            self.log(f"{progress_pc} {eta} seconds remaining. {msg}", level="PROGRESS")
+            self.progress_logged = time_now
+
+    def fetch_locking(self):
+        """
+        A 'lock' is the information needed by a model to reproduce an output.
+
+        This method is optionally implemented by subclasses that need more than the context
+        provided by `ayeaye.connector_resolver` in order to be repeatable. For example, the model
+        might not be deterministic.
+
+        The value returned will be passed to :meth:`apply_locking` if/when a model needs to
+        be repeated.
+
+        @returns something that can be serialised to JSON
+        """
+        return None
+
+    def apply_locking(self, lock_doc):
+        """
+        Use the output from :meth:`fetch_locking` to reproduce results from a previous build.
+
+        This method should be implemented if a model needs to be hydrated with locking details from
+        a previous build.
+        """
+        raise NotImplementedError("Missing sub-class method on attempt to re-hydrate locking.")
+
+    def lock(self, locking_level=LockingMode.CONTEXT):
+        """
+        A 'lock' is the information needed by a model to reproduce an output.
+
+        Return a JSON safe dictionary of variables needed to repeat the build.
+
+        The returned dictionary is expected to be serialised and stored.
+
+        @param locking_level: (LockingMode)
+            LockingMode.CONTEXT - key values from ayeaye.connector_resolver
+            LockingMode.ALL_DATASETS - CONTEXT + engine_urls from all datasets in model.
+
+        @return (dict)
+        """
+        # this is very much work in progress.
+        # coming soon
+        # - code version (git commitishes)
+        # - library code versions (maybe pipenv lock file)
+
+        locking_doc = {"resolve_context": connector_resolver.capture_context()}
+
+        model_lock = self.fetch_locking()
+        if model_lock is not None:
+            locking_doc["model_locking"] = model_lock
+
+        if locking_level == LockingMode.ALL_DATASETS:
+            locking_doc["dataset_engine_urls"] = {}
+            for dataset_name, connector in self.datasets().items():
+                # Secrets shouldn't be in the locking doc.
+                status, engine_url = connector.ignition.engine_url_at_state(
+                    EngineUrlCase.WITHOUT_SECRETS
+                )
+
+                if status != EngineUrlStatus.OK:
+                    raise ValueError(f"Can't lock, engine_url not available for '{dataset_name}'")
+
+                locking_doc["dataset_engine_urls"][dataset_name] = engine_url
+
+        return locking_doc
+
+
+class PartitionedModel(Model):
+    """
+    Similar to :class:`Model` but requires additional methods to be implemented by the subclass to
+    describe how the processing can be split into parallel subtasks.
+
+    A model can suggest to the executor how many parallel tasks could be used and the executor
+    is responsible for orchestrating a level of parallelisation that fits the execution environment.
+
+    An external executor is expected to run :class:`PartitionedModel` subclasses. It would
+    instantiate the model and examine it's :meth:`partition_plea` before running it in a
+    distributed environment (e.g. Google Cloud Run, Celery, AWS' ECS etc.). The external executor
+    is responsible for transporting task arguments, log message etc.
+    See https://github.com/Aye-Aye-Dev/Fossa
+
+    :class:`PartitionedModel` does support a simple mechanism for parallel execution across local
+    processes. To use it implement the mandatory methods and run method:`go`.
+
+    e.g.
+    >>> my_model = MyModel()
+    >>> my_model.go()
+
+    And a reasonable number of local processes will run in a Python multiprocessor Pool to work
+    on the tasks the model divides itself into.
+
+    The executor is responsible for re-executing failed tasks. All sub-tasks should be idempotent and
+    therefore safe to execute multiple times, possibly in parallel.
+
+    It works as follows-
+
+    1. The executor creates the parent instance.
+      i.e. this instance is of a subclass of :class:`PartitionedModel`.
+      e.g.
+        >>> class MyModel(PartitionedModel):
+            ...
+        >>> my_model = MyModel()
+
+        `my_model` is the parent instance.
+
+    2. :meth:`build` will be called on the parent instance. In a partitioned model that does all
+    it's work through separate sub-tasks the :meth:`build` method doesn't need to do anything. So
+    it could be implemented like this-
+
+        >>> def build(self):
+        >>>   pass
+
+    3. The executor uses :meth:`partition_plea` to ask the parent instance for 'suggestions' of how
+    many workers to use to run sub-tasks. i.e. This suggestion is for the number of workers the
+    model would like to have running in parallel. There are situations where an exact number of
+    workers are needed (e.g. so each worker has independent control of a resource such as a file)
+    and there are other situations where too many worker could result in a stampede on a resource
+    (such as a database) so fewer workers than supported by the environment should be used by the
+    executor.
+
+    4. The executor evaluates the :class:`PartitionOption` returned by :meth:`partition_plea`
+    along with the capabilities of the execution environment and requests a mutually compatible
+    number of partition arguments from :meth:`partition_slice`. The number of sub-tasks doesn't
+    need to match the number of workers although there can be a relationship.
+
+    5. :meth:`partition_slice` is called on the parent instance. It returns a list of sub-tasks
+    (e.g. method names and sub-task arguments) or is a generator. Each sub-task is passed by the executor to an
+    instance of the model that has been instantiated with the same resolver context (see
+    :class:`ConnectorResolver`) as the 'parent' model. The models running in the worker processes
+    are initiated when the worker process starts, i.e. each instance will have it's sub-task method
+    called multiple times. See :meth:`partition_initialise`.
+
+    6. The return value from each subtask is passed to (optionally overridden)
+    :meth:`partition_subtask_complete` on the parent instance.
+
+    7. When the executor is satisfied that all sub-tasks are complete the optional
+    :meth:`partition_complete` method is called on the parent instance.
+
+    """
+
+    # Start simple, this will no doubt increase in flexibility. Each are an integer suggesting
+    # how many sub-tasks the execution could be split into.
+    PartitionOption = namedtuple("PartitionOption", ("minimum", "maximum", "optimal"))
+
+    def __init__(self):
+        super().__init__()
+
+        # the link between the execution environment and the process
+        self.runtime = RuntimeKnowledge()
+
+        # lazy / injectable
+        self._process_pool = None
+
+    @property
+    def process_pool(self):
+        """
+        Set the way subtasks are processed in parallel. Do this before using the model.
+
+        The It's used to change how subtasks are run. The default is to use :class:`LocalProcessPool`
+        which uses multiple :class:`multiprocessing.Process`es but a distributed pool could be used
+        instead.
+        see Fossa repo :class:`fossa.control.rabbit_mq.message_exchange` for another
+        example.
+
+        @return: subclass of :class:`ayeaye.runtime.multiprocess.AbstractProcessPool`
+        """
+        if self._process_pool is None:
+            # default behaviour is to run subtasks in separate local processes
+            self._process_pool = LocalProcessPool(max_processes=self.runtime.max_concurrent_tasks)
+
+        return self._process_pool
+
+    @process_pool.setter
+    def process_pool(self, alternative_process_pool):
+        """
+        Override the default process pool. Maybe with a distributed one.
+        @param alternative_process_pool: object as subclass of
+            :class:`ayeaye.runtime.multiprocess.AbstractProcessPool`
+        """
+        # check for existing pool so a user doesn't trash an existing running set of subtasks
+        if self._process_pool is not None:
+            raise ValueError("Attempt made to replace existing process pool")
+
+        self._process_pool = alternative_process_pool
+
+    def partition_initialise(self, **kwargs):
+        """
+        This method will be called when a worker process instantiates a model. This method can
+        be overridden but this sub-class's method must be called.
+        e.g. `super().partition_initialise()`
+
+        `kwargs` can be whatever the subclass needs but values must be serialisable to JSON.
+
+        Note that models (like all Python classes) also take constructor arguments.
+        The :meth:`partition_initialise` method is for setting up a model with any worker
+        specific details. The normal Python `__init__` construction is for instance level setup.
+        e.g. `__init__` would be used for passing a variable that is common to all subtasks and
+        `partition_initialise` might contain a hashing value so a sub-task only selects a sub-set
+        of the data that it receives.
+        """
+        self.start_build_time = time()
+        return None
+
+    def partition_plea(self):
+        """
+        Optionally override this method to adjust the number of workers that will be used for
+        sub-task execution.
+
+        This method presents a mechanism for the model to co-ordinate with the execution environment
+        in order to split the task based on the environment. Generally, this isn't needed as the
+        number of workers is independent to the number of sub-tasks. i.e. a typical model will
+        produce a large number of sub-tasks that are executed by a smaller number of workers.
+
+        Examples of where implementing this method in a subclass is useful-
+        * Too many parallel tasks could swamp a resource. e.g. a relational database
+        * Optimal hash partitioning - where each worker runs one partition in parallel
+        https://docs.gitlab.com/ee/development/database/partitioning/hash.html
+
+        The default behaviour is to return `PartitionOption(minimum=1, maximum=128, optimal=16)`
+        as this is a reasonable parallel work load for a typical task which consumes a balance of
+        IO and CPU on either a modern machine or in a distributed setup.
+
+        Also @see :class:`ayeaye.runtime.knowledge.RuntimeKnowledge` which will impose resource
+        limits when running processes locally.
+
+        @return (PartitionOption)
+        """
+        return PartitionedModel.PartitionOption(minimum=1, maximum=128, optimal=16)
+
+    def partition_slice(self, partition_count):
+        """
+        Specify all the sub-tasks.
+
+        Create a list or iterator object (and therefore a generator could be used) of arguments to
+        define each subtask. At the minimum, this is  a (str, dict) tuple of method name and
+        keyword arguments. The method+kwargs will be called by one of the workers on an instance of
+        the current class.
+
+        Slightly more flexible than returning tuples to describe sub-tasks is to use
+        :class`TaskPartition` objects. This class can be used to specify another class for the model
+        (i.e. something other than `self.__class__`. And other sets of keyword arguments can be
+        specified. e.g. model or partition initialisation parameters.
+
+        The number of sub-tasks returned doesn't need to relate to the number of partitions
+        (`partition_count`). This is because each worker could execute zero or more sub-tasks.
+
+        `partition_count` is passed to :meth:`partition_slice` as there are scenarios
+        where a greater efficiency is possible when the number of sub-tasks is a multiple of the
+        number of workers. See doc. in :meth:`partition_plea`
+
+        @param partition_count: (int)
+            The number of workers the executor plans to run.
+
+        @returns (list of (method name (str), kwargs (dict))
+                    or
+                 (list of :class`TaskPartition` objects)
+                    or
+                 an iterator object
+                    or
+                 implement a generator here (e.g. use a `yield` statement for each subtask)
+                 - Python's syntactical sugar will make this into an iterator.
+        """
+        raise NotImplementedError("All models must implement this method")
+
+    def partition_subtask_complete(self, task_message):
+        """
+        Optional method. Called on the parent instance for each completed sub-task. It can be used
+        to collate results or take further actions when a sub-task has finished.
+
+        @param task_message: (:class:`ayeaye.runtime.task_message.TaskComplete`)
+        """
+        return None
+
+    def partition_subtask_failed(self, task_message):
+        """
+        A subtask could be run within the current process or within an isolated separate process or
+        on another machine altogether. If the task fails with an exception details of the problem
+        are relayed back to the originating model via a :class:`ayeaye.runtime.task_message.TaskFailed`
+        message. This could be handled by the model (just re-implement this method within the subclass)
+        or else the `TaskFailed` message will be converted into an exception.
+
+        A failed subtask shouldn't be silent so the default behaviour is to raise this as an
+        :class:`ayeaye.exceptions.SubTaskFailed` exception.
+
+        @param task_message: (`ayeaye.runtime.task_message.TaskFailed`)
+        """
+        raise SubTaskFailed(task_fail_message=task_message)
+
+    def partition_complete(self):
+        """
+        Optional method. Called on the parent instance when the executor has finished all sub-tasks.
+        """
+        return None
+
+    def _build(self):
+        """
+        When not run by an executor in a distributed environment the default behaviour is for
+        :class:`PartitionedModel`s to behave like normal :class:`Model`s but using
+        multiprocessing for local parallel execution.
+
+        This 'built in' concurrent operator sets up a pool of processes that is related to the
+        number of sub-tasks indicated by :meth:`partition_plea`. There doesn't need to be
+        a relationship between the number of processes and the number of tasks but it wouldn't
+        make sense for more processes than tasks.
+        """
+
+        partition_option = self.partition_plea()
+
+        msg = "Partition minimum must be > 0 and < maximum"
+        assert partition_option.minimum > 0, msg
+        assert partition_option.minimum <= partition_option.maximum, msg
+
+        # this should be in lock-step with the default LocalProcessPool and other pools do their
+        # own thing.
+        max_workers = self.runtime.max_concurrent_tasks
+
+        workers_count = partition_option.minimum
+        if partition_option.optimal < max_workers:
+            workers_count = partition_option.optimal
+        else:
+            workers_count = max_workers
+
+        if workers_count > partition_option.maximum:
+            workers_count = partition_option.maximum
+
+        # workers_count =  1
+        self.log(f"Using {workers_count} worker processes")
+
+        self.build()
+
+        active_context = connector_resolver.capture_context()
+
+        tasks = self.partition_slice(workers_count)
+
+        if isinstance(tasks, list):
+
+            subtasks_count = len(tasks)
+
+            # the simple version of :meth:`partition_slice` returns a list of tuples.
+            # :class:`TaskPartition` contains more info
+            task_definitions = []
+            for t in tasks:
+                if isinstance(t, TaskPartition):
+                    task_definitions.append(t)
+                else:
+                    method_name, method_kwargs = t
+                    tp = TaskPartition(
+                        model_cls=self.__class__,
+                        method_name=method_name,
+                        method_kwargs=method_kwargs if method_kwargs is not None else {},
+                        model_construction_kwargs={},
+                        partition_initialise_kwargs={},
+                    )
+                    task_definitions.append(tp)
+
+            def _sub_tasks_iterator():
+                "Convert list into an iterator"
+                yield from task_definitions
+
+            sub_tasks_iterator = _sub_tasks_iterator()
+
+        elif hasattr(tasks, "__iter__"):
+            # there isn't an `isiterable` in Python, this is close enough
+            subtasks_count = None  # not possible with iterator of tasks
+            sub_tasks_iterator = tasks
+        else:
+            raise ValueError("tasks returned from `partition_slice` isn't an obvious iterator")
+
+        if workers_count == 1:
+            # don't use the process pool as only one worker is available. There might be many
+            # tasks so do these in serial.
+            # this mode is useful for unittests as Multiprocess can confuse things
+            self.log(f"Running single sub-task within main process")
+
+            # simplified verion of what happens in ProcessPool.
+            # The resolver context and class are currently assumed to be the same as `self` has
+            # so :meth:`partition_initialise` isn't called.
+
+            self.runtime.worker_id = 0
+            self.runtime.total_workers = 1
+
+            subtasks_complete = 0
+            for task in sub_tasks_iterator:
+
+                resolver_context = None
+                if task.additional_context:
+                    # this will be overlaid onto any context that is already in play
+                    resolver_context = connector_resolver.context(**task.additional_context)
+                    resolver_context.start()
+
+                # re-create self as a new instance model. This keeps single process mode insync
+                # with the `process_pool` mode.
+                m = task.model_cls(**task.model_construction_kwargs)
+
+                # it's running in the same process as self so share logging
+                m.log_to_stdout = self.log_to_stdout
+                m.external_loggers = self.external_loggers
+
+                m.partition_initialise(**task.partition_initialise_kwargs)
+
+                sub_task_method = getattr(m, task.method_name)
+                subtask_return_value = sub_task_method(**task.method_kwargs)
+                subtasks_complete += 1
+
+                m.close_datasets()
+
+                task_message = TaskComplete(
+                    model_cls_name=task.model_cls.__name__,
+                    method_name=task.method_name,
+                    method_kwargs=task.method_kwargs,
+                    return_value=subtask_return_value,
+                )
+                self.partition_subtask_complete(task_message=task_message)
+
+                if resolver_context is not None:
+                    resolver_context.finish()
+
+                if subtasks_count is not None:
+                    self.log_progress(subtasks_complete / subtasks_count)
+
+        else:
+            subtasks_complete = 0
+            subtask_kwargs = {
+                "sub_tasks": sub_tasks_iterator,
+                "context_kwargs": active_context["mapper"],
+                "processes": workers_count,
+            }
+
+            for subtask_message in self.process_pool.run_subtasks(**subtask_kwargs):
+                if isinstance(subtask_message, TaskComplete):
+                    self.partition_subtask_complete(task_message=subtask_message)
+                    subtasks_complete += 1
+
+                    if subtasks_count is not None:
+                        self.log_progress(subtasks_complete / subtasks_count)
+
+                elif isinstance(subtask_message, TaskFailed):
+                    subtasks_complete += 1
+
+                    # The failure could be handled by the model. Default behaviour in
+                    # :meth:`PartitionedModel.partition_subtask_complete` is to raise this as an
+                    # exception
+                    # for now, throw an error
+                    self.partition_subtask_failed(task_message=subtask_message)
+
+                elif isinstance(subtask_message, TaskLogMessage):
+                    # TODO structured logging to separate and de-dupe fields like the date
+                    self.log(subtask_message.msg, level=subtask_message.level)
+                else:
+                    raise ValueError("Undefined message type received")
+
+        self.partition_complete()
