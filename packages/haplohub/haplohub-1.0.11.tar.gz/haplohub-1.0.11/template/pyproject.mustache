@@ -1,0 +1,36 @@
+[project]
+name = "{{{packageName}}}"
+version = "{{{packageVersion}}}"
+description = "{{{appName}}}"
+authors = ["{{infoName}}{{^infoName}}OpenAPI Generator Community{{/infoName}} <{{infoEmail}}{{^infoEmail}}team@openapitools.org{{/infoEmail}}>"]
+license = "{{{licenseInfo}}}{{^licenseInfo}}NoLicense{{/licenseInfo}}"
+readme = "README.md"
+repository = "https://{{{gitHost}}}/{{{gitUserId}}}/{{{gitRepoId}}}"
+keywords = ["OpenAPI", "OpenAPI-Generator", "{{{appName}}}"]
+include = ["{{packageName}}/py.typed"]
+requires-python = ">=3.8"
+
+dependencies = [
+    "urllib3 >= 1.25.3",
+    "python-dateutil >= 2.8.2",
+    "pydantic >= 1.10.5, <2",
+    "aenum >= 3.1.11",
+    {{#asyncio}}"aiohttp >= 3.8.4",{{/asyncio}}
+    {{#tornado}}"tornado >= 4.2, <5",{{/tornado}}
+    {{#hasHttpSignatureMethods}}
+    "pem >= 19.3.0",
+    "pycryptodome >= 3.9.0",
+    {{/hasHttpSignatureMethods}}
+]
+
+dynamic = ["version"]
+
+[build-system]
+requires = ["setuptools", "setuptools_scm[toml]"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "haplohub/_version.py"
+
+[tool.pylint.'MESSAGES CONTROL']
+extension-pkg-whitelist = "pydantic"
