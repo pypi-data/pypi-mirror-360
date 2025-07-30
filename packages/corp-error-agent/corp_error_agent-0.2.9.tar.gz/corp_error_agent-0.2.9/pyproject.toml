@@ -1,0 +1,44 @@
+[project]
+name            = "corp_error_agent"
+version         = "0.2.9"               # bump for the new safer install
+description     = "Runtime agent that captures uncaught errors + env snapshot and prints data‑driven CLI hints."
+authors         = [{ name = "Fayol Ateufack", email="arielfayol1@gmail.com" }]
+readme          = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "requests>=2.31",
+    "platformdirs>=3.10",
+]
+
+[project.scripts]
+corp-error-agent = "corp_error_agent.cli:main"
+
+# -------------------------------------------------------------------
+# Build backend
+# -------------------------------------------------------------------
+[build-system]
+requires      = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# -------------------------------------------------------------------
+# Setuptools instructions
+# -------------------------------------------------------------------
+[tool.setuptools]
+packages = ["corp_error_agent"]         # ship the full package
+
+# copy the shim into *root* of site‑packages/
+data-files = { "" = ["corp_error_agent.pth"] }
+
+# (py‑modules removed – the .pth shim replaces the top‑level sitecustomize.py)
+
+# optional: if you prefer auto‑discovery
+#[tool.setuptools.packages.find]
+#where = ["corp_error_agent"]
+
+[project.urls]
+Source="https://github.com/arielfayol37/corp_error_agent"
