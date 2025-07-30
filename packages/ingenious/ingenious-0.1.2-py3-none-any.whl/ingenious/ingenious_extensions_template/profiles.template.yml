@@ -1,0 +1,83 @@
+# =============================================================================
+# Insight Ingenious Profiles Template
+# =============================================================================
+# Copy this file to profiles.yml and modify for your environment
+# Note: Environment variables will be substituted for ${VAR:default} syntax
+#
+# REQUIRED ENVIRONMENT VARIABLES:
+# - AZURE_OPENAI_API_KEY: Your Azure OpenAI API key
+# - AZURE_OPENAI_BASE_URL: Your Azure OpenAI endpoint URL
+#
+# OPTIONAL ENVIRONMENT VARIABLES (only needed for specific workflows):
+# - AZURE_SEARCH_API_KEY: For knowledge-base workflows
+# - AZURE_SQL_CONNECTION_STRING: For SQL manipulation workflows
+# - AZURE_STORAGE_*: For Azure storage integration
+#
+# Example .env file:
+# AZURE_OPENAI_API_KEY=your-api-key-here
+# AZURE_OPENAI_BASE_URL=https://your-resource.openai.azure.com/
+# AZURE_OPENAI_MODEL_NAME=gpt-4.1-nano
+# AZURE_OPENAI_DEPLOYMENT=gpt-4.1-nano
+
+# =============================================================================
+# DEVELOPMENT PROFILE
+# =============================================================================
+- name: dev
+  # =============================================================================
+  # MODEL CONFIGURATION (REQUIRED)
+  # =============================================================================
+  models:
+    - model: ${AZURE_OPENAI_MODEL_NAME:gpt-4.1-nano}
+      api_key: ${AZURE_OPENAI_API_KEY:REQUIRED_SET_IN_ENV}
+      base_url: ${AZURE_OPENAI_BASE_URL:REQUIRED_SET_IN_ENV}
+      deployment: ${AZURE_OPENAI_DEPLOYMENT:gpt-4.1-nano}
+  # =============================================================================
+  # CHAT HISTORY CONFIGURATION (Uses local SQLite by default)
+  # =============================================================================
+  chat_history:
+    database_connection_string: ${AZURE_SQL_CONNECTION_STRING:}
+  # =============================================================================
+  # AZURE SEARCH SERVICES (Optional - only for knowledge-base workflows)
+  # =============================================================================
+  # azure_search_services:
+  #   - service: default
+  #     key: ${AZURE_SEARCH_API_KEY:}
+  # =============================================================================
+  # AZURE SQL SERVICES (Optional - only for sql-manipulation workflows)
+  # =============================================================================
+  # azure_sql_services:
+  #   database_connection_string: ${AZURE_SQL_CONNECTION_STRING:}
+  # =============================================================================
+  # RECEIVER CONFIGURATION (Optional)
+  # =============================================================================
+  receiver_configuration:
+    enable: false
+    api_url: ${RECEIVER_API_URL:}
+    api_key: ${RECEIVER_API_KEY:DevApiKey}
+  # =============================================================================
+  # CHAINLIT CONFIGURATION (Optional)
+  # =============================================================================
+  chainlit_configuration:
+    enable: false
+    authentication:
+      enable: false
+      github_secret: ${GITHUB_CLIENT_SECRET:}
+      github_client_id: ${GITHUB_CLIENT_ID:}
+  # =============================================================================
+  # WEB CONFIGURATION (Optional)
+  # =============================================================================
+  web_configuration:
+    authentication:
+      enable: ${WEB_AUTH_ENABLE:false}
+      username: ${WEB_AUTH_USERNAME:admin}
+      password: ${WEB_AUTH_PASSWORD:admin123}
+  # =============================================================================
+  # DATA LAKE STORAGE CONFIGURATION (Optional - for Azure storage integration)
+  # =============================================================================
+  # file_storage:
+  #   revisions:
+  #     url: ${AZURE_STORAGE_REVISIONS_URL:}
+  #     authentication_method: ${AZURE_STORAGE_AUTH_METHOD:default_credential} # msi, default_credential
+  #   data:
+  #     url: ${AZURE_STORAGE_DATA_URL:}
+  #     authentication_method: ${AZURE_STORAGE_AUTH_METHOD:default_credential} # msi, default_credential

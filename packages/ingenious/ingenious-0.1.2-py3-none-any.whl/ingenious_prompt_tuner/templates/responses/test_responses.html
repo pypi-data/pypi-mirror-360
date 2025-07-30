@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}Test API Responses{% endblock %}
+{% block head %}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+          rel="stylesheet">
+    <style>
+    .test-card {
+        margin: 1rem 0;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+    }
+
+    .test-result {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 0.375rem;
+    }
+
+    .success {
+        background-color: #d1e7dd;
+        border: 1px solid #badbcc;
+    }
+
+    .error {
+        background-color: #f8d7da;
+        border: 1px solid #f5c2c7;
+    }
+    </style>
+{% endblock %}
+{% block content %}
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <div class="col-12">
+                <h2>
+                    <i class="fas fa-vial"></i> API Response Testing
+                </h2>
+                <p class="text-muted">Test the response parsing and display functionality of the ingenious prompt tuner.</p>
+                <div class="test-card">
+                    <div class="card-header">
+                        <h5>
+                            <i class="fas fa-check-circle text-success"></i> Response Parser Test
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Test the AgentChatWrapper and response parsing functionality with sample data.</p>
+                        <button class="btn btn-primary" onclick="runResponseParserTest()">
+                            <i class="fas fa-play"></i> Run Response Parser Test
+                        </button>
+                        <div id="response-parser-result" class="test-result" style="display: none"></div>
+                    </div>
+                </div>
+                <div class="test-card">
+                    <div class="card-header">
+                        <h5>
+                            <i class="fas fa-file-alt"></i> File Reading Test
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Test the file reading functionality for agent responses.</p>
+                        <div class="form-group mb-3">
+                            <label for="test-identifier">Test Identifier:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="test-identifier"
+                                   value="test_001">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="test-event-type">Event Type:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="test-event-type"
+                                   value="bike_insights">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="test-agent-name">Agent Name:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="test-agent-name"
+                                   value="BikeInsightsAgent">
+                        </div>
+                        <button class="btn btn-primary" onclick="runFileReadingTest()">
+                            <i class="fas fa-folder-open"></i> Test File Reading
+                        </button>
+                        <div id="file-reading-result" class="test-result" style="display: none;"></div>
+                    </div>
+                </div>
+                <div class="test-card">
+                    <div class="card-header">
+                        <h5>
+                            <i class="fas fa-list"></i> Available Test Files
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p>List all available test data files for the current revision.</p>
+                        <button class="btn btn-info" onclick="listTestFiles()">
+                            <i class="fas fa-list"></i> List Test Files
+                        </button>
+                        <div id="test-files-result" class="test-result" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    function runResponseParserTest() {
+        const resultDiv = document.getElementById('response-parser-result');
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running response parser test...';
+
+        fetch('{{ url_for("responses.test_response_parsing") }}')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(html => {
+                resultDiv.innerHTML = html;
+                resultDiv.className = 'test-result success';
+            })
+            .catch(err => {
+                resultDiv.innerHTML = `
+                <div class="alert alert-danger" role="alert">
+                    <h6>Response Parser Test Failed</h6>
+                    <p>Error: ${err.message}</p>
+                </div>
+            `;
+                resultDiv.className = 'test-result error';
+            });
+    }
+
+    function runFileReadingTest() {
+        const identifier = document.getElementById('test-identifier').value;
+        const eventType = document.getElementById('test-event-type').value;
+        const agentName = document.getElementById('test-agent-name').value;
+        const resultDiv = document.getElementById('file-reading-result');
+
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing file reading...';
+
+        fetch(`{{ url_for('responses.get_agent_response') }}?identifier=${identifier}&agent_name=${agentName}&event_type=${eventType}&identifier_group=default`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(html => {
+                resultDiv.innerHTML = `
+                <div class="alert alert-success" role="alert">
+                    <h6>File Reading Test Result</h6>
+                    <p>Successfully retrieved agent response for ${agentName}</p>
+                </div>
+                <div class="border p-3 mt-2" style="max-height: 400px; overflow-y: auto;">
+                    ${html}
+                </div>
+            `;
+                resultDiv.className = 'test-result success';
+            })
+            .catch(err => {
+                resultDiv.innerHTML = `
+                <div class="alert alert-warning" role="alert">
+                    <h6>File Reading Test Result</h6>
+                    <p>Could not read file for ${agentName}</p>
+                    <p>Error: ${err.message}</p>
+                    <p><small>This may be expected if the test file doesn't exist.</small></p>
+                </div>
+            `;
+                resultDiv.className = 'test-result error';
+            });
+    }
+
+    function listTestFiles() {
+        const resultDiv = document.getElementById('test-files-result');
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading test files...';
+
+        fetch('{{ url_for("responses.get_test_data_files") }}')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.files && data.files.length > 0) {
+                    let filesList = '<ul class="list-group">';
+                    data.files.forEach(file => {
+                        filesList += `<li class="list-group-item">${file}</li>`;
+                    });
+                    filesList += '</ul>';
+
+                    resultDiv.innerHTML = `
+                    <div class="alert alert-success" role="alert">
+                        <h6>Found ${data.files.length} test data files</h6>
+                    </div>
+                    ${filesList}
+                `;
+                    resultDiv.className = 'test-result success';
+                } else {
+                    resultDiv.innerHTML = `
+                    <div class="alert alert-info" role="alert">
+                        <h6>No test data files found</h6>
+                        <p>No test data files are available for the current revision.</p>
+                    </div>
+                `;
+                    resultDiv.className = 'test-result';
+                }
+            })
+            .catch(err => {
+                resultDiv.innerHTML = `
+                <div class="alert alert-danger" role="alert">
+                    <h6>Error Loading Test Files</h6>
+                    <p>Error: ${err.message}</p>
+                </div>
+            `;
+                resultDiv.className = 'test-result error';
+            });
+    }
+    </script>
+{% endblock %}
