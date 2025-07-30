@@ -1,0 +1,33 @@
+fix: align SDK normalization with CDC agent behavior
+
+This commit resolves transaction verification failures caused by normalization
+inconsistencies between the ETRAP SDK and CDC agent.
+
+BREAKING CHANGE: Integer fields are no longer converted to strings during
+normalization. This may affect code that expects stringified integers.
+
+Changes:
+- Keep integer fields as integers (matching CDC agent behavior)
+- Add special handling for `_at` fields with numeric epoch timestamps
+  - Convert epoch milliseconds/seconds to ISO format strings
+  - Matches CDC agent's timestamp conversion logic
+- Update all affected tests to expect integers instead of strings
+
+Normalization behavior after this fix:
+
+1. ID fields (*_id): Remain as numbers (int/float)
+2. Regular integers: Remain as numbers
+3. Floats: Convert to strings with decimal formatting
+4. Timestamp fields ending with `_at`:
+   - Numeric epochs → ISO strings (e.g., 1736282700000 → "2025-01-07T20:45:00.000")
+   - String timestamps → Normalized ISO format
+5. Other numeric timestamps: Remain as numbers
+
+This ensures consistent hash computation between the SDK and CDC agent,
+enabling successful verification of transactions from tables like
+`ticket_purchase_hist` with fields like `transaction_date_time`.
+
+Tested with:
+- Tables containing `transaction_date_time` (non-_at timestamp)
+- Tables containing `created_at`/`updated_at` (epoch → ISO conversion)
+- Mixed numeric field types
