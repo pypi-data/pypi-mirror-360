@@ -1,0 +1,88 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel>=0.40.0", "setuptools-scm>=8.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hwh-backend"
+dynamic = ["version"]
+description = "Setuptools based backend supporting Cython extensions"
+authors = [
+    { name = "Mathias von Essen", email = "3090690+mkgessen@users.noreply.github.com" },
+]
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+keywords = ["cython", "build", "backend", "pep517"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Cython",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Operating System :: POSIX :: Linux",
+]
+dependencies = [
+    "setuptools>=68.0",
+    "wheel>=0.40.0",
+    "Cython<3.0.0",
+    "pyproject-metadata>=0.7.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "coverage>=7.0",
+    "build>=1.0.0",
+    "tomli-w",
+]
+dev = ["black>=23.0.0", "isort>=5.0.0", "mypy>=1.0.0", "ruff>=0.1.0", "hwh-backend[test]"]
+
+[project.urls]
+Repository = "https://github.com/mkgessen/hwh-backend.git"
+
+[tool.setuptools]
+packages = ["hwh_backend"]
+package-dir = { "" = "src" }
+
+[tool.setuptools_scm]
+version_scheme = "post-release"
+local_scheme = "dirty-tag"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=hwh_backend --cov-report=term-missing"
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[tool.ruff]
+select = [
+    "E", # pycodestyle errors
+    "W", # pycodestyle warnings
+    "F", # pyflakes
+    "I", # isort
+    "C", # flake8-comprehensions
+    "B", # flake8-bugbear
+]
+ignore = []
+line-length = 88
+target-version = "py311"
