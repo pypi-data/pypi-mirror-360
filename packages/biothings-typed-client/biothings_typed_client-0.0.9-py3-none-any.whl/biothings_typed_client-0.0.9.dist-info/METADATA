@@ -1,0 +1,840 @@
+Metadata-Version: 2.4
+Name: biothings-typed-client
+Version: 0.0.9
+Summary: A strongly-typed Python wrapper around the BioThings Client library, providing type safety and better IDE support through Python's type hints and Pydantic models.
+Author-email: antonkulaga <antonkulaga@gmail.com>
+License-File: LICENSE
+Requires-Python: >=3.10
+Requires-Dist: biothings-client[caching]>=0.4.1
+Requires-Dist: pandas>=2.1.1
+Requires-Dist: pydantic>=2.11.4
+Requires-Dist: pyld>=2.0.4
+Requires-Dist: rich>=14.0.0
+Requires-Dist: typer>=0.16.0
+Description-Content-Type: text/markdown
+
+# BioThings Typed Client
+
+[![Tests](https://github.com/longevity-genie/biothings-typed-client/actions/workflows/tests.yml/badge.svg)](https://github.com/longevity-genie/biothings-typed-client/actions/workflows/tests.yml)
+[![PyPI version](https://badge.fury.io/py/biothings-typed-client.svg)](https://badge.fury.io/py/biothings-typed-client)
+
+## About BioThings.io
+
+[BioThings.io](https://biothings.io/) is a platform that provides a network of high-performance biomedical APIs and tools for building FAIR (Findable, Accessible, Interoperable, and Reusable) data services. The platform includes several key components:
+
+- **Core BioThings APIs**:
+  - [MyGene.info](https://mygene.info/) - Gene Annotation Service
+  - [MyVariant.info](https://myvariant.info/) - Variant Annotation Service
+  - [MyChem.info](https://mychem.info/) - Chemical and Drug Annotation Service
+  - [MyDisease.info](http://mydisease.info/) - Disease Annotation Service
+  - Taxonomy API - For querying taxonomic information
+
+This typed client library is built on top of the BioThings ecosystem, providing type-safe access to these services through Python.
+
+## Project Description
+
+A strongly-typed Python wrapper around the [BioThings Client](https://github.com/biothings/biothings_client.py) library, providing type safety and better IDE support through Python's type hints and Pydantic models.
+
+## Features
+
+- **Type Safety & Validation**: Leverages Pydantic models for runtime data validation and type checking.
+- **Enhanced IDE Support**: Full autocompletion and static analysis in modern IDEs
+- **Synchronous & Asynchronous**: Support for both sync and async operations
+- **Helper Methods**: Additional utility methods for common operations
+- **Compatibility**: Maintains full compatibility with the original BioThings client
+
+## Installation
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/longevity-genie/biothings-typed-client.git
+cd biothings-typed-client
+```
+
+### Using pip
+
+```bash
+pip install biothings-typed-client
+```
+
+#### Setting Up for Development
+
+If you want to contribute to this repository:
+
+1.  Clone the repository (if you haven't already):
+    ```bash
+    git clone https://github.com/longevity-genie/biothings-typed-client.git
+    cd biothings-typed-client
+    ```
+
+2.  Install UV:
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+
+3.  Create and activate a virtual environment:
+    ```bash
+    uv venv
+    source .venv/bin/activate  # On Unix/macOS
+    # or
+    .venv\Scripts\activate  # On Windows
+    ```
+
+4.  Install all dependencies, including development tools:
+    ```bash
+    uv sync
+    ```
+    This command reads the `pyproject.toml` file and installs the package in editable mode along with all its dependencies and optional dependencies (like those needed for testing and development).
+
+## Quick Start
+
+### Synchronous Client
+
+```python
+from biothings_typed_client.variants import VariantClient
+
+# Initialize the client
+client = VariantClient()
+
+# Get a single variant
+variant = client.getvariant("chr7:g.140453134T>C")
+if variant:
+    print(f"Variant ID: {variant.get_variant_id()}")
+    print(f"Chromosome: {variant.chrom}")
+    print(f"Position: {variant.vcf.position}")
+    print(f"Reference: {variant.vcf.ref}")
+    print(f"Alternative: {variant.vcf.alt}")
+
+# Get multiple variants
+variants = client.getvariants(["chr7:g.140453134T>C", "chr9:g.107620835G>A"])
+for variant in variants:
+    print(f"Found variant: {variant.get_variant_id()}")
+
+# Query variants
+results = client.query("dbnsfp.genename:cdk2", size=5)
+for hit in results["hits"]:
+    print(f"Found variant: {hit['_id']}")
+```
+
+### Asynchronous Client
+
+```python
+import asyncio
+from biothings_typed_client.variants import VariantClientAsync
+
+async def main():
+    # Initialize the client
+    client = VariantClientAsync()
+    
+    # Get a single variant
+    variant = await client.getvariant("chr7:g.140453134T>C")
+    if variant:
+        print(f"Variant ID: {variant.get_variant_id()}")
+        print(f"Has clinical significance: {variant.has_clinical_significance()}")
+        print(f"Has functional predictions: {variant.has_functional_predictions()}")
+    
+    # Query variants
+    results = await client.query("dbnsfp.genename:cdk2", size=5)
+    print("\nQuery results:")
+    print(results)
+
+# Run the async code
+asyncio.run(main())
+```
+
+### Gene Client Examples
+
+#### Synchronous Gene Client
+
+```python
+from biothings_typed_client.genes import GeneClient
+
+# Initialize the client
+client = GeneClient()
+
+# Get a single gene
+gene = client.getgene("1017")  # Using Entrez ID
+if gene:
+    print(f"Gene ID: {gene.id}")
+    print(f"Symbol: {gene.symbol}")
+    print(f"Name: {gene.name}")
+
+# Get multiple genes
+genes = client.getgenes(["1017", "1018"])  # Using Entrez IDs
+for gene in genes:
+    print(f"Found gene: {gene.symbol} ({gene.name})")
+
+# Query genes
+results = client.query("symbol:CDK2", size=5)
+for hit in results["hits"]:
+    print(f"Found gene: {hit['symbol']} ({hit['name']})")
+
+# Batch query genes
+genes = client.querymany(["CDK2", "BRCA1"], scopes=["symbol"], size=1)
+for gene in genes:
+    print(f"Found gene: {gene['symbol']} ({gene['name']})")
+```
+
+#### Asynchronous Gene Client
+
+```python
+import asyncio
+from biothings_typed_client.genes import GeneClientAsync
+
+async def main():
+    # Initialize the client
+    client = GeneClientAsync()
+    
+    # Get a single gene
+    gene = await client.getgene("1017")  # Using Entrez ID
+    if gene:
+        print(f"Gene ID: {gene.id}")
+        print(f"Symbol: {gene.symbol}")
+        print(f"Name: {gene.name}")
+    
+    # Query genes
+    results = await client.query("symbol:CDK2", size=5)
+    print("\nQuery results:")
+    for hit in results["hits"]:
+        print(f"Found gene: {hit['symbol']} ({hit['name']})")
+
+# Run the async code
+asyncio.run(main())
+```
+
+### Chemical Client Examples
+
+#### Synchronous Chemical Client
+
+```python
+from biothings_typed_client.chem import ChemClient
+
+# Initialize the client
+client = ChemClient()
+
+# Get a single chemical
+chem = client.getchem("ZRALSGWEFCBTJO-UHFFFAOYSA-N")  # Using InChI key
+print(f"Chemical ID: {chem.id}")
+print(f"Molecular Formula: {chem.pubchem.molecular_formula}")
+print(f"SMILES: {chem.pubchem.smiles}")
+print(f"Molecular Weight: {chem.pubchem.molecular_weight}")
+print(f"XLogP: {chem.pubchem.xlogp}")
+print(f"Hydrogen Bond Donors: {chem.pubchem.hydrogen_bond_donor_count}")
+print(f"Hydrogen Bond Acceptors: {chem.pubchem.hydrogen_bond_acceptor_count}")
+print(f"Rotatable Bonds: {chem.pubchem.rotatable_bond_count}")
+print(f"Topological Polar Surface Area: {chem.pubchem.topological_polar_surface_area} Å²")
+
+# Get multiple chemicals
+chems = client.getchems(["ZRALSGWEFCBTJO-UHFFFAOYSA-N", "RRUDCFGSUDOHDG-UHFFFAOYSA-N"])
+for chem in chems:
+    print(f"\nFound chemical: {chem.id}")
+    if chem.has_pubchem():
+        print(f"Molecular Formula: {chem.pubchem.molecular_formula}")
+        print(f"Molecular Weight: {chem.pubchem.molecular_weight}")
+
+# Query chemicals with different field filters
+print("\n=== Simple Queries ===")
+results = client.query("pubchem.molecular_formula:C6H12O6", size=5)
+for hit in results["hits"]:
+    print(f"Found chemical: {hit['_id']}")
+
+print("\n=== Fielded Queries ===")
+results = client.query("pubchem.molecular_weight:[100 TO 200]", size=5)
+for hit in results["hits"]:
+    print(f"Found chemical: {hit['_id']}")
+
+print("\n=== Range Queries ===")
+results = client.query("pubchem.xlogp:>2", size=5)
+for hit in results["hits"]:
+    print(f"Found chemical: {hit['_id']}")
+
+print("\n=== Boolean Queries ===")
+results = client.query("pubchem.hydrogen_bond_donor_count:>2 AND pubchem.hydrogen_bond_acceptor_count:>4", size=5)
+for hit in results["hits"]:
+    print(f"Found chemical: {hit['_id']}")
+
+# Batch query chemicals with field filtering
+chems = client.querymany(
+    ["C6H12O6", "C12H22O11"],
+    scopes=["pubchem.molecular_formula"],
+    fields=["pubchem.molecular_weight", "pubchem.xlogp", "pubchem.smiles"],
+    size=1
+)
+for chem in chems:
+    print(f"\nFound chemical: {chem['_id']}")
+    if 'pubchem' in chem:
+        print(f"Molecular Weight: {chem['pubchem'].get('molecular_weight')}")
+        print(f"XLogP: {chem['pubchem'].get('xlogp')}")
+        print(f"SMILES: {chem['pubchem'].get('smiles')}")
+```
+
+#### Asynchronous Chemical Client
+
+```python
+import asyncio
+from biothings_typed_client.chem import ChemClientAsync
+
+async def main():
+    # Initialize the client
+    client = ChemClientAsync()
+    
+    # Get a single chemical
+    chem = await client.getchem("ZRALSGWEFCBTJO-UHFFFAOYSA-N")  # Using InChI key
+    if chem:
+        print(f"Chemical ID: {chem.id}")
+        print(f"Has PubChem info: {chem.has_pubchem()}")
+        if chem.has_pubchem():
+            print(f"Molecular Formula: {chem.pubchem.molecular_formula}")
+            print(f"Molecular Weight: {chem.pubchem.molecular_weight}")
+            print(f"XLogP: {chem.pubchem.xlogp}")
+            print(f"Hydrogen Bond Donors: {chem.pubchem.hydrogen_bond_donor_count}")
+            print(f"Hydrogen Bond Acceptors: {chem.pubchem.hydrogen_bond_acceptor_count}")
+            print(f"Rotatable Bonds: {chem.pubchem.rotatable_bond_count}")
+            print(f"Topological Polar Surface Area: {chem.pubchem.topological_polar_surface_area} Å²")
+    
+    # Query chemicals with different field filters
+    print("\n=== Simple Queries ===")
+    results = await client.query("pubchem.molecular_formula:C6H12O6", size=5)
+    print("\nQuery results:")
+    for hit in results["hits"]:
+        print(f"Found chemical: {hit['_id']}")
+        
+    print("\n=== Fielded Queries ===")
+    results = await client.query("pubchem.molecular_weight:[100 TO 200]", size=5)
+    print("\nQuery results:")
+    for hit in results["hits"]:
+        print(f"Found chemical: {hit['_id']}")
+        
+    print("\n=== Range Queries ===")
+    results = await client.query("pubchem.xlogp:>2", size=5)
+    print("\nQuery results:")
+    for hit in results["hits"]:
+        print(f"Found chemical: {hit['_id']}")
+        
+    print("\n=== Boolean Queries ===")
+    results = await client.query("pubchem.hydrogen_bond_donor_count:>2 AND pubchem.hydrogen_bond_acceptor_count:>4", size=5)
+    print("\nQuery results:")
+    for hit in results["hits"]:
+        print(f"Found chemical: {hit['_id']}")
+    
+    await client.close()
+
+# Run the async code
+asyncio.run(main())
+```
+
+The chemical client provides access to detailed chemical compound information from MyChem.info, including:
+
+- **Structural Information**:
+  - Molecular formula
+  - SMILES strings
+  - InChI and InChIKey
+  - IUPAC names
+
+- **Physical Properties**:
+  - Molecular weight
+  - Exact mass
+  - Monoisotopic weight
+  - XLogP (octanol-water partition coefficient)
+  - Topological polar surface area
+
+- **Chemical Properties**:
+  - Hydrogen bond donors/acceptors
+  - Rotatable bonds
+  - Chiral centers
+  - Formal charge
+  - Molecular complexity
+
+- **Stereochemistry**:
+  - Chiral atom count
+  - Chiral bond count
+  - Defined/undefined stereocenters
+
+For more information about available fields and data sources, see the [MyChem.info documentation](https://docs.mychem.info/en/latest/doc/data.html#available-fields).
+
+### Taxon Client Examples
+
+#### Synchronous Taxon Client
+
+```python
+from biothings_typed_client.taxons import TaxonClient
+
+# Initialize the client
+client = TaxonClient()
+
+# Get a single taxon
+taxon = client.gettaxon(9606)  # Using taxon ID for Homo sapiens
+if taxon:
+    print(f"Taxon ID: {taxon.id}")
+    print(f"Scientific Name: {taxon.scientific_name}")
+    print(f"Common Name: {taxon.common_name}")
+
+# Get multiple taxa
+taxa = client.gettaxons([9606, 10090])  # Homo sapiens and Mus musculus
+for taxon in taxa:
+    print(f"Found taxon: {taxon.scientific_name}")
+
+# Query taxa
+results = client.query("scientific_name:Homo sapiens", size=5)
+for hit in results["hits"]:
+    print(f"Found taxon: {hit['scientific_name']}")
+
+# Batch query taxa
+taxa = client.querymany(["Homo sapiens", "Mus musculus"], scopes=["scientific_name"], size=1)
+for taxon in taxa:
+    print(f"Found taxon: {taxon['scientific_name']}")
+```
+
+#### Asynchronous Taxon Client
+
+```python
+import asyncio
+from biothings_typed_client.taxons import TaxonClientAsync
+
+async def main():
+    # Initialize the client
+    client = TaxonClientAsync()
+    
+    # Get a single taxon
+    taxon = await client.gettaxon(9606)  # Using taxon ID for Homo sapiens
+    if taxon:
+        print(f"Taxon ID: {taxon.id}")
+        print(f"Has lineage: {taxon.has_lineage()}")
+        print(f"Has common name: {taxon.has_common_name()}")
+    
+    # Query taxa
+    results = await client.query("scientific_name:Homo sapiens", size=5)
+    print("\nQuery results:")
+    for hit in results["hits"]:
+        print(f"Found taxon: {hit['scientific_name']}")
+
+# Run the async code
+asyncio.run(main())
+```
+
+### Variant Client Examples
+
+#### Synchronous Variant Client
+
+```python
+from biothings_typed_client.variants import VariantClient
+
+# Initialize the client
+client = VariantClient()
+
+# Get a single variant
+variant = client.getvariant("chr7:g.140453134T>C")
+if variant:
+    print(f"Variant ID: {variant.get_variant_id()}")
+    print(f"Has clinical significance: {variant.has_clinical_significance()}")
+    print(f"Variant details: {variant.model_dump_json(indent=2)}")
+else:
+    print("Variant not found")
+
+# Query variants using different syntax
+print("\n=== Simple Queries ===")
+results = client.query("rs58991260")
+print(f"Query 'rs58991260' results: {results['total']} hits")
+if results['hits']:
+    print(f"First result: {results['hits'][0].get('_id', 'No ID')}")
+    print(f"Score: {results['hits'][0].get('_score', 'No score')}")
+
+print("\n=== Fielded Queries ===")
+results = client.query("dbsnp.vartype:snp")
+print(f"Query 'dbsnp.vartype:snp' results: {results['total']} hits")
+if results['hits']:
+    print(f"First result: {results['hits'][0].get('_id', 'No ID')}")
+    print(f"Score: {results['hits'][0].get('_score', 'No score')}")
+
+print("\n=== Range Queries ===")
+results = client.query("dbnsfp.polyphen2.hdiv.score:>0.99")
+print(f"Query 'dbnsfp.polyphen2.hdiv.score:>0.99' results: {results['total']} hits")
+if results['hits']:
+    print(f"First result: {results['hits'][0].get('_id', 'No ID')}")
+    print(f"Score: {results['hits'][0].get('_score', 'No score')}")
+
+print("\n=== Wildcard Queries ===")
+results = client.query("dbnsfp.genename:CDK?")
+print(f"Query 'dbnsfp.genename:CDK?' results: {results['total']} hits")
+if results['hits']:
+    print(f"First result: {results['hits'][0].get('_id', 'No ID')}")
+    print(f"Score: {results['hits'][0].get('_score', 'No score')}")
+
+print("\n=== Boolean Queries ===")
+results = client.query("_exists_:dbsnp AND dbsnp.vartype:snp")
+print(f"Query '_exists_:dbsnp AND dbsnp.vartype:snp' results: {results['total']} hits")
+if results['hits']:
+    print(f"First result: {results['hits'][0].get('_id', 'No ID')}")
+    print(f"Score: {results['hits'][0].get('_score', 'No score')}")
+```
+
+#### Asynchronous Variant Client
+
+```python
+import asyncio
+from biothings_typed_client.variants import VariantClientAsync
+
+async def main():
+    client = VariantClientAsync()
+    
+    # Get a single variant
+    variant = await client.getvariant("chr7:g.140453134T>C")
+    if variant:
+        print(f"Variant ID: {variant.get_variant_id()}")
+        print(f"Has clinical significance: {variant.has_clinical_significance()}")
+        print(f"Variant details: {variant.model_dump_json(indent=2)}")
+    else:
+        print("Variant not found")
+        
+    # Query variants using different syntax
+    print("\n=== Simple Queries ===")
+    results = await client.query("rs58991260")
+    print(f"Query 'rs58991260' results: {results['total']} hits")
+    if results['hits']:
+        print(f"First result: {results['hits'][0].get('_id', 'No ID')}")
+        print(f"Score: {results['hits'][0].get('_score', 'No score')}")
+        
+    print("\n=== Fielded Queries ===")
+    results = await client.query("dbsnp.vartype:snp")
+    print(f"Query 'dbsnp.vartype:snp' results: {results['total']} hits")
+    if results['hits']:
+        print(f"First result: {results['hits'][0].get('_id', 'No ID')}")
+        print(f"Score: {results['hits'][0].get('_score', 'No score')}")
+        
+    print("\n=== Range Queries ===")
+    results = await client.query("dbnsfp.polyphen2.hdiv.score:>0.99")
+    print(f"Query 'dbnsfp.polyphen2.hdiv.score:>0.99' results: {results['total']} hits")
+    if results['hits']:
+        print(f"First result: {results['hits'][0].get('_id', 'No ID')}")
+        print(f"Score: {results['hits'][0].get('_score', 'No score')}")
+        
+    print("\n=== Wildcard Queries ===")
+    results = await client.query("dbnsfp.genename:CDK?")
+    print(f"Query 'dbnsfp.genename:CDK?' results: {results['total']} hits")
+    if results['hits']:
+        print(f"First result: {results['hits'][0].get('_id', 'No ID')}")
+        print(f"Score: {results['hits'][0].get('_score', 'No score')}")
+        
+    print("\n=== Boolean Queries ===")
+    results = await client.query("_exists_:dbsnp AND dbsnp.vartype:snp")
+    print(f"Query '_exists_:dbsnp AND dbsnp.vartype:snp' results: {results['total']} hits")
+    if results['hits']:
+        print(f"First result: {results['hits'][0].get('_id', 'No ID')}")
+        print(f"Score: {results['hits'][0].get('_score', 'No score')}")
+    
+    await client.close()
+
+# Run the async code
+asyncio.run(main())
+```
+
+## Command Line Interface (CLI)
+
+The library provides a comprehensive command-line interface that gives you access to all BioThings APIs directly from your terminal. The CLI supports both table and JSON output formats, field filtering, and caching.
+
+### Installation and Setup
+
+After installing the package, you'll have access to two CLI commands:
+
+- `biothings-typed-client` - Main API interface
+- `clear-cache` - Cache management utility
+
+### Basic Usage
+
+```bash
+# Show main help
+biothings-typed-client --help
+
+# Show help for a specific API
+biothings-typed-client gene --help
+biothings-typed-client chem --help
+biothings-typed-client variant --help
+biothings-typed-client geneset --help
+biothings-typed-client taxon --help
+```
+
+### Gene API Commands
+
+#### Get Single Gene Information
+
+```bash
+# Get gene by Entrez ID
+biothings-typed-client gene get 1017
+
+# Get gene by Ensembl ID  
+biothings-typed-client gene get ENSG00000123374
+
+# Get specific fields only
+biothings-typed-client gene get 1017 --fields "symbol,name,entrezgene"
+
+# Output as JSON
+biothings-typed-client gene get 1017 --format json
+
+# Enable caching
+biothings-typed-client gene get 1017 --cache
+```
+
+#### Get Multiple Genes
+
+```bash
+# Get multiple genes (comma-separated)
+biothings-typed-client gene list "1017,1018,1019"
+
+# With specific fields
+biothings-typed-client gene list "1017,1018" --fields "symbol,name" --format json
+```
+
+### Chemical API Commands
+
+#### Get Chemical Compound Information
+
+```bash
+# Get chemical by InChI Key
+biothings-typed-client chem get KTUFNOKKBVMGRW-UHFFFAOYSA-N
+
+# Get multiple chemicals
+biothings-typed-client chem list "KTUFNOKKBVMGRW-UHFFFAOYSA-N,XEFQLINVKFYRCS-UHFFFAOYSA-N"
+
+# Get specific PubChem fields
+biothings-typed-client chem get KTUFNOKKBVMGRW-UHFFFAOYSA-N --fields "pubchem.molecular_formula,pubchem.molecular_weight"
+```
+
+### Variant API Commands
+
+#### Get Variant Information
+
+```bash
+# Get variant by ID
+biothings-typed-client variant get "chr7:g.140453134T>C"
+
+# Get multiple variants
+biothings-typed-client variant list "chr7:g.140453134T>C,chr9:g.107620835G>A"
+
+# Get specific annotation fields
+biothings-typed-client variant get "chr7:g.140453134T>C" --fields "clinvar,cadd,dbsnp"
+
+# JSON output for programmatic use
+biothings-typed-client variant get "chr7:g.140453134T>C" --format json
+```
+
+### Geneset API Commands
+
+#### Get Geneset Information
+
+```bash
+# Get geneset by ID
+biothings-typed-client geneset get WP100
+
+# Get multiple genesets
+biothings-typed-client geneset list "WP100,WP101,WP102"
+
+# Get specific fields
+biothings-typed-client geneset get WP100 --fields "name,source,count,genes"
+```
+
+### Taxon API Commands
+
+#### Get Taxonomic Information
+
+```bash
+# Get human taxonomy info
+biothings-typed-client taxon get 9606
+
+# Get multiple taxa
+biothings-typed-client taxon list "9606,10090,7955"
+
+# Get specific fields
+biothings-typed-client taxon get 9606 --fields "scientific_name,common_name,rank"
+```
+
+### Global Options
+
+All commands support these options:
+
+- `--fields`, `-f`: Comma-separated list of fields to return
+- `--format`: Output format (`table` or `json`)
+- `--cache`: Enable response caching
+- `--help`: Show command help
+
+### Output Formats
+
+#### Table Format (Default)
+
+Beautiful, human-readable tables with colored output:
+
+```bash
+$ biothings-typed-client gene get 1017
+
+                                    Gene Information: 1017
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Field       ┃ Value                                                           ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ ID          │ 1017                                                            │
+│ Symbol      │ CDK2                                                            │
+│ Name        │ cyclin dependent kinase 2                                       │
+│ Entrez Gene │ 1017                                                            │
+│ Taxonomy ID │ 9606                                                            │
+│ Summary     │ This gene encodes a member of a family of serine/threonine...   │
+└─────────────┴─────────────────────────────────────────────────────────────────┘
+```
+
+#### JSON Format
+
+Perfect for programmatic use and pipeline integration:
+
+```bash
+$ biothings-typed-client gene get 1017 --format json --fields "symbol,name,entrezgene"
+
+{
+  "id": "1017",
+  "score": null,
+  "name": "cyclin dependent kinase 2",
+  "symbol": "CDK2",
+  "refseq": null,
+  "taxid": null,
+  "entrezgene": 1017,
+  "ensembl": null,
+  "uniprot": null,
+  "summary": null,
+  "genomic_pos": null
+}
+```
+
+### Cache Management
+
+#### Clear Cache Files
+
+```bash
+# Clear cache in current directory
+clear-cache
+
+# Clear cache in specific directory
+clear-cache /path/to/cache/directory
+
+# Show help
+clear-cache --help
+```
+
+The cache cleaner removes files like:
+- `mychem_cache`
+- `mygene_cache`
+- `myvariant_cache`
+- `mygeneset_cache`
+- `mytaxon_cache`
+
+### Integration Examples
+
+#### Shell Scripting
+
+```bash
+#!/bin/bash
+
+# Get gene information and extract symbol
+SYMBOL=$(biothings-typed-client gene get 1017 --format json | jq -r '.symbol')
+echo "Gene symbol: $SYMBOL"
+
+# Process multiple genes
+for gene_id in 1017 1018 1019; do
+    echo "Processing gene $gene_id..."
+    biothings-typed-client gene get "$gene_id" --fields "symbol,name" --cache
+done
+```
+
+#### Pipeline Integration
+
+```bash
+# Get variant data and pipe to analysis script
+biothings-typed-client variant get "chr7:g.140453134T>C" --format json | python analyze_variant.py
+
+# Batch process with caching enabled
+biothings-typed-client gene list "$(cat gene_ids.txt | tr '\n' ',')" --cache --format json > gene_data.json
+```
+
+### Performance Tips
+
+1. **Use caching** (`--cache`) for repeated queries
+2. **Specify fields** (`--fields`) to reduce response size
+3. **Use JSON format** for programmatic processing
+4. **Batch requests** when possible using the `list` commands
+
+## Available Clients
+
+The library currently provides the following typed clients:
+
+- `VariantClient` / `VariantClientAsync`: For accessing variant data
+- `GeneClient` / `GeneClientAsync`: For accessing gene data
+- `ChemClient` / `ChemClientAsync`: For accessing chemical compound data
+- `TaxonClient` / `TaxonClientAsync`: For accessing taxonomic information
+- More clients coming soon...
+
+## Response Models
+
+The library provides strongly-typed response models for all data types. For example, the `VariantResponse` model includes:
+
+```python
+class VariantResponse(BaseModel):
+    id: str = Field(description="Variant identifier")
+    version: int = Field(description="Version number")
+    chrom: str = Field(description="Chromosome number")
+    hg19: GenomicLocation = Field(description="HG19 genomic location")
+    vcf: VCFInfo = Field(description="VCF information")
+    
+    # Optional annotation fields
+    cadd: Optional[CADDScore] = None
+    clinvar: Optional[ClinVarAnnotation] = None
+    cosmic: Optional[CosmicAnnotation] = None
+    dbnsfp: Optional[DbNSFPPrediction] = None
+    dbsnp: Optional[DbSNPAnnotation] = None
+    # ... and more
+```
+
+## Helper Methods
+
+The response models include useful helper methods:
+
+```python
+# Get a standardized variant ID
+variant.get_variant_id()
+
+# Check for clinical significance
+variant.has_clinical_significance()
+
+# Check for functional predictions
+variant.has_functional_predictions()
+```
+
+## Development
+
+### Running Tests
+
+```bash
+uv run pytest -vvv
+```
+You can add -s to also get stdout
+
+### Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- [BioThings](https://biothings.io/) for the biothings API and original [client library](https://github.com/biothings/biothings_client.py)
+
+- This project is part of the [Longevity Genie](https://github.com/longevity-genie) organization, which develops open-source AI assistants and libraries for health, genetics, and longevity research.
+
+We are supported by:
+
+[![HEALES](images/heales.jpg)](https://heales.org/)
+
+*HEALES - Healthy Life Extension Society*
+
+and
+
+[![IBIMA](images/IBIMA.jpg)](https://ibima.med.uni-rostock.de/)
+
+[IBIMA - Institute for Biostatistics and Informatics in Medicine and Ageing Research](https://ibima.med.uni-rostock.de/)
