@@ -1,0 +1,195 @@
+{% extends 'corptax/base.html' %}
+
+{% load i18n %}
+{% load humanize %}
+{% block details %}
+<div class="card text-center">
+    <div class="card-header">
+      <ul class="nav nav-tabs card-header-tabs">
+        <li class="nav-item">
+          <a class="nav-link" href="/corptax/">Tax Bill Preview</a>
+        </li>
+        {% block tax_month_list_nav %}
+            {% for x in tax_month_list|slice:":1" %}
+                <li class="nav-item">
+                    <a class="nav-link  active" aria-current="true" href="/corptax/tax/{{x.tax_date|date:'m'}}/{{x.tax_date|date:'Y'}}">Tax Bill</a>
+                </li>
+            {% endfor %}
+        {% endblock %}
+        <li class="nav-item">
+            <a class="nav-link" aria-current="true" href="/corptax/data-export/{{request.user.profile.main_character.corporation_id}}/member-ledger.csv">Member Ledger CSV export</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/corptax/finance">Razor Finance</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/corptax/corpstats">Corporation statistic</a>
+        </li>
+      </ul>
+    </div>
+    <div class="card card-primary">
+        <div class="card-header">
+            <div class="card-title"><h3>Corporation Taxes</h3></div>
+        </div>
+
+        <div class="card-body">
+            <p class="card-text">{% block tax_date %} Final tax bill for: {{tax_date}} {% endblock %}</br></p>
+            <p class="card-text">{% block total_tax %} Total Tax for this month: {{total_tax|floatformat:"0"|intcomma}} {% endblock %}</br></p>
+            {% block tax_month_list %}
+            {% for x in tax_month_list %}
+                <a href="/corptax/tax/{{x.tax_date|date:'m'}}/{{x.tax_date|date:'Y'}}" class="btn btn-primary">{{x.tax_date|date:'m'}}/{{x.tax_date|date:'Y'}}</a>
+            {% endfor %}
+            {% endblock %}
+
+        </div>
+    </div>
+</div>
+<div class="card card-primary">
+    <div class="card-header">
+        <div class="card-title">Moon Mining</div>
+    </div>
+</div>
+<div class="table-responsive">
+    <table class="table table-hover">
+        <tr>
+            <th>Corp</th>
+            <th>Amount</th>
+            <th>Tax Month</th>
+        </tr>
+        {% block tax_corp_moon %}
+            {% for x in tax_corp_moon %}    
+            <tr>
+                <td>
+                    <a href="/corptax/moon_member/{{x.corp_id}}/{{x.tax_date|date:'m'}}/{{x.tax_date|date:'Y'}}">{{x.corp_name}}</a>
+                </td>
+                <td>
+                    {{x.amount|floatformat:"0"|intcomma}}
+                </td>
+                <td>
+                    {{x.tax_date|date:'M / Y'}}
+                </td>
+            </tr>
+            {% endfor %}
+        {% endblock %}
+    </table>
+</div>
+<div class="card card-primary">
+    <div class="card-body">
+        {% block tax_moon_total %}Total Moon Mining: {{tax_moon_total|floatformat:"0"|intcomma}} {% endblock %}
+    </div>
+</div>
+<div class="card card-primary">
+    <div class="card-header">
+        <div class="card-title">Ratting</div>
+    </div>
+</div>
+<div class="table-responsive">
+    <table class="table">
+        <tr>
+            <th>Corp</th>
+            <th>Amount</th>
+            <th>Tax Month</th>
+        </tr>
+        {% block tax_corp_ratting %}
+            {% for x in tax_corp_ratting %}    
+            <tr>
+                <td>
+                    {{x.corp_name}}
+                </td>
+                <td>
+                    {{x.amount|floatformat:"0"|intcomma}}
+                </td>
+                <td>
+                    {{x.tax_date|date:'M / Y'}}
+                </td>
+            </tr>
+            {% endfor %}
+        {% endblock %}
+    </table>
+</div>
+<div class="card card-primary">
+    <div class="card-body">
+        {% block tax_ratting_total %}Total Ratting: {{tax_ratting_total|floatformat:"0"|intcomma}} {% endblock %}
+    </div>
+</div>
+
+<div class="card card-primary">
+    <div class="card-header">
+        <div class="card-title">Metenox Drills</div>
+    </div>
+</div>
+<div class="table-responsive">
+    <table class="table">
+        <tr>
+            <th>Corp</th>
+            <th>Amount</th>
+            <th>Tax Month</th>
+        </tr>
+        {% block tax_corp_drill %}
+            {% for x in tax_corp_drill %}    
+            <tr>
+                <td>
+                    {{x.corp_name}}
+                </td>
+                <td>
+                    {{x.amount|floatformat:"0"|floatformat:"0"|intcomma}}
+                </td>
+                <td>
+                    {{x.tax_date|date:'M / Y'}}
+                </td>
+            </tr>
+            {% endfor %}
+        {% endblock %}
+    </table>
+</div>
+<div class="card card-primary">
+    <div class="card-body">
+        {% block tax_drill_total %}Total Metenox Drills: {{tax_drill_total|floatformat:"0"|intcomma}} {% endblock %}
+    </div>
+</div>
+
+<div class="card card-primary">
+    <div class="card-header">
+        <div class="card-title">Athanor Rent</div>
+    </div>
+</div>
+<div class="table-responsive">
+    <table class="table">
+        <tr>
+            <th>Corp</th>
+            <th>Amount</th>
+            <th>Tax Month</th>
+        </tr>
+        {% block tax_corp_athanor %}
+            {% for x in tax_corp_athanor %}    
+            <tr>
+                <td>
+                    {{x.corp_name}}
+                </td>
+                <td>
+                    {{x.amount|floatformat:"0"|floatformat:"0"|intcomma}}
+                </td>
+                <td>
+                    {{x.tax_date|date:'M / Y'}}
+                </td>
+            </tr>
+            {% endfor %}
+        {% endblock %}
+    </table>
+</div>
+<div class="card card-primary">
+    <div class="card-body">
+        {% block tax_athanor_total %}Total Athanor: {{tax_athanor_total|floatformat:"0"|intcomma}} {% endblock %}
+    </div>
+</div
+
+{% endblock %}
+
+{% block extra_javascript %}
+{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block extra_script %}
+{% endblock %}

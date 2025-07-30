@@ -1,0 +1,105 @@
+{% extends 'corptax/base.html' %}
+
+{% load i18n %}
+{% load humanize %}
+{% block details %}
+<div class="card text-center">
+    <div class="card card-primary">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item">
+                    <a class="nav-link" href="/corptax/">Tax Bill Preview</a>
+                </li>
+                {% block tax_month_list_nav %}
+                    {% for x in tax_month_list|slice:":1" %}
+                        <li class="nav-item">
+                            <a class="nav-link" aria-current="true" href="/corptax/tax/{{x.tax_date|date:'m'}}/{{x.tax_date|date:'Y'}}">Tax Bill</a>
+                        </li>
+                    {% endfor %}
+                {% endblock %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/corptax/data-export/{{request.user.profile.main_character.corporation_id}}/member-ledger.csv">Member Ledger CSV export</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="true" href="/corptax/finance">Razor Finance</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/corptax/corpstats">Corporation statistic</a>
+                </li>
+            </ul>
+            <div class="card-title"><h3>Razor Finance Information</h3></div>
+        </div>
+
+        <div class="card-body">
+            <p class="card-title"> <p>For month: {{date}}</p> <p>Total {{total|floatformat:"0"|intcomma}}</p>
+            {% block months %}
+                {% for x in months %}
+                    <a href="/corptax/finance/{{x|date:'m'}}/{{x|date:'Y'}}" class="btn btn-primary">{{x|date:'m'}}/{{x|date:'Y'}}</a>
+                {% endfor %}
+            {%endblock%}
+        </div>
+    </div>
+</div>
+{% block income_total %}
+<div class="card card-primary">
+    <div class="card-header">
+        <div class="card-title">Income {{income_total|floatformat:"0"|intcomma}}</div>
+    </div>
+</div>
+{% endblock %}
+<div class="table-responsive">
+    <table class="table">
+        <tr>
+            <th>Item</th>
+            <th>Amount</th>
+        </tr>
+        {% block finance_income %}
+            {% for x in finance_income %}    
+            <tr>
+                <td>
+                    {{x.description}}
+                </td>
+                <td>
+                    {{x.income|floatformat:"0"|intcomma}}
+                </td>
+            </tr>
+            {% endfor %}
+        {% endblock %}
+    </table>
+</div>
+{% block expense_total %}
+<div class="card card-primary">
+    <div class="card-header">
+        <div class="card-title">Expense {{expense_total|floatformat:"0"|intcomma}}</div>
+    </div>
+</div>
+{% endblock %}
+<div class="table-responsive">
+    <table class="table">
+        <tr>
+            <th>Item</th>
+            <th>Amount</th>
+        </tr>
+        {% block finance_expense %}
+            {% for x in finance_expense %}    
+            <tr>
+                <td>
+                    {{x.description}}
+                </td>
+                <td>
+                    {{x.expense|floatformat:"0"|intcomma}}
+                </td>
+            </tr>
+            {% endfor %}
+        {% endblock %}
+    </table>
+{% endblock %}
+
+{% block extra_javascript %}
+{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block extra_script %}
+{% endblock %}

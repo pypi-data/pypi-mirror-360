@@ -1,0 +1,44 @@
+{% extends 'corptax/base.html' %}
+
+{% load i18n %}
+{% load django_bootstrap5 %}
+{% load humanize %}
+{% block details %}
+<div class="card card-primary">
+    <div class="card-header">
+        <div class="card-title"><h3>Member Tax</h3></div>
+    </div>
+</div>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <tr>
+                <th>Name</th>
+                <th>Amount</th>
+            </tr>
+            {% block corp_id %}
+                {% for x in moon_ledger_member %}    
+                <tr>
+                    <td>
+                        {{x.character_name}}
+                    </td>
+                    <td>
+                        {{x.amount|intcomma}}
+                    </td>
+                    <td>
+                        {{x.date|date:'M/Y'}}
+                    </td>
+                </tr>
+                {% endfor %}
+            {% endblock %}
+        </table>
+    </div>
+{% endblock %}
+
+{% block extra_javascript %}
+{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block extra_script %}
+{% endblock %}
