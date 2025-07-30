@@ -1,0 +1,1 @@
+__version__ = "0.0.4fix"  # Version of the bowcar package
