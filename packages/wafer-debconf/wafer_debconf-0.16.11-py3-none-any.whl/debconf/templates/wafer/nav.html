@@ -1,0 +1,42 @@
+{% extends "wafer/nav.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block navtitle %}
+    <a class="navbar-brand" href="{% url 'wafer_page' %}">
+        <img src="{% static "img/logo.png" %}" alt='Logo'/>
+        {{ WAFER_CONFERENCE_NAME }}
+    </a>
+{% endblock navtitle %}
+{% block navauthenticated %}
+  <li class="nav-item dropdown">
+    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+      {{ user.username }}
+    </a>
+    <ul class="dropdown-menu dropdown-menu-right">
+      <li><a class="dropdown-item" href="{% url 'wafer_user_profile' username=user.username %}">
+        {% blocktrans trimmed with name=user.userprofile.display_name %}
+          {{ name }}'s profile
+        {% endblocktrans %}
+      </a></li>
+      {% if perms.talks.add_review %}
+        <li><a class="dropdown-item" href="{% url 'wafer_users_talks' %}">
+          {% trans 'Review Talks' %}
+        </a></li>
+      {% endif %}
+      {% if USING_FRONTDESK_APP and perms.register.view_attendee %}
+        <li><a class="dropdown-item" href="{% url 'front_desk' %}">
+          {% trans 'Front Desk' %}
+        </a></li>
+      {% endif %}
+      {% if user.is_staff %}
+        <li><a class="dropdown-item" href="{% url 'admin:index' %}">
+          {% trans 'Site admin' %}
+        </a></li>
+      {% endif %}
+      <li><a class="dropdown-item" href="{% url 'auth_logout' %}">
+        {% trans 'Log out' %}
+      </a></li>
+    </ul>
+  </li>
+{% endblock navauthenticated %}

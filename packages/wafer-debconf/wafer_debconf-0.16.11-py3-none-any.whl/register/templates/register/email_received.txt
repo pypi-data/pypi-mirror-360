@@ -1,0 +1,111 @@
+{% autoescape off %}Thank you for {% if DEBCONF_REVIEW_FREE_ATTENDEES and not attendee.registration_approved%}applying to attend{% else %}registering for{% endif %} {{ WAFER_CONFERENCE_NAME }} in {{ DEBCONF_CITY }}, {{ DEBCONF_DATES.0.1.year }}.
+Conference dates:{% for part, from, to in DEBCONF_DATES %}
+  {{ part }} from {{ from|date:"SHORT_DATE_FORMAT" }} to {{ to|date:"SHORT_DATE_FORMAT" }}{% endfor %}
+
+We have {% if fresh_registration %}received{% else %}updated{% endif %} your registration.
+You can come back and edit your registration, at any time (until
+registration closes).
+
+{% if DEBCONF_REVIEW_FREE_ATTENDEES and not attendee.registration_approved %}NOTE: Your registration is currently pending approval.
+{% endif %}
+The details we currently have for you are:
+Name: {{ profile.display_name }}
+eMail: {{ user.email }}
+Contact Number: {{ profile.contact_number }}
+{% if not DEBCONF_ONLINE %}
+Nametag Line 2: {{ attendee.nametag_2 }}
+Nametag Line 3: {{ attendee.nametag_3 }}
+Emergency Contact:
+{{ attendee.emergency_contact }}
+
+Announce Arrival on IRC: {{ attendee.announce_me|yesno }}{% endif %}
+Subscribe to mailing lists:
+  debconf-announce: {{ attendee.register_announce|yesno }}
+  debconf-discuss: {{ attendee.register_discuss|yesno }}
+Agree to Code of Conduct: {{ attendee.coc_ack|yesno }}
+
+Conference Fee: {{ fee }}
+{% if not DEBCONF_ONLINE %}
+Arrival: {{ attendee.arrival|date:"DATETIME_FORMAT" }}
+Departure: {{ attendee.departure|date:"DATETIME_FORMAT" }}{% endif %}
+
+T-Shirt: {% if attendee.t_shirt_size %}{{ t_shirt_size }}{% else %}No{% endif %}{% if DEBCONF_SHOE_SIZES %}
+Shoes: {{ attendee.shoe_size|default:"No" }}{% endif %}{% if DEBCONF_ONLINE %}
+Shipping address:
+{{attendee.shipping_address.formatted_address}}{% endif %}
+Gender: {{ gender }}
+Country: {{ attendee.country_name }}{% if DEBCONF_COLLECT_AFFILIATION %}
+Affiliation: {{ attendee.affiliation }}{% endif %}{% if not DEBCONF_ONLINE %}
+Languages Spoken: {{ attendee.languages }}
+PGP Keysigning Keys:
+{{ attendee.pgp_fingerprints|default:"None submitted" }}
+Fully COVID-19 Vaccinated: {{ attendee.vaccinated|yesno }}
+{{ attendee.vaccination_notes }}{% endif %}{% if attendee.visa %}
+Visa Required. Citizenship: {{ attendee.visa.country_name }}{% else %}No visa required.{% endif %}
+Notes:
+{{ attendee.notes }}
+
+{% if bursary.request_any %}
+== Bursary ==
+Requested for food: {{ bursary.request_food|yesno }}
+Requested for accommodation: {{ bursary.request_accommodation|yesno }}
+Requested for travel: {{ bursary.request_travel|yesno }}
+Requested for expenses: {{ bursary.request_expenses|yesno }}
+Funding Source: {{ bursary.budget_description }}
+Debian Contributions:
+{{ bursary.reason_contribution }}
+Plans for DebConf:
+{{ bursary.reason_plans }}{% if bursary.reason_diversity %}
+Diversity Eligibility:
+{{ bursary.reason_diversity }}
+{% endif %}{% if not DEBCONF_ONLINE %}{% if bursary.request_travel %}
+Travel Cost: {{ DEBCONF_BURSARY_CURRENCY_SYMBOL }} {{ bursary.travel_bursary }} ({{ DEBCONF_BURSARY_CURRENCY }})
+Travelling From: {{ bursary.travel_from }}
+Level of Need: {{ bursary_need }}{% endif %}
+{% if bursary.request_food or bursary.request_accommodation %}Partial Contribution: {% if bursary.partial_contribution %}{{ DEBCONF_BILLING_CURRENCY_SYMBOL }} {{ bursary.partial_contribution }}{% else %}No{% endif %}{% endif %}
+{% else %}
+No Travel Bursary Request.
+{% endif %}
+
+== Food ==
+{% if food %}
+Meals Requested:
+{% for day, meals in food.meals_by_day.items %}{{ day|date:"SHORT_DATE_FORMAT" }}: {% for meal in meals %}{{ meal.meal }} {% endfor %}
+{% endfor %}
+Diet: {{ diet }}{% if food.special_diet %}
+Special Diet: {{ food.special_diet }}
+{% endif %}
+{% else %}
+No Food Requested.
+{% endif %}
+
+== Accommodation ==
+{% if accomm %}
+Nights Requested:
+{% for night in accomm.nights.all %}  {{ night.date|date:"SHORT_DATE_FORMAT" }}
+{% endfor %}{% if accomm.requirements %}
+Accommodation Requirements:
+{{ accomm.requirements }}
+{% endif %}{% if accomm.family_usernames %}
+Family Accompanying:
+{{ accomm.family_usernames }}
+{% endif %}{% if accomm.option %}
+Option: {{ accomm_option }}
+{% endif %}
+{% else %}
+No Accommodation Requested.
+{% endif %}
+
+== Child Care ==
+{% if child_care %}
+Childcare Needs:
+{{ child_care.needs }}
+Childcare Details:
+{{ child_care.details }}
+{% else %}
+No Child Care Requested.
+{% endif %}{% endif %}
+
+Regards,
+
+The {{ WAFER_CONFERENCE_NAME }} registration team.{% endautoescape %}

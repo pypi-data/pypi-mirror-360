@@ -1,0 +1,140 @@
+{% extends "wafer/base_form.html" %}
+{% load crispy_forms_tags %}
+{% block title %}{{ WAFER_CONFERENCE_NAME }} - Check In: {{ object.user.userprofile.display_name }}{% endblock %}
+{% block content %}
+{% if attendee.paid %}
+  <h4 class="float-right">
+    <i class="fas fa-check-circle" aria-hidden="true"></i> Paid
+  </h4>
+{% else %}
+  <div class="alert alert-danger float-right" role="alert">
+    <h4 class="not-paid">
+      <i class="fas fa-times" aria-hidden="true"></i> NOT PAID
+    </h4>
+  </div>
+{% endif %}
+<h1>{{ object.user.userprofile.display_name }}</h1>
+<a href="{% url 'badges.check_in' username=object.user.username %}"
+   target="_blank"
+   class="btn btn-primary">Print badge</a>
+{% if meals %}
+<h2>Meals</h2>
+<table>
+    <thead><th>Meal \ Date</th>{% for date in dates %}<th>{{ date.day }}</th>{% endfor %}</thead>
+    <tbody>
+    {% for meal_label, dates in meals %}
+      <tr>
+        <th>{{ meal_label }}</th>
+        {% for date, check in dates %}
+        <td>{% if check %}<i class="fas fa-check-circle" aria-hidden="true"></i>{% endif %}</td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+<a href="{% url 'front_desk.change_food' username=object.user.username %}" class="btn btn-secondary">Change Food (admin only)</a>
+{% if accomm %}
+  <h2>Accommodation</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Check-In</th>
+        <th>Check-Out</th>
+        <th>Option</th>
+        <th>Room</th>
+        <th>Roommates</th>
+      </tr>
+    </thead>
+    {% for checkin, checkout in accomm.get_stay_details %}
+      <tr>
+        <td>{{ checkin | date }}</td>
+        <td>{{ checkout | date }}</td>
+        <td>{{ accomm.option }}</td>
+        <td>{{ accomm.room }}</td>
+        <td>
+          {% for mate in accomm.get_roommates %}
+            <a href="{% url 'front_desk.check_in' username=mate.user.username %}">
+              {{ mate.user.userprofile.display_name }}</a>
+            {% if mate.check_in %}
+              <i class="fas fa-check-circle" aria-hidden="true" title="Checked-in"></i>
+            {% else %}
+              <i class="fas fa-times" aria-hidden="true" title="Not yet checked-in"></i>
+            {% endif %}
+            {% if not forloop.last %},{% endif %}
+          {% endfor %}
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endif %}
+{% if invoices or not attendee.paid %}
+  <h2>Payment</h2>
+  {% if attendee.invoice_outdated %}
+    <div class="alert alert-danger" role="alert">
+      <h4 class="alert-heading">Invoice Outdated / Missing</h4>
+      <form action="{% url 'front_desk.invoice' object.user.username %}" method=post>
+        {% csrf_token %}
+        <input type="submit" class="btn btn-primary" name="submit" value="Issue Invoice">
+      </form>
+    </div>
+  {% endif %}
+  {% if invoices %}
+    <h3>Invoices</h3>
+    <ul>
+      {% for invoice in invoices %}
+        <li class="invoice invoice-{{ invoice.status }}">
+          <a href="{{ invoice.get_absolute_url }}">{{ invoice.reference_number }}</a>:
+          {{ invoice.status|title }}: {{ DEBCONF_BILLING_CURRENCY }} {{ invoice.total }}
+          {% if DEBCONF_BILLING_CURRENCY != DEBCONF_LOCAL_CURRENCY %}
+            / {{ DEBCONF_LOCAL_CURRENCY }} {{ invoice.total_local }}
+          {% endif %}
+          {% if invoice.status == 'new' %}
+            <a href="{% url 'front_desk.cash_invoice_payment' ref=invoice.reference_number %}"
+               class="btn btn-success">Take Cash Payment (admin only)</a>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endif %}
+{% if not object.registered_before_deadline %}
+  <div class="alert alert-warning">
+    <h4 class="alert-heading">Late Registration</h4>
+    <p>
+      Registered after the confirmation deadline.<br>
+      Only give out swag if there is some left over.
+    </p>
+  </div>
+{% endif %}
+<div class="row">
+  <div class="col">
+    <h2>Check In:</h2>
+    {% crispy form %}
+  </div>
+  <div class="col">
+    <h2>T-Shirt:</h2>
+    {% if t_shirt_swap_available %}
+      {% crispy t_shirt_form %}
+    {% elif t_shirt %}
+      <p>Selected: {{ t_shirt }}</p>
+      <p>
+        T-shirt swaps will be possible from
+        {{ T_SHIRT_SWAP_ON_OR_AFTER|date:'DATE_FORMAT' }}
+      </p>
+    {% endif %}
+    {% if DEBCONF_SHOE_SIZES %}
+      <h2>Shoes:</h2>
+      {% if t_shirt_swap_available %}
+        {% crispy shoes_form %}
+      {% elif shoes %}
+        <p>Selected: {{ shoes }}</p>
+        <p>
+          Shoe swaps will be possible from
+          {{ T_SHIRT_SWAP_ON_OR_AFTER|date:'DATE_FORMAT' }}
+        </p>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

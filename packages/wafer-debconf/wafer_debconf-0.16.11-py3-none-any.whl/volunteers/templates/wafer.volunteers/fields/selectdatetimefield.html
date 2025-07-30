@@ -1,0 +1,32 @@
+{% load crispy_forms_field %}
+
+{% if field.is_hidden %}
+{{ field }}
+{% else %}
+
+{% if field.label %}
+<div class="form-row">
+  <label for="{{ field.id_for_label }}"{% if labelclass %} class="{{ labelclass }}"{% endif %}>
+    {{ field.label }}
+  </label>
+</div>
+{% endif %}
+
+<div class="form-row">
+  {% with widget=widget.subwidgets.0 %}
+    {% include widget.template_name %}
+  {% endwith %}
+</div>
+<div class="form-row">
+  <div class="col">
+    {% with widget=widget.subwidgets.1 %}
+      {% include widget.template_name %}
+    {% endwith %}
+  </div>
+  <div class="col">
+    {% with widget=widget.subwidgets.2 %}
+      {% include widget.template_name %}
+    {% endwith %}
+  </div>
+</div>
+{% endif %}

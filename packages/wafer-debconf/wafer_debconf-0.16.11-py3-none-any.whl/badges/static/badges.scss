@@ -1,0 +1,325 @@
+@import "variables";
+@import "vendor/normalize.css/normalize.css";
+
+$fa-font-path: "vendor/fontawesome/webfonts";
+@import "vendor/fontawesome/scss/fontawesome";
+@import "vendor/fontawesome/scss/solid";
+@import "vendor/fontawesome/scss/regular";
+
+$badge-width: 175mm;
+$badge-height: 240mm;
+
+$fold-width: $badge-width / 2;
+$fold-height: $badge-height / 2;
+
+$face-padding: 5mm;
+$face-width: $badge-width / 2 - 2 * $face-padding;
+$face-height: $badge-height / 2 - 2 * $face-padding;
+
+@page {
+  /* This doesn't seem to be supported by any browser */
+  size: $badge-width $badge-height;
+  margin: 0;
+}
+
+html {
+  -webkit-print-color-adjust: exact;
+  color-adjust: exact;
+}
+
+body {
+  font-size: 12pt;
+  margin: 0;
+}
+
+.sheet {
+  margin: 0;
+  overflow: hidden;
+  position: relative;
+  page-break-after: always;
+  width: $badge-width;
+  /* Avoid an extra blank page :( */
+  height: $badge-height - 1mm;
+}
+
+@media screen {
+  body {
+    background: #e0e0e0;
+  }
+
+  .sheet {
+    background: white;
+    box-shadow: 0 .5mm 2mm rgba(0,0,0,.3);
+    margin: 0 auto;
+    padding: 0;
+  }
+}
+
+.badge-face, .badge-mid {
+  position: absolute;
+  width: $face-width;
+  height: $face-height;
+  padding: $face-padding;
+  margin: 0;
+}
+
+.badge-face {
+  .name {
+    width: 100%;
+    background-repeat: no-repeat;
+    background-position: bottom;
+    background-image: url(img/badge-background-logo.svg);
+    background-size: 100% auto;
+  }
+}
+
+.badge-mid {
+  height: $face-height - 1mm;
+}
+
+.badge-topleft {
+  left: 0;
+  top: 0;
+}
+
+.badge-topright {
+  right: 0;
+  top: 0;
+}
+
+.badge-midleft {
+  left: 0;
+  top: $fold-height;
+}
+
+.badge-midright {
+  right: 0;
+  top: $fold-height;
+}
+
+/* Display fold lines in preview only */
+@media screen {
+  .badge-topleft, .badge-midleft {
+    border-right: 0.1mm dashed #000;
+  }
+
+  .rotated .badge-midleft {
+    border-right: none;
+    border-left: 0.1mm dashed #000;
+  }
+
+  .badge-topleft, .badge-topright {
+    border-bottom: 0.1mm dashed #000;
+  }
+}
+
+/* Rotate the mid sections for printing, but provide a dev button */
+.rotated .badge-mid {
+  transform: rotate(180deg);
+}
+
+#unrotate {
+  float: right;
+  @media print {
+    display: none;
+  }
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.top {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  color: $primary;
+  div {
+    padding: 0 1rem;
+  }
+}
+
+.name {
+  flex: 1;
+  margin: auto 2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.name-content div {
+  margin: 2mm 0;
+
+  -webkit-line-clamp: 2;
+  line-height: 1.1em;
+}
+
+.name-line1 {
+  font-weight: 700;
+  font-size: 32pt;
+}
+
+.name-line2, .name-line3 {
+  font-weight: 700;
+  font-size: 18pt;
+}
+
+.badge-name-bottom {
+  align-self: start;
+  display: flex;
+  flex-direction: row;
+  align-items: end;
+  width: 100%;
+}
+
+.logo {
+  margin-top: 3mm;
+  margin-bottom: auto;
+
+  img {
+    height: 25mm;
+  }
+}
+
+.tags {
+  flex: 1;
+  margin-left: 2mm;
+  margin-right: 2mm;
+
+  .tag {
+    margin: 2mm auto;
+    padding: 0 2.5mm;
+    line-height: 5mm;
+    font-size: 6pt;
+    font-weight: 700;
+    background: #999;
+    border-radius: 2.5mm;
+    color: rgba(255,255,255,0);
+    color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    text-shadow: 0 0 0 #fff;
+  }
+
+  .tag i:before {
+    width: 1.2em;
+    text-align: center;
+  }
+
+  .tag i {
+    width: 1.2em;
+    display: inline-block;
+  }
+
+  .tag-blue {
+    background: #0690e0;
+  }
+  .tag-pgp {
+    background: $primary;
+  }
+
+  .pgp-fpr {
+    // weird printing in firefox
+    // font-family: "Roboto Mono";
+    // font-size: 6pt;
+    // color: rgba(255, 255, 255, 0);
+  }
+
+  .pgp-id {
+    float: right;
+  }
+
+  .tag-lightgreen {
+    background: #74d300;
+  }
+
+  .tag-green {
+    background: #0eaf00;
+  }
+
+  .tag-red {
+    background: #a80030;
+  }
+
+  .tag-yellow {
+    background: #d6ae00;
+  }
+
+  .tag-purple {
+    background: #4b0080;
+  }
+
+  .tag-center {
+    text-align: center;
+  }
+
+  .tag-large {
+    font-size: 12pt;
+    line-height: 8mm;
+  }
+
+  .tag-red-on-white {
+    color: #a80030;
+    background: #fff;
+    border: 0.5mm solid #a80030;
+    box-sizing: border-box;
+  }
+}
+
+.badge-midleft, .badge-midright, .badge-bottom {
+  font-size: 8pt;
+
+  h1 {
+    font-size: 13pt;
+
+  }
+
+  h2.tight {
+    margin-bottom: 0;
+  }
+
+  h3 {
+    margin-top: 0;
+  }
+
+  img {
+    width: 100%;
+  }
+
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  th, td {
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    padding-right: 1em;
+    max-width: 12em;
+  }
+}
+
+.two-col {
+  column-count: 2;
+
+  p {
+    page-break-inside: avoid;
+    margin: 0;
+    padding: 0.5em 0;
+  }
+
+  ul {
+    page-break-inside: avoid;
+    margin: 0;
+  }
+}

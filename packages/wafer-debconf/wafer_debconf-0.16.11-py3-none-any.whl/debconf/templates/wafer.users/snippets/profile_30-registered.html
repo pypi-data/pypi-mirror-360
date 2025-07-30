@@ -1,0 +1,34 @@
+{% if can_edit %}
+  <section>
+    <h2>Conference Registration:</h2>
+    {% if object.attendee.confirmed %}
+      {% if RECONFIRMATION %}
+        <p class="alert alert-success">Registered and attendance is confirmed.</p>
+      {% endif %}
+    {% elif object.attendee.completed_timestamp %}
+      {% if RECONFIRMATION %}
+        <p class="alert alert-warning">
+          Registered but not yet confirmed.
+          Please update your registration and tick the option to confirm your
+          attendance.
+        </p>
+      {% else %}
+        <p class="alert alert-success">Registered.</p>
+      {% endif %}
+    {% elif object.attendee %}
+      <p class="alert alert-warning">
+        Partially registered. Please complete your registration.
+      </p>
+    {% else %}
+      <p class="alert alert-danger">
+        Not registered to attend the conference.
+      </p>
+    {% endif %}
+    {% if object.attendee.billable and not object.attendee.paid %}
+      <p class="alert alert-warning">
+        There are still outstanding invoices (see below).
+        Please pay these before attending the conference.
+      </p>
+    {% endif %}
+  </section>
+{% endif %}

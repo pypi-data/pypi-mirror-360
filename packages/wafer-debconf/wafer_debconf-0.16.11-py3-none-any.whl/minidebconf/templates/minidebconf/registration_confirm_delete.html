@@ -1,0 +1,17 @@
+{% extends "wafer/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<h1>{% trans 'Cancel registration' %}</h1>
+<div class="alert alert-danger" role="alert">
+  {% blocktrans trimmed %}
+  Are you sure you want to cancel your registration?
+  You can register again later if you change your mind.
+  {% endblocktrans %}
+</div>
+<form method="POST" action="{% url 'unregister' %}">
+  <input type='hidden' name='csrfmiddlewaretoken' value='{{csrf_token}}' />
+  <a href="{% url 'wafer_user_profile' username=user.username %}" class="btn btn-secondary">{% trans "No, abort" %}</a>
+  <input type="submit" class="btn btn-danger" value="{% trans "Yes, I'm sure" %}"/>
+</form>
+{% endblock  %}

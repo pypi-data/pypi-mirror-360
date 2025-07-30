@@ -1,0 +1,97 @@
+Dear {{ object.user.get_full_name }},
+
+The bursaries team has updated the status of your bursary request for {{ WAFER_CONFERENCE_NAME }}.
+{% if object.request_travel %}
+Travel bursary
+--------------
+{% if object.travel_status == 'pending' %}
+We're glad to announce that your request for a travel bursary has been granted!
+
+You need to accept or withdraw it before {{ object.travel_accept_before|date }}.
+Please make sure to do so as soon as possible in your profile[1] on the
+{{ WAFER_CONFERENCE_NAME }} website.
+
+After you've booked your tickets, please adjust the amount in your bursary
+application, to the cost of your travel (the amount you are claiming). This
+allows us to get a better view of our budget and grant bursaries to further
+applicants.
+
+NOTE: We may have adjusted the amount of your bursary, request, if we found
+significantly cheaper flights available. If you need help finding flights in
+this price range, or this causes problems, please contact us.
+
+{% elif object.travel_status == 'accepted' %}
+You have accepted your travel bursary grant. Please update the amount of your
+expenses on your {{ WAFER_CONFERENCE_NAME }} website profile[1], to allow
+us to get a better view of our budget and grant bursaries to further applicants.
+{% elif object.travel_status == 'ranked' %}
+Your request for a travel bursary has been evaluated and ranked. However, we are
+unable to grant it at this time: our travel budget is very limited, and we had
+to defer a lot of strong applications. We will let you know as soon as possible,
+which may be in a few weeks, if we can grant you the amount you have
+requested as our budget evolves and higher ranked applicants finalize their
+plans.
+{% elif object.travel_status == 'denied' %}
+We're sorry to tell you that we are unable to grant you travel assistance for
+{{ WAFER_CONFERENCE_NAME }}. We simply don't have the budget to accept every request.
+{% endif %}{% endif %}
+{% if object.request_food %}
+Food bursary
+------------
+{% if object.food_status == 'pending' %}
+Your request for food during the conference has been granted!
+
+You need to accept or withdraw it before {{ object.food_accept_before|date }}.
+Please make sure to do so as soon as possible in your profile[1] on the
+{{ WAFER_CONFERENCE_NAME }} website.
+{% elif object.food_status == 'accepted' %}
+You have accepted your food bursary grant.
+{% elif object.food_status == 'ranked' and object.request_travel %}
+You have told us that you would be completely unable to come to {{ WAFER_CONFERENCE_NAME }}
+if you weren't granted a travel bursary. Your food bursary is therefore pending
+an update on the travel bursaries front. If you're able to join us nonetheless,
+let the bursaries team know so we can update your "level of need". Note that
+this will be reflected in your travel bursary ranking.
+{% elif object.food_status == 'ranked' %}
+Your request for a food bursary has been evaluated and ranked. However, we are
+unable to grant it at this time because our budget is limited, and we had
+to defer some applications. We will let you know as soon as possible,
+which may be in a few weeks, if we can grant you the food bursary.
+{% elif object.food_status == 'denied' %}
+We're sorry to let you know that we are unable to grant you a food bursary for
+{{ WAFER_CONFERENCE_NAME }}.
+{% endif %}{% endif %}
+{% if object.request_accommodation %}
+Accommodation bursary
+---------------------
+{% if object.accommodation_status == 'pending' %}
+Your request for accommodation during the conference has been granted!
+
+You need to accept or withdraw it before {{ object.accommodation_accept_before|date }}.
+Please make sure to do so as soon as possible in your profile[1] on the
+{{ WAFER_CONFERENCE_NAME }} website.
+{% elif object.accommodation_status == 'accepted' %}
+You have accepted your accommodation bursary grant.
+{% elif object.accommodation_status == 'ranked' and object.request_travel %}
+You have told us that you would be completely unable to come to {{ WAFER_CONFERENCE_NAME }}
+if you weren't granted a travel bursary. Your accommodation bursary is
+therefore pending an update on the travel bursaries front. If you're able to
+join us nonetheless, let the bursaries team know so we can update your "level
+of need".  Note that this will be reflected in your travel bursary ranking.
+{% elif object.accommodation_status == 'ranked' %}
+Your request for an accomodation bursary has been evaluated and ranked.
+However, we are unable to grant it at this time bacause our budget is limited,
+and we had to defer some applications. We will let you know as soon as
+possible, which may be in a few weeks, if we can grant you the accomodation
+bursary.
+{% elif object.accommodation_status == 'denied' %}
+We're sorry to let you know that we are unable to grant you an accommodation
+bursary for {{ WAFER_CONFERENCE_NAME }}.
+{% endif %}{% endif %}
+
+You can review the full status of your bursary request in your profile[1] on the
+{{ WAFER_CONFERENCE_NAME }} website.
+
+[1] {{ profile_url }}
+-- 
+The {{ WAFER_CONFERENCE_NAME }} bursaries team

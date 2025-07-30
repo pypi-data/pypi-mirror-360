@@ -1,0 +1,46 @@
+{% extends "register/form.html" %}
+{% block extra_foot %}
+  <script type="text/javascript">
+    'use strict';
+    $(function() {
+      if ($('#shipping_address').length) {
+        hookDependentVisibility($('#t_shirt_size'), $('#shipping_address'));
+      }
+      const birthdate_el = document.getElementById("date_of_birth");
+      let viewMode = 'calendar';
+      if (! birthdate_el.value) {
+        viewMode = 'decades';
+      }
+      const options = {
+        display: {
+          components: {
+            clock: false,
+          },
+          inline: true,
+          icons: {
+              type: 'icons',
+              time: 'fas fa-clock',
+              date: 'fas fa-calendar',
+              up: 'fas fa-arrow-up',
+              down: 'fas fa-arrow-down',
+              previous: 'fas fa-chevron-left',
+              next: 'fas fa-chevron-right',
+              today: 'fas fa-calendar-check',
+              clear: 'fas fa-trash',
+              close: 'fas fa-xmark'
+            },
+          viewMode,
+        },
+        localization: {
+          locale: 'en-gb',
+          format: 'yyyy-MM-dd',
+        },
+        restrictions: {
+          maxDate: new Date(),
+        },
+        useCurrent: false,
+      };
+      const birthdate_td = new tempusDominus.TempusDominus(birthdate_el.parentElement, options);
+    });
+  </script>
+{% endblock %}

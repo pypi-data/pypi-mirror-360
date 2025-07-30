@@ -1,0 +1,206 @@
+{% extends 'wafer/base.html' %}
+{% load countries %}
+
+{% block content %}
+<h1>Content</h1>
+<div class="accordion" id="content-statistics">
+  <div class="card">
+    <div class="card-header" id="headingProposals">
+      <h4 class="mb-0">
+        <button class="btn btn-link" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseProposals" aria-expanded="false"
+                aria-controls="collapseProposals">
+          Event Proposals
+        </button>
+      </h4>
+    </div>
+    <div id="collapseProposals" class="collapse"
+         aria-labelledby="headingProposals" data-parent="#content-statistics">
+      <div class="card-body">
+        <table class="table-sm table-hover">
+          <thead>
+            <tr>
+              <th>Submitted</th>
+              <th>Reviewed</th>
+              <th>Scheduled</th>
+              <th>Hours Scheduled</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ talks_submitted }}</td>
+              <td>{{ talks_reviewed }}</td>
+              <td>{{ talks_scheduled }}</td>
+              <td>{{ hours_of_content }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header" id="headingConcurrency">
+      <h4 class="mb-0">
+        <button class="btn btn-link" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseConcurrency" aria-expanded="false"
+                aria-controls="collapseConcurrency">
+          Schedule Concurrency
+        </button>
+      </h4>
+    </div>
+    <div id="collapseConcurrency" class="collapse"
+         aria-labelledby="headingConcurrency" data-parent="#content-statistics">
+      <div class="card-body">
+        <table class="table-sm table-hover">
+          <thead>
+            <tr>
+              <th>Concurrent Events</th>
+              <th>Hours of schedule at this level</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for concurrency, hours in hours_of_concurrency %}
+              <tr>
+                <th>{{ concurrency }}</th>
+                <td>{{ hours }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header" id="headingTracks">
+      <h4 class="mb-0">
+        <button class="btn btn-link" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseTracks" aria-expanded="false"
+                aria-controls="collapseTracks">
+          Event Tracks
+        </button>
+      </h4>
+    </div>
+    <div id="collapseTracks" class="collapse"
+         aria-labelledby="headingTracks" data-parent="#content-statistics">
+      <div class="card-body">
+        <table class="table-sm table-hover">
+          <thead>
+            <tr>
+              <th>Track</th>
+              <th>Submitted Events</th>
+              <th>Scheduled Events</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for name, stats in talks_by_track.items %}
+              <tr>
+                <th>{{ name }}</th>
+                <td>{{ stats.submitted }}</td>
+                <td>{{ stats.scheduled }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header" id="headingTypes">
+      <h4 class="mb-0">
+        <button class="btn btn-link" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseTypes" aria-expanded="false"
+                aria-controls="collapseTypes">
+          Event Types
+        </button>
+      </h4>
+    </div>
+    <div id="collapseTypes" class="collapse"
+         aria-labelledby="headingTypes" data-parent="#content-statistics">
+      <div class="card-body">
+        <table class="table-sm table-hover">
+          <thead>
+            <tr>
+              <th>Types</th>
+              <th>Submitted Events</th>
+              <th>Scheduled Events</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for name, stats in talks_by_type.items %}
+              <tr>
+                <th>{{ name }}</th>
+                <td>{{ stats.submitted }}</td>
+                <td>{{ stats.scheduled }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header" id="headingTypes">
+      <h4 class="mb-0">
+        <button class="btn btn-link" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseSpeakersByCountry" aria-expanded="false"
+                aria-controls="collapseSpeakersByCountry">
+          Speakers by Country
+        </button>
+      </h4>
+    </div>
+    <div id="collapseSpeakersByCountry" class="collapse"
+         aria-labelledby="headingTypes" data-parent="#content-statistics">
+      <div class="card-body">
+        <table class="table-sm table-hover">
+          <thead>
+            <tr>
+              <th>Country</th>
+              <th>Speakers</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for country, count in speakers_by_country %}
+              <tr>
+                <th>{{ country }}</th>
+                <td>{{ count }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header" id="headingTypes">
+      <h4 class="mb-0">
+        <button class="btn btn-link" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseSpeakersByGender" aria-expanded="false"
+                aria-controls="collapseSpeakersByGender">
+          Speakers by Declared Gender
+        </button>
+      </h4>
+    </div>
+    <div id="collapseSpeakersByGender" class="collapse"
+         aria-labelledby="headingTypes" data-parent="#content-statistics">
+      <div class="card-body">
+        <table class="table-sm table-hover">
+          <thead>
+            <tr>
+              <th>Gender</th>
+              <th>Speakers</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for gender, count in speakers_by_gender %}
+              <tr>
+                <th>{{ gender }}</th>
+                <td>{{ count }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

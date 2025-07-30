@@ -1,0 +1,28 @@
+<div class="row">
+  <div class="col">
+    <b>{{ DEBCONF_NAME }}</b> <br>
+    {{ DEBCONF_INVOICE_ADDRESS|linebreaks }}
+  </div>
+  <div>
+    {% if object.invoiced_entity %}
+      <b>{{ object.invoiced_entity }}</b><br>
+      for {{ object.recipient.get_full_name }}
+    {% else %}
+      <b>{{ object.recipient.get_full_name }}</b>
+    {% endif %}
+    {{ object.billing_address|linebreaks }}
+  </div>
+</div>
+<div class="row">
+  <div class="col text-right">
+    {{ DEBCONF_CITY }}, {{ object.date | date }}
+  </div>
+</div>
+<div class="row justify-content-md-center">
+  <div class="col col-md-auto">
+    <h4>
+      Invoice {{ object.reference_number }}
+    </h4>
+  </div>
+</div>
+{% include 'invoices/includes/details.html' with lines=object.lines.all total=object.total total_local=object.total_local %}

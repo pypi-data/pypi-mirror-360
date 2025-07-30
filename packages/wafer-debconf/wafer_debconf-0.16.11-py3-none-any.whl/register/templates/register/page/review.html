@@ -1,0 +1,357 @@
+{% extends "register/base.html" %}
+{% block registration_page %}
+  {% if not attendee %}
+    <div class="jumbotron">
+      <h2 class="display-3 alert alert-warning">You are not Registered</h2>
+    </div>
+  {% else %}
+    <div class="jumbotron">
+      <h2>Your Personal Details</h2>
+      <table class="register-details">
+        <tr>
+          <th>Name</th>
+          <td>{{ profile.display_name }}</td>
+        </tr>
+        <tr>
+          <th>eMail Address</th>
+          <td>{{ user.email }}</td>
+        </tr>
+        <tr>
+          <th>Contact Number</th>
+          <td>{{ profile.contact_number }}</td>
+        </tr>
+        {% if not DEBCONF_ONLINE %}
+          <tr>
+            <th>Nametag Line 2</th>
+            <td>{{ attendee.nametag_2 }}</td>
+          </tr>
+          <tr>
+            <th>Nametag Line 3</th>
+            <td>{{ attendee.nametag_3 }}</td>
+          </tr>
+          <tr>
+            <th>Emergency Contact</th>
+            <td>{{ attendee.emergency_contact|linebreaksbr }}</td>
+          </tr>
+          <tr>
+            <th>Announce Arrival on IRC</th>
+            <td>
+              {% if attendee.announce_me %}
+                <i class="fas fa-check" aria-label="Yes"></i>
+              {% else %}
+                <i class="fas fa-times" aria-label="No"></i>
+              {% endif %}
+            </td>
+          </tr>
+        {% endif %}
+        <tr>
+          <th>Subscribe to mailing lists</th>
+          <td>
+            {% if attendee.register_announce %}
+              <span class="badge bg-primary">debconf-announce</span>
+            {% endif %}
+            {% if attendee.register_discuss %}
+              <span class="badge bg-primary">debconf-discuss</span>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>Code of Conduct</th>
+          <td>
+            {% if attendee.coc_ack %}
+              <i class="fas fa-check" aria-hidden="true"></i>
+              I agree to Follow the DebConf Code of Conduct.
+            {% else %}
+              <i class="fas fa-times" aria-label="No"></i>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>Conference Fee</th>
+          <td>{{ fee }}</td>
+        </tr>
+        {% if not DEBCONF_ONLINE %}
+          <tr>
+            <th>Arrival</th>
+            <td>
+              {{ attendee.arrival|date:"DATETIME_FORMAT" }}
+              {% if attendee.final_dates %}
+                <span class="badge bg-success">finalized</span>
+              {% else %}
+                <span class="badge bg-warning">estimated</span>
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <th>Departure</th>
+            <td>
+              {{ attendee.departure|date:"DATETIME_FORMAT" }}
+              {% if attendee.final_dates %}
+                <span class="badge bg-success">finalized</span>
+              {% else %}
+                <span class="badge bg-warning">estimated</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endif %}
+        {% if RECONFIRMATION %}
+          <tr>
+            <th>Attendance Confirmed?</th>
+            <td>
+              {% if attendee.reconfirm %}
+                <i class="fas fa-check" aria-label="Yes"></i>
+              {% else %}
+                <i class="fas fa-times" aria-label="No"></i>
+              {% endif %}
+            </td>
+          </tr>
+        {% endif %}
+        <tr>
+          <th>T-Shirt</th>
+          <td>
+            {% if attendee.t_shirt_size %}
+              {{ t_shirt_size }}
+            {% else %}
+              <i class="fas fa-times" aria-label="No"></i>
+            {% endif %}
+          </td>
+        </tr>
+        {% if DEBCONF_SHOE_SIZES %}
+          <tr>
+            <th>Shoes</th>
+            <td>
+              {% if attendee.shoe_size %}
+                {{ attendee.shoe_size }}
+              {% else %}
+                <i class="fas fa-times" aria-label="No"></i>
+              {% endif %}
+            </td>
+          </tr>
+        {% endif %}
+        {% if DEBCONF_ONLINE %}
+          <tr>
+            <th>Shipping Address</th>
+            <td>
+              {{ attendee.shipping_address.formatted_address|linebreaksbr }}
+            </td>
+          </tr>
+        {% endif %}
+        <tr>
+          <th>Gender</th>
+          <td>{{ gender }}</td>
+        </tr>
+        <tr>
+          <th>Country</th>
+          <td>{{ attendee.country_name }}</td>
+        </tr>
+        {% if DEBCONF_COLLECT_AFFILIATION %}
+          <tr>
+            <th>Affiliation</th>
+            <td>{{ attendee.affiliation }}</td>
+          </tr>
+        {% endif %}
+        {% if not DEBCONF_ONLINE %}
+          <tr>
+            <th>Languages Spoken</th>
+            <td>{{ attendee.languages }}</td>
+          </tr>
+          <tr>
+            <th>PGP Keysigning Keys</th>
+            <td class="pgp-fingerprints">{{ attendee.pgp_fingerprints|linebreaksbr }}</td>
+          </tr>
+          <tr>
+            <th>Fully COVID-19 Vaccinated?</th>
+            <td>
+              {% if attendee.vaccinated %}
+                <i class="fas fa-check" aria-label="Yes"></i>
+              {% else %}
+                <i class="fas fa-times" aria-label="No"></i>
+              {% endif %}
+              {{ attendee.vaccination_notes|linebreaksbr }}
+            </td>
+          </tr>
+          <tr>
+            <th>Visa Required</th>
+            <td>
+              {% if visa %}
+                <i class="fas fa-check" aria-label="Yes"></i>
+                Citizenship: {{ visa.country_name }}
+              {% else %}
+                <i class="fas fa-times" aria-label="No"></i>
+              {% endif %}
+            </td>
+          </tr>
+        {% endif %}
+        <tr>
+          <th>Billing Address</th>
+          <td>{{ attendee.billing_address|linebreaksbr }}</td>
+        </tr>
+        <tr>
+          <th>Notes</th>
+          <td>{{ attendee.notes|linebreaksbr }}</td>
+        </tr>
+      </table>
+    </div>
+    <div class="jumbotron">
+      <h2>Bursary Details</h2>
+      {% if bursary.request_any %}
+        <table class="register-details">
+          <tr>
+            <th>Request Bursary For</th>
+            <td>
+              {% if bursary.request_food %}
+                <span class="badge bg-warning">Food</span>
+              {% endif %}
+              {% if bursary.request_accommodation %}
+                <span class="badge bg-warning">Accommodation</span>
+              {% endif %}
+              {% if bursary.request_travel %}
+                <span class="badge bg-warning">Travel</span>
+              {% endif %}
+              {% if bursary.request_expenses %}
+                <span class="badge bg-warning">Expenses reimbursement</span>
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <th>Funding Source</th>
+            <td>{{ bursary.budget_description|linebreaksbr }}</td>
+          </tr>
+          <tr>
+            <th>Debian Contributions</th>
+            <td>{{ bursary.reason_contribution|linebreaksbr }}</td>
+          </tr>
+          <tr>
+            <th>Plans for DebConf</th>
+            <td>{{ bursary.reason_plans|linebreaksbr }}</td>
+          </tr>
+          {% if bursary.reason_diversity %}
+            <tr>
+              <th>Diversity Eligibility</th>
+              <td>{{ bursary.reason_diversity|linebreaksbr }}</td>
+            </tr>
+          {% endif %}
+          {% if bursary.request_travel %}
+            <tr>
+              <th>Travel Cost</th>
+              <td>
+                {{ DEBCONF_BURSARY_CURRENCY_SYMBOL }}&nbsp;{{ bursary.travel_bursary }}
+                ({{ DEBCONF_BURSARY_CURRENCY }})
+              </td>
+            </tr>
+            <tr>
+              <th>Travelling From</th>
+              <td>{{ bursary.travel_from }}</td>
+            </tr>
+            <tr>
+              <th>Level of Need</th>
+              <td>{{ bursary_need }}</td>
+            </tr>
+          {% endif %}
+          {% if bursary.request_food or bursary.request_accommodation %}
+            <tr>
+              <th>Partial Contribution</th>
+              <td>
+                {% if bursary.partial_contribution %}
+                  {{ DEBCONF_BILLING_CURRENCY_SYMBOL }}&nbsp;{{ bursary.partial_contribution }}
+                {% else %}
+                  No
+                {% endif %}
+            </tr>
+          {% endif %}
+        </table>
+      {% else %}
+        <p class="lead">No Bursary Request.</p>
+      {% endif %}
+    </div>
+    {% if not DEBCONF_ONLINE %}
+      <div class="jumbotron">
+        <h2>Food</h2>
+        {% if food %}
+          <table class="register-details">
+            <tr>
+              <th>Meals Requested</th>
+              <td>
+                {% for day, meals in food.meals_by_day.items %}
+                  {{ day|date:"SHORT_DATE_FORMAT" }}
+                  {% for meal in meals %}
+                    {% if meal.conference_dinner %}
+                      <span class="badge bg-success">Conference Dinner</span>
+                    {% else %}
+                      <span class="badge bg-info">{{ meal.meal }}</span>
+                    {% endif %}
+                  {% endfor %}
+                  <br>
+                {% endfor %}
+              </td>
+            </tr>
+            <tr>
+              <th>Diet</th>
+              <td>
+                {{ diet }}
+                {% if food.special_diet %}
+                  <br>
+                  {{ food.special_diet }}
+                {% endif %}
+              </td>
+            </tr>
+          </table>
+        {% else %}
+          <p class="lead">No Food Requested.</p>
+        {% endif %}
+      </div>
+      <div class="jumbotron">
+        <h2>Accommodation</h2>
+        {% if accomm %}
+          <table class="register-details">
+            <tr>
+              <th>Nights Requested</th>
+              <td>
+                {% for night in accomm.nights.all %}
+                  {{ night.date|date:"SHORT_DATE_FORMAT" }}<br>
+                {% endfor %}
+              </td>
+            </tr>
+            {% if accomm.option %}
+              <tr>
+                <th>Accommodation Option</th>
+                <td>{{ accomm_option }}</td>
+              </tr>
+            {% endif %}
+            {% if accomm.requirements %}
+              <tr>
+                <th>Accommodation Requirements</th>
+                <td>{{ accomm.requirements }}</td>
+              </tr>
+            {% endif %}
+            {% if accomm.family_usernames %}
+              <tr>
+                <th>Family Accompanying</th>
+                <td>{{ accomm.family_usernames|linebreaksbr }}</td>
+              </tr>
+            {% endif %}
+          </table>
+        {% else %}
+          <p class="lead">No Accommodation Requested.</p>
+        {% endif %}
+      </div>
+      <div class="jumbotron">
+        <h2>Child Care</h2>
+        {% if child_care %}
+          <table class="register-details">
+            <tr>
+              <th>Childcare Needs</th>
+              <td>{{ child_care.needs|linebreaksbr }}</td>
+            </tr>
+            <tr>
+              <th>Childcare Details</th>
+              <td>{{ child_care.details|linebreaksbr }}</td>
+            </tr>
+          </table>
+        {% else %}
+          <p class="lead">No Child Care Requested.</p>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endif %}
+{% endblock %}

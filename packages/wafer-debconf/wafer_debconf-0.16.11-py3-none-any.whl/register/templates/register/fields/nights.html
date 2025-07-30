@@ -1,0 +1,34 @@
+{% extends 'register/fields/base.html' %}
+{% load crispy_forms_filters %}
+{% load l10n %}
+{% block field %}
+<table class="table table-sm table-hover">
+  <thead>
+    <tr>
+      <th>Night of</th>
+      <th>Accommodation</th>
+    </tr>
+  </thead>
+  <tr>
+    <td></td>
+    <td>
+      <div class="btn btn-secondary accomm-select-all">
+        Select All:
+        <i class="far fa-square select-all" aria-hidden="true"></i>
+      </div>
+    </td>
+  </tr>
+  {% for choice in field.field.choices %}
+    <tr>
+      <td>
+        {{ choice.0|slice:"-10:" }}
+      </td>
+      <td>
+        <div class="checkbox">
+          <input type="checkbox"{% if choice.0 in field.value or choice.0|stringformat:"s" in field.value or choice.0|stringformat:"s" == field.value|stringformat:"s" %} checked="checked"{% endif %} name="{{ field.html_name }}" id="id_{{ field.html_name }}_{{ forloop.counter }}" value="{{ choice.0|unlocalize }}" {{ field.field.widget.attrs|flatatt }}>
+        </div>
+      </td>
+    </tr>
+  {% endfor %}
+</table>
+{% endblock %}

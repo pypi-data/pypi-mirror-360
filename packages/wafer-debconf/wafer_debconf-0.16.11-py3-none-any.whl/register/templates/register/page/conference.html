@@ -1,0 +1,123 @@
+{% extends "register/form.html" %}
+{% load i18n %}
+{% block extra_foot %}
+  <script type="text/javascript">
+    'use strict';
+    $(function() {
+      const localization = {
+        locale: 'en-gb',
+        format: 'yyyy-MM-dd HH:mm:ss',
+      };
+      const dateParser = (datestr) => tempusDominus.DateTime.fromString(datestr, localization);
+      const minDate = dateParser('{{ ARRIVE_ON_OR_AFTER|date:"Y-m-d" }} 00:00:00');
+      const maxDate = dateParser('{{ LEAVE_ON_OR_BEFORE|date:"Y-m-d" }} {{ DEBCONF_DEPARTURE_TIME|time:"H:i:s" }}');
+
+      const options = () => {
+        return {
+          display: {
+            components: {},
+            inline: true,
+            icons: {
+                type: 'icons',
+                time: 'fas fa-clock',
+                date: 'fas fa-calendar',
+                up: 'fas fa-arrow-up',
+                down: 'fas fa-arrow-down',
+                previous: 'fas fa-chevron-left',
+                next: 'fas fa-chevron-right',
+                today: 'fas fa-calendar-check',
+                clear: 'fas fa-trash',
+                close: 'fas fa-xmark'
+              },
+          },
+          localization,
+          restrictions: {
+            maxDate: maxDate.clone,
+            minDate: minDate.clone,
+          },
+          useCurrent: false,
+        };
+      };
+      const arrival_el = document.getElementById("arrival");
+      const departure_el = document.getElementById("departure");
+      let arrival_date, departure_date;
+      try {
+        arrival_date = dateParser(arrival_el.value);
+      } catch (error) {
+        arrival_date = null;
+      }
+      try {
+        departure_date = dateParser(departure_el.value);
+      } catch (error) {
+        departure_date = null;
+      }
+
+      // Build a range date selector and some UI for it
+      const range_div = document.createElement("div");
+      range_div.setAttribute("class", "mb-3");
+      const range_label = document.createElement("label");
+      range_label.setAttribute("class", "form-label");
+      range_label.appendChild(document.createTextNode("{% trans 'My dates at the venue are' %}"));
+      range_div.appendChild(range_label);
+      const dates_el = document.getElementById("dates");
+      dates_el.insertBefore(range_div, document.getElementById("div_id_arrival"));
+      const range_opts = options();
+      range_opts.dateRange = true;
+      range_opts.display.components.clock = false;
+      // Allow selecting the last day, no matter what time is set, we'll clamp
+      // this later
+      range_opts.restrictions.maxDate.hours = 23;
+      range_opts.restrictions.maxDate.minutes = 59;
+      range_opts.restrictions.maxDate.seconds = 59;
+      const range_td = new tempusDominus.TempusDominus(range_div, range_opts);
+      range_td.dates.setValue(arrival_date, 0);
+      range_td.dates.setValue(departure_date, 1);
+
+      // Time selectors
+      const time_opts = options();
+      time_opts.display.components.calendar = false;
+      time_opts.display.viewMode = 'clock';
+      const arrival_td = new tempusDominus.TempusDominus(arrival_el.parentElement, time_opts);
+      const departure_td = new tempusDominus.TempusDominus(departure_el.parentElement, time_opts);
+
+      range_td.subscribe(tempusDominus.Namespace.events.change, (e) => {
+        if (e.isValid) {
+          const index = range_td.dates.pickedIndex(e.date);
+          let target_td = null;
+          if (index == 0) {
+            target_td = arrival_td;
+          } else if (index == 1) {
+            target_td = departure_td;
+          } else {
+            return;
+          }
+          let ev_date = e.date.clone;
+          const was_blank = target_td.dates.lastPicked === undefined;
+          // Default to 10:00, not midnight
+          if (was_blank && ev_date.hours == 0) {
+            ev_date.hours = 10;
+          }
+          if (index == 0 && ev_date.isBefore(minDate)) {
+            ev_date = minDate.clone;
+          } else if (index == 1 && ev_date.isAfter(maxDate)) {
+            ev_date = maxDate.clone;
+          }
+          target_td.dates.setValue(ev_date);
+        }
+      });
+
+      arrival_td.subscribe(tempusDominus.Namespace.events.change, (e) => {
+        if (e.isValid) {
+          const ev_date = e.date;
+          range_td.dates.setValue(ev_date, 0);
+        }
+      });
+      departure_td.subscribe(tempusDominus.Namespace.events.change, (e) => {
+        if (e.isValid) {
+          const ev_date = e.date;
+          range_td.dates.setValue(ev_date, 1);
+        }
+      });
+    });
+  </script>
+{% endblock %}

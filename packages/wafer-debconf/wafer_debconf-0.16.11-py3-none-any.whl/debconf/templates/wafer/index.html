@@ -1,0 +1,112 @@
+{% extends 'wafer/base.html' %}
+{% load i18n %}
+{% load sponsors %}
+{% load static %}
+{% block container_class %}index{% endblock %}
+
+{% block content %}
+  {% if debconf_soon or debconf_day %}
+    <section id="calls-to-action" class="row">
+        <div class="col-lg-12">
+          <div class="card">
+            <div class="card-body">
+              {% if debconf_day %}
+              <h2 class="card-title">
+                {% blocktrans trimmed %}{{ WAFER_CONFERENCE_NAME }} is underway!{% endblocktrans %}</h2>
+              {% elif debconf_soon %}
+                {% blocktrans trimmed %}{{ WAFER_CONFERENCE_NAME }} starts soon!{% endblocktrans %}</h2>
+              {% endif %}
+            </div>
+              <div class="card-footer">
+                <a class="btn btn-lg btn-info" href="{% url 'wafer_full_schedule' %}">{% trans 'Schedule' %}</a>
+              </div>
+          </div>
+        </div>
+    </section>
+    <section id="video-streams" class="row">
+      <div class="col-lg-12">
+        <div class="card">
+          <div class="card-body">
+            <h2 class="card-title">{% trans 'Video streams' %}</h2>
+          </div>
+        </div>
+      </div>
+      {% for blk in venue_blocks %}
+        <div class="col-lg-6">
+          <div class="card">
+             <div class="card-header text-center">
+              <h3>{{ blk.venue.name }}</h3>
+            </div>
+            <div class="card-body">
+              {% if blk.event.talk and blk.event.talk.video %}
+                <h5 class="card-title">From {{ blk.start_time }} to {{ blk.end_time }}</h5>
+                <div class="card-text">
+                  <p>
+                    {% include "wafer.schedule/schedule_item.html" with item=blk.event %}
+                  </p>
+                </div>
+              {% else %}
+                <div class="card-text">
+                  <p>
+                    {% trans 'No event streaming currently.' %}
+                  </p>
+                </div>
+              {% endif %}
+            </div>
+            <div class="card-footer text-center">
+              <a class="btn btn-info" href="{{ blk.venue.get_absolute_url }}">
+                {% trans 'Watch the Stream' %}
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </section>
+  {% endif %}
+  <section class="row">
+    {% if user.is_authenticated %}
+      <div class="col-lg-12">
+        <div class="card">
+          <div class="card-body">
+            <h2 class="card-title">Profile</h2>
+            <div class="card-text">
+              <p>
+                {% blocktrans trimmed %}
+                Manage your registration, public bio, event submissions, and
+                other conference-related information.
+                {% endblocktrans %}
+              </p>
+            </div>
+          </div>
+          <div class="card-footer">
+            <a class="btn btn-info" href="{% url 'wafer_user_profile' username=user.username %}">{% trans 'View my profile' %}</a>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="page">
+  {% if page %}
+    {{ page.cached_render|safe }}
+    {% if perms.pages.change_page %}
+      <div class="page-controls clearfix d-print-none">
+        <a href="{% url "admin:pages_page_change" page.id %}"
+           class="btn btn-secondary">{% trans 'Edit' %}</a>
+      </div>
+    {% endif %}
+  {% else %}
+    {% if perms.pages.change_page %}
+      <div class="page-controls clearfix d-print-none">
+        <a href="{% url "admin:pages_page_add" %}?slug=index"
+           class="btn btn-secondary">{% trans 'Create homepage' %}</a>
+      </div>
+    {% endif %}
+  {% endif %}
+  </section>
+
+  {% block debconf_homepage_sponsors %}
+    {% sponsors %}
+  {% endblock %}
+
+{% endblock %}

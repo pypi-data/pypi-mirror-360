@@ -1,0 +1,84 @@
+{% load i18n %}
+<div>
+  {% regroup tasks by schedule_item as schedule_item_tasks %}
+  {% for schedule_item in schedule_item_tasks %}
+    {% if schedule_item.grouper %}
+      {# This is the group of tasks for a schedule_item #}
+      {% with task=schedule_item.list|first %}
+        <h5>
+          {% blocktrans with start_time=task.start|time end_time=task.end|time venue=task.get_venue %}
+            {{ start_time }} to {{ end_time }} in {{ venue }}
+          {% endblocktrans %}
+        </h5>
+      {% endwith %}
+      <p>
+        {% with schedule_item.grouper.get_url as url_ %}
+          {% if url_ %}
+            <a href="{{ url_ }}">
+          {% endif %}
+          {% with schedule_item.grouper.talk.get_authors_display_name as author %}
+            {% if author %}
+              {{ author }}:
+            {% endif %}
+          {% endwith %}
+          {{ schedule_item.grouper.get_title }}
+          {% if url_ %}
+            </a>
+          {% endif %}
+        {% endwith %}
+      </p>
+    {% endif %}
+    <table>
+      <thead>
+        <tr>
+          {% if not schedule_item.grouper %}
+            <th>{% trans "When" %}</th>
+          {% endif %}
+          <th>{% trans "Title" %}</th>
+          {% if not schedule_item.grouper %}
+            <th>{% trans "Where" %}</th>
+          {% endif %}
+          <th>{% trans "Volunteers" %}</th>
+          {% if not schedule_item.grouper %}
+            <th>{% trans "Category" %}</th>
+          {% endif %}
+        </tr>
+
+        {% for task in schedule_item.list %}
+          <tr>
+            {% if not schedule_item.grouper %}
+              <td>{{ task.start|date }} {{ task.start|time }} {% trans 'to' %} {{ task.end|time }}</td>
+            {% endif %}
+            <td>
+              <a href="{% url 'wafer_task' task.pk %}">{{ task.get_name }}</a>
+            </td>
+            {% if not schedule_item.grouper %}
+              <td>{{ task.get_venue }}</td>
+            {% endif %}
+            <td>
+              {{ task.nbr_volunteers }}/{{ task.get_nbr_volunteers_max }}
+              {% if task.nbr_volunteers %}
+                {% spaceless %}
+                  {% for volunteer in task.volunteers.all %}
+                    <a href="{% url 'wafer_volunteer' volunteer.user.username %}">
+                      {{ volunteer.user.userprofile.display_name }}
+                    </a>{% if not forloop.last %}, {% endif %}
+                  {% endfor %}
+                {% endspaceless %}
+              {% endif %}
+            </td>
+            {% if not schedule_item.grouper %}
+              <td>
+                {% if task.get_category %}
+                  {{ task.get_category }}
+                {% else %}
+                  {% trans 'N/A' %}
+                {% endif %}
+              </td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+      </thead>
+    </table>
+  {% endfor %}
+</div>

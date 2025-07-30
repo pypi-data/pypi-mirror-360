@@ -1,0 +1,53 @@
+{% extends "register/base.html" %}
+{% block registration_h1 %}{% endblock %}
+{% block registration_h2 %}{% endblock %}
+{% block registration_page %}
+  <div class="jumbotron">
+    {% if attendee %}
+      {% if not attendee.registration_approved %}
+        <h2 class="display-3">Your registration is pending</h2>
+        <p class="lead">Your registration information is saved and is pending approval.</p>
+      {% else %}
+        <h2 class="display-3">You are Registered</h2>
+        <p class="lead">Your registration is complete and has been saved.</p>
+        <p class="lead">We look forward to seeing you in {{ DEBCONF_CITY }}.</p>
+      {% endif %}
+    {% else %}
+      <h2 class="display-3">You are not Registered</h2>
+    {% endif %}
+  </div>
+  {% if attendee.billable %}
+    {% if attendee.paid %}
+      <div class="alert alert-success" role="alert">
+        <h2 class="alert-heading">Payment</h2>
+        <p>
+          <i class="fas fa-check"></i>
+          Your registration is paid for, thank you.
+        </p>
+      </div>
+    {% else %}
+      <div class="alert alert-warning" role="alert">
+        <h2 class="alert-heading">Not Yet Paid</h2>
+        <p>
+          Your registration is not yet paid for, please make a payment.
+        </p>
+        {% for invoice in attendee.new_invoices.all %}
+          <a class="btn btn-info" href="{{ invoice.get_absolute_url }}">View Invoice {{ invoice.reference_number }}</a>
+        {% empty %}
+          <p>
+            You need to go back to the
+            <a href="{% url 'register-step-9' %}">billing page</a>
+            to create an invoice.
+          </p>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% elif not attendee.registration_approved  %}
+      <p class="lead">
+        We will review the request and notify you by email when a decision has been made.
+      </p>
+  {% endif %}
+{% endblock %}
+{% block save_buttons %}
+  <input type="submit" class="btn btn-primary" value="Return to profile">
+{% endblock %}

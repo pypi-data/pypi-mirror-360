@@ -1,0 +1,174 @@
+{% extends "wafer/base.html" %}
+{% block title %}{{ WAFER_CONFERENCE_NAME }} - Invoice {{ object.reference_number }}{% endblock %}
+{% block content %}
+{% include 'invoices/includes/invoice.html' %}
+<div class="row d-print-none">
+  <div class="col-md">
+    {% if object.status == 'new' %}
+      {% if not using_signed_url %}
+        <div class="card border-info mb-3">
+          <h4 class="card-header bg-info">Forward Invoice:</h4>
+          <div class="card-body">
+            Is somebody else going to pay this on your behalf?<br>
+            Send them
+            <a href="{{ object.get_signed_url }}">this URL
+              <i class="fas fa-link"></i></a>.<br>
+            They will be able to combine this with other invoices, and pay them in
+            a single payment, if desired.
+          </div>
+        </div>
+        <div class="card border-danger mb-3">
+          <h4 class="card-header bg-danger">Danger Zone:</h4>
+          <div class="card-body">
+            <p>
+              If you have modified your registration and the invoice is no longer
+              correct, you may cancel it and re-create it.
+            </p>
+            <form action={% url 'invoices:cancel' reference_number=object.reference_number %} method="post">
+              {% csrf_token %}
+              <input type="submit" class="btn btn-warning" value="Cancel Invoice">
+            </form>
+          </div>
+        </div>
+      {% elif not object.compound %}
+        <div class="card border-info mb-3">
+          <h4 class="card-header bg-info">Combine Invoices:</h4>
+          <div class="card-body">
+            <p>
+              If you want to pay for multiple invoices, together, you can combine
+              them into a single invoice.
+            </p>
+            <a href="{% url 'invoices:combine' %}?invoice={{ view.request.build_absolute_uri|urlencode }}"
+               class="btn btn-warning">Combine Invoices</a>
+          </div>
+        </div>
+      {% endif %}
+    {% endif %}
+  </div>
+  <div class="col-md">
+    {% if object.status == 'canceled' %}
+      <div class="card border-danger mb-3">
+        <h4 class="card-header bg-danger">Cancelled!</h4>
+        <div class="card-body">
+          <p>Cancelled on {{ object.last_update | date }}</p>
+        </div>
+      </div>
+    {% elif object.status == 'disputed' %}
+      <div class="card border-danger mb-3">
+        <h4 class="card-header bg-danger">Payment Disputed!</h4>
+        <div class="card-body">
+          <p>Disputed on {{ object.last_update | date }}</p>
+        </div>
+      </div>
+    {% elif object.status == 'refunded' %}
+      <div class="card border-danger mb-3">
+        <h4 class="card-header bg-danger">Payment Refunded</h4>
+        <div class="card-body">
+          <p>Refunded on {{ object.last_update | date }}</p>
+        </div>
+      </div>
+    {% else %}
+      <div class="card border-success mb-3">
+        <h4 class="card-header bg-success">Payment:</h4>
+        <div class="card-body">
+          {% if object.status == 'new' %}
+            <div id="payment-form">
+              <div id="payment-element" class="pb-3">
+                <div class="alert alert-danger">
+                  This is where the Stripe Credit Card form is displayed.
+                  <br>
+                  {% if STRIPE_PUBLISHABLE_KEY %}
+                    If you see this and use LibreJS, NoScript, Request Policy, or
+                    some similar browser plugin, you may need to whitelist this
+                    site or <code>js.stripe.com</code> in it.
+                  {% else %}
+                    Stripe integration is not configured.
+                  {% endif %}
+                </div>
+              </div>
+              <!-- Used to display Element errors. -->
+              <div id="payment-errors" role="alert"></div>
+              <button id="submit-payment" class="btn btn-primary">Pay by Card</button>
+            </div>
+            <div id="payment-complete" class="alert alert-success" style="display: none">
+              Payment processed, thank you!
+            </div>
+          {% elif object.status == 'pending' %}
+            <p>Waiting for payment confirmation</p>
+          {% elif object.status == 'paid' %}
+            <p>
+              Payment received on {{ object.last_update | date }} <br>
+              Transaction number {{ object.transaction_id }}
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+    <div class="mb-3 text-right">
+      <a class="btn btn-warning print-button" href="">Print</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_foot %}
+  {% if object.status == 'new' and STRIPE_PUBLISHABLE_KEY %}
+    <script src="https://js.stripe.com/basil/stripe.js"></script>
+    <script type="text/javascript">
+      $(function() {
+        var stripe = Stripe('{{ STRIPE_PUBLISHABLE_KEY }}');
+        var clientSecret = '{{ payment_intent_client_secret }}';
+        var locale = document.querySelector('html').getAttribute('lang') || 'en';
+        var elements = stripe.elements({locale, clientSecret});
+
+        var paymentElement = elements.create('payment');
+        paymentElement.mount('#payment-element');
+        var submitButton = $('#submit-payment');
+
+        var displayError = function(message) {
+          const tag = $('#payment-errors');
+          tag.text(message);
+          if (message) {
+            tag.addClass('alert alert-warning');
+          } else {
+            tag.removeClass('alert alert-warning');
+            submitButton.removeAttr('disabled');
+          }
+        };
+
+        paymentElement.addEventListener('change', ({error}) => {
+          if (error) {
+            displayError(error.message);
+          } else {
+            displayError('');
+          }
+        });
+
+        submitButton.click(function(ev) {
+          submitButton.attr('disabled', 'disabled');
+          stripe.confirmPayment({
+            elements,
+            confirmParams: {
+              return_url: '{{ request.build_absolute_uri }}',
+            },
+          }).then(function(result) {
+            if (result.error) {
+              displayError(result.error.message);
+            } else {
+              if (result.paymentIntent.status === 'succeeded') {
+                $('#payment-form').hide();
+                $('#payment-complete').show();
+              }
+            }
+          });
+        });
+      });
+    </script>
+  {% endif %}
+  <script type="text/javascript">
+    $(function() {
+      $('.print-button').click(function() {
+        window.print();
+      });
+    });
+  </script>
+{% endblock %}

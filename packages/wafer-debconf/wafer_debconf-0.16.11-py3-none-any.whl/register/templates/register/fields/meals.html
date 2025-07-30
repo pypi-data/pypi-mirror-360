@@ -1,0 +1,52 @@
+{% extends 'register/fields/base.html' %}
+{% load crispy_forms_filters %}
+{% load l10n %}
+{% block field %}
+<table class="table table-sm table-hover">
+  <thead>
+    <tr>
+      <th>
+        <i class="far fa-square select-all" aria-hidden="true"></i>
+        Select All
+      </th>
+      <th>Date</th>
+      {% if DEBCONF_BREAKFAST %}
+        <th>Breakfast</th>
+      {% endif %}
+      <th>Lunch</th>
+      <th>Dinner</th>
+    </tr>
+  </thead>
+  {% for date, meals in by_day %}
+    <tr>
+      <td>
+        <i class="far fa-square select-day" aria-hidden="true"></i>
+      </td>
+      <td>
+        {{ date|date:"SHORT_DATE_FORMAT" }}
+      </td>
+      {% for meal in meals %}
+        <td
+            {% if DEBCONF_BREAKFAST and meal.brunch %}
+              colspan=2
+            {% endif %}
+          >
+          {% if meal.conference_dinner %}
+            <div title="Selected below">Conference Dinner</div>
+          {% elif meal.skipped %}
+            <div>Not served</div>
+          {% else %}
+            <div class="checkbox">
+              <input type="checkbox"
+                     {% if meal.selected %}checked="checked"{% endif %}
+                     name="{{ meal.name }}" id="{{ meal.attrs.id }}"
+                     value="{{ meal.value }}">
+              {% if meal.brunch %}(Brunch){% endif %}
+            </div>
+          {% endif %}
+        </td>
+      {% endfor %}
+    </tr>
+  {% endfor %}
+</table>
+{% endblock %}
