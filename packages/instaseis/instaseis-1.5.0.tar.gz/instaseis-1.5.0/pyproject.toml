@@ -1,0 +1,124 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# Dyanmic
+dynamic = ["version"]
+name = "instaseis"
+authors = [
+    { name = "Lion Krischer", email = "lion.krischer@gmail.com" },
+    { name = "Martin van Driel" },
+    { name = "Simon Staehler" }
+    ]
+description = "Instaseis - Instant global seismological waveforms"
+readme = "Readme.md"
+requires-python = ">=3.11"
+#license = "LGPL-3.0-only for non-commercial/academic use"
+license-files = ["LICENSE.txt"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "h5py",
+    "numpy",
+    "obspy >= 1.4",
+    "tornado >= 6.0.0",
+    "requests",
+    "geographiclib",
+    "jsonschema >= 2.4.0",
+    "numba"
+]
+[project.optional-dependencies]
+gui = [
+    "PySide6",
+    "pyqtgraph"
+]
+tests = [
+  "pytest >= 8.0",
+  "pytest-xdist >= 3.7.0",
+  "click",
+  "netCDF4",
+  "ruff",
+  "responses",
+]
+
+
+[project.urls]
+"Homepage" = "https://instaseis.net"
+
+[tool.black]
+line-length = 79
+target-version = ['py37']
+
+[tool.ruff]
+line-length = 79
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "W", "D"]
+# Some of these should be turned on at some point if the time permits.
+ignore = [
+    # Missing docstrings in public module.
+    "D100",
+    # Missing docstrings in public class.
+    "D101",
+    # Missing docstrings in public methods.
+    "D102",
+    # Missing docstrings in public function.
+    "D103",
+    # Missing docstrings in public package.
+    "D104",
+    # Missing docstrings in magic methods.
+    "D105",
+    # Missing docstrings in __init__.
+    "D107",
+    # Some problems with the formatter.
+    "D203",
+    # 1 blank line required between summary line and description
+    "D205",
+    # `incorrect-blank-line-before-class` (D203) and
+    # `no-blank-line-before-class` (D211) are incompatible. Ignoring
+    # `incorrect-blank-line-before-class`.
+    "D211",
+    # `multi-line-summary-first-line` (D212) and
+    # `multi-line-summary-second-line` (D213) are incompatible. Ignoring
+    # `multi-line-summary-second-line`.
+    "D213",
+    # Force imperative mood for the first line of docstrings.
+    "D401",
+    # First line should not have the function signature.
+    "D402"
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore test docstrings.
+"tests/**" = ["D"]
+
+
+# can be empty if no extra settings are needed, presence enables setuptools-scm.
+[tool.setuptools_scm]
+
+[tool.coverage.run]
+omit = [
+    "tests/*",
+    "src/instaseis/benchmark/*",
+    "src/instaseis/gui/*",
+    "src/instaseis/scripts/*",
+    # Numba is not supported by coverage.
+    "src/instaseis/finite_elem_mapping.py",
+    "src/instaseis/sem_derivatives.py",
+    "src/instaseis/spectral_basis.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+]
