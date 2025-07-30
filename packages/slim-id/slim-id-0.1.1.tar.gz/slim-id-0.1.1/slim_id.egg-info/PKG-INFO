@@ -1,0 +1,175 @@
+Metadata-Version: 2.1
+Name: slim-id
+Version: 0.1.1
+Summary: This is a tool that automatically generates short IDs
+Home-page: https://github.co.jp/
+Author: bib_inf
+Author-email: contact.bibinf@gmail.com
+License: CC0 v1.0
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
+Description-Content-Type: text/markdown
+
+# Slim-ID: A Lightweight ID Generation Library for Python
+
+下の方に日本語の説明があります
+
+## Overview
+- This is a tool that automatically generates short IDs.
+- It has a mechanism to avoid collisions with already generated IDs.
+
+## Features
+- Specify the desired length for generated IDs (default is 5 characters)
+- Automatically increases the length if the generated ID conflicts with existing IDs
+- Specify the alphabet to use for the ID (default is URL-safe Base64, but hexadecimal can also be specified)
+- Uses cryptographically secure random number generation internally, providing a degree of protection against attackers predicting the random number from timestamps, etc.
+- Requires a user-defined function to determine if a generated ID conflicts with existing IDs. This function is expected to handle dictionary lookups or database queries, for example.
+
+## Usage Example
+```python
+import sys
+import slim_id
+
+id_dic = {}
+
+def exists(arg_id):
+    return (arg_id in id_dic)
+
+# Generate an ID using Slim-ID
+s_id = slim_id.gen(exists)
+id_dic[s_id] = True
+print(s_id)
+
+# Generate an ID using Slim-ID with custom parameters
+s_id = slim_id.gen(
+    exists,  # Function to determine if an ID exists in the database
+    length = 7,  # Base length (automatically increases if a collision occurs)
+    ab = "16",  # Alphabet type (base64url... URL-safe Base64, 16... hexadecimal)
+)
+id_dic[s_id] = True
+print(s_id)
+```
+
+## Custom Alphabet for Generating Slim-ID
+
+Users can now specify a custom character set for generating IDs, allowing for tailored ID generation to meet specific needs. When using a custom alphabet, provide a list of characters to be used.
+
+```python
+import sys
+import slim_id
+
+id_dic = {}
+
+def exists(arg_id):
+    return (arg_id in id_dic)
+
+# Generate a basic Slim-ID
+s_id = slim_id.gen(exists)
+id_dic[s_id] = True
+print(s_id)
+
+# Generate a Slim-ID using a custom alphabet
+s_id = slim_id.gen(
+    exists,  # Function to check if the ID already exists in the database
+    length = 7,  # Base length (will increase automatically if a collision occurs)
+    ab = list("0123456789"),  # Custom alphabet
+)
+id_dic[s_id] = True
+print(s_id)
+```
+
+With this feature, IDs are generated using the specified custom alphabet set. For example, in the code above, the generated IDs will consist only of numbers.
+
+Here is the English translation of your document:
+
+## Usage from the Command Line
+
+- You can use the following command in the console:
+
+- If no argument is provided, the default length will be 30.
+```sh
+slim_id
+```
+
+- You can specify the length as an argument. (In the example below, the result will be 10 characters long)
+```sh
+slim_id 10
+```
+
+## 概要
+- 短いIDを自動生成するツールです
+- 生成済みIDとの衝突を回避する仕組みを持っています
+
+## 特徴
+- 生成されるIDの長さを指定可能（デフォルトは5文字）
+- 生成されたIDが既存のIDと衝突する場合、長さが自動的に増える
+- IDに使用するアルファベットを指定可能（デフォルトはURLセーフなBase64だが、16進数も指定できる）
+- 内部で暗号学的に安全な乱数生成を使用しており、タイムスタンプなどから乱数を推定する攻撃者に対してある程度の保護を提供
+- 生成されたIDが既存のIDと衝突しているかどうかを判断する関数をユーザーが定義する必要がある。この関数は、辞書の引当やDBの引き当てなどを処理することが想定されている。
+
+```python
+import sys
+import slim_id
+
+id_dic = {}
+
+def exists(arg_id):
+    return (arg_id in id_dic)
+
+# Slim-IDを使用してIDを生成
+s_id = slim_id.gen(exists)
+id_dic[s_id] = True
+print(s_id)
+
+# カスタムパラメータを使用してSlim-IDでIDを生成
+s_id = slim_id.gen(
+    exists,  # IDがデータベースに存在するかどうかを判断する関数
+    length = 7,  # 基本長（衝突が発生した場合、自動的に長くなります）
+    ab = "16",  # アルファベットの種類（base64url... URLセーフな64進数、16... 16進数）
+)
+id_dic[s_id] = True
+print(s_id)
+```
+
+## カスタムアルファベット指定
+ユーザーが任意の文字セットを指定してIDを生成できるようになりました。これにより、特定のニーズに応じたID生成が可能になります。
+(カスタム指定の場合は、アルファベットの文字のリストを指定します。)
+
+```python
+import sys
+import slim_id
+
+id_dic = {}
+
+def exists(arg_id):
+    return (arg_id in id_dic)
+
+# 基本的なSlim-IDの生成
+s_id = slim_id.gen(exists)
+id_dic[s_id] = True
+print(s_id)
+
+# カスタムアルファベットを使用してSlim-IDでIDを生成
+s_id = slim_id.gen(
+    exists,  # IDがデータベースに存在するかどうかを判断する関数
+    length = 7,  # 基本長（衝突が発生した場合、自動的に長くなります）
+    ab = list("0123456789"),  # カスタムアルファベットの種類
+)
+id_dic[s_id] = True
+print(s_id)
+```
+
+これにより、指定されたカスタムアルファベットのセットからIDが生成されます。例えば、上記の例では数字のみを使用してIDが生成されます。
+
+## コマンドラインからの利用
+- コンソールで下記コマンドで利用できます
+
+- 引数を省略した場合、長さは30になります。
+```sh
+slim_id
+```
+
+- 引数で長さを指定できます。 (下記の場合は10桁になる)
+```sh
+slim_id 10
+```
