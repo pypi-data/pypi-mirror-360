@@ -1,0 +1,55 @@
+[build-system]
+requires = [ 'flit_core >=3.12,<4' ]
+build-backend = 'flit_core.buildapi'
+
+[project]
+name = 'scadere'
+description = 'TLS certificate renewal reminder'
+readme = 'README.md'
+requires-python = '>=3.11'
+license = 'AGPL-3.0-or-later AND CC0-1.0'
+license-files = [ 'LICENSES/*.txt' ]
+authors = [ { name = 'Nguyễn Gia Phong', email = 'cnx@loang.net' } ]
+maintainers = [ { name = 'Nguyễn Gia Phong', email = 'chung@loa.loang.net' } ]
+keywords = [ 'atom', 'tls', 'ca' ]
+classifiers = [
+    'Development Status :: 4 - Beta',
+    'Environment :: Console',
+    'Environment :: Web Environment',
+    'Framework :: AsyncIO',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python',
+    'Topic :: Utilities' ]
+dynamic = [ 'version' ]
+
+[project.urls]
+Source = 'https://trong.loang.net/scadere'
+Inbox = 'https://loa.loang.net/chung'
+
+[project.optional-dependencies]
+dev = [ 'coverage',
+        'flake8',
+        'hypothesis',
+        'pytest',
+        'pytest-asyncio',
+        'reuse',
+        'trustme >= 1.2.0' ]
+
+[project.scripts]
+scadere-check = 'scadere.check:main'
+scadere-listen = 'scadere.listen:main'
+
+[tool.pytest.ini_options]
+asyncio_mode = 'auto'
+asyncio_default_fixture_loop_scope = 'function'
+testpaths = [ 'tst' ]
+verbosity_assertions = 2
+
+[tool.coverage.run]
+branch = true
+command_line = '-m pytest'
+source = [ '.' ]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
