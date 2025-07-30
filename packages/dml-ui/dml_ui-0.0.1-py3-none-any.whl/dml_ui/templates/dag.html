@@ -1,0 +1,1663 @@
+{% extends "layout.html" %} {% block title %}DAG{% endblock %}
+
+{#
+  DAG Visualization Template
+  
+  This template displays a directed acyclic graph (DAG) with interactive visualization
+  using Cytoscape.js. It includes multiple tabs for different views:
+  - Graph: Interactive network visualization of nodes and edges
+  - Result: Display of DAG execution results
+  - Logs: Stdout/stderr output from DAG execution
+  - argv: Command-line arguments passed to the DAG
+  
+  The template expects the following context variables:
+  - dag_data: Dictionary containing nodes, edges, and metadata
+  - result: DAG execution result (optional)
+  - log_streams: Dictionary with stdout/stderr log information (optional)
+  - argv: List of argument node data (optional)
+#}
+
+{% block extra_header %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.26.0/cytoscape.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/base16/ashes.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/python.min.js"></script>
+
+  <style>
+    :host {
+      display: block;
+    }
+    #cy {
+      width: 100%;
+      height: 60vh;
+      position: relative;
+    }
+    
+    /* Inline DAG Statistics - positioned on right */
+    .dag-stats-inline {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    /* DAG Stats Container - with background and border */
+    .dag-stats-container {
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid var(--bs-border-color-translucent);
+      border-radius: 0.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      backdrop-filter: blur(20px);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.5rem 0.75rem;
+    }
+    
+    .dag-stats-container:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      border-color: var(--bs-primary-border-subtle);
+    }
+    
+    /* DAG Stats Header with icon */
+    .dag-stats-header {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--bs-gray-700);
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      white-space: nowrap;
+      margin: 0;
+    }
+    
+    /* Filter nodes styling - positioned after DAG title */
+    .filter-nodes-container {
+      opacity: 0.8;
+      transition: opacity 0.2s ease-in-out;
+      white-space: nowrap;
+    }
+    
+    .filter-nodes-container:hover {
+      opacity: 1;
+    }
+    .legend {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      padding: 15px;
+      border: 1px solid var(--bs-border-color);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+      border: 2px solid;
+    }
+    .legend-shape {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+      background-color: var(--bs-primary);
+    }
+    .code-container {
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    .code-container pre {
+      border-radius: 0;
+      max-height: none;
+    }
+    .code-container .card-body {
+      background-color: var(--bs-gray-100);
+    }
+    #plugin-container {
+      position: relative;
+      overflow: hidden;
+    }
+    #plugin-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      min-height: 60vh;
+    }
+    .plugin-loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+    }
+    
+    /* DAG Stats Container - Horizontal Layout */
+    .dag-stats-container {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 0.75rem 1.25rem;
+      width: 100%;
+    }
+    
+    .dag-stats-header {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--bs-gray-700);
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      white-space: nowrap;
+      margin: 0;
+    }
+    
+    .dag-stats-grid {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .dag-stat-item {
+      background: var(--bs-gray-50);
+      border: 1px solid var(--bs-border-color-translucent);
+      border-radius: 0.375rem;
+      padding: 0.375rem 0.625rem;
+      text-align: center;
+      transition: all 0.2s ease;
+      cursor: default;
+      min-width: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .dag-stat-item:hover {
+      border-color: var(--bs-primary);
+      background-color: var(--bs-primary-bg-subtle);
+      transform: translateY(-1px);
+    }
+    
+    .dag-stat-item.clickable {
+      cursor: pointer;
+    }
+    
+    .dag-stat-item.clickable:hover {
+      background-color: var(--bs-primary);
+      color: white;
+      box-shadow: 0 2px 8px rgba(var(--bs-primary-rgb), 0.3);
+    }
+    
+    .dag-stat-value {
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.125rem;
+      color: var(--bs-gray-900);
+    }
+    
+    .dag-stat-item:hover .dag-stat-value {
+      color: inherit;
+    }
+    
+    .dag-stat-label {
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: var(--bs-gray-600);
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      line-height: 1;
+    }
+    
+    .dag-stat-item:hover .dag-stat-label {
+      color: inherit;
+      opacity: 0.9;
+    }
+    
+    .dag-stat-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-left: auto;
+    }
+    
+    .dag-meta-item {
+      background: var(--bs-gray-50);
+      border: 1px solid var(--bs-border-color-translucent);
+      border-radius: 0.375rem;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.7rem;
+      color: var(--bs-gray-700);
+      white-space: nowrap;
+    }
+    
+    .dag-meta-label {
+      font-weight: 600;
+      margin-bottom: 0.05rem;
+    }
+    
+    .dag-meta-value {
+      font-family: var(--bs-font-monospace);
+      color: var(--bs-gray-900);
+      word-break: break-all;
+    }
+    
+    /* Dark mode support */
+    [data-bs-theme="dark"] .dag-stats-container {
+      background: rgba(33, 37, 41, 0.98);
+      border-color: var(--bs-border-color);
+    }
+    
+    [data-bs-theme="dark"] .dag-stat-item {
+      background: var(--bs-gray-800);
+      border-color: var(--bs-border-color);
+    }
+    
+    [data-bs-theme="dark"] .dag-stat-item:hover {
+      border-color: var(--bs-primary);
+      background-color: var(--bs-primary);
+    }
+    
+    [data-bs-theme="dark"] .dag-meta-item {
+      background: var(--bs-gray-800);
+      border-color: var(--bs-border-color);
+    }
+    
+    /* Filter nodes styling */
+    .filter-nodes-container {
+      opacity: 0.7;
+      transition: opacity 0.2s ease-in-out;
+    }
+    
+    .filter-nodes-container:hover {
+      opacity: 1;
+    }
+    
+    .filter-nodes-container .form-check-input {
+      border-color: var(--bs-border-color);
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .filter-nodes-container .form-check-input:focus {
+      box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+    
+    .filter-nodes-container .form-check-label {
+      cursor: pointer;
+      transition: color 0.2s ease-in-out;
+    }
+    
+    .filter-nodes-container:hover .form-check-label {
+      color: var(--bs-body-color) !important;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="h-100">
+  <!-- Header Row with DAG Title, Toggle, and Stats -->
+  <div class="d-flex align-items-center mb-3 gap-3">
+    <h2 class="mb-0">DAG</h2>
+    
+    <!-- Filter Nodes Checkbox - positioned after DAG title -->
+    <div class="form-check form-switch filter-nodes-container">
+      <input class="form-check-input" type="checkbox" id="filterNodesSwitch" checked style="transform: scale(0.9);">
+      <label class="form-check-label text-muted small" for="filterNodesSwitch" style="font-size: 0.85rem;">
+        Prune graph
+      </label>
+    </div>
+    
+    <!-- DAG Statistics - moved to right side -->
+    <div class="dag-stats-inline ms-auto">
+      <div class="dag-stats-container">
+        <div class="dag-stats-header">
+          <i class="bi bi-bar-chart-line"></i>
+          DAG Statistics
+        </div>
+        
+        <div class="dag-stats-grid" id="dagStatsGrid">
+          <!-- Statistics will be populated dynamically -->
+          <div class="dag-stat-item">
+            <div class="dag-stat-value">
+              <div class="spinner-border spinner-border-sm" role="status" style="width: 1rem; height: 1rem;">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+            <div class="dag-stat-label">Loading...</div>
+          </div>
+        </div>
+        
+        <!-- Metadata Section -->
+        <div class="dag-stat-meta" id="dagStatsMeta">
+          <!-- Metadata will be populated dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+  <ul class="nav nav-tabs" id="dagTab" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="viz-tab" data-bs-toggle="tab" data-bs-target="#viz" type="button" role="tab" aria-controls="viz" aria-selected="true">Visualization</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="table-tab" data-bs-toggle="tab" data-bs-target="#table" type="button" role="tab" aria-controls="table" aria-selected="false">Node Table</button>
+    </li>
+    <li class="nav-item" role="presentation" id="argv-tab-container" style="display: none;">
+      <button class="nav-link" id="argv-tab" data-bs-toggle="tab" data-bs-target="#argv" type="button" role="tab" aria-controls="argv" aria-selected="false">argv</button>
+    </li>
+    <li class="nav-item" role="presentation" id="code-tab-container" style="display: none;">
+      <button class="nav-link" id="code-tab" data-bs-toggle="tab" data-bs-target="#code" type="button" role="tab" aria-controls="code" aria-selected="false">Executed Code</button>
+    </li>
+    <li class="nav-item" role="presentation" id="logs-tab-container" style="display: none;">
+      <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs" type="button" role="tab" aria-controls="logs" aria-selected="false">Logs</button>
+    </li>
+    <li class="nav-item" role="presentation" id="error-tab-container" style="display: none;">
+      <button class="nav-link" id="error-tab" data-bs-toggle="tab" data-bs-target="#error" type="button" role="tab" aria-controls="error" aria-selected="false">Error</button>
+    </li>
+    <li class="nav-item" role="presentation" id="result-tab-container" style="display: none;">
+      <button class="nav-link" id="result-tab" data-bs-toggle="tab" data-bs-target="#result" type="button" role="tab" aria-controls="result" aria-selected="false">Result</button>
+    </li>
+    <li class="nav-item" role="presentation" id="html-tab-container" style="display: none;">
+      <button class="nav-link" id="html-tab" data-bs-toggle="tab" data-bs-target="#html" type="button" role="tab" aria-controls="html" aria-selected="false">HTML</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab" aria-controls="dashboard" aria-selected="false">Dashboard</button>
+    </li>
+  </ul>
+  <div class="tab-content mt-3" id="dagTabContent">
+    <div class="tab-pane fade show active" id="viz" role="tabpanel" aria-labelledby="viz-tab">
+      <div class="d-flex align-items-center mb-2" id="cy-controls">
+        <button class="btn btn-outline-secondary btn-sm me-2" id="cy-zoom-in" title="Zoom In"><i class="bi bi-zoom-in"></i> Zoom In</button>
+        <button class="btn btn-outline-secondary btn-sm me-2" id="cy-zoom-out" title="Zoom Out"><i class="bi bi-zoom-out"></i> Zoom Out</button>
+        <button class="btn btn-outline-secondary btn-sm" id="cy-reset" title="Reset View"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+      </div>
+      <div style="position: relative;">
+        <div id="cy">
+          <div class="text-center p-4">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Loading graph...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading DAG visualization...</p>
+          </div>
+        </div>
+        <div class="legend" id="cy-legend">
+          <h3>Shape</h3>
+          <div class="legend-item">
+            <div class="legend-shape" style="border-radius: 3px"></div>
+            <span>Internal</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-shape" style="border-radius: 50%"></div>
+            <span>Result</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="table" role="tabpanel" aria-labelledby="table-tab">
+      <div class="table-responsive table-hover">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Parent</th>
+              <th>Nodetype</th>
+              <th>Datatype</th>
+              <th>Docstring</th>
+            </tr>
+          </thead>
+          <tbody id="nodeTable">
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="argv" role="tabpanel" aria-labelledby="argv-tab">
+      <div class="container-fluid">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="bi bi-list-ul me-2"></i>
+              argv
+            </h5>
+            <p class="text-muted mb-0 small">Individual argv nodes in this DAG</p>
+          </div>
+          <div class="card-body" id="argvContent">
+            <div class="text-center p-4">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-2">Loading arguments...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="code" role="tabpanel" aria-labelledby="code-tab">
+      <div class="container-fluid">
+        <div class="card code-container">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Executed Code</h5>
+          </div>
+          <div class="card-body p-0" id="codeContent">
+            <div class="text-center p-4">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-2">Loading code...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="logs" role="tabpanel" aria-labelledby="logs-tab">
+      <div class="accordion" id="logsAccordion">
+        <!-- Logs content will be populated dynamically -->
+        <div class="text-center p-4">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2">Loading logs...</p>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="error" role="tabpanel" aria-labelledby="error-tab">
+      <div id="errorContent">
+        <div class="text-center p-4">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2">Loading error information...</p>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="result" role="tabpanel" aria-labelledby="result-tab">
+      <div class="container-fluid">
+        <div class="card code-container">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Result</h5>
+          </div>
+          <div class="card-body p-0" id="resultContent">
+            <div class="text-center p-4">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-2">Loading result...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="html" role="tabpanel" aria-labelledby="html-tab">
+      <div id="htmlContent">
+        <div class="text-center p-4">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2">Loading HTML content...</p>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+      <div class="container-fluid">
+        <div class="card">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0">Dashboard</h5>
+              <div class="dropdown">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="plugin-selector" data-bs-toggle="dropdown" aria-expanded="false">
+                  Select Plugin
+                </button>
+                <ul class="dropdown-menu" id="plugin-dropdown" aria-labelledby="plugin-selector">
+                  <li><span class="dropdown-item-text text-muted">Loading plugins...</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div id="plugin-container" style="width: 100%; min-height: 60vh; border: none; background-color: #f8f9fa;">
+              <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+                <div class="text-center">
+                  <i class="bi bi-plugin fs-1 mb-3"></i>
+                  <p>Select a plugin from the dropdown above to display its content</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Global variables for DAG data
+  let graphData = null;
+  let logState = {};
+  let dagData = null;
+
+  // Get URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const dagId = urlParams.get('dag_id');
+  const repo = urlParams.get('repo');
+  const branch = urlParams.get('branch');
+  const prune = urlParams.get('prune') !== 'false'; // Default to true (pruned)
+
+  // Function to load DAG data dynamically
+  async function loadDAGData(pruneNodes = null) {
+    try {
+      // Use provided prune parameter or fall back to URL parameter
+      const shouldPrune = pruneNodes !== null ? pruneNodes : prune;
+      
+      let apiUrl = `/api/dag?dag_id=${encodeURIComponent(dagId)}`;
+      if (repo) apiUrl += `&repo=${encodeURIComponent(repo)}`;
+      if (branch) apiUrl += `&branch=${encodeURIComponent(branch)}`;
+      // Note: Removed --prune flag due to bug in DML library
+      // We'll implement pruning logic client-side instead
+
+      console.log('DEBUG: Making API call to:', apiUrl);
+      console.log('DEBUG: shouldPrune value:', shouldPrune);
+
+      const response = await fetch(apiUrl);
+      console.log('DEBUG: Response status:', response.status);
+      console.log('DEBUG: Response ok:', response.ok);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('DEBUG: Error response text:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('DEBUG: Received data:', data);
+      console.log('DEBUG: Data keys:', Object.keys(data || {}));
+      
+      if (data && data.dag_data) {
+        console.log('DEBUG: dag_data before pruning - nodes:', data.dag_data.nodes?.length, 'edges:', data.dag_data.edges?.length);
+      }
+      
+      // Apply client-side pruning if requested
+      if (shouldPrune && data && data.dag_data) {
+        console.log('DEBUG: Applying client-side pruning');
+        data.dag_data = applyCustomPruning(data.dag_data);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('DEBUG: Error in loadDAGData:', error);
+      showError('Failed to load DAG data: ' + error.message);
+      return null;
+    }
+  }
+
+  // Custom pruning logic to work around DML library bug
+  function applyCustomPruning(dagData) {
+    console.log('DEBUG: Applying custom pruning logic...');
+    console.log('DEBUG: Input dagData:', dagData);
+    
+    if (!dagData || !dagData.nodes || !dagData.edges) {
+      console.log('DEBUG: Invalid dagData structure, returning as-is');
+      return dagData;
+    }
+    
+    // Create a copy of the DAG data to avoid mutating the original
+    const prunedData = {
+      ...dagData,
+      nodes: [...dagData.nodes],
+      edges: [...dagData.edges]
+    };
+    
+    console.log('DEBUG: Before pruning - nodes:', prunedData.nodes.length, 'edges:', prunedData.edges.length);
+    
+    // Step 1: Remove nodes with prunable: true
+    const prunableNodeIds = new Set();
+    prunedData.nodes = prunedData.nodes.filter(node => {
+      if (node.prunable === true) {
+        prunableNodeIds.add(node.id);
+        console.log(`DEBUG: Removing prunable node: ${node.id} (${node.name || 'unnamed'})`);
+        return false;
+      }
+      return true;
+    });
+    
+    console.log('DEBUG: Removed', prunableNodeIds.size, 'prunable nodes');
+    
+    // Step 2: Process edges with prunable: true
+    const processedEdges = [];
+    let edgesDropped = 0;
+    let edgesRedirected = 0;
+    
+    for (const edge of prunedData.edges) {
+      // Skip edges that reference pruned nodes
+      if (prunableNodeIds.has(edge.source) || prunableNodeIds.has(edge.target)) {
+        console.log(`DEBUG: Skipping edge referencing pruned node: ${edge.source} -> ${edge.target}`);
+        edgesDropped++;
+        continue;
+      }
+      
+      if (edge.prunable === true) {
+        if (edge.prune_source) {
+          // Redirect the edge to use prune_source as the new source
+          const redirectedEdge = {
+            ...edge,
+            source: edge.prune_source,
+            prunable: false // Mark as processed
+          };
+          console.log(`DEBUG: Redirecting prunable edge: ${edge.source} -> ${edge.target} becomes ${edge.prune_source} -> ${edge.target}`);
+          processedEdges.push(redirectedEdge);
+          edgesRedirected++;
+        } else {
+          // Drop the edge entirely
+          console.log(`DEBUG: Dropping prunable edge without prune_source: ${edge.source} -> ${edge.target}`);
+          edgesDropped++;
+        }
+      } else {
+        // Keep the edge as-is
+        processedEdges.push(edge);
+      }
+    }
+    
+    prunedData.edges = processedEdges;
+    
+    console.log(`DEBUG: Pruning complete:`);
+    console.log(`DEBUG:   Nodes: ${dagData.nodes.length} -> ${prunedData.nodes.length}`);
+    console.log(`DEBUG:   Edges: ${dagData.edges.length} -> ${prunedData.edges.length}`);
+    console.log(`DEBUG:   Edges dropped: ${edgesDropped}, redirected: ${edgesRedirected}`);
+    
+    return prunedData;
+  }
+
+  // Function to populate DAG statistics
+  function populateDAGStats(data) {
+    const statsGrid = document.getElementById('dagStatsGrid');
+    const statsMeta = document.getElementById('dagStatsMeta');
+    
+    if (!data || !data.dag_data) return;
+    
+    const dagData = data.dag_data;
+    const nodes = dagData.nodes || [];
+    const edges = dagData.edges || [];
+    
+    // Calculate node types
+    const nodeTypes = {};
+    nodes.forEach(node => {
+      const type = node.node_type || 'unknown';
+      nodeTypes[type] = (nodeTypes[type] || 0) + 1;
+    });
+    
+    // Calculate executed nodes
+    const executedNodes = nodes.filter(node => node.executed !== undefined);
+    
+    // Calculate max depth
+    let maxDepth = 0;
+    nodes.forEach(node => {
+      if (node.depth && node.depth > maxDepth) {
+        maxDepth = node.depth;
+      }
+    });
+    
+    // Create tooltip content for node types
+    let tooltipContent = 'Node Types:<br>';
+    for (const [type, count] of Object.entries(nodeTypes)) {
+      tooltipContent += `<strong>${type}:</strong> ${count}<br>`;
+    }
+    
+    // Populate stats grid
+    statsGrid.innerHTML = `
+      <div class="dag-stat-item">
+        <div class="dag-stat-value">${nodes.length}</div>
+        <div class="dag-stat-label">Nodes</div>
+      </div>
+      
+      <div class="dag-stat-item">
+        <div class="dag-stat-value">${edges.length}</div>
+        <div class="dag-stat-label">Edges</div>
+      </div>
+      
+      <div class="dag-stat-item clickable" 
+           data-bs-toggle="tooltip" 
+           data-bs-placement="bottom"
+           data-bs-html="true"
+           title="${tooltipContent}">
+        <div class="dag-stat-value">${Object.keys(nodeTypes).length}</div>
+        <div class="dag-stat-label">Types</div>
+      </div>
+      
+      ${executedNodes.length > 0 ? `
+      <div class="dag-stat-item">
+        <div class="dag-stat-value">${executedNodes.length}</div>
+        <div class="dag-stat-label">Executed</div>
+      </div>
+      ` : ''}
+      
+      ${maxDepth > 0 ? `
+      <div class="dag-stat-item">
+        <div class="dag-stat-value">${maxDepth}</div>
+        <div class="dag-stat-label">Depth</div>
+      </div>
+      ` : ''}
+    `;
+    
+    // Populate metadata
+    let metaHtml = '';
+    if (dagData.name || dagData.id) {
+      if (dagData.name) {
+        metaHtml += `
+          <div class="dag-meta-item">
+            <div class="dag-meta-label">Name</div>
+            <div class="dag-meta-value" title="${dagData.name}">${dagData.name}</div>
+          </div>
+        `;
+      }
+      if (dagData.id) {
+        const shortId = dagData.id.length > 12 ? dagData.id.substring(0, 12) + '...' : dagData.id;
+        metaHtml += `
+          <div class="dag-meta-item">
+            <div class="dag-meta-label">ID</div>
+            <div class="dag-meta-value" title="${dagData.id}">${shortId}</div>
+          </div>
+        `;
+      }
+    }
+    statsMeta.innerHTML = metaHtml;
+    
+    // Re-initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(tooltipTriggerEl => {
+      new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  }
+
+  // Function to populate node table
+  function populateNodeTable(data) {
+    const tableBody = document.getElementById('nodeTable');
+    if (!data || !data.dag_data) return;
+    
+    const nodes = data.dag_data.nodes || [];
+    
+    tableBody.innerHTML = nodes
+      .sort((a, b) => ((a.name || "") > (b.name || "") ? 1 : -1))
+      .map(node => {
+        let parent = "";
+        if (node.parent) {
+          parent = `<a href="${node.parent_link || '#'}">${node.parent}</a>`;
+        }
+        
+        let node_type = node.node_type || 'N/A';
+        if (node.sublist && node.sublist.length > 0) {
+          let inner = node.sublist
+            .map((subnode, index) => {
+              return `<li><a href="${subnode[1]}" class="dropdown-item">${subnode[0].substring(0, 8)}</a></li>`
+            })
+            .join('');
+          node_type = `
+            <div class="dropdown">
+              <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                ${node.node_type}
+              </button>
+              <ul class="dropdown-menu">
+                ${inner}
+              </ul>
+            </div>
+          `;
+        }
+        
+        return `
+          <tr data-node-id="${node.id}" ${node.id == data.dag_data.result ? 'class="border border-primary"' : ""}>
+            <td><a href="${node.link || '#'}">${(node.id || 'N/A').substring(0, 8)}</a></td>
+            <td>${node.name || 'N/A'}</td>
+            <td>${parent}</td>
+            <td>${node_type}</td>
+            <td>${node.data_type || 'N/A'}</td>
+            <td>${node.doc || 'N/A'}</td>
+          </tr>
+        `;
+      }).join('');
+  }
+
+  /**
+   * Updates the visibility of tabs based on available data.
+   * 
+   * This function controls which tabs are shown in the DAG interface by checking
+   * if the corresponding data is available and non-empty.
+   * 
+   * @param {Object} data - The DAG data object containing various optional properties
+   * @param {Array} data.argv - Array of argument nodes (shows argv tab if non-empty)
+   * @param {string} data.script - Script content (shows code tab if present)
+   * @param {Object} data.log_streams - Log stream data (shows logs tab if non-empty)
+   * @param {string} data.error - Error information (shows error tab if present)
+   * @param {*} data.result - DAG result (shows result tab if present)
+   * @param {string} data.html_uri - HTML content URI (shows HTML tab if present)
+   */
+  function updateTabVisibility(data) {
+    const tabMap = {
+      'argv-tab-container': data.argv && data.argv.length > 0,
+      'code-tab-container': data.script,
+      'logs-tab-container': data.log_streams && Object.keys(data.log_streams).length > 0,
+      'error-tab-container': data.error,
+      'result-tab-container': data.result,
+      'html-tab-container': data.html_uri
+    };
+    
+    for (const [containerId, show] of Object.entries(tabMap)) {
+      const container = document.getElementById(containerId);
+      if (container) {
+        container.style.display = show ? 'block' : 'none';
+      }
+    }
+  }
+
+  /**
+   * Populates tab content with data from the DAG.
+   * 
+   * This function fills in the content areas for each tab type based on the
+   * available data, formatting code blocks and error messages appropriately.
+   * 
+   * @param {Object} data - The DAG data object
+   * @param {string} data.script - Python script content for syntax highlighting
+   * @param {string} data.error - Error message and stack trace
+   * @param {*} data.result - DAG execution result to be displayed
+   */
+  function populateTabContent(data) {
+    // Code tab
+    if (data.script) {
+      document.getElementById('codeContent').innerHTML = `
+        <pre class="mb-0"><code class="language-python">${data.script}</code></pre>
+      `;
+    }
+    
+    // Argv tab
+    if (data.argv && data.argv.length > 0) {
+      populateArgvTab(data.argv);
+    }
+    
+    // Error tab
+    if (data.error) {
+      document.getElementById('errorContent').innerHTML = `
+        <pre><code class="language-python">${data.error}</code></pre>
+      `;
+    }
+    
+    // Result tab
+    if (data.result) {
+      document.getElementById('resultContent').innerHTML = `
+        <pre class="mb-0"><code class="language-python">${data.result}</code></pre>
+      `;
+    }
+    
+    // HTML tab
+    if (data.html_uri) {
+      document.getElementById('htmlContent').innerHTML = `
+        <iframe src="${data.html_uri}"
+                style="width: 100%; height: 100vh; border: none;"
+                sandbox="allow-scripts allow-same-origin"></iframe>
+      `;
+    }
+    
+    // Initialize log state for logs tab
+    if (data.log_streams) {
+      logState = {};
+      for (const streamName of Object.keys(data.log_streams)) {
+        logState[streamName] = { page: 1, nextForwardToken: null, nextBackwardToken: null };
+      }
+      populateLogsTab(data.log_streams);
+    }
+  }
+
+  // Function to populate logs tab
+  function populateLogsTab(logStreams) {
+    const logsAccordion = document.getElementById('logsAccordion');
+    const streamNames = Object.keys(logStreams);
+    
+    logsAccordion.innerHTML = streamNames.map((streamName, index) => `
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading-${streamName}">
+          <button class="accordion-button ${index === 0 ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${streamName}" aria-expanded="${index === 0 ? 'true' : 'false'}" aria-controls="collapse-${streamName}">
+            ${streamName}
+          </button>
+        </h2>
+        <div id="collapse-${streamName}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" aria-labelledby="heading-${streamName}" data-bs-parent="#logsAccordion">
+          <div class="accordion-body">
+            <div class="log-container" id="${streamName}-log-container">
+              <div class="log-content" id="${streamName}-log-content">
+                <div class="text-center">
+                  <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  Loading logs...
+                </div>
+              </div>
+            </div>
+            <div class="log-pagination mt-2">
+              <button class="btn btn-sm btn-outline-primary load-more-logs" data-stream-name="${streamName}" data-direction="backward" disabled>
+                ⬆️ Older logs
+              </button>
+              <span class="text-muted small">Page <span id="${streamName}-log-page">1</span></span>
+              <button class="btn btn-sm btn-outline-primary load-more-logs" data-stream-name="${streamName}" data-direction="forward" disabled>
+                ⬇️ Newer logs
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Helper function to get data type icon
+  function getDataTypeIcon(dataType) {
+    const iconMap = {
+      'list': 'bi-list-ul',
+      'dict': 'bi-collection',
+      'str': 'bi-type',
+      'int': 'bi-123',
+      'float': 'bi-decimal',
+      'bool': 'bi-check-square',
+      'bytes': 'bi-file-binary',
+      'tuple': 'bi-collection',
+      'set': 'bi-diagram-3',
+      'object': 'bi-box'
+    };
+    return iconMap[dataType] || 'bi-file';
+  }
+
+  // Helper function to get node type icon
+  function getNodeTypeIcon(nodeType) {
+    const iconMap = {
+      'fn': 'bi-gear',
+      'import': 'bi-box-arrow-in-down',
+      'literal': 'bi-file-text',
+      'argv': 'bi-terminal'
+    };
+    return iconMap[nodeType] || 'bi-circle';
+  }
+
+  // Helper function to escape HTML
+  function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Function to populate argv tab
+  function populateArgvTab(argvData) {
+    const argvContent = document.getElementById('argvContent');
+    
+    if (!argvData || argvData.length === 0) {
+      argvContent.innerHTML = `
+        <div class="text-center p-4 text-muted">
+          <i class="bi bi-info-circle fs-3"></i>
+          <p class="mt-2">No argv found for this DAG</p>
+        </div>
+      `;
+      return;
+    }
+    
+    // Create a grid of cards for each argv node description
+    const argvCards = argvData.map((argvNode, index) => {
+      const dataTypeIcon = getDataTypeIcon(argvNode.data_type);
+      const nodeTypeIcon = getNodeTypeIcon(argvNode.node_type);
+      
+      return `
+        <div class="col-md-6 col-lg-4 mb-3">
+          <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span class="badge bg-primary">argv[${index}]</span>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-secondary">
+                  <i class="${nodeTypeIcon}"></i> ${argvNode.node_type || 'unknown'}
+                </span>
+                ${argvNode.data_type ? `<span class="badge bg-info">
+                  <i class="${dataTypeIcon}"></i> ${argvNode.data_type}
+                </span>` : ''}
+              </div>
+            </div>
+            <div class="card-body">
+              ${argvNode.name ? `<h6 class="card-title">${escapeHtml(argvNode.name)}</h6>` : ''}
+              
+              <dl class="row small mb-2">
+                <dt class="col-sm-4">Node ID:</dt>
+                <dd class="col-sm-8"><code class="small">${argvNode.id || 'N/A'}</code></dd>
+                
+                ${argvNode.datum_id ? `
+                <dt class="col-sm-4">Datum ID:</dt>
+                <dd class="col-sm-8"><code class="small">${argvNode.datum_id}</code></dd>
+                ` : ''}
+                
+                ${argvNode.length !== null && argvNode.length !== undefined ? `
+                <dt class="col-sm-4">Length:</dt>
+                <dd class="col-sm-8">${argvNode.length}</dd>
+                ` : ''}
+                
+                ${argvNode.dict_keys && argvNode.dict_keys.length > 0 ? `
+                <dt class="col-sm-4">Keys:</dt>
+                <dd class="col-sm-8">
+                  ${argvNode.dict_keys.map(key => `<span class="badge bg-light text-dark me-1">${escapeHtml(key)}</span>`).join('')}
+                </dd>
+                ` : ''}
+              </dl>
+              
+              ${argvNode.doc ? `
+              <div class="mb-2">
+                <small class="text-muted">Documentation:</small>
+                <p class="small">${escapeHtml(argvNode.doc)}</p>
+              </div>
+              ` : ''}
+            </div>
+            <div class="card-footer">
+              ${argvNode.link ? `
+              <a href="${argvNode.link}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-arrow-right-circle"></i> View Node
+              </a>
+              ` : `
+              <span class="text-muted small">Node details not available</span>
+              `}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    argvContent.innerHTML = `
+      <div class="row">
+        ${argvCards}
+      </div>
+    `;
+  }
+
+  // Function to show error message
+  function showError(message) {
+    const statsGrid = document.getElementById('dagStatsGrid');
+    statsGrid.innerHTML = `
+      <div class="dag-stat-item" style="background-color: #f8d7da; border-color: #f5c6cb;">
+        <div class="dag-stat-value" style="color: #721c24;">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <div class="dag-stat-label" style="color: #721c24;">Error</div>
+      </div>
+    `;
+  }
+
+  // Initialize cytoscape graph
+  function initializeCytoscape(data) {
+    console.log('DEBUG: initializeCytoscape called with data:', data);
+    
+    if (!data || !data.dag_data) {
+      console.log('DEBUG: No dag_data available, skipping cytoscape initialization');
+      return;
+    }
+    
+    console.log('DEBUG: Setting global variables...');
+    graphData = data.dag_data;
+    dagData = data;
+    
+    console.log('DEBUG: graphData set to:', graphData);
+    console.log('DEBUG: Calling initCytoscape...');
+    
+    // Initialize cytoscape graph
+    initCytoscape();
+    
+    console.log('DEBUG: Calling populateNodeTable...');
+    // Populate the node table
+    populateNodeTable(data);
+    
+    console.log('DEBUG: initializeCytoscape complete');
+  }
+
+  // Main initialization function
+  async function initializePage() {
+    try {
+      console.log('DEBUG: Starting page initialization');
+      console.log('DEBUG: dagId =', dagId, 'repo =', repo, 'branch =', branch, 'prune =', prune);
+      
+      const data = await loadDAGData();
+      console.log('DEBUG: loadDAGData returned:', data);
+      
+      if (data) {
+        console.log('DEBUG: Populating UI components...');
+        populateDAGStats(data);
+        updateTabVisibility(data);
+        populateTabContent(data);
+        initializeCytoscape(data);
+        
+        // Highlight code after content is populated
+        if (typeof hljs !== 'undefined') {
+          hljs.highlightAll();
+        }
+        console.log('DEBUG: Page initialization complete');
+      } else {
+        console.log('DEBUG: No data received, skipping UI population');
+      }
+    } catch (error) {
+      console.error('DEBUG: Error initializing page:', error);
+      showError('Failed to initialize page: ' + error.message);
+    }
+  }
+
+  // Function to refresh DAG data with new prune setting
+  async function refreshDAGData(pruneNodes) {
+    try {
+      // Show loading states
+      showLoadingStates();
+      
+      console.log(`Refreshing DAG data with prune=${pruneNodes}`);
+      const data = await loadDAGData(pruneNodes);
+      
+      if (data) {
+        // Update all UI components with new data
+        populateDAGStats(data);
+        updateTabVisibility(data);
+        populateTabContent(data);
+        initializeCytoscape(data);
+        
+        // Highlight code after content is updated
+        if (typeof hljs !== 'undefined') {
+          hljs.highlightAll();
+        }
+        
+        console.log('DAG data refreshed successfully');
+      }
+    } catch (error) {
+      console.error('Error refreshing DAG data:', error);
+      showError('Failed to refresh DAG data: ' + error.message);
+    }
+  }
+
+  // Function to show loading states during refresh
+  function showLoadingStates() {
+    // Show loading in stats
+    const statsGrid = document.getElementById('dagStatsGrid');
+    if (statsGrid) {
+      statsGrid.innerHTML = `
+        <div class="dag-stat-item">
+          <div class="dag-stat-value">
+            <div class="spinner-border spinner-border-sm" role="status" style="width: 1rem; height: 1rem;">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div class="dag-stat-label">Refreshing...</div>
+        </div>
+      `;
+    }
+    
+    // Show loading in cytoscape container
+    const cyContainer = document.getElementById('cy');
+    if (cyContainer) {
+      cyContainer.innerHTML = `
+        <div class="text-center p-4">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading graph...</span>
+          </div>
+          <p class="mt-2 text-muted">Refreshing DAG visualization...</p>
+        </div>
+      `;
+    }
+    
+    // Show loading in table
+    const tableBody = document.getElementById('nodeTable');
+    if (tableBody) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center p-3">
+            <div class="spinner-border spinner-border-sm me-2" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            Refreshing node data...
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  // Start loading data when DOM is ready
+  document.addEventListener('DOMContentLoaded', function() {
+    initializePage();
+    
+    // Initialize tooltips for static elements
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(tooltipTriggerEl => {
+      new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Enhanced stats functionality
+    const statsContainer = document.querySelector('.dag-stats-container');
+    if (statsContainer) {
+      // Add subtle animation on hover
+      statsContainer.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-2px)';
+      });
+      
+      statsContainer.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0)';
+      });
+    }
+  });
+</script>
+<script>
+  // Function to initialize cytoscape after data is loaded
+  function initCytoscape() {
+    console.log('DEBUG: initCytoscape called');
+    console.log('DEBUG: graphData available:', !!graphData);
+    
+    if (!graphData) {
+      console.log('DEBUG: No graph data available yet');
+      return;
+    }
+    
+    try {
+      console.log('DEBUG: Initializing cytoscape with data:', graphData);
+
+      // Check if cytoscape is available
+      if (typeof cytoscape === 'undefined') {
+        console.error('DEBUG: Cytoscape library not loaded!');
+        return;
+      }
+
+    var _style = window.getComputedStyle(document.body);
+    const color_map = {
+      argv: _style.getPropertyValue("--bs-warning-text-emphasis"),
+      literal: _style.getPropertyValue("--bs-primary"),
+      fn: _style.getPropertyValue("--bs-secondary"),
+      import: _style.getPropertyValue("--bs-danger"),
+    };
+
+    console.log('Color map:', color_map);
+
+    const cyNodes = graphData.nodes.map((node) => ({
+      data: {
+        id: node.id,
+        label: node.name ? node.name : "#" + node.id.substring(0, 8),
+        shape: node.id === graphData.result ? "ellipse" : "roundrectangle",
+        color: color_map[node.node_type],
+        doc: node.doc,
+      },
+    }));
+    
+    const cyEdges = graphData.edges
+      .filter((x) => x.type === "node")
+      .map((edge) => ({
+        data: {
+          source: edge.source,
+          target: edge.target,
+        },
+      }));
+
+    console.log('Cytoscape nodes:', cyNodes);
+    console.log('Cytoscape edges:', cyEdges);
+
+    const cyContainer = document.querySelector("#cy");
+    console.log('Cytoscape container:', cyContainer);
+    
+    if (!cyContainer) {
+      console.error('Cytoscape container not found!');
+      return;
+    }
+
+    // Clear the container before initializing cytoscape
+    cyContainer.innerHTML = '';
+    const cy = cytoscape({
+      container: cyContainer,
+      elements: {
+        nodes: cyNodes,
+        edges: cyEdges,
+      },
+      style: [
+        {
+          selector: "node",
+          style: {
+            label: "data(label)",
+            "background-color": "data(color)",
+            "border-width": 1,
+            "border-color": "#000",
+            color: "#000",
+            "text-valign": "center",
+            "text-halign": "center",
+            width: 80,
+            height: 30,
+            "font-size": 12,
+            padding: 5,
+            shape: "data(shape)",
+          },
+        },
+        {
+          selector: "edge",
+          style: {
+            width: 1,
+            "line-color": "#7681b3",
+            "target-arrow-color": "#7681b3",
+            "target-arrow-shape": "triangle",
+            "source-arrow-color": "#7681b3",
+            "curve-style": "bezier",
+          },
+        },
+      ],
+      layout: {
+        name: "dagre",
+        rankDir: "TB",
+        nodeSep: 50,
+        rankSep: 100,
+        padding: 50,
+      },
+    });
+
+    console.log('Cytoscape instance created:', cy);
+
+    // Add zoom and reset controls
+    document.getElementById('cy-zoom-in').onclick = function() {
+      cy.zoom({ level: cy.zoom() * 1.2, renderedPosition: { x: cy.width()/2, y: cy.height()/2 } });
+    };
+    document.getElementById('cy-zoom-out').onclick = function() {
+      cy.zoom({ level: cy.zoom() / 1.2, renderedPosition: { x: cy.width()/2, y: cy.height()/2 } });
+    };
+    document.getElementById('cy-reset').onclick = function() {
+      cy.fit();
+    };
+
+    // Update legend
+    const legendTable = document.querySelector("#cy-legend");
+    legendTable.innerHTML = `<h3 style="margin-top: 0">Color</h3>`;
+    Object.entries(color_map).forEach(([a, b]) => {
+      const row = document.createElement("div");
+      const c = a.charAt(0).toUpperCase() + a.slice(1);
+      row.classList.add("legend-item");
+      row.innerHTML = `
+        <div class="legend-color" style="border-color: ${b}; background-color: ${b}"></div>
+        <span>${c}</span>
+      `;
+      legendTable.appendChild(row);
+    });
+    
+    legendTable.innerHTML += `
+      <h3>Shape</h3>
+      <div class="legend-item">
+        <div class="legend-shape" style="border-radius: 3px"></div>
+        <span>Internal</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-shape" style="border-radius: 50%"></div>
+        <span>Result</span>
+      </div>
+    `;
+    } catch (error) {
+      console.error('Error initializing cytoscape:', error);
+    }
+  }
+
+  // Update the initializeCytoscape function to call the actual cytoscape init
+  function initializeCytoscape(data) {
+    if (!data || !data.dag_data) return;
+    
+    graphData = data.dag_data;
+    dagData = data;
+    
+    // Initialize cytoscape graph
+    initCytoscape();
+    
+    // Populate the node table
+    populateNodeTable(data);
+  }
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    hljs.highlightAll();
+    // Logs accordion UI initialization (dynamic, no Jinja2 control flow)
+    const logAccordions = document.querySelectorAll('.accordion-button[data-bs-toggle="collapse"]');
+    function fetchLogs(stream, direction = null) {
+      const pageSpan = document.getElementById(`${stream}-log-page`);
+      const logContent = document.getElementById(`${stream}-log-content`);
+      const container = document.getElementById(`${stream}-log-container`);
+      const backwardBtn = document.querySelector(`.load-more-logs[data-stream-name="${stream}"][data-direction="backward"]`);
+      const forwardBtn = document.querySelector(`.load-more-logs[data-stream-name="${stream}"][data-direction="forward"]`);
+      if (!logContent || !container) return;
+      // Disable buttons
+      if (backwardBtn) backwardBtn.disabled = true;
+      if (forwardBtn) forwardBtn.disabled = true;
+      logContent.innerHTML = `<div class='text-center'><div class='spinner-border spinner-border-sm' role='status'></div> Loading logs...</div>`;
+      const urlParams = new URLSearchParams(window.location.search);
+      let url = `/logs?dag_id=${encodeURIComponent(urlParams.get('dag_id'))}&stream_name=${encodeURIComponent(stream)}`;
+      const repo = urlParams.get('repo');
+      const branch = urlParams.get('branch');
+      if (repo) {
+        url += `&repo=${encodeURIComponent(repo)}`;
+      }
+      if (branch) {
+        url += `&branch=${encodeURIComponent(branch)}`;
+      }
+      if (direction === 'forward' && logState[stream].nextForwardToken) {
+        url += `&next_token=${encodeURIComponent(logState[stream].nextForwardToken)}`;
+        logState[stream].page++;
+      } else if (direction === 'backward' && logState[stream].nextBackwardToken) {
+        url += `&next_token=${encodeURIComponent(logState[stream].nextBackwardToken)}`;
+        logState[stream].page = Math.max(1, logState[stream].page - 1);
+      } else {
+        logState[stream].page = 1;
+      }
+      fetch(url)
+        .then(r => r.json())
+        .then(data => {
+          logState[stream].nextForwardToken = data.nextForwardToken;
+          logState[stream].nextBackwardToken = data.nextBackwardToken;
+          if (pageSpan) pageSpan.textContent = logState[stream].page;
+          if (backwardBtn) backwardBtn.disabled = !data.nextBackwardToken;
+          if (forwardBtn) forwardBtn.disabled = !data.nextForwardToken;
+          if (data.events && data.events.length > 0) {
+            logContent.innerHTML = data.events.map(event => {
+              const date = new Date(event.timestamp);
+              const timestamp = date.toLocaleTimeString();
+              return `<div class='log-entry'>[${timestamp}] ${event.message}</div>`;
+            }).join('');
+            container.scrollTop = direction === 'backward' ? 0 : container.scrollHeight;
+          } else {
+            logContent.innerHTML = '<span class="text-muted">No logs available.</span>';
+          }
+        })
+        .catch(() => {
+          logContent.innerHTML = '<span class="text-danger">Failed to load logs.</span>';
+        });
+    }
+    // Fetch logs for the first (active) accordion panel on load
+    const firstAccordion = document.querySelector('.accordion-button[data-bs-toggle="collapse"]');
+    if (firstAccordion) {
+      const stream = firstAccordion.textContent.trim();
+      fetchLogs(stream);
+    }
+    // Set up accordion shown event to fetch logs when a panel is expanded
+    logAccordions.forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        const stream = this.textContent.trim();
+        fetchLogs(stream);
+      });
+    });
+    // Set up pagination buttons
+    document.querySelectorAll('.load-more-logs').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const stream = this.getAttribute('data-stream-name');
+        const direction = this.getAttribute('data-direction');
+        fetchLogs(stream, direction);
+      });
+    });
+  });
+</script>
+<script>
+  // Dashboard plugin functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const pluginDropdown = document.getElementById('plugin-dropdown');
+    const pluginSelector = document.getElementById('plugin-selector');
+    const pluginContainer = document.getElementById('plugin-container');
+    
+    // Load available plugins when dashboard tab is first clicked
+    document.getElementById('dashboard-tab').addEventListener('click', function() {
+      if (!this.dataset.pluginsLoaded) {
+        loadPlugins();
+        this.dataset.pluginsLoaded = 'true';
+      }
+    });
+    
+    function loadPlugins() {
+      pluginDropdown.innerHTML = '<li><span class="dropdown-item-text text-muted">Loading plugins...</span></li>';
+      
+      // Fetch available plugins from backend
+      fetch('/api/dag/plugins')
+        .then(response => response.json())
+        .then(plugins => {
+          if (plugins && plugins.length > 0) {
+            pluginDropdown.innerHTML = plugins.map(plugin => 
+              `<li><a class="dropdown-item" href="#" data-plugin-id="${plugin.id}">${plugin.name}</a></li>`
+            ).join('');
+            
+            // Add click event listeners to plugin options
+            pluginDropdown.querySelectorAll('.dropdown-item').forEach(item => {
+              item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const pluginId = this.dataset.pluginId;
+                const pluginName = this.textContent;
+                loadPlugin(pluginId, pluginName);
+              });
+            });
+          } else {
+            pluginDropdown.innerHTML = '<li><span class="dropdown-item-text text-muted">No plugins available</span></li>';
+          }
+        })
+        .catch(error => {
+          console.error('Error loading plugins:', error);
+          pluginDropdown.innerHTML = '<li><span class="dropdown-item-text text-danger">Error loading plugins</span></li>';
+        });
+    }
+    
+    function loadPlugin(pluginId, pluginName) {
+      // Update dropdown button text
+      pluginSelector.innerHTML = pluginName + ' <span class="caret"></span>';
+      
+      // Show loading state
+      showPluginLoading();
+      
+      // Get current parameters from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const dagId = urlParams.get('dag_id');
+      const repo = urlParams.get('repo');
+      const branch = urlParams.get('branch');
+      
+      // Build plugin URL with all necessary parameters
+      let pluginUrl = `/api/dag/plugins/${encodeURIComponent(pluginId)}?dag_id=${encodeURIComponent(dagId)}`;
+      if (repo) {
+        pluginUrl += `&repo=${encodeURIComponent(repo)}`;
+      }
+      if (branch) {
+        pluginUrl += `&branch=${encodeURIComponent(branch)}`;
+      }
+      
+      // Fetch plugin content
+      fetch(pluginUrl)
+        .then(response => response.text())
+        .then(html => {
+          // Create isolated iframe for plugin content
+          const iframe = document.createElement('iframe');
+          iframe.style.width = '100%';
+          iframe.style.height = '60vh';
+          iframe.style.border = 'none';
+          iframe.sandbox = 'allow-scripts allow-same-origin allow-forms';
+          
+          // Clear container and add iframe
+          pluginContainer.innerHTML = '';
+          pluginContainer.appendChild(iframe);
+          
+          // Write plugin content to iframe
+          iframe.contentDocument.open();
+          iframe.contentDocument.write(html);
+          iframe.contentDocument.close();
+        })
+        .catch(error => {
+          console.error('Error loading plugin:', error);
+          showPluginError('Failed to load plugin content');
+        });
+    }
+    
+    function showPluginLoading() {
+      pluginContainer.innerHTML = `
+        <div class="d-flex align-items-center justify-content-center h-100">
+          <div class="text-center">
+            <div class="spinner-border text-primary mb-3" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted">Loading plugin...</p>
+          </div>
+        </div>
+      `;
+    }
+    
+    function showPluginError(message) {
+      pluginContainer.innerHTML = `
+        <div class="d-flex align-items-center justify-content-center h-100">
+          <div class="text-center">
+            <i class="bi bi-exclamation-triangle text-danger fs-1 mb-3"></i>
+            <p class="text-danger">${message}</p>
+          </div>
+        </div>
+      `;
+    }
+  });
+
+  // Filter nodes functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const filterSwitch = document.getElementById('filterNodesSwitch');
+    
+    if (filterSwitch) {
+      const container = filterSwitch.closest('.filter-nodes-container');
+      
+      // Set initial state based on URL prune parameter
+      filterSwitch.checked = prune; // When prune=true, checkbox is checked
+      
+      // Set initial visual state
+      if (filterSwitch.checked) {
+        container.style.opacity = '1';
+      } else {
+        container.style.opacity = '0.8';
+      }
+      
+      filterSwitch.addEventListener('change', async function() {
+        const isChecked = this.checked;
+        const shouldPrune = isChecked; // When checked, prune nodes
+        
+        // Disable the switch during refresh to prevent multiple requests
+        this.disabled = true;
+        container.style.opacity = '0.6';
+        
+        try {
+          // Update visual feedback
+          if (isChecked) {
+            console.log('Prune enabled - showing filtered nodes');
+          } else {
+            console.log('Prune disabled - showing all nodes');
+          }
+          
+          // Refresh DAG data with new prune setting
+          await refreshDAGData(shouldPrune);
+          
+          // Update URL to reflect current state
+          const url = new URL(window.location);
+          if (shouldPrune) {
+            url.searchParams.delete('prune'); // Default is pruned, so remove param
+          } else {
+            url.searchParams.set('prune', 'false');
+          }
+          window.history.replaceState({}, '', url);
+          
+        } catch (error) {
+          console.error('Error updating filter:', error);
+          // Revert checkbox state on error
+          this.checked = !isChecked;
+        } finally {
+          // Re-enable the switch and restore opacity
+          this.disabled = false;
+          container.style.opacity = isChecked ? '1' : '0.8';
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}
