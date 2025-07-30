@@ -1,0 +1,161 @@
+Metadata-Version: 2.4
+Name: discontinuum
+Version: 1.0.2
+Summary: Estimate discontinuous timeseries from continuous covariates.
+Maintainer-email: Timothy Hodson <thodson@usgs.gov>
+License: License
+        =======
+        
+        Unless otherwise noted, this project is in the public domain in the United
+        States because it contains materials that originally came from the United
+        States Geological Survey, an agency of the United States Department of
+        Interior. For more information, see the official USGS copyright policy at
+        https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits
+        
+        Additionally, we waive copyright and related rights in the work
+        worldwide through the CC0 1.0 Universal public domain dedication.
+        
+        
+        CC0 1.0 Universal Summary
+        -------------------------
+        
+        This is a human-readable summary of the
+        [Legal Code (read the full text)][1].
+        
+        
+        ### No Copyright
+        
+        The person who associated a work with this deed has dedicated the work to
+        the public domain by waiving all of his or her rights to the work worldwide
+        under copyright law, including all related and neighboring rights, to the
+        extent allowed by law.
+        
+        You can copy, modify, distribute and perform the work, even for commercial
+        purposes, all without asking permission.
+        
+        
+        ### Other Information
+        
+        In no way are the patent or trademark rights of any person affected by CC0,
+        nor are the rights that other persons may have in the work or in how the
+        work is used, such as publicity or privacy rights.
+        
+        Unless expressly stated otherwise, the person who associated a work with
+        this deed makes no warranties about the work, and disclaims liability for
+        all uses of the work, to the fullest extent permitted by applicable law.
+        When using or citing the work, you should not imply endorsement by the
+        author or the affirmer.
+        
+        
+        
+        [1]: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+        
+Project-URL: homepage, https://github.com/thodson-usgs/discontinuum
+Project-URL: repository, https://github.com/thodson-usgs/discontinuum.git
+Keywords: timeseries,Gaussian processes,discontinuous
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE.md
+Requires-Dist: gpytorch
+Requires-Dist: matplotlib
+Requires-Dist: scikit-learn
+Requires-Dist: tqdm
+Requires-Dist: xarray
+Provides-Extra: dev
+Requires-Dist: flake8; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+Requires-Dist: pytest-cov[all]; extra == "dev"
+Requires-Dist: requests_mock; extra == "dev"
+Requires-Dist: dataretrieval; extra == "dev"
+Provides-Extra: doc
+Requires-Dist: sphinx; extra == "doc"
+Requires-Dist: sphinx-book-theme; extra == "doc"
+Requires-Dist: myst-nb; extra == "doc"
+Requires-Dist: sphinxcontrib-mermaid; extra == "doc"
+Requires-Dist: sphinx-copybutton; extra == "doc"
+Requires-Dist: ipython; extra == "doc"
+Requires-Dist: ipykernel; extra == "doc"
+Provides-Extra: gpytorch
+Requires-Dist: gpytorch; extra == "gpytorch"
+Provides-Extra: pymc
+Requires-Dist: pymc>=5.0.0; extra == "pymc"
+Provides-Extra: loadest-gp
+Requires-Dist: dataretrieval; extra == "loadest-gp"
+Provides-Extra: rating-gp
+Requires-Dist: dataretrieval; extra == "rating-gp"
+Dynamic: license-file
+
+# discontinuum
+
+![PyPI - Version](https://img.shields.io/pypi/v/discontinuum)
+
+> [!WARNING]  
+> Experimental.
+
+## Overview
+`discontinuum` is a middleware for developing Gaussian process (GP) models.
+
+GP's are a flexible approach to machine learning,
+which are naturally suited for applications with sparse and noisy data
+or for uncertainty analysis.
+However, fitting GP's is numerically expensive,
+which has led to a range of optimizations with different tradeoffs.
+Ideally, we could quickly write mathematical models, then run them on whichever
+"engine" is best suited for a particular problem.
+
+Most model applications also include a fair amount of "boiler plate"
+in the form of utility functions for plotting, managing metadata, data pre-processing, etc.
+`discontinum` packages several engines and helper utilities into a single ecosystem
+to simplify the processes of prototyping GP models.
+
+## Installation
+```
+pip install discontinuum
+```
+
+## Models
+
+### loadset-gp
+`loadest-gp` is Gaussian-process model for estimating river constituent time series,
+which borrows its namesake from the venerable LOAD ESTimator (LOADEST) software program.
+However, LOADEST has several serious limitations
+---it's essentially a linear regression---and it has been all but replaced by
+the more flexible Weighted Regression on Time Discharge and Season (WRTDS),
+which allows the relation between target and covariate to vary through time.
+`loadest-gp` takes the WRTDS idea and reimplements it as a GP.
+Try it out in the [loadest-gp demo](https://code.usgs.gov/wma/uncertainty/discontinuum/-/blob/main/docs/source/notebooks/loadest-gp-demo.ipynb).
+
+### rating-gp
+`rating-gp` is a Gaussian-process model for estimating river flow from stage time series.
+Try it out in the [rating-gp demo](https://code.usgs.gov/wma/uncertainty/discontinuum/-/blob/main/docs/source/notebooks/rating-gp-demo.ipynb).
+
+## Engines
+Currently, the only supported engines are the marginal likelihood implementation in `pymc` and `gpytorch`.
+Latent GP implementations could be added in the future.
+In general, the `gpytorch` implementation is faster and provides a lot a powerful features,
+like GPU support, whereas `pymc` is a more complete probabilistic-programming framework,
+which can be "friendlier" for certain use cases.
+
+Porting a model from one engine to another usually involves completely rewriting the guts of the GP.
+but any other boiler-plate functions should be unaffected.
+
+
+## Roadmap
+```mermaid
+mindmap
+  root((discontinuum))
+    data providers
+      USGS
+      etc
+    engines
+      PyMC
+      PyTorch
+    utilities
+      pre-processing
+      post-processing
+      plotting
+    models
+      loadest-gp
+      rating-gp
+```
