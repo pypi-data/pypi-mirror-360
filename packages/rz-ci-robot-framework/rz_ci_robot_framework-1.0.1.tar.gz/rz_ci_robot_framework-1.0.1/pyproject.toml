@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rz-ci-robot-framework"
+version = "1.0.1"
+description = "Robot Framework-based testing framework for Renesas RZ boards"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+authors = [
+    {name = "RZ-CI Team", email = "rz-ci@renesas.com"},
+]
+keywords = ["robot", "framework", "testing", "renesas", "rz", "embedded", "hardware"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Testing",
+    "Framework :: Robot Framework",
+]
+dependencies = [
+    "robotframework>=6.0.0,<7.0.0",
+    "robotframework-seriallibrary>=0.3.1",
+    "robotframework-sshlibrary>=3.8.0",
+    "pyserial>=3.5",
+    "PyYAML>=6.0",
+    "python-dateutil>=2.8.0",
+    "pytz>=2023.3",
+]
+
+[project.optional-dependencies]
+docs = [
+    "sphinx>=4.0.0",
+    "sphinx-rtd-theme>=1.2.0",
+]
+testing = [
+    "robotframework-metrics>=3.3.0",
+    "robotframework-pabot>=2.16.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/renesas/rz-ci-robot-framework"
+Documentation = "https://github.com/renesas/rz-ci-robot-framework/wiki"
+Repository = "https://github.com/renesas/rz-ci-robot-framework"
+Issues = "https://github.com/renesas/rz-ci-robot-framework/issues"
+
+[project.scripts]
+rz-ci-test = "rz_ci_robot_framework.cli:main"
+rz-ci-list-features = "rz_ci_robot_framework.cli:list_features_main"
+rz-ci-validate-config = "rz_ci_robot_framework.cli:validate_config_main"
+
+[tool.setuptools_scm]
+write_to = "rz_ci_robot_framework/version.py"
+
+[tool.setuptools]
+packages = ["rz_ci_robot_framework", "rz_ci_robot_framework.common", "rz_ci_robot_framework.libraries"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+rz_ci_robot_framework = ["config/*.yml", "test/**/*.robot", "keywords/*.robot"]
