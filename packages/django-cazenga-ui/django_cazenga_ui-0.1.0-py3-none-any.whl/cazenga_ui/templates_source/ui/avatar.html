@@ -1,0 +1,68 @@
+<!--
+Componente: Avatar
+Uso: include "components/avatar.html" with src="/path/to/image.jpg" alt="Nome do usuário" fallback="JD"
+
+Parâmetros:
+- src: URL da imagem (opcional)
+- alt: Texto alternativo da imagem (obrigatório se src fornecido)
+- fallback: Texto ou iniciais para mostrar quando não há imagem (opcional)
+- size: xs, sm, md, lg, xl (padrão: md)
+- shape: circle, square (padrão: circle)
+- status: online, offline, away, busy (opcional)
+- class: Classes CSS adicionais (opcional)
+-->
+{% with size=size|default:"md" shape=shape|default:"circle" %}
+<div 
+    x-data="{ imageError: false }"
+    class="relative flex shrink-0 overflow-hidden
+        {% if shape == 'square' %}rounded-lg{% else %}rounded-full{% endif %}
+        {% if size == 'xs' %}size-6
+        {% elif size == 'sm' %}size-8
+        {% elif size == 'lg' %}size-12
+        {% elif size == 'xl' %}size-16
+        {% else %}size-10{% endif %}
+        {{ class|default:'' }}"
+>
+    {% if src %}
+        <img 
+            src="{{ src }}"
+            alt="{{ alt }}"
+            @error="imageError = true"
+            x-show="!imageError"
+            class="aspect-square size-full object-cover"
+        />
+    {% endif %}
+    
+    <!-- Fallback -->
+    <div 
+        {% if src %}x-show="imageError || !{{ src|yesno:'true,false' }}"{% endif %}
+        class="bg-muted flex size-full items-center justify-center
+            {% if shape == 'square' %}rounded-lg{% else %}rounded-full{% endif %}
+            {% if size == 'xs' %}text-xs
+            {% elif size == 'sm' %}text-sm
+            {% elif size == 'lg' %}text-lg
+            {% elif size == 'xl' %}text-xl
+            {% else %}text-base{% endif %}"
+    >
+        {{ fallback|default:"" }}
+    </div>
+    
+    {% if status %}
+        <!-- Status indicator -->
+        <div class="absolute bottom-0 right-0 
+            {% if size == 'xs' %}size-1.5
+            {% elif size == 'sm' %}size-2
+            {% elif size == 'lg' %}size-3
+            {% elif size == 'xl' %}size-4
+            {% else %}size-2.5{% endif %}
+            {% if shape == 'square' %}-mb-0.5 -mr-0.5{% endif %}
+            rounded-full border-2 border-background
+            {% if status == 'online' %}bg-green-500
+            {% elif status == 'offline' %}bg-gray-400
+            {% elif status == 'away' %}bg-yellow-500
+            {% elif status == 'busy' %}bg-red-500
+            {% endif %}"
+        ></div>
+    {% endif %}
+</div>
+{% endwith %}

@@ -1,0 +1,73 @@
+<!--
+Componente: Alert
+Uso: include "components/alert.html" with variant="default" title="Título" description="Descrição"
+
+Parâmetros:
+- variant: default, destructive (padrão: default)
+- title: Título do alerta (opcional)
+- description: Descrição do alerta (opcional)
+- icon: Ícone SVG do alerta (opcional)
+- dismissible: true/false - se o alerta pode ser fechado (padrão: false)
+- class: Classes CSS adicionais (opcional)
+-->
+{% with variant=variant|default:"default" dismissible=dismissible|default:False %}
+<div 
+    {% if dismissible %}
+        x-data="{ show: true }"
+        x-show="show"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 transform scale-95"
+        x-transition:enter-end="opacity-100 transform scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 transform scale-100"
+        x-transition:leave-end="opacity-0 transform scale-95"
+    {% endif %}
+    role="alert"
+    class="relative w-full rounded-lg border px-4 py-3 text-sm grid 
+        {% if icon %}grid-cols-[1.5rem_1fr] gap-x-3{% else %}grid-cols-[0_1fr]{% endif %}
+        gap-y-0.5 items-start
+        {% if variant == 'destructive' %}
+            text-destructive bg-card border-destructive/50
+        {% else %}
+            bg-card text-card-foreground border-border
+        {% endif %}
+        {{ class|default:'' }}"
+>
+    {% if icon %}
+        <div class="size-4 translate-y-0.5 text-current">
+            {{ icon|safe }}
+        </div>
+    {% endif %}
+    
+    {% if title %}
+        <div class="col-start-2 line-clamp-1 min-h-4 font-medium tracking-tight">
+            {{ title }}
+        </div>
+    {% endif %}
+    
+    {% if description %}
+        <div class="col-start-2 grid justify-items-start gap-1 text-sm 
+            {% if variant == 'destructive' %}text-destructive/90{% else %}text-muted-foreground{% endif %}">
+            {{ description|safe }}
+        </div>
+    {% endif %}
+    
+    {% if content %}
+        <div class="col-start-2">
+            {{ content|safe }}
+        </div>
+    {% endif %}
+    
+    {% if dismissible %}
+        <button
+            @click="show = false"
+            class="absolute right-2 top-2 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            aria-label="Fechar alerta"
+        >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    {% endif %}
+</div>
+{% endwith %}

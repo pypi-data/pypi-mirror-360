@@ -1,0 +1,490 @@
+{% load icon_tags %}
+
+<!-- Componente Content Manager -->
+<div class="content-manager bg-background {{ class|default:'' }}" 
+     x-data="contentManager()">
+
+    <!-- Header Principal -->
+    <div class="bg-card border-b border-border p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-card-foreground" x-text="title"></h1>
+                <p class="text-sm text-muted-foreground mt-1">
+                    <span x-text="contentType"></span> • 
+                    <span x-text="saving ? 'Salvando...' : (saved ? 'Salvo automaticamente' : 'Não salvo')"></span>
+                </p>
+            </div>
+            
+            <!-- Botões de ação -->
+            <div class="flex items-center space-x-3">
+                <!-- Status -->
+                <div class="flex items-center space-x-2 text-sm">
+                    <div x-show="saving" class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                    <div x-show="saved && !saving" class="w-2 h-2 bg-green-500 rounded-full"></div>
+                </div>
+
+                <!-- Botões de ação com ícones -->
+                <button @click="saveAsDraft()" 
+                        class="inline-flex items-center justify-center gap-2 rounded-radius-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4">
+                    {% include "components/icon.html" with name="file" size="size-4" %}
+                    Rascunho
+                </button>
+                
+                <button @click="togglePreview()" 
+                        class="inline-flex items-center justify-center gap-2 rounded-radius-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4">
+                    {% include "components/icon.html" with name="eye-open" size="size-4" %}
+                    <span x-text="isPreview ? 'Editar' : 'Preview'"></span>
+                </button>
+                
+                <button @click="publish()" 
+                        class="inline-flex items-center justify-center gap-2 rounded-radius-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4">
+                    {% include "components/icon.html" with name="rocket" size="size-4" %}
+                    Publicar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layout Principal -->
+    <div class="flex">
+        <!-- Área de Edição -->
+        <div class="flex-1 p-6" :class="{ 'w-2/3': showSidebar, 'w-full': !showSidebar }">
+            
+            <!-- Modo Preview -->
+            <div x-show="isPreview" class="prose prose-lg max-w-none">
+                <div x-html="getPreviewContent()" class="space-y-6"></div>
+            </div>
+
+            <!-- Modo Edição -->
+            <div x-show="!isPreview" class="space-y-6">
+                
+                <!-- Campo Título Principal -->
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-foreground flex items-center gap-2">
+                        {% include "components/icon.html" with name="text" size="size-4" %}
+                        Título Principal 
+                        <span class="text-destructive">*</span>
+                    </label>
+                    <input type="text" 
+                           name="title" 
+                           id="content-title"
+                           x-model="formData.title"
+                           placeholder="Digite o título da sua postagem..."
+                           dir="ltr"
+                           class="flex h-10 w-full rounded-radius-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-lg font-semibold">
+                </div>
+
+                <!-- Campo Resumo/Excerpt -->
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-foreground flex items-center gap-2">
+                        {% include "components/icon.html" with name="text-align-left" size="size-4" %}
+                        Resumo
+                    </label>
+                    <div class="relative">
+                        <textarea name="excerpt" 
+                                  id="content-excerpt"
+                                  x-model="formData.excerpt"
+                                  placeholder="Breve descrição que aparecerá na listagem e redes sociais..." 
+                                  rows="3"
+                                  maxlength="160"
+                                  dir="ltr"
+                                  class="flex min-h-[60px] w-full rounded-radius-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"></textarea>
+                        <div class="absolute bottom-2 right-2 text-xs text-muted-foreground flex items-center gap-1">
+                            {% include "components/icon.html" with name="counter-clockwise-clock" size="size-3" %}
+                            <span x-text="formData.excerpt ? formData.excerpt.length : 0"></span>/160
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Editor de Conteúdo Principal -->
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-foreground flex items-center gap-2">
+                        {% include "components/icon.html" with name="pencil-1" size="size-4" %}
+                        Conteúdo Principal
+                    </label>
+                    {% include "components/text-editor.html" with height="h-96" word_count=true auto_save=true placeholder="Comece a escrever o conteúdo principal aqui..." %}
+                </div>
+
+                <!-- Upload de Imagem de Destaque -->
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-foreground flex items-center gap-2">
+                        {% include "components/icon.html" with name="image" size="size-4" %}
+                        Imagem de Destaque
+                    </label>
+                    <div class="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors"
+                         x-data="{ dragover: false }"
+                         @dragover.prevent="dragover = true"
+                         @dragleave.prevent="dragover = false"
+                         @drop.prevent="handleImageDrop($event); dragover = false"
+                         :class="{ 'border-primary bg-primary/5': dragover }">
+                        
+                        <div x-show="!featuredImage" class="space-y-3">
+                            <div class="mx-auto w-12 h-12 text-muted-foreground">
+                                {% include "components/icon.html" with name="image" size="size-12" %}
+                            </div>
+                            <div>
+                                <p class="text-sm text-muted-foreground">Arraste uma imagem ou clique para selecionar</p>
+                                <input type="file" accept="image/*" @change="handleImageUpload($event)" class="hidden" x-ref="imageInput">
+                                <button type="button" 
+                                        @click="$refs.imageInput.click()"
+                                        class="inline-flex items-center justify-center gap-2 rounded-radius-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 mt-2">
+                                    {% include "components/icon.html" with name="upload" size="size-4" %}
+                                    Selecionar Imagem
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div x-show="featuredImage" class="space-y-3">
+                            <img :src="featuredImage" class="max-w-full h-48 object-cover mx-auto rounded-md">
+                            <button type="button" 
+                                    @click="featuredImage = ''"
+                                    class="inline-flex items-center justify-center gap-2 rounded-radius-md text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 h-9 px-4">
+                                {% include "components/icon.html" with name="trash" size="size-4" %}
+                                Remover Imagem
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campos Adicionais por Tipo -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Categoria -->
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-foreground flex items-center gap-2">
+                            {% include "components/icon.html" with name="component-instance" size="size-4" %}
+                            Categoria
+                        </label>
+                        <select name="category" 
+                                id="content-category"
+                                x-model="formData.category"
+                                class="flex h-10 w-full items-center justify-between rounded-radius-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                            <option value="">Selecione uma categoria</option>
+                            <option value="marketing">📢 Marketing</option>
+                            <option value="tecnologia">💻 Tecnologia</option>
+                            <option value="negocios">💼 Negócios</option>
+                            <option value="design">🎨 Design</option>
+                        </select>
+                    </div>
+
+                    <!-- Tags -->
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-foreground flex items-center gap-2">
+                            {% include "components/icon.html" with name="bookmark" size="size-4" %}
+                            Tags
+                        </label>
+                        <div class="space-y-2">
+                            <!-- Tags selecionadas -->
+                            <div class="flex flex-wrap gap-2" x-show="tags.length > 0">
+                                <template x-for="(tag, index) in tags" :key="index">
+                                    <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80">
+                                        <span x-text="tag"></span>
+                                        <button type="button" 
+                                                @click="removeTag(index)"
+                                                class="ml-2 text-secondary-foreground/60 hover:text-secondary-foreground">
+                                            {% include "components/icon.html" with name="cross-1" size="size-3" %}
+                                        </button>
+                                    </span>
+                                </template>
+                            </div>
+                            <!-- Input para adicionar tags -->
+                            <input type="text" 
+                                   name="new-tag"
+                                   id="content-tag-input"
+                                   placeholder="Digite uma tag e pressione Enter"
+                                   dir="ltr"
+                                   @keydown.enter.prevent="addTag($event.target.value); $event.target.value = ''"
+                                   class="flex h-10 w-full rounded-radius-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div x-show="showSidebar && !isPreview" class="w-1/3 bg-muted/30 border-l border-border p-6 space-y-6">
+            
+            <!-- Status de Publicação -->
+            <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                <h3 class="font-semibold leading-none tracking-tight mb-4 flex items-center gap-2">
+                    {% include "components/icon.html" with name="rocket" size="size-4" %}
+                    Publicação
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm font-medium text-foreground mb-2 block">Status</label>
+                        <select name="status" 
+                                x-model="formData.status"
+                                class="flex h-9 w-full items-center justify-between rounded-radius-md border border-input bg-background px-3 py-2 text-sm">
+                            <option value="draft">📝 Rascunho</option>
+                            <option value="published">🚀 Publicado</option>
+                            <option value="scheduled">⏰ Agendado</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-foreground mb-2 block">Data de Publicação</label>
+                        <input type="datetime-local" 
+                               name="publish-date"
+                               x-model="formData.publishDate"
+                               class="flex h-9 w-full rounded-radius-md border border-input bg-background px-3 py-2 text-sm">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SEO -->
+            <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                <h3 class="font-semibold leading-none tracking-tight mb-4 flex items-center gap-2">
+                    {% include "components/icon.html" with name="magnifying-glass" size="size-4" %}
+                    SEO
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm font-medium text-foreground mb-2 block">Meta Título</label>
+                        <input type="text" 
+                               name="meta-title"
+                               x-model="seoData.metaTitle"
+                               placeholder="Título que aparece no Google..."
+                               maxlength="60"
+                               dir="ltr"
+                               class="flex h-9 w-full rounded-radius-md border border-input bg-background px-3 py-2 text-sm">
+                        <p class="text-xs text-muted-foreground mt-1">
+                            <span x-text="(seoData.metaTitle || '').length"></span>/60 caracteres
+                        </p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-foreground mb-2 block">Meta Descrição</label>
+                        <textarea name="meta-description"
+                                  x-model="seoData.metaDescription"
+                                  placeholder="Descrição que aparece no Google..."
+                                  maxlength="160"
+                                  rows="3"
+                                  dir="ltr"
+                                  class="flex min-h-[60px] w-full rounded-radius-md border border-input bg-background px-3 py-2 text-sm"></textarea>
+                        <p class="text-xs text-muted-foreground mt-1">
+                            <span x-text="(seoData.metaDescription || '').length"></span>/160 caracteres
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Estatísticas -->
+            <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                <h3 class="font-semibold leading-none tracking-tight mb-4 flex items-center gap-2">
+                    {% include "components/icon.html" with name="bar-chart" size="size-4" %}
+                    Estatísticas
+                </h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-muted-foreground">Palavras:</span>
+                        <span x-text="getWordCount()"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-muted-foreground">Caracteres:</span>
+                        <span x-text="(formData.content || '').length"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-muted-foreground">Tempo de leitura:</span>
+                        <span x-text="getReadingTime() + ' min'"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão Toggle Sidebar -->
+    <button @click="showSidebar = !showSidebar" 
+            x-show="!isPreview"
+            class="fixed bottom-6 right-6 p-3 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors">
+        {% include "components/icon.html" with name="layout" size="size-5" %}
+    </button>
+
+    <!-- Modal de Preview -->
+    <div x-show="isPreview" 
+         class="fixed inset-0 bg-black/50 z-50" 
+         @click="isPreview = false"
+         x-transition>
+        <div class="fixed inset-4 bg-background rounded-lg shadow-xl overflow-auto" @click.stop>
+            <!-- Header do Preview -->
+            <div class="sticky top-0 bg-background border-b border-border p-4 flex justify-between items-center">
+                <h2 class="text-lg font-semibold">Visualização</h2>
+                {% include "components/button.html" with variant="ghost" size="sm" class="close-preview-btn" %}
+            </div>
+            
+            <!-- Conteúdo do Preview -->
+            <div class="p-6">
+                <article class="prose prose-lg max-w-none">
+                    <div x-html="getPreviewContent()"></div>
+                </article>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function contentManager() {
+    return {
+        // Configurações
+        title: '{{ title|default:"Novo Conteúdo"|escapejs }}',
+        contentType: '{{ content_type|default:"post"|escapejs }}',
+        
+        // Estados
+        isPreview: false,
+        showSidebar: true,
+        saving: false,
+        saved: false,
+        
+        // Dados do formulário
+        formData: {
+            title: '{{ fields.title.value|default:""|escapejs }}',
+            excerpt: '{{ fields.excerpt.value|default:""|escapejs }}',
+            content: '{{ fields.content.value|default:""|escapejs }}',
+            status: 'draft',
+            publishDate: new Date().toISOString().slice(0, 16),
+            category: ''
+        },
+        
+        // Mídia
+        featuredImage: '{{ fields.featured_image.value|default:""|escapejs }}',
+        
+        // Tags
+        tags: {{ fields.tags.value|default:'[]'|safe }},
+        
+        // SEO
+        seoData: {
+            metaTitle: '{{ seo.meta_title|default:""|escapejs }}',
+            metaDescription: '{{ seo.meta_description|default:""|escapejs }}',
+            keywords: '{{ seo.keywords|default:""|escapejs }}'
+        },
+        
+        init() {
+            // Auto-save
+            this.$watch('formData', () => {
+                this.autoSave();
+            }, { deep: true });
+        },
+        
+        togglePreview() {
+            this.isPreview = !this.isPreview;
+        },
+        
+        getPreviewContent() {
+            const title = this.formData.title || 'Título do Conteúdo';
+            const excerpt = this.formData.excerpt || '';
+            const content = this.formData.content || '<p>Conteúdo em branco...</p>';
+            const image = this.featuredImage;
+            
+            let preview = `<header class="mb-8">
+                <h1 class="text-4xl font-bold mb-4">${title}</h1>`;
+            
+            if (excerpt) {
+                preview += `<p class="text-xl text-muted-foreground mb-6">${excerpt}</p>`;
+            }
+            
+            if (image) {
+                preview += `<img src="${image}" alt="Imagem de destaque" class="w-full h-64 object-cover rounded-lg mb-6">`;
+            }
+            
+            preview += `</header><div class="prose-content" dir="ltr">${content}</div>`;
+            
+            return preview;
+        },
+        
+        handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.featuredImage = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        },
+        
+        handleImageDrop(event) {
+            const file = event.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                this.handleImageUpload({ target: { files: [file] } });
+            }
+        },
+        
+        addTag(tagText) {
+            if (tagText.trim() && !this.tags.includes(tagText.trim())) {
+                this.tags.push(tagText.trim());
+            }
+        },
+        
+        removeTag(index) {
+            this.tags.splice(index, 1);
+        },
+        
+        getWordCount() {
+            const text = (this.formData.content || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            return text ? text.split(' ').length : 0;
+        },
+        
+        getReadingTime() {
+            return Math.ceil(this.getWordCount() / 200);
+        },
+        
+        autoSave() {
+            this.saving = true;
+            setTimeout(() => {
+                this.saving = false;
+                this.saved = true;
+                setTimeout(() => {
+                    this.saved = false;
+                }, 3000);
+            }, 1000);
+        },
+        
+        saveAsDraft() {
+            this.formData.status = 'draft';
+            this.autoSave();
+            console.log('Salvando como rascunho:', this.formData);
+        },
+        
+        publish() {
+            this.formData.status = 'published';
+            this.autoSave();
+            console.log('Publicando:', this.formData);
+            alert('Conteúdo publicado com sucesso!');
+        }
+    }
+}
+</script>
+
+<style>
+/* Garantir direção LTR em todos os campos de texto */
+input[type="text"], 
+input[type="email"], 
+input[type="url"], 
+textarea,
+.prose-content {
+    direction: ltr;
+    text-align: left;
+}
+
+/* Estilização do preview */
+.prose-content img {
+    border-radius: calc(var(--radius) - 2px);
+    margin: 1rem 0;
+}
+
+.prose-content h1, .prose-content h2, .prose-content h3 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.prose-content p {
+    margin-bottom: 1rem;
+    line-height: 1.7;
+}
+
+.prose-content ul, .prose-content ol {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.prose-content li {
+    margin: 0.5rem 0;
+}
+</style> 

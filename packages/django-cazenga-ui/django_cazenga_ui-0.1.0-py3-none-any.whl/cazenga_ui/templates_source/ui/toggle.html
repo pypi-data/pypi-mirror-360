@@ -1,0 +1,57 @@
+<!--
+Componente: Toggle
+Uso: include "components/toggle.html" with text="Toggle" pressed=False
+
+Parâmetros:
+- text: Texto do botão toggle (opcional)
+- icon: Ícone SVG (opcional)
+- pressed: Estado inicial (true/false, padrão: false)
+- variant: default, outline (padrão: default)
+- size: default, sm, lg (padrão: default)
+- disabled: true/false (padrão: false)
+- name: Nome do input hidden (opcional)
+- value: Valor do input hidden (opcional)
+- class: Classes CSS adicionais (opcional)
+- onclick: Função JavaScript para executar no clique (opcional)
+
+Exemplo:
+include "components/toggle.html" with 
+    text="Favorito" 
+    icon="<svg>...</svg>"
+    pressed=False
+    variant="outline"
+    size="default"
+-->
+{% with variant=variant|default:"default" size=size|default:"default" pressed=pressed|default:False disabled=disabled|default:False %}
+<button 
+    x-data="{ pressed: {{ pressed|yesno:'true,false' }} }"
+    @click="if (!{{ disabled|yesno:'true,false' }}) { pressed = !pressed; {% if onclick %}{{ onclick }}{% endif %} }"
+    :class="{ 'bg-accent text-accent-foreground': pressed }"
+    type="button"
+    {% if disabled %}disabled{% endif %}
+    class="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium hover:bg-muted hover:text-muted-foreground disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors whitespace-nowrap
+        {% if variant == 'default' %}bg-transparent
+        {% elif variant == 'outline' %}border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground
+        {% else %}bg-transparent{% endif %}
+        {% if size == 'sm' %}h-8 px-1.5 min-w-8
+        {% elif size == 'lg' %}h-10 px-2.5 min-w-10
+        {% else %}h-9 px-2 min-w-9{% endif %}
+        {{ class|default:'' }}"
+    :aria-pressed="pressed"
+    role="button"
+>
+    {% if icon %}
+        <span class="[&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:pointer-events-none">
+            {{ icon|safe }}
+        </span>
+    {% endif %}
+    
+    {% if text %}
+        <span>{{ text }}</span>
+    {% endif %}
+    
+    {% if name %}
+        <input type="hidden" :name="pressed ? '{{ name }}' : ''" :value="pressed ? '{{ value|default:'on' }}' : ''">
+    {% endif %}
+</button>
+{% endwith %}

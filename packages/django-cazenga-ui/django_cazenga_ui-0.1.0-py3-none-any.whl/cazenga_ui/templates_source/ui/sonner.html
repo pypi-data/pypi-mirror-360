@@ -1,0 +1,192 @@
+<!--
+Componente: Sonner (Toast Notifications)
+Uso: include "components/sonner.html" in base template
+
+Este componente deve ser incluído no template base uma vez.
+Para mostrar toasts, use JavaScript: 
+- showToast('Mensagem', 'success')
+- showToast('Erro', 'error')
+- showToast('Aviso', 'warning')
+- showToast('Info', 'info')
+
+Parâmetros:
+- position: top-left, top-center, top-right, bottom-left, bottom-center, bottom-right (padrão: bottom-right)
+- duration: Duração em ms (padrão: 4000)
+- max_toasts: Número máximo de toasts visíveis (padrão: 5)
+- class: Classes CSS adicionais (opcional)
+
+Exemplo:
+include "components/sonner.html" with position="top-right" duration=3000
+-->
+{% with position=position|default:"bottom-right" duration=duration|default:4000 max_toasts=max_toasts|default:5 %}
+<div 
+    x-data="{ 
+        toasts: [],
+        nextId: 1,
+        maxToasts: {{ max_toasts }},
+        defaultDuration: {{ duration }},
+        
+        showToast(message, type = 'info', duration = null) {
+            const id = this.nextId++;
+            const toast = {
+                id,
+                message,
+                type,
+                duration: duration || this.defaultDuration,
+                timestamp: Date.now()
+            };
+            
+            this.toasts.push(toast);
+            
+            // Limitar número de toasts
+            if (this.toasts.length > this.maxToasts) {
+                this.toasts.shift();
+            }
+            
+            // Auto remove
+            setTimeout(() => {
+                this.removeToast(id);
+            }, toast.duration);
+        },
+        
+        removeToast(id) {
+            this.toasts = this.toasts.filter(toast => toast.id !== id);
+        },
+        
+        getIcon(type) {
+            switch(type) {
+                case 'success': return '✓';
+                case 'error': return '✕';
+                case 'warning': return '⚠';
+                case 'info': return 'ℹ';
+                default: return 'ℹ';
+            }
+        },
+        
+        getTypeClasses(type) {
+            switch(type) {
+                case 'success': return 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-300';
+                case 'error': return 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300';
+                case 'warning': return 'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-300';
+                case 'info': return 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300';
+                default: return 'bg-background border-border text-foreground';
+            }
+        }
+    }"
+    x-init="
+        // Expor função globalmente
+        window.showToast = (message, type, duration) => showToast(message, type, duration);
+        window.toast = {
+            success: (message, duration) => showToast(message, 'success', duration),
+            error: (message, duration) => showToast(message, 'error', duration),
+            warning: (message, duration) => showToast(message, 'warning', duration),
+            info: (message, duration) => showToast(message, 'info', duration)
+        };
+    "
+    class="fixed z-50 pointer-events-none
+        {% if position == 'top-left' %}top-4 left-4
+        {% elif position == 'top-center' %}top-4 left-1/2 transform -translate-x-1/2
+        {% elif position == 'top-right' %}top-4 right-4
+        {% elif position == 'bottom-left' %}bottom-4 left-4
+        {% elif position == 'bottom-center' %}bottom-4 left-1/2 transform -translate-x-1/2
+        {% else %}bottom-4 right-4
+        {% endif %}
+        {{ class|default:'' }}
+    "
+>
+    <div class="flex flex-col gap-2
+        {% if 'top-' in position %}
+            {% if position == 'top-center' %}items-center{% elif position == 'top-left' %}items-start{% else %}items-end{% endif %}
+        {% else %}
+            {% if position == 'bottom-center' %}items-center{% elif position == 'bottom-left' %}items-start{% else %}items-end{% endif %}
+        {% endif %}
+    ">
+        <template x-for="toast in toasts" :key="toast.id">
+            <div 
+                x-show="true"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 transform 
+                    {% if 'top-' in position %}
+                        translate-y-2
+                    {% else %}
+                        -translate-y-2
+                    {% endif %}
+                    {% if 'right' in position %}
+                        translate-x-2
+                    {% elif 'left' in position %}
+                        -translate-x-2
+                    {% endif %}
+                "
+                x-transition:enter-end="opacity-100 transform translate-y-0 translate-x-0"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 transform translate-y-0 translate-x-0"
+                x-transition:leave-end="opacity-0 transform 
+                    {% if 'top-' in position %}
+                        translate-y-2
+                    {% else %}
+                        -translate-y-2
+                    {% endif %}
+                    {% if 'right' in position %}
+                        translate-x-2
+                    {% elif 'left' in position %}
+                        -translate-x-2
+                    {% endif %}
+                "
+                class="pointer-events-auto max-w-sm w-full bg-background border rounded-lg shadow-lg p-4 relative"
+                :class="getTypeClasses(toast.type)"
+            >
+                <div class="flex items-start gap-3">
+                    <!-- Icon -->
+                    <div class="flex-shrink-0 w-5 h-5 flex items-center justify-center text-sm font-bold" 
+                         x-text="getIcon(toast.type)">
+                    </div>
+                    
+                    <!-- Message -->
+                    <div class="flex-1 text-sm" x-text="toast.message"></div>
+                    
+                    <!-- Close button -->
+                    <button 
+                        @click="removeToast(toast.id)"
+                        class="flex-shrink-0 w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label="Fechar notificação"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m18 6-12 12"/>
+                            <path d="m6 6 12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Progress bar -->
+                <div class="absolute bottom-0 left-0 h-1 bg-current opacity-20 rounded-b-lg overflow-hidden">
+                    <div 
+                        class="h-full bg-current opacity-60 transition-all ease-linear"
+                        :style="{ 
+                            width: Math.max(0, 100 - ((Date.now() - toast.timestamp) / toast.duration * 100)) + '%',
+                            transitionDuration: '100ms'
+                        }"
+                    ></div>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+{% endwith %}
+
+<script>
+// Adicionar estilos para animação shimmer se não existir
+if (!document.querySelector('#sonner-styles')) {
+    const style = document.createElement('style');
+    style.id = 'sonner-styles';
+    style.textContent = `
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .animate-shimmer {
+            animation: shimmer 2s infinite;
+        }
+    `;
+    document.head.appendChild(style);
+}
+</script>

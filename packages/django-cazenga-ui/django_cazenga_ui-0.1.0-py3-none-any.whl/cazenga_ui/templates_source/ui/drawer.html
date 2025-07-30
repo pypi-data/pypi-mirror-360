@@ -1,0 +1,145 @@
+<!--
+Componente: Drawer
+Uso: include "components/drawer.html" with trigger_text="Abrir Drawer" title="Título" content="Conteúdo"
+
+Parâmetros:
+- trigger_text: Texto do botão trigger (obrigatório)
+- trigger_variant: Variante do botão trigger (padrão: default)
+- title: Título do drawer (opcional)
+- description: Descrição do drawer (opcional)
+- content: Conteúdo HTML do drawer (opcional)
+- footer: Conteúdo HTML do footer (opcional)
+- direction: top, right, bottom, left (padrão: bottom)
+- size: sm, md, lg, xl, full (padrão: md)
+- class: Classes CSS adicionais (opcional)
+- handle: true/false - mostrar handle de arraste (padrão: true para bottom/top)
+- snap_points: Lista de pontos de snap (ex: "25,50,75")
+
+Exemplo:
+include "components/drawer.html" with 
+    trigger_text="Abrir Menu" 
+    title="Menu de Navegação"
+    description="Selecione uma opção"
+    content="<p>Conteúdo do menu...</p>"
+    direction="bottom"
+    size="lg"
+-->
+{% with direction=direction|default:"bottom" size=size|default:"md" trigger_variant=trigger_variant|default:"default" handle=handle|default:True %}
+<div 
+    x-data="{ 
+        open: false,
+        startY: 0,
+        currentY: 0,
+        isDragging: false,
+        snapPoints: '{{ snap_points|default:"30,70" }}'.split(',').map(p => parseInt(p)),
+        handleDragStart(e) {
+            this.isDragging = true;
+            this.startY = e.touches ? e.touches[0].clientY : e.clientY;
+            this.currentY = this.startY;
+        },
+        handleDragMove(e) {
+            if (!this.isDragging) return;
+            this.currentY = e.touches ? e.touches[0].clientY : e.clientY;
+            const deltaY = this.currentY - this.startY;
+            if (deltaY > 100) this.open = false;
+        },
+        handleDragEnd() {
+            this.isDragging = false;
+        }
+    }"
+    @keydown.escape.window="open = false"
+    class="{{ class|default:'' }}"
+>
+    <!-- Trigger Button -->
+    <button
+        @click="open = true"
+        type="button"
+        class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50
+            {% if trigger_variant == 'default' %}bg-primary text-primary-foreground hover:bg-primary/90
+            {% elif trigger_variant == 'destructive' %}bg-destructive text-destructive-foreground hover:bg-destructive/90
+            {% elif trigger_variant == 'outline' %}border border-input bg-background hover:bg-accent hover:text-accent-foreground
+            {% elif trigger_variant == 'secondary' %}bg-secondary text-secondary-foreground hover:bg-secondary/80
+            {% elif trigger_variant == 'ghost' %}hover:bg-accent hover:text-accent-foreground
+            {% elif trigger_variant == 'link' %}text-primary underline-offset-4 hover:underline
+            {% else %}bg-primary text-primary-foreground hover:bg-primary/90{% endif %}"
+    >
+        {{ trigger_text }}
+    </button>
+
+    <!-- Drawer Overlay and Content -->
+    <div 
+        x-show="open"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        @click="open = false"
+        class="fixed inset-0 z-50 bg-black/50"
+        style="display: none;"
+    >
+        <!-- Drawer Panel -->
+        <div 
+            @click.stop
+            @touchstart="handleDragStart"
+            @touchmove="handleDragMove"
+            @touchend="handleDragEnd"
+            @mousedown="handleDragStart"
+            @mousemove="handleDragMove"
+            @mouseup="handleDragEnd"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="{% if direction == 'bottom' %}translate-y-full{% elif direction == 'top' %}-translate-y-full{% elif direction == 'right' %}translate-x-full{% elif direction == 'left' %}-translate-x-full{% endif %}"
+            x-transition:enter-end="translate-x-0 translate-y-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="translate-x-0 translate-y-0"
+            x-transition:leave-end="{% if direction == 'bottom' %}translate-y-full{% elif direction == 'top' %}-translate-y-full{% elif direction == 'right' %}translate-x-full{% elif direction == 'left' %}-translate-x-full{% endif %}"
+            class="fixed bg-background flex flex-col shadow-lg
+                {% if direction == 'bottom' %}inset-x-0 bottom-0 rounded-t-lg border-t mt-24
+                    {% if size == 'sm' %}max-h-[30vh]{% elif size == 'lg' %}max-h-[80vh]{% elif size == 'xl' %}max-h-[90vh]{% elif size == 'full' %}max-h-full{% else %}max-h-[60vh]{% endif %}
+                {% elif direction == 'top' %}inset-x-0 top-0 rounded-b-lg border-b mb-24
+                    {% if size == 'sm' %}max-h-[30vh]{% elif size == 'lg' %}max-h-[80vh]{% elif size == 'xl' %}max-h-[90vh]{% elif size == 'full' %}max-h-full{% else %}max-h-[60vh]{% endif %}
+                {% elif direction == 'right' %}inset-y-0 right-0 h-full border-l
+                    {% if size == 'sm' %}w-80{% elif size == 'lg' %}w-96{% elif size == 'xl' %}w-1/2{% elif size == 'full' %}w-full{% else %}w-3/4 sm:max-w-sm{% endif %}
+                {% elif direction == 'left' %}inset-y-0 left-0 h-full border-r
+                    {% if size == 'sm' %}w-80{% elif size == 'lg' %}w-96{% elif size == 'xl' %}w-1/2{% elif size == 'full' %}w-full{% else %}w-3/4 sm:max-w-sm{% endif %}
+                {% endif %}"
+        >
+            <!-- Drag Handle -->
+            {% if handle and direction == 'bottom' or direction == 'top' %}
+                <div class="mx-auto {% if direction == 'bottom' %}mt-4{% else %}mb-4{% endif %} h-2 w-[100px] shrink-0 rounded-full bg-muted cursor-grab active:cursor-grabbing"></div>
+            {% endif %}
+
+            <!-- Header -->
+            {% if title or description %}
+                <div class="flex flex-col gap-1.5 p-6 {% if direction == 'bottom' or direction == 'top' %}text-center md:text-left{% endif %}">
+                    {% if title %}
+                        <h2 class="text-lg font-semibold text-foreground">{{ title }}</h2>
+                    {% endif %}
+                    {% if description %}
+                        <p class="text-sm text-muted-foreground">{{ description }}</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <!-- Content -->
+            <div class="flex-1 overflow-y-auto p-6 {% if not title and not description %}{% if handle and direction == 'bottom' %}pt-2{% elif handle and direction == 'top' %}pb-2{% endif %}{% endif %}">
+                {% if content %}
+                    {{ content|safe }}
+                {% else %}
+                    {% block drawer_content %}
+                        <p class="text-muted-foreground">Conteúdo do drawer...</p>
+                    {% endblock %}
+                {% endif %}
+            </div>
+
+            <!-- Footer -->
+            {% if footer %}
+                <div class="mt-auto flex flex-col gap-2 p-6 border-t">
+                    {{ footer|safe }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endwith %}

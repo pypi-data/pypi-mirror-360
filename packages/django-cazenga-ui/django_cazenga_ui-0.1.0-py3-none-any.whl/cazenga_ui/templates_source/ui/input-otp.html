@@ -1,0 +1,143 @@
+<!--
+Componente: Input OTP
+Uso: include "components/input-otp.html" with length=6 name="otp"
+
+Parâmetros:
+- length: Número de dígitos do OTP (padrão: 6)
+- name: Nome do input hidden (obrigatório para formulários)
+- value: Valor inicial do OTP (opcional)
+- placeholder: Placeholder para cada campo (padrão: "•")
+- disabled: true/false - desabilitar input (padrão: false)
+- separator_at: Posição para adicionar separador (opcional, ex: 3 para XXX-XXX)
+- separator: Caractere separador (padrão: "-")
+- type: text, number, password (padrão: text)
+- class: Classes CSS adicionais (opcional)
+- onchange: Função JavaScript para executar na mudança (opcional)
+- oncomplete: Função JavaScript para executar quando completo (opcional)
+
+Exemplo:
+include "components/input-otp.html" with 
+    length=6 
+    name="verification_code"
+    separator_at=3
+    type="number"
+-->
+{% with length=length|default:6 placeholder=placeholder|default:"•" disabled=disabled|default:False separator_at=separator_at|default:None separator=separator|default:"-" type=type|default:"text" %}
+<div 
+    x-data="{ 
+        length: {{ length }},
+        value: '{{ value|default:'' }}',
+        digits: Array.from({length: {{ length }}}, (_, i) => '{{ value|default:'' }}'.charAt(i) || ''),
+        focusedIndex: 0,
+        
+        updateValue() {
+            this.value = this.digits.join('');
+            {% if onchange %}{{ onchange }}{% endif %}
+            if (this.value.length === this.length) {
+                {% if oncomplete %}{{ oncomplete }}{% endif %}
+            }
+        },
+        
+        handleInput(index, event) {
+            const input = event.target;
+            const value = input.value;
+            
+            if (value.length > 1) {
+                // Handle paste
+                const pastedValue = value.slice(0, this.length);
+                for (let i = 0; i < pastedValue.length; i++) {
+                    this.digits[index + i] = pastedValue[i] || '';
+                }
+                this.updateValue();
+                this.focusNext(Math.min(index + pastedValue.length, this.length - 1));
+            } else {
+                this.digits[index] = value;
+                this.updateValue();
+                if (value && index < this.length - 1) {
+                    this.focusNext(index + 1);
+                }
+            }
+        },
+        
+        handleKeydown(index, event) {
+            if (event.key === 'Backspace' && !this.digits[index] && index > 0) {
+                this.focusPrevious(index - 1);
+            } else if (event.key === 'ArrowLeft' && index > 0) {
+                event.preventDefault();
+                this.focusPrevious(index - 1);
+            } else if (event.key === 'ArrowRight' && index < this.length - 1) {
+                event.preventDefault();
+                this.focusNext(index + 1);
+            } else if (event.key === 'Delete') {
+                this.digits[index] = '';
+                this.updateValue();
+            }
+        },
+        
+        focusNext(index) {
+            this.focusedIndex = index;
+            this.$nextTick(() => {
+                const input = this.$refs['input-' + index];
+                if (input) input.focus();
+            });
+        },
+        
+        focusPrevious(index) {
+            this.focusedIndex = index;
+            this.$nextTick(() => {
+                const input = this.$refs['input-' + index];
+                if (input) input.focus();
+            });
+        }
+    }"
+    class="flex items-center gap-2 {{ class|default:'' }}"
+>
+    {% for i in "x"|ljust:length %}
+        {% if separator_at and forloop.counter0 == separator_at %}
+            <div class="text-muted-foreground select-none">{{ separator }}</div>
+        {% endif %}
+        
+        <input
+            x-ref="input-{{ forloop.counter0 }}"
+            x-model="digits[{{ forloop.counter0 }}]"
+            @input="handleInput({{ forloop.counter0 }}, $event)"
+            @keydown="handleKeydown({{ forloop.counter0 }}, $event)"
+            @focus="focusedIndex = {{ forloop.counter0 }}"
+            type="{{ type }}"
+            inputmode="{% if type == 'number' %}numeric{% else %}text{% endif %}"
+            maxlength="1"
+            {% if disabled %}disabled{% endif %}
+            class="
+                flex h-9 w-9 items-center justify-center border border-input bg-background text-sm shadow-xs transition-colors
+                file:border-0 file:bg-transparent file:text-sm file:font-medium
+                placeholder:text-muted-foreground
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+                disabled:cursor-not-allowed disabled:opacity-50
+                text-center font-mono
+                first:rounded-l-md last:rounded-r-md
+                data-[focused=true]:z-10 data-[focused=true]:ring-2 data-[focused=true]:ring-ring
+                aria-invalid:border-destructive aria-invalid:ring-destructive
+            "
+            :data-focused="focusedIndex === {{ forloop.counter0 }}"
+            placeholder="{{ placeholder }}"
+            aria-label="Dígito {{ forloop.counter }} de {{ length }}"
+        >
+    {% endfor %}
+    
+    <!-- Hidden input para formulários -->
+    {% if name %}
+        <input type="hidden" name="{{ name }}" x-model="value">
+    {% endif %}
+    
+    <!-- Cursor piscante -->
+    <template x-for="(digit, index) in digits" :key="index">
+        <div 
+            x-show="focusedIndex === index && !digit"
+            class="absolute pointer-events-none"
+            :style="{ left: (index * 44 + 18) + 'px' }"
+        >
+            <div class="w-px h-4 bg-foreground animate-pulse"></div>
+        </div>
+    </template>
+</div>
+{% endwith %}

@@ -1,0 +1,65 @@
+<!--
+Componente: Badge
+Uso: include "components/badge.html" with text="Novo" variant="default"
+
+Parâmetros:
+- text: Texto do badge (obrigatório)
+- variant: default, secondary, destructive, outline (padrão: default)
+- icon: Ícone SVG para mostrar antes do texto (opcional)
+- removable: true/false - se o badge pode ser removido (padrão: false)
+- href: URL se o badge for um link (opcional)
+- class: Classes CSS adicionais (opcional)
+-->
+{% with variant=variant|default:"default" removable=removable|default:False %}
+{% if href %}
+<a 
+{% else %}
+<span
+{% endif %}
+    {% if removable %}
+        x-data="{ visible: true }"
+        x-show="visible"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 transform scale-100"
+        x-transition:leave-end="opacity-0 transform scale-95"
+    {% endif %}
+    {% if href %}href="{{ href }}"{% endif %}
+    class="inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 gap-1 
+        focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] 
+        transition-[color,box-shadow] overflow-hidden
+        {% if variant == 'secondary' %}
+            border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/90
+        {% elif variant == 'destructive' %}
+            border-transparent bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60
+        {% elif variant == 'outline' %}
+            text-foreground hover:bg-accent hover:text-accent-foreground border-border
+        {% else %}
+            border-transparent bg-primary text-primary-foreground hover:bg-primary/90
+        {% endif %}
+        {{ class|default:'' }}"
+>
+    {% if icon %}
+        <span class="size-3 pointer-events-none">
+            {{ icon|safe }}
+        </span>
+    {% endif %}
+    
+    {{ text }}
+    
+    {% if removable %}
+        <button
+            @click.stop="visible = false"
+            class="ml-1 ring-offset-background rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            aria-label="Remover badge"
+        >
+            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    {% endif %}
+{% if href %}
+</a>
+{% else %}
+</span>
+{% endif %}
+{% endwith %}

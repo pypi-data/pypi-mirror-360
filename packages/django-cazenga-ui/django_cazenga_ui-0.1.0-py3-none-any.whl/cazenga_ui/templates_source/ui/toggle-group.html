@@ -1,0 +1,116 @@
+<!--
+Componente: Toggle Group (Versão Completa)
+Uso: include "components/toggle-group.html" with items=item_list labels=label_list value="item1"
+
+Parâmetros:
+- items: Lista de itens/valores (obrigatório) - ex: ["left", "center", "right"]
+- labels: Lista de labels para exibição (opcional, usa items se não fornecido) - ex: ["Esquerda", "Centro", "Direita"]
+- icons: Lista de ícones SVG (opcional) - ex: ["<svg>...</svg>", "<svg>...</svg>", "<svg>...</svg>"]
+- value: Valor selecionado inicial (single) ou lista de valores (multiple)
+- type: single, multiple (padrão: single)
+- variant: default, outline (padrão: default)
+- size: default, sm, lg (padrão: default)
+- name: Nome do input hidden (obrigatório para formulários)
+- disabled: true/false (padrão: false)
+- class: Classes CSS adicionais (opcional)
+- onchange: Função JavaScript para executar na mudança (opcional)
+
+Exemplo:
+include "components/toggle-group.html" with 
+    items=alignment_items
+    labels=alignment_labels
+    icons=alignment_icons
+    value="center"
+    type="single"
+    name="alignment"
+
+Onde:
+- alignment_items = ["left", "center", "right"]
+- alignment_labels = ["Esquerda", "Centro", "Direita"]
+- alignment_icons = ["<svg>...</svg>", "<svg>...</svg>", "<svg>...</svg>"]
+-->
+{% with name_value=name|default:"" items_value=items|default:"[]" %}
+{% with type_value=type|default:"single" variant_value=variant|default:"default" size_value=size|default:"default" disabled_value=disabled|default:False %}
+<div 
+    x-data="{ 
+        selectedValues: '{{ type_value }}' === 'multiple' ? 
+            {% if value %}{{ value|safe }}{% else %}[]{% endif %} : 
+            {% if value %}['{{ value }}']{% else %}[]{% endif %},
+        type: '{{ type_value }}',
+        
+        isSelected(value) {
+            return this.selectedValues.includes(value);
+        },
+        
+        toggle(value) {
+            if ({{ disabled_value|yesno:'true,false' }}) return;
+            
+            if (this.type === 'single') {
+                this.selectedValues = this.selectedValues[0] === value ? [] : [value];
+            } else {
+                const index = this.selectedValues.indexOf(value);
+                if (index === -1) {
+                    this.selectedValues.push(value);
+                } else {
+                    this.selectedValues.splice(index, 1);
+                }
+            }
+            
+            {% if onchange %}{{ onchange }}{% endif %}
+        }
+    }"
+    class="flex w-fit items-center rounded-md {% if variant_value == 'outline' %}shadow-sm{% endif %} {{ class|default:'' }}"
+    role="group"
+    {% if disabled_value %}aria-disabled="true"{% endif %}
+>
+    {% for item in items_value %}
+        <button
+            @click="toggle('{{ item }}')"
+            :class="{ 'bg-accent text-accent-foreground': isSelected('{{ item }}') }"
+            type="button"
+            {% if disabled_value %}disabled{% endif %}
+            class="inline-flex items-center justify-center gap-2 text-sm font-medium hover:bg-muted hover:text-muted-foreground disabled:pointer-events-none disabled:opacity-50 transition-colors whitespace-nowrap min-w-0 flex-1 shrink-0 rounded-none shadow-none focus:z-10 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+                {% if forloop.first %}rounded-l-md{% endif %}
+                {% if forloop.last %}rounded-r-md{% endif %}
+                {% if variant_value == 'default' %}bg-transparent
+                {% elif variant_value == 'outline' %}border border-input bg-transparent hover:bg-accent hover:text-accent-foreground
+                    {% if not forloop.first %}border-l-0{% endif %}
+                {% else %}bg-transparent{% endif %}
+                {% if size_value == 'sm' %}h-8 px-1.5 min-w-8
+                {% elif size_value == 'lg' %}h-10 px-2.5 min-w-10
+                {% else %}h-9 px-2 min-w-9{% endif %}"
+            :aria-pressed="isSelected('{{ item }}')"
+        >
+            {% comment %}Ícone se fornecido{% endcomment %}
+            {% if icons %}
+                {% for icon in icons %}
+                    {% if forloop.counter0 == forloop.parentloop.counter0 %}
+                        <span class="[&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:pointer-events-none">
+                            {{ icon|safe }}
+                        </span>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            
+            {% comment %}Label se fornecido, senão usa o item{% endcomment %}
+            {% if labels %}
+                {% for label in labels %}
+                    {% if forloop.counter0 == forloop.parentloop.counter0 %}
+                        <span>{{ label }}</span>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <span>{{ item }}</span>
+            {% endif %}
+        </button>
+    {% endfor %}
+    
+    <!-- Hidden inputs para formulários -->
+    {% if name_value %}
+        <template x-for="value in selectedValues" :key="value">
+            <input type="hidden" :name="type === 'multiple' ? '{{ name_value }}[]' : '{{ name_value }}'" :value="value">
+        </template>
+    {% endif %}
+</div>
+{% endwith %}
+{% endwith %}

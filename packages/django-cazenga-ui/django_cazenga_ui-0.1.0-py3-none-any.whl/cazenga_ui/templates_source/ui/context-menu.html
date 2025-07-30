@@ -1,0 +1,167 @@
+<!--
+Componente: Context Menu
+Uso: include "components/context-menu.html" with menu_items=context_items content="Clique direito aqui"
+
+Parâmetros:
+- menu_items: Lista de itens do menu contextual (obrigatório)
+- content: Conteúdo que será clicado (obrigatório)
+- class: Classes CSS adicionais (opcional)
+
+Exemplo de menu_items:
+[
+    {"title": "Copiar", "action": "copy()", "shortcut": "Ctrl+C", "icon": "<svg>...</svg>"},
+    {"title": "Colar", "action": "paste()", "shortcut": "Ctrl+V", "disabled": true},
+    {"separator": true},
+    {"title": "Excluir", "action": "delete()", "variant": "destructive"},
+    {
+        "title": "Mais opções",
+        "submenu": [
+            {"title": "Renomear", "action": "rename()"},
+            {"title": "Propriedades", "action": "properties()"}
+        ]
+    }
+]
+-->
+<div 
+    x-data="{ 
+        open: false,
+        x: 0,
+        y: 0,
+        
+        showMenu(event) {
+            event.preventDefault();
+            this.x = event.clientX;
+            this.y = event.clientY;
+            this.open = true;
+            
+            // Ajustar posição se sair da tela
+            this.$nextTick(() => {
+                const menu = this.$refs.contextMenu;
+                const rect = menu.getBoundingClientRect();
+                
+                if (rect.right > window.innerWidth) {
+                    this.x = window.innerWidth - rect.width - 10;
+                }
+                if (rect.bottom > window.innerHeight) {
+                    this.y = window.innerHeight - rect.height - 10;
+                }
+            });
+        },
+        
+        hideMenu() {
+            this.open = false;
+        },
+        
+        executeAction(action) {
+            this.hideMenu();
+            if (action) {
+                eval(action);
+            }
+        }
+    }"
+    @click.away="hideMenu()"
+    class="{{ class|default:'' }}"
+>
+    <!-- Trigger Content -->
+    <div @contextmenu="showMenu($event)" class="select-none">
+        {{ content|safe }}
+    </div>
+    
+    <!-- Context Menu -->
+    <div 
+        x-show="open"
+        x-ref="contextMenu"
+        x-transition:enter="transition ease-out duration-100"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-75"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        :style="`position: fixed; top: ${y}px; left: ${x}px; z-index: 50;`"
+        class="min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground p-1 shadow-md"
+        style="display: none;"
+    >
+        {% for item in menu_items %}
+            {% if item.separator %}
+                <!-- Separator -->
+                <div class="bg-border -mx-1 my-1 h-px"></div>
+            {% elif item.label %}
+                <!-- Label -->
+                <div class="px-2 py-1.5 text-sm font-medium text-foreground">
+                    {{ item.label }}
+                </div>
+            {% elif item.submenu %}
+                <!-- Submenu Item -->
+                <div 
+                    x-data="{ subOpen: false }"
+                    @mouseenter="subOpen = true"
+                    @mouseleave="subOpen = false"
+                    class="relative"
+                >
+                    <div class="flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                        {% if item.icon %}
+                            {{ item.icon|safe }}
+                        {% endif %}
+                        {{ item.title }}
+                        <svg class="ml-auto size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </div>
+                    
+                    <!-- Submenu -->
+                    <div 
+                        x-show="subOpen"
+                        x-transition:enter="transition ease-out duration-100"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-75"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
+                        class="absolute top-0 left-full z-50 ml-1 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground p-1 shadow-lg"
+                        style="display: none;"
+                    >
+                        {% for subitem in item.submenu %}
+                            {% if subitem.separator %}
+                                <div class="bg-border -mx-1 my-1 h-px"></div>
+                            {% else %}
+                                <div 
+                                    @click="executeAction('{{ subitem.action|default:'' }}')"
+                                    class="relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                                    :class="{ 'opacity-50 pointer-events-none': {{ subitem.disabled|yesno:'true,false' }} }"
+                                >
+                                    {% if subitem.icon %}
+                                        {{ subitem.icon|safe }}
+                                    {% endif %}
+                                    {{ subitem.title }}
+                                    {% if subitem.shortcut %}
+                                        <span class="ml-auto text-xs tracking-widest text-muted-foreground">
+                                            {{ subitem.shortcut }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <!-- Regular Item -->
+                <div 
+                    @click="executeAction('{{ item.action|default:'' }}')"
+                    class="relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground
+                        {% if item.variant == 'destructive' %}text-destructive hover:bg-destructive/10 focus:bg-destructive/10 hover:text-destructive focus:text-destructive{% endif %}"
+                    :class="{ 'opacity-50 pointer-events-none': {{ item.disabled|yesno:'true,false' }} }"
+                >
+                    {% if item.icon %}
+                        {{ item.icon|safe }}
+                    {% endif %}
+                    {{ item.title }}
+                    {% if item.shortcut %}
+                        <span class="ml-auto text-xs tracking-widest text-muted-foreground">
+                            {{ item.shortcut }}
+                        </span>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>

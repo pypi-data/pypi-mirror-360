@@ -1,0 +1,47 @@
+<!--
+Componente: Aspect Ratio
+Uso: include "components/aspect-ratio.html" with content="Conteúdo" ratio="16/9"
+
+Parâmetros:
+- content: Conteúdo HTML (obrigatório)
+- ratio: Proporção de aspecto (padrão: 16/9)
+- class: Classes CSS adicionais (opcional)
+- content_class: Classes CSS adicionais para o conteúdo (opcional)
+
+Exemplos comuns:
+- 16/9 (widescreen): include "components/aspect-ratio.html" with ratio="16/9"
+- 4/3 (tradicional): include "components/aspect-ratio.html" with ratio="4/3"
+- 1/1 (quadrado): include "components/aspect-ratio.html" with ratio="1/1"
+- 3/4 (retrato): include "components/aspect-ratio.html" with ratio="3/4"
+- 9/16 (vertical): include "components/aspect-ratio.html" with ratio="9/16"
+-->
+{% with ratio=ratio|default:"16/9" %}
+<div class="relative w-full {{ class|default:'' }}">
+    {% comment %}Usar padding-bottom para manter proporção{% endcomment %}
+    {% if ratio == "16/9" or ratio == "16:9" %}
+        <div style="padding-bottom: 56.25%;"></div>
+    {% elif ratio == "4/3" or ratio == "4:3" %}
+        <div style="padding-bottom: 75%;"></div>
+    {% elif ratio == "1/1" or ratio == "1:1" %}
+        <div style="padding-bottom: 100%;"></div>
+    {% elif ratio == "3/2" or ratio == "3:2" %}
+        <div style="padding-bottom: 66.67%;"></div>
+    {% elif ratio == "9/16" or ratio == "9:16" %}
+        <div style="padding-bottom: 177.78%;"></div>
+    {% elif ratio == "21/9" or ratio == "21:9" %}
+        <div style="padding-bottom: 42.86%;"></div>
+    {% else %}
+        <div style="padding-bottom: 56.25%;"></div>
+    {% endif %}
+    
+    <div class="absolute inset-0 {{ content_class|default:'' }}">
+        {% if content %}
+            {{ content|safe }}
+        {% else %}
+            <div class="size-full bg-muted rounded-md flex items-center justify-center">
+                <p class="text-muted-foreground text-sm">Conteúdo {{ ratio }}</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endwith %}

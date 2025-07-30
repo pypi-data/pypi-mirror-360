@@ -1,0 +1,213 @@
+<!--
+Componente: Command
+Uso: include "components/command.html" with commands=command_list trigger_text="Abrir comandos"
+
+Parâmetros:
+- commands: Lista de comandos (obrigatório)
+- trigger_text: Texto do botão trigger (opcional)
+- placeholder: Placeholder da busca (padrão: "Digite um comando...")
+- shortcut: Atalho do teclado (padrão: "Ctrl+K")
+
+Exemplo de commands:
+[
+    {
+        "group": "Navegação",
+        "items": [
+            {"title": "Dashboard", "description": "Ir para dashboard", "action": "window.location='/dashboard'", "shortcut": "Ctrl+D"},
+            {"title": "Perfil", "description": "Ver perfil", "action": "window.location='/profile'"}
+        ]
+    },
+    {
+        "group": "Ações",
+        "items": [
+            {"title": "Novo Post", "description": "Criar novo post", "action": "createPost()", "shortcut": "Ctrl+N"},
+            {"title": "Configurações", "description": "Abrir configurações", "action": "openSettings()"}
+        ]
+    }
+]
+-->
+{% with placeholder=placeholder|default:"Digite um comando..." shortcut=shortcut|default:"Ctrl+K" %}
+<div 
+    x-data="{ 
+        open: false,
+        search: '',
+        selectedIndex: 0,
+        
+        get filteredCommands() {
+            if (!this.search) return {{ commands|safe }};
+            
+            const filtered = [];
+            {{ commands|safe }}.forEach(group => {
+                const filteredItems = group.items.filter(item => 
+                    item.title.toLowerCase().includes(this.search.toLowerCase()) ||
+                    (item.description && item.description.toLowerCase().includes(this.search.toLowerCase()))
+                );
+                if (filteredItems.length > 0) {
+                    filtered.push({
+                        group: group.group,
+                        items: filteredItems
+                    });
+                }
+            });
+            return filtered;
+        },
+        
+        get allFilteredItems() {
+            const items = [];
+            this.filteredCommands.forEach(group => {
+                group.items.forEach(item => items.push(item));
+            });
+            return items;
+        },
+        
+        executeCommand(item) {
+            this.open = false;
+            this.search = '';
+            this.selectedIndex = 0;
+            if (item.action) {
+                eval(item.action);
+            }
+        },
+        
+        handleKeydown(event) {
+            const items = this.allFilteredItems;
+            
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                this.selectedIndex = Math.min(this.selectedIndex + 1, items.length - 1);
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                this.selectedIndex = Math.max(this.selectedIndex - 1, 0);
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                if (items[this.selectedIndex]) {
+                    this.executeCommand(items[this.selectedIndex]);
+                }
+            } else if (event.key === 'Escape') {
+                this.open = false;
+                this.search = '';
+                this.selectedIndex = 0;
+            }
+        },
+        
+        init() {
+            // Atalho do teclado
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    this.open = !this.open;
+                    if (this.open) {
+                        this.$nextTick(() => {
+                            this.$refs.searchInput.focus();
+                        });
+                    }
+                }
+            });
+        }
+    }"
+    x-init="init()"
+>
+    <!-- Trigger Button -->
+    {% if trigger_text %}
+        <button 
+            @click="open = true"
+            class="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+        >
+            <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            {{ trigger_text }}
+            <kbd class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                <span class="text-xs">{{ shortcut }}</span>
+            </kbd>
+        </button>
+    {% endif %}
+    
+    <!-- Command Palette Dialog -->
+    <div 
+        x-show="open"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        @click="open = false"
+        class="fixed inset-0 z-50 bg-black/50"
+        style="display: none;"
+    >
+        <div 
+            @click.stop
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="fixed left-1/2 top-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg"
+        >
+            <!-- Search Input -->
+            <div class="flex h-12 items-center gap-2 border-b px-3">
+                <svg class="size-4 shrink-0 opacity-50" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                <input
+                    x-ref="searchInput"
+                    x-model="search"
+                    @keydown="handleKeydown"
+                    @input="selectedIndex = 0"
+                    type="text"
+                    placeholder="{{ placeholder }}"
+                    class="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                >
+            </div>
+            
+            <!-- Commands List -->
+            <div class="max-h-[300px] scroll-py-1 overflow-y-auto p-1">
+                <template x-for="(group, groupIndex) in filteredCommands" :key="groupIndex">
+                    <div>
+                        <!-- Group Header -->
+                        <div 
+                            x-text="group.group"
+                            class="px-2 py-1.5 text-xs font-medium text-muted-foreground"
+                        ></div>
+                        
+                        <!-- Group Items -->
+                        <template x-for="(item, itemIndex) in group.items" :key="itemIndex">
+                            <div 
+                                @click="executeCommand(item)"
+                                :class="{ 'bg-accent text-accent-foreground': selectedIndex === allFilteredItems.indexOf(item) }"
+                                class="relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground"
+                            >
+                                <div class="flex-1">
+                                    <div x-text="item.title" class="font-medium"></div>
+                                    <div 
+                                        x-show="item.description"
+                                        x-text="item.description" 
+                                        class="text-xs text-muted-foreground"
+                                    ></div>
+                                </div>
+                                
+                                <!-- Shortcut -->
+                                <div 
+                                    x-show="item.shortcut"
+                                    x-text="item.shortcut"
+                                    class="ml-auto text-xs tracking-widest text-muted-foreground"
+                                ></div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                
+                <!-- No Results -->
+                <div 
+                    x-show="filteredCommands.length === 0"
+                    class="py-6 text-center text-sm text-muted-foreground"
+                >
+                    Nenhum comando encontrado
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endwith %}
