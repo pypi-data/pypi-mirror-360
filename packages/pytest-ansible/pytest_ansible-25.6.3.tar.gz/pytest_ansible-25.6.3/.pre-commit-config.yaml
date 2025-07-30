@@ -1,0 +1,111 @@
+---
+ci:
+  # format compatible with commitlint
+  autoupdate_commit_msg: "chore: pre-commit autoupdate"
+  autoupdate_schedule: monthly
+  autofix_commit_msg: "chore: auto fixes from pre-commit.com hooks"
+  skip:
+    - deps
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: debug-statements
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/Lucas-C/pre-commit-hooks.git
+    rev: v1.5.5
+    hooks:
+      - id: remove-tabs
+        exclude: >
+          (?x)^(
+            .config/pydoclint-baseline.txt
+          )$
+
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.6.2
+    hooks:
+      - id: prettier
+        always_run: true
+        additional_dependencies:
+          - prettier
+          - prettier-plugin-toml
+          - prettier-plugin-sort-json
+
+  - repo: https://github.com/pappasam/toml-sort
+    rev: v0.24.2
+    hooks:
+      - id: toml-sort-fix
+
+  - repo: https://github.com/tox-dev/tox-ini-fmt
+    rev: 1.5.0
+    hooks:
+      - id: tox-ini-fmt
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.1
+    hooks:
+      - id: ruff-format
+        alias: ruff
+      - id: ruff-check
+        alias: ruff
+  - repo: https://github.com/streetsidesoftware/cspell-cli
+    rev: v9.0.1
+    hooks:
+      - id: cspell
+        name: Spell check with cspell
+
+  - repo: https://github.com/jsh9/pydoclint
+    rev: "0.6.7"
+    hooks:
+      - id: pydoclint
+        # This allows automatic reduction of the baseline file when needed.
+        entry: sh -ec "pydoclint . && pydoclint --generate-baseline=1 ."
+        pass_filenames: false
+
+  - repo: https://github.com/pycqa/pylint.git
+    rev: v3.3.7
+    hooks:
+      - id: pylint
+        args:
+          - --output-format=colorized
+        additional_dependencies:
+          - ansible-compat
+          - ansible-core
+          - molecule
+          - pytest
+          - pyyaml
+          - setuptools
+          - typing_extensions
+
+  - repo: https://github.com/pre-commit/mirrors-mypy.git
+    rev: v1.16.1
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - ansible-compat
+          - molecule
+          - pytest
+          - types-pyyaml
+          - types-setuptools
+          - typing_extensions
+        # Override default pre-commit '--ignore-missing-imports'
+        args: [--strict]
+
+  # Keep last due to being considerably slower than the others:
+  - repo: local
+    hooks:
+      - id: deps
+        name: Upgrade constraints files and requirements
+        language: python
+        entry: python3 -m uv pip compile -q --all-extras --output-file=.config/constraints.txt pyproject.toml --upgrade
+        pass_filenames: false
+        stages:
+          - manual
+        additional_dependencies:
+          - uv>=0.4.3
