@@ -1,0 +1,57 @@
+[project]
+name = "nshutils"
+version = "0.34.0"
+description = ""
+authors = [{ name = "Nima Shoghi", email = "nimashoghi@gmail.com" }]
+requires-python = ">=3.9,<4.0"
+readme = "README.md"
+
+dependencies = [
+    "lazy-loader",
+    "numpy",
+    "typing-extensions",
+    "jaxtyping",
+    "beartype",
+    "uuid7",
+]
+
+[project.optional-dependencies]
+snoop = ["pysnooper"]
+pprint = ["rich[jupyter]", "treescope; python_version >= '3.10'"]
+extra = ["pysnooper", "rich[jupyter]", "treescope; python_version >= '3.10'"]
+
+[project.urls]
+homepage = "https://github.com/nimashoghi/nshutils"
+
+[tool.poetry.group.dev.dependencies]
+basedpyright = "*"
+ruff = "*"
+ipykernel = "*"
+ipywidgets = "*"
+pytest = "*"
+pytest-cov = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.basedpyright]
+typeCheckingMode = "standard"
+deprecateTypingAliases = true
+strictListInference = true
+strictDictionaryInference = true
+strictSetInference = true
+reportPrivateImportUsage = false
+
+[tool.ruff.lint]
+select = ["FA102", "FA100"]
+ignore = ["F722", "F821", "E731", "E741"]
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "--cov=nshutils --cov-report=term-missing"
