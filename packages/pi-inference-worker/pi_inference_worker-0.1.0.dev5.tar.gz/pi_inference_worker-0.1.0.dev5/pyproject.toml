@@ -1,0 +1,51 @@
+[project]
+name = "pi-inference-worker"
+dynamic = ["version"]
+description = "prime inference worker"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = {text = "MIT"}
+authors = [
+    { name = "Jackmin801", email = "ongjackm@gmail.com" }
+]
+dependencies = [
+    "fastapi[standard]",
+    "uvicorn[standard]",
+    "toploc>=0.1.6",
+    "torch",
+    "transformers",
+    "vllm",
+    "pyarrow",
+    "shardcast>=0.1.8",
+    "setuptools",
+    "datasets",
+]
+
+[project.optional-dependencies]
+gcp = [
+    "google-cloud-storage",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "ruff",
+    "pre-commit",
+    "pytest",
+    "pytest-asyncio",
+]
+
+[project.scripts]
+pi-inference-worker = "pi_inference_worker.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "pi_inference_worker/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pi_inference_worker"]
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
