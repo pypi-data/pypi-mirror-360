@@ -1,0 +1,162 @@
+{
+  "cdk": {
+    "parameters": [
+      {
+        "placeholder": "{{WORKLOAD_NAME}}",
+        "env_var_name": "CDK_WORKLOAD_NAME",
+        "cdk_parameter_name": "WorkloadName"
+      },
+      {
+        "placeholder": "{{CDK_SYNTH_COMMAND_FILE}}",
+        "value": "../../samples/docker_build/commands/cdk_synth.sh",
+        "cdk_parameter_name": "CdkSynthCommandFile"
+      },
+      {
+        "placeholder": "{{AWS_ACCOUNT}}",
+        "env_var_name": "AWS_ACCOUNT_NUMBER",
+        "cdk_parameter_name": "AccountNumber"
+      },
+      {
+        "placeholder": "{{DEVOPS_AWS_ACCOUNT}}",
+        "env_var_name": "DEVOPS_AWS_ACCOUNT",
+        "cdk_parameter_name": "AccountNumber"
+      },
+      {
+        "placeholder": "{{DEVOPS_REGION}}",
+        "env_var_name": "DEVOPS_REGION",
+        "cdk_parameter_name": "AwsRegion"
+      },
+      {
+        "placeholder": "{{CODE_REPOSITORY_NAME}}",
+        "env_var_name": "CODE_REPOSITORY_NAME",
+        "cdk_parameter_name": "CodeRepositoryName"
+      },
+      {
+        "placeholder": "{{CODE_REPOSITORY_CONNECTOR_ARN}}",
+        "env_var_name": "CODE_REPOSITORY_CONNECTOR_ARN",
+        "cdk_parameter_name": "CodeRepositoryArn"
+      },
+      {
+        "placeholder": "{{SITE_BUCKET_NAME}}",
+        "env_var_name": "SITE_BUCKET_NAME",
+        "cdk_parameter_name": "SiteBucketName"
+      },
+      {
+        "placeholder": "{{ENVIRONMENT}}",
+        "env_var_name": "ENVIRONMENT",
+        "cdk_parameter_name": "Environment"
+      }
+    ]
+  },
+  "workload": {
+    "name": "docker-build-test",
+    "description": "General info about this app/workload",
+    "devops": {
+      "account": "328553401036",
+      "region": "us-east-1",
+      "code_repository": {
+        "name": "geekcafe/cdk-factory-sample-static-website",
+        "type": "connector_arn",
+        "connector_arn": "arn:aws:codeconnections:us-east-1:328553401036:connection/564e4daf-ccc8-4cbe-8414-39640c3e3e58"
+      },
+      "commands": [
+        {
+          "name": "cdk_synth",
+          "commands": [],
+          "file": "../../samples/docker_build/commands/cdk_synth.sh"
+        }
+      ]
+    },
+    "builds": [
+      {
+        "name": "my-docker-app",
+        "enabled": true,
+        "wave": "docker-wave",
+        "pre_steps": [
+          {
+            "name": "where-am-i",
+            "commands": [
+              "$(pwd)",
+              "pwd"
+            ]
+          },
+          {
+            "name": "who-am-i",
+            "commands": [
+              "whoami"
+            ]
+          },
+          {
+            "name": "unit-tests",
+            "commands": [
+              "../../samples/docker_build/commands/unit_tests.sh"
+            ]
+          },
+          {
+            "name": "docker-build",
+            "commands": [
+              "../../samples/docker_build/commands/docker_build.sh"
+            ]
+          },
+          {
+            "name": "docker-tag-integration",
+            "commands": [
+              "../../samples/docker_build/commands/docker_tag.sh --tag integration"
+            ]
+          },
+          {
+            "name": "docker-push-integration",
+            "commands": [
+              "../../samples/docker_build/commands/docker_push.sh"
+            ]
+          },
+          {
+            "name": "integration-tests",
+            "commands": [
+              "../../samples/docker_build/commands/integration-tests.sh"
+            ]
+          },
+          {
+            "name": "docker-tag-dev",
+            "commands": [
+              "../../samples/docker_build/commands/docker_tag.sh --tag dev"
+            ]
+          },
+          {
+            "name": "docker-push",
+            "commands": [
+              "../../samples/docker_build/commands/docker_push.sh"
+            ]
+          }
+        ]
+      }
+    ],
+    "deployments": [
+      {
+        "name": "my-docker-build-pipeline",
+        "description": "this deployment points to a pipeline build",
+        "environment": "dev",
+        "account": "328553401036",
+        "region": "us-east-1",
+        "mode": "pipeline",
+        "pipeline": "docker-build",
+        "enabled": true
+      }
+    ],
+    "pipelines": [
+      {
+        "name": "docker-build",
+        "branch": "develop",
+        "enabled": true,
+        "stages": [
+          {
+            "name": "docker",
+            "builds": [
+              "my-docker-app"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
