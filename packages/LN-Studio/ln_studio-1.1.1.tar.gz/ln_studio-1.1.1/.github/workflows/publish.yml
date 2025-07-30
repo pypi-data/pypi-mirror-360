@@ -1,0 +1,68 @@
+name: Publish
+run-name: ${{ github.actor }} - ${{ github.event_name }}
+on:
+  push:
+    tags: 
+      - '*.*.*'
+
+jobs:
+  build-package:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/Livenodes
+    permissions:
+      id-token: write 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: Install build tools
+        run: pip install -U pip twine build setuptools wheel pkginfo
+
+      - name: Log Versions
+        run: |
+          python --version
+          pip --version
+          pip list
+
+      - name: Build package
+        run: python3 -m build
+
+      - name: Show package metadata
+        run: |
+          echo "Built packages:"
+          ls -la dist/
+          echo "Package metadata:"
+          python -c "import glob,pkginfo; f=glob.glob('dist/*.whl')[0]; w=pkginfo.Wheel(f); print(f'Name: {w.name}\nVersion: {w.version}\nSummary: {w.summary}\nAuthor: {w.author}')"
+
+      # debug: show exactly what ended up in dist/
+      - name: List dist/ artifacts
+        run: ls -l dist/
+
+      # debug: inspect sdist metadata
+      - name: Show sdist PKG-INFO
+        run: |
+          S=$(ls dist/*.tar.gz)
+          echo "→ $S"
+          tar -xOzf "$S" --wildcards '*/PKG-INFO' | head -n20
+
+      # debug: inspect wheel metadata
+      - name: Show wheel METADATA
+        run: |
+          W=$(ls dist/*.whl)
+          echo "→ $W"
+          unzip -p "$W" '*.dist-info/METADATA' | head -n20
+
+      - name: Check long description
+        run: twine check dist/*
+
+      - name: Publish dists to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
