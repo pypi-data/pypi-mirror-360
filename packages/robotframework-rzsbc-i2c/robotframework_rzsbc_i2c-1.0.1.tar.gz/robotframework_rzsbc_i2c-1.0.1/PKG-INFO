@@ -1,0 +1,245 @@
+Metadata-Version: 2.4
+Name: robotframework-rzsbc-i2c
+Version: 1.0.1
+Summary: Robot Framework Library for RZ-SBC I2C communication with optimized imports
+Author-email: RZ-CI Team <rz-ci@renesas.com>
+License: MIT
+Project-URL: Homepage, https://github.com/renesas/robotframework-rzsbc-i2c
+Project-URL: Documentation, https://renesas.github.io/robotframework-rzsbc-i2c/
+Project-URL: Repository, https://github.com/renesas/robotframework-rzsbc-i2c
+Project-URL: Issues, https://github.com/renesas/robotframework-rzsbc-i2c/issues
+Keywords: robot,framework,i2c,rz-sbc,renesas,embedded,hardware,automation,board-config
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Software Development :: Testing
+Classifier: Topic :: System :: Hardware
+Classifier: Framework :: Robot Framework
+Classifier: Framework :: Robot Framework :: Library
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: robotframework>=3.2.2
+Requires-Dist: pyserial>=3.5
+Requires-Dist: pyyaml>=5.4.0
+Provides-Extra: dev
+Requires-Dist: pytest>=6.0; extra == "dev"
+Requires-Dist: black>=21.0.0; extra == "dev"
+Requires-Dist: flake8>=3.8.0; extra == "dev"
+Provides-Extra: docs
+Requires-Dist: sphinx>=4.0.0; extra == "docs"
+Requires-Dist: sphinx-rtd-theme>=1.2.0; extra == "docs"
+Dynamic: license-file
+
+# Robot Framework RZ-SBC I2C Library
+
+[![PyPI version](https://badge.fury.io/py/robotframework-rzsbc-i2c.svg)](https://badge.fury.io/py/robotframework-rzsbc-i2c)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+Robot Framework library for RZ-SBC I2C communication with dynamic board configuration support for Renesas RZ-SBC systems.
+
+## Features
+
+-   **Dynamic Board Configuration**: Automatically loads I2C settings based on board type
+-   **Serial Integration**: Works with serial connections for remote I2C operations
+-   **Configuration Management**: Uses YAML-based configuration files for different board types
+-   **Comprehensive I2C Operations**: Supports device detection, scanning, and communication
+-   **Error Handling**: Robust error handling and logging for debugging
+
+## Installation
+
+```bash
+pip install robotframework-rzsbc-i2c
+```
+
+## Requirements
+
+-   Robot Framework (>=3.2.2)
+-   pyserial (>=3.5)
+-   pyyaml (>=5.4.0)
+
+## Quick Start
+
+```robot
+*** Settings ***
+Library    robotframework_rzsbc_i2c.I2CLibrary.I2CLibrary
+
+*** Test Cases ***
+Test I2C Communication
+    Init I2C Library    ${serial_connection}    RZ_SBC_Board
+    Set I2C Parameters    i2c_bus=1    expected_addr=0x48
+    Detect I2C Adapter
+    ${devices}=    Scan I2C Device    1
+    Log    Found devices: ${devices}
+```
+
+## Keywords
+
+### Initialization and Configuration
+
+-   `Init I2C Library` - Initialize the library with serial connection and board type
+-   `Set I2C Parameters` - Configure I2C bus, addresses, and timing parameters
+
+### Device Operations
+
+-   `Detect I2C Adapter` - Detect and validate I2C adapter presence
+-   `Scan I2C Device` - Scan for devices on specified I2C bus
+-   `Verify I2C Address Present` - Check if a specific device address is present
+-   `Get I2C Bus Address Pairs` - Retrieve configured I2C bus/address pairs for board type
+
+## Board Configuration
+
+The library uses YAML configuration files to define board-specific I2C settings:
+
+```yaml
+boards:
+    RZ_SBC_Board:
+        images:
+            linux_image:
+                features:
+                    i2c:
+                        enabled: true
+                        instances:
+                            temp_sensor:
+                                i2c_bus: 1
+                                expected_addr: "0x48"
+                            rtc:
+                                i2c_bus: 1
+                                expected_addr: "0x68"
+```
+
+## Examples
+
+### Basic I2C Device Detection
+
+```robot
+*** Settings ***
+Library    robotframework_rzsbc_i2c.I2CLibrary.I2CLibrary
+
+*** Test Cases ***
+Detect I2C Devices
+    Init I2C Library    ${SERIAL}    RZ_SBC_Board
+    Detect I2C Adapter    delay=2
+
+    ${pairs}=    Get I2C Bus Address Pairs    RZ_SBC_Board
+    FOR    ${bus}    ${addr}    IN    @{pairs}
+        ${present}=    Verify I2C Address Present    ${bus}    ${addr}
+        Should Be True    ${present}    Device ${addr} not found on bus ${bus}
+    END
+```
+
+### Advanced I2C Scanning
+
+```robot
+*** Settings ***
+Library    robotframework_rzsbc_i2c.I2CLibrary.I2CLibrary
+
+*** Test Cases ***
+Comprehensive I2C Test
+    Init I2C Library    ${SERIAL}    RZ_SBC_Board
+    Set I2C Parameters    retry_count=3    delay_between_commands=1
+
+    # Scan multiple buses
+    FOR    ${bus}    IN RANGE    0    3
+        TRY
+            ${devices}=    Scan I2C Device    ${bus}    delay=2
+            Log    Bus ${bus} devices: ${devices}
+        EXCEPT
+            Log    Bus ${bus} not available or no devices found
+        END
+    END
+```
+
+### Board-Specific Configuration
+
+```robot
+*** Settings ***
+Library    robotframework_rzsbc_i2c.I2CLibrary.I2CLibrary
+
+*** Test Cases ***
+Test Multiple Board Types
+    @{board_types}=    Create List    RZ_SBC_Board    RZ_G2L_Board    RZ_V2L_Board
+
+    FOR    ${board}    IN    @{board_types}
+        TRY
+            Init I2C Library    ${SERIAL}    ${board}
+            ${pairs}=    Get I2C Bus Address Pairs    ${board}
+            Log    ${board} I2C configuration: ${pairs}
+        EXCEPT    AS    ${error}
+            Log    Board ${board} not configured: ${error}
+        END
+    END
+```
+
+## Configuration File Structure
+
+The library expects a `config.yml` file with the following structure:
+
+```yaml
+boards:
+    BOARD_TYPE:
+        images:
+            IMAGE_NAME:
+                features:
+                    i2c:
+                        enabled: true/false
+                        instances:
+                            INSTANCE_NAME:
+                                i2c_bus: BUS_NUMBER
+                                expected_addr: "DEVICE_ADDRESS"
+```
+
+## Error Handling
+
+The library provides comprehensive error handling:
+
+-   **Missing Configuration**: Graceful handling when board configs are not found
+-   **Serial Communication**: Robust serial connection error handling
+-   **I2C Hardware**: Proper error reporting for I2C hardware issues
+-   **Device Detection**: Clear feedback when devices are not present
+
+## Supported Platforms
+
+-   Renesas RZ-SBC systems
+-   Any Linux system with I2C support
+-   Remote systems via serial connection
+
+## Hardware Requirements
+
+-   I2C-enabled system or board
+-   Serial connection for remote operations
+-   Proper I2C device permissions
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Import Errors**: Ensure all dependencies are installed
+2. **Permission Denied**: Check I2C device permissions (`/dev/i2c-*`)
+3. **Configuration Not Found**: Verify `config.yml` file location and format
+4. **Serial Connection**: Ensure proper serial connection and baud rate
+
+### Debug Mode
+
+Enable detailed logging by setting the Robot Framework log level:
+
+```robot
+*** Settings ***
+Library    robotframework_rzsbc_i2c.I2CLibrary.I2CLibrary    WITH NAME    I2C
+```
+
+## License
+
+MIT License. See LICENSE file for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Support
+
+For issues and questions, please use the GitHub issue tracker.
