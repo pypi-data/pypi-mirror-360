@@ -1,0 +1,687 @@
+{
+  "description": "A deliberately slow CLI application with complex argument structures",
+  "epilog": "Use --help on any subcommand for more detailed help",
+  "options": [
+    {
+      "name": "-h",
+      "aliases": [
+        "--help"
+      ],
+      "help": "show this help message and exit",
+      "type": null,
+      "choices": null,
+      "default": "==SUPPRESS==",
+      "required": false,
+      "nargs": null
+    },
+    {
+      "name": "--version",
+      "aliases": [],
+      "help": "show program's version number and exit",
+      "type": null,
+      "choices": null,
+      "default": "==SUPPRESS==",
+      "required": false,
+      "nargs": null
+    },
+    {
+      "name": "--verbose",
+      "aliases": [
+        "-v"
+      ],
+      "help": "Increase verbosity (can be used multiple times)",
+      "type": null,
+      "choices": null,
+      "default": 0,
+      "required": false,
+      "nargs": null
+    },
+    {
+      "name": "--quiet",
+      "aliases": [
+        "-q"
+      ],
+      "help": "Suppress all output except errors",
+      "type": null,
+      "choices": null,
+      "default": false,
+      "required": false,
+      "nargs": null
+    },
+    {
+      "name": "--config",
+      "aliases": [
+        "-c"
+      ],
+      "help": "Path to configuration file (YAML, TOML, or JSON)",
+      "type": "<class 'str'>",
+      "choices": null,
+      "default": null,
+      "required": false,
+      "nargs": null
+    },
+    {
+      "name": "--output-format",
+      "aliases": [],
+      "help": "Output format for results",
+      "type": null,
+      "choices": [
+        "json",
+        "yaml",
+        "csv",
+        "table",
+        "human"
+      ],
+      "default": "human",
+      "required": false,
+      "nargs": null
+    },
+    {
+      "name": "--log-level",
+      "aliases": [],
+      "help": "Set logging level",
+      "type": null,
+      "choices": [
+        "DEBUG",
+        "INFO",
+        "WARNING",
+        "ERROR",
+        "CRITICAL"
+      ],
+      "default": "INFO",
+      "required": false,
+      "nargs": null
+    }
+  ],
+  "positionals": [
+    {
+      "name": "command",
+      "help": "Available commands",
+      "type": null,
+      "choices": [
+        "data",
+        "network",
+        "analyze",
+        "system"
+      ],
+      "nargs": "A..."
+    }
+  ],
+  "subcommands": [
+    {
+      "description": "Process, analyze, and transform data files",
+      "epilog": null,
+      "options": [
+        {
+          "name": "-h",
+          "aliases": [
+            "--help"
+          ],
+          "help": "show this help message and exit",
+          "type": null,
+          "choices": null,
+          "default": "==SUPPRESS==",
+          "required": false,
+          "nargs": null
+        }
+      ],
+      "positionals": [
+        {
+          "name": "data_command",
+          "help": "Data subcommands",
+          "type": null,
+          "choices": [
+            "process",
+            "analyze"
+          ],
+          "nargs": "A..."
+        }
+      ],
+      "subcommands": [
+        {
+          "description": "Process data files with various transformations",
+          "epilog": null,
+          "options": [
+            {
+              "name": "-h",
+              "aliases": [
+                "--help"
+              ],
+              "help": "show this help message and exit",
+              "type": null,
+              "choices": null,
+              "default": "==SUPPRESS==",
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--input",
+              "aliases": [
+                "-i"
+              ],
+              "help": "Input file path",
+              "type": "<class 'str'>",
+              "choices": null,
+              "default": null,
+              "required": true,
+              "nargs": null
+            },
+            {
+              "name": "--output",
+              "aliases": [
+                "-o"
+              ],
+              "help": "Output file path (default: stdout)",
+              "type": "<class 'str'>",
+              "choices": null,
+              "default": null,
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--format",
+              "aliases": [],
+              "help": "Input/output format",
+              "type": null,
+              "choices": [
+                "csv",
+                "json",
+                "yaml",
+                "parquet",
+                "excel"
+              ],
+              "default": "csv",
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--transform",
+              "aliases": [],
+              "help": "Data transformation to apply",
+              "type": null,
+              "choices": [
+                "normalize",
+                "standardize",
+                "log",
+                "sqrt",
+                "custom"
+              ],
+              "default": null,
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--filter",
+              "aliases": [],
+              "help": "Filter expression (e.g., \"column > 100\")",
+              "type": "<class 'str'>",
+              "choices": null,
+              "default": null,
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--compress",
+              "aliases": [],
+              "help": "Compression method",
+              "type": null,
+              "choices": [
+                "none",
+                "gzip",
+                "bzip2",
+                "lzma"
+              ],
+              "default": "none",
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--validate",
+              "aliases": [],
+              "help": "Validate data after processing",
+              "type": null,
+              "choices": null,
+              "default": false,
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--chunk-size",
+              "aliases": [],
+              "help": "Chunk size for large files",
+              "type": "<class 'int'>",
+              "choices": null,
+              "default": 10000,
+              "required": false,
+              "nargs": null
+            }
+          ],
+          "positionals": [],
+          "subcommands": [],
+          "name": "process"
+        },
+        {
+          "description": "Perform statistical analysis on data",
+          "epilog": null,
+          "options": [
+            {
+              "name": "-h",
+              "aliases": [
+                "--help"
+              ],
+              "help": "show this help message and exit",
+              "type": null,
+              "choices": null,
+              "default": "==SUPPRESS==",
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--input",
+              "aliases": [
+                "-i"
+              ],
+              "help": "Input file path",
+              "type": "<class 'str'>",
+              "choices": null,
+              "default": null,
+              "required": true,
+              "nargs": null
+            },
+            {
+              "name": "--columns",
+              "aliases": [],
+              "help": "Comma-separated list of columns to analyze",
+              "type": "<class 'str'>",
+              "choices": null,
+              "default": null,
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--stats",
+              "aliases": [],
+              "help": "Statistics to compute",
+              "type": null,
+              "choices": [
+                "mean",
+                "median",
+                "std",
+                "min",
+                "max",
+                "count",
+                "all"
+              ],
+              "default": [
+                "all"
+              ],
+              "required": false,
+              "nargs": "+"
+            },
+            {
+              "name": "--correlation",
+              "aliases": [],
+              "help": "Compute correlation matrix",
+              "type": null,
+              "choices": null,
+              "default": false,
+              "required": false,
+              "nargs": null
+            }
+          ],
+          "positionals": [],
+          "subcommands": [],
+          "name": "analyze"
+        }
+      ],
+      "name": "data"
+    },
+    {
+      "description": "Network scanning, monitoring, and testing",
+      "epilog": null,
+      "options": [
+        {
+          "name": "-h",
+          "aliases": [
+            "--help"
+          ],
+          "help": "show this help message and exit",
+          "type": null,
+          "choices": null,
+          "default": "==SUPPRESS==",
+          "required": false,
+          "nargs": null
+        }
+      ],
+      "positionals": [
+        {
+          "name": "network_command",
+          "help": "Network subcommands",
+          "type": null,
+          "choices": [
+            "scan"
+          ],
+          "nargs": "A..."
+        }
+      ],
+      "subcommands": [
+        {
+          "description": "Scan network targets for open ports and services",
+          "epilog": null,
+          "options": [
+            {
+              "name": "-h",
+              "aliases": [
+                "--help"
+              ],
+              "help": "show this help message and exit",
+              "type": null,
+              "choices": null,
+              "default": "==SUPPRESS==",
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--targets",
+              "aliases": [],
+              "help": "Target IP addresses or ranges (e.g., 192.168.1.0/24)",
+              "type": "<class 'str'>",
+              "choices": null,
+              "default": null,
+              "required": true,
+              "nargs": null
+            },
+            {
+              "name": "--ports",
+              "aliases": [],
+              "help": "Comma-separated list of ports to scan",
+              "type": "<class 'str'>",
+              "choices": null,
+              "default": "80,443,8080",
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--timeout",
+              "aliases": [],
+              "help": "Connection timeout in seconds",
+              "type": "<class 'int'>",
+              "choices": null,
+              "default": 30,
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--retries",
+              "aliases": [],
+              "help": "Number of retry attempts",
+              "type": "<class 'int'>",
+              "choices": null,
+              "default": 3,
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--threads",
+              "aliases": [],
+              "help": "Number of concurrent threads",
+              "type": "<class 'int'>",
+              "choices": null,
+              "default": 10,
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--service-detection",
+              "aliases": [],
+              "help": "Attempt service detection",
+              "type": null,
+              "choices": null,
+              "default": false,
+              "required": false,
+              "nargs": null
+            }
+          ],
+          "positionals": [],
+          "subcommands": [],
+          "name": "scan"
+        }
+      ],
+      "name": "network"
+    },
+    {
+      "description": "Machine learning and statistical analysis",
+      "epilog": null,
+      "options": [
+        {
+          "name": "-h",
+          "aliases": [
+            "--help"
+          ],
+          "help": "show this help message and exit",
+          "type": null,
+          "choices": null,
+          "default": "==SUPPRESS==",
+          "required": false,
+          "nargs": null
+        },
+        {
+          "name": "--algorithm",
+          "aliases": [],
+          "help": "Analysis algorithm type",
+          "type": null,
+          "choices": [
+            "ml",
+            "stats",
+            "visualize"
+          ],
+          "default": null,
+          "required": true,
+          "nargs": null
+        },
+        {
+          "name": "--input",
+          "aliases": [
+            "-i"
+          ],
+          "help": "Input data file",
+          "type": "<class 'str'>",
+          "choices": null,
+          "default": null,
+          "required": true,
+          "nargs": null
+        },
+        {
+          "name": "--model-type",
+          "aliases": [],
+          "help": "Machine learning model type",
+          "type": null,
+          "choices": [
+            "random-forest",
+            "linear-regression",
+            "logistic-regression",
+            "svm",
+            "neural-network"
+          ],
+          "default": null,
+          "required": false,
+          "nargs": null
+        },
+        {
+          "name": "--features",
+          "aliases": [],
+          "help": "Feature selection method",
+          "type": null,
+          "choices": [
+            "auto",
+            "manual"
+          ],
+          "default": "auto",
+          "required": false,
+          "nargs": null
+        },
+        {
+          "name": "--cross-validate",
+          "aliases": [],
+          "help": "Perform cross-validation",
+          "type": null,
+          "choices": null,
+          "default": false,
+          "required": false,
+          "nargs": null
+        },
+        {
+          "name": "--test-size",
+          "aliases": [],
+          "help": "Test set size (0.0 to 1.0)",
+          "type": "<class 'float'>",
+          "choices": null,
+          "default": 0.2,
+          "required": false,
+          "nargs": null
+        }
+      ],
+      "positionals": [],
+      "subcommands": [],
+      "name": "analyze"
+    },
+    {
+      "description": "System information and monitoring",
+      "epilog": null,
+      "options": [
+        {
+          "name": "-h",
+          "aliases": [
+            "--help"
+          ],
+          "help": "show this help message and exit",
+          "type": null,
+          "choices": null,
+          "default": "==SUPPRESS==",
+          "required": false,
+          "nargs": null
+        }
+      ],
+      "positionals": [
+        {
+          "name": "system_command",
+          "help": "System subcommands",
+          "type": null,
+          "choices": [
+            "info",
+            "monitor"
+          ],
+          "nargs": "A..."
+        }
+      ],
+      "subcommands": [
+        {
+          "description": "Show detailed system information",
+          "epilog": null,
+          "options": [
+            {
+              "name": "-h",
+              "aliases": [
+                "--help"
+              ],
+              "help": "show this help message and exit",
+              "type": null,
+              "choices": null,
+              "default": "==SUPPRESS==",
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--detailed",
+              "aliases": [],
+              "help": "Show detailed information",
+              "type": null,
+              "choices": null,
+              "default": false,
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--format",
+              "aliases": [],
+              "help": "Output format",
+              "type": null,
+              "choices": [
+                "json",
+                "yaml",
+                "table",
+                "human"
+              ],
+              "default": "human",
+              "required": false,
+              "nargs": null
+            }
+          ],
+          "positionals": [],
+          "subcommands": [],
+          "name": "info"
+        },
+        {
+          "description": "Real-time system resource monitoring",
+          "epilog": null,
+          "options": [
+            {
+              "name": "-h",
+              "aliases": [
+                "--help"
+              ],
+              "help": "show this help message and exit",
+              "type": null,
+              "choices": null,
+              "default": "==SUPPRESS==",
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--duration",
+              "aliases": [],
+              "help": "Monitoring duration in seconds",
+              "type": "<class 'int'>",
+              "choices": null,
+              "default": 60,
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--interval",
+              "aliases": [],
+              "help": "Update interval in seconds",
+              "type": "<class 'float'>",
+              "choices": null,
+              "default": 1.0,
+              "required": false,
+              "nargs": null
+            },
+            {
+              "name": "--metrics",
+              "aliases": [],
+              "help": "Metrics to monitor",
+              "type": null,
+              "choices": [
+                "cpu",
+                "memory",
+                "disk",
+                "network",
+                "all"
+              ],
+              "default": [
+                "all"
+              ],
+              "required": false,
+              "nargs": "+"
+            }
+          ],
+          "positionals": [],
+          "subcommands": [],
+          "name": "monitor"
+        }
+      ],
+      "name": "system"
+    }
+  ]
+}
