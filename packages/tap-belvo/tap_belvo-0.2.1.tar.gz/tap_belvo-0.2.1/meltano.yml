@@ -1,0 +1,59 @@
+version: 1
+send_anonymous_usage_stats: false
+project_id: tap-belvo
+default_environment: dev
+environments:
+- name: dev
+plugins:
+  extractors:
+  - name: tap-belvo
+    namespace: belvo
+    label: Belvo
+    docs: https://github.com/edgarrmondragon/tap-belvo#readme
+    pip_url: -e .
+    description: The leading Open Banking API platform in Latin America
+    capabilities:
+    - state
+    - catalog
+    - discover
+    settings_group_validation:
+    - - secret_id
+      - password
+    settings:
+    - name: secret_id
+      kind: password
+      label: Secret ID
+      description: Belvo API secret ID
+      sensitive: true
+    - name: password
+      kind: password
+      label: Password
+      description: Belvo API password
+      sensitive: true
+    - name: base_url
+      kind: string
+      value: https://development.belvo.com
+      label: Base URL
+      description: Belvo API base URL
+    - name: start_date
+      kind: date_iso8601
+      label: Start Date
+      description: Earliest datetime to get data from
+    config:
+      start_date: '2022-11-21'
+    select:
+    - links_*.*
+    - banking_*.*
+    repository: https://github.com/edgarrmondragon/tap-belvo
+  loaders:
+  - name: target-jsonl
+    variant: andyh1203
+    pip_url: target-jsonl
+  - name: target-duckdb
+    variant: jwills
+    pip_url: target-duckdb~=0.4
+    config:
+      filepath: output/wh.duckdb
+      default_target_schema: $MELTANO_ENVIRONMENT
+venv:
+  backend: uv

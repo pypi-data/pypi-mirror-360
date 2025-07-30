@@ -1,0 +1,42 @@
+ci:
+  autofix_prs: false
+  autofix_commit_msg: '[pre-commit.ci] auto fixes'
+  autoupdate_schedule: monthly
+  autoupdate_commit_msg: 'chore(deps): pre-commit autoupdate'
+  skip:
+  - uv-lock
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v5.0.0
+  hooks:
+  - id: check-json
+    exclude: "\\.vscode/.*.json"
+  - id: check-toml
+  - id: check-yaml
+  - id: end-of-file-fixer
+    exclude: "plugins/.*/.*\\.lock"
+  - id: trailing-whitespace
+
+- repo: https://github.com/tox-dev/pyproject-fmt
+  rev: "v2.6.0"
+  hooks:
+  - id: pyproject-fmt
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: "v0.12.0"
+  hooks:
+  - id: ruff
+    args: [--fix, --exit-non-zero-on-fix, --show-fixes]
+  - id: ruff-format
+
+- repo: https://github.com/pre-commit/pre-commit
+  rev: v4.2.0
+  hooks:
+  - id: validate_manifest
+
+- repo: https://github.com/astral-sh/uv-pre-commit
+  rev: "0.7.13"
+  hooks:
+    - id: uv-lock
+    - id: uv-sync

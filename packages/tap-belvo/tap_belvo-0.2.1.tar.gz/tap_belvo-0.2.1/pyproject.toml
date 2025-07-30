@@ -1,0 +1,113 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = [
+  "hatch-vcs==0.5",
+  "hatchling==1.27",
+]
+
+[project]
+name = "tap-belvo"
+description = "Singer tap for Belvo, built with the Meltano SDK for Singer Taps."
+readme = "README.md"
+keywords = [
+  "Belvo",
+  "ELT",
+  "singer.io",
+]
+license = "Apache-2.0"
+maintainers = [ { name = "Edgar Ramírez-Mondragón", email = "edgarrm358@gmail.com" } ]
+authors = [ { name = "Edgar Ramírez-Mondragón", email = "edgarrm358@gmail.com" } ]
+requires-python = ">=3.11"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+dynamic = [
+  "version",
+]
+dependencies = [
+  "requests~=2.32.3",
+  "requests-cache==1.*",
+  "singer-sdk~=0.47.3",
+]
+urls.Documentation = "https://github.com/edgarrmondragon/tap-belvo#readme"
+urls.Homepage = "https://github.com/edgarrmondragon/tap-belvo"
+urls.Source = "https://github.com/edgarrmondragon/tap-belvo"
+scripts."tap-belvo" = "tap_belvo.tap:TapBelvo.cli"
+
+[dependency-groups]
+dev = [
+  { include-group = "testing" },
+  { include-group = "typing" },
+]
+testing = [
+  "deptry>=0.12",
+  "pytest>=7.4",
+  "singer-sdk[testing]",
+]
+typing = [
+  "mypy",
+  "types-requests",
+]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.ruff]
+line-length = 88
+
+lint.select = [ "ALL" ]
+lint.ignore = [
+  "COM812", # missing-trailing-comma
+  "DJ",     # flake8-django
+  "FIX002", # line-contains-todo
+  "ISC001", # single-line-implicit-string-concatenation
+]
+lint.per-file-ignores."noxfile.py" = [ "ANN" ]
+lint.per-file-ignores."tests/*" = [
+  "ANN201", # missing-return-type-public-function
+  "S101",   # assert
+  "SLF001", # private-member-access
+]
+lint.unfixable = [
+  "ERA001", # commented-out-code
+]
+lint.isort.known-first-party = [ "tap_belvo" ]
+lint.isort.required-imports = [ "from __future__ import annotations" ]
+lint.pydocstyle.convention = "google"
+
+[tool.pyproject-fmt]
+max_supported_python = "3.14"
+
+[tool.pytest.ini_options]
+addopts = [ "-vvv" ]
+filterwarnings = [
+  "error",
+  "default:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
+  "default:'_UnionGenericAlias' is deprecated and slated for removal in Python 3.17:DeprecationWarning",
+]
+
+[tool.mypy]
+enable_error_code = [
+  "ignore-without-code",
+  "redundant-expr",
+  "truthy-bool",
+]
+warn_redundant_casts = true
+warn_return_any = true
+warn_no_return = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = [ "backoff.*" ]
+
+[tool.uv]
+prerelease = "allow"
+preview = true
+required-version = ">=0.5.19"
