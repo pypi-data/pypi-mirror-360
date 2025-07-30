@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "panos-upgrade-assurance"
+version = "1.4.0"
+description = ""
+authors = ["Palo Alto Networks"]
+readme = "README.md"
+packages = [
+    { include = "panos_upgrade_assurance" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[tool.project.urls]
+"Homepage" = "https://github.com/PaloAltoNetworks/pan-os-upgrade-assurance"
+"Bug Tracker" = "https://github.com/PaloAltoNetworks/pan-os-upgrade-assurance/issues"
+
+[tool.poetry.dependencies]
+python = ">=3.8"
+pan-os-python = ">=1.8,<2.0"
+xmltodict = ">=0.12.0,<0.15.0"
+pyopenssl = ">=23.2,<24.0"
+packaging = ">=22.0"
+
+[tool.poetry.group.dev.dependencies]
+flake8 = ">=5"
+black = ">=23.11"
+bandit = ">=1.7"
+flake8-pyproject = ">=1.2"
+pytest = ">=7.2.1"
+pytest-cov = ">=4.0.0"
+deepdiff = ">=6.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.bandit]
+exclude_dirs = ["docs", ".venv", ".github", "docker_image", "dist"]
+skips = ["B405", "B314"]
+
+[tool.bandit.assert_used]
+skips = ['*_test.py', '*test_*.py']
+
+[tool.black]
+line-length = 130
+
+[tool.flake8]
+select = ["C","E","F","W","B","D","B950"]
+ignore = ["E203","E501","W503","D203","D102","D103","D107","D400","E501"]
+
+[tool.coverage.run]
+source = [ "panos_upgrade_assurance" ]
+relative_files = true
