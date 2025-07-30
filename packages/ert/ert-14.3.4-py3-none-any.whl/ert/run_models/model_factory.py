@@ -1,0 +1,327 @@
+from __future__ import annotations
+
+import logging
+from queue import SimpleQueue
+from typing import TYPE_CHECKING
+
+import numpy as np
+
+from ert.config import (
+    ConfigValidationError,
+    ConfigWarning,
+    ErtConfig,
+    ObservationSettings,
+)
+from ert.mode_definitions import (
+    ENIF_MODE,
+    ENSEMBLE_EXPERIMENT_MODE,
+    ENSEMBLE_SMOOTHER_MODE,
+    ES_MDA_MODE,
+    EVALUATE_ENSEMBLE_MODE,
+    MANUAL_UPDATE_MODE,
+    TEST_RUN_MODE,
+)
+from ert.validation import ActiveRange
+
+from .base_run_model import BaseRunModel
+from .ensemble_experiment import EnsembleExperiment
+from .ensemble_information_filter import EnsembleInformationFilter
+from .ensemble_smoother import EnsembleSmoother
+from .evaluate_ensemble import EvaluateEnsemble
+from .manual_update import ManualUpdate
+from .multiple_data_assimilation import MultipleDataAssimilation
+from .single_test_run import SingleTestRun
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
+
+    from ert.namespace import Namespace
+    from ert.run_models.event import StatusEvents
+    from ert.storage import Storage
+
+
+def create_model(
+    config: ErtConfig,
+    storage: Storage,
+    args: Namespace,
+    status_queue: SimpleQueue[StatusEvents],
+) -> BaseRunModel:
+    logger = logging.getLogger(__name__)
+    logger.info(
+        "Initiating experiment",
+        extra={
+            "mode": args.mode,
+            "ensemble_size": config.runpath_config.num_realizations,
+        },
+    )
+    update_settings = config.analysis_config.observation_settings
+
+    if args.mode == TEST_RUN_MODE:
+        return _setup_single_test_run(config, storage, args, status_queue)
+    validate_minimum_realizations(config, args)
+    if args.mode == ENSEMBLE_EXPERIMENT_MODE:
+        return _setup_ensemble_experiment(config, storage, args, status_queue)
+    if args.mode == EVALUATE_ENSEMBLE_MODE:
+        return _setup_evaluate_ensemble(config, storage, args, status_queue)
+    if args.mode == ENSEMBLE_SMOOTHER_MODE:
+        return _setup_ensemble_smoother(
+            config, storage, args, update_settings, status_queue
+        )
+    if args.mode == ENIF_MODE:
+        return _setup_ensemble_information_filter(
+            config, storage, args, update_settings, status_queue
+        )
+    if args.mode == ES_MDA_MODE:
+        return _setup_multiple_data_assimilation(
+            config, storage, args, update_settings, status_queue
+        )
+    if args.mode == MANUAL_UPDATE_MODE:
+        return _setup_manual_update(
+            config, storage, args, update_settings, status_queue
+        )
+    raise NotImplementedError(f"Run type not supported {args.mode}")
+
+
+def _setup_single_test_run(
+    config: ErtConfig,
+    storage: Storage,
+    args: Namespace,
+    status_queue: SimpleQueue[StatusEvents],
+) -> SingleTestRun:
+    experiment_name = (
+        "single-test-run" if args.experiment_name is None else args.experiment_name
+    )
+
+    return SingleTestRun(
+        random_seed=config.random_seed,
+        ensemble_name=args.current_ensemble,
+        experiment_name=experiment_name,
+        config=config,
+        storage=storage,
+        status_queue=status_queue,
+    )
+
+
+def validate_minimum_realizations(config: ErtConfig, args: Namespace) -> None:
+    min_realizations_count = config.analysis_config.minimum_required_realizations
+    active_realizations = _get_active_realizations_list(args, config)
+    active_realizations_count = int(np.sum(active_realizations))
+    if active_realizations_count < min_realizations_count:
+        config.analysis_config.minimum_required_realizations = active_realizations_count
+        ConfigWarning.warn(
+            "MIN_REALIZATIONS was set to the current number of active realizations "
+            f"({active_realizations_count}) as it is lower than the MIN_REALIZATIONS "
+            f"({min_realizations_count}) that was specified in the config file."
+        )
+
+
+def _setup_ensemble_experiment(
+    config: ErtConfig,
+    storage: Storage,
+    args: Namespace,
+    status_queue: SimpleQueue[StatusEvents],
+) -> EnsembleExperiment:
+    active_realizations = _get_active_realizations_list(args, config)
+    experiment_name = args.experiment_name
+    assert experiment_name is not None
+
+    return EnsembleExperiment(
+        random_seed=config.random_seed,
+        active_realizations=active_realizations,
+        ensemble_name=args.current_ensemble,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        experiment_name=experiment_name,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
+        status_queue=status_queue,
+    )
+
+
+def _setup_evaluate_ensemble(
+    config: ErtConfig,
+    storage: Storage,
+    args: Namespace,
+    status_queue: SimpleQueue[StatusEvents],
+) -> EvaluateEnsemble:
+    active_realizations = _get_active_realizations_list(args, config)
+
+    return EvaluateEnsemble(
+        random_seed=config.random_seed,
+        active_realizations=active_realizations,
+        ensemble_id=args.ensemble_id,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
+        status_queue=status_queue,
+    )
+
+
+def _get_active_realizations_list(args: Namespace, config: ErtConfig) -> list[bool]:
+    ensemble_size = config.runpath_config.num_realizations
+    if (
+        config.analysis_config.design_matrix is not None
+        and config.analysis_config.design_matrix.active_realizations is not None
+    ):
+        if args.realizations is None:
+            return config.analysis_config.design_matrix.active_realizations
+        else:
+            ensemble_size = len(
+                config.analysis_config.design_matrix.active_realizations
+            )
+    return _realizations(args, ensemble_size).tolist()
+
+
+def _setup_manual_update(
+    config: ErtConfig,
+    storage: Storage,
+    args: Namespace,
+    update_settings: ObservationSettings,
+    status_queue: SimpleQueue[StatusEvents],
+) -> ManualUpdate:
+    active_realizations = _realizations(args, config.runpath_config.num_realizations)
+
+    return ManualUpdate(
+        random_seed=config.random_seed,
+        active_realizations=active_realizations.tolist(),
+        ensemble_id=args.ensemble_id,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        target_ensemble=args.target_ensemble,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
+        es_settings=config.analysis_config.es_settings,
+        update_settings=update_settings,
+        status_queue=status_queue,
+    )
+
+
+def _setup_ensemble_smoother(
+    config: ErtConfig,
+    storage: Storage,
+    args: Namespace,
+    update_settings: ObservationSettings,
+    status_queue: SimpleQueue[StatusEvents],
+) -> EnsembleSmoother:
+    active_realizations = _get_active_realizations_list(args, config)
+    if len(active_realizations) < 2:
+        raise ConfigValidationError(
+            "Number of active realizations must be at least 2 for an update step"
+        )
+
+    return EnsembleSmoother(
+        target_ensemble=args.target_ensemble,
+        experiment_name=getattr(args, "experiment_name", ""),
+        active_realizations=active_realizations,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        random_seed=config.random_seed,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
+        es_settings=config.analysis_config.es_settings,
+        update_settings=update_settings,
+        status_queue=status_queue,
+    )
+
+
+def _setup_ensemble_information_filter(
+    config: ErtConfig,
+    storage: Storage,
+    args: Namespace,
+    update_settings: ObservationSettings,
+    status_queue: SimpleQueue[StatusEvents],
+) -> EnsembleInformationFilter:
+    active_realizations = _get_active_realizations_list(args, config)
+    if len(active_realizations) < 2:
+        raise ConfigValidationError(
+            "Number of active realizations must be at least 2 for an update step"
+        )
+
+    return EnsembleInformationFilter(
+        target_ensemble=args.target_ensemble,
+        experiment_name=getattr(args, "experiment_name", ""),
+        active_realizations=active_realizations,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        random_seed=config.random_seed,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
+        es_settings=config.analysis_config.es_settings,
+        update_settings=update_settings,
+        status_queue=status_queue,
+    )
+
+
+def _determine_restart_info(args: Namespace) -> tuple[bool, str]:
+    """Handles differences in configuration between CLI and GUI.
+
+    Returns
+    -------
+    A tuple containing the restart_run flag and the ensemble
+    to run from.
+    """
+    if hasattr(args, "restart_ensemble_id"):
+        # When running from CLI
+        restart_run = args.restart_ensemble_id is not None
+        prior_ensemble = args.restart_ensemble_id
+    else:
+        # When running from GUI
+        restart_run = args.restart_run
+        prior_ensemble = args.prior_ensemble_id
+    return restart_run, prior_ensemble
+
+
+def _setup_multiple_data_assimilation(
+    config: ErtConfig,
+    storage: Storage,
+    args: Namespace,
+    update_settings: ObservationSettings,
+    status_queue: SimpleQueue[StatusEvents],
+) -> MultipleDataAssimilation:
+    restart_run, prior_ensemble = _determine_restart_info(args)
+    active_realizations = _get_active_realizations_list(args, config)
+    if len(active_realizations) < 2:
+        raise ConfigValidationError(
+            "Number of active realizations must be at least 2 for an update step"
+        )
+
+    return MultipleDataAssimilation(
+        random_seed=config.random_seed,
+        active_realizations=active_realizations,
+        target_ensemble=_iterative_ensemble_format(args),
+        weights=args.weights,
+        restart_run=restart_run,
+        prior_ensemble_id=prior_ensemble,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        experiment_name=args.experiment_name,
+        config=config,
+        storage=storage,
+        queue_config=config.queue_config,
+        es_settings=config.analysis_config.es_settings,
+        update_settings=update_settings,
+        status_queue=status_queue,
+    )
+
+
+def _realizations(args: Namespace, ensemble_size: int) -> npt.NDArray[np.bool_]:
+    if args.realizations is None:
+        return np.ones(ensemble_size, dtype=bool)
+    return np.array(
+        ActiveRange(rangestring=args.realizations, length=ensemble_size).mask
+    )
+
+
+def _iterative_ensemble_format(args: Namespace) -> str:
+    """
+    When a RunModel runs multiple iterations, an ensemble format will be used.
+    E.g. when starting from the ensemble 'ensemble', subsequent runs can be named
+    'ensemble_0', 'ensemble_1', 'ensemble_2', etc.
+
+    This format can be set from the commandline via the `target_ensemble` option.
+    or we use the current ensemble and add `_%d` to it.
+    """
+    return (
+        args.target_ensemble
+        or f"{getattr(args, 'current_ensemble', None) or 'default'}_%d"
+    )
