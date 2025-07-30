@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: [v*]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.platform }} (${{ matrix.python-version }})
+    runs-on: ${{ matrix.platform }}
+    env:
+      UV_FROZEN: 1
+      UV_PYTHON: ${{ matrix.python-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.13"]
+        platform: [windows-latest, ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: extractions/setup-just@v3
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: matrix.platform == 'windows-latest'
+        with:
+          toolset: "14.29"
+      
+      # - name: install boost
+      #   if: matrix.platform == 'windows-latest'
+      #   run: choco install boost-msvc-14.2
+
+      - name: install
+        # install with devices=true coverage=true
+        run: just install true true
+
+      - name: test
+        run: uv run --no-sync pytest --color=yes -v --cov --cov-report=xml
+
+      - name: cpp-coverage
+        run: uv run --no-sync gcovr --filter=src --xml coverage_cpp.xml --merge-mode-functions=merge-use-line-min
+
+      - uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml,./coverage_cpp.xml
