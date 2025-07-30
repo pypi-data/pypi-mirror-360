@@ -1,0 +1,34 @@
+{"create_users_table":"""
+    CREATE TABLE IF NOT EXISTS users (
+      username      VARCHAR(255) PRIMARY KEY,
+      password_hash TEXT           NOT NULL,
+      is_admin      BOOLEAN        NOT NULL DEFAULT FALSE,
+      created_at    TIMESTAMPTZ    DEFAULT NOW(),
+      updated_at    TIMESTAMPTZ    DEFAULT NOW()
+    );
+    """,
+ 
+ "create_update_triggers":"""
+    CREATE OR REPLACE FUNCTION update_users_updated_at()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      NEW.updated_at := NOW();
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+    """,
+ "create_triggers":"""
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger WHERE tgname = 'users_updated_at_trigger'
+      ) THEN
+        CREATE TRIGGER users_updated_at_trigger
+        BEFORE UPDATE ON users
+        FOR EACH ROW
+        EXECUTE PROCEDURE update_users_updated_at();
+      END IF;
+    END;
+    $$;
+    """
+ }
