@@ -1,0 +1,637 @@
+framework:
+  name: lm-evaluation-harness
+  pkg_name: lm_eval
+  full_name: Language Model Evaluation Harness
+  description: This project provides a unified framework to test generative language models on a large number of different evaluation tasks.
+  url: https://github.com/EleutherAI/lm-evaluation-harness
+  source: https://gitlab-master.nvidia.com/swdl-nemollm-mlops/evals/lm-evaluation-harness
+defaults:
+  command: >-
+    {% if target.api_endpoint.api_key is not none %}OPENAI_API_KEY=${{target.api_endpoint.api_key}}{% endif %}
+    lm-eval --tasks {{config.params.task}}{% if config.params.extra.num_fewshot is defined %} --num_fewshot {{ config.params.extra.num_fewshot }}{% endif %}
+    --model {% if target.api_endpoint.type == "completions" %}local-completions{% elif target.api_endpoint.type == "chat" %}local-chat-completions{% endif %}
+    --model_args "base_url={{target.api_endpoint.url}},model={{target.api_endpoint.model_id}},tokenized_requests={{config.params.extra.tokenized_requests}},{% if config.params.extra.tokenizer is not none %}tokenizer={{config.params.extra.tokenizer}}{% endif %},tokenizer_backend={{config.params.extra.tokenizer_backend}},num_concurrent={{config.params.parallelism}},timeout={{ config.params.request_timeout }},max_retries={{ config.params.max_retries }},stream={{ target.api_endpoint.stream }}"
+    --log_samples --output_path {{config.output_dir}} --use_cache {{config.output_dir}}/lm_cache {% if config.params.limit_samples is not none %}--limit {{config.params.limit_samples}}{% endif %}
+    {% if target.api_endpoint.type == "chat" %}--fewshot_as_multiturn --apply_chat_template {% endif %} {% if config.params.extra.args is defined %} {{config.params.extra.args}} {% endif %}
+    {% if config.params.temperature is not none or config.params.top_p is not none or config.params.max_new_tokens is not none %}--gen_kwargs="{% if config.params.temperature is not none %}temperature={{ config.params.temperature }}{% endif %}{% if config.params.top_p is not none %},top_p={{ config.params.top_p}}{% endif %}{% if config.params.max_new_tokens is not none %},max_gen_toks={{ config.params.max_new_tokens }}{% endif %}"{% endif %}
+    {% if config.params.extra.downsampling_ratio is not none %}--downsampling_ratio {{ config.params.extra.downsampling_ratio }}{% endif %}
+  config:
+    params:
+      limit_samples: null
+      max_new_tokens: null
+      temperature: 0.0000001
+      top_p: 0.9999999
+      parallelism: 10
+      max_retries: 5
+      request_timeout: 30
+      extra:
+        tokenizer: null
+        # tokenizer_backend: None or huggingface/tiktoken for loglikelihoods. Use tokenizer arguments to provide tokenizer name or path.
+        # Otherwise model name is used.
+        tokenizer_backend: None
+        downsampling_ratio: null
+        tokenized_requests: false
+  target:
+    api_endpoint: # required to add: url, model_id, type
+      stream: false
+evaluations:
+  - name: MMLU
+    description: The MMLU (Massive Multitask Language Understanding) benchmark is designed to measure the knowledge acquired during pretraining by evaluating models in zero-shot and few-shot settings. It covers 57 subjects across various fields, testing both world knowledge and problem-solving abilities.
+    defaults:
+      config:
+        type: "mmlu"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "mmlu_str"
+          extra:
+            num_fewshot: 5
+            args: "--trust_remote_code"
+  - name: MMLU-instruct
+    description: >-
+      - The MMLU (Massive Multitask Language Understanding) benchmark is designed to measure the knowledge acquired during pretraining by evaluating models in zero-shot and few-shot settings. It covers 57 subjects across various fields, testing both world knowledge and problem-solving abilities.
+      - This variant defaults to zero-shot evaluation and instructs the model to produce a single letter response.
+    defaults:
+      config:
+        type: "mmlu_instruct"
+        supported_endpoint_types:
+          - chat
+          - completions
+        params:
+          task: "mmlu_str"
+          extra:
+            num_fewshot: 0
+            args: "--trust_remote_code --add_instruction"
+  - name: MMLU-tigerlab
+    description: >-
+      - The MMLU (Massive Multitask Language Understanding) benchmark is designed to measure the knowledge acquired during pretraining by evaluating models in zero-shot and few-shot settings. It covers 57 subjects across various fields, testing both world knowledge and problem-solving abilities.
+      - This variant defaults to chain-of-thought zero-shot evaluation.
+    defaults:
+      config:
+        type: "mmlu_cot_0_shot_chat"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "mmlu_cot_0_shot_chat"
+          extra:
+            args: "--trust_remote_code"
+  - name: IFEval
+    description: IFEval is a dataset designed to test a model's ability to follow explicit instructions, such as "include keyword x" or "use format y." The focus is on the model's adherence to formatting instructions rather than the content generated, allowing for the use of strict and rigorous metrics.
+    defaults:
+      config:
+        type: "ifeval"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "ifeval"
+  - name: MMLU-Pro
+    description: MMLU-Pro is a refined version of the MMLU dataset, which has been a standard for multiple-choice knowledge assessment. Recent research identified issues with the original MMLU, such as noisy data (some unanswerable questions) and decreasing difficulty due to advances in model capabilities and increased data contamination. MMLU-Pro addresses these issues by presenting models with 10 choices instead of 4, requiring reasoning on more questions, and undergoing expert review to reduce noise. As a result, MMLU-Pro is of higher quality and currently more challenging than the original.
+    defaults:
+      config:
+        type: "mmlu_pro"
+        supported_endpoint_types:
+          - chat
+          - completions
+        params:
+          task: "mmlu_pro"
+          extra:
+            # This is default anyways, just pinning it here to distinguish against zero-shot
+            num_fewshot: 5
+  - name: MMLU-Pro-instruct
+    description: >-
+      - MMLU-Pro is a refined version of the MMLU dataset, which has been a standard for multiple-choice knowledge assessment. Recent research identified issues with the original MMLU, such as noisy data (some unanswerable questions) and decreasing difficulty due to advances in model capabilities and increased data contamination. MMLU-Pro addresses these issues by presenting models with 10 choices instead of 4, requiring reasoning on more questions, and undergoing expert review to reduce noise. As a result, MMLU-Pro is of higher quality and currently more challenging than the original.
+      - This variant applies a chat template and defaults to zero-shot evaluation.
+    defaults:
+      config:
+        type: "mmlu_pro_instruct"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "mmlu_pro"
+          max_new_tokens: 1024
+          extra:
+            num_fewshot: 0
+  - name: MMLU-Redux
+    description: MMLU-Redux is a subset of 3,000 manually re-annotated questions across 30 MMLU subjects.
+    defaults:
+      config:
+        type: "mmlu_redux"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "mmlu_redux"
+  - name: MMLU-Redux-instruct
+    description: >-
+      - MMLU-Redux is a subset of 3,000 manually re-annotated questions across 30 MMLU subjects.
+      - This variant applies a chat template and defaults to zero-shot evaluation.
+    defaults:
+      config:
+        type: "mmlu_redux_instruct"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "mmlu_redux"
+          max_new_tokens: 8192
+          extra:
+            num_fewshot: 0
+            args: "--add_instruction"
+  - name: indonesian_mmlu
+    description: >-
+      - The MMLU (Massive Multitask Language Understanding) benchmark translated to Indonesian.
+      - This variant uses the Indonesian version of the MMLU tasks with string-based evaluation.
+    defaults:
+      config:
+        type: "m_mmlu_id_str"
+        supported_endpoint_types:
+          - chat
+          - completions
+        params:
+          task: "m_mmlu_id_str"
+          extra:
+            num_fewshot: 0
+            args: "--trust_remote_code"
+  # Currently unsupported due to https://github.com/EleutherAI/lm-evaluation-harness/issues/2618
+  # - name: MathLvl5
+  #   description: MATH is a compilation of high-school level competition problems gathered from several sources, formatted consistently using Latex for equations and Asymptote for figures. Generations must fit a very specific output format. We keep only level 5 MATH questions and call it MATH Lvl 5.
+  #   defaults:
+  #     config:
+  #       type: "math"
+  #       supported_endpoint_types:
+  #       - chat
+  #       params:
+  #         task: "leaderboard_math_hard"
+  - name: GSM8K
+    description: The GSM8K benchmark evaluates the arithmetic reasoning of large language models using 1,319 grade school math word problems.
+    defaults:
+      config:
+        type: "gsm8k"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "gsm8k"
+  - name: GSM8K-instruct
+    description: >-
+      - The GSM8K benchmark evaluates the arithmetic reasoning of large language models using 1,319 grade school math word problems.
+      - This variant defaults to chain-of-thought zero-shot evaluation with custom instructions.
+    defaults:
+      config:
+        type: "gsm8k_cot_instruct"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "gsm8k_zeroshot_cot"
+          extra:
+            args: "--add_instruction"
+  - name: GSM8K-cot-zeroshot
+    description: >-
+      - The GSM8K benchmark evaluates the arithmetic reasoning of large language models using 1,319 grade school math word problems.
+      - This variant defaults to chain-of-thought zero-shot evaluation.
+    defaults:
+      config:
+        type: "gsm8k_cot_zeroshot"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "gsm8k_cot_zeroshot"
+          max_new_tokens: 1024
+  - name: GSM8K-cot-llama
+    description: >-
+      - The GSM8K benchmark evaluates the arithmetic reasoning of large language models using 1,319 grade school math word problems.
+      - This variant defaults to chain-of-thought evaluation - implementation taken from llama.
+    defaults:
+      config:
+        type: "gsm8k_cot_llama"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "gsm8k_cot_llama"
+          max_new_tokens: 1024
+  - name: GSM8K-cot-zeroshot-llama
+    description: >-
+      - The GSM8K benchmark evaluates the arithmetic reasoning of large language models using 1,319 grade school math word problems.
+      - This variant defaults to chain-of-thought zero-shot evaluation - implementation taken from llama.
+    defaults:
+      config:
+        type: "gsm8k_cot_zeroshot_llama"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "gsm8k_cot_llama"
+          max_new_tokens: 1024
+          extra:
+            num_fewshot: 0
+  - name: HumanEval-instruct
+    description: >-
+      - The HumanEval benchmark measures functional correctness for synthesizing programs from docstrings.
+      - Implementation taken from llama.
+    defaults:
+      config:
+        type: "humaneval_instruct"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "humaneval_instruct"
+  - name: MBPP EvalPlus
+    description: MBPP EvalPlus is an extension of the MBPP benchmark that explores the limits of the current generation of large language models for program synthesis in general purpose programming languages.
+    defaults:
+      config:
+        type: "mbpp_plus"
+        supported_endpoint_types:
+          - chat
+          - completions
+        params:
+          task: "mbpp_plus"
+  - name: MGSM
+    description: The Multilingual Grade School Math (MGSM) benchmark evaluates the reasoning abilities of large language models in multilingual settings. It consists of 250 grade-school math problems from the GSM8K dataset, translated into ten diverse languages, and tests models using chain-of-thought prompting.
+    defaults:
+      config:
+        type: "mgsm"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "mgsm_direct"
+  - name: MGSM-CoT
+    description: The Multilingual Grade School Math (MGSM) benchmark evaluates the reasoning abilities of large language models in multilingual settings. It consists of 250 grade-school math problems from the GSM8K dataset, translated into ten diverse languages, and tests models using chain-of-thought prompting.
+    defaults:
+      config:
+        type: "mgsm_cot"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "mgsm_cot_native"
+          max_new_tokens: 1024
+          extra:
+            num_fewshot: 0
+  - name: WikiLingua
+    description: The WikiLingua benchmark is a large-scale, multilingual dataset designed for evaluating cross-lingual abstractive summarization systems. It includes approximately 770,000 article-summary pairs in 18 languages, extracted from WikiHow, with gold-standard alignments created by matching images used to describe each how-to step in an article.
+    defaults:
+      config:
+        type: "wikilingua"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "wikilingua"
+          extra:
+            args: "--trust_remote_code"
+  - name: winogrande
+    description: WinoGrande is a collection of 44k problems, inspired by Winograd Schema Challenge (Levesque, Davis, and Morgenstern 2011), but adjusted to improve the scale and robustness against the dataset-specific bias. Formulated as a fill-in-a-blank task with binary options, the goal is to choose the right option for a given sentence which requires commonsense reasoning.
+    defaults:
+      config:
+        type: "winogrande"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "winogrande"
+          extra:
+            num_fewshot: 5
+  - name: ARC Challenge
+    description: The ARC dataset consists of 7,787 science exam questions drawn from a variety of sources, including science questions provided under license by a research partner affiliated with AI2. These are text-only, English language exam questions that span several grade levels as indicated in the files. Each question has a multiple choice structure (typically 4 answer options). The questions are sorted into a Challenge Set of 2,590 "hard" questions (those that both a retrieval and a co-occurrence method fail to answer correctly) and an Easy Set of 5,197 questions.
+    defaults:
+      config:
+        type: "arc_challenge"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "arc_challenge"
+  - name: ARC Challenge-instruct
+    description: >-
+      - The ARC dataset consists of 7,787 science exam questions drawn from a variety of sources, including science questions provided under license by a research partner affiliated with AI2. These are text-only, English language exam questions that span several grade levels as indicated in the files. Each question has a multiple choice structure (typically 4 answer options). The questions are sorted into a Challenge Set of 2,590 "hard" questions (those that both a retrieval and a co-occurrence method fail to answer correctly) and an Easy Set of 5,197 questions.
+      - This variant applies a chat template and defaults to zero-shot evaluation.
+    defaults:
+      config:
+        type: "arc_challenge_chat"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "arc_challenge_chat"
+          max_new_tokens: 1024
+          extra:
+            num_fewshot: 0
+  - name: HellaSwag
+    description: The HellaSwag benchmark tests a language model's commonsense reasoning by having it choose the most logical ending for a given story.
+    defaults:
+      config:
+        type: "hellaswag"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "hellaswag"
+          extra:
+            num_fewshot: 10
+  - name: Truthful QA
+    description: The TruthfulQA benchmark measures the truthfulness of language models in generating answers to questions. It consists of 817 questions across 38 categories, such as health, law, finance, and politics, designed to test whether models can avoid generating false answers that mimic common human misconceptions.
+    defaults:
+      config:
+        type: "truthfulqa"
+        params:
+          task: "truthfulqa"
+  - name: BIG-Bench Hard
+    description: The BIG-Bench Hard (BBH) benchmark is a part of the BIG-Bench evaluation suite, focusing on 23 particularly difficult tasks that current language models struggle with. These tasks require complex, multi-step reasoning, and the benchmark evaluates models using few-shot learning and chain-of-thought prompting techniques.
+    defaults:
+      config:
+        type: "bbh"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "leaderboard_bbh"
+  - name: BIG-Bench Hard-instruct
+    description: The BIG-Bench Hard (BBH) benchmark is a part of the BIG-Bench evaluation suite, focusing on 23 particularly difficult tasks that current language models struggle with. These tasks require complex, multi-step reasoning, and the benchmark evaluates models using few-shot learning and chain-of-thought prompting techniques.
+    defaults:
+      config:
+        type: "bbh_instruct"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "bbh_zeroshot"
+  - name: MuSR
+    description: The MuSR (Multistep Soft Reasoning) benchmark evaluates the reasoning capabilities of large language models through complex, multistep tasks specified in natural language narratives. It introduces sophisticated natural language and complex reasoning challenges to test the limits of chain-of-thought prompting.
+    defaults:
+      config:
+        type: "musr"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "leaderboard_musr"
+  - name: GPQA
+    description: The GPQA (Graduate-Level Google-Proof Q&A) benchmark is a challenging dataset of 448 multiple-choice questions in biology, physics, and chemistry. It is designed to be extremely difficult for both humans and AI, ensuring that questions cannot be easily answered using web searches.
+    defaults:
+      config:
+        type: "gpqa"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "leaderboard_gpqa"
+  - name: GPQA-Diamond-CoT
+    description: The GPQA (Graduate-Level Google-Proof Q&A) benchmark is a challenging dataset of 448 multiple-choice questions in biology, physics, and chemistry. It is designed to be extremely difficult for both humans and AI, ensuring that questions cannot be easily answered using web searches.
+    defaults:
+      config:
+        type: "gpqa_diamond_cot"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "gpqa_diamond_cot_zeroshot"
+          max_new_tokens: 1024
+  - name: GPQA-Diamond-CoT (5 shot)
+    description: The GPQA (Graduate-Level Google-Proof Q&A) benchmark is a challenging dataset of 448 multiple-choice questions in biology, physics, and chemistry. It is designed to be extremely difficult for both humans and AI, ensuring that questions cannot be easily answered using web searches. Diamond version is the hardest subset.
+    defaults:
+      config:
+        type: "gpqa_diamond_cot_5_shot"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "gpqa_diamond_cot_n_shot"
+          max_new_tokens: 1024
+          extra:
+            num_fewshot: 5
+  - name: Frames Naive
+    description: Frames Naive uses the prompt as input without additional context
+    defaults:
+      config:
+        type: "frames_naive"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "frames_naive"
+          max_new_tokens: 2048
+          temperature: 0.0
+  - name: Frames Naive with Links
+    description: Frames Naive with Links provides the prompt and relevant Wikipedia article links
+    defaults:
+      config:
+        type: "frames_naive_with_links"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "frames_naive_with_links"
+          max_new_tokens: 2048
+          temperature: 0.0
+  - name: Frames Oracle
+    description: Frames Oracle (long context) provides prompts and relevant text from curated and processed Wikipedia articles from "parasail-ai/frames-benchmark-wikipedia".
+    defaults:
+      config:
+        type: "frames_oracle"
+        supported_endpoint_types:
+          - chat
+        params:
+          task: "frames_oracle"
+          max_new_tokens: 2048
+          temperature: 0.0
+          max_retries: 5
+          timeout: 1000
+
+  - name: CommonsenseQA
+    description: >-
+      - CommonsenseQA is a multiple-choice question answering dataset that requires different types of commonsense knowledge to predict the correct answers.
+      - It contains 12,102 questions with one correct answer and four distractor answers.
+    defaults:
+      config:
+        type: "commonsense_qa"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "commonsense_qa"
+          extra:
+            num_fewshot: 7
+
+  - name: OpenBookQA
+    description: >-
+      - OpenBookQA is a question-answering dataset modeled after open book exams for assessing human understanding of a subject.
+      - It consists of 5,957 multiple-choice elementary-level science questions (4,957 train, 500 dev, 500 test), which probe the understanding of a small "book" of 1,326 core science facts and the application of these facts to novel situations.
+      - For training, the dataset includes a mapping from each question to the core science fact it was designed to probe.
+      - Answering OpenBookQA questions requires additional broad common knowledge, not contained in the book.
+      - The questions, by design, are answered incorrectly by both a retrieval-based algorithm and a word co-occurrence algorithm.
+    defaults:
+      config:
+        type: "openbookqa"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "openbookqa"
+
+  - name: MMLU-Logits
+    description: >-
+      - The MMLU (Massive Multitask Language Understanding) benchmark is designed to measure the knowledge acquired during pretraining by evaluating models in zero-shot and few-shot settings.
+      - It covers 57 subjects across various fields, testing both world knowledge and problem-solving abilities.
+      - This variant uses the logits of the model to evaluate the accuracy.
+    defaults:
+      config:
+        type: "mmlu_logits"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "mmlu"
+          extra:
+            num_fewshot: 5
+
+  # ADLR actually used the baber/piqa dataset instead of the original piqa dataset, but results are the same.
+  - name: PIQA
+    description: >-
+      - Physical Interaction: Question Answering (PIQA) is a physical commonsense
+        reasoning and a corresponding benchmark dataset. PIQA was designed to investigate
+        the physical knowledge of existing models. To what extent are current approaches
+        actually learning about the world?
+    defaults:
+      config:
+        type: "piqa"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "piqa"
+
+  - name: Social IQA
+    description: >-
+      - Social IQa contains 38,000 multiple choice questions for probing emotional and social intelligence in a variety of everyday situations (e.g., Q: "Jordan wanted to tell Tracy a secret, so Jordan leaned towards Tracy. Why did Jordan do this?" A: "Make sure no one else could hear").
+    defaults:
+      config:
+        type: "social_iqa"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "social_iqa"
+          extra:
+            args: "--trust_remote_code"
+
+  # ADLR specific tasks:
+  - name: ADLR RACE
+    description: RACE version used by NVIDIA Applied Deep Learning Research team (ADLR).
+    defaults:
+      config:
+        type: "adlr_race"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "adlr_race"
+
+  - name: ADLR TruthfulQA-MC2
+    description: TruthfulQA-MC2 version used by NVIDIA Applied Deep Learning Research team (ADLR).
+    defaults:
+      config:
+        type: "adlr_truthfulqa_mc2"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "adlr_truthfulqa_mc2"
+
+  - name: ADLR ARC-Challenge-Llama
+    description: ARC-Challenge-Llama version used by NVIDIA Applied Deep Learning Research team (ADLR).
+    defaults:
+      config:
+        type: "adlr_arc_challenge_llama"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "adlr_arc_challenge_llama"
+          extra:
+            num_fewshot: 25
+
+  - name: ADLR Minerva-Math-NeMo
+    description: Minerva-Math version used by NVIDIA Applied Deep Learning Research team (ADLR).
+    defaults:
+      config:
+        type: "adlr_minerva_math_nemo"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "adlr_minerva_math_nemo"
+          extra:
+            num_fewshot: 4
+
+  - name: ADLR GSM8K-CoT
+    description: GSM8K-CoT version used by NVIDIA Applied Deep Learning Research team (ADLR).
+    defaults:
+      config:
+        type: "adlr_gsm8k_fewshot_cot"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "adlr_gsm8k_fewshot_cot"
+
+  - name: ADLR MMLU-Pro-Tigerlab
+    description: MMLU-Pro-Tigerlab version used by NVIDIA Applied Deep Learning Research team (ADLR).
+    defaults:
+      config:
+        type: "adlr_mmlu_pro_5_shot_base"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "adlr_mmlu_pro_5_shot_base"
+
+  - name: ADLR HumanEval
+    description: HumanEval version used by NVIDIA Applied Deep Learning Research team (ADLR).
+    defaults:
+      config:
+        type: "adlr_humaneval_greedy"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "adlr_humaneval_greedy"
+
+  - name: ADLR HumanEvalPlus
+    description: HumanEvalPlus version used by NVIDIA Applied Deep Learning Research team (ADLR).
+    defaults:
+      config:
+        type: "adlr_humanevalplus_greedy"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "adlr_humanevalplus_greedy"
+
+  - name: ADLR MBPP
+    description: MBPP version used by NVIDIA Applied Deep Learning Research team (ADLR).
+    defaults:
+      config:
+        type: "adlr_mbpp_sanitized_3shot_greedy"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "adlr_mbpp_sanitized_3shot_greedy"
+
+  - name: ADLR MBPPPlus
+    description: MBPPPlus version used by NVIDIA Applied Deep Learning Research team (ADLR).
+    defaults:
+      config:
+        type: "adlr_mbppplus_greedy_sanitized"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "adlr_mbppplus_greedy_sanitized"
+  - name: BBQ
+    description: The BBQ (Bias Benchmark for QA) is a benchmark designed to measure social biases in question answering systems. It contains ambiguous questions spanning 9 categories - disability, gender, nationality, physical appearance, race/ethnicity, religion, sexual orientation, socioeconomic status, and age.
+    defaults:
+      config:
+        type: "bbq"
+        supported_endpoint_types:
+          - chat
+          - completions
+        params:
+          task: "bbq_generate"
+  - name: ARC Multilingual
+    description: The ARC dataset consists of 7,787 science exam questions drawn from a variety of sources, including science questions provided under license by a research partner affiliated with AI2. These are text-only, English language exam questions that span several grade levels as indicated in the files. Each question has a multiple choice structure (typically 4 answer options). The questions are sorted into a Challenge Set of 2,590 "hard" questions (those that both a retrieval and a co-occurrence method fail to answer correctly) and an Easy Set of 5,197 questions.
+    defaults:
+      config:
+        type: "arc_multilingual"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "arc_multilingual"
+  - name: HellaSwag Multilingual
+    description: The HellaSwag benchmark tests a language model's commonsense reasoning by having it choose the most logical ending for a given story.
+    defaults:
+      config:
+        type: "hellaswag_multilingual"
+        supported_endpoint_types:
+          - completions
+        params:
+          task: "hellaswag_multilingual"
+          extra:
+            num_fewshot: 10
+  - name: MMLU-ProX
+    description: A Multilingual Benchmark for Advanced Large Language Model Evaluation
+    defaults:
+      config:
+        type: "mmlu_prox"
+        supported_endpoint_types:
+          - chat
+          - completions
+        params:
+          task: "mmlu_prox"
