@@ -1,0 +1,239 @@
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# [tool.hatch.version]
+# source = "uv-dynamic-versioning"
+
+# [tool.hatch.build.hooks.version]
+# path = "sklearn_nominal/_version.py"
+# template = '''
+# version = "{version}"
+# '''
+
+# [tool.uv-dynamic-versioning]
+# vcs = "git"
+# style = "semver"
+
+[project]
+name = "sklearn_nominal"
+version = "0.0.3"
+description = "Extra models for scikit-learn w/ built-in support for nominal attributes"
+readme = "README.md"
+authors = [{name="Facundo Manuel Quiroga", email="{first_name}{last_name_initial}@gmail.com"}]
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.2.0",
+    "matplotlib>=3.10.0",
+    "graphviz>=0.20.3",
+    "pandas>=2.2.3",
+    "scikit-learn>=1.6.1",
+    "data-science-types>=0.2.23",
+    "pandas[pyarrow]>=2.2.3",
+    "pyarrow>=19.0.1",
+    "pygraphviz>=1.14",
+    "cairosvg>=2.7.1",
+
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+]
+
+
+[dependency-groups]
+dev = [
+    "pandas-stubs>=2.2.3.250308",
+    "scipy-stubs>=1.15.2.1",
+    "microsoft-python-type-stubs",
+    "jupyter>=1.1.1",
+    "pytest>=8.4.1",
+    "sklearn_nominal",
+    "tqdm>=4.67.1",
+    "types-tqdm>=4.67.0.20250401",
+    "snakeviz>=2.2.2",
+    "openml>=0.15.1",
+    "lets-plot>=4.6.2",
+    "py-cpuinfo>=9.0.0",
+    "tabulate>=0.9.0",
+    "black>=25.1.0",
+    "pre-commit>=4.2.0",
+    "poethepoet>=0.35.0",
+]
+docs = [
+    "sphinx>=8.2.3",
+    "sphinx-design>=0.6.1",
+    "sphinx-prompt>=1.10.0",
+    "numpydoc>=1.9.0",
+    "sphinx-gallery>=0.19.0",
+    "pydata-sphinx-theme>=0.16.1",
+    "sphinx-autobuild>=2024.10.3",
+    "sphinx-autodoc-typehints>=3.2.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/facundoq/sklearn_nominal"
+"Bug Reports" = "https://github.com/facundoq/sklearn_nominal/issues"
+"Source" = "https://github.com/facundoq/sklearn_nominal"
+
+[project.optional-dependencies]
+export = [
+
+]
+
+
+[tool.setuptools_scm]
+version_file = "sklearn_nominal/_version.py"
+
+
+[tool.uv]
+default-groups = ["dev", "docs"]
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple/"
+publish-url = "https://pypi.org/legacy/"
+
+[tool.uv.sources]
+microsoft-python-type-stubs = { git = "https://github.com/microsoft/python-type-stubs.git" }
+sklearn_nominal = { workspace = true }
+
+
+
+# [tool.black]
+# line-length = 88
+# target_version = ['py312']
+# preview = true
+# exclude = '''
+# /(
+#     \.eggs         # exclude a few common directories in the
+#   | \.git          # root of the project
+#   | \.vscode
+# )/
+# '''
+#force-exclude = "sklearn_nominal/_version.py"
+
+
+[tool.ruff]
+line-length = 120
+
+target-version = "py312"
+exclude=[
+    ".git",
+    ".github",
+    "__pycache__",
+    "dist",
+    "doc/_build",
+    "doc/auto_examples",
+    "docs",
+    "build",
+    "sklearn_nominal/_version.py",
+]
+
+[tool.ruff.lint]
+# all rules can be found here: https://beta.ruff.rs/docs/rules/
+select = ["E", "F", "W", "I"]
+ignore=[
+    # space before : (needed for how black formats slicing)
+    "E203",
+    # explicit reexport
+    "F401",
+    # fstrings with no variables
+    "F541",
+    # do not assign a lambda expression, use a def
+    "E731",
+    # do not use variables named 'l', 'O', or 'I'
+    "E741",
+    # line length
+    "E501"
+]
+
+[tool.ruff.lint.per-file-ignores]
+# It's fine not to put the import at the top of the file in the examples
+# folder.
+"*/__init__.py"=["I001","E402"]
+"examples/*"=["E402"]
+"doc/conf.py"=["E402"]
+"doc/_templates/numpydoc_docstring.py"=["F821", "W292"]
+"*.ipynb" = ["ALL"]
+
+[tool.pytest.ini_options]
+addopts = "--color=yes"
+doctest_optionflags = "NORMALIZE_WHITESPACE"
+
+# [tool.mypy]
+# implicit_optional = true
+# disallow_untyped_defs = false
+# check_untyped_defs = true
+# warn_return_any = true
+
+
+[tool.poe]
+executor.type = "uv"
+
+[tool.poe.tasks]
+test = "uv run pytest sklearn_nominal"
+lint = "uvx ruff check --fix sklearn_nominal "
+format = "uvx ruff format sklearn_nominal"
+build = "uv build"
+docs = "uv run sphinx-build docs docs/_build"
+serve-docs = " uv run sphinx-autobuild --open-browser docs docs/_build"
+precommit = "uv run pre-commit run --all-files"
+
+# OLD PIXI STUFF FROM TEMPLATE
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
+
+
+[tool.pixi.feature.lint.dependencies]
+# The version below should be aligned with the one of `.pre-commit-config.yaml`
+black = "23.3.0"
+pre-commit = "4.3.0"
+ruff = "0.4.2"
+
+[tool.pixi.feature.lint.tasks]
+black = { cmd = "black --check --diff sklearn_nominal && black --check --diff examples" }
+ruff = { cmd = "ruff check --output-format=full sklearn_nominal && ruff check --output-format=full examples" }
+lint = { depends_on = ["black", "ruff"]}
+
+
+[tool.setuptools]
+py-modules = ['sklearn_nominal']
+
+[tool.hatch.build.targets.wheel]
+packages = ["sklearn_nominal"]
+
+[tool.pixi.feature.test.dependencies]
+pytest = "*"
+pytest-cov = "*"
+
+[tool.pixi.feature.test.tasks]
+test = { cmd = "pytest -vsl --cov=sklearn_nominal --cov-report=xml sklearn_nominal" }
+
+[tool.pixi.feature.doc.dependencies]
+matplotlib = "*"
+numpydoc = "*"
+pydata-sphinx-theme = "*"
+setuptools-scm = ">=8"  # needed for the versioning
+sphinx = "*"
+sphinx-design = "*"
+sphinx-gallery = "*"
+sphinx-prompt = "*"
+
+[tool.pixi.feature.doc.tasks]
+build-doc = { cmd = "make html", cwd = "doc" }
+clean-doc = { cmd = "rm -rf _build", cwd = "doc" }
+
+[tool.pixi.environments]
+doc = ["doc"]
+lint = ["lint"]
+test = ["test"]
+dev = ["doc", "lint", "test"]
