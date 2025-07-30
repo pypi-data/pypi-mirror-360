@@ -1,0 +1,12 @@
+{% if content -%}
+{% for content_type, item in content.items() -%}
+{% set schema = item.schema -%}
+{% if schema -%}
+{{ schema | ref_to_link }}{% include './_object_schema.md.j2' %}
+{% else -%}
+...{% endif -%}
+{% with root = item -%}
+{% include './_example.md.j2' -%}
+{% endwith -%}
+{% endfor -%}
+{% endif -%}
