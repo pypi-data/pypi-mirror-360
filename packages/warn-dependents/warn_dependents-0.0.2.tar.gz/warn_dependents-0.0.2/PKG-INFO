@@ -1,0 +1,74 @@
+Metadata-Version: 2.4
+Name: warn-dependents
+Version: 0.0.2
+Summary: Email the authors and maintainers of all projects using a PyPi project (e.g. yours) downstream.  By default, warn them it is intended to drop support for old Python versions.
+Project-URL: Issues, https://github.com/JamesParrott/warn-dependents/issues
+Project-URL: Source, https://github.com/JamesParrott/warn-dependents
+Author-email: JamesParrott <james.parrott@proton.me>
+License-Expression: AGPL-3.0-or-later
+License-File: LICENSE.txt
+Classifier: Development Status :: 4 - Beta
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Requires-Python: >=3.12
+Requires-Dist: maintainers-and-authors
+Requires-Dist: nameutils
+Requires-Dist: requests
+Requires-Dist: sparkpost
+Description-Content-Type: text/markdown
+
+# warn_dependents
+Email the authors and maintainers of all projects using a PyPi project (e.g. yours) downstream.  By default, warn them it is intended to drop support for old Python versions.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Usage](#usage)
+- [License](#license)
+
+## Installation
+
+```console
+pip install warn-dependents
+```
+
+## Usage
+
+The user interface deliberately reads from stdin (via maintainers-and-authors).
+
+echo project_name | warn-dependents <sender_name> <sender_email> <project_name> <discussion_link> <Python_version>
+
+
+## Usage
+
+Breaking the steps down allows checks that all the required APIs are working,and double checking the list of recipients of the emails before hitting "send":
+
+Bash
+```console
+rev-deps project_name > revdeps.txt
+cat revdeps.txt | maintainers-and-authors > emails.txt
+SPARKPOST_API_KEY=_____________ 
+cat revdeps.txt | warn_dependents "Your name" yourself@example.com project_name https://www.github.com/user_or_org/project_name/discussions 3.14
+```
+
+Cmd.exe
+```console
+rev-deps project_name > revdeps.txt
+type revdeps.txt | maintainers-and-authors > emails.txt
+set SPARKPOST_API_KEY=_____________ 
+type revdeps.txt | warn_dependents "Your name" yourself@example.com project_name https://www.github.com/user_or_org/project_name/discussions 3.14
+```
+
+To live dangerously and do it all on one line:
+```
+SPARKPOST_API_KEY=_____________ && echo project_name | warn-dependents "Your name" yourself@example.com project_name https://www.github.com/user_or_org/project_name/discussions 3.14
+```
+
+## License
+AGPL3
+
