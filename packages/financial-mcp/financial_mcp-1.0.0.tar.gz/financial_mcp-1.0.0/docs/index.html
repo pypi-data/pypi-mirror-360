@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Dashboard - Assets & Currencies</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        .asset-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: white;
+            border: 2px solid #3498db;
+            color: #3498db;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .tab-btn:hover, .tab-btn.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .metric-name {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .metric-change {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .positive { 
+            color: #27ae60; 
+            background: rgba(39, 174, 96, 0.1); 
+        }
+
+        .negative { 
+            color: #e74c3c; 
+            background: rgba(231, 76, 60, 0.1); 
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: white;
+            border: 2px solid #3498db;
+            color: #3498db;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover, .btn.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .chart-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .summary-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+
+        .asset-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        .currency-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metric-card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Financial Dashboard</h1>
+            <p class="subtitle">Analysis of major financial assets and currencies (2020-2024)</p>
+        </header>
+
+        <div class="asset-tabs">
+            <button class="tab-btn active" onclick="setAssetFilter('all')">All Assets</button>
+            <button class="tab-btn" onclick="setAssetFilter('traditional')">Traditional</button>
+            <button class="tab-btn" onclick="setAssetFilter('crypto')">Crypto</button>
+            <button class="tab-btn" onclick="setAssetFilter('currencies')">Currencies</button>
+        </div>
+
+        <div class="currency-info" id="currencyInfo" style="display: none;">
+            💱 Currency pairs show exchange rates: JPY/USD (Yen per Dollar), EUR/USD (Euro to Dollar), and USD Index (Dollar strength vs basket of currencies)
+        </div>
+
+        <div class="metrics-row" id="metricsContainer">
+            <div class="loading">Loading market data...</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn active" onclick="setTimeframe('all')">All Time</button>
+            <button class="btn" onclick="setTimeframe('2024')">2024</button>
+            <button class="btn" onclick="setTimeframe('2023')">2023</button>
+            <button class="btn" onclick="setTimeframe('ytd')">YTD</button>
+        </div>
+
+        <div class="chart-grid">
+            <div class="chart-section">
+                <div class="chart-title">📈 Price Performance</div>
+                <div class="asset-legend" id="priceChartLegend"></div>
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-section">
+                <div class="chart-title">📊 Daily Returns</div>
+                <div class="asset-legend" id="returnsChartLegend"></div>
+                <div class="chart-container">
+                    <canvas id="returnsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-section">
+            <div class="chart-title">⚖️ Risk vs Return Profile</div>
+            <div class="chart-container">
+                <canvas id="riskReturnChart"></canvas>
+            </div>
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-title">📈 Best Performers</div>
+                <div id="bestPerformers"></div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-title">📉 Worst Performers</div>
+                <div id="worstPerformers"></div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-title">📊 Volatility Ranking</div>
+                <div id="volatilityRanking"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Asset configuration with categories
+        const assets = {
+            'SP500': { name: 'S&P 500', color: '#3498db', category: 'traditional' },
+            'Gold': { name: 'Gold', color: '#f39c12', category: 'traditional' },
+            'Bitcoin': { name: 'Bitcoin', color: '#e67e22', category: 'crypto' },
+            'Ethereum': { name: 'Ethereum', color: '#9b59b6', category: 'crypto' },
+            'XRP': { name: 'XRP', color: '#e74c3c', category: 'crypto' },
+            'JPY_USD': { name: 'JPY/USD', color: '#16a085', category: 'currencies' },
+            'EUR_USD': { name: 'EUR/USD', color: '#2ecc71', category: 'currencies' },
+            'USD_Index': { name: 'USD Index', color: '#34495e', category: 'currencies' }
+        };
+
+        let financialData = {};
+        let currentTimeframe = 'all';
+        let currentFilter = 'all';
+        let charts = {};
+
+        // Generate sample financial data
+        function generateSampleData() {
+            const data = {};
+            const startDate = new Date('2020-01-01');
+            const endDate = new Date('2024-12-31');
+            const totalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
+
+            Object.keys(assets).forEach(assetKey => {
+                data[assetKey] = {
+                    dates: [],
+                    prices: [],
+                    returns: []
+                };
+
+                let price = assetKey === 'Bitcoin' ? 7000 : 
+                           assetKey === 'Ethereum' ? 130 : 
+                           assetKey === 'XRP' ? 0.2 : 
+                           assetKey === 'Gold' ? 1500 :
+                           assetKey === 'JPY_USD' ? 110 :
+                           assetKey === 'EUR_USD' ? 1.18 :
+                           assetKey === 'USD_Index' ? 92 : 3200;
+
+                for (let i = 0; i <= totalDays; i++) {
+                    const date = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+                    
+                    // Skip weekends for traditional assets and currencies
+                    if ((assets[assetKey].category !== 'crypto') && 
+                        (date.getDay() === 0 || date.getDay() === 6)) {
+                        continue;
+                    }
+
+                    const volatility = assetKey === 'Bitcoin' ? 0.04 : 
+                                     assetKey === 'Ethereum' ? 0.05 :
+                                     assetKey === 'XRP' ? 0.06 : 
+                                     assetKey === 'Gold' ? 0.012 :
+                                     assetKey.includes('USD') ? 0.008 : 0.015;
+                    
+                    const drift = assetKey === 'Bitcoin' ? 0.0003 : 
+                                 assetKey === 'Ethereum' ? 0.0004 :
+                                 assetKey === 'XRP' ? 0.0001 : 
+                                 assetKey === 'Gold' ? 0.00015 :
+                                 assetKey.includes('USD') ? 0.00005 : 0.0002;
+
+                    const dailyReturn = (Math.random() - 0.5) * volatility * 2 + drift;
+                    price = price * (1 + dailyReturn);
+
+                    data[assetKey].dates.push(date.toISOString().split('T')[0]);
+                    data[assetKey].prices.push(price);
+                    data[assetKey].returns.push(dailyReturn * 100);
+                }
+            });
+
+            return data;
+        }
+
+        // Filter assets based on category
+        function getFilteredAssets() {
+            if (currentFilter === 'all') {
+                return Object.keys(assets);
+            }
+            return Object.keys(assets).filter(key => assets[key].category === currentFilter);
+        }
+
+        // Set asset filter
+        function setAssetFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Show/hide currency info
+            document.getElementById('currencyInfo').style.display = 
+                filter === 'currencies' ? 'block' : 'none';
+            
+            updateMetrics();
+            updateCharts();
+            updateSummary();
+        }
+
+        // Initialize dashboard
+        function initDashboard() {
+            financialData = generateSampleData();
+            updateMetrics();
+            createCharts();
+            updateSummary();
+        }
+
+        // Update metrics cards
+        function updateMetrics() {
+            const container = document.getElementById('metricsContainer');
+            container.innerHTML = '';
+            const filteredAssets = getFilteredAssets();
+
+            filteredAssets.forEach(assetKey => {
+                const asset = assets[assetKey];
+                const data = financialData[assetKey];
+                const latestPrice = data.prices[data.prices.length - 1];
+                const initialPrice = data.prices[0];
+                const totalReturn = ((latestPrice - initialPrice) / initialPrice) * 100;
+                const latestReturn = data.returns[data.returns.length - 1];
+
+                const card = document.createElement('div');
+                card.className = 'metric-card';
+                card.innerHTML = `
+                    <div class="metric-name">${asset.name}</div>
+                    <div class="metric-value" style="color: ${asset.color}">
+                        ${totalReturn.toFixed(1)}%
+                    </div>
+                    <div class="metric-change ${latestReturn >= 0 ? 'positive' : 'negative'}">
+                        ${latestReturn >= 0 ? '↗' : '↘'} ${latestReturn.toFixed(2)}% today
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Create asset legend
+        function createLegend(containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            const filteredAssets = getFilteredAssets();
+            
+            filteredAssets.forEach(assetKey => {
+                const asset = assets[assetKey];
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                legendItem.innerHTML = `
+                    <div class="legend-color" style="background-color: ${asset.color}"></div>
+                    <span>${asset.name}</span>
+                `;
+                container.appendChild(legendItem);
+            });
+        }
+
+        // Create charts
+        function createCharts() {
+            createLegend('priceChartLegend');
+            createLegend('returnsChartLegend');
+            createPriceChart();
+            createReturnsChart();
+            createRiskReturnChart();
+        }
+
+        // Update charts when filter changes
+        function updateCharts() {
+            createLegend('priceChartLegend');
+            createLegend('returnsChartLegend');
+            
+            // Destroy existing charts
+            if (charts.priceChart) charts.priceChart.destroy();
+            if (charts.returnsChart) charts.returnsChart.destroy();
+            if (charts.riskReturnChart) charts.riskReturnChart.destroy();
+            
+            // Recreate charts
+            createPriceChart();
+            createReturnsChart();
+            createRiskReturnChart();
+        }
+
+        // Price performance chart
+        function createPriceChart() {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            const filteredAssets = getFilteredAssets();
+            
+            const datasets = filteredAssets.map(assetKey => {
+                const asset = assets[assetKey];
+                const data = financialData[assetKey];
+                const normalizedPrices = data.prices.map(price => 
+                    ((price - data.prices[0]) / data.prices[0]) * 100
+                );
+
+                return {
+                    label: asset.name,
+                    data: normalizedPrices,
+                    borderColor: asset.color,
+                    backgroundColor: asset.color + '20',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.1,
+                    pointRadius: 0,
+                    pointHoverRadius: 4
+                };
+            });
+
+            charts.priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: financialData[filteredAssets[0]].dates,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Return (%)'
+                            },
+                            grid: { color: '#f0f0f0' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { maxTicksLimit: 6 }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        // Daily returns chart
+        function createReturnsChart() {
+            const ctx = document.getElementById('returnsChart').getContext('2d');
+            const filteredAssets = getFilteredAssets();
+            
+            // Show only the last 100 days for clarity
+            const datasets = filteredAssets.map(assetKey => {
+                const asset = assets[assetKey];
+                const data = financialData[assetKey];
+                const recentReturns = data.returns.slice(-100);
+
+                return {
+                    label: asset.name,
+                    data: recentReturns,
+                    borderColor: asset.color,
+                    backgroundColor: asset.color + '30',
+                    borderWidth: 1,
+                    fill: false,
+                    pointRadius: 1,
+                    pointHoverRadius: 3
+                };
+            });
+
+            charts.returnsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: financialData[filteredAssets[0]].dates.slice(-100),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Daily Return (%)'
+                            },
+                            grid: { color: '#f0f0f0' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { maxTicksLimit: 6 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Risk vs return scatter plot
+        function createRiskReturnChart() {
+            const ctx = document.getElementById('riskReturnChart').getContext('2d');
+            const filteredAssets = getFilteredAssets();
+            
+            const data = filteredAssets.map(assetKey => {
+                const asset = assets[assetKey];
+                const returns = financialData[assetKey].returns;
+                const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length * 252;
+                const variance = returns.reduce((sum, ret) => 
+                    sum + Math.pow(ret - returns.reduce((a, b) => a + b, 0) / returns.length, 2), 0
+                ) / returns.length;
+                const volatility = Math.sqrt(variance * 252);
+                
+                return {
+                    x: volatility,
+                    y: avgReturn,
+                    label: asset.name,
+                    backgroundColor: asset.color,
+                    borderColor: asset.color
+                };
+            });
+
+            charts.riskReturnChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Assets',
+                        data: data,
+                        backgroundColor: data.map(d => d.backgroundColor),
+                        borderColor: data.map(d => d.borderColor),
+                        pointRadius: 8,
+                        pointHoverRadius: 12
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const point = context.raw;
+                                    return `${point.label}: Return ${point.y.toFixed(1)}%, Risk ${point.x.toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Annual Volatility (%)'
+                            },
+                            grid: { color: '#f0f0f0' }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Annual Return (%)'
+                            },
+                            grid: { color: '#f0f0f0' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update summary statistics
+        function updateSummary() {
+            const filteredAssets = getFilteredAssets();
+            const performance = filteredAssets.map(assetKey => {
+                const asset = assets[assetKey];
+                const data = financialData[assetKey];
+                const returns = data.returns;
+                const totalReturn = ((data.prices[data.prices.length - 1] - data.prices[0]) / data.prices[0]) * 100;
+                const volatility = Math.sqrt(returns.reduce((sum, ret) => 
+                    sum + Math.pow(ret - returns.reduce((a, b) => a + b, 0) / returns.length, 2), 0
+                ) / returns.length) * Math.sqrt(252);
+
+                return {
+                    name: asset.name,
+                    return: totalReturn,
+                    volatility: volatility
+                };
+            });
+
+            // Best performers
+            const best = [...performance].sort((a, b) => b.return - a.return).slice(0, 3);
+            document.getElementById('bestPerformers').innerHTML = best.map(asset => 
+                `<div class="summary-item">
+                    <span>${asset.name}</span>
+                    <span style="color: #27ae60;">+${asset.return.toFixed(1)}%</span>
+                </div>`
+            ).join('');
+
+            // Worst performers
+            const worst = [...performance].sort((a, b) => a.return - b.return).slice(0, 3);
+            document.getElementById('worstPerformers').innerHTML = worst.map(asset => 
+                `<div class="summary-item">
+                    <span>${asset.name}</span>
+                    <span style="color: #e74c3c;">${asset.return.toFixed(1)}%</span>
+                </div>`
+            ).join('');
+
+            // Volatility ranking
+            const volatilityRanked = [...performance].sort((a, b) => b.volatility - a.volatility);
+            document.getElementById('volatilityRanking').innerHTML = volatilityRanked.map(asset => 
+                `<div class="summary-item">
+                    <span>${asset.name}</span>
+                    <span>${asset.volatility.toFixed(1)}%</span>
+                </div>`
+            ).join('');
+        }
+
+        // Set timeframe filter
+        function setTimeframe(timeframe) {
+            document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            currentTimeframe = timeframe;
+            
+            // In a real implementation, you would filter data and update charts
+            console.log('Timeframe changed to:', timeframe);
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+</body>
+</html>

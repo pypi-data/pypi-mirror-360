@@ -1,0 +1,108 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "financial-mcp"
+version = "1.0.0"
+description = "A comprehensive financial data analysis and visualization package"
+readme = "README_PYPI.md"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Tatsuru Kikuchi", email = "tatsuru.kikuchi@example.com"}
+]
+maintainers = [
+    {name = "Tatsuru Kikuchi", email = "tatsuru.kikuchi@example.com"}
+]
+keywords = [
+    "finance",
+    "data-analysis",
+    "visualization",
+    "stock-market",
+    "cryptocurrency",
+    "currency",
+    "trading",
+    "investment",
+    "yahoo-finance",
+    "financial-modeling"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "yfinance>=0.2.28",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.5.0",
+    "seaborn>=0.12.0",
+    "scipy>=1.10.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+jupyter = [
+    "jupyter>=1.0.0",
+    "notebook>=6.5.0",
+    "ipykernel>=6.0.0",
+]
+all = [
+    "financial-mcp[dev,jupyter]"
+]
+
+[project.urls]
+Homepage = "https://github.com/Tatsuru-Kikuchi/MCP"
+Documentation = "https://github.com/Tatsuru-Kikuchi/MCP#readme"
+Repository = "https://github.com/Tatsuru-Kikuchi/MCP"
+"Bug Tracker" = "https://github.com/Tatsuru-Kikuchi/MCP/issues"
+"Live Dashboard" = "https://tatsuru-kikuchi.github.io/MCP/"
+
+[project.scripts]
+financial-mcp = "financial_mcp.cli:main"
+financial-mcp-fetch = "financial_mcp.cli:main"
+financial-mcp-analyze = "financial_mcp.cli:main"
+financial-mcp-visualize = "financial_mcp.cli:main"
+
+[tool.setuptools]
+packages = ["financial_mcp"]
+
+[tool.setuptools.package-data]
+financial_mcp = ["*.py"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
