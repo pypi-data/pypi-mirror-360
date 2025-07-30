@@ -1,0 +1,212 @@
+Metadata-Version: 2.4
+Name: crc1625_api
+Version: 0.1.0
+Summary: Python client for querying and downloading data from the MatInf VRO API
+Home-page: https://gitlab.ruhr-uni-bochum.de/icams-mids/crc1625rdmswrapper
+Author: Doaa Mohamed
+Author-email: Doaa Mohamed <doaamahmoud262@yahoo.com>
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+Requires-Dist: requests
+Requires-Dist: pandas
+Requires-Dist: openpyxl
+Dynamic: author
+Dynamic: home-page
+Dynamic: requires-python
+
+# CRC_API
+
+A Python wrapper for the MatInf VRO API used in CRC 1625. It allows querying samples, associated objects, compositions, and properties.
+
+## Installation
+
+```bash
+pip install crc1625-api
+```
+
+## 1. Initialize the client
+```python
+### Full Summary Query Example
+from matinfwebapi.Api import MatInfWebApiClient
+
+
+crc_api = MatInfWebApiClient(
+    service_url="https://your-api-endpoint",  # e.g., "https://matinf-api.crc1625.de"
+    api_key="your-api-token"
+)
+```
+## 🧭 get_summary_fields() – Discover What You Can Search and Filter
+Before performing a detailed query, it's helpful to know what types, elements, properties, and users exist in the database.
+The get_summary_fields() method helps you explore all available options.
+
+It retrieves:
+
+#### ✅ Associated Object Types – e.g., 'EDX CSV', 'Photo', 'Bandgap Plot'
+
+#### ✅ Property Names – e.g., 'Bandgap', 'Thickness', 'Resistance'
+
+#### ✅ Element Names – e.g., 'Ag', 'Pd', 'Pt', 'Cu'
+
+#### ✅ Creator Emails – list of all users who created objects
+
+#### ✅ Creator Usernames – system usernames linked to object creation
+
+This is useful for building dropdowns in a UI, validating user input, or just understanding the structure of your research data.
+
+##### 📌 Example:
+You can use the output of this function to:
+
+Suggest available filters for users
+
+Know which properties or elements are supported
+
+Pre-fill search fields in automated scripts
+
+
+```python
+summary_fields = CRC_API.get_summary_fields()
+# Convert and display each field as a table
+display(pd.DataFrame(summary_fields["distinct_associated_typenames"], columns=["Associated Object Types"]))
+```
+
+## What Does get_summary() Do?
+The get_summary() function collects detailed information about research objects (like samples) from the MatInf database. You can use it to:
+
+#### ✅ Filter objects by:
+
+Type (e.g. "Sample")
+
+Date range (e.g. created between Jan 2024 and May 2025)
+
+Specific associated data types (e.g. EDX, Photo, Resistance CSV)
+
+Specific elements (e.g. only samples that contain Ag and Pd)
+
+Optional element percentage ranges (e.g. Pd between 5–20%)
+
+#### ✅ Include in the output:
+
+Linked files (associated objects like images, CSVs, etc.)
+
+Properties of the object (e.g. Bandgap)
+
+Composition (element percentages)
+
+Properties of linked objects (e.g. bandgap of associated analysis file)
+
+#### ✅ Export results:
+
+As a readable list of Python dictionaries
+
+Or save it as a .json file for reuse or sharing
+
+🧠 Example in This Notebook:
+We are retrieving all Sample objects:
+
+Created between 2024-01-01 and 2025-05-31
+
+That are linked to EDX CSV, Photo, and HTTS Resistance CSV files
+
+That contain Pd (5–20%) and Ag (any amount)
+
+And include the Bandgap property (if available)
+
+The result will be saved in the results/ folder as summary_Sample.json.
+
+### Full Summary Query Example
+```python
+summary = crc_api.get_summary(
+    main_object="Sample",                        # Main object type to search
+    start_date="2023-01-01",                         # Start of creation date range
+    end_date="2025-01-01",                           # End of creation date range
+    include_associated=True,                         # Include linked objects
+    include_properties=True,                         # Include main object properties
+    include_composition=True,                        # Include element composition
+    include_linked_properties=True,                  # Include properties of associated objects
+    user_associated_typenames=["EDX CSV", "HTTS Resistance CSV"],  # Associated object types to include
+    property_names=["Bandgap"],        # Properties to extract
+    required_elements={"Pt": (10, 90), "Pd": None},  # Filter for samples with elements in given range
+    required_properties=["Bandgap"],                 # Filter for samples that include this property
+    save_to_json=True,                               # Save summary to disk
+    output_folder="summary_results"                  # Folder to save output
+)
+
+```
+
+
+## Search and Download  Objects by Type, Elements, and Metadata
+This notebook shows how to use the MatInfWebApiClient to explore and extract structured research data from the MatInf VRO API.
+
+### 💡 What You Can Do with It:
+Query objects (e.g., Samples) by type, creation date, and creator.
+
+Filter objects based on associated data types (e.g., EDX, Photos, Resistance data).
+
+Refine your search using specific elements (e.g., Ag, Pd), including optional percentage ranges (e.g., Pd between 5% and 20%).
+
+Save results locally as .csv and .json files.
+
+Automatically download all linked files into structured folders for offline use.
+
+Export an Excel report that shows which users contributed to which data types.
+
+Support strict filtering, so only objects that match all required associated types are returned.
+
+### 📘 Example Use Case in This Notebook:
+We are searching for:
+
+All Sample objects created between 2024-01-01 and 2025-05-31.
+
+That are linked to at least these types: EDX CSV, Photo, and HTTS Resistance CSV.
+
+That contain Ag (any amount) and Pd (between 5% and 20%) in their composition.
+
+(Optional) That were created by a specific user (filtered by email).
+
+All results will be saved locally, and relevant files will be downloaded automatically.
+
+This tool supports FAIR data practices and can be useful for building datasets for machine learning, publication, or collaborative research.
+```python
+# Define parameters for processing data
+typename_list = ['EDX CSV', 'Photo', 'HTTS Resistance CSV']
+main_object = 'Sample'
+start_date = '2024-01-01'
+end_date = '2025-05-31'
+
+# Elements with their percentage range (min, max)
+element_criteria = {
+    'Ag': (5, 20),
+    'Pd': (5, 20)
+}
+
+# Define save location and output filename
+save_location = "./results"
+output_filename = "search_result.csv"
+
+# Filter by creator's email
+creator_email = "felix.thelen.rub@gmail.com"
+
+# Call the search function with creator
+df = CRC_API.search(
+    associated_typenames=typename_list,
+    main_object=main_object,
+    start_date=start_date,
+    end_date=end_date,
+    element_criteria=element_criteria,
+    #creator=creator_email,  
+    strict=True,
+    save_location=save_location,
+    output_filename=output_filename
+)
+
+
+```
+
+
+
+## Get the measurement with the object id
+```python
+main_objectID = 11104
+associated_types = ["EDX CSV", "Photo"]
+CRC_API.download_by_main_objectid( main_objectID , associated_types, download_folder="downloaded_files")
+```
