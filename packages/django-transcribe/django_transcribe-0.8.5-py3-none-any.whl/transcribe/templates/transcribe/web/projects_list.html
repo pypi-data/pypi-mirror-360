@@ -1,0 +1,55 @@
+{% extends "transcribe/web/base.html" %}
+
+{% block bodyclasses %}projects{% endblock %}
+
+
+{% block content %}
+	
+<header class="relative">
+	<h1><span class="icon-stack"></span> Projects</h1>
+
+	{% if transcribe_user.is_admin %}
+		<a class="button corner" href="{% url 'admin:transcribe_project_add' %}">+ Create a New Project</a>
+	{% endif %}
+</header>
+
+	{% for project in projects %}
+
+    
+<section class="box project">
+	<ul class="meta">
+		<li>
+			<h3>Media Type</h3>
+			<p>{{ project.media_type }}</p>
+		</li>
+		<li>
+			<h3>Project Status</h3>
+			<p>{{ project.status }}</p>
+		</li>
+		<li>
+			<h3>Number of Tasks</h3>
+			<p>{{ project.num_tasks }}</p>
+		</li>
+	</ul>
+
+	<h2><a href="{% url 'project_detail' pk=project.id %}">{{ project.title }}</a></h2>
+
+	<div class="info">
+		{% if project.percent_done == 0 %}
+			New!
+		{% else %}
+			<span class="progressbar"><span class="progressfill" style="width: {{ project.percent_done }}%"><span class="progressnum">{{ project.percent_done }}%</span></span></span>
+		{% endif %}
+	</div>
+		
+	<p class="description">{{ project.description|safe }}</p>
+
+    <a href="{% url 'project_detail' pk=project.id %}">More about this project &rarr;</a>
+</section>
+
+
+
+	{% empty %}
+	<p>Sorry, there aren't any projects available right now.</p>
+	{% endfor %}
+{% endblock %}

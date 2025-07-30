@@ -1,0 +1,95 @@
+{% extends "transcribe/web/base.html" %}
+
+
+{% block content %}
+
+<section class="box project">
+	<ul class="meta">
+		<li>
+			<h3>Media Type</h3>
+			<p>{{ project.media_type }}</p>
+		</li>
+		<li>
+			<h3>Project Status</h3>
+			<p>{{ project.status }}</p>
+		</li>
+		<li>
+			<h3>Number of Tasks</h3>
+			<p>{{ project.num_tasks }}</p>
+		</li>
+	</ul>
+
+	<h2><a href="{{ project.get_absolute_url }}">{{ project.title }}</a></h2>
+
+	<div class="info">
+		{% if project.percent_done == 0 %}
+			New!
+		{% else %}
+			<span class="progressbar"><span class="progressfill" style="width: {{ project.percent_done }}%"><span class="progressnum">{{ project.percent_done }}%</span></span></span>
+		{% endif %}
+	</div>
+		
+	<p>
+    {% if not project.available_tasks %}
+	    <span class="noTasksAvailable">No available transcription tasks.</span>
+    {% endif %}
+    {# pending review task #}
+    {% if project.pending_review_task_ %}
+        <a class="button" href="{{ project.pending_review_task_.get_absolute_url }}">Continue your {{ project.media_type_display }} review &rarr;</a>
+    {% endif %}
+    {# pending transcription task #}
+    {% if project.pending_trans_task %}
+        <a class="button" href="{{ project.pending_trans_task.get_absolute_url }}">Continue your transcription &rarr;</a>
+    {% endif %}
+    {# review task available #}
+    {% if project.avail_review_task %}
+	<a class="button" href="{% url 'project_claim_task' pk=project.id type='review' %}">+ Get a {{ project.media_type_display }} to review</a>
+    {% endif %}
+    {# transcription task available #}
+    {% if project.avail_trans_task %}
+        <a class="button" href="{% url 'project_claim_task' pk=project.id type='transcription' %}">+ Get a {{ project.media_type_display }} to transcribe</a>
+    {% endif %}
+	</p>
+
+	<p class="description">{{ project.description|safe }}</p>
+
+	{% if project.finding_aid_url %}
+		<p>
+			<a target="_blank" href="{{ project.finding_aid_url }}">Click Here for Finding Aid</a>
+		</p>
+	{% endif %}
+
+	<div class="guidelines">
+		<h3>Project Guidelines</h3>
+		<p>
+			{% if project.guidelines %}
+				{{ project.guidelines|safe|linebreaksbr }}
+			{% else %}
+				Please read the <a href='/help'>basic guidelines</a> that apply to all projects.
+			{% endif %}
+		</p>
+
+		<p>Have a specific question the basic guidelines don't answer? Check the <a href='/faq/'>FAQ page</a>!</p>
+	</div>
+
+    <!-- ADMIN ITEMS -->
+    {% if transcribe_user.is_admin %}
+    <div class="toolbar">
+    	<ul>
+    		<li><a href="{% url 'admin:transcribe_project_change' project.id %}" title="Edit this project"><span class="icon-pencil"></span> Edit</a></li>
+    	{% if project.tasks %}
+    		<li class="message"><span class="icon-download-2"></span> Download: 
+    		<a href="{% url 'project_download' pk=project.id type='xml' %}">XML</a>
+    		<a href="{% url 'project_download' pk=project.id type='txt' %}">TXT</a>
+    		<a href="{% url 'project_download' pk=project.id type='html' %}">HTML</a>
+    		</li>
+    	{% else %}
+    		<li class='message notice'>This project needs a media folder.</li>
+    	{% endif %}
+    	</ul>
+    </div>
+    {% endif %}
+
+</section>
+
+{% endblock %}

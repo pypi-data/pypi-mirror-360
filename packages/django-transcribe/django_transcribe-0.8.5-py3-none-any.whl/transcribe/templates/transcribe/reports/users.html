@@ -1,0 +1,34 @@
+{% extends "transcribe/web/base.html" %}
+
+{% block content %}
+
+<h1><a class="saveTranscription" href="{% url 'reports:list' %}"><span class="icon-table"></span> Reports</a></h1>
+<h2>Users</h2>
+
+<h3>
+{% if datetime_start|date:'Y' == datetime_end|date:'Y' and datetime_start|date:'M' == datetime_end|date:'M' %}
+{{ datetime_start|date:'F j' }} - {{ datetime_end|date:'j, Y' }}
+{% elif datetime_start|date:'Y' == datetime_end|date:'Y' %}
+{{ datetime_start|date:'F j' }} - {{ datetime_end|date:'F j, Y' }}
+{% else %}
+{{ datetime_start|date:'M j, Y' }} - {{ datetime_end|date:'M j, Y' }}
+{% endif %}
+<a href="{% url 'reports:users_report' %}?datetime_start={{ datetime_start|date:'Y-m-d H:i:s' }}&datetime_end={{ datetime_end|date:'Y-m-d H:i:s' }}&download=True">(download)</a>
+</h3>
+
+{% for transcribe_user in transcribe_users %}
+<p>
+<b>{{ transcribe_user.user.last_name }}, {{ transcribe_user.user.first_name }}</b>
+({{ transcribe_user }})
+<br>
+Last Login: {{ transcribe_user.user.last_login|date:'F j, Y, g:i A' }}
+<br>
+{{ transcribe_user.num_finished_transcriptions }} finished transcriptions
+({{ transcribe_user.num_skipped_transcriptions }} skipped, {{ transcribe_user.num_in_progress_transcriptions }} in progress)
+<br>
+{{ transcribe_user.num_finished_reviews }} finished reviews
+({{ transcribe_user.num_skipped_reviews }} skipped, {{ transcribe_user.num_in_progress_reviews }} in progress)
+</p>
+{% endfor %}
+
+{% endblock %}

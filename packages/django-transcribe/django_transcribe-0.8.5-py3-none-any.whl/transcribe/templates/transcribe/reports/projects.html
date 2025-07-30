@@ -1,0 +1,45 @@
+{% extends "transcribe/web/base.html" %}
+
+{% block content %}
+
+<h1><a class="saveTranscription" href="{% url 'reports:list' %}"><span class="icon-table"></span> Reports</a></h1>
+<h2>Projects</h2>
+
+<h3>
+<!-- {{ TIME_ZONE }} -->
+{% if datetime_start|date:'Y' == datetime_end|date:'Y' and datetime_start|date:'M' == datetime_end|date:'M' %}
+{{ datetime_start|date:'F j' }} - {{ datetime_end|date:'j, Y' }}
+{% elif datetime_start|date:'Y' == datetime_end|date:'Y' %}
+{{ datetime_start|date:'F j' }} - {{ datetime_end|date:'F j, Y' }}
+{% else %}
+{{ datetime_start|date:'M j, Y' }} - {{ datetime_end|date:'M j, Y' }}
+{% endif %}
+<a href="{% url 'reports:projects_report' %}?datetime_start={{ datetime_start|date:'Y-m-d H:i:s' }}&datetime_end={{ datetime_end|date:'Y-m-d H:i:s' }}&download=True">(download)</a>
+</h3>
+
+{{ all_projects_total.transcriptions }} finished transcriptions (all projects)
+<br>
+{{ all_projects_total.reviews }} finished reviews (all projects)
+<br>
+<br>
+
+{% for project in projects %}
+<br>
+<div class='project_report'>
+    <b>{{ project.title }}</b>
+    <br>
+    Current Status:
+    
+    {{ project.stats.percent_done }}% complete
+         ({{ project.stats.total_finished_transcriptions }} / {{ project.stats.total_tasks }} Transcriptions, {{ project.stats.total_finished_reviews }} / {{ project.stats.total_tasks }} Reviews)
+    
+    <br>
+    Finished Transcription{{ project.stats.finished_transcriptions|pluralize }}:
+    {{ project.stats.finished_transcriptions }}
+    <br>
+    Finished Review{{ project.stats.finished_reviews|pluralize }}:
+    {{ project.stats.finished_reviews }}
+</div>
+{% endfor %}
+
+{% endblock %}

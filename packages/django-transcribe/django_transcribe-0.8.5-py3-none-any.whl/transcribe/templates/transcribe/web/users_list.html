@@ -1,0 +1,69 @@
+{% extends "transcribe/web/base.html" %}
+
+{% block bodyclasses %}users{% endblock %}
+
+
+{% block content %}
+<header class="relative">
+	<h1><span class="icon-users-2"></span> Users ({{ users.count }})</h1>
+</header>
+<span class='recentActivity'>Show statistics for the past: </span>
+<br/>
+<br/>
+<table class="users">
+	<tr>
+		<th>User</th>
+		<th>finished</th>
+		<th>skipped</th>
+		<th>in progress</th>
+	</tr>
+	{% for transcribe_user in transcribe_users %}
+	<tr>
+		<td>
+			<a href="/user/{{ transcribe_user.pk }}">{{ transcribe_user.sort_name }} ({{ transcribe_user.user.username }})</a>
+		</td>
+		<td align="center">
+            {{ transcribe_user.num_finished_transcriptions }}
+		</td>
+		<td align="center">
+            {{ transcribe_user.num_skipped_transcriptions }}
+		</td>
+		<td align="center">
+            {{ transcribe_user.num_in_progress_transcriptions }}
+		</td>
+	</tr>
+	{% endfor %}
+</table>
+
+{% if global_transcribers or global_reviewers or global_admins %}
+<br>
+<br>
+<div class="globalRoles">
+	<h3>Users with Global Roles</h3>
+	<table class="globalUsers">
+		<tr>
+			<th>Global Transcribers</th>
+			<th>Global Reviewers</th>
+			<th>Global Admins</th>
+		</tr>
+		<tr>
+			<td>
+			{% for transcribe_user in global_transcribers %}
+				<a href='/user/{{ transcribe_user.pk }}/'>{{ transcribe_user.name }} ({{ transcribe_user.user.username }})</a><br>
+			{% endfor %}
+			</td>
+			<td>
+			{% for transcribe_user in global_reviewers %}
+				<a href='/user/{{ transcribe_user.pk }}/'>{{ transcribe_user.name }} ({{ transcribe_user.user.username }})</a><br>
+			{% endfor %}
+			</td>
+			<td>
+			{% for transcribe_user in global_admins %}
+				<a href='/user/{{ transcribe_user.pk }}/'>{{ transcribe_user.name }} ({{ transcribe_user.user.username }})</a><br>
+			{% endfor %}
+			</td>
+		</tr>
+	</table>
+</div>
+{% endif %}
+{% endblock %}

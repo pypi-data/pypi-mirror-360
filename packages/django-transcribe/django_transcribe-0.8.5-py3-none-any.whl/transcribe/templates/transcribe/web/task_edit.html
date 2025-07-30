@@ -1,0 +1,209 @@
+{% extends "transcribe/web/base.html" %}
+{% load static %}
+
+{% block bodyclasses %}transview trans{% endblock %}
+
+{% block content %}
+<script type="text/javascript">
+	{% if project_preferences.transcription_height %}
+		var stackedHeight = '{{ project_preferences.transcription_height }}px';
+	{% else %}
+		var stackedHeight = '40%';
+	{% endif %}
+	{% if project_preferences.transcription_width %}
+		var unstackedWidth = '{{ project_preferences.transcription_width }}px';
+	{% else %}
+		var unstackedWidth = '35%';
+	{% endif %}
+	{% if project_preferences.transcription_stacked %}
+		var stacked = true;
+	{% else %}
+		var stacked = false;
+	{% endif %}
+</script>
+<form action="/userprojectpreferences/{{ project_preferences.pk }}/update/" method="post" accept-charset="utf-8" id="resizeTranscriptionForm" class="hiddenForm">
+	{% csrf_token %}
+	<input name="transcription_width" value="{% if project_preferences.transcription_width %}{{ project_preferences.transcription_width }}{% endif %}" type="hidden" id="transcriptionWidth">
+	<input name="transcription_height" value="{% if project_preferences.transcription_height %}{{ project_preferences.transcription_height }}{% endif %}" type="hidden" id="transcriptionHeight">
+	<input name="transcription_stacked" value="{{ project_preferences.transcription_stacked }}" type="hidden" id="transcriptionStacked">
+</form>
+
+<form action="/userpreferences/{{ user_preferences.pk }}/update/" method="post" accept-charset="utf-8" id="serifToggleForm" class="hiddenForm">
+	{% csrf_token %}
+	<input name="uses_serif_transcription_font" type="hidden" id="serifToggleInput">
+</form>
+
+<form action="" method="post" accept-charset="utf-8" id="transcribeForm">{% csrf_token %}
+
+<script type="text/javascript">
+	var taskEdit = this.taskEdit || {};
+	taskEdit.pages = [];
+	{% for page in pages %}
+		var addable = {};
+		addable.url = '{{ page }}';
+		if(addable.url === '{{ usertask.task.file.url }}') {
+			taskEdit.editedPage = addable;
+			taskEdit.currentPage = addable;
+			$(document).ready(function() {
+				taskEdit.currentPage.figure = $('.source figure')[0];
+				taskEdit.currentPage.image = $('.task .source figure img')[0];
+			});
+		} else {
+			addable.figure = document.createElement('figure');
+			$(addable.figure).addClass('fillWidth');
+		}
+		taskEdit.pages.push(addable);
+	{% endfor %}
+</script>
+
+<div class="task {% if usertask.status == 'finished' %}finished{% endif %} {% if project_preferences.stacked %}stacked{% endif %}">
+	<h1 class="hidden">{{ usertask.task.project.media_type_display }} from {{ usertask.task.project.title }}</h1>
+	{% if usertask.status == 'finished' %}
+	<div class="notouch finishedTask"><p>This transcription task is finished.</p></div>
+	{% elif usertask.status == 'skipped' %}
+	<div class="notouch skippedTask"><p>You skipped this task.<br><a class="reOpenUserTask" href="#">Click here to re-open it.</a></p></div>
+	{% endif %}
+
+	<div class="source">
+		{% if usertask.task.project.media_type == 'text' %}
+			<figure id="openseadragon" class="fillWidth"></figure>
+			<script src="{% static 'transcribe/js/lib/openseadragon/openseadragon.min.js' %}"></script>
+			<script src="{% static 'transcribe/js/lib/openseadragon/openseadragon-filtering.js' %}"></script>
+			<script type="text/javascript">
+				var viewer = OpenSeadragon({
+					id: "openseadragon",
+					prefixUrl: '/static/transcribe/js/lib/openseadragon/images/',
+					tileSources: {
+						type: 'image',
+						url: '{{ usertask.task.file.url }}',
+						crossOriginPolicy: 'Anonymous',
+					},
+					// It was decided to load the images full length instead
+					// of width. This is to allow people to see the whole page
+					// before beginning transcribing.
+					//visibilityRatio: 1.0,  // don't pan beyond image
+					//defaultZoomLevel: 1,  // fixed width
+					//minZoomLevel: 1,  // can't zoom out more than the full width
+					maxZoomLevel: 5,  // can't zoom out more than the full width
+					showRotationControl: true, // allow image rotation
+				});
+				viewer.setFilterOptions({
+					filters: {
+						processors: [
+							OpenSeadragon.Filters.BRIGHTNESS(0),
+							OpenSeadragon.Filters.CONTRAST(1)
+						]
+					}
+				});
+				function go_to_top(immediately) {
+					var oldBounds = viewer.viewport.getBounds();
+					//var newBounds = new OpenSeadragon.Rect(0, 0, 1, oldBounds.height / oldBounds.width);
+					var newBounds = new OpenSeadragon.Rect(0, 0, 1, 1);
+					viewer.viewport.fitBounds(newBounds, false);
+				}
+
+				//viewer.viewport.goHome = go_to_top;
+				//viewer.addHandler("open", go_to_top);
+
+				function scrollDown() {
+					viewer.viewport.panBy({x: 0, y: 0.1}, false);
+				}
+
+				function scrollUp() {
+					viewer.viewport.panBy({x: 0, y: -0.1}, false);
+				}
+
+			</script>
+		{% elif usertask.task.project.media_type == 'audio' %}
+			<audio src="{{ usertask.task.file.url }}"></audio>
+			<div class="audioControls">
+				<div class="playButton audioControlButton icon-play"></div>
+				<div class="timeDisplay">
+					<span class="progress"></span> / <span class="totalTime"></span>
+				</div>
+				<div class="seekSlider">
+					<div class="seekTrack">
+						<div class="seekCursor"></div>
+					</div>
+				</div>
+				<div class="speedButton audioControlButton icon-clock">
+					<div class="speedSlider verticalSlider">
+						<div class="speedTrack verticalTrack">
+							<div class="speedCursor verticalCursor"></div>
+						</div>
+					</div>
+				</div>
+				<div class="volumeButton audioControlButton icon-volume-high">
+					<div class="volumeSlider verticalSlider">
+						<div class="volumeTrack verticalTrack">
+							<div class="volumeCursor verticalCursor"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+			{# text browser support for mp3 playback #}
+			<script type="text/javascript">
+				var audio = new Audio();
+				var canPlayMP3 = !!audio.canPlayType && audio.canPlayType('audio/mp3;') != "";
+			if (!canPlayMP3) {
+				document.write('<h2>Sorry; your browser doesn\'t support MP3 playback.</h2>');
+			}
+			</script>
+		{% elif usertask.task.project.media_type == 'video' %}
+			<video src="{{ usertask.task.file.url }}" controls></video>
+		{% endif %}
+
+		{% if usertask.task.project.media_type == 'audio' or usertask.task.project.media_type == 'video' %}
+		<div class="keyboardShortcuts">
+			<h3>Keyboard Shortcuts</h3>
+			<ul class="shortcutkey">
+				<li><em>ctrl-k:</em> play/pause</li>
+				<li><em>ctrl-j:</em> jump back 5 seconds</li>
+				<li><em>ctrl-l:</em> jump forward 5 seconds</li>
+			</ul>
+		</div>
+		{% endif %}
+	</div>
+
+	<div class="splitter"><div class="icon-menu-2 splitter-icon"></div></div>
+
+	<div class="transcript {% if usertask.status != 'finished' and usertask.task_type == 'review' %}has_tags{% endif %}">
+		<div id="transcriptDimmer">Click the square button between the left and right arrows to return to your currently assigned page and continue transcribing.</div>
+		<pre><div contenteditable="true" spellcheck="false" name="transcription" id="transcriptionTextArea"{% if user_preferences.uses_serif_transcription_font %} class="serif"{% endif %}>{{ usertask.transcription|safe }}</div></pre>
+		{% if usertask.task_type == 'review' and usertask.status != 'finished' %}
+		<div class="tags">
+			<h3>Tags</h3>
+			{% for tag in tags %}
+				<button class="insertTags" buttonName="{{ tag.name }}">{{ tag.name }}</button>
+			{% endfor %}
+		</div>
+		{% endif %}
+	</div>
+
+	<input type="hidden" name="id" value="{{ usertask.id }}" id="id">
+	<input type="hidden" name="task" value="{{ usertask.task.id }}">
+	<input type="hidden" name="task_type" value="{{ usertask.task_type }}">
+	<input type="hidden" name="user" value="{{ request.user.id }}">
+</div>
+
+<ul class="toolbar">
+		<li><a id="toggleLayout" href="#"><span class="icon-screen"></span> Toggle Layout</a></li>
+		<li><a class="saveTranscription" href="{{ usertask.task.project.get_absolute_url }}"><span class="icon-info"></span> Project Info</a></li>
+		<li><span><span class="icon-image"></span> {{ usertask.task.filename }}</span></li>
+		<li><span id="pagesNav">
+			<button onclick="return false;" id="previousPageButton" class="icon-arrow-left" title="view the previous page">
+			<button onclick="return false;" id="currentPageButton" class="icon-home" title="view the page you are currently transcribing">
+			<button onclick="return false;" id="nextPageButton" class="icon-arrow-right" title="view the next page">
+		</span></li>
+		<li><span id="serifToggle" class="serif"><button onclick="return false;" id="serifToggleButton" title="toggle serif font">F</button></span></li>
+		<li class="right finishButton"><button id="finishButton" class="submit" name="status" value="finished" type="submit"><span class="icon-checkmark"></span> Submit</button></li>
+		<li class="right skipButton"><button id="skipButton" class="skip" name="status" value="skipped" type="submit" onClick="if(confirm('Are you sure you want to skip this task?\n')) return true; else return false"><span class="icon-close"></span> Skip</button></li>
+		<li class="right saveButton"><button id="saveButton" class="save" name="status" value="in progress" type="submit"><span class="icon-disk icon"></span><span class="icon-spinner-5 spinner"></span> Save</button></li>
+</ul>
+
+
+</form>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

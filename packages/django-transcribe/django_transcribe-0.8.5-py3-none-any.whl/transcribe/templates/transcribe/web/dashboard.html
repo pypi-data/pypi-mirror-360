@@ -1,0 +1,85 @@
+{% extends "transcribe/web/base.html" %}
+
+{% block bodyclasses %}dashboard{% endblock %}
+
+
+{% block content %}
+<h1><span class="icon-user-4"></span> Dashboard</h1>
+
+<section id="available">
+	<header>
+		<h2><span class="icon-checkmark"></span> Available Tasks</h2>
+		<p>Here's what's available for you to work on right now...</p>
+	</header>
+
+	<ul class="tasks">
+		{% for project in projects %}
+            {% if project.pending_review_task_ %}
+                <li class="pending {{ project.media_type_display }} review">
+                <span class="icon-copy-3"></span> <a class="type" href="{{ project.pending_review_task_.get_absolute_url }}">{{ project.media_type_display }} review</a>  from
+                <a class="title" href="{{ project.get_absolute_url }}">{{ project.title }}</a> <span class='label_wrap'>
+					<span class='label {{ project.prending_review_task.status }}'>{{ project.pending_review_task_.status }}</span></span></li>
+            {% endif %}
+		{% endfor %}
+
+		{% for project in projects %}
+            {% if project.pending_trans_task %}
+            <li class="pending {{ project.media_type_display }} transcription">
+                <span class="icon-file"></span>
+                <a class="type" href="{{ project.pending_trans_task.get_absolute_url }}">
+                    {{ project.media_type_display }}</a> from <a class="title" href="{{ project.get_absolute_url }}">{{ project.title }}</a>
+                <span class='label_wrap'><span class='label {{ project.pending_trans_task.status }}'>{{ project.pending_trans_task.status }}</span></span></li>
+            {% endif %}
+		{% endfor %}
+
+		{% for project in projects %}
+            {% if project.avail_review_task %}
+                <li class="{{ project.media_type_display }} review">
+                <span class='icon-copy-3'></span> <a class="type" href="{% url 'project_claim_task' pk=project.id type='review' %}">{{ project.media_type_display }} review</a> from
+                <a class="title" href="{{ project.get_absolute_url }}">{{ project.title }}</a></li>
+            {% endif %}
+		{% endfor %}
+
+		{% for project in projects %}
+            {% if project.avail_trans_task %}
+                <li class="{{ project.media_type_display }} transcription">
+				<span class='icon-file'></span>
+                <a class='type'	href="{% url 'project_claim_task' pk=project.id type='transcription' %}">{{ project.media_type_display }}</a> from 
+                <a class="title" href="{{ project.get_absolute_url }}">{{ project.title }}</a></li>
+            {% endif %}
+		{% endfor %}
+        
+        {% if all_tasks is False and projects|length > 4 %}
+        <a class='view_all_tasks' href="{% url 'dashboard_all_tasks' all_tasks='all_tasks' %}">view more ▾</a>
+        {% endif %}
+
+        {% if not available_tasks %}
+		<h3 class="noTasksAvailable">Sorry, there are no tasks available for you right now.</h3><p>Please check back later.</p>
+        {% endif %}
+	</ul>
+
+</section>
+
+{% if completed_tasks %}
+	<section id='completed'>
+		<h3>Completed Tasks</h3>
+		<ul class='tasks'>
+		{% for task in completed_tasks %}
+			<li class="{{ task.status }} {{ task.task.project.media_type_display }} {{ task.task_type }}">
+				{% if task.task_type == 'review' %}
+					<span class="icon-copy-3"></span> <a class='type' href='/Task/review/{{ task.task.id }}'>{{ task.task.project.media_type_display }} {{ task.task_type }}</a>
+				{% else %}
+					<span class="icon-file"></span> <a class='type' href='/Task/view/{{ task.task.id }}'>{{ task.task.project.media_type_display }}</a>
+				{% endif %}
+				from <a class='title' href='{{ task.task.project.get_absolute_url }}'>{{ task.task.project.title }}</a>
+				<span class='label_wrap'><span class='label {{ task.status }}'>{{ task.status }} on {{ task.updated|date:"n/j/Y g:i:s a" }}</span></span>
+			</li>
+		{% endfor %}
+		</ul>
+	
+		{% if completed_tasks|length > 20 %}
+		<p class="center"><a class="button" href="/dashboard/showAllCompletedTasks">view all completed tasks</a></p>
+		{% endif %}
+	</section>
+{% endif %}
+{% endblock %}

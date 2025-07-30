@@ -1,0 +1,29 @@
+{% extends "transcribe/web/base.html" %}
+
+
+{% block content %}
+<header class="relative">
+    <h1><a href="/users"><span class="icon-users-2"></span> Users</a> &gt; User</h1>
+</header>
+
+<h2 class='user'>{{  transcribe_user.name }} ({{  transcribe_user.user.username }})</h2>
+    
+<div class='roles'>
+    <h3>Roles</h3>
+</div>
+<br><br>
+<div class='recentActivity'>
+    <h3>Recent Activity</h3>
+    <ul class='usertasks'>
+    {% for task in  transcribe_user.recent_transcription_tasks %}
+        <li class='{{ task.status }}'>
+            <span class='datetime'>{{ task.modified|date:"M j, Y g:i a" }}</span>
+            <span class='status'>{{ task.status }}</span> task from
+            <span class='projectTitle'>{{ task.task.project.title }}</span>
+        </li>
+    {% empty %}
+        <i>No recent activity</i>
+    {% endfor %}
+    </ul>
+</div>
+{% endblock %}
