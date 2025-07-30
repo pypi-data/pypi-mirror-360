@@ -1,0 +1,74 @@
+Metadata-Version: 2.1
+Name: robhan_cdk_lib.aws_grafana
+Version: 0.0.46
+Summary: AWS CDK Construct Library for Grafana
+Home-page: https://github.com/robert-hanuschke/cdk-aws_grafana
+Author: Robert Hanuschke<robhan-cdk-lib@hanuschke.eu>
+License: MIT
+Project-URL: Source, https://github.com/robert-hanuschke/cdk-aws_grafana
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: JavaScript
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Typing :: Typed
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: License :: OSI Approved
+Requires-Python: ~=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: aws-cdk-lib<3.0.0,>=2.198.0
+Requires-Dist: constructs<11.0.0,>=10.0.5
+Requires-Dist: jsii<2.0.0,>=1.112.0
+Requires-Dist: publication>=0.0.3
+Requires-Dist: typeguard<4.3.0,>=2.13.3
+
+# @robhan-cdk-lib/aws_grafana
+
+AWS Cloud Development Kit (CDK) L2 constructs for Amazon Managed Grafana.
+
+In [aws-cdk-lib.aws_grafana](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_grafana-readme.html), there currently only exist L1 constructs for Amazon Managed Grafana.
+
+The CDK maintainers explain that [publishing your own package](https://github.com/aws/aws-cdk/blob/main/CONTRIBUTING.md#publishing-your-own-package) is "by far the strongest signal you can give to the CDK team that a feature should be included within the core aws-cdk packages".
+
+This project aims to develop aws_grafana L2 constructs to a maturity that is accepted to the CDK core.
+
+Currently, development is focusing on the npm package. But PyPI, Maven Central, NuGet, and GitHub (for Go) will be added once a more stable state is reached.
+
+## Example use
+
+```python
+import * as cdk from "aws-cdk-lib";
+import { Construct } from "constructs";
+import {
+  AccountAccessType,
+  AuthenticationProviders,
+  PermissionTypes,
+  Workspace,
+} from "@robhan-cdk-lib/aws_grafana";
+import { Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
+
+export class AwsGrafanaCdkStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
+
+    const grafanaRole = new Role(this, "GrafanaWorkspaceRole", {
+      assumedBy: new ServicePrincipal("grafana.amazonaws.com"),
+      description: "Role for Amazon Managed Grafana Workspace",
+    });
+
+    const workspace = new Workspace(this, "Workspace", {
+      accountAccessType: AccountAccessType.CURRENT_ACCOUNT,
+      authenticationProviders: [AuthenticationProviders.AWS_SSO],
+      permissionType: PermissionTypes.SERVICE_MANAGED,
+      role: grafanaRole,
+    });
+  }
+}
+```
+
+## License
+
+MIT
