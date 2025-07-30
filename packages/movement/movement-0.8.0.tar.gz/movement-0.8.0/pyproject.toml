@@ -1,0 +1,187 @@
+[project]
+name = "movement"
+authors = [
+  { name = "Nikoloz Sirmpilatze", email = "niko.sirbiladze@gmail.com" },
+  { name = "Chang Huan Lo", email = "changhuan.lo@ucl.ac.uk" },
+  { name = "Sofía Miñano", email = "s.minano@ucl.ac.uk" },
+]
+description = "Analysis of body movement"
+readme = "README.md"
+requires-python = ">=3.11.0"
+dynamic = ["version"]
+
+license = { text = "BSD-3-Clause" }
+
+dependencies = [
+  "numpy>=2.0.0",
+  "pandas",
+  "h5py",
+  "attrs",
+  "pooch",
+  "tqdm",
+  "shapely",
+  "sleap-io",
+  "xarray[accel,io,viz]",
+  "PyYAML",
+  "napari-video",
+  "pyvideoreader>=0.5.3",  # since switching to depend on openCV-headless
+  "qt-niu",  # needed for collapsible widgets
+  "loguru",
+  "pynwb",
+  "ndx-pose>=0.2.1",
+]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Operating System :: OS Independent",
+  "License :: OSI Approved :: BSD License",
+  "Framework :: napari",
+]
+
+# Entry point for napari plugin
+entry-points."napari.manifest".movement = "movement.napari:napari.yaml"
+
+[project.urls]
+"Homepage" = "https://github.com/neuroinformatics-unit/movement"
+"Bug Tracker" = "https://github.com/neuroinformatics-unit/movement/issues"
+"Documentation" = "https://movement.neuroinformatics.dev/"
+"Source Code" = "https://github.com/neuroinformatics-unit/movement"
+"User Support" = "https://neuroinformatics.zulipchat.com/#narrow/stream/406001-Movement"
+
+[project.optional-dependencies]
+napari = [
+  "napari[all]>=0.6.0",
+]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "pytest-mock",
+  "coverage",
+  "tox",
+  "mypy",
+  "pre-commit",
+  "ruff",
+  "codespell",
+  "setuptools_scm",
+  "pandas-stubs",
+  "types-attrs",
+  "check-manifest",
+  "types-PyYAML",
+  "types-requests",
+  "pytest-qt",
+  "movement[napari]",
+]
+
+[project.scripts]
+movement = "movement.cli_entrypoint:main"
+
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["movement*"]
+exclude = ["tests", "docs*"]
+
+
+[tool.pytest.ini_options]
+addopts = "--cov=movement"
+
+[tool.setuptools_scm]
+
+[tool.check-manifest]
+ignore = [
+  ".yaml",
+  "tox.ini",
+  "tests/",
+  "tests/test_unit/",
+  "tests/test_integration/",
+  "docs/",
+  "docs/source/",
+]
+
+[[tool.mypy.overrides]]
+module = ["pooch.*", "h5py.*", "sleap_io.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 79
+exclude = ["__init__.py", "build", ".eggs"]
+fix = true
+
+[tool.ruff.lint]
+# See https://docs.astral.sh/ruff/rules/
+ignore = [
+  "D203", # one blank line before class
+  "D213", # multi-line-summary second line
+]
+select = [
+  "E",      # pycodestyle errors
+  "F",      # Pyflakes
+  "UP",     # pyupgrade
+  "I",      # isort
+  "B",      # flake8 bugbear
+  "SIM",    # flake8 simplify
+  "C90",    # McCabe complexity
+  "D",      # pydocstyle
+  "NPY201", # checks for syntax that was deprecated in numpy2.0
+]
+per-file-ignores = { "tests/*" = [
+  "D100", # missing docstring in public module
+  "D205", # missing blank line between summary and description
+  "D103", # missing docstring in public function
+], "examples/*" = [
+  "B018", # Found useless expression
+  "D103", # Missing docstring in public function
+  "D400", # first line should end with a period.
+  "D415", # first line should end with a period, question mark...
+  "D205", # missing blank line between summary and description
+] }
+
+[tool.ruff.format]
+docstring-code-format = true # Also format code in docstrings
+
+[tool.codespell]
+skip = '.git,.tox'
+check-hidden = true
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+requires =
+    tox-conda
+    tox-gh-actions
+envlist = py{311,312,313}
+isolated_build = True
+
+[gh-actions]
+python =
+    3.11: py311
+    3.12: py312
+    3.13: py313
+
+[testenv]
+conda_deps =
+    pytables
+conda_channels =
+    conda-forge
+passenv =
+    CI
+    GITHUB_ACTIONS
+    DISPLAY
+    XAUTHORITY
+    NUMPY_EXPERIMENTAL_ARRAY_FUNCTION
+    PYVISTA_OFF_SCREEN
+extras =
+    dev
+commands =
+    pytest -v --color=yes --cov=movement --cov-report=xml
+"""

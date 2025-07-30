@@ -1,0 +1,86 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - '*'
+    tags:
+      - '*'
+  pull_request:
+  merge_group:
+
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: neuroinformatics-unit/actions/lint@v2
+
+  manifest:
+    name: Check Manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: neuroinformatics-unit/actions/check_manifest@v2
+
+  test:
+    needs: [linting, manifest]
+    name: ${{ matrix.os }} py${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # Run all supported Python versions on linux
+        python-version: ["3.11", "3.12", "3.13"]
+        os: [ubuntu-latest]
+        # Include 1 MacOS Silicon (latest) and 1 Windows run
+        include:
+        - os: macos-latest
+          python-version: "3.13"
+        - os: windows-latest
+          python-version: "3.13"
+
+    steps:
+      # these libraries enable testing on Qt on linux
+      - uses: pyvista/setup-headless-display-action@v4
+        with:
+          qt: true
+      - name: Cache Test Data
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.movement/*
+          key: cached-test-data-${{ runner.os }}
+          restore-keys: cached-test-data
+      - name: Set up Conda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          auto-update-conda: true
+          channels: conda-forge,defaults
+          activate-environment: movement-env
+      - uses: neuroinformatics-unit/actions/test@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          secret-codecov-token: ${{ secrets.CODECOV_TOKEN }}
+
+  build_sdist_wheels:
+    name: Build source distribution
+    needs: [test]
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: neuroinformatics-unit/actions/build_sdist_wheels@v2
+
+
+  upload_all:
+    name: Publish build distributions
+    needs: [build_sdist_wheels]
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        name: artifact
+        path: dist
+    - uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.TWINE_API_KEY }}
