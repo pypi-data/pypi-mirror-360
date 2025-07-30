@@ -1,0 +1,43 @@
+[project]
+name = "pytrnsys_process"
+version = "0.0.27"
+authors = [
+    { name="Alex Hobé", email="alex.hobe@ost.ch" },
+    { name="Sebastian Swoboda", email="sebastian@swoboda.ch" },
+    { name="Damian Birchler", email="damian.birchler@ost.ch" },
+]
+description = "Post processing for pytrnsys"
+readme = "pypi-readme.md"
+requires-python = ">=3.12"
+license = "GPL-3.0-or-later"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements/release-3rd-party.in"]}
+
+[project.urls]
+Homepage = "https://github.com/SPF-OST/pytrnsys_process"
+Issues = "https://github.com/SPF-OST/pytrnsys_process/issues"
+Documentation = "https://pytrnsys-process.readthedocs.io"
+
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["pytrnsys_process*"]  # package names should match these glob patterns (["*"] by default)
+
+[tool.setuptools.package-data]
+"pytrnsys_process.deck" = ["*.lark"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning:dateutil.tz.tz:37",
+]
