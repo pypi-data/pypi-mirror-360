@@ -1,0 +1,77 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sleap-io"
+authors = [
+    {name = "Liezl Maree", email = "lmaree@salk.edu"},
+    {name = "David Samy", email = "davidasamy@gmail.com"},
+    {name = "Talmo Pereira", email = "talmo@salk.edu"}]
+description="Standalone utilities for working with pose data from SLEAP and other tools."
+requires-python = ">=3.7"
+keywords = ["sleap", "pose tracking", "pose estimation", "behavior"]
+license = {text = "BSD-3-Clause"}
+classifiers = [
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12"]
+dependencies = [
+    "numpy",
+    "attrs",
+    "h5py>=3.8.0",
+    "pynwb",
+    "ndx-pose>=0.2.1",
+    "pandas",
+    "simplejson",
+    "imageio",
+    "imageio-ffmpeg>=0.5.0",
+    "tqdm",
+    "pyyaml"]
+dynamic = ["version", "readme"]
+
+[tool.setuptools.dynamic]
+version = {attr = "sleap_io.version.__version__"}
+readme = {file = ["README.md"], content-type="text/markdown"}
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pytest-watch",
+    "black",
+    "pydocstyle",
+    "toml",
+    "twine",
+    "build",
+    "mkdocs-material[imaging]",
+    "mkdocs-jupyter",
+    "mkdocstrings[python]>=0.18",
+    "mkdocs-gen-files",
+    "mkdocs-literate-nav",
+    "mkdocs-section-index",
+    "mike"]
+
+[project.urls]
+Homepage = "https://io.sleap.ai"
+Repository = "https://github.com/talmolab/sleap-io"
+
+[tool.setuptools.packages.find]
+exclude = ["site"]
+
+[tool.black]
+line-length = 88
+
+[pydocstyle]
+convention = "google"
+match-dir = "sleap_io"
+
+[tool.codespell]
+# Ref: https://github.com/codespell-project/codespell#using-a-config-file
+skip = '.git*,*.css'
+check-hidden = true
+# ignore-regex = ''
+# ignore-words-list = ''
