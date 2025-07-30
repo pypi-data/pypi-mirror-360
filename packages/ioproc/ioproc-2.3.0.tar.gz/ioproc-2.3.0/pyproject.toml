@@ -1,0 +1,52 @@
+[project]
+authors = [{name = "Benjamin Fuchs", email = "Benjamin.Fuchs@dlr.de"}, {name="Felix Nitsch", email="Felix.Nitsch@dlr.de"}, {name="Jan Buschmann", email="Jan.Buschmann@dlr.de"}, {name="Judith Riehm", email="Judith.Riehm@dlr.de"}]
+dependencies = []
+description = "Workflow framework for data pre- and postprocessing."
+name = "ioproc"
+requires-python = ">= 3.11"
+version = "2.3.0"
+license = {file="LICENSE"}
+maintainers = [{name="Benjamin Fuchs", email="Benjamin.Fuchs@dlr.de"} , {name="Felix Nitsch", email="Felix.Nitsch@dlr.de"}, {name="Jan Buschmann", email="Jan.Buschmann@dlr.de"}]
+readme = 'README.md'
+keywords = ["workflow management", "data pipeline", "data science"]
+
+[project.urls]
+homepage = 'https://gitlab.com/dlr-ve/ioproc'
+
+[project.scripts]
+ioproc = 'ioproc:run'
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["win-64"]
+
+[tool.pixi.pypi-dependencies]
+ioproc = { path = ".", editable = true }
+
+[tool.pixi.tasks]
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+staging = { solve-group = "default", features=["staging"]}
+
+[tool.pixi.dependencies]
+cerberus = ">=1.3.5,<2"
+pandas = ">=2.2.3,<3"
+pyyaml = ">=6.0.2,<7"
+pytables = ">=3.10.1,<4"
+frozendict = ">=2.4.6,<3"
+arrow = ">=1.3.0,<2"
+click = ">=8.1.7,<9"
+jinja2 = ">=3.1.4,<4"
+attrs = ">=24.2.0,<25"
+cattrs = ">=24.1.2,<25"
+toml = ">=0.10.2,<0.11"
+
+[tool.pixi.feature.staging.dependencies]
+hatch = "*"
+rattler-build = ">=0.31.1,<0.32"
+coloredlogs = ">=15.0.1,<16"

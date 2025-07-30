@@ -1,0 +1,36 @@
+image: "python:3.7"
+
+stages:
+  - build
+  - test
+
+packaging:
+  stage: build
+  script:
+    - conda init bash
+    - source ~/.bashrc
+    - pip3 install hatch
+    - hatch build
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - dist
+
+test:
+  stage: test
+  script:
+    - conda init bash
+    - source ~/.bashrc
+    - pip3 install dist/*.whl
+    - pip3 install pytest coverage coverage-badge Jinja2
+    - coverage run --source=ioproc -m pytest --junitxml=report.xml
+    - coverage report -m
+    - coverage html
+    - coverage-badge
+
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+
+  coverage: '/^TOTAL.+?(\d+\%)$/'
