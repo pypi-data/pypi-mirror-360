@@ -1,0 +1,10 @@
+class SthgCommonConstants:
+    header_x_user_id_key = "x-user-id"
+    header_user_id_key = "user_id"
+    header_x_request_id_key = "x-request-id"
+    header_x_trace_id_key = "x-trace-id"
+    header_x_guid_id_key = "x-guid"
+    context_trace_id_key = "x_trace_id"
+    context_request_id_key = "_x_request_id"
+    context_user_id_key = "user_id"
+    context_guid_id_key = "x_guid"
