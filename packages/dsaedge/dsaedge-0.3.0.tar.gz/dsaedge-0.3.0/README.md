@@ -1,0 +1,117 @@
+# dsaedge: Data Structures and Algorithms in Python
+
+A comprehensive collection of various data structures and algorithms implemented in Python.
+
+## Installation
+
+You can install this package using pip:
+
+```bash
+pip install dsaedge
+```
+
+## Usage
+
+Here are some examples of how to use the implemented data structures and algorithms:
+
+### Linked Lists
+
+```python
+from dsaedge.linked_lists.singly_linked_list import LinkedList
+
+ll = LinkedList()
+ll.append(10)
+ll.prepend(5)
+print(ll)
+```
+
+### Sorting Algorithms
+
+```python
+from dsaedge.sorting.sorting_algorithms import Sorting
+
+arr = [64, 34, 25, 12, 22, 11, 90]
+sorted_arr = Sorting.bubble_sort(arr[:])
+print(sorted_arr)
+```
+
+### Searching Algorithms
+
+```python
+from dsaedge.searching.searching_algorithms import Searching
+
+arr = [1, 5, 2, 8, 3]
+index = Searching.linear_search(arr, 8)
+print(f"Element found at index: {index}")
+```
+
+### Graph Algorithms
+
+```python
+from dsaedge.graphs.graph_representation import Graph
+
+graph = Graph()
+graph.add_edge('A', 'B', weight=4)
+graph.add_edge('A', 'C', weight=2)
+
+# Example BFS
+bfs_result = graph.bfs('A')
+print(f"BFS Traversal: {bfs_result}")
+
+# Example Dijkstra
+distances, predecessors = graph.dijkstra('A')
+print(f"Dijkstra distances from A: {distances}")
+```
+
+## Implemented Data Structures and Algorithms
+
+The `dsaedge` package is organized into several modules, each focusing on a specific category of data structures or algorithms.
+
+### Data Structures
+
+*   **`advanced_data_structures`**
+    *   `disjoint_set_union.py`: Disjoint Set Union (DSU)
+    *   `fenwick_tree.py`: Fenwick Tree (Binary Indexed Tree)
+    *   `segment_tree.py`: Segment Tree
+    *   `trie.py`: Trie (Prefix Tree)
+*   **`hash_tables`**
+    *   `hash_table.py`: Hash Table (with chaining)
+*   **`heaps`**
+    *   `min_heap.py`: Min-Heap
+*   **`linked_lists`**
+    *   `circular_singly_linked_list.py`: Circular Singly Linked List
+    *   `doubly_linked_list.py`: Doubly Linked List
+    *   `singly_linked_list.py`: Singly Linked List
+*   **`trees`**
+    *   `avl_tree.py`: AVL Tree
+    *   `binary_search_tree.py`: Binary Search Tree (BST)
+    *   `binary_tree.py`: Generic Binary Tree (with traversals)
+
+### Algorithms
+
+*   **`algorithmic_paradigms`**
+    *   `kmp_search.py`: Knuth-Morris-Pratt (KMP) string searching
+    *   `knapsack_problem.py`: Knapsack Problem (Dynamic Programming)
+    *   `longest_common_subsequence.py`: Longest Common Subsequence (Dynamic Programming)
+    *   `n_queens.py`: N-Queens Problem (Backtracking)
+    *   `sudoku_solver.py`: Sudoku Solver (Backtracking)
+*   **`graphs`**
+    *   `bellman_ford.py`: Bellman-Ford Algorithm
+    *   `floyd_warshall.py`: Floyd-Warshall Algorithm
+    *   `graph_representation.py`: Graph Representation (Adjacency List) and common graph algorithms (BFS, DFS, Dijkstra, Prim, A*, Cycle Detection, SCC)
+    *   `kruskal_algorithm.py`: Kruskal's Algorithm
+    *   `topological_sort.py`: Topological Sort
+*   **`searching`**
+    *   `searching_algorithms.py`: Linear Search, Binary Search, Jump Search, Exponential Search
+*   **`sorting`**
+    *   `sorting_algorithms.py`: Bubble Sort, Selection Sort, Insertion Sort, Merge Sort, Quick Sort, Heap Sort, Counting Sort, Radix Sort
+
+
+
+## Contributing
+
+Contributions are welcome! Please feel free to open issues or submit pull requests.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
