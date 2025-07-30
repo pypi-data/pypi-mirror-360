@@ -1,0 +1,121 @@
+defaults:
+  - _self_ #configs from the Defaults List are overriding config.yaml
+  - gui: default
+#  - _self_ #config.yaml is overriding configs from the Defaults List
+
+# APP
+file_name: menu_file
+export_file_name: lunch_order.xlsx
+nthreads: null
+
+# OPTIONS
+# Dashboard options
+result_column_text: "# Orders"
+time_column_text: "#### Summary"
+birthday_column_text: "#### B-days"
+lunch_times_options:
+  - "12:00"
+  - "12:30"
+  - "13:00"
+  - "13:30"
+  - "14:00"
+  - "14:30"
+additional_items_to_concat:
+  # Set description to null to exclude from additional items details in gui
+  - name: Insalatona Primavera
+    short_name: Primavera
+    icon: 🌱
+    description: 🥬 + pomodorini, mozzarella, carciofi, funghi, olive.
+  - name: Insalatona Valtellina
+    short_name: Valtellina
+    icon: ⛰️
+    description: 🥬 + rucola, pomodorini, bresaola, grana.
+  - name: Insalatona Sorrento
+    short_name: Sorrento
+    icon: 🍋
+    description: 🥬 + pomodorini, bufala, olive, noci, carciofi.
+  - name: Insalatona Chicken Salad
+    short_name: Chicken Salad
+    icon: 🍗
+    description: 🥬 + pomodorini, mozzarella, mais, pollo.
+  - name: Insalatona Esplosiva
+    short_name: Esplosiva
+    icon: 🧨
+    description: 🥬 + pomodorini, tonno, fagioli, cipolle.
+  - name: Insalatona Follie
+    short_name: Follie
+    icon: 🤪
+    description: 🥬 + pomodori secchi, melanzane, tonno, acciughe.
+  - name: Dolce
+    short_name: null
+    icon: null
+    description: null
+  - name: Caffé
+    short_name: null
+    icon: 
+    description: null
+  - name: Altro
+    short_name: Altro
+    icon: 🃏
+    description: richieste speciali (da specificare nella colonna note).
+guest_types: # Check also guests icons in panel/gui
+  - Edison Guest
+  - External Guest
+
+# BIRTHDAYS NOTIFICATION
+birthdays_notification:
+  # Set to false to disable birthday notification
+  enabled: true
+  # Days ahead to check
+  days_ahead: 90
+  # Max birthdays to notify
+  max_birthdays_to_notify: 7
+
+# NOTIFICATIONS
+notifications:
+  duration: 0
+  # Notification on first connection or on disconnection (set to ""
+  # to deactivate)
+  disconnect_notification: |-
+    Connection lost<br>Please reload the page
+  ready_notification: ""
+# Drop unused menus entries in orders tables (drop unused if true)
+drop_unused_menu_items: true
+
+# STATISTICS DATAFRAMES
+stats_id_cols:
+  - Year
+  - Month
+stats_locals_column_name: Officine MI # Non-guest users (used to fill NaNs)
+
+# SERVER SCHEDULED ACTIVITIES
+scheduled_tasks: # Set to [] empty list to turn it off
+  - _target_: dlunch.scheduled_tasks.Task
+    name: reset guest password
+    enabled: false
+    hour: null
+    minute: null
+    period: 1d
+    actions:
+      - _target_: dlunch.scheduled_tasks.ResetGuestPassword
+  - _target_: dlunch.scheduled_tasks.Task
+    name: scheduled cleaning
+    enabled: true
+    hour: 04
+    minute: 00
+    period: 1d
+    actions:
+      - _target_: dlunch.scheduled_tasks.CleanFilesDB
+  - _target_: dlunch.scheduled_tasks.Task
+    name: database upload
+    enabled: ${db.ext_storage_upload.enabled}
+    hour: 11
+    minute: 25
+    period: 60min
+    actions:
+      - _target_: dlunch.scheduled_tasks.UploadDBToGCP
+        source_file_name: ${db.ext_storage_upload.source_file_name}
+        destination_blob_name: ${db.ext_storage_upload.destination_blob_name}
+        bucket_name: ${db.ext_storage_upload.bucket_name}
+        project: ${db.ext_storage_upload.project}
+

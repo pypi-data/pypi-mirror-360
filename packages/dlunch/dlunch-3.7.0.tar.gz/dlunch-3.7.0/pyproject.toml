@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dlunch"
+version = "3.7.0"
+authors = [
+  { name="Michele Alberti", email="michele.alberti90@gmail.com" },
+]
+description = "The ultimate web app for a well organized lunch."
+readme = "README.md"
+requires-python = ">=3.11"
+keywords = ["python", "webapp", "lunch"]
+license = {text = "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: Free for non-commercial use",
+    "Operating System :: OS Independent",
+]
+dynamic = ["dependencies", "optional-dependencies"]
+
+[project.urls]
+Homepage = "https://github.com/Michele-Alberti/data-lunch"
+Issues = "https://github.com/Michele-Alberti/data-lunch/issues"
+
+[project.scripts]
+data-lunch = "dlunch.cli:main"
+
+[tool.setuptools]
+packages = ["dlunch"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements/requirements.txt"]}
+
+[tool.setuptools.dynamic.optional-dependencies]
+dev = {file = ['requirements/dev-requirements.txt']}
+docs = {file = ['requirements/docs-requirements.txt']}
+
+[tool.black]
+line-length = 79
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "3.7.0"
+version_files = [
+    "dlunch/core.py",
+    "pyproject.toml:version",
+]
+tag_format = "v$version"
+changelog_file = "changelog.md"
+update_changelog_on_bump = true
+annotated_tag = true
+bump_message = "release $new_version (previous release $current_version)"

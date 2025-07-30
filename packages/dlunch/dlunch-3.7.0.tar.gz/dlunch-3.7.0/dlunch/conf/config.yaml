@@ -1,0 +1,28 @@
+defaults:
+  - _self_ #configs from the Defaults List are overriding config.yaml
+  - panel: default
+  - db: sqlite
+  - server: no_auth
+  - auth: ${oc.env:PANEL_ENV}
+  - optional basic_auth: ${server}
+  - override hydra/job_logging: custom
+#  - _self_ #config.yaml is overriding configs from the Defaults List
+
+# PACKAGE PATH
+package_path: ${pkg_path:dlunch}
+
+# LOCAL TIMEZONE
+local_timezone: Europe/Rome
+
+# DOCKER
+docker_username: ${oc.env:DOCKER_USERNAME, not_declared}
+
+hydra:
+  # disable changing of cwd
+  run:
+    dir: .
+  # output files creation
+  output_subdir: null
+  # Do not change working directory
+  job:
+    chdir: false
