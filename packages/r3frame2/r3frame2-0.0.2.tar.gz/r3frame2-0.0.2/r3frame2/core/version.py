@@ -1,0 +1,3 @@
+R3FRAME_MAJOR: int = 0
+R3FRAME_MINOR: int = 0
+R3FRAME_PATCH: int = 2
