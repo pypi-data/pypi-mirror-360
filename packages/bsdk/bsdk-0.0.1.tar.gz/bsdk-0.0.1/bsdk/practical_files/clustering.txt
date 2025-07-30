@@ -1,0 +1,29 @@
+# Practical: Clustering Model
+
+import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.datasets import load_iris
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error
+
+df = load_iris()
+x = df.data
+y = df.target
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=10, random_state=10)
+
+k = KMeans(n_clusters=3, random_state=0)
+k.fit(xtrain,ytrain)
+pred_train = k.predict(xtrain) # Predict on training data
+pred_test = k.predict(xtest) # Predict on test data
+
+mm = mean_absolute_error(pred_test,ytest)
+
+plt.scatter(xtrain[:, 0], xtrain[:, 1], c=pred_train, s=50) # Use predictions on training data for color
+plt.scatter(k.cluster_centers_[:, 0], k.cluster_centers_[:, 1], c='red')
+plt.xlabel('Sepal Length')
+plt.ylabel('Sepal Width')
+plt.title('KMeans Clustering')
+plt.legend()
+plt.grid(True)
+plt.show()

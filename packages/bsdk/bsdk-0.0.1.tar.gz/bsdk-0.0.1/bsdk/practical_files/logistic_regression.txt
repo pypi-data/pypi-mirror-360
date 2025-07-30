@@ -1,0 +1,23 @@
+# Practical: 3 Logistic Regression
+
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
+df = pd.read_csv('pima-diabetes.csv')
+
+x=df.iloc[:,:-1]
+y=df.iloc[:,-1]
+
+ss = StandardScaler()
+x_scaled = ss.fit_transform(x)
+
+xtrain, xtest, ytrain, ytest = train_test_split(x_scaled, y, test_size=0.25, random_state=1)
+
+lr = LogisticRegression()
+lr.fit(xtrain,ytrain)
+predictions = lr.predict(xtest)
+
+accuracy_score(ytest,predictions)
