@@ -1,0 +1,45 @@
+from typing import Any, Dict, List, Text
+
+from rasa_sdk import Action, Tracker
+from rasa_sdk.events import SlotSet
+from rasa_sdk.executor import CollectingDispatcher
+
+from actions.database import Database
+
+
+class ActionUpdateCardStatus(Action):
+    def name(self) -> str:
+        return "action_update_card_status"
+
+    def run(
+        self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[str, Any]
+    ) -> List[Dict[Text, Any]]:
+        username = tracker.get_slot("username")
+        card_number = tracker.get_slot("card_number")
+        new_status = "inactive"
+
+        db = Database()
+
+        # Get user information
+        user = db.get_user_by_name(username)
+        if not user:
+            dispatcher.utter_message(text="User not found.")
+            return []
+
+        # Get card information to verify it belongs to the user
+        card = db.get_card_by_number(card_number)
+        if not card or card["user_id"] != user["id"]:
+            dispatcher.utter_message(text="Card not found or does not belong to you.")
+            return []
+
+        # Update card status
+        success = db.update_card_status(card_number, new_status)
+
+        if success:
+            dispatcher.utter_message(text=f"Card status updated to {new_status}.")
+            return [SlotSet("card_status", new_status)]
+        else:
+            dispatcher.utter_message(
+                text="Failed to update card status. Please try again."
+            )
+            return []
