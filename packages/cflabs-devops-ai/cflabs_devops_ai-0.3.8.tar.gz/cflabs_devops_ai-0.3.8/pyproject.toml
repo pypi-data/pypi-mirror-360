@@ -1,0 +1,74 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cflabs-devops-ai"
+version = "0.3.8"
+description = "Deploy Flask apps to AWS Lambda + API Gateway with zero code changes"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "CosmicFusionLabs", email = "info@cosmicfusionlabs.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "typer>=0.9.0",
+    "jinja2>=3.1.0",
+    "boto3>=1.26.0",
+    "docker>=6.0.0",
+    "rich>=13.0.0",
+    "pyyaml>=6.0.0",
+    "openai>=1.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+cflabs-devops-ai = "devops_ai.cli:app"
+devops-ai-eventbridge = "devops_ai_eventbridge.cli:app"
+devops-ai-agent = "devops_ai_agent.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/cosmicfusionlabs/cflabs-devops-ai"
+Repository = "https://github.com/cosmicfusionlabs/cflabs-devops-ai"
+Issues = "https://github.com/cosmicfusionlabs/cflabs-devops-ai/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["devops_ai_serverless", "devops_ai_agent", "devops_ai_eventbridge", "devops_ai_amplify", "devops_ai"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true 
