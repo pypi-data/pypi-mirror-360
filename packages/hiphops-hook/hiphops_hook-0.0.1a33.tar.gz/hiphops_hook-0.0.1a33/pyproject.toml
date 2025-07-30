@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=77.0.3", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hiphops-hook"
+version = "0.0.1-alpha33"
+description = "Python client for HipHops Hook"
+readme = "README.md"
+license = "MIT"
+authors = [
+    {name = "hiphops.io", email = "hello@hiphops.io"}
+]
+keywords = ["hiphops", "hook", "client"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.8"
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/hiphops-io/hook"
+Repository = "https://github.com/hiphops-io/hook.git"
+Issues = "https://github.com/hiphops-io/hook/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov>=2.0",
+    "black>=22.0",
+    "flake8>=4.0",
+    "mypy>=0.900"
+]
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["hiphops_hook*"]
+
+[tool.setuptools.package-data]
+hiphops_hook = ["bin/*"]
+
+[tool.cibuildwheel]
+before-build = "python {package}/scripts/download_binary_for_build.py"
+build = "cp312-*"
+
+[tool.cibuildwheel.linux]
+repair-wheel-command = "mkdir -p {dest_dir} && cp {wheel} {dest_dir}/$(basename {wheel} | sed 's/linux_x86_64/manylinux_2_17_x86_64/')"
+
+[tool.cibuildwheel.macos]
+repair-wheel-command = "cp {wheel} {dest_dir}"
+environment = "MACOSX_DEPLOYMENT_TARGET=11.0"
