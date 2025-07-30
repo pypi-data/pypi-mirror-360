@@ -1,0 +1,84 @@
+Metadata-Version: 2.4
+Name: vidfetch_bot
+Version: 0.4.4
+Summary: This bot watches messages for URLs then passes those to yt-dlp for processing and download. It then replies to the message containing the URL with the video embedded.
+Author-email: Arthur Tucker <firm.pin7067@fastmail.com>
+License-Expression: GPL-3.0
+Project-URL: Homepage, https://github.com/arthurlt/vidfetch_bot
+Project-URL: Issues, https://github.com/arthurlt/vidfetch_bot/issues
+Keywords: TikTok,Instagram,YouTube,Telegram
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: No Input/Output (Daemon)
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Communications :: Chat
+Classifier: Topic :: Multimedia :: Sound/Audio :: Conversion
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: aiogram~=3.2
+Requires-Dist: yt-dlp
+Dynamic: license-file
+
+# VidFetch_Bot
+
+Are you sick of your friends sending you links to TikTok, Instagram, and YouTube only to have to navigate the maze of app download and account signup redirects and popups?
+
+Just add this bot to your group's Telegram meme chat. (Or if they're using a better messaging service just DM the bot the links.)
+
+## How to run
+
+Examples of how to run the bot
+
+### Docker
+
+**TODO**
+
+### Quadlet
+
+If the system you're wanting to run on has Podman>=5 installed you can use [Quadlets](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html). Create a file `vidfetch-bot.container` and place it in `/etc/containers/systemd/`.
+
+```ini
+[Unit]
+Description=A Telegram bot
+
+[Container]
+Image=ghcr.io/arthurlt/vidfetch_bot:latest
+Environment="BOT_TOKEN=<INSERT_YOUR_BOT_TOKEN_HERE>"
+Pull=newer
+#AutoUpdate=registry
+
+[Service]
+Restart=always
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target default.target
+```
+
+### Kubernetes
+
+**TODO**
+
+### systemd
+
+**TODO**
+
+
+## Develop
+
+Supply your bot's API token via environment variable `BOT_TOKEN`.
+
+### TODO:
+- [x] Rewrite to use `yt-dlp` as library
+- [x] Move Docker image build/publish to `workflow.yaml`
+- [ ] Improve README
+- [ ] Add/improve docstrings
+- [ ] Add (more) unit tests
+- [ ] Improve CI vs CD workflows
+- [ ] Enable 'strict' checking for `pyright` (unsure how to handle `yt-dlp`)
+- [ ] Shrink container image
