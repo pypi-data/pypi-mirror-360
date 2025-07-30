@@ -1,0 +1,87 @@
+# Copyright (c) 2022, 2025, Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at
+# https://oss.oracle.com/licenses/upl.
+[tool.poetry]
+name = "coherence-client"
+version = "2.0.4"
+description = """The Coherence Python Client allows Python applications to act as cache clients to a \
+Coherence Cluster using Google's gRPC framework as the network transport."""
+packages = [
+    { include = "coherence", from = "./src"},
+]
+readme = "README.md"
+authors = ["Oracle <dhiru.pandey@oracle.com>"]
+homepage = "https://github.com/oracle/coherence-py-client"
+repository = "https://github.com/oracle/coherence-py-client"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Universal Permissive License (UPL)",
+    "Operating System :: OS Independent",
+    "Development Status :: 5 - Production/Stable",
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+protobuf = "5.29.5"
+grpcio = "1.73.0"
+grpcio-tools = "1.71.0"
+jsonpickle = ">=3.0,<4.2"
+pymitter = ">=0.4,<1.1"
+typing-extensions = ">=4.11,<4.15"
+types-protobuf = "6.30.2.20250703"
+pympler = "1.1"
+numpy = "2.0.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "~8.4"
+pytest-asyncio = "~1.0"
+pytest-cov = "~6.2"
+pytest-unordered = "~0.7"
+pre-commit = "~4.2"
+docutils="~0.20"
+Sphinx = "~7.4"
+sphinx-rtd-theme = "~3.0"
+sphinxcontrib-napoleon = "~0.7"
+m2r = "~0.3"
+third-party-license-file-generator = "~2025.6"
+pyinstrument="5.0.3"
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["src"]
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 120
+
+[tool.black]
+line-length = 120
+target-version = ['py310']
+include = '\.pyi?$'
+exclude = '''
+
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
+)
+'''
+
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
