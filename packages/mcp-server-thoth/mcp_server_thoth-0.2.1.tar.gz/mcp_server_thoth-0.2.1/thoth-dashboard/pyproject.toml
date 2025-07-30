@@ -1,0 +1,64 @@
+[project]
+name = "thoth-dashboard"
+version = "0.1.0"
+description = "Interactive dashboard for Thoth codebase memory MCP server"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Varun Shijo", email = "varunshi@buffalo.edu"}]
+maintainers = [{name = "Varun Shijo", email = "varun.shijo@gmail.com"}]
+keywords = ["thoth", "dashboard", "codebase", "visualization", "gradio"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "mcp-server-thoth>=0.2.0",  # Core thoth dependency
+    "gradio>=5.0.0",  # Dashboard UI
+    "plotly>=5.0.0",  # Interactive visualizations
+    "pandas>=2.0.0",  # Data manipulation
+    "networkx>=3.0",  # Graph operations
+]
+
+[project.urls]
+"Homepage" = "https://github.com/braininahat/thoth"
+"Bug Tracker" = "https://github.com/braininahat/thoth/issues"
+"Source Code" = "https://github.com/braininahat/thoth/tree/main/thoth-dashboard"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+]
+
+[project.scripts]
+thoth-dashboard = "thoth_dashboard.app:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["thoth_dashboard"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
