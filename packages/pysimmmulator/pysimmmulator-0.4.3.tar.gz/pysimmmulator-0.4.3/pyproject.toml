@@ -1,0 +1,43 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling >= 1.26"]
+
+[project]
+name = "pysimmmulator"
+description = "Python package for generating MMM (Marketing Mix Model) input data"
+dependencies = [
+  "numpy",
+  "pandas",
+  "pyyaml",
+  "matplotlib"
+]
+requires-python = ">=3.8"
+authors = [
+  { name="Ryan Duecker", email="ryan.duecker@yahoo.com" },
+]
+readme = "README.md"
+license = {file = 'LICENSE'}
+keywords = ["Marketing", "Media", "Model", "MMM", "Simulate", "SiMMMulator"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+testing = ["pytest"]
+linting = ["flake8", "pylint"]
+dev = ["black","flake8","pylint","pytest"]
+
+[tool.setuptools.dynamic]
+version = {file = "src/pysimmmulator/VERSION"}
+
+[tool.coverage.run]
+source = ["src"]
+
+[tool.hatch.version]
+path = "src/pysimmmulator/__init__.py"
+
+[project.scripts]
+pysimmm = "pysimmmulator.command_line:main"
