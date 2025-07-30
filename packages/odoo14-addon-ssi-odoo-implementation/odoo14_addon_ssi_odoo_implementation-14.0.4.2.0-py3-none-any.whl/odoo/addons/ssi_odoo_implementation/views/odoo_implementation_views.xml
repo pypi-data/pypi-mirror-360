@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2022 OpenSynergy Indonesia
+     Copyright 2022 PT. Simetri Sinergi Indonesia
+     License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl). -->
+<odoo>
+<record id="odoo_implementation_view_search" model="ir.ui.view">
+    <field name="name">odoo_implementation - search</field>
+    <field name="model">odoo_implementation</field>
+    <field name="mode">primary</field>
+    <field
+            name="inherit_id"
+            ref="ssi_transaction_mixin.mixin_transaction_view_search"
+        />
+    <field name="arch" type="xml">
+        <data>
+            <xpath expr="//field[@name='user_id']" position="after">
+                <field name="partner_id" />
+                <field name="domain" />
+                <field name="version_id" />
+                <field name="environment_id" />
+            </xpath>
+        </data>
+    </field>
+</record>
+
+<record id="odoo_implementation_view_tree" model="ir.ui.view">
+    <field name="name">odoo_implementation.tree</field>
+    <field name="model">odoo_implementation</field>
+    <field name="mode">primary</field>
+    <field name="inherit_id" ref="ssi_transaction_mixin.mixin_transaction_view_tree" />
+    <field name="arch" type="xml">
+        <data>
+            <xpath expr="//field[@name='company_id']" position="after">
+                <field name="partner_id" />
+                <field name="date" />
+                <field name="domain" />
+                <field name="version_id" />
+                <field name="environment_id" />
+            </xpath>
+        </data>
+    </field>
+</record>
+
+    <record id="odoo_implementation_view_form" model="ir.ui.view">
+        <field name="name">odoo_implementation.form</field>
+        <field name="model">odoo_implementation</field>
+        <field name="mode">primary</field>
+        <field
+            name="inherit_id"
+            ref="ssi_transaction_mixin.mixin_transaction_view_form"
+        />
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//field[@name='user_id']" position="after">
+                    <field name="partner_id" />
+                    <field name="date" />
+                </xpath>
+                <xpath expr="//group[@name='header_right']" position="inside">
+                    <field name="domain" />
+                    <field name="version_id" />
+                    <field name="environment_id" />
+                </xpath>
+                <xpath expr="//page[1]" position="before">
+                    <page
+                        name="feature_implementation"
+                        string="Feature Implementations"
+                    >
+                        <field name="feature_implementation_ids" />
+                    </page>
+                    <page name="installed_module" string="Installed Modules">
+                        <field name="installed_version_module_ids" />
+                    </page>
+                    <page name="missing_module" string="Missing Modules">
+                        <group
+                            name="missing_core_module"
+                            string="Core"
+                            colspan="4"
+                            col="2"
+                        />
+                        <field name="missing_core_module_ids" />
+                        <group
+                            name="all_missing_module"
+                            string="All"
+                            colspan="4"
+                            col="2"
+                        />
+                        <field name="missing_module_ids" />
+                    </page>
+                    <page name="extra_module" string="Extra Modules">
+                        <field name="extra_module_ids" />
+                    </page>
+                    <page name="xmlrpc" string="XMLRPC">
+                        <button
+                            name="action_get_installed_module"
+                            string="Get Installed Modules"
+                            type="object"
+                            class="oe_highlight"
+                            icon="fa-refresh"
+                        />
+                        -
+                        <button
+                            name="action_get_installed_module_xmlrpc"
+                            string="XMLRPC"
+                            type="object"
+                            class="oe_highlight"
+                            icon="fa-handshake-o"
+                        />
+                        <group name="xmlrpc_1" colspan="4" col="2">
+                            <field name="xmlrpc_url" />
+                            <field name="xmlrpc_login" />
+                            <field name="xmlrpc_password" password="True" />
+                            <field name="xmlrpc_db" />
+                            <field name="xmlrpc_port" widget="char" />
+                            <field name="temp_odoo_module_list" />
+                        </group>
+                    </page>
+                    <page name="update" string="Updates">
+                        <field name="update_ids">
+                            <tree editable="bottom">
+                                <field name="date_maintenance" />
+                                <field name="user_id" />
+                            </tree>
+                            <form>
+                                <group name="update_1" colspan="4" col="2">
+                                    <group name="update_1_1" colspan="1" col="2">
+                                        <field name="date_maintenance" />
+                                        <field name="user_id" />
+                                    </group>
+                                    <group name="update_1_2" colspan="1" col="2" />
+                                </group>
+                            </form>
+                        </field>
+                    </page>
+                </xpath>
+
+            </data>
+        </field>
+    </record>
+
+    <record id="odoo_implementation_action" model="ir.actions.act_window">
+        <field name="name">Odoo Implementations</field>
+        <field name="res_model">odoo_implementation</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem
+        id="odoo_implementation_menu"
+        name="Implementations"
+        parent="menu_root_odoo"
+        action="odoo_implementation_action"
+        groups="odoo_implementation_viewer_group"
+        sequence="10"
+    />
+</odoo>
