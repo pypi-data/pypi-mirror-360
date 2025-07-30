@@ -1,0 +1,136 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "optuna-dashboard"
+description = "Real-time dashboard for Optuna"
+readme = "README.md"
+authors = [
+    { name = "Masashi Shibata", "email" = "mshibata@preferred.jp" }
+]
+requires-python = ">=3.8"
+license = {text = "MIT License"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Intended Audience :: Science/Research",
+]
+dependencies = [
+    "bottle>=0.13.0",
+    "optuna>=3.6.0",
+    "packaging",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+preferential = [
+    "torch",
+    "botorch",
+]
+# This field is referrenced by .readthedocs.yaml.
+docs = [
+    "boto3",
+    "torch; python_version>='3.9'",
+    "botorch; python_version>='3.9'",
+    "streamlit",
+    "sphinx",
+    "sphinx_rtd_theme",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu" },
+]
+
+[project.scripts]
+optuna-dashboard = "optuna_dashboard._cli:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "optuna_dashboard.__version__"}
+
+[tool.setuptools]
+include-package-data = false
+package-data = { "optuna_dashboard" = ["public/*", "img/*", "index.html"] }
+
+[tool.setuptools.packages.find]
+include = ["optuna_dashboard*"]
+exclude = ["optuna_dashboard.node_modules*", "optuna_dashboard.ts*"]
+
+[project.urls]
+"Homepage" = "https://github.com/optuna/optuna-dashboard"
+"Sources" = "https://github.com/optuna/optuna-dashboard"
+"Bug Tracker" = "https://github.com/optuna/optuna-dashboard/issues"
+
+[tool.ruff]
+line-length = 99
+target-version = "py38"
+exclude = [
+    ".eggs",
+    ".git",
+    ".mypy_cache",
+    ".venv",
+    "_build",
+    "build",
+    "dist",
+    "venv",
+    "node_modules",
+    "docs/conf.py",
+]
+
+[tool.ruff.lint]
+# Enable flake8 equivalent rules and some additional useful ones
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+]
+ignore = [
+    "I001",   # Import block is unsorted
+]
+
+[tool.mypy]
+ignore_missing_imports = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+addopts = "--color=yes"
+markers = [
+  "slow: marks tests as slow",
+]
+
+[dependency-groups]
+test = [
+    "torch; python_version>='3.9'",
+    "botorch; python_version>='3.9'",
+    "streamlit",
+    "boto3",
+    "coverage",
+    "plotly",
+    "pytest",
+    "streamlit",
+    "scikit-learn",
+    "moto[s3]",
+    "pytest-playwright>=0.4.4",
+]
+lint = [
+    "ruff",
+    "mypy",
+    "mypy-boto3-s3",
+]
