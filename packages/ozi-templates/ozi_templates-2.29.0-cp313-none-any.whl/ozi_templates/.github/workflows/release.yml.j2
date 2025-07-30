@@ -1,0 +1,42 @@
+{#- OZI
+# ozi/templates/.github/workflows/release.yml
+# SPDX-License-Identifier: MIT-0
+#}
+  release:
+    needs: [draft, checkpoint]
+    runs-on: ubuntu-latest
+    concurrency: release
+    strategy:
+      matrix:
+        py:
+          - security2
+          - security1
+          - bugfix
+          - prerelease
+      fail-fast: true
+      max-parallel: 1
+    outputs:
+{%- raw %}
+      hashes: ${{ steps.release.outputs.hashes }}
+{%- endraw %}
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+{%- if project.github_harden_runner %}
+{% include "github_workflows/harden_runner.yml.j2" %}
+        allowed-endpoints: >
+        {%- for endpoint in spec.python.ci.github.harden_runner.endpoints.release.split(' ') %}
+            {{ endpoint }}
+        {%- endfor %}
+{%- endif %}
+      - uses: OZI-Project/release@{{ spec.python.ci.release.version }}
+        id: release
+        with:
+{%- raw %}
+          python-dist: ${{ matrix.py }}
+          tag: ${{ needs.draft.outputs.tag }}
+{%- endraw %}
+{%- if project.signed_wheel %}
+          wheel-sign-token: ${{ secrets.WHEEL_SIGN_TOKEN }}
+{%- endif %}
