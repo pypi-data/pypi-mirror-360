@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=70.1.0", "setuptools_scm>=8", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ramalama-stack"
+description = "An external provider for Llama Stack allowing for the use of RamaLama for inference."
+authors = [{ name = "The RamaLama Stack Authors" }]
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+keywords = ["ramalama", "llama", "AI"]
+requires-python = ">=3.12"
+dynamic = ["version"]
+dependencies = [
+    "aiohttp>=3.12.2",
+    "aiosqlite>=0.21.0",
+    "autoevals>=0.0.129",
+    "blobfile>=3.0.0",
+    "chardet>=3.0.0",
+    "datasets>=3.6.0",
+    "fastapi>=0.115.12",
+    "httpx>=0.28.1",
+    "llama-stack==0.2.13",
+    "mcp>=1.9.2",
+    "numpy>=2.2.6",
+    "openai>=1.82.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.33.1",
+    "opentelemetry-sdk>=1.33.1",
+    "peft>=0.15.2",
+    "psutil>=7.0.0",
+    "pydantic>=2.11.5",
+    "pymilvus>=2.5.10",
+    "ramalama==0.10.0",
+    "requests>=2.32.3",
+    "sentence-transformers>=3.0.0",
+    "six>=1.17.0",
+    "sqlalchemy>=2.0.41",
+    "torch>=2.7.0",
+    "trl>=0.18.1",
+    "urllib3>=2.4.0",
+    "uvicorn>=0.34.2",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=3.0.4,<4.0",
+]
+
+[project.urls]
+homepage = "https://ramalama.ai"
+Repository = "https://github.com/containers/ramalama-stack"
+Issues = "https://github.com/containers/ramalama-stack/issues"
+
+[tool.setuptools_scm]
+version_file = "src/ramalama_stack/_version.py"
+# do not include +gREV local version, required for Test PyPI upload
+local_scheme = "no-local-version"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+
+[tool.setuptools.package-data]
+"ramalama_stack" = ["providers.d/**/*", "ramalama-run.yaml"]
+
+[tool.ruff]
+extend-exclude = ["*.ipynb"]
