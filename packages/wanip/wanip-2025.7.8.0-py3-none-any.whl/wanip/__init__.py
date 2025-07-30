@@ -1,0 +1,1 @@
+from .wanip import main
