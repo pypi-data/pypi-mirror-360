@@ -1,0 +1,649 @@
+Metadata-Version: 2.3
+Name: mcp-instana
+Version: 0.1.0
+Summary: MCP server for Instana
+License: Apache-2.0
+Author: Guangya Liu
+Author-email: gyliu@ibm.com
+Requires-Python: >=3.11
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Dist: instana-client (>=1.0.0)
+Requires-Dist: mcp (>=0.1.0)
+Requires-Dist: pydantic (>=2.0.0)
+Requires-Dist: python-dotenv (>=1.0.0)
+Requires-Dist: requests (>=2.31.0)
+Description-Content-Type: text/markdown
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**
+
+- [MCP Server for IBM Instana](#mcp-server-for-ibm-instana)
+  - [Architecture Diagram](#architecture-diagram)
+  - [WorkFlow Diagram](#workflow-diagram)
+  - [Pre-Reqs](#pre-reqs)
+    - [Install dependencies](#install-dependencies)
+    - [Environment Configuration](#environment-configuration)
+  - [Run and Test](#run-and-test)
+    - [Claude Desktop](#claude-desktop)
+      - [Streamable HTTP Mode](#streamable-http-mode)
+      - [Stdio Mode](#stdio-mode)
+    - [GitHub Copilot](#github-copilot)
+      - [Streamable HTTP Mode](#streamable-http-mode-1)
+      - [Stdio Mode](#stdio-mode-1)
+    - [mcpclient](#mcpclient)
+      - [Streamable HTTP Mode](#streamable-http-mode-2)
+      - [Stdio Mode](#stdio-mode-2)
+  - [Features](#features)
+  - [Tools](#tools)
+  - [Example Prompts](#example-prompts)
+  - [Troubleshooting](#troubleshooting)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+# MCP Server for IBM Instana
+
+The Instana MCP server allows interaction with the Instana observability platform helps fetching real-time observability data directly into development workflow.
+
+It acts as a bridge between clients (like AI agents or custom tools) and the Instana REST APIs , converts user queries into Instana API requests and formats/summarizes the API responses into structured formats.
+
+The server supports **Streamable HTTP** and **Stdio** transport modes for maximum compatibility with different MCP clients. For more Details refer to [MCP Transport Modes](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports) .
+
+## Architecture Diagram
+
+```mermaid
+graph LR
+    subgraph "Application Host Process"
+        MH[MCP Host]
+        MSI[Instana MCP Server]
+        MST[ProductA MCP Server]
+        MSC[ProductB MCP Server]
+
+        MH <--> MSI
+        MH <--> MSC
+        MH <--> MST
+    end
+
+    subgraph "Remote Service"
+        II[Instana Instance]
+        TI[ProductA Instance]
+        CI[ProductB Instance]
+
+        MSI <--> II
+        MST <--> TI
+        MSC <--> CI
+    end
+
+    subgraph "LLM"
+        L[LLM]
+        MH <--> L
+    end
+```
+
+## WorkFlow Diagram
+
+Let’s take a simple example. Assume you are using a MCP Host, it can be Claude Desktop, VS Code or some others, and it connected to a MCP server of Instana. Here I will ask for the Instana MCP Server to show me some alerts. Here is what happens:
+
+- The MCP client gets the list of available tools from the Instana MCP server.
+- Your query is sent to LLM along with tool descriptions.
+- LLM analyzes the available tools and decides which one(s) to use. In this case some tools related to getting instana alerts and application are returned to Instana MCP client.
+- The client executes the chosen tool(s) through the Instana MCP server, since tools is in the server.
+- Results (latest alerts) are sent back to LLM.
+- LLM formulates a natural language response.
+- The response is displayed to you.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant ChatBot as MCP Host
+    participant MCPClient as MCP Client
+    participant MCPServer as Instana MCP Server
+    participant LLM
+    participant Instana as Instana Instance
+
+    ChatBot->>MCPClient: Load available tools from MCP Server
+    MCPClient->>MCPServer: Request available tool list
+    MCPServer->>MCPClient: Return list of available tools
+    User->>ChatBot: Ask "Show me the latest alerts from Instana for application robot-shop"
+    ChatBot->>MCPClient: Forward query
+    MCPClient->>LLM: Send query and tool description
+    LLM->>MCPClient: Select appropriate tool(s) for Instana alert query
+    MCPClient->>MCPServer: Execute selected tool(s)
+    MCPServer->>Instana: Retrieve alerts for application robot-shop
+    MCPServer->>MCPClient: Send alerts of Instana result
+    MCPClient->>LLM: Forward alerts of Instana
+    LLM->>ChatBot: Generate natural language response for Instana alerts
+    ChatBot->>User: Show Instana alert response
+```
+
+## Pre-Reqs
+
+To create a virtual environment and activate it, run the following command:
+
+```shell
+python -m venv .mcp-instana
+source .mcp-instana/bin/activate
+```
+### Install dependencies
+
+```
+pip install -r requirements.txt
+```
+
+### Environment Configuration
+
+Create a `.env` file in your project root:
+
+```bash:.env
+INSTANA_BASE_URL=https://your-instana-instance.instana.io
+INSTANA_API_TOKEN=your_instana_api_token_here
+```
+
+## Run and Test
+
+### Claude Desktop
+
+Claude Desktop supports all modes - Streamable HTTP and Stdio for MCP integration.
+
+Configure Claude Desktop by editing the configuration file:
+
+**File Locations:**
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+#### Streamable HTTP Mode
+
+The Streamable HTTP mode provides a REST API interface for MCP communication using JSON-RPC over HTTP.
+
+**Step 1: Start the MCP Server in Streamable HTTP Mode**
+
+```bash
+python src/mcp_server.py --transport streamable-http --debug
+```
+
+**Note:** debug flag is optional , set  `--debug` for getting additional logs. Provide --transport streamable-http to start the server in streamable-http mode.
+
+**Step 2: Configure Claude Desktop**
+
+```json:claude_desktop_config.json
+{
+  "mcpServers": {
+    "Instana Tools": {
+      "command": "npx",
+      "args": ["mcp-remote", "http://127.0.0.1:8000/mcp"],
+      "env": {
+        "INSTANA_BASE_URL": "<INSTANA_BASE_URL>",
+        "INSTANA_API_TOKEN": "<INSTANA_API_TOKEN>"
+      }
+    }
+  }
+}
+```
+
+**Step 3: Test the Connection**
+
+Restart Claud Desktop, now you will be able to see instana tools in claude desktop as shown below .
+
+![](./images/claudeTools.png)
+
+You can now run the query in Claud Desktop.
+
+```bash
+get me all endpoints from Instana
+```
+![](./images/claudeResponse.png)
+
+
+#### Stdio Mode
+
+**Configuration:**
+
+```json
+{
+  "mcpServers": {
+    "Instana Tools": {
+      "command": "<path-to-mcp-instana-virtual-env-folder>/bin/uv",
+      "args": [
+        "--directory",
+        "<path-to-mcp-instana-folder>"
+        "run",
+        "src/mcp_server.py"
+      ],
+      "env": {
+        "INSTANA_BASE_URL": "<INSTANA_BASE_URL>",
+        "INSTANA_API_TOKEN": "<INSTANA_API_TOKEN>"
+      }
+    }
+  }
+}
+```
+
+
+### GitHub Copilot
+
+GitHub Copilot supports MCP integration through VS Code configuration.
+For GitHub Copilot integration with VScode refer this [link](#https://code.visualstudio.com/docs/copilot/setup).
+
+#### Streamable HTTP Mode
+
+**Step 1: Start the MCP Server in Streamable HTTP Mode**
+
+```bash
+python src/mcp_server.py --transport streamable-http --debug
+```
+
+**Step 2: Configure VS Code**
+
+Check [Use MCP servers in VS Code](https://code.visualstudio.com/docs/copilot/chat/mcp-servers) for detailed configuration.
+
+1. In the `mcp.json` file click on Add Server .
+2. From the list, select HTTP (HTTP or Server-Sent Events).
+
+![alt text](./images/copilotHTTPServer.png)
+3. In the Server URL field, enter http://127.0.0.1:8000/mcp and press Enter.     
+4. Under Enter Server ID, press Enter to use the default server ID, or enter a custom server ID( here I was using default name as `my-mcp-server-http`), post which it will add `my-mcp-server-http` to `mcp.json` file as shown below.
+
+![alt text](./images/copilotStartServer.png)
+
+In the above picture we have server configuration for all modes (Steamable HTTP, Stdio) . Based on the particular mode we want to use,  we can keep the configuration in mcp.json file.
+
+#### Stdio Mode
+
+**Step 1: Create VS Code MCP Configuration**
+Create `.vscode/mcp.json` in your project root:
+
+```json:.vscode/mcp.json
+{
+  "servers": {
+    "Instana Tools": {
+      "command": "/absolute/path/to/your/project/.mcp-instana/bin/uv",
+      "args": [
+        "--directory",
+        "/absolute/path/to/your/project/mcp-instana",
+        "run",
+        "src/mcp_server.py"
+      ],
+      "env": {
+        "INSTANA_BASE_URL": "https://your-instana-instance.instana.io",
+        "INSTANA_API_TOKEN": "your_instana_api_token"
+      }
+    }
+  }
+}
+```
+
+**Step 2: Manage Server in VS Code**
+
+1. **Open `.vscode/mcp.json`** - you'll see server management controls at the top
+2. **Click `Start`** next to `Instana Tools` to start the server
+3. Running status along with no. of tools shows the server is running
+
+**Step 3: Test Integration**
+
+Switch to Agent Mode in Github CoPilot and reload tools.
+Here is the example of GitHub Copilot response:
+
+![alt text](./images/copilotResponse.png)
+
+### mcpclient
+
+The MCP Client(`mcpclient/mcp_client.py`) is a Streamlit-based web application that provides a user-friendly interface for testing and interacting with the Instana MCP server. It supports all modes - Streamable HTTP and stdio  allowing users to execute queries against Instana's monitoring data through an intuitive web interface.
+
+#### Streamable HTTP Mode
+
+**Step 1: Start the MCP Server with Streamable HTTP Mode**
+
+```bash
+source .mcp-instana/bin/activate
+cd mcp-instana
+python src/mcp_server.py --transport streamable-http --debug
+```
+**Step 2: Run the Client**
+
+```bash
+cd mcp-instana
+streamlit run mcpclient/mcp_client.py
+```
+**Step 3: Configure Streamable HTTP Mode**
+
+1. Access the client at http://localhost:8501
+2. In the sidebar, select **"streamable-http"** as the transport mode
+3. Configure the server settings:
+   - **Server Host**: `localhost`
+   - **Server Port**: `8000`
+4. The http URL will be automatically set to `http://localhost:8000/mcp/`
+
+![](./images/mcpClientHttp.png)
+
+#### Stdio Mode
+
+**Step 1: Configure Environment**
+
+Create/Update `.env` file in in your project root and configure watsonx environment variables:
+
+
+```bash:.env
+WATSONX_URL=your_watsonx_url
+WATSONX_API_KEY=your_watsonx_api_key
+WATSONX_PROJECT_ID=your_watsonx_project_id
+INSTANA_BASE_URL=https://your-instana-instance.instana.io
+INSTANA_API_TOKEN=your_instana_api_token
+```
+**Step 2: Update MCP Configuration**
+
+Update `mcpclient/mcp-instana.json` file with your working directory path.
+
+```json:mcpclient/mcp-instana.json
+{
+  "mcpServers": {
+    "instana": {
+      "command": "/absolute/path/to/your/project/.mcp-instana/bin/python",
+      "args": ["/absolute/path/to/your/project/src/mcp_server.py"],
+      "cwd": "/absolute/path/to/your/project",
+      "env": {
+        "INSTANA_BASE_URL": "https://your-instana-instance.instana.io",
+        "INSTANA_API_TOKEN": "your_instana_api_token"
+      }
+    }
+  }
+}
+```
+**Step 3: Run the Client**
+
+```
+cd mcp-instana
+streamlit run mcpclient/mcp_client.py
+```
+
+Access the client at http://localhost:8501 and select **"stdio"** as the transport mode.
+
+![](./images/mcpClientStdio.png)
+
+## Features
+
+- [ ] Application
+  - [ ] Application Metrics
+    - [ ] Application Metrics
+    - [ ] Endpoint Metrics
+    - [ ] Service Metrics
+    - [ ] Data Metrics
+  - [x] Application Resources
+    - [x] Get Applications Endpoints
+    - [x] Get Applications
+    - [x] Get Services
+    - [x] Get Application Services
+  - [x] Application Alert Configuration
+    - [x] Get All Smart Alert Configurations
+    - [x] Get Smart Alert Configuration
+    - [x] Get Smart Alert Config Versions
+    - [ ] Create Smart Alert Configuration
+    - [ ] Update Smart Alert Configuration
+    - [x] Delete Smart Alert Configuration
+    - [ ] Recalculate Smart Alert Config Baseline
+    - [x] Enable Application Alert Config
+    - [x] Disable Smart Alert Config
+    - [x] Restore Smart Alert Config
+- [ ] Infrastructure
+  - [ ] Infrastructure Analyze
+    - [x] Get Available Metrics
+    - [ ] Get infrastructure entities
+    - [ ] Get grouped entities with aggregated metrics
+    - [x] Get available plugins/entity types
+  - [x] Infrastructure Catalog
+    - [x] Get Payload Keys By plugin ID
+    - [x] Get Infrastructure Catalog Metrics
+    - [x] Get Infrastructure Catalog Plugins
+    - [x] Get Infrastructure Catalog Plugins with Custom Metrics
+    - [x] Get Infrastructure Catalog Search Fields
+    - [x] Get Infrastructure Catalog Search Fields with Custom Metrics
+    - [x] Get Tag Catalog
+    - [x] Get Tag Catalog ALL
+  - [ ] Infrastructure Resources
+    - [x] Get Monitoring State
+    - [ ] Get plugin Payload
+    - [x] Search Snapshots
+    - [x] Get Snapshot Details for single Snapshot ID
+    - [x] Get Details for Multiple Snapshot IDs
+    - [x] Software Versions
+  - [x] Infrastructure Topology
+    - [x] Get Hosts for Snapshot
+    - [x] Get Topology
+  - [ ] Events
+    - [ ] Events
+      - [ ] Get all Events
+      - [x] Get Events by IDs
+      - [x] Get Agent Monitoring Events
+      - [x] Get Kubernetes Info Events
+
+
+## Tools
+
+| Tool                                                          | Category                 | Description                                            |
+|---------------------------------------------------------------|--------------------------|------------------------------------------------------- |
+| `get_application_metrics`                                     | Application Metrics      | Get ApplicationMetrics                                 |
+| `get_endpoints_metrics`                                       | Application Metrics      | Get Endpoint metrics                                   |
+| `get_services_metrics`                                        | Application Metrics      | Get Service metrics                                    |
+| `get_application_data_metrics_v2`                             | Application Metrics      | Get Application Data Metrics                           |
+| `get_applications`                                            | Application Resources    | Get applications                                       |
+| `get_application_services`                                    | Application Resources    | Get applications/services                              |
+| `get_application_endpoints`                                   | Application Resources    | Get endpoints                                          |
+| `get_services`                                                | Application Resources    | Get services                                           |
+| `get_monitoring_state`                                        | Infrastructure Resources | Monitored host count                                   |
+| `get_plugin_payload`                                          | Infrastructure Resources | Get a payload for a snapshot                           |
+| `get_snapshots`                                               | Infrastructure Resources | Search snapshots                                       |
+| `post_snapshots`                                              | Infrastructure Resources | Get snapshot details for multiple snapshots            |
+| `get_snapshot`                                                | Infrastructure Resources | Get snapshot details                                   |
+| `software_versions`                                           | Infrastructure Resources | Get installed software                                 |
+| `get_available_payload_keys_by_plugin_id`                     | Infrastructure Catalog   | Get Payload Keys By plugin ID                          |
+| `get_infrastructure_catalog_metrics`                          | Infrastructure Catalog   | Get Infrastructure Catalog Metrics                     |
+| `get_infrastructure_catalog_plugins`                          | Infrastructure Catalog   | Get Infrastructure Catalog Plugins                     |
+| `get_infrastructure_catalog_plugins_with_custom_metrics`      | Infrastructure Catalog   | Get Infrastructure Catalog Plugins with Custom Metrics |
+| `get_infrastructure_catalog_search_fields`                    | Infrastructure Catalog   | Get Infrastructure Catalog Search Fields               |
+| `get_tag_catalog`                                             | Infrastructure Catalog   | Get Tag Catalog                                        |
+| `get_tag_catalog_all`                                         | Infrastructure Catalog   | Get Tag Catalog ALL                                    |
+| `get_related_hosts`                                           | Infrastructure Topology  | Get Related Hosts                                      |
+| `get_topology`                                                | Infrastructure Topology  | Get Topology                                           |
+| `get_available_metrics`                                       | Infrastructure Analyze   | Get Available Metrics                                  |
+| `get_entities`                                                | Infrastructure Analyze   | Get infrastructure entities                            |
+| `get_aggregated_entity_groups`                                | Infrastructure Analyze   | Get grouped entities with aggregated metrics           |
+| `get_available_plugins`                                       | Infrastructure Analyze   | Get available entity types                             |
+| `get_application_alert_configs`                               | Application Alert Configuration  | Get All Smart Alert Configurations             |
+| `find_application_alert_config`                               | Application Alert Configuration  | Get Smart Alert Configuration                  |
+| `find_application_alert_config_versions`                      | Application Alert Configuration  | Get Smart Alert Config Versions                |
+| `create_application_alert_config`                             | Application Alert Configuration  | Create Smart Alert Configuration               |
+| `update_application_alert_config`                             | Application Alert Configuration  | Update Smart Alert Configuration               |
+| `delete_application_alert_config`                             | Application Alert Configuration  | Delete Smart Alert Configuration               |
+| `update_application_historic_baseline`                        | Application Alert Configuration  | Recalculate Smart Alert Config Baseline        |
+| `enable_application_alert_config`                             | Application Alert Configuration  | Enable Application Alert Config                |
+| `disable_application_alert_config`                            | Application Alert Configuration  | Disable Smart Alert Config                     |
+| `restore_application_alert_config`                            | Application Alert Configuration  | Restore Smart Alert Config                     |
+| `get_event`                                                   | Events                           | Get Events by IDs                              |
+| `get_kubernetes_info_events`                                  | Events                           | Get Kubernetes Info Events                     |
+| `get_agent_monitoring_events`                                 | Events                           | Get Agent Monitoring Events                    |
+
+## Example Prompts
+
+Here are some example prompts (contains the query and results) that you can use to get started with the Instana Observability Platform API:
+
+- Query 1
+```
+we want to understand what all search criteria are available in Instana so that 
+we can find out correct search tags for specific entities and 
+build complex queries to filter entities in Instana . can you help with this?
+```
+
+- Result 1
+
+```shell
+
+Here is the list of search criteria available in Instana:
+
+entity.jvm.dropwizard.timer
+entity.otel
+host.name
+entity.dropwizard.meter
+entity.springboot.name
+entity.kubernetes.node.name
+entity.tuxedoapp.tuxedoService.name
+entity.ace.integrationServer.name
+entity.containerd.containerIdentity.tuxedo.domain.tuxconfig
+entity.host.mac
+```
+- Query 2
+```shell
+Our application deployments seem to be failing intermittently.
+Can you fetch recent Kubernetes info events events from Instana for last 1 day
+to help identify what might be causing these deployment issues?
+```
+- Result 2
+![alt text](./images/kubernetesEvents.png)
+
+- Query 3
+```shell
+we are seeing errors in agent logs and experiencing some issue with agent behavior 
+Can you fetch recent agent monitoring events from Instana 
+to help figure out what might be causing these  issues?
+```
+- Result 3
+```shell
+The recent agent monitoring events from Instana indicate that there are several issues with the agent behavior, including:
+
+JVM attach generic issues: There are 36 events related to JVM attach generic issues, affecting multiple entities such as Process (/etc/java-8-64bit-jdk/jdk8u402-b06/bin/java), Process (/etc/java-16-64bit-jdk/jdk-16.0.2+7/bin/java), and others.
+Python sensor not installed: There are 7 events related to Python sensor not installed issues, affecting entities such as Process (/usr/bin/python3), Process (/usr/libexec/platform-python), and others.
+PostgreSQL authentication failed: There are 2 events related to PostgreSQL authentication failed issues, affecting entities such as PostgreSQL DB (PostgreSQL) and PostgreSQL DB (PostgreSQL @5432).
+PostgreSQL connection failed: There is 1 event related to PostgreSQL connection failed issues, affecting the entity PostgreSQL DB (PostgreSQL @5432).
+Spring Boot actuator not configured: There is 1 event related to Spring Boot actuator not configured issues, affecting the entity Spring Boot App (sqs-demo-application 0.0.1).
+These issues may be causing the errors in the agent logs and affecting the agent behavior. It is recommended to investigate and resolve these issues to ensure proper agent functionality.
+```
+- Query 4
+```shell
+We're setting up comprehensive application performance monitoring across our entire infrastructure. 
+Can you retrieve all the applications that Instana has discovered? I need to see which applications are available 
+so I can configure monitoring dashboards, set up alerts, and establish performance baselines for each service in our environment.
+```
+- Result 4
+
+```shell
+The discovered applications are:
+
+Ovcharov
+AWS Resources
+Cedric OTel
+Cedric Sein Otel
+Col
+Damian - Sample Go App
+Fofo
+INSTANA-ECOSYSTEM-SAP-CF
+Kate
+```
+- Query 5
+```shell
+We're investigating an issue for the snapshot id  "qjNuS6pmtYkxCBKwqsfxvHylisU" and 
+want to see which hosts might be affected for this . Can you get the hosts for this snapshot id?
+```
+- Result 5
+```shell
+The hosts related to the snapshot with ID "qjNuS6pmtYkxCBKwqsfxvHylisU" are:
+
+XDrSHZ5iq0BV_bPxQ6FFGsbxqv4
+There is 1 host related to this snapshot.
+```
+- Query 6
+```shell
+We want to get specific metrics for Amazon MQ in INstana, Can you Show all possible tags
+I can use for the plugin awsMq ?
+```
+- Result 6
+
+```shell
+
+The following tags are available for the plugin "awsMq":
+
+aws.accountId
+aws.arn
+aws.mq.brokerName
+aws.mq.deploymentMode
+aws.mq.engineVersion
+aws.mq.instanceType
+dfq.selftype
+dfq.type
+label
+metricId
+type
+zone
+These tags can be used to filter and group metrics for Amazon MQ in Instana.
+```
+
+- Query 7
+```shell
+we want to troubleshoot issues with custom metric collection, hence need details of the
+plugins which are configured with custom metrics in Instana,Can you help us get the details ?
+```
+- Result 7
+
+```shell
+JVM and OpenTelemetry SDK. The JVM plugin is identified by the label "JVM" and the plugin ID "jvmRuntimePlatform". 
+The OpenTelemetry SDK plugin is identified by the label "OpenTelemetry SDK" and the plugin ID "openTelemetry".
+```
+
+- Query 8
+```shell
+we want to see what kind of systems Instana is tracking , want to explore the monitoring 
+capabilities of our Instana installation, please give me the list of monitored entity types
+```
+- Result 8
+```shell
+The list includes various plugins such as businessActivity, azureManagedHSM, kafkaConnectWorker, and many more.
+The total number of available plugins is 395, but only the first 50 are shown in the output.
+```
+
+- Query 9
+```shell
+We're having performance issues with our db2Database. What payload keys are available for the
+db2Database plugin so I can access detailed monitoring data?
+```
+- Result 9
+
+```shell
+The available payload keys for the db2Database plugin are:
+
+tableSpaceNamesSense
+topqueries
+diaglogentries
+dbConfig
+dbmConfig
+lockWaits
+runstats
+dbutilities
+toptotalstmts
+idlogdiskwait
+idhadrstats
+reorgtablesize
+```
+
+- Query 10
+```shell
+We have SLAs for our cryptographic services. What Azure Managed HSM metrics can help 
+monitor service levels using azureManagedHSM plugin?
+```
+- Result 10
+
+```shell
+The azureManagedHSM plugin provides three metrics that can help monitor service levels for cryptographic services:
+1. Total Service Api Hits: This metric measures the total number of API hits for the service.
+2. Overall Service Api Latency: This metric measures the overall latency of service API requests.
+3. Overall Service Availability: This metric measures the availability of the service.
+```
+
+## Troubleshooting
+
+- Dependency Version Conflicts
+  - If you encounter version conflicts during `pip install -r requirements.txt` for any of the packages try updating to latest versions via `pip install --upgrade -r requirements.txt` or manually update conflicting package versions in requirements.txt
+
+- Github Copilot
+  - If you encounter any issues with Github Copilot, try start/stop/restart the server in `mcp.json` file and try to keep any one server at a time.
+
