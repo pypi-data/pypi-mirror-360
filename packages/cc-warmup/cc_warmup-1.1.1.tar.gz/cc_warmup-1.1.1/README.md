@@ -1,0 +1,184 @@
+# cc-warmup 🔥
+
+**Maximize Claude Code usage blocks with intelligent session warming and comprehensive project analytics.**
+
+cc-warmup is a powerful CLI tool that analyzes your Claude Code usage patterns, categorizes your messages, and automatically sends warmup messages to keep your sessions active. It features real-time monitoring, rich terminal colors, and comprehensive project analytics.
+
+## ✨ Features
+
+- **🔄 Watch Mode (Default)**: Continuous monitoring with auto-refresh
+- **🔥 Auto-Warmup**: Automatically sends warmup messages when needed
+- **🏷️ Message Categorization**: AI-powered categorization of your messages into planning, development, debugging, and testing
+- **📊 Rich Analytics**: Project-level and global statistics with beautiful terminal colors
+- **🎯 Project-Specific Analysis**: Deep dive into individual project patterns
+- **⚡ High Performance**: Efficient processing with optimized algorithms
+
+## 🚀 Quick Install
+
+### From PyPI (Recommended)
+Once the package is uploaded to PyPI, you can install it with:
+```bash
+pip install cc-warmup
+```
+
+### From Source
+```bash
+# Clone the repository
+git clone <repository>
+cd cc-warmup
+
+# Build and install the package
+python3 -m build
+pip install dist/cc_warmup-1.1.0-py3-none-any.whl
+
+# Start using cc-warmup immediately!
+cc-warmup
+```
+
+## 📖 Usage Examples
+
+### Default Mode (Recommended)
+```bash
+# Start continuous monitoring with auto-warmup
+cc-warmup
+
+# This will:
+# - Monitor all your Claude Code projects
+# - Refresh every 30 seconds
+# - Automatically send warmups when needed
+# - Display colorful analytics
+# - Exit with Ctrl+C
+```
+
+### Analysis Modes
+```bash
+# Category analytics only
+cc-warmup --categories-only
+
+# Specific project analysis
+cc-warmup --project "my-awesome-app"
+
+# Custom refresh interval (60 seconds)
+cc-warmup --refresh-interval 60
+
+# Monitor without sending warmups
+cc-warmup --no-warmup
+```
+
+### Legacy Single-Run Mode
+```bash
+# Run once and exit (old behavior)
+cc-warmup --no-watch
+
+# Dry run - see what warmups would be sent
+cc-warmup --dry-run --no-watch
+
+# Test warmup functionality
+cc-warmup --test-warmup
+```
+
+## 🎨 Sample Output
+
+```
+🔄 cc-warmup Watch Mode
+⏰ Last updated: 2025-07-08 18:53:42 | Refresh: 30s | 🔥 Auto-warmup ON | Press Ctrl+C to exit
+================================================================================
+
+📊 GLOBAL SESSION ANALYSIS
+================================================================================
+🔍 Discovered 8 projects with 11 global sessions (11,412 total entries)
+⏱️  Processing time: 2.81s
+
+🏷️  CATEGORY ANALYTICS
+================================================================================
+📈 Global Category Summary:
+   Total categorized: 2,329 messages
+   🎯 Planning: 254 (10.9%)
+   💻 Development: 730 (31.3%)
+   🐛 Debugging: 890 (38.2%)
+   🧪 Testing: 455 (19.5%)
+
+📊 Project Category Breakdown:
+   📁 my-app: Rate: 1102/4839 (22.8%)
+      🎯 Planning: 106 (9.6%)
+      💻 Development: 344 (31.2%)
+      🐛 Debugging: 379 (34.4%)
+      🧪 Testing: 273 (24.8%)
+```
+
+## 🔧 Command Line Options
+
+| Option | Description |
+|--------|-------------|
+| `--help` | Show all available options |
+| `--categories-only` | Show detailed category analytics |
+| `--project NAME` | Analyze specific project |
+| `--no-watch` | Disable watch mode (run once) |
+| `--no-warmup` | Disable auto-warmup |
+| `--refresh-interval N` | Set refresh interval (seconds) |
+| `--lookback HOURS` | Hours to analyze (default: 168) |
+| `--dry-run` | Show analysis without sending warmups |
+| `--test-warmup` | Test warmup functionality |
+
+## 🔍 What cc-warmup Does
+
+1. **Scans** your `~/.claude/projects` directory
+2. **Analyzes** all Claude Code session data (JSONL files)
+3. **Categorizes** messages using AI-powered keyword matching
+4. **Monitors** session activity and timing
+5. **Sends** warmup messages automatically when sessions need extension
+6. **Displays** rich analytics with beautiful terminal colors
+
+## 📊 Message Categories
+
+- **🎯 Planning**: Architecture, design, requirements, roadmaps
+- **💻 Development**: Coding, implementation, refactoring, deployment
+- **🐛 Debugging**: Error fixing, troubleshooting, investigations
+- **🧪 Testing**: Unit tests, integration tests, validation
+
+## ⚙️ Requirements
+
+- **Python 3.8+**
+- **tabulate** (installed automatically)
+- **Claude Code** with active projects in `~/.claude/projects`
+
+## 🔒 Privacy & Security
+
+cc-warmup only reads local Claude Code session files and operates entirely offline except for sending warmup messages through Claude Code's standard mechanisms. No data is transmitted to external services.
+
+## 🐛 Troubleshooting
+
+### Command not found
+```bash
+# Add to PATH manually
+export PATH="$HOME/.local/bin:$PATH"
+
+# Or restart your shell
+```
+
+### Python/pip issues
+```bash
+# Check Python version
+python3 --version  # Should be 3.8+
+
+# Install pip if missing
+sudo apt install python3-pip  # Ubuntu/Debian
+brew install python3          # macOS
+```
+
+### Permission issues
+```bash
+# Don't run as root, the script will handle permissions
+./install.sh
+```
+
+## 🎯 Perfect For
+
+- **Active Claude Code users** who want to maximize their usage
+- **Developers** tracking their AI-assisted workflow patterns
+- **Teams** analyzing development patterns and debugging frequency
+- **Anyone** who wants beautiful, informative Claude Code analytics
+
+---
+
+**Ready to supercharge your Claude Code experience? Install cc-warmup and never lose a session again! 🚀**
