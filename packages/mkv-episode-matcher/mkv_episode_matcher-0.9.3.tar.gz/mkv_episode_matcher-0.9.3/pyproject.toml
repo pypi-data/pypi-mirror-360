@@ -1,0 +1,118 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+# See configuration details in https://github.com/pypa/setuptools_scm
+
+[project]
+name = "mkv-episode-matcher"
+description = "The MKV Episode Matcher is a tool for identifying TV series episodes from MKV files and renaming the files accordingly."
+dynamic = ["version"]
+readme = "README.md"
+license = { text = "MIT" }
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+authors = [
+  { name = "Jsakkos", email = "jonathansakkos@gmail.com" },
+]
+requires-python = ">=3.9,<3.13"
+dependencies = [
+    "configparser>=7.1.0",
+    "ffmpeg>=1.4",
+    "loguru>=0.7.2",
+    "openai-whisper>=20240930",
+    "opensubtitlescom>=0.1.5",
+    "rapidfuzz>=3.10.1",
+    "requests>=2.32.3",
+    "rich[jupyter]>=13.9.4",
+    "tmdb-client>=0.0.1",
+    "torch>=2.5.1",
+    "torchaudio>=2.5.1",
+    "torchvision>=0.20.1",
+]
+[project.urls]
+Documentation = "https://github.com/Jsakkos/mkv-episode-matcher#readme"
+Issues = "https://github.com/Jsakkos/mkv-episode-matcher/issues"
+Source = "https://github.com/Jsakkos/mkv-episode-matcher"
+
+[project.scripts]
+mkv-match = "mkv_episode_matcher.__main__:main"
+
+[dependency-groups]
+dev = [
+    "pytest-cov>=6.0.0",
+    "pytest>=8.3.3",
+    "ruff>=0.8.0",
+    "chardet>=5.2.0",
+    "matplotlib>=3.9.4",
+    "memory-profiler>=0.61.0",
+    "line-profiler>=4.2.0",
+]
+
+
+[tool.ruff.format]
+preview = true
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint]
+preview = true
+extend-select = ["C901"]
+select = [
+    "E",  # pycodestyle errors
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+    "UP",  # pyupgrade
+    "N",  # pep8-naming
+    "YTT",  # flake8-2020
+    #"S",  # flake8-bandit
+]
+ignore = ["E501","E402","S101","S113","E741","UP008"]  # Line length is handled by formatter
+
+[tool.ruff.lint.extend-per-file-ignores]
+"docs/.hooks/*" = ["INP001", "T201"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["foo", "bar"]
+
+[tool.coverage.run]
+source_pkgs = ["mkv_episode_matcher", "tests"]
+branch = true
+parallel = true
+omit = [
+  "mkv-episode-matcher/mkv_episode_matcher/__init__.py",
+]
+
+[tool.coverage.paths]
+tests = ["tests", "*/mkv_episode_matcher/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "pass",
+]
+show_missing = true
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+pythonpath = ["."]
+addopts = "-ra -q --cov=mkv_episode_matcher --cov-report=term-missing"
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+
+
