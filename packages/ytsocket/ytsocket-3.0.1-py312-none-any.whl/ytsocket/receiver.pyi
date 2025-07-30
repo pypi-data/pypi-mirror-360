@@ -1,0 +1,13 @@
+# Stub file for type hints
+
+import queue
+from typing import Callable as _Callable, Any as _Any
+from johnsonthy.thread.handler import Runnable as _Runnable
+from johnsonthy.logging import LOGGER as _LOGGER
+from socket import socket
+
+class Receiver:
+    def __init__(self, *args, **kwargs): ...
+    def refresh_connect_socket(self, *args, **kwargs): ...
+    def run(self, *args, **kwargs): ...
+
