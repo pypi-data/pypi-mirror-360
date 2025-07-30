@@ -1,0 +1,39 @@
+[project]
+name = "pi-inference-scheduler"
+dynamic = ["version"]
+description = "Prime Inference Scheduler"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = {text = "MIT"}
+authors = [
+    { name = "Jackmin801", email = "ongjackm@gmail.com" }
+]
+dependencies = [
+    "fastapi[standard]",
+    "uvicorn[standard]",
+    "setuptools",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "ruff",
+    "pre-commit",
+    "pytest",
+    "pytest-asyncio",
+]
+
+[project.scripts]
+pi-inference-scheduler = "pi_inference_scheduler.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "pi_inference_scheduler/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pi_inference_scheduler"]
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
