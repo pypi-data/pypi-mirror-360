@@ -1,0 +1,57 @@
+from argparse import ArgumentParser, Namespace
+from os import makedirs
+from os.path import join, exists
+
+from alpaca.common.alpaca_application import handle_main
+from alpaca.common.logging import logger
+from alpaca.common.tar import compress_tar
+from alpaca.configuration.configuration import Configuration
+from alpaca.packages.package_file_info import write_file_info
+from alpaca.recipes.build_context import BuildContext
+
+
+def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    compress_package_parser = subparsers.add_parser("deploy",
+                                                   help="Handle all package deploy steps. "
+                                                   "This is intended to be used by alpaca itself to handle the "
+                                                   "deploy steps of a package inside of a fakeroot.")
+    compress_package_parser.add_argument("workspace_dir", type=str,
+                                         help="The path to the workspace root of the package to deploy during package.")
+
+    compress_package_parser.add_argument("output_dir", type=str,
+                                         help="The output directory where the package will be deployed.")
+
+    return parser
+
+
+def _command_main(args: Namespace, configuration: Configuration):
+    if args.command == "deploy":
+        logger.info(f"Deploying package from workspace: {args.workspace_dir} to {configuration.package_artifact_path}")
+
+        build_context = BuildContext.create_from_workspace(configuration, args.workspace_dir)
+        write_file_info(build_context.package_directory)
+        build_context.description.write_package_description(
+            build_context.package_directory / ".package_info"
+        )
+        build_context.write_package_hash()
+
+        if not exists(configuration.package_artifact_path):
+            makedirs(configuration.package_artifact_path)
+
+        compress_tar(build_context.package_directory,
+            join(configuration.package_artifact_path, build_context.output_filename))
+
+
+def main():
+    handle_main(
+        "command",
+        require_root=False,
+        disallow_root=False,
+        create_arguments_callback=_create_arg_parser,
+        main_function_callback=_command_main)
+
+
+if __name__ == "__main__":
+    main()
