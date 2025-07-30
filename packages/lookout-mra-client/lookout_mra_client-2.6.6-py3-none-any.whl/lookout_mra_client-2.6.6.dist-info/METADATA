@@ -1,0 +1,221 @@
+Metadata-Version: 2.4
+Name: lookout_mra_client
+Version: 2.6.6
+Summary: Lookout's Mobile Risk API in Python
+Author-email: Lookout <esupport@lookout.com>
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.9
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+Requires-Dist: requests
+Requires-Dist: oauthlib>=3.2
+Requires-Dist: requests-oauthlib>=1.3
+Provides-Extra: models
+Requires-Dist: peewee>=3.15; extra == "models"
+Requires-Dist: wtforms>=3.0; extra == "models"
+Requires-Dist: flask_wtf>=1.0; extra == "models"
+Requires-Dist: furl>=2.1; extra == "models"
+Dynamic: license-file
+
+# Mobile Risk API Client `lookout_mra_client`
+
+This package contains the code required to create a Mobile Risk API client in Python.
+
+## Requirements
+This module requires Python 3.9.
+
+## Installation
+```bash
+pip install lookout_mra_client
+```
+
+## Demo script
+The module will install a script called `mra-v2-demo`. This script is a demonstration
+to help the user get started on the usage of the MRA client.
+In the following example, the script will write the events to `/var/log/output.txt`.
+```sh
+# read MRA API key from /var/opt/apikey.txt
+# log events to /var/log/output.txt
+mra-v2-demo file \\
+    --output /var/log/output.txt \\
+    --api_key /var/opt/apikey.txt \\
+    --event_type THREAT DEVICE
+```
+The script expects a few parameters to start, including the path to a file containing
+an API key for accessing the MRA APIs. The `--event_type` parameter is optional, and
+can be used to specify the event types, the user requires.
+
+Run `mra-v2-demo --help` to view more usage options.
+
+## Usage
+This section below will describe how to use the different components of the demo
+script, so that the user can build their own scripts, similar to the demo script.
+
+### Simple Event Reader
+Write the following into a file named `mra_event_reader.py`:
+```python
+import datetime, time, json
+
+from lookout_mra_client.lookout_logger import init_lookout_logger
+from lookout_mra_client.event_forwarders.event_forwarder import EventForwarder
+from lookout_mra_client.mra_v2_stream_thread import MRAv2StreamThread
+
+# This class defines where to send the events received from MRA APIs.
+# In this code, they're being logged to stdout.
+class StdoutForwarder(EventForwarder):
+    def write(self, event: dict, entName: str = ""):
+        print(json.dumps(event))
+
+def main():
+    # Initialize logging
+    init_lookout_logger("./mra_v2_demo_script.log")
+
+    forwarder = StdoutForwarder()
+    start_time = datetime.datetime.now() - datetime.timedelta(days=1)
+    start_time = start_time.replace(tzinfo=datetime.timezone.utc)
+    # Update this variable with the desired events types.
+    # Refer to the MRA API documentation for possible values
+    event_type = [ "THREAT", "DEVICE", "AUDIT" ]
+    stream_args = {
+        "api_domain": "https://api.lookout.com",
+        "api_key": your_lookout_api_key_here,
+        "start_time": start_time,
+        "event_type": ",".join(event_type),
+    }
+    mra = MRAv2StreamThread("demoEnt", forwarder, **stream_args)
+
+    # A code pattern for starting the event thread and allowing a graceful shutdown
+    # with Ctrl-C
+    try:
+        mra.start()
+        while True:
+            time.sleep(100)
+    except KeyboardInterrupt:
+        mra.shutdown_flag.set()
+        mra.join()
+
+if __name__ == "__main__":
+    main()
+```
+Then, run the file using `python mra_event_reader.py`. This will read events from MRA APIs
+and print them to the console. The running process can be stopped with `Ctrl-C`.
+
+
+Please note, the code here does not take any inputs from the user. All of the parameters are
+hard coded in the `stream_args` object.
+
+### Event Forwarder
+The event forwarder decides the output of the program. Define an event forwarder and pass it
+as a parameter to the MRA client as shown in the example above.
+
+To define an event forwarder, extend the base class `EventForwarder` and implement the write
+method. The following implementation prints the events to standard output (console).
+```python
+from lookout_mra_client.event_forwarders.event_forwarder import EventForwarder
+
+class StdoutForwarder(EventForwarder):
+    def write(self, event: dict, entName: str = ""):
+        print(event)
+```
+
+#### Syslog Forwarder
+A common requirement is to forward events to a Syslog server. The following code demonstrates
+how to initialize an event forwarder to achieve this.
+```python
+class SyslogEventForwarder(EventForwarder):
+    def __init__(self, syslog_address) -> None:
+        self.syslog_client = SyslogClient(
+            "MRAv2SyslogClient", lambda d: str(d), (syslog_address, 514), True, socket.SOCK_DGRAM
+        )
+
+    def write(self, event: dict, entName: str = ""):
+        event["entName"] = entName
+        self.syslog_client.write(event)
+```
+To create an instance of `SyslogEventForwarder`, provide the Syslog server address.
+
+```python
+forwarder = SyslogEventForwarder("xxx.xxx.xxx.xxx")
+```
+The class accepts the Syslog server's IP or hostname. To connect to a local syslog server, `localhost`
+or `127.0.0.1` can be passed instead.
+
+The `write` method is useful for additional event customizations before the event is
+forwarded to Syslog. Check the `Customization` section below.
+
+### `event_translators`
+
+Translate MRA events to third party event formats.
+
+Currently Supported:
+* IBM QRadar LEEF - `leef_translator.py`
+
+### `init_lookout_logger`
+
+Initialize a log file for the MRA client to write debug and application logs to. It is
+best called inside the `main` function before any other code.
+```python
+from lookout_mra_client.lookout_logger import init_lookout_logger
+...
+def main():
+    init_lookout_logger("./mra_v2_demo_script.log")
+...
+```
+The MRA client will send logs to the file `mra_v2_demo_script.log`.
+
+## Customization
+The `transform_event` utility can be used to tailor the received MRA event object as
+required. The event forwarder is an ideal place for calling this function.
+
+The field names in the event can be renamed as required. In the below example, the
+`targetGuid` key is renamed to `lookoutDeviceGuid`.
+
+```python
+from lookout_mra_client.event_translators.utilities import transform_event
+from lookout_mra_client.event_forwarders.event_forwarder import EventForwarder
+
+class StdoutForwarder(EventForwarder):
+    event_mappings = (("targetGuid", "lookoutDeviceGuid"))
+
+    def write(self, event: dict, entName: str = ""):
+        # targetGuid: guid -> lookoutDeviceGuid: guid
+        newEvent = transform_event(self.event_mappings, event)
+        print(newEvent)
+```
+
+The corresponding value of a field can also be transformed. The following code prefixes `new_` to
+the value against `targetGuid` while also renaming the field.
+
+```python
+from lookout_mra_client.event_translators.utilities import transform_event
+from lookout_mra_client.event_forwarders.event_forwarder import EventForwarder
+
+class StdoutForwarder(EventForwarder):
+    event_mappings = (("targetGuid", "lookoutDeviceGuid", lambda value: "new_" + value))
+
+    def write(self, event: dict, entName: str = ""):
+        # targetGuid: guid -> lookoutDeviceGuid: new_guid
+        newEvent = transform_event(event_mappings, event)
+        print(newEvent)
+```
+
+Multiple fields can be combined into a single field. Eg: if a new field is required that
+combines `targetGuid` and `entGuid`, it can be done as follows.
+
+```python
+from lookout_mra_client.src.lookout_mra_client.event_translators.utilities import transform_event
+from lookout_mra_client.event_forwarders.event_forwarder import EventForwarder
+
+class StdoutForwarder(EventForwarder):
+    event_mappings = ((
+        "targetGuid", "entGuid", "guid",
+        lambda value1, value2: value1 + "_" + value
+    ))
+
+    def write(self, event: dict, entName: str = ""):
+        # targetGuid: guid1, entGuid: guid2 -> guid: guid1_guid2
+        newEvent = transform_event(event_mappings, event)
+        print(newEvent)
+```
