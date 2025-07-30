@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="css/bootstrap.css">
+	<link rel="stylesheet" href="simplex.css">
+	<script src="library/plotly-2.32.0.min.js"></script>
+  <script src="constants.js"></script>
+  <script src="common.js"></script>  
+  <script src="pythonui.js"></script>  
+  <script src="guicomps.js"></script>  
+  <script src="updategui.js"></script>
+  <script src="preprocess.js"></script>
+  <script src="postprocess.js"></script>
+  <script src="converter.js"></script>
+  <script src="main.js"></script>
+</head>
+
+<body oncontextmenu="return false;">
+
+ <!--- context menu, should be place on top  -->
+<div class="dropdown">
+  <button class="contextmenu btn btn-secondary dropdown-toggle" type="button" id="scan-prm" data-bs-toggle="dropdown" aria-expanded="false">
+    Scan Parameter
+  </button>
+  <ul id="scan-prm-ul" class="dropdown-menu" aria-labelledby="scan-prm">
+    <li><button class="dropdown-item" id="scan-prm-item">Scan This Parameter</button></li>
+  </ul>
+</div>
+
+<div class="d-flex flex-column align-items-stretch" id="gui-panel">
+  <div id="menubar" class="d-flex border-bottom align-items-center menubar">
+  </div>
+  <div class="flex-grow-1 d-flex ms-2">
+    <div class="d-flex flex-column w-100">
+      <nav>
+        <div class="nav nav-tabs mt-2 me-2 mb-1 d-flex" role="tablist">
+          <button id="ebeam-seed-tab" class="nav-link fw-bold active p-2" data-bs-toggle="tab" data-bs-target="#ebeam-seed" role="tab">Electron Beam & Seed</button>
+          <button id="undulatorline-tab" class="nav-link p-2" data-bs-toggle="tab" data-bs-target="#undulatorline" role="tab">Undulator Line</button>
+          <button id="options-tab" class="nav-link p-2" data-bs-toggle="tab" data-bs-target="#options" role="tab">Options</button>
+          <button id="simctrl-dump-tab" class="nav-link p-2" data-bs-toggle="tab" data-bs-target="#simctrl-dump" role="tab">Simulation Controls</button>
+          <button id="preproc-tab" class="nav-link p-2" data-bs-toggle="tab" data-bs-target="#preproc" role="tab">Pre-Processing</button>
+          <button id="postproc-tab" class="nav-link p-2" data-bs-toggle="tab" data-bs-target="#postproc" role="tab">Post-Processing</button>
+          <div id="spinner" class="d-none spinner-border spinner-border-sm ms-1 text-primary ms-3" role="status"></div>
+        </div>
+      </nav>
+
+      <div class="tab-content d-flex flex-grow-1">
+
+        <div id="ebeam-seed" class="tab-pane show active h-100" role="tabpanel">
+          <div class="d-flex h-100">
+            <div class="card inputprm">
+              <div id="ebeam" class="card-header pt-0 pb-0"></div>
+              <div class="card-body p-2" id="ebeam-div"></div>
+            </div>  
+            <div class="d-flex flex-column h-100">
+              <div class="card inputprm flex-grow-1" >
+                <div id="seed"  class="card-header pt-0 pb-0"></div>
+                <div class="card-body p-2" id="seed-div"></div>
+              </div>    
+              <div id="spx-output-card" class="d-none card inputprm" >
+                <div id="spxout" class="card-header pt-0 pb-0"></div>
+                <div class="card-body p-2" id="spxout-div"></div>
+              </div>        
+            </div>
+          </div>
+        </div>
+
+        <div id="undulatorline" class="align-items-stretch tab-pane h-100" role="tabpanel">
+          <div class="d-flex h-100">
+            <div class="card inputprm">
+              <div id="undulator" class="card-header pt-0 pb-0"></div>
+              <div class="card-body p-2" id="und-div"></div>
+            </div>  
+            <div class="card inputprm" >
+              <div id="lattice" class="card-header pt-0 pb-0"></div>
+              <div class="card-body p-2" id="lattice-div"></div>
+            </div>  
+          </div>
+        </div>
+
+        <div id="options" class="align-items-stretch tab-pane h-100" role="tabpanel">
+          <div class="d-flex h-100">
+            <div class="d-flex flex-column align-items-stretch">
+              <div class="card inputprm flex-grow-1">
+                <div id="alignment" class="card-header pt-0 pb-0"></div>
+                <div class="card-body p-2" id="ualign-div"></div>
+              </div>
+              <div class="card inputprm flex-grow-1">
+                <div id="wake" class="card-header pt-0 pb-0"></div>
+                <div class="card-body p-2" id="wake-div"></div>
+              </div>    
+            </div>
+            <div class="d-flex flex-column align-items-stretch">
+              <div class="card inputprm flex-grow-1">
+                <div id="chicane" class="card-header pt-0 pb-0"></div>
+                <div class="card-body p-2" id="chicane-div"></div>
+              </div>    
+              <div class="card inputprm flex-grow-1">
+                <div id="dispersion" class="card-header pt-0 pb-0"></div>
+                <div class="card-body p-2" id="dispersion-div"></div>
+              </div>    
+            </div>  
+          </div>
+        </div>
+
+        <div id="simctrl-dump" class="align-items-stretch tab-pane h-100" role="tabpanel">
+          <div class="d-flex h-100">
+            <div class="card inputprm" >
+              <div id="condition" class="card-header pt-0 pb-0"></div>
+              <div class="card-body p-2" id="simctrl-div"></div>
+            </div>  
+            <div class="d-flex flex-column">
+              <div class="card inputprm flex-grow-1">
+                <div id="datadump" class="card-header pt-0 pb-0"></div>
+                <div class="card-body p-2" id="dump-div"></div>
+              </div>    
+            </div>  
+          </div>
+        </div>
+
+        <div id="fel-panel" class="d-flex flex-column">
+          <div class="card inputprm flex-grow-1">
+            <div id="felprm" class="card-header pt-0 pb-0"></div>
+            <div class="card-body p-2" id="felprms-div" ></div>
+          </div>
+          <div class="card inputprm flex-grow-1">
+            <div id="outfile" class="card-header pt-0 pb-0"></div>
+            <div class="card-body p-2" id="outfile-div" ></div>
+          </div>      
+          <div class="card inputprm d-none" id="calcproc-card">
+            <div class="card-header pt-0 pb-0">Simulation Process/Status</div>
+            <div class="card-body p-2" id="calcproc-div" ></div>
+          </div>  
+        </div>
+
+        <div id="preproc" class="align-items-stretch tab-pane h-100" role="tabpanel">
+          <div class="d-flex h-100">
+            <div class="d-flex flex-column">
+
+              <div id="preproc-item-div" class="card m-0 ppprm">
+                <div class="card-header d-flex pt-0 pb-0"> Select Operation/Item to Plot
+                </div>
+                <div class="card-body p-2">
+                  <div class="d-flex flex-column align-items-stretch">
+                    <select id="preproc-select" onchange="ArrangePPPanel()"></select>  
+                    <div class="d-flex justify-content-end">
+                      <button class="btn btn-primary btn-sm mt-1 d-none" id="preproc-units" onclick="EditUnits()">Edit Units</button>
+                      <button class="btn btn-outline-primary btn-sm mt-1 d-none" id="preproc-import" onclick="ImportData()">Import</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="preproc-conf-div" class="d-none card m-0 ppprm">
+                <div class="card-header d-flex align-items-center justify-content-between pt-0 pb-0">
+                  <div>Configurations</div>
+                  <button class="btn btn-primary btn-sm d-none" id="preproc-optimize" onclick="DrawPPPlot()"></button>
+                  <button class="btn btn-primary btn-sm d-none" id="preproc-seedrun" onclick="RunMbunchEvaluation()"></button>
+                </div>
+                <div class="card-body p-2">
+
+                  <div id="preproc-subconf-div"></div>
+
+                  <div id="preproc-part" class="d-none flex-column">
+                    <div class="mb-0">Data File</div>
+                    <div id="partdataname" class="mt-0 mb-1" style="white-space:normal; word-break:break-all">Not Selected</div>
+                    <div class="d-flex justify-content-between align-items-end mt-1">
+                      <div>File Contents</div>
+                      <button class="btn btn-outline-primary btn-sm" id="preproc-load" onclick="ImportParticle()"></button>
+                    </div>
+                    <textarea id="preproc-part-cont" wrap="off" style="font-size: small"></textarea>
+                    <div id="preproc-part-anadiv">
+                      <div id="preproc-part-plotconf-div">
+                        <hr class="mt-2 mb-2">
+                        <div id="preproc-part-plotconf"></div>
+                        <div class="d-flex justify-content-end m-1">
+                          <button class="btn btn-primary btn-sm" id="preproc-slice" onclick="ExportBunchProfile(1)"></button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="preproc-seed" class="d-none flex-column align-items-end mt-2">
+                    <div id="preproc-seed-select-div" class="d-none align-items-center justify-content-end mt-2 pt-1 border-top">
+                      <div class="me-2">Item to Plot: </div>
+                      <select id="preproc-seed-select" onchange="PlotMbunchEvaluation()"></select>
+                    </div>
+                  </div>
+
+                  <div id="preproc-udata" class="d-none flex-column">
+                    <select id="preproc-udata-select" onchange="UpdateUDPlot()"></select>
+                    <div class="d-flex mt-1 btn-group">
+                      <button class="btn btn-outline-primary btn-sm me-1" id="preproc-uimport" onclick="ImportUData()"></button>
+                      <button class="btn btn-primary btn-sm me-1" id="preproc-uunits" onclick="EditUnits()"></button>
+                      <button class="btn btn-primary btn-sm me-1" id="preproc-urename" onclick="EditUData(1)"></button>
+                    </div>
+                    <div class="d-flex mt-1 btn-group">                       
+                      <button class="btn btn-outline-dark btn-sm" id="preproc-uclear" onclick="EditUData(0)"></button>
+                      <button class="btn btn-dark btn-sm" id="preproc-udelete" onclick="EditUData(-1)"></button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <div class="flex-grow-1"></div>
+
+              <div id="expbtn" class="d-none btn-group mt-1">
+                <button id="preproc-ascii" class="btn btn-outline-primary btn-sm" onclick="ExportPreProcess(0)"></button>
+                <button id="preproc-duplicate" class="btn btn-primary btn-sm" onclick="ExportPreProcess(1)"></button>
+              </div>
+
+            </div>
+            <div id="preproc-plot" class="d-flex flex-column align-items-stretch resizableplot"></div>  
+          </div>
+        </div>
+
+        <div id="postproc" class="align-items-stretch tab-pane h-100" role="tabpanel">
+          <div class="d-flex h-100">
+            <div id="postproc-conf-div" class="card ppprm">
+              <div class="card-header d-flex pt-0 pb-0">Post-Processing Configurations
+              </div>
+              <div class="card-body p-2 d-flex flex-column">
+                <div id="resultdata" class="d-flex mb-4 flex-column align-items-stretch"></div>
+                <div id="viewresult" class="d-none flex-column flex-grow-1">
+                  <nav>
+                    <div class="nav nav-tabs" role="tablist">
+                      <button id="postp-view-btn" class="nav-link p-1 active" data-bs-toggle="tab" role="tab" onclick="PostProcessTab(0)">Visualization</button>
+                      <button id="postp-rproc-btn" class="nav-link p-1" data-bs-toggle="tab" role="tab" onclick="PostProcessTab(1)"></button>
+                    </div>
+                  </nav>
+                  <div id="postp-view" class="h-100">
+                    <div id="postp-view-cont" class="d-flex flex-column h-100"></div>
+                  </div>
+                  <div id="postp-conf" class="d-none">
+                    <div id="postp-conf-cont" class="mt-2">
+                      <div id="postp-process-parent">
+                        <div id="postp-process" class="mt-2"></div>
+                      </div>
+                      <button id="runpostp" class="btn btn-primary btn-sm mt-2" style="width:100%" onclick="RunPostProcess()">Run Data-Processing</button>  
+                    </div>
+                  </div>                  
+                </div>
+              </div>
+            </div>
+            <div id="postp-plot" class="d-flex flex-column align-items-stretch resizableplot"></div>
+          </div>
+        </div>           
+      </div>  
+    </div>
+ </div>
+</div>
+
+<input type="file" id="file-main" class="d-none">
+
+<button type="button" class="d-none" data-bs-toggle="modal" data-bs-target="#modalDialog" id="showModal"></button>  
+<div class="modal" id="modalDialog" tabindex="-1" aria-labelledby="modalDialogLabel" aria-hidden="true">
+  <div id="modaldlg" class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header p-2">
+        <div class="modal-title" id="modalDialogLabel">
+        </div>
+      </div>
+      <div class="modal-body d-flex flex-column text-wrap" id="modalDialogCont">
+      </div>
+      <div class="modal-footer p-2">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal" id="modalCancel">Cancel</button>
+        <button type="button" class="btn btn-sm btn-primary" data-bs-dismiss="modal" id="modalOKsimple">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>var iniFile = ""; var iniBL = ""; var iniPP = ""; var iniLPP = ""; var iniDir = ""</script>
+<script src="js/bootstrap.bundle.min.js"></script>
+    <script>iniFile = "<?php echo isset($_GET['file']) ? $_GET['file'] : ''; ?>" </script>
+    <script>iniBL = "<?php echo isset($_GET['bl']) ? $_GET['bl'] : ''; ?>" </script>
+    <script>iniPP = "<?php echo isset($_GET['pp']) ? $_GET['pp'] : ''; ?>" </script>
+    <script>iniLPP = "<?php echo isset($_GET['lpp']) ? $_GET['lpp'] : ''; ?>" </script>
+    <script>iniDir = "<?php echo isset($_GET['dir']) ? $_GET['dir'] : ''; ?>" </script>
+</body>
+</html>
