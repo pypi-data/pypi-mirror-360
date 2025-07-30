@@ -1,0 +1,101 @@
+<!--
+Componente: Tabs
+Uso: include "components/tabs.html" with tabs=tabs_list default_tab="tab1"
+
+Parâmetros:
+- tabs: Lista de dicionários com 'id', 'label', 'content' e opcionalmente 'icon', 'disabled'
+- default_tab: ID da aba ativa por padrão (padrão: primeira aba)
+- orientation: horizontal, vertical (padrão: horizontal)
+- class: Classes CSS adicionais (opcional)
+
+Exemplo de tabs_list:
+[
+    {"id": "tab1", "label": "Conta", "content": "<p>Conteúdo da aba conta</p>"},
+    {"id": "tab2", "label": "Senha", "content": "<p>Conteúdo da aba senha</p>", "icon": "<svg>...</svg>"},
+    {"id": "tab3", "label": "Desativado", "content": "<p>...</p>", "disabled": true}
+]
+-->
+{% with orientation=orientation|default:"horizontal" %}
+{% if tabs %}
+    <div 
+        x-data="{ 
+            activeTab: '{{ default_tab|default:"account" }}',
+            init() {
+                // Se não há default_tab definido, usar o primeiro tab disponível
+                if (!this.activeTab || this.activeTab === 'account') {
+                    const firstTab = document.querySelector('[role=tab]');
+                    if (firstTab) {
+                        this.activeTab = firstTab.id.replace('-trigger', '');
+                    }
+                }
+            }
+        }"
+        class="flex {% if orientation == 'vertical' %}flex-row gap-6{% else %}flex-col gap-2{% endif %} {{ class|default:'' }}"
+    >
+        <!-- Tabs List -->
+        <div 
+            role="tablist"
+            aria-orientation="{{ orientation }}"
+            class="bg-muted text-muted-foreground inline-flex items-center justify-center rounded-lg p-[3px]
+                {% if orientation == 'vertical' %}flex-col h-fit w-fit{% else %}h-9 w-fit{% endif %}"
+        >
+            {% for tab in tabs %}
+                <button
+                    type="button"
+                    role="tab"
+                    id="{{ tab.id }}-trigger"
+                    aria-controls="{{ tab.id }}-content"
+                    :aria-selected="activeTab === '{{ tab.id }}'"
+                    @click="activeTab = '{{ tab.id }}'"
+                    {% if tab.disabled %}disabled{% endif %}
+                    class="inline-flex items-center justify-center gap-1.5 rounded-md 
+                        border border-transparent px-2 py-1 text-sm font-medium 
+                        whitespace-nowrap transition-[color,box-shadow] 
+                        focus-visible:ring-[3px] focus-visible:outline-1 
+                        focus-visible:border-ring focus-visible:ring-ring/50 
+                        focus-visible:outline-ring 
+                        disabled:pointer-events-none disabled:opacity-50
+                        {% if orientation == 'vertical' %}w-full h-[calc(100%-1px)]{% else %}h-[calc(100%-1px)] flex-1{% endif %}"
+                    :class="{
+                        'bg-background text-foreground shadow-sm dark:text-foreground dark:border-input dark:bg-input/30': activeTab === '{{ tab.id }}',
+                        'text-foreground dark:text-muted-foreground': activeTab !== '{{ tab.id }}'
+                    }"
+                >
+                    {% if tab.icon %}
+                        <span class="pointer-events-none shrink-0 size-4">
+                            {{ tab.icon|safe }}
+                        </span>
+                    {% endif %}
+                    {{ tab.label }}
+                </button>
+            {% endfor %}
+        </div>
+        
+        <!-- Tabs Content -->
+        <div class="flex-1">
+            {% for tab in tabs %}
+                <div
+                    x-show="activeTab === '{{ tab.id }}'"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 transform scale-95"
+                    x-transition:enter-end="opacity-100 transform scale-100"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100 transform scale-100"
+                    x-transition:leave-end="opacity-0 transform scale-95"
+                    role="tabpanel"
+                    id="{{ tab.id }}-content"
+                    aria-labelledby="{{ tab.id }}-trigger"
+                    tabindex="0"
+                    class="outline-none"
+                >
+                    {{ tab.content|safe }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% else %}
+    <div class="p-4 text-muted-foreground text-center">
+        <p>Nenhuma aba foi fornecida.</p>
+    </div>
+{% endif %}
+{% endwith %}
