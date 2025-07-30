@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+  fc_guarder:
+    build:
+      context: ../..
+      dockerfile: docker/fc_guarder/Dockerfile
+    image: fc_guarder
+    container_name: fc_guarder
+    tty: true
+    env_file:
+      - .env
+    volumes:
+      - $PWD/../../fc_server/config/lavacli.yaml:/root/.config/lavacli.yaml
+      - $PWD/../../fc_server/config/:/fc/fc_server/config/
+      - /etc/localtime:/etc/localtime
+      - /usr/local/share/ca-certificates:/usr/local/share/ca-certificates
