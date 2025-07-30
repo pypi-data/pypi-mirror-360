@@ -1,0 +1,108 @@
+name: Test and Publish Python Package to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version to publish (e.g., 0.1.1). Must match pyproject.toml.'
+        required: true
+        type: string
+
+jobs:
+  test_package:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+      fail-fast: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Set VIRTUAL_ENV and PATH
+        run: |
+          echo "VIRTUAL_ENV=$GITHUB_WORKSPACE/.venv" >> $GITHUB_ENV
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv pip install -e .[dev]
+
+      - name: Run tests
+        run: uv run --python $(which python) pytest --cov=src/ez_animate --cov-report=xml --cov-report=term-missing
+
+  publish:
+    name: Build and publish Python distributions to PyPI
+    runs-on: ubuntu-latest
+    needs: test_package # IMPORTANT: This job depends on the 'test_package' job
+    # Prevent publishing from branches other than master, even if manually triggered
+    # Ensure the version in pyproject.toml is updated on master before running.
+    if: github.ref == 'refs/heads/master' && needs.test_package.result == 'success'
+    permissions:
+      contents: write  # Allow writing repository contents (needed for creating tags/releases)
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for all tags and branches
+
+      - name: Set up Python for publishing
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12' # Use a recent stable version for building/publishing
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+        with:
+          version: latest # Ensure latest uv is installed
+
+      # Verify pyproject.toml version is the same as the input version
+      - name: Verify pyproject.toml version
+        shell: bash
+        run: |
+          PYPROJECT_VERSION=$(uv run python -c "import tomllib; f = open('pyproject.toml', 'rb'); data = tomllib.load(f); print(data['project']['version'])")
+          INPUT_VERSION="${{ github.event.inputs.version }}"
+          echo "Version from pyproject.toml: $PYPROJECT_VERSION"
+          echo "Version from manual input: $INPUT_VERSION"
+          if [ "$PYPROJECT_VERSION" != "$INPUT_VERSION" ]; then
+            echo "Error: Version in pyproject.toml ($PYPROJECT_VERSION) does not match manually input version ($INPUT_VERSION)."
+            echo "Please update pyproject.toml on the 'master' branch and re-run with the correct version."
+            exit 1
+          fi
+          echo "Versions match. Proceeding with build."
+
+      - name: Build package (sdist and wheel)
+        run: uv build --sdist --wheel -o dist/ .
+
+      - name: Publish package to PyPI
+        run: |
+          uv publish dist/* \
+            --publish-url https://upload.pypi.org/legacy/ \
+            --token ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: success() # Only run if publish was successful
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: Release v${{ github.event.inputs.version }}
+          body: |
+            Release of version v${{ github.event.inputs.version }}
+            See [CHANGELOG.md](CHANGELOG.md) for details.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

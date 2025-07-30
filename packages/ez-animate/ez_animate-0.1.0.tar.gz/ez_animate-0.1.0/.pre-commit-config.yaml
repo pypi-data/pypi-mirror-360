@@ -1,0 +1,26 @@
+# .pre-commit-config.yaml
+
+# Optional: Set minimum pre-commit version if needed
+# minimum_pre_commit_version: 2.9.0
+
+default_language_version:
+  python: python  # or just "python" to use whatever is active
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.3
+    hooks:
+      - id: ruff
+        name: Run Ruff Linter (with auto-fix)
+        args: [--fix, --exit-non-zero-on-fix] # Uses pyproject.toml by default
+      - id: ruff-format
+        name: Run Ruff Formatter
+        args: [--config=pyproject.toml] # Explicitly specify config file (optional)
