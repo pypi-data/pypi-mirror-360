@@ -1,0 +1,86 @@
+stages:
+  - test
+  - build
+  - deploy
+
+unittests:
+    stage: test
+    tags:
+    - enaio
+    before_script:
+        - pip install -r requirements.txt
+        - pip install -r requirements-dev.txt
+    script:
+        - python -m pytest --junitxml=report.xml
+    artifacts:
+        when: always
+        reports:
+            junit: report.xml
+        expire_in: 2 weeks
+
+build:
+  stage: build
+  image: python:3.13
+  variables:
+    GIT_DEPTH: 0
+  script:
+    - python -m venv .venv
+    - source .venv/bin/activate
+    - pip install --upgrade pip
+    - pip install -r requirements-dev.txt
+    - pip install -r requirements.txt
+    - python -m build --no-isolation --sdist --wheel
+  artifacts:
+    paths:
+      - dist/*
+
+deploy_gitlab:
+  stage: deploy
+  image: python:3.13
+  variables:
+    TWINE_USERNAME: gitlab-ci-token
+    TWINE_PASSWORD: $CI_JOB_TOKEN
+  script:
+    - python -m venv .venv
+    - source .venv/bin/activate
+    - pip install --upgrade pip
+    - pip install -r requirements-dev.txt    
+    - python -m twine upload --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
+  needs:
+    - build
+
+deploy_pypi_test:
+  stage: deploy
+  image: python:3.13
+  variables:
+    TWINE_USERNAME: __token__
+    TWINE_PASSWORD: $PYPI_TEST_TOKEN
+  script:
+    - python -m venv .venv
+    - source .venv/bin/activate
+    - pip install --upgrade pip
+    - pip install -r requirements-dev.txt    
+    - python3 -m twine upload --repository testpypi dist/*
+  needs:
+    - build
+  only:
+    - master
+
+deploy_pypi:
+  stage: deploy
+  image: python:3.13
+  variables:
+    TWINE_USERNAME: __token__
+    TWINE_PASSWORD: $PYPI_TOKEN
+  script:
+    - python -m venv .venv
+    - source .venv/bin/activate
+    - pip install --upgrade pip
+    - pip install -r requirements-dev.txt    
+    - python3 -m twine upload --repository pypi dist/*
+  needs:
+    - build
+    - deploy_pypi_test
+  only:
+    - tags
+    - master
