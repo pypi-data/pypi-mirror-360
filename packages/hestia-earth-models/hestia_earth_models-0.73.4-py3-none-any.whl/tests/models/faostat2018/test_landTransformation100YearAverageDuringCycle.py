@@ -1,0 +1,21 @@
+from unittest.mock import patch
+import json
+from tests.utils import fixtures_path, fake_new_indicator
+
+from hestia_earth.models.faostat2018 import MODEL
+from hestia_earth.models.faostat2018.landTransformation100YearAverageDuringCycle import TERM_ID, run
+
+class_path = f"hestia_earth.models.{MODEL}.{TERM_ID}"
+fixtures_folder = f"{fixtures_path}/{MODEL}/{TERM_ID}"
+
+
+@patch(f"hestia_earth.models.{MODEL}.utils._new_indicator", side_effect=fake_new_indicator)
+def test_run(*args):
+    with open(f"{fixtures_folder}/impact-assessment.jsonld", encoding='utf-8') as f:
+        cycle = json.load(f)
+
+    with open(f"{fixtures_folder}/result.jsonld", encoding='utf-8') as f:
+        expected = json.load(f)
+
+    value = run(cycle)
+    assert value == expected
