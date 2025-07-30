@@ -1,0 +1,275 @@
+# 🚀 Gitbolt
+
+![PyPI - Types](https://img.shields.io/pypi/types/gitbolt)
+![GitHub License](https://img.shields.io/github/license/Vaastav-Technologies/py-gitbolt)
+[![🔧 test](https://github.com/Vaastav-Technologies/py-gitbolt/actions/workflows/test.yml/badge.svg)](https://github.com/Vaastav-Technologies/py-gitbolt/actions/workflows/test.yml)
+[![💡 typecheck](https://github.com/Vaastav-Technologies/py-gitbolt/actions/workflows/typecheck.yml/badge.svg)](https://github.com/Vaastav-Technologies/py-gitbolt/actions/workflows/typecheck.yml)
+[![🛠️ lint](https://github.com/Vaastav-Technologies/py-gitbolt/actions/workflows/lint.yml/badge.svg)](https://github.com/Vaastav-Technologies/py-gitbolt/actions/workflows/lint.yml)
+[![📊 coverage](https://codecov.io/gh/Vaastav-Technologies/py-gitbolt/branch/main/graph/badge.svg)](https://codecov.io/gh/Vaastav-Technologies/py-gitbolt)
+[![📤 Upload Python Package](https://github.com/Vaastav-Technologies/py-gitbolt/actions/workflows/python-publish.yml/badge.svg)](https://github.com/Vaastav-Technologies/py-gitbolt/actions/workflows/python-publish.yml)
+![PyPI - Version](https://img.shields.io/pypi/v/gitbolt)
+
+**Fast, flexible and type-safe Git command execution in Python using subprocess.**
+
+---
+
+## ✨ Features
+
+* 🧠 **Typed:** All commands and options are statically type-checked.
+* ⚡ **Fast:** Minimal abstractions over subprocess, runs directly on your system Git.
+* 🧩 **Composable:** Git commands and options can be passed around as objects.
+* 🔁 **Overridable:** Easily override environment variables and options in a chainable, readable manner.
+* 📦 **Lightweight:** No dependencies on heavy Git libraries or C extensions.
+* 🧰 **Extensible:** Future support for output transformers and other plugins.
+* 🚨 **Exception Handling:** Raises any error as a Python-recognisable exception.
+* 📤 **Debuggable:** Exceptions capture `stdout`, `stderr`, and the return code of the run command.
+* 💤 **Lazy Execution:** Inherently lazily processed.
+* 📄 **Transparent Output:** Returns a Git command's `stdout` as-is.
+* 🧪 **Terminal Functions:** Git subcommands are terminal functions.
+* 🧼 **Idiomatic Python:** Write commands in idiomatic Python at compile-time and be confident they’ll execute smoothly at runtime.
+
+---
+
+## 📦 Installation
+
+```bash
+pip install gitbolt
+```
+
+---
+
+## 💡 Motivation
+
+Running system commands in Python can be tricky for the following reasons:
+
+1. Arguments sent to `subprocess` may not be typed correctly and result in runtime errors.
+2. Argument groups may be mutually exclusive or required conditionally — again causing runtime issues.
+3. Errors from subprocess are often unhelpful and difficult to debug.
+
+Also, using subprocess effectively means you must:
+
+* Understand and manage process setup, piping, and teardown.
+* Know your CLI command intricacies in depth.
+
+> This project exists to fix all that — with ergonomics, speed, and type-safety.
+
+---
+
+## 🎯 Project Goals
+
+### ✅ Predictable Compile-Time Behavior
+
+Type-checking ensures runtime safety.
+
+### ✅ Ergonomic APIs
+
+<details>
+<summary>Make git command interfaces as ergonomic to the user as possible.</summary>
+
+#### Provide versions of most used command combinations
+
+`git hash-object` supports taking multiple files and outputs a hash per file. But in practice, it's most often used to write a single file to the Git object database and return its hash. To match this real-world usage, Gitbolt offers a more ergonomic method that accepts one file and returns one hash — while still giving you the flexibility to access the full range of `git hash-object` capabilities when needed.
+
+#### Let subcommands be passed around as objects
+
+Gitbolt lets you pass subcommands around as typed objects. This enables highly focused, minimal APIs — you can write functions that accept only the subcommands they truly need. This leads to cleaner logic, better separation of concerns, and compile-time guarantees that help prevent misuse.
+
+```python
+import gitbolt
+from gitbolt.git_subprocess.impl.simple import SimpleGitCommand
+
+git = SimpleGitCommand()
+version_subcmd = git.version_subcmd
+add_subcmd = git.add_subcmd
+
+def method_which_only_adds_a_file(add_subcmd: gitbolt.base.Add):
+    """
+    This method only requires the `add` subcommand.
+    """
+    ...
+
+method_which_only_adds_a_file(add_subcmd)
+```
+
+</details>
+
+### ✅ Subcommands as Objects
+
+git subcommands are modeled as terminal functions that return stdout.
+
+```python
+from gitbolt.git_subprocess.impl.simple import SimpleGitCommand
+
+git = SimpleGitCommand()
+status_out = git.status_subcmd.status()
+print(status_out)
+```
+
+---
+
+## 🧠 Strong Typing Everywhere
+
+Extensive use of type-hints ensures that invalid usages fail early — at *compile-time*. Write at compile-time and be sure that commands run error-free at runtime.
+
+---
+
+<details>
+<summary>Allow users to set/unset/reset Git environment variables and main command options using typed, chainable, Pythonic methods — just before a subcommand is executed.</summary>
+
+### 🧬 Git Environment Variables
+
+#### 🔁 Override a single Git env (e.g., `GIT_TRACE`)
+
+```python
+from gitbolt.git_subprocess.impl.simple import SimpleGitCommand
+
+git = SimpleGitCommand()
+git = git.git_envs_override(GIT_TRACE=True)
+```
+
+#### 🌐 Override multiple Git envs (e.g., `GIT_TRACE`, `GIT_DIR`, `GIT_EDITOR`)
+
+```python
+from pathlib import Path
+from gitbolt.git_subprocess.impl.simple import SimpleGitCommand
+
+git = SimpleGitCommand()
+git = git.git_envs_override(GIT_TRACE=1, GIT_DIR=Path('/tmp/git-dir/'), GIT_EDITOR='vim')
+```
+
+#### 🪢 Chain multiple overrides fluently
+
+```python
+from pathlib import Path
+from gitbolt.git_subprocess.impl.simple import SimpleGitCommand
+
+git = SimpleGitCommand()
+overridden_git = git.git_envs_override(GIT_SSH=Path('/tmp/SSH')).git_envs_override(
+    GIT_TERMINAL_PROMPT=1,
+    GIT_NO_REPLACE_OBJECTS=True
+)
+re_overridden_git = overridden_git.git_envs_override(GIT_TRACE=True)
+```
+
+#### ❌ Unset Git envs using a special `UNSET` marker
+
+```python
+from gitbolt.git_subprocess.impl.simple import SimpleGitCommand
+from vt.utils.commons.commons.core_py import UNSET
+
+git = SimpleGitCommand()
+overridden_git = git.git_envs_override(GIT_ADVICE=True, GIT_TRACE=True)
+no_advice_unset_git = overridden_git.git_envs_override(GIT_TRACE=UNSET)
+```
+
+#### 🔄 Reset Git envs by setting new values
+
+```python
+from gitbolt.git_subprocess.impl.simple import SimpleGitCommand
+
+git = SimpleGitCommand()
+overridden_git = git.git_envs_override(GIT_TRACE=True)
+git_trace_reset_git = overridden_git.git_envs_override(GIT_TRACE=False)
+```
+</details>
+
+---
+
+<details>
+<summary>Allow users to set/unset/reset git main command options in typed and pythonic manner just before subcommand run to provide maximal flexibility.</summary>
+
+### ⚙️ Git Main Command Options
+
+#### 🔁 Override a single Git opt (e.g., `--no-replace-objects`)
+
+```python
+from gitbolt.git_subprocess.impl.simple import SimpleGitCommand
+
+git = SimpleGitCommand()
+git = git.git_opts_override(no_replace_objects=True)
+```
+
+#### 🌐 Override multiple options (e.g., `--git-dir`, `--paginate`)
+
+```python
+from pathlib import Path
+from gitbolt.git_subprocess.impl.simple import SimpleGitCommand
+
+git = SimpleGitCommand()
+git = git.git_opts_override(no_replace_objects=True, git_dir=Path(), paginate=True)
+```
+
+#### 🪢 Chain multiple option overrides fluently
+
+```python
+from pathlib import Path
+from gitbolt.git_subprocess.impl.simple import SimpleGitCommand
+
+git = SimpleGitCommand()
+overridden_git = git.git_opts_override(exec_path=Path('tmp')).git_opts_override(
+    noglob_pathspecs=True,
+    no_advice=True
+).git_opts_override(
+    config_env={'auth': 'suhas', 'comm': 'suyog'}
+)
+re_overridden_git = overridden_git.git_opts_override(glob_pathspecs=True)
+```
+
+#### ❌ Unset Git opts using a special `UNSET` marker
+
+```python
+from pathlib import Path
+from gitbolt.git_subprocess.impl.simple import SimpleGitCommand
+from vt.utils.commons.commons.core_py import UNSET
+
+git = SimpleGitCommand()
+overridden_git = git.git_opts_override(exec_path=Path('tmp'), no_advice=True)
+no_advice_unset_git = overridden_git.git_opts_override(no_advice=UNSET)
+```
+
+#### 🔄 Reset Git opts by setting new values
+
+```python
+from gitbolt.git_subprocess.impl.simple import SimpleGitCommand
+
+git = SimpleGitCommand()
+overridden_git = git.git_opts_override(no_advice=True)
+no_advice_reset_git = overridden_git.git_opts_override(no_advice=False)
+```
+
+</details>
+
+
+---
+
+## 🔍 Transparent by Default
+
+Output of git commands is returned as-is. No transformations unless explicitly requested.
+Transformers for formatting/parsing can be added later.
+
+---
+
+## ✅ Benefits Out-of-the-Box
+
+* 🔄 Composable Git commands.
+* 📤 Returns raw stdout.
+* 🚨 Exceptions with full context.
+* 💤 Lazy execution.
+* 🧠 Strong typing and compile-time guarantees.
+* 🧼 Idiomatic Python.
+* 🧪 Terminal subcommands.
+* 💣 Fail-fast on invalid usage.
+
+---
+
+## 📄 More Information
+
+- 📜 [License (Apache-2.0)](./LICENSE)
+- 🤝 [Contributing Guide](./CONTRIBUTING.md)
+
+---
+
+## 🚧 Future Goals
+
+* Support `pygit2` for direct, fast Git access.
+* Enable `porcelain` support using `pygit2` where required.
