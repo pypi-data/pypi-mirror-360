@@ -1,0 +1,86 @@
+site_name: odfdo documentation
+repo_url: https://github.com/jdum/odfdo
+docs_dir: src
+use_directory_urls: false
+markdown_extensions:
+    - smarty
+    - admonition
+    - pymdownx.highlight:
+          linenums: false
+          use_pygments: true
+          line_spans: __span
+          pygments_lang_class: true
+    - pymdownx.inlinehilite
+    - pymdownx.snippets
+    - pymdownx.superfences
+    - pymdownx.details
+    - toc:
+          toc_depth: 2
+
+theme:
+    name: material
+    locale: en
+    logo: odfdo.png
+    palette:
+        # Dark Mode
+        - scheme: slate
+          toggle:
+              icon: material/weather-sunny
+              name: Dark mode
+          primary: blue grey
+          accent: deep purple
+
+        # Light Mode
+        - scheme: default
+          toggle:
+              icon: material/weather-night
+              name: Light mode
+          primary: blue
+          accent: deep orange
+    features:
+        - toc.follow
+    # features:
+    # - navigation.instant
+    # - navigation.tabs
+    # - navigation.tabs.sticky
+    # - navigation.sections
+    # - navigation.expand
+
+plugins:
+    - search:
+
+    - mkdocstrings:
+          default_handler: python
+          handlers:
+              python:
+                  options:
+                      filters:
+                          - '!^_'
+                          - '^__init__$'
+                      show_if_no_docstring: true
+                      summary:
+                          attributes: true
+                          functions: true
+                          classes: true
+                          modules: false
+                      show_signature: true
+                      separate_signature: true
+                      show_signature_annotations: true
+                      signature_crossrefs: true
+          #rendering:
+          #    show_source: true
+
+    - include-markdown:
+          preserve_includer_indent: true
+          dedent: true
+          trailing_newlines: true
+          comments: true
+          rewrite_relative_urls: false
+          heading_offset: 0
+          recursive: false
+
+nav:
+    - Readme: README.md
+    - Changes: CHANGES.md
+    - Reference: reference.md
+    - Recipes: recipes.md
