@@ -1,0 +1,50 @@
+Metadata-Version: 2.4
+Name: mt3-audio2midi
+Version: 0.1.0
+Summary: MT3 Music Transcription Library
+Author-email: dummyjenil <dummyjenil@gmail.com>
+Requires-Python: >=3.11
+Requires-Dist: absl-py
+Requires-Dist: cached-property
+Requires-Dist: clu
+Requires-Dist: fiddle>=0.2.5
+Requires-Dist: flax
+Requires-Dist: flax==0.10.7
+Requires-Dist: gin-config
+Requires-Dist: grain==0.2.0
+Requires-Dist: immutabledict
+Requires-Dist: jax>=0.4.16
+Requires-Dist: jaxlib>=0.4.16
+Requires-Dist: librosa
+Requires-Dist: mir-eval
+Requires-Dist: note-seq
+Requires-Dist: numpy
+Requires-Dist: optax
+Requires-Dist: orbax-checkpoint>=0.5
+Requires-Dist: pretty-midi
+Requires-Dist: scikit-learn
+Requires-Dist: scipy
+Requires-Dist: seqio==0.0.19
+Requires-Dist: t5
+Requires-Dist: tensorflow
+Requires-Dist: tensorflow-cpu
+Requires-Dist: tensorflow-datasets
+Requires-Dist: tensorstore>=0.1.20
+Description-Content-Type: text/markdown
+
+```python
+from huggingface_hub import hf_hub_download
+from shutil import unpack_archive
+from mt3_audio2midi import MT3
+import nest_asyncio
+nest_asyncio.apply()
+
+unpack_archive(hf_hub_download("shethjenil/Audio2Midi_Models","mt3.zip"),"mt3_model",format="zip")
+unpack_archive(hf_hub_download("shethjenil/Audio2Midi_Models","ismir2021.zip"),"ismir2021_model",format="zip")
+
+mt3_model = MT3("mt3_model")
+ismir2021_model = MT3("ismir2021_model","ismir2021")
+
+mt3_model.predict(audio_path)
+ismir2021_model.predict(audio_path)
+```
