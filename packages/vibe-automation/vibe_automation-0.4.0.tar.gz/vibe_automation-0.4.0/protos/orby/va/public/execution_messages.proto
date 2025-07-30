@@ -1,0 +1,160 @@
+syntax = "proto3";
+
+package orby.va.public;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+
+
+// =============================================================================
+//  Service RPC Messages
+// =============================================================================
+message EnvironmentVariable {
+  string name = 1;
+  string value = 2;
+}
+
+// Request to start a new execution.
+message StartExecutionRequest {
+  string workflow_id = 1;
+  repeated EnvironmentVariable environment = 4;
+}
+
+// Response after starting an execution.
+message StartExecutionResponse {
+  string execution_id = 1;
+  string live_view_url = 2;
+}
+
+
+// Request to cancel a running execution.
+message CancelExecutionRequest {
+  string execution_id = 1;
+  string reason = 2;
+}
+
+// Response after a cancellation request.
+message CancelExecutionResponse {
+  string execution_id = 1;
+}
+
+// Request to stream events for a specific execution.
+message GetExecutionEventsRequest {
+  string execution_id = 1;
+  string last_event_id = 2;
+}
+
+message RequestReviewRequest {
+  string execution_id = 1;
+}
+
+message RequestReviewResponse {
+  string status = 1;
+  string review_id = 2;
+}
+
+message ReviewCompletedRequest {
+  string review_id = 1;
+}
+
+message ReviewCompletedResponse {
+  string status = 1;
+}
+
+message GetReviewStatusRequest {
+  string review_id = 1;
+}
+
+message GetReviewStatusResponse {
+  string status = 1;
+}
+
+// =============================================================================
+//  Component Messages
+// =============================================================================
+
+message ErrorInfo {
+  string message = 1;
+  int32 code = 2;
+}
+
+// =============================================================================
+//  Streaming Event Payloads
+// =============================================================================
+
+// ExecutionEvent is a single event in the lifecycle of an execution.
+// Note: This model is not finalized, and will likely change in the future.
+message ExecutionEvent {
+  string event_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string execution_id = 3;
+
+  oneof payload {
+    StepStarted step_started = 10;
+    StepCompleted step_completed = 11;
+    ApiCallDetails api_call_details = 12;
+    BrowserUseLiveSession browser_use_live_session = 13;
+    BrowserUseVideoArtifact browser_use_video_artifact = 14;
+    ExecutionCompleted execution_completed = 15;
+    ExecutionFailed execution_failed = 16;
+    ExecutionCanceled execution_canceled = 17;
+  }
+}
+
+message Step {
+  string id = 1;
+  string description = 2;
+  StepType type = 3;
+}
+
+message StepStarted { Step step = 1; }
+
+message StepCompleted {
+  Step step = 1;
+  StepStatus status = 2;
+  google.protobuf.Duration duration = 3;
+}
+
+message ApiCallPayload {
+  string endpoint = 1;
+  string method = 2;
+
+  // The following fields will likely be changed in the future.
+  // We will probably switch to a system where the model adds a log after the API call to capture the inputs and outputs.
+  google.protobuf.Struct request = 3;  
+  google.protobuf.Struct response = 4;
+  google.protobuf.Duration duration = 5;
+}
+
+message ApiCallDetails { string step_id = 1; ApiCallPayload api_call = 2; }
+
+message BrowserUseLiveSession { string step_id = 1; string session_url = 2; }
+
+message BrowserUseVideoArtifact {
+  string step_id = 1;
+  string url = 2;
+  string format = 3;
+  google.protobuf.Duration duration = 4;
+}
+
+message ExecutionCompleted { google.protobuf.Struct output = 1; }
+message ExecutionFailed { ErrorInfo error = 1; }
+message ExecutionCanceled { string reason = 1; }
+
+// =============================================================================
+//  Enumerations
+// =============================================================================
+
+enum StepType {
+  STEP_TYPE_UNSPECIFIED = 0;
+  WORKFLOW_LOGIC = 1;
+  API_STEP = 2;
+  BROWSER_USE = 3;
+}
+
+enum StepStatus {
+  STEP_STATUS_UNSPECIFIED = 0;
+  SUCCESS = 1;
+  FAILURE = 2;
+}
