@@ -1,0 +1,35 @@
+<div class="modal-content">
+    <span class="close-btn" onclick="this.closest('.modal').innerHTML = ''">&times;</span>
+    <h2>Feld bearbeiten</h2>
+    {% if warning %}
+    <div style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+        {{ warning }}
+    </div>
+    {% endif %}
+    <form hx-post="/record/{{ doc_id }}/update" hx-target="#row-{{ field.name }}" hx-swap="outerHTML" hx-on:htmx:after-request="this.closest('.modal').innerHTML = ''">
+        <p><strong>Feld:</strong> {{ field.name }}</p>
+        <p><strong>Typ:</strong> {{ field.get('type', '-') }}</p>
+        <input type="hidden" name="field_name" value="{{ field.name }}">
+        <input type="hidden" name="is_multi_valued" value="{{ 'true' if field.get('multiValued') else 'false' }}">
+        
+        {% if field.get('multiValued') %}
+            <div>
+                <label for="field_value">Werte (ein Wert pro Zeile):</label>
+                <textarea name="field_value" id="field_value" rows="5">{%- if doc_value is iterable and doc_value is not string -%}
+                        {{- doc_value|join('\n') -}}
+                    {%- else -%}
+                        {{- doc_value or '' -}}
+                    {%- endif -%}
+                </textarea>
+            </div>
+        {% else %}
+            <div>
+                <label for="field_value">Wert:</label>
+                <input type="text" name="field_value" id="field_value" value="{{ doc_value or '' }}">
+            </div>
+        {% endif %}
+        <br>
+        <button type="submit">Speichern</button>
+        <button type="button" onclick="this.closest('.modal').innerHTML = ''">Abbrechen</button>
+    </form>
+</div>
