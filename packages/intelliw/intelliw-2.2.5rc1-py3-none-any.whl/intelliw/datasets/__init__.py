@@ -1,0 +1,11 @@
+# regist dataset
+# dont delete
+from intelliw.datasets.datasource_empty import EmptyDataSource
+from intelliw.datasets.datasource_intelliv import DataSourceIntelliv
+from intelliw.datasets.datasource_iwfactorydata import DataSourceIwFactoryData
+from intelliw.datasets.datasource_iwimgdata import DataSourceIwImgData
+from intelliw.datasets.datasource_local_csv import DataSourceLocalCsv
+from intelliw.datasets.datasource_nlp_corpora import DataSourceNLPCorpora
+from intelliw.datasets.datasource_remote_csv import DataSourceRemoteCsv
+from intelliw.datasets.datasource_semantic import DataSourceSemanticData
+from intelliw.datasets.datasource_large_model import DataSourceLMCorpora
