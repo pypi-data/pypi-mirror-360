@@ -1,0 +1,162 @@
+1.0.3
+ - enh: allow to specify resource name when creating test resource
+1.0.2
+ - ref: disable threading and use 1GiB threshold for multipart uploads
+1.0.1
+ - enh: introduce `for_circles_only` kwarg for `iter_buckets`
+1.0.0
+ - ref: remove deprecations (`s3cc.object_exists`, `make_dataset`,
+   `make_resource`, `create_context` arg in `make_resource_via_s3`)
+0.15.1
+ - enh: new method `testing.activate_dataset`
+ - enh: ensure Path class in `testing.make_resource_via_s3`
+0.15.0
+ - feat: add `s3.iter_buckets`
+ - feat: add `s3.iter_bucket_objects`
+0.14.0
+ - feat: add `s3.prune_multipart_uploads`
+0.13.1
+ - enh: optionally return exact expiration time of presigned URL
+0.13.0
+ - BREAKING: remove `get_resource_path`, `get_dcor_depot_path`,
+   `get_dcor_users_depot_path`
+ - BREAKING: `wait_for_resource` and `get_dc_instance` now only check S3 data
+ - feat: add `is_resource_private` method
+ - fix: disable SHA256 verification in boto3 (not supported everywhere);
+   note that we are still doing SHA256 verification after the upload
+ - enh: add "artifact" kwarg to `get_s3_dc_handle`
+ - enh: partial resource ID in basin names for `get_s3_dc_handle_basin_based`
+ - enh: add "perishable" key for basins in `get_s3_dc_handle_basin_based`
+ - setup: bump dclab to 0.64.0
+0.12.3
+ - enh: improved resource availability check
+0.12.2
+ - fix: testing did not append S3 resources
+0.12.1
+ - ci: migrate to docker
+ - ref: deprecate `get_resource_path`, `make_dataset`, `make_resource`
+0.12.0
+ - feat: introduce rqjob submodule for managing CKAN background jobs
+0.11.5
+ - ref: add minor caching
+0.11.4
+ - ref: wait longer in wait_for_resource
+0.11.3
+ - ref: wait longer in `wait_for_resource` loop
+ - ref: turn deprecation in `wait_for_resource` into ValueError
+0.11.3
+ - fix: did not extract `dcor_object_store.ssl_verify` from config
+0.11.2
+ - build: cleanup
+0.11.1
+ - build: fix CI pipeline
+0.11.0
+ - fix: support boolean ssl_verify option returned by CKAN
+ - setup: migrate to pyproject.toml
+0.10.3
+ - reg: typo in dclab S3 instantiation
+0.10.2
+ - setup: bump dclab to 0.58.6
+0.10.1
+ - fix: handle case in wait_for_resource when resource is not yet in CKAN
+0.10.0
+ - BREAKING CHANGE: presigned URLs for uploading resources now work
+   differently. For small files (< 1 GiB), a single upload URL for
+   PUT is created. For larger files, a multipart upload is started.
+ - enh: retry set_object_tagging on failure
+0.9.1
+ - feat: add convenience method `get_s3_attributes_for_artifact`
+0.9.0
+ - feat: introduce `testing.make_dataset_via_s3` and
+   `testing.make_resource_via_s3` which uploads resources via S3
+ - enh: make sha256 optional in `s3.upload_file`
+0.8.0
+ - feat: introduce `get_resource_dc_config`, `get_resource_info`, and
+   `s3cc.get_s3_dc_handle_basin_based`
+ - enh: return S3 URL in s3cc.upload_artifact
+ - enh: make specifying owner organization and create context in
+   `testing.make_dataset` optional
+0.7.4
+ - fix: disable basins when loading a dataset instance
+ - enh: implement s3cc.upload_artifact
+0.7.3
+ - enh: add get_dc_instance convenience method
+0.7.2
+ - tests: fix invalid make_dataset method
+0.7.1
+ - fix: handle non-existent bucket when S3 object is missing
+ - docs: be more verbose in s3cc docstrings
+0.7.0
+ - feat: implement `s3.create_presigned_upload_url` for creating presigned
+   upload URLs that DCOR-Aid can use to upload resources directly to S3
+ - feat: new S3 CKAN convenience methods submodule `s3cc`
+ - feat: new submodule for shared test methods `testing`
+ - ref: migrate ckan imports to function code so dcor_control
+   works on any machine
+ - setup: add dependency dclab 0.57.3 (boto3 resource access)
+0.6.0
+ - BREAKING CHANGE: wait_for_resource now requires the resource_id
+   instead of the resource path
+ - BREAKING CHANGE: ckan installation is now mandatory
+ - enh: cache calls to data.wait_for_resource
+0.5.6
+ - maintenance release
+0.5.5
+ - ref: factor out s3.object_exists method
+ - ref: factor out s3.compute_checksum method
+0.5.4
+ - enh: cache presigned URLs with 10% tolerance
+0.5.3
+ - enh: allow to disable override when uploading an object to S3
+0.5.2
+ - enh: allow specifying filename when creating presigned S3 URL
+0.5.1
+ - enh: allow to silently fail when making objects public
+0.5.0
+ - feat: migrate s3 submodule from ckanext.dcor_depot to dcor_shared
+0.4.4
+ - maintenance release
+0.4.3
+ - enh: import get_ckan_config_option to top module
+0.4.2
+ - enh: add sha256sum method
+0.4.1
+ - ref: further migration changes for CKAN 2.10.1
+0.4.0
+ - ref: migration to CKAN 2.10.1
+0.3.1
+ - cleanup
+0.3.0
+ - feat: add "paths" submodule with common DCOR paths
+0.2.12
+ - ref: use f-strings
+0.2.11
+ - enh: decrease timeout value for `wait_for_resource` back to 10s,
+   because background jobs are now ran sequentially and after
+   the symlink job
+0.2.10
+ - enh: increase timeout value for `wait_for_resource` to 500s
+0.2.9
+ - fix: wait_for_resource did not work for very small files
+0.2.8
+ - enh: introduce get_resource_path and check for availability of
+   ckanext-dcor_depot on-the-fly, which makes it possible to run
+   pytest-ckan with a custom configuration
+0.2.7
+ - ci: migrate to GH Actions
+0.2.6
+ - fix: wait_for_resource now checks whether resource is symlinked
+0.2.5
+ - enh: get_resource_path now returns a pathlib.Path
+0.2.4
+ - enh: allow to get the resource path from outside CKAN
+0.2.3
+ - maintenance release
+0.2.2
+ - allow import when ckan is not installed
+0.2.1
+ - automated releases
+0.2.0
+ - added get_resource_path
+0.1.0
+ - initial version
