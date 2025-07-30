@@ -1,0 +1,26 @@
+# GESTOR DE NOTAS SIMPLE
+
+Un gestor de notas simple para poder agregar, leer y buscar notas a traves de opciones multiples
+
+## OPCIONES DISPONIBLES:
+
+- 1. Agregar notas
+- 2. Leer notas
+- 3. Buscar notas
+- 4. Borrar notas
+- 5. Salir del gestor de notas
+
+# Instalacion
+
+Instala el paquete utilizando 'pip3'
+
+```python
+pip3 install gnotas
+```
+
+# Uso Basico
+
+## Abrir menu
+
+```python
+python3 main.py
