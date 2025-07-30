@@ -1,0 +1,90 @@
+### {{app.label}} DETECTIONS ###
+
+{% for detection in objects %}
+[{{ detection.get_conf_stanza_name(app) }}]
+action.escu = 0
+action.escu.enabled = 1
+description = {{ detection.status_aware_description | escapeNewlines() }} 
+action.escu.mappings = {{ detection.mappings | tojson }}
+action.escu.data_models = {{ detection.datamodel | tojson }}
+action.escu.eli5 = {{ detection.status_aware_description | escapeNewlines() }}
+action.escu.how_to_implement = {{ detection.how_to_implement | escapeNewlines() }}
+action.escu.known_false_positives = {{ detection.known_false_positives | escapeNewlines() }}
+action.escu.creation_date = {{ detection.date }}
+action.escu.modification_date = {{ detection.date }}
+action.escu.confidence = high
+action.escu.search_type = detection
+action.escu.product = {{ detection.tags.product | tojson }}
+{% if detection.tags.atomic_guid %}
+action.escu.atomic_red_team_guids = {{ detection.tags.getAtomicGuidStringArray() | tojson }}
+{% endif %}
+{% if detection.providing_technologies | length > 0  %}
+action.escu.providing_technologies = {{ detection.providing_technologies | tojson }}
+{% else %}
+action.escu.providing_technologies = null
+{% endif %}
+action.escu.analytic_story = {{ objectListToNameList(detection.tags.analytic_story) | tojson }}
+{% if detection.deployment.alert_action.rba.enabled%}
+action.risk = 1
+action.risk.param._risk_message = {{ detection.rba.message | escapeNewlines() }}
+action.risk.param._risk = {{ detection.risk | tojson }}
+action.risk.param._risk_score = 0
+action.risk.param.verbose = 0
+{% endif %}
+cron_schedule = {{ detection.deployment.scheduling.cron_schedule }}
+dispatch.earliest_time = {{ detection.deployment.scheduling.earliest_time }}
+dispatch.latest_time = {{ detection.deployment.scheduling.latest_time }}
+action.correlationsearch.enabled = 1
+action.correlationsearch.detection_type = ebd
+action.correlationsearch.label = {{ detection.get_action_dot_correlationsearch_dot_label(app) }}
+action.correlationsearch.annotations = {{ detection.annotations | tojson }}
+action.correlationsearch.metadata = {{ detection.metadata | tojson }}
+schedule_window = {{ detection.deployment.scheduling.schedule_window }}
+{% if detection.deployment.alert_action.notable %}
+action.notable = 1
+action.notable.param._entities = [{"risk_object_field": "N/A", "risk_object_type": "N/A", "risk_score": 0}]
+action.notable.param.nes_fields = {{ detection.nes_fields }}
+action.notable.param.rule_description = {{ detection.deployment.alert_action.notable.rule_description | custom_jinja2_enrichment_filter(detection) | escapeNewlines()}}
+action.notable.param.rule_title = {% if detection.type | lower == "correlation" %}RBA: {{ detection.deployment.alert_action.notable.rule_title | custom_jinja2_enrichment_filter(detection) }}{% else %}{{ detection.deployment.alert_action.notable.rule_title | custom_jinja2_enrichment_filter(detection) }}{% endif +%}
+action.notable.param.security_domain = {{ detection.tags.security_domain }}
+action.notable.param.severity = {{ detection.severity }}
+{% endif %}
+{% if detection.deployment.alert_action.email %}
+action.email = 1
+action.email.subject.alert = {{ detection.deployment.alert_action.email.subject | custom_jinja2_enrichment_filter(detection) | escapeNewlines() }}
+action.email.to = {{ detection.deployment.alert_action.email.to }}
+action.email.message.alert = {{ detection.deployment.alert_action.email.message | custom_jinja2_enrichment_filter(detection) | escapeNewlines() }}
+action.email.useNSSubject = 1
+{% endif %}
+{% if detection.deployment.alert_action.slack %}
+action.slack = 1
+action.slack.param.channel = {{ detection.deployment.alert_action.slack.channel | custom_jinja2_enrichment_filter(detection) | escapeNewlines() }}
+action.slack.param.message = {{ detection.deployment.alert_action.slack.message | custom_jinja2_enrichment_filter(detection) | escapeNewlines() }}
+{% endif %}
+{% if detection.deployment.alert_action.phantom%}
+action.sendtophantom = 1
+action.sendtophantom.param._cam_workers = {{ detection.deployment.alert_action.phantom.cam_workers | custom_jinja2_enrichment_filter(detection) }}
+action.sendtophantom.param.label = {{ detection.deployment.alert_action.phantom.label | custom_jinja2_enrichment_filter(detection) }}
+action.sendtophantom.param.phantom_server = {{ detection.deployment.alert_action.phantom.phantom_server | custom_jinja2_enrichment_filter(detection) }}
+action.sendtophantom.param.sensitivity = {{ detection.deployment.alert_action.phantom.sensitivity | custom_jinja2_enrichment_filter(detection) }}
+action.sendtophantom.param.severity = {{ detection.deployment.alert_action.phantom.severity | custom_jinja2_enrichment_filter(detection) }}
+{% endif %}
+alert.digest_mode = 1
+disabled = {{ (not detection.enabled_by_default) | lower }}
+enableSched = 1
+allow_skew = 100%
+counttype = number of events
+relation = greater than
+quantity = 0
+realtime_schedule = 0
+is_visible = false
+{% if detection.tags.throttling %}
+alert.suppress = true
+alert.suppress.fields = {{ detection.tags.throttling.conf_formatted_fields() }}
+alert.suppress.period = {{ detection.tags.throttling.period }}
+{% endif %}
+search = {{ detection.search | escapeNewlines() }}
+action.notable.param.drilldown_searches = {{ detection.drilldowns_in_JSON | tojson | escapeNewlines() }}
+
+{% endfor %}
+### END {{ app.label }} DETECTIONS ###
