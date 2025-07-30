@@ -1,0 +1,59 @@
+[build-system]
+requires = ['hatchling']
+build-backend = 'hatchling.build'
+[tool.hatch.build.targets.wheel]
+packages = ['src/heimdall']
+[tool.hatch.build.targets.sdist]
+exclude = [
+  '/tests', '/coverage', '/docs',
+  '.pycodestyle', '.gitlab-ci.yml',
+  '/src/heimdall/__init__.py', '/src/heimdall/connectors/__init__.py',
+  ]
+[tool.hatch.version]
+path = 'src/heimdall/connectors/opentheso.py'
+
+[tool.coverage.run]
+source = ['src/', ]
+omit = ['tests/', ]
+branch = true
+[tool.coverage.html]
+directory = 'coverage/'
+
+[project]
+name = "pyheimdall-opentheso"
+dynamic = ['version']
+authors = [
+  {name = "Régis Witz", email = "regis.witz@cnrs.fr"},
+]
+description = "Opentheso connector for pyHeimdall"
+readme = 'README.rst'
+keywords = ["hera", "databases", "interoperability", ]
+license = {text = 'aGPL'}
+classifiers = [  # https://pypi.org/classifiers/
+  'Development Status :: 3 - Alpha',
+  'Environment :: Console',
+  'Programming Language :: Python :: 3',
+  'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
+  'Operating System :: OS Independent',
+  'Topic :: Database',
+  'Topic :: Documentation',
+  'Topic :: File Formats',
+  'Topic :: Scientific/Engineering',
+  'Topic :: Utilities',
+]
+dependencies = [
+  'pyheimdall>1.0.0',
+  'requests',
+]
+
+[project.optional-dependencies]
+tests = ['pytest', 'coverage', ]  # parametrized + coverage
+pep_8 = ['pycodestyle', ]  # linter, to assert compliancy with PEP 8
+dev = [ 'pyheimdall[tests,pep_8]', ]
+
+[project.urls]
+Homepage = 'https://gitlab.huma-num.fr/datasphere/heimdall/connectors/opentheso/'
+Issues = 'https://gitlab.huma-num.fr/datasphere/heimdall/python/-/issues'
+
+# ... other project metadata fields as listed in:
+#     https://packaging.python.org/en/latest/guides/writing-pyproject-toml/
