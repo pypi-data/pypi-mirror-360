@@ -1,0 +1,144 @@
+# synth-monorepo/pyproject.toml
+[project]
+name = "synth-env"
+version = "0.1.3.dev2"
+description = ""
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [ "pydantic", "python-dotenv>=1.0.1", "pytest>=8.3.3", "pydantic-openapi-schema>=1.5.1", "pytest-asyncio>=0.24.0", "numpy>=2.2.3", "networkx>=3.4.2", "synth-ai", "synth-sdk", "crafter>=1.8.3", "fastapi>=0.115.12", "gym-sokoban>=0.0.6", "gymnasium>=1.1.1", "uvicorn>=0.34.2", "ty>=0.0.1a5", "ruff>=0.11.10", "pyboy>=2.6.0", "setuptools>=80.8.0", "psutil>=7.0.0", "redis>=6.2.0", "imageio>=2.31.0", "nle>=0.9.1", "matplotlib>=3.10.3", "seaborn>=0.13.2", "pillow>=11.2.1", "minigrid>=3.0.0", "tabulate>=0.9.0", "tqdm>=4.67.1", "duckdb>=1.0.0", "pyarrow>=18.0.0", "reflex>=0.3.8", "pandas>=2.2.3",]
+classifiers = []
+
+[[project.authors]]
+name = "Synth AI"
+email = "josh@usesynth.ai"
+
+[build-system]
+requires = [ "setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["synth_env*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.py", "*.json", "*.yaml", "*.yml", "*.toml", "*.txt", "*.md"]
+
+[tool.setuptools.exclude-package-data]
+"*" = [
+    "*.db",
+    "*.sqlite*", 
+    "*.cache/*",
+    "*.npy",
+    "*.npz", 
+    "*.arrow",
+    "*.pkl",
+    "*.pickle",
+    "*test*",
+    "*demo*",
+    "*example*",
+    "agent_demos/*",
+    ".cache/*",
+    "__pycache__/*",
+    "uv.lock"
+]
+
+[project.license]
+text = "MIT"
+
+[project.urls]
+Homepage = "https://github.com/synth-laboratories/synth-env"
+Documentation = "https://docs.usesynth.ai/"
+Repository = "https://github.com/synth-laboratories/synth-env"
+Issues = "https://github.com/synth-laboratories/synth-env/issues"
+
+[tool.ty]
+respect-ignore-files = true
+
+[tool.ty.environment]
+python-version = "3.11"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[tool.uv.sources]
+backend = { path = "../backend", editable = true }
+synth-ai = { path = "synth-ai" }
+synth-sdk = { path = "synth-sdk" }
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]  # Line too long
+
+[tool.uv]
+dev-dependencies = [
+    "aiobreaker>=1.2.0",
+    "aiohttp>=3.11.18",
+    "pytest-aiohttp>=1.1.0",
+    "pytest-timeout>=2.3.1",
+    "pytest-xdist>=3.7.0",
+]
+
+[tool.uv.workspace]
+members = [
+    "backend",
+    "synth-sdk",
+    "synth-ai"
+]
+
+[tool.pytest.ini_options]
+norecursedirs = []
+addopts = """
+  --ignore=tests/integration
+  --ignore=tests/staging
+  --cov-report=html:temp/htmlcov
+  --cov-report=term
+  -v
+"""
+log_cli = true
+log_cli_level = "WARNING"
+log_cli_format = "%(message)s"
+log_level = "WARNING"
+loggers = [
+    "sqlalchemy.engine",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore:pkg_resources is deprecated:DeprecationWarning",
+    'ignore:Deprecated call to `pkg_resources.declare_namespace.*:DeprecationWarning',
+    'ignore:Starting with ImageIO v3.*:DeprecationWarning:gym_sokoban\\\\.envs\\\\.render_utils',
+    "ignore::pytest.PytestDeprecationWarning" # General pytest deprecation warnings
+]
+# Add pytest-asyncio configuration (already default, but explicit)
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "docker: marks tests requiring docker",
+    "gpu: marks tests requiring GPU",
+    "requires_env_service: marks test requiring the separate environment service",
+    "skip_in_ci: marks tests to be skipped in CI environment"
+]
+# https://github.com/pytest-dev/pytest-asyncio#modes
+asyncio_mode = "auto" # Or "strict" if you prefer, current output shows STRICT
+testpaths = [
+    "backend/tests",
+    "frontend/tests",
+    "tests",
+]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.coverage.html]
+directory = "temp/htmlcov"
+
+[tool.coverage.run]
+source = ["src"] 
