@@ -1,0 +1,157 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dml-util"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "Aaron Niskin", email = "aaron@niskin.org" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "boto3",
+]
+
+[project.optional-dependencies]
+dml = [
+  "daggerml==0.0.35",
+  "daggerml-cli==0.0.33",
+  "watchtower",
+]
+nb = [
+  "jupyter",
+  "nbconvert",
+]
+test = [
+  "pytest",
+  "pytest-cov",
+  "moto[all,server]",
+]
+
+[project.scripts]
+dml-util-lambda-adapter = "dml_util.adapters:LambdaAdapter.cli"
+dml-util-local-adapter = "dml_util.adapters:LocalAdapter.cli"
+dml-util-dag = "dml_util.dags:main"
+
+[project.urls]
+Documentation = "https://github.com/daggerml/dml-util#readme"
+Issues = "https://github.com/daggerml/dml-util/issues"
+Source = "https://github.com/daggerml/dml-util"
+
+[tool.pytest.ini_options]
+pythonpath = "tests/"
+minversion = "6.0"
+addopts = "-ra --ignore=submodules/"
+testpaths = [
+  "tests",
+]
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+version_scheme = "only-version"   # use tag as version
+local_scheme = "no-local-version"  # pypi does not support local-schemes
+tag_regex = "^v(?P<version>[0-9.]+)$"
+version_file = "src/dml_util/__about__.py"  # write version info to this file
+relative_to = "{root:uri}"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dml_util"]
+artifacts = [
+  "src/dml_util/__about__.py"  # add to hatch build because it's git ignored
+]
+
+[tool.hatch.envs.default]
+python="3.10"
+features = ["test", "nb"]
+dependencies = ["twine"]
+pre-install-commands = [
+  "pip install -e {root:uri}/submodules/python-lib",
+  "pip install -e {root:uri}/submodules/python-lib/submodules/daggerml_cli",
+]
+[tool.hatch.envs.default.scripts]
+test = 'pytest {args}'
+dml-build = "hatch build && twine upload -r {args:testpypi} dist/*"
+[tool.hatch.envs.default.env-vars]
+PYTHONDONTWRITEBYTECODE = "1"
+DML_S3_BUCKET = "dml-doesnotexist"
+DML_S3_PREFIX = "jobs"
+
+[tool.hatch.envs.pandas]
+template = "default"
+dependencies = ["pandas==2.2.3"]
+[tool.hatch.envs.polars]
+template = "default"
+dependencies = ["polars==1.2"]
+
+[tool.hatch.envs.test-matrix]
+template = "default"
+[[tool.hatch.envs.test-matrix.matrix]]
+python = ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+[tool.hatch.envs.no-dml]
+python="3.10"
+features = ["test"]
+dependencies = []
+pre-install-commands = []
+[tool.hatch.envs.no-dml.env-vars]
+PYTHONDONTWRITEBYTECODE = "1"
+AWS_ACCESS_KEY_ID  = "doesnotexist"
+AWS_SECRET_ACCESS_KEY  = "doesnotexist"
+DML_S3_BUCKET = "dml-doesnotexist"
+DML_S3_PREFIX = "jobs"
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "PGH004", "PT", "W"]
+ignore = ["PT009", "PT027"]
+unfixable = ["B"]
+
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-names-type = "csv"
+
+[tool.ruff.lint.isort]
+known-first-party = ["dml_util"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "E402"]
+# Tests can use magic values, assertions, and relative imports
+"tests/**/*" = ["PLR2004", "S101", "TID252"]
+"examples/**/*" = ["I001"]
+
+[tool.pyright]
+include = ["src"]
+defineConstant = { DEBUG = true }
+typeCheckingMode = "basic"
+reportGeneralTypeIssues = false
+reportMissingImports = "error"
+reportMissingTypeStubs = false
+reportOptionalCall = false
+reportOptionalMemberAccess = false
