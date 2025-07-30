@@ -1,0 +1,62 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>{% translate "Quiz results summary" %}</title>
+  </head>
+
+  <img class="logo img-fluid" src="{% static logo %}" alt="Logo" width="240">
+
+  <h1>{% translate "Quiz results summary" %}</h1>
+
+  <p class="quiz-conclusion">
+    <b>
+      {% if quiz_type == "weighed_answers_quiz" and conclusion.points %}
+        {% blocktranslate with points=conclusion.points plural=conclusion.points|pluralize %}
+          Result: {{ points }} point{{ plural }}
+        {% endblocktranslate %}
+      {% elif quiz_type == "interpretation_quiz" %}
+        {{ conclusion }}
+      {% endif %}
+    </b>
+  </p>
+
+  <div class="quiz-conclusion-description">
+    {{ conclusion.description|safe }}
+  </div>
+
+  {% if quiz_type == "weighed_answers_quiz" %}
+    {% for dict in final_quiz %}
+      <fieldset class="quiz-summary-fieldset">
+        <legend>{{ dict.question.label }}</legend>
+        {% for answer in dict.answers %}
+          <div class="quiz-answer">
+            <input type="checkbox" checked disabled />
+            <label>
+              <div class="answer">{{ answer|safe }}</div>
+            </label>
+          </div>
+        {% empty %}
+          <p>
+            <i>{% translate "You haven't selected any answer." %}</i>
+          </p>
+        {% endfor %}
+      </fieldset>
+    {% endfor %}
+  {% elif quiz_type == "interpretation_quiz" %}
+    {% for dict in final_quiz %}
+      <fieldset class="quiz-summary-fieldset">
+        <legend>{{ dict.question.label }}</legend>
+        <div class="quiz-answer">
+          <input type="checkbox" checked disabled />
+          <label>
+            <div class="answer">{{ dict.answer|safe }}</div>
+          </label>
+        </div>
+      </fieldset>
+    {% endfor %}
+  {% endif %}
+
+</body>
+</html>

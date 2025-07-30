@@ -1,0 +1,98 @@
+{% load i18n %}
+
+<div class="quiz-container">
+
+
+  <h1>{{ quiz.name }}</h1>
+
+  {% if conclusion %}
+
+    {% if conclusion.points %}
+      {% if quiz.show_score_summary %}
+        <p class="quiz-conclusion">
+          <b>
+            {% translate "Result" %}: {{ conclusion.points }} {% translate "point" %}{{ conclusion.points|pluralize }}
+          </b>
+        </p>
+      {% endif %}
+
+      <div class="quiz-conclusion-description">
+        {{ conclusion.description|safe }}
+      </div>
+    {% else %}
+      <div class="quiz-conclusion-description">
+        {{ conclusion.description|safe }}
+      </div>
+    {% endif %}
+
+    <p class="quiz-summary">
+      <b>{% translate "Summary:" %}</b>
+    </p>
+    {% for dict in final_quiz %}
+      <fieldset class="quiz-summary-fieldset">
+        <legend>{{ dict.question.label }}</legend>
+        {% for answer in dict.answers %}
+          <div class="quiz-answer">
+            <input type="checkbox" id="answer_{{ forloop.counter }}" checked disabled />
+            <label for="answer_{{ forloop.counter }}" ><div class="answer">{{ answer|safe }}</div></label>
+          </div>
+        {% empty %}
+          <p>
+            <i>{% translate "You haven't selected any answer." %}</i>
+          </p>
+        {% endfor %}
+      </fieldset>
+    {% endfor %}
+
+    {% if relaunch_button %}
+      <a href="{% url 'weighted_answers_quiz' request.resolver_match.kwargs.pk %}">{% translate "Relaunch the quiz" %}</a>
+    {% endif %}
+
+    {% if final_quiz|length > 0 and weasyprint_download_uuid %}
+      <a href="{% url 'quiz_download_pdf' weasyprint_download_uuid %}?name=resultat_quiz.pdf" download="resultat_quiz.pdf" target="_blank">{% translate "Download the summary in pdf" %}</a>
+    {% endif %}
+
+
+    {% if thank_you %}
+      <p class="thank_you">{% translate "Thank you for your answers." %}</p>
+    {% endif %}
+
+    {% if more_info_quiz and more_info_quiz_after_main_quiz %}
+      {% include "django_easy_quiz/more_info_quiz.html" %}
+    {% endif %}
+
+  {% else %}
+
+    {{ quiz.description|safe }}
+
+    <form method="post" autocomplete="off">
+      {% csrf_token %}
+
+      {% for form in formset %}
+        <fieldset>
+          <legend>{{ form.initial.question.label|safe }}</legend>
+          {% for answer in form.initial.answers %}
+            <p>
+              <input type="{% if form.initial.question.multiple_answers %}checkbox{% else %}radio{% endif %}" name="question_{{ form.initial.question.id }}" value="{{ answer.id }}" id="answer_{{ form.initial.question.id }}_{{ answer.id }}" {% if not form.initial.question.multiple_answers %}required{% endif %} />
+              <label for="answer_{{ form.initial.question.id }}_{{ answer.id }}">
+                <span class="answer">{{ answer.label|safe }}</span>
+              </label>
+            </p>
+          {% endfor %}
+        </fieldset>
+      {% endfor %}
+      {% if saved_quiz_id %}
+        <input type="hidden" name="saved_quiz" value="{{ saved_quiz_id }}" />
+      {% endif %}
+
+      {% if more_info_quiz and more_info_quiz_after_main_quiz == False %}
+        {% include "django_easy_quiz/more_info_quiz.html" with hide_submit_button_and_form=True %}
+      {% endif %}
+
+      <button type="submit">{% translate "Submit" %}</button>
+    </form>
+
+  {% endif %}
+
+
+</div>
