@@ -1,0 +1,291 @@
+Metadata-Version: 2.4
+Name: uh-joan-pubmed-mcp-server
+Version: 0.1.2
+Summary: An MCP server for searching, retrieving, and analyzing articles from PubMed
+Project-URL: Homepage, https://github.com/uh-joan/pubmed-mcp-server
+Project-URL: Documentation, https://github.com/uh-joan/pubmed-mcp-server#readme
+Project-URL: Repository, https://github.com/uh-joan/pubmed-mcp-server
+Project-URL: Bug Tracker, https://github.com/uh-joan/pubmed-mcp-server/issues
+License: MIT
+License-File: LICENSE
+Keywords: articles,biomedical,mcp,pubmed,research,search
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Internet :: WWW/HTTP :: Dynamic Content
+Classifier: Topic :: Scientific/Engineering :: Bio-Informatics
+Classifier: Topic :: Scientific/Engineering :: Information Analysis
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.10
+Requires-Dist: beautifulsoup4>=4.9.3
+Requires-Dist: mcp>=1.4.1
+Requires-Dist: requests>=2.25.1
+Description-Content-Type: text/markdown
+
+# PubMed MCP Server
+
+[![npm version](https://badge.fury.io/py/pubmed-mcp-server.svg)](https://badge.fury.io/py/pubmed-mcp-server)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![FastMCP](https://img.shields.io/badge/FastMCP-0.6.0-green.svg)](https://github.com/jlowin/fastmcp)
+
+An MCP server providing access to PubMed's vast repository of biomedical literature through a simple interface. This server enables AI assistants to search, access, and analyze scientific articles, retrieve detailed metadata, and perform comprehensive analysis in a programmatic way.
+
+## 🔬 Supported Data Sources
+
+This server provides comprehensive access to biomedical literature and research data:
+
+### Scientific Literature
+- **PubMed Search** - Query millions of biomedical articles with keywords or advanced search
+- **Article Metadata** - Retrieve detailed information including authors, abstracts, and citations
+- **Full-text Access** - Attempt to download PDF content when available
+
+### Research Analysis
+- **Deep Paper Analysis** - Perform comprehensive analysis of research papers
+- **Research Prompts** - Specialized analysis templates for biomedical research
+- **Citation Analysis** - Track research impact and relationships
+
+### Data Integration
+- **FastMCP Framework** - High-performance async server implementation
+- **Efficient Retrieval** - Optimized access to paper metadata and content
+- **Research Support** - Facilitate biomedical sciences research and analysis
+
+## Installation
+
+### From pip
+
+```bash
+pip install pubmed-mcp-server
+```
+
+Then run directly:
+
+```bash
+python pubmed_server.py
+```
+
+### From Source
+
+1. Clone this repository:
+
+```bash
+git clone https://github.com/uh-joan/pubmed-mcp-server.git
+cd pubmed-mcp-server
+```
+
+2. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Start the server:
+
+```bash
+python pubmed_server.py
+```
+
+## Project Structure
+
+```
+src/
+├── pubmed_server.py          # Main MCP server implementation
+├── pubmed_web_search.py      # PubMed search and retrieval logic
+├── requirements.txt          # Python dependencies
+├── pyproject.toml           # Project configuration
+└── README.md                # This file
+```
+
+## 🔧 Configuration
+
+The server can be configured using environment variables:
+
+### Server Settings
+- `SERVER_NAME`: Server name (default: 'pubmed-mcp-server')
+- `SERVER_VERSION`: Server version (default: '1.0.0')
+- `LOG_LEVEL`: Logging level - 'error', 'warn', 'info', 'debug' (default: 'info')
+
+### Performance Settings
+- `REQUEST_TIMEOUT`: Request timeout in milliseconds (default: 30000)
+- `MAX_REQUEST_SIZE`: Maximum request size in bytes (default: 1048576)
+- `ENABLE_PERFORMANCE_MONITORING`: Enable performance monitoring (default: false)
+
+### Development Settings
+- `NODE_ENV`: Environment mode (default: 'production')
+- `DEV_MODE`: Enable development mode (default: false)
+- `DEBUG`: Enable debug logging (default: false)
+
+## MCP Client Configuration
+
+### Claude Desktop
+
+Add this configuration to your `claude_desktop_config.json`:
+
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "pubmed": {
+      "command": "python",
+      "args": ["/path/to/pubmed-mcp-server/pubmed_server.py"],
+      "env": {
+        "LOG_LEVEL": "info"
+      }
+    }
+  }
+}
+```
+
+### Cursor MCP Settings
+
+To use this server with Cursor, add this configuration to your `~/.cursor/mcp.json`:
+
+```json
+{
+  "pubmed-mcp-server": {
+    "command": "python",
+    "args": ["/path/to/pubmed-mcp-server/pubmed_server.py"],
+    "env": {
+      "LOG_LEVEL": "info",
+      "DEV_MODE": "false"
+    }
+  }
+}
+```
+
+Make sure to:
+1. Replace `/path/to/pubmed-mcp-server` with your actual project path
+2. Restart your MCP client after making changes
+
+## 🔍 Available Tools
+
+The PubMed MCP Server provides the following tools for biomedical research:
+
+### Literature Search Tools
+
+**Tool Name**: `search_pubmed_key_words`
+**Description**: Search for articles on PubMed using keywords and terms.
+
+**Usage Example**:
+```javascript
+{
+  "query": "CRISPR gene editing",
+  "max_results": 10,
+  "sort": "relevance"
+}
+```
+
+**Tool Name**: `search_pubmed_advanced`
+**Description**: Perform advanced search with multiple parameters and filters.
+
+**Parameters**:
+- `query` (required): Search query string
+- `max_results`: Maximum results to return (default: 10)
+- `sort`: Sort order ('relevance', 'date', 'author')
+- `filters`: Additional search filters
+- `date_range`: Limit results by publication date
+
+### Article Analysis Tools
+
+**Tool Name**: `get_pubmed_article_metadata`
+**Description**: Fetch detailed metadata for a specific PubMed article using its PMID.
+
+**Tool Name**: `download_pubmed_pdf`
+**Description**: Attempt to download the full-text PDF for a PubMed article.
+
+**Tool Name**: `deep_paper_analysis`
+**Description**: Perform comprehensive analysis of a PubMed article including methodology, findings, and significance.
+
+## Usage Examples
+
+### Basic Literature Search
+
+You can ask the AI assistant to search for papers using queries like:
+
+```
+Can you search PubMed for recent papers about CRISPR gene editing?
+```
+
+### Detailed Article Analysis
+
+Once you have a PMID, you can request detailed analysis:
+
+```
+Can you perform a deep analysis of the paper with PMID 12345678?
+```
+
+### Research Workflow
+
+```
+Search for papers on "COVID-19 vaccine effectiveness", then analyze the top 3 most recent papers for methodology and findings.
+```
+
+## Development
+
+### Prerequisites
+
+- Python 3.10+
+- FastMCP library
+- requests
+- beautifulsoup4
+
+### Development Setup
+
+1. Start in development mode:
+
+```bash
+DEV_MODE=true python pubmed_server.py
+```
+
+2. Run with debug logging:
+
+```bash
+LOG_LEVEL=debug python pubmed_server.py
+```
+
+3. Test the server:
+
+```bash
+python -c "import pubmed_server; print('✅ Server module loaded successfully')"
+```
+
+## 📡 API Integration
+
+This server integrates with PubMed's E-utilities API provided by the National Center for Biotechnology Information (NCBI). The API provides access to biomedical literature with search and retrieval capabilities.
+
+### Supported Data Sources
+- **NCBI/NLM**: National Center for Biotechnology Information
+- **PubMed**: Biomedical literature database
+- **PMC**: PubMed Central full-text articles
+- **MeSH**: Medical Subject Headings
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## ⚠️ Disclaimer
+
+This tool is for research purposes only. Please respect PubMed's terms of service and use this tool responsibly.
+
+## 📚 Resources
+
+- [PubMed](https://pubmed.ncbi.nlm.nih.gov/)
+- [NCBI E-utilities](https://www.ncbi.nlm.nih.gov/books/NBK25501/)
+- [Model Context Protocol](https://github.com/modelcontextprotocol)
+- [FastMCP Framework](https://github.com/jlowin/fastmcp)
