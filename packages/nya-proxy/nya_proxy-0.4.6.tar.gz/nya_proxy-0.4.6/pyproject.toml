@@ -1,0 +1,108 @@
+[build-system]
+requires = ["setuptools>=77.0.3", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nya-proxy"
+version = "0.4.6"
+description = "A lightweight, flexible API proxy with dynamic token rotation, load balancing, and rate limiting capabilities."
+readme = "README.md"
+authors = [
+    {name = "Nya Foundation Team (k3scat)", email = "k3scat@gmail.com"},
+]
+license = "MIT"
+license-files = ["LICENSE"]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "httpx[socks]>=0.24.0",
+    "setuptools>=42.0.0",
+    "watchfiles>=0.18.0",
+    "jmespath>=1.0.1",
+    "orjson>=3.10,<4",
+    "loguru>=0.7.0",
+    "nekoconf[remote,schema,server]==1.2.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.10.0",
+    "aioresponses>=0.7.4",
+]
+lint = [
+    "flake8>=6.0.0",
+    "black>=23.0.0",
+    "isort>=5.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=nya --cov-report=term-missing"
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["nya"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+    "raise ImportError"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/Nya-Foundation/nyaproxy"
+"Bug Tracker" = "https://github.com/Nya-Foundation/nyaproxy/issues"
+
+[project.scripts]
+nyaproxy = "nya.server.app:main"
+
+
+[tool.setuptools]
+package-dir = {"" = "."}  # Use current directory as source root
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]  # Root directory for discovery
+include = ["nya*"] # Include nya and its subpackages
+
+
+[tool.setuptools.package-data]
+"nya" = ["config.yaml", "schema.json"]
+"nya.html" = ["*.html", 'favicon.ico', "static/**/*"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["*.pyc", "*.pyo", "__pycache__/*"]
+
+[tool.semantic_release]
+tag_format = "v{version}"
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["nya/_version.py:__version__"]
+build_command = "python -m pip install build && python -m build"
+commit_parser = "conventional"
+commit_message = "chore(release): bump version to v{version} [skip ci]"
+commit_author = "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+[tool.semantic_release.publish]
+dist_glob_patterns = ["dist/*"]
+upload_to_vcs_release = true
