@@ -1,0 +1,19 @@
+# Stub file for type hints
+
+import socket
+import threading
+import queue
+import time
+from johnsonthy.logging import LOGGER as _LOGGER
+from johnsonthy.thread.handler import ThreadPoolHandler as _ThreadPoolHandler
+from ytsocket.receiver import Receiver as _Receiver
+from ytsocket.sender import Sender as _Sender
+
+class YTSocket:
+    def __init__(self, *args, **kwargs): ...
+    def run(self, *args, **kwargs): ...
+    def startServer(self, *args, **kwargs): ...
+    def _handleServer(self, *args, **kwargs): ...
+    def stopServer(self, *args, **kwargs): ...
+    def simulate_scanning(self, *args, **kwargs): ...
+
