@@ -1,0 +1,81 @@
+[project]
+name = "continuousvi"
+version = "0.1.12"
+description = "Analyzing single-cell RNA-seq data with continuous covariates extinding scVI."
+readme = "README.md"
+authors = [
+    { name = "Yuya Sato", email = "yu.pisces.556223@akane.waseda.jp" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "anndata==0.11",
+    "fa2-modified>=0.3.10",
+    "grandprix>=0.1.2",
+    "igraph>=0.11.8",
+    "leidenalg>=0.10.2",
+    "numpy>=2.0.2",
+    "openpyxl>=3.1.5",
+    "pandas>=2.2.3",
+    "patsy>=1.0.1",
+    "polars>=1.26.0",
+    "pyarrow>=19.0.1",
+    "pygam>=0.8.0",
+    "requests>=2.32.3",
+    "scanpy>=1.8.0",
+    "scvi-tools>=1.3.0",
+    "statsmodels>=0.14.4",
+    "torch==2.5.1",
+]
+
+[project.scripts]
+continuousvi = "continuousvi:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "harmonypy>=0.0.10",
+    "hatch>=1.14.0",
+    "ipykernel>=6.29.5",
+    "ipywidgets>=8.1.5",
+    "keyrings-alt>=5.0.2",
+    "mypy>=1.15.0",
+    "ruff>=0.11.2",
+    "scib-metrics>=0.5.4",
+]
+[tool.ruff]
+extend-include = ["*.ipynb"]
+exclude = [".venv/*", "*/resources/*", "*/data/*", "*/out/*", "*/dist/*"] # チェックを除外するディレクトリ
+line-length = 200  # 1行の最大文字数
+indent-width = 4  # インデント幅（スペースの数）
+
+[tool.ruff.format]
+docstring-code-format = true
+indent-style = "space"  # または "tab"
+
+[tool.ruff.lint]
+select = ["ALL"]
+
+ignore=[
+    "ERA001", # commented out code
+    "G004", # Logging
+    "FBT001", # boolean type
+    "FBT002", # boolean type
+    "UP007", # Enable Optional[XXX]
+    "EM101", #Exception
+    "TRY003", #Exception
+    "PLR0913", # long args
+    "EM102", # f-string usage
+    "D205", # Description
+    "D401", # Doc string
+    "N806", # Doc string
+    "N999", # Public module description
+    "C901", "PLR0915", # Args
+    "PLR0912", # Branches
+]
+
+unfixable = [
+    "F401",   # unused import
+]
