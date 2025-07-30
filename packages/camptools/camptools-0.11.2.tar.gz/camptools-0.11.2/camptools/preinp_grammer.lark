@@ -1,0 +1,82 @@
+?start         : statement
+
+?statement    : definition | assignment | convert_expr
+
+
+// パラメータのマクロ的定義
+?definition    : define_expr
+?define_expr   : define | define_with_index | define_list | define_list_with_index
+define        : symbol "=" value
+define_with_index : symbol "(" array_key ")" "=" value
+define_list   : symbol "=" values
+define_list_with_index : symbol "(" array_key ")" "=" values
+
+// マクロ内で用いる変数代入
+assignment    : "var" symbol "=" value
+
+
+// 複雑なパラメータ変換を行う場合の関数呼び出し型マクロ定義
+convert_expr  : function_name "(" (arguments ",")? keyword_arguments? ")"
+function_name : symbol
+
+arguments     : [arg ("," arg)*]
+arg           : value
+
+keyword_arguments : [kwarg ("," kwarg)*]
+kwarg         : kwarg_name "=" value
+
+
+// 細かいトークンの記述
+values       : value_list
+?value_list   : [value ("," value)*]
+?value        : string | num_expr
+kwarg_name    : symbol
+
+array_key     : index_list
+?index_list   : [index ("," index)*]
+?index         : num_expr | slice
+slice         : num_expr ":" num_expr
+
+?num_expr     : term | num_add | num_sub | num_min | num_max | num_if_else
+num_add       : num_expr "+" term
+num_sub       : num_expr "-" term
+num_min       : "min" "(" num_expr "," num_expr ")"
+num_max       : "max" "(" num_expr "," num_expr ")"
+
+num_if_else   : num_expr "if" condition "else" num_expr
+?condition    : cond_lt | cond_le | cond_eq | cond_ge | cond_gt | cond_ne
+cond_lt       : num_expr "<" num_expr
+cond_le       : num_expr "<=" num_expr
+cond_eq       : num_expr "==" num_expr
+cond_ge       : num_expr ">=" num_expr
+cond_gt       : num_expr ">" num_expr
+cond_ne       : num_expr "!=" num_expr
+
+?term         : factor| num_mul | num_div
+num_mul       : term "*" factor
+num_div       : term "/" factor
+factor        : number | variable_expr | "(" num_expr ")" | num_sin | num_cos | num_tan | num_sqrt | num_to_int | trans_unit | reverse_unit
+num_sin       : "sin" "(" num_expr ")"
+num_cos       : "cos" "(" num_expr ")"
+num_tan       : "tan" "(" num_expr ")"
+num_sqrt       : "sqrt" "(" num_expr ")"
+num_to_int    : "int" "(" num_expr ")"
+trans_unit    : "unit" "." symbol "." "trans" "(" num_expr ")"
+reverse_unit  : "unit" "." symbol "." "reverse" "(" num_expr ")"
+number        : integer | float
+
+?variable_expr  : variable | variable_element
+variable_element: variable_expr "[" integer "]"
+
+variable      : symbol
+symbol        : CNAME
+string        : ESCAPED_STRING
+integer       : SIGNED_INT
+float         : SIGNED_FLOAT
+
+%import common.CNAME
+%import common.ESCAPED_STRING
+%import common.SIGNED_INT
+%import common.SIGNED_FLOAT
+%import common.WS
+%ignore WS
