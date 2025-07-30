@@ -1,0 +1,76 @@
+[project]
+name = "img-phash-tools"
+description="Image Hash command line tools."
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers=[
+    "Development Status :: 1 - Planning",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+license = {file = "LICENSE"}
+dependencies = [
+    "numpy",
+    "opencv-python",
+    "opencv-contrib-python",
+    "typer"
+]
+version = "0.0.1"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "black",
+    "prospector[with-everything]",
+    "setuptools",
+]
+
+[[project.authors]]
+name = "PoulpHunter"
+email = "poulphunter@yahoo.fr"
+
+[tool.coverage.run]
+disable_warnings = ["no-data-collected"]
+omit = [
+    # omit anything in a .local directory anywhere
+    "*/.local/*",
+    # omit everything in /usr
+    "/usr/*",
+    # omit this single file
+    "config.py",
+    "config-3.py",
+    ]
+source = [
+    ".venv/lib/python3.11/site-packages/imgphash",
+    ".venv/lib/python3.11/site-packages/dupimg",
+    ".venv/lib/python3.11/site-packages/simg",
+    ".venv/lib/python3.11/site-packages/qsimg",
+    ".venv/lib/python3.11/site-packages/img-phash-tools",
+    ]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+
+[tool.black]
+line-length = 79
+target-version = ['py313']
+
+[build-system]
+requires = ["setuptools >= 80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+imgphash = "imgphash.cli:app"
+dupimg = "dupimg.cli:app"
+simg = "simg.cli:app"
+qsimg = "qsimg.cli:app"
