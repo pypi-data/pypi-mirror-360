@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+   <title>Channel ${channel}</title>
+</head>
+<body onload="fetchMessages()">
+  <header>
+    <h1>Channel ${channel}</h1>
+  </header>
+<%!
+import cherrypy
+import qrcode
+import qrcode.image.svg
+qr = qrcode.QRCode(image_factory=qrcode.image.svg.SvgPathImage)
+url = cherrypy.url()
+qr.add_data(url)
+qr.make(fit=True)
+img = qr.make_image()
+img_str = img.to_string(encoding="utf8").decode()
+%>
+  <span>${img_str}</span>
+  <main>
+    <section>
+    <p>
+      <button disabled id="enablePush">
+        Enable Push Messaging
+      </button>
+    </p>
+    </section>
+    <section>
+      <h2>New message</h2>
+      <form id="message-form" onsubmit="return false;" action="">
+          <label for="message">Message:</label>
+          <input type="text" id="message" name="message">
+          <button type="submit">Send</button>
+        </form>
+      <div style="border:1px solid gray;width:fit-content;margin:5px;padding:5px;">
+        <div id="toggleMessageFormat" style="font-style: italic;cursor: pointer;" onclick="toggleMessageFormat()" >Message Format +</div>
+        <div id="messageFormatDescription" style="display: none;">
+        <div>A message can be any string, that will be notified as is except for JSON strings.<br>
+          JSON data using this format produce better looking notifications:</div>
+<pre>{
+  "title"  : "title of the message",                       // default: "Notification"
+  "body"   : "body of the message",                        // default: no body text
+  "icon"   : "url to a small icon image",                  // default: no icon
+  "image"   : "url to an image",                           // default: no image
+  "action" : "url to open when clicking the notification", // default: open this page
+  "silent" : true or false                                 // default: false, not silent
+}</pre>
+This is an example message:
+<pre>{
+  "title"  : "Hello from PushService",
+  "body"   : "This is a test message from PushService.",
+  "icon"   : "https://www.esuli.it/images/ae64.png",
+  "image"   : "https://www.esuli.it/images/andrea.jpg",
+  "action" : "https://esuli.it"
+}</pre>
+        </div>
+        <script>
+            function toggleMessageFormat() {
+                const description = document.getElementById('messageFormatDescription');
+                const toggleText = document.getElementById('toggleMessageFormat');
+
+                if (description.style.display === 'none') {
+                    description.style.display = 'block';
+                    toggleText.textContent = 'Message Format -';
+                } else {
+                    description.style.display = 'none';
+                    toggleText.textContent = 'Message Format +';
+                }
+            }
+        </script>
+      </div>
+    </section>
+    <section>
+      <h2>Messages</h2>
+      <ul id="messages">
+      </ul>
+      <button id="refreshMessages" type="button" onclick="fetchMessages()">Refresh</button>
+    <script>
+        async function fetchMessages() {
+          document.getElementById('response-message').textContent = 'Fetching messages';
+          try {
+              const response = await fetch('${channel}/messages');
+              const messages = await response.json();
+              const messagesList = document.getElementById('messages');
+              messagesList.innerHTML = '';
+              messages.forEach(message => {
+                  const listItem = document.createElement('li');
+                  listItem.textContent = message.time+' ['+message.sender+']: '+message.content;
+                  messagesList.appendChild(listItem);
+              });
+          } catch (error) {
+              document.getElementById('response-message').textContent = 'Failed to fetch messages: '+error;
+              return;
+          }
+          document.getElementById('response-message').textContent = '';
+        };
+    </script>
+    </section>
+    <section>
+      <p id="response-message"></p>
+    </section>
+    % if is_admin:
+    <section>
+        <h2>Subscriptions</h2>
+        <ul>
+      % for subscription in subscriptions:
+          <li>${subscription['id']}, ${subscription['time']}, ${subscription['ip']} - <button onclick="confirmDelete('${channel}','${subscription['id']}');">unsubscribe</button></li>
+      % endfor
+        </ul>
+        <script>
+        function confirmDelete(channel,subscription_id) {
+            if (confirm("Are you sure you want to delete this subscription?")) {
+                fetch(channel+'/delete_subscription/'+subscription_id)
+                .then(()=>{window.location.reload();});
+            }
+            return false;
+        }
+        </script>
+        </ul>
+    </section>
+    % endif
+  </main>
+  <script src="${channel}/subscription.js"></script>
+  <script>
+      document.getElementById('message-form').addEventListener('submit', function(event) {
+          document.getElementById('response-message').textContent = 'Sending message';
+          const message = document.getElementById('message').value;
+          fetch('${channel}/send', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: message
+          })
+          .then(() => {
+              fetchMessages();
+          })
+          .catch(error => {
+              document.getElementById('response-message').textContent = 'Failed to send message: '+error;
+          });
+      });
+  </script>
+</body>
+</html>
