@@ -1,0 +1,76 @@
+[tool.poetry]
+name = "resonances"
+version = "0.5.0"
+description = "Identification of mean-motion resonances"
+authors = ["Evgeny Smirnov <smirik@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "http://smirik.github.io/resonances/"
+repository = "https://github.com/smirik/resonances"
+documentation = "http://smirik.github.io/resonances/"
+keywords = ["astronomy", "nbody", "resonance", "mmr"]
+classifiers = [
+    'Development Status :: 4 - Beta',
+    'Intended Audience :: Science/Research',
+    'Intended Audience :: Developers',
+    'Topic :: Scientific/Engineering :: Astronomy',
+    'Programming Language :: Python :: 3',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: OS Independent',
+]
+
+[tool.poetry.dependencies]
+python = ">=3.11, <4"
+# Core scientific computing
+numpy = "^2.3.0"
+scipy = "^1.15.3"
+pandas = "^2.3.0"
+# Visualization
+matplotlib = "^3.10.3"
+seaborn = "^0.13.2"
+# Astronomy specific
+astropy = "^7.1.0"
+astroquery = "^0.4.10"
+rebound = "^4.4.8"
+# rebound = "^4.4.2"
+astdys = ">=0.9.4"
+# Utilities
+tqdm = "^4.67.1"
+python-dotenv = "^1.1.0"
+lxml-html-clean = ">=0.1.1,<0.5.0"
+
+[tool.poetry.group.dev.dependencies]
+# Testing
+pytest = "^8.4.0"
+coverage = "^7.8.2"
+# Code quality
+black = { extras = ["jupyter"], version = "^25.1.0" }
+flake8 = "^7.2.0"
+flake8-bugbear = "^24.12.12"
+# Documentation
+mkdocs = "1.4.2"
+mkdocs-jupyter = "^0.25.1"
+# Jupyter support
+ipykernel = "^6.29.5"
+
+[tool.coverage.run]
+omit = [".*", "tests/*", "*/site-packages/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/resonances"]
+filterwarnings = [
+    "ignore::DeprecationWarning:rebound",
+    "ignore::RuntimeWarning:rebound.horizons",
+]
+
+[tool.coverage.report]
+fail_under = 80
+omit = [".*", "tests/resonances/*", "*/site-packages/*"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 140
+skip-string-normalization = true
