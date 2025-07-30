@@ -1,0 +1,60 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "mosaic-gui"
+version = "1.0.2.post1"
+description = "mosaic"
+authors = ["Valentin Maurer <valentin.maurer@embl-hamburg.de>"]
+license = "GPL-2.0-only"
+readme = "README.md"
+repository = "https://github.com/KosinskiLab/mosaic"
+packages = [{include = "mosaic", from = "src"}]
+include = [
+    "LICENSE",
+    "README.md",
+    "src/mosaic/data/**/*"
+]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+numpy = ">=1.22.2"
+scipy = ">=1.14.1"
+vtk = ">=9.3.1"
+PyQt6 = "==6.7.1"
+pyqtgraph = ">=0.13.3"
+pytme = ">=0.2.6"
+open3d = ">=0.18.0"
+libigl = "==2.5.1"
+pymeshlab = ">=2023.12"
+qtawesome = "*"
+matplotlib = "*"
+imageio = "*"
+imageio-ffmpeg = "*"
+Pillow = "*"
+importlib_resources = "*"
+zmesh = ">=1.8.0"
+tqdm = ">=4.67.1"
+pyfqmr = ">=0.3.0"
+
+[tool.poetry.group.optional.dependencies]
+membrain-seg = "==0.0.5"
+
+[tool.poetry.scripts]
+mosaic = "mosaic.scripts.app:main"
+
+[tool.poetry.urls]
+"Homepage" = "https://github.com/KosinskiLab/mosaic"
+
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]
+
+[tool.coverage.run]
+omit = ["tests/*"]
+
+[tool.pyright.defineConstant]
+PYQT5 = false
+PYSIDE2 = false
+PYQT6 = true
+PYSIDE6 = false
