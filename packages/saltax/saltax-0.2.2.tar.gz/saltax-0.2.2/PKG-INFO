@@ -1,0 +1,62 @@
+Metadata-Version: 2.3
+Name: saltax
+Version: 0.2.2
+Summary: Salting MC into straxen
+Author: Lanqing Yuan
+Requires-Python: >=3.9,<3.13
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Topic :: Scientific/Engineering :: Physics
+Requires-Dist: numba
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: scipy
+Requires-Dist: strax
+Requires-Dist: straxen
+Requires-Dist: tabulate
+Requires-Dist: xenon-fuse (>=1.5.3)
+Project-URL: Repository, https://github.com/XENONnT/saltax
+Description-Content-Type: text/markdown
+
+# saltax
+
+[![DOI](https://zenodo.org/badge/646649000.svg)](https://doi.org/10.5281/zenodo.14247662)
+[![Test package](https://github.com/XENONnT/saltax/actions/workflows/test_package.yml/badge.svg?branch=main)](https://github.com/XENONnT/saltax/actions/workflows/test_package.yml)
+[![Coverage Status](https://coveralls.io/repos/github/XENONnT/saltax/badge.svg?branch=main&kill_cache=1)](https://coveralls.io/github/XENONnT/saltax?branch=main&kill_cache=1)
+[![PyPI version shields.io](https://img.shields.io/pypi/v/saltax.svg)](https://pypi.python.org/pypi/saltax/)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/XENONnT/saltax/main.svg)](https://results.pre-commit.ci/latest/github/XENONnT/saltax/main)
+
+Salting `fuse` into `strax` data, followed by comparison and analysis. Please check this [notes](https://xe1t-wiki.lngs.infn.it/doku.php?id=lanqing:ambience_interference_and_sprinkling#raw_records_simu) to see how it serves physics.
+
+## Installation
+
+```
+cd saltax
+pip install -e ./ --user
+```
+
+## Tutorial
+
+Please check notebooks in `notebooks/`.
+
+## Computing
+
+Please see folder `jobs/` for slurm job submission. Below you can see a benchmark from a 26 seconds Ar37 run, sprinkled 50Hz flat beta band. You can roughly estimate the overhead by scaling it, neglecting the rate dependence in overhead.
+
+| Step                  | Overhead [sec] (salt) | Overhead [sec] (simu) |
+| :-------------------: | :-------------------: | :-------------------: |
+| `microphysics_summary`| 19                    |                       |
+| `raw_records_simu`    | 210                   |                       |
+| `records`             | 15                    |                       |
+| `peaklets`            | 68                    | 9                     |
+| `peak_basics`         | 3                     | 1                     |
+| `event_info`          | 63                    | 11                    |
+
