@@ -1,0 +1,29 @@
+<div class="hidden">
+	<div id="rs2_default_project">
+		<div class="panel panel-default">
+			<div class="panel-body form-horizontal">
+				<h3>Default project</h3>
+				<div class="form-group">
+					<label class="control-label col-sm-3" style="text-align: left" for="user_preference_select_project">Select your default project</label>
+					<div class="col-sm-4">
+						<select id="user_preference_select_project" class="form-control" name="default_project">
+							<option value=""></option>
+							{% for user_project in projects %}
+								<option value="{{ user_project.id }}" {% if user_project.id == user_default_project.id %}selected{% endif %}>{{ user_project }}</option>
+							{% endfor %}
+						</select>
+					</div>
+					<div class="col-sm-offset-3 col-sm-9 help-block">
+						Select your default project to charge for area access when not using any tool.<br>If left blank, the first project of the list will be automatically used.
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script>
+	{# Insert our HTML fragment at the end of the form, right before the submit button #}
+	let rs2_default_project = document.getElementById("rs2_default_project");
+    let submit_button = $('.container form [type=submit]')[0];
+	submit_button.parentNode.insertBefore(rs2_default_project, submit_button);
+</script>
