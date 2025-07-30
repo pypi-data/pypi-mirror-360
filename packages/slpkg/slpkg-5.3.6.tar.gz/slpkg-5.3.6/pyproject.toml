@@ -1,0 +1,63 @@
+[build-system]
+requires = ["flit_core>=3.10.0,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "slpkg"
+version = "5.3.6"
+authors = [
+    { name = "Dimitris Zlatanidis", email = "dslackw@gmail.com" },
+]
+maintainers = [
+    { name = "Dimitris Zlatanidis", email = "dslackw@gmail.com" },
+]
+description = "Package manager utility for Slackware Linux"
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["slackware", "linux", "package", "manager", "tool"]
+license = { text = "GNU General Public License v3 (GPLv3)" }
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Natural Language :: English",
+    "Environment :: Console",
+    "Operating System :: POSIX",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Unix Shell",
+    "Topic :: Utilities", "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Archiving :: Packaging",
+    "Topic :: System :: Software Distribution",
+    "Topic :: System :: Installation/Setup",
+    "Topic :: System :: Systems Administration",
+    "Topic :: System :: Software Distribution",
+    "Development Status :: 5 - Production/Stable"
+]
+
+dependencies = [
+    "tomlkit>=0.13.2"
+]
+
+[[tool.mypy.overrides]]
+module = ["untyped_package.*"]
+follow_untyped_imports = true
+
+[tool.pylint.MESSAGES_CONTROL]
+disable = ["missing-module-docstring", "C0301"]
+
+[tool.flit_core]
+name = "slpkg"
+
+[project.urls]
+Homepage = "https://dslackw.gitlab.io/slpkg/"
+Documentation = "https://dslackw.gitlab.io/slpkg/"
+Repository = "https://gitlab.com/dslackw/slpkg.git"
+Changelog = "https://gitlab.com/dslackw/slpkg/-/blob/master/ChangeLog.txt"
+
+[project.optional-dependencies]
+socks = ["PySocks>=1.7.1"]
+dialog = ["pythondialog>=3.5.3"]
+
+[project.scripts]
+slpkg = "slpkg.main:main"
+slpkg_new-configs = "slpkg.new_configs:main"
