@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+"""
+Setup script for CBUAE MCP Server.
+This is mainly for compatibility with older build systems.
+The main configuration is in pyproject.toml.
+"""
+
+from setuptools import setup
+
+# Read the contents of README file
+from pathlib import Path
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text(encoding='utf-8')
+
+setup(
+    long_description=long_description,
+    long_description_content_type='text/markdown'
+)
