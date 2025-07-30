@@ -1,0 +1,20 @@
+services:
+  html2rss-ai:
+    image: html2rss-ai
+    container_name: html2rss-ai
+    build:
+      context: .
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+    user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OUTPUT_DIR=/app/data/output
+      - PATTERN_CACHE_DIR=/app/pattern_cache
+    volumes:
+      - ./data/output:/app/data/output
+      - ./pattern_cache:/app/pattern_cache
+      - ./config:/app/config:ro
+    working_dir: /app
+    command: ["--help"]
