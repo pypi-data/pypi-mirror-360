@@ -1,0 +1,420 @@
+module sztpd-common {
+    yang-version 1.1;
+    namespace "https://watsen.net/sztpd-common";
+    prefix sztpd-common;
+
+    import ietf-yang-types {
+        prefix yang;
+        reference
+            "RFC 6991: Common YANG Data Types";
+    }
+
+    import ietf-inet-types {
+        prefix inet;
+        reference
+            "RFC 6991: Common YANG Data Types";
+    }
+
+    import yangcore {
+        prefix yangcore;
+    }
+
+    organization
+        "Watsen Networks (https://watsen.net)";
+
+    description
+        "This module defines groupings shared by both the 'sztpd'
+         and 'sztpd-rpcs' modules. 
+
+         Copyright (c) 2021-2025 Watsen Networks. All Rights Reserved.";
+
+    revision "2025-07-08" {
+        description
+            "Initial version";
+    }
+
+
+  /************/
+  /* Features */
+  /************/
+
+  feature signing-supported {
+    if-feature "signed-managed-data-implemented";
+    description
+      "Indicates that the SZTPD supports itself signing
+       conveyed information.";
+  }
+
+  feature signed-managed-data-implemented {
+    description
+      "Indicates that the SZTPD supports returning signed
+       managed data at all (even if provided externally).";
+  }
+
+  feature artifact-callbacks-implemented {  // FIXME: if implemented, then why sill a feature?!
+    description
+      "Indicates that the SZTPD supports the three callouts to
+       supply bootstrapping artifacts, specifically:
+         - supply-bootstrapping-data (returns up to 3 CMS structures)
+         - supply-conveyed-information (returns 1 document)
+         - supply-ownership-voucher (returns 1 CMS 'voucher' structure)";
+  }
+
+  feature local-definitions-information-implemented {
+    description
+      "Indicates that the SZTPD supports the configuration of
+       'local definition' for conveyed information per device record,
+       in addition to being able to reference definitions outside of
+       the device record (and thus potentially sharable).";
+  }
+
+  feature dynamic-ownership-verification-implemented {
+    description
+      "Indicates that the SZTPD supports authenticating device-ownership
+       inside the 'get-bootstrapping-data' handler.  Note, already SZTPD
+       implements ownership test for when the device is configured.";
+  }
+
+  feature webhook-implemented {
+    description
+      "Indicates that SZTPD is capable to executing webhooks.";
+  }
+
+    /***************/
+    /*  Groupings  */
+    /***************/
+
+    grouping dynamic-callout-result {
+      description
+        "A callout may be a callback or a list of webhooks...";
+      choice result-type {
+        case no-callout-configured {  // FIXME: why is this here? - is it used?
+          leaf no-callout-configured {
+            type empty;
+            description
+              "Identifies that no callout was configured at
+               the time the event occurred.";
+          }
+        }
+        case callout-configured {
+          leaf name {
+            type string; // leafref?  config false points to config true?
+            mandatory true;
+            description
+              "The name of the callout at the time it was called.";
+          }
+          leaf rpc-supported {
+            type identityref {
+              base yangcore:dynamic-callout-type;
+            }
+            mandatory true;
+            description
+              "The dentity of the RPC the the callout supports";
+          }
+          leaf callout-type {
+            type enumeration {
+              enum function;
+              enum webhook;
+            }
+            mandatory true;
+            description
+              "The type of callout configured.";
+          }
+          choice function-or-webhook {
+            case function {
+              container function-details {
+                leaf plugin {
+                  type string;
+                  mandatory true;
+                }
+                leaf function {
+                  type string;
+                  mandatory true;
+                }
+              }
+              container function-results {
+                // FIXME: should Python-based RPCs be required to return a tuple that includes results?
+                choice exit-status {
+                  mandatory true;
+                  leaf exception-thrown {
+                    type string;
+                  }
+                  leaf exited-normally {
+                    type string;
+                  }
+                }
+              }
+            }
+            case webhook {
+              if-feature "webhook-implemented";
+              container webhook-details {
+                leaf num-webhooks-configured {
+                  type uint8;
+                  mandatory true;
+                }
+              }
+              container webhook-results {
+                list webhook {
+                  description
+                    "Specifies information about a specific URI.";
+                  min-elements 1;
+                  leaf name {
+                    type string;
+                    mandatory true;
+                    description
+                      "The name of the webhook.";
+                  }
+                  leaf uri {
+                    type inet:uri;
+                    mandatory true;
+                    description
+                      "The URI used at the time the webhook was invoked.";
+                  }
+                  choice result-type {
+                    leaf connection-error {
+                      type string;
+                      description
+                        "The error message produced when trying to connect
+                         to the remote server.";
+                    }
+                    leaf http-status-code {
+                      type string;
+                      mandatory true;
+                      description
+                        "The HTTP status code returned by the remote system
+                         when attempting to deliver the webhook to it.";
+                    }
+                  }
+                }
+              }
+            } // case webhook
+          } // choice callout-type
+        } // case callout-configured
+      } // choice result-type
+    } // grouping dynamic-callout-result
+
+    grouping bootstrapping-log-record {
+        description
+            "A grouping that both defines the bootstrapping log record
+             persisted in SZTPD's per-device log (i.e., /sztpd:bootstrapping-log)
+             and also the bootstrapping log record passed as input into the
+             'relay-bootstrapping-log-record' dynamic callout function.";
+
+        leaf serial-number {
+            type string;
+            mandatory true;
+            description
+                "The device's serial number, as extracted during its
+                 authentication to the SZTPD.  The term 'serial-number'
+                 is used, to be consistent with RFC 8572 and IEEE 802.1AR
+                 terminology, but it may be any unique identifier.";
+            reference
+              "802.1AR: Secure Device Identity";
+        }
+        leaf timestamp {
+            type yang:date-and-time;
+            mandatory true;
+            description
+                "When the bootstrap server received the device's request.";
+        }
+        leaf source-ip {
+            type inet:ip-address;
+            mandatory true;
+            description
+                "The source IP address of the HTTP client.  This
+                 may not be the device's address, if intermediates
+                 performed network address translation (NAT).";
+        }
+        container request {
+            leaf method {
+                type enumeration {
+                    enum UNKNOWN;
+                    enum HEAD;
+                    enum GET;
+                    enum PUT;
+                    enum POST;
+                    enum PATCH;
+                    enum DELETE;
+                    enum OPTIONS;
+                }
+                mandatory true;
+                description
+                    "The HTTP method used in the request.";
+            }
+            leaf path {
+                type string;
+                mandatory true;
+                description
+                    "The relative URL requested by the request.";
+            }
+            anydata body {
+                mandatory true;
+                description
+                    "Either the 'input' document or None.";
+            }
+        }
+        container handling {
+            when "contains(../request/path, 'ietf-sztp-bootstrap-server') and (../response/return-code = 200 or ../response/return-code = 204 or ../response/return-code = 404)";
+            choice rpc {
+                mandatory true;
+                case get-bootstrapping-data-rpc {
+                    container get-bootstrapping-data {
+                        leaf selected-response { // FIXME: rename to "matched-response"? 
+                            type union {
+                                type enumeration {
+                                    enum no-responses-configured;
+                                    enum no-match-found;
+                                }
+                                type string; // the name of the matched-response used
+                            }
+                            description
+                                "Identifies the matched response selected among those
+                                 configured and the RPC's 'input', or 'no-match-found'
+                                 if no match could be found (an error condition!).";
+                        }
+                        container response-details {
+                            when '../selected-response != "no-match-found" and ../selected-response != "no-responses-configured"';
+                            choice response-type {
+                                mandatory true;
+                                /*case dynamic-callout {
+                                    if-feature "artifact-callbacks-implemented";
+                                    container via-dynamic-callout {
+                                        description
+                                            "From the 'sztpd:get-bootstrapping-data' RPC.";
+                                        uses dynamic-callout-result;
+                                    }
+                                }*/
+                                case managed-response {
+                                    container managed-response {
+                                        container conveyed-information {
+                                            grouping inline-or-reference-grouping { // local grouping definition
+                                                /*
+                                                choice inline-or-reference {
+                                                    mandatory true;
+                                                    case local {
+                                                        if-feature "local-definitions-information-implemented";
+                                                        leaf local-definition {
+                                                            type empty;
+                                                        }
+                                                    }
+                                                    case reference {
+                                                */
+                                                        leaf referenced-definition {
+                                                            type string; // no leafref ok since not config
+                                                            description
+                                                                "The name of the leafref used at the time of the bootstrapping
+                                                                 event.    This field has minimal value as the name MAY no
+                                                                 longer be a valid and/or contents of the referenced
+                                                                 definition may have changed since.";
+                                                        }
+                                                /*
+                                                    }
+                                                }
+                                                */
+                                            } // grouping inline-or-reference-grouping
+
+                                            choice conveyed-information-handler {
+                                                mandatory true;
+                                                case dynamic-callout {
+                                                    container via-dynamic-callout {
+                                                        description
+                                                            "From the 'sztpd-rpcs:supply-conveyed-information' RPC.";
+                                                        uses dynamic-callout-result;
+                                                    }
+                                                }
+                                                case cms-information {
+                                                    if-feature "signed-managed-data-implemented";
+                                                    container cms-information {
+                                                        uses inline-or-reference-grouping;
+                                                    }
+                                                }
+                                                case redirect-information {
+                                                    container via-redirect-response {
+                                                        uses inline-or-reference-grouping;
+                                                    }
+                                                }
+                                                case onboarding-information {
+                                                    container via-onboarding-response {
+                                                        uses inline-or-reference-grouping;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        container owner-certificate {
+                                            if-feature "signed-managed-data-implemented";
+                                            leaf referenced-definition {
+                                                type string; // no leafref ok since not config
+                                            }
+                                            leaf used-to-sign-response {
+                                                if-feature "signing-supported";
+                                                type boolean;
+                                                description
+                                                    "Indicates that the SZTPD signed the
+                                                     conveyed information artifact itself using
+                                                     the private key associated with this owner
+                                                     certificate.";
+                                            }
+                                        }
+                                        container ownership-voucher {
+                                            if-feature "signed-managed-data-implemented";
+                                            choice voucher-access {
+                                                mandatory true;
+                                                case dynamic-callout {
+                                                    container dynamic-callout {
+                                                        description
+                                                            "From the 'wn-sztpd-callout:supply-ownership-voucher' RPC.";
+                                                        uses dynamic-callout-result;
+                                                    }
+                                                }
+                                                case reference {
+                                                    leaf referenced-definition {
+                                                        type string; // no leafref ok since not config
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } // container managed-response
+                                } // case managed
+                            } // choice response-type
+                        } // container response-details
+                    } // container get-bootstrapping-data
+                } // case get-bootstrapping-data-rpc
+                case report-progress {
+                    container report-progress {
+                        container dynamic-callout {
+                            uses dynamic-callout-result;
+                        }
+                    }
+                }
+            } // choice rpc
+        } // container handling
+
+        container response {
+            leaf return-code {
+                type uint16;
+                mandatory true;
+                description
+                    "The HTTP status code returned to the client.";
+            }
+            anydata error-returned {
+             /* 
+              * FIXME: the 'uses' statement doesn't provide the "ietf-restonf" namespace, so
+              * validation fails.   Would augment it in, but would need to augment two 
+              * locations, which means *implementing* two different "ietf-restconf" modules...
+              *
+              * Fortunately, the pytests do validate the ietf-restconf:errors (+ sztp-csr
+              * augment), but it would obviously be better if the data-model here wasn't
+              * just an anydata!
+              */
+              description
+                "Container for the error message, if any, returned to the device.
+
+                 Ideally, ietf-restconf:errors would be augmented in here, but
+                 attempting to do so introduces a circular dependency that was
+                 difficult to overcome quickly.  The 'anydata' works, except
+                 for the tree diagram not showing the structure...";
+            }
+        }
+    } // grouping bootstrapping-log-record
+
+}

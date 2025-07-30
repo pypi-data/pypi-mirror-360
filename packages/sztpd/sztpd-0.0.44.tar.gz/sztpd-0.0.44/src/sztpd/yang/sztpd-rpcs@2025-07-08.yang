@@ -1,0 +1,335 @@
+module sztpd-rpcs {
+  yang-version 1.1;
+  namespace "https://watsen.net/sztpd-rpcs";
+  prefix sztpd-rpcs;
+
+  import ietf-inet-types {
+    prefix inet;
+    reference
+      "RFC 6991: Common YANG Data Types";
+  }
+
+/* for CMS objects (commented out)
+  import ietf-crypto-types {
+    prefix ct;
+    reference
+      "RFC 9640: Common YANG Data Types for Cryptography";
+  }
+*/
+
+  import sztpd-common {
+    prefix sztpd-common;
+  }
+
+  organization
+    "Watsen Networks (https://watsen.net)";
+
+  description
+    "This module defines RPCs that are used by SZTPD to either
+     push data to or collect data from other systems.
+
+     Copyright (c) 2019-2025 Watsen Networks. All Rights Reserved.";
+
+  revision 2025-07-08 {
+    description
+      "Initial version";
+  }
+
+
+  /**********/
+  /*  RPCs  */
+  /**********/
+
+  rpc verify-device-ownership {
+    description
+      "An RPC enabling the SZTPD to callout to another
+       system to confirm that the SZTPD (or tenant
+       therein) is the rightful owner for a list of devices
+       (i.e., a serial number).
+
+       In the case of an error, the RPC MUST return
+       the 'ietf-restconf:errors' structure defined
+       in Section 7.1 in RFC 8040.";
+    input {
+      leaf tenant {
+        type string; // the tenant record 'name'
+        mandatory true;
+      }
+      leaf-list serial-number {
+        type string;
+        min-elements 1;
+      }
+    }
+    output {
+      container verification-results {
+        list verification-result {
+          key serial-number;
+          leaf serial-number {
+            type string;
+            mandatory true;
+          }
+          leaf result {
+            type enumeration {
+              enum success;
+              enum failure;
+            }
+            mandatory true;
+          }
+          min-elements 1;
+        }
+      }
+    }
+  }
+
+  grouping common-device-input {
+    leaf serial-number {
+      type string;
+      mandatory true;
+      description
+        "The device's serial number, as extracted during its
+         authentication to the SZTPD.  The term 'serial-number'
+         is used, to be consistent with RFC 8572 and IEEE 802.1AR
+         terminology, but it may be any unique identifier.";
+      reference
+        "802.1AR: Secure Device Identity";
+    }
+    leaf source-ip-address {
+      type inet:ip-address;
+      mandatory true;
+      description
+        "The source IP address of the device's connection to SZTPD.
+         This may not be the device's real IP address if, for
+         instance, an intermediate device performed address
+         translation.";
+    }
+    /* why pass the cert?
+    leaf identity-certificate {
+      type ct:cms;
+      description
+        "The device's identity certificate (e.g., IDevID).
+
+         This parameter is not 'mandatory true' as RFC 8572 allows
+         devices to optionally authenticate using an HTTP-level
+         authentication scheme (e.g., 'digest').
+
+         This node will be present whenever the device authenticates
+         using a client certificates.";
+    }*/
+    anydata from-device {
+      description
+        "Contains the 'input' node provided by the device call
+         to the 'get-bootstrapping-data' or 'report-progress'
+         RPCs, per RFC 8572.
+
+         For the 'get-bootstrapping-data' RPC, this node
+         may contain the following possible parameters from
+         RFC 8572: 'signed-data-preferred', 'hw-model',
+         'os-name', 'os-version', and 'nonce'.  Additionally,
+         from draft-ietf-ietf-sztp-csr, this node may also
+         contain the parameters 'csr-support' and 'csr'.
+
+         For the 'report-progress' RPC, this node may contain
+         the following possible parameters from RFC 8572:
+         'progress-type', 'message', 'ssh-host-keys', and
+         'trust-anchor-certs'.";
+      reference
+        "RFC 8572:
+          Secure Zero Touch Provisioning (SZTP)
+         draft-ietf-netconf-sztp-csr:
+           Conveying a Certificate Signing Request (CSR)
+           in a Secure Zero Touch Provisioning (SZTP)
+           Bootstrapping Request";
+    }
+  }
+
+/* remove entirely?
+  rpc get-bootstrapping-data {
+    description
+      "An RPC to dynamically obtain all of the bootstrapping
+       data for a device.
+
+       This call is invoked for devices after they have been
+       authenticated and it has been determined, via the policy
+       define in the 'response manager', that a dynamic callout
+       should be used to obtain ll of the bootstrapping data
+       to return to the device.  In essence, removing SZTPD
+       almost entirely from the processing the request.
+
+       In the case of an error, the RPC MUST return
+       the 'ietf-restconf:errors' structure defined
+       in Section 7.1 in RFC 8040.";
+    input {
+      uses common-device-input;
+      anydata opaque {
+        description
+          "Optional additional configuration set for the
+           dynamic callout.";
+      }
+    }
+    output {
+      leaf conveyed-information {
+        type ct:cms;
+        mandatory true;
+        description
+          "An SZTP conveyed information artifact, as described
+           in Section 3.1 of RFC 8572.";
+        reference
+          "RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+      }
+      leaf owner-certificate {
+        type ct:cms;
+        must '../ownership-voucher' {
+          description
+            "An ownership voucher must be present whenever an
+             owner certificate is presented.";
+        }
+        description
+          "An owner certificate artifact, as described in Section
+           3.2 of RFC 8572.  This leaf is optional because it is
+           only needed when the conveyed information artifact is
+           signed.";
+        reference
+          "RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+      }
+      leaf ownership-voucher {
+        type ct:cms;
+        must '../owner-certificate' {
+          description
+            "An owner certificate must be present whenever an
+             ownership voucher is presented.";
+        }
+        description
+          "An ownership voucher artifact, as described by Section
+           3.3 of RFC 8572.  This leaf is optional because it is
+           only needed when the conveyed information artifact is
+           signed.";
+        reference
+          "RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+      }
+    }
+  }
+  */
+
+  rpc get-conveyed-information {
+    description
+      "An RPC to dynamically obtain the conveyed information
+       for a device.
+
+       This call is invoked for devices after they have been
+       authenticated and it has been determined, via the policy
+       define in the 'response manager', that a dynamic
+       callout should be used to obtain the 'conveyed
+       information' to return to the device.
+
+       Just the 'conveyed-information' is returned, leaving
+       it to SZTPD to encapsulate it into a CMS structure,
+       which it may be additionally signed and/or encrypted,
+       as per configuration.
+
+       In the case of an error, the RPC MUST return
+       the 'ietf-restconf:errors' structure defined
+       in Section 7.1 in RFC 8040.";
+    input {
+      uses common-device-input;
+      anydata opaque {
+        description
+          "Optional additional configuration set for the
+           dynamic callout.";
+      }
+    }
+    output {
+      anydata conveyed-information {
+        mandatory true;
+        description
+          "The 'conveyed-information' yang-data structure, as
+           as described in Section 3.1 of RFC 8572.  The
+           structure MAY contain 'redirect-information' or
+           'onboarding-information'.";
+        reference
+          "RFC 8040: RESTCONF Protocol
+           RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+      }
+    }
+  }
+
+  /* not implemented yet
+  rpc get-ownership-voucher {
+    description
+      "An RPC to dynamically obtain an ownership voucher
+       for a device.
+
+       This call is invoked for devices after they have
+       been authenticated and it has been determined, via
+       the policy define in the 'response manager', that
+       a dynamic callout should be used to obtain the
+       'ownership voucher' to return to the device.
+
+       Just the 'ownership-voucher' is returned, leaving
+       it to SZTPD to futher signed and/or encrypted it,
+       as per configuration.
+
+       In the case of an error, the RPC MUST return
+       the 'ietf-restconf:errors' structure defined
+       in Section 7.1 in RFC 8040.";
+    input {
+      uses common-device-input;
+      anydata opaque {
+        description
+          "Optional additional configuration set for the
+           dynamic callout.";
+      }
+    }
+    output {
+      leaf ownership-voucher {
+        type ct:cms;
+        mandatory true;
+        description
+          "An ownership voucher artifact, as described by Section
+           3.3 of RFC 8572.";
+        reference
+          "RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+      }
+    }
+  }
+  */
+
+
+  rpc relay-progress-report {
+    description
+      "An RPC for relaying a single 'progress-report', as
+       defined by RFC 8572
+
+       In the case of an error, the RPC MUST return the 
+       'ietf-restconf:errors' structure defined in Section 7.1
+       in RFC 8040.";
+    input {
+      uses common-device-input;
+      anydata opaque {
+        description
+          "Optional additional configuration set for the
+           dynamic callout.";
+      }
+    }
+  }
+
+  rpc relay-bootstrapping-log-record {
+    description
+      "An RPC for relaying a single 'bootstrapping-log-record',
+       as defined by the 'sztpd-common' YANG module.
+
+       In the case of an error, the RPC MUST return the 
+       'ietf-restconf:errors' structure defined in Section 7.1
+       in RFC 8040.";
+    input {
+      container bootstrapping-log-record {
+        uses sztpd-common:bootstrapping-log-record;
+      }
+      anydata opaque {
+        description
+          "Optional additional configuration set for the
+           dynamic callout.";
+      }
+    }
+  }
+
+} 

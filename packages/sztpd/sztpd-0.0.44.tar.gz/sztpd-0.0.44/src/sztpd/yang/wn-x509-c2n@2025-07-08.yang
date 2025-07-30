@@ -1,0 +1,47 @@
+module wn-x509-c2n {
+  yang-version 1.1;
+  namespace "https://watsen.net/wnc2n";
+  prefix wnc2n;
+
+  import ietf-x509-cert-to-name {
+    prefix x509c2n;
+    reference
+      "RFC 7407: A YANG Data Model for SNMP Configuration";
+  }
+
+  organization
+    "Watsen Networks (https://watsen.net)";
+
+  description
+    "This module define an identity that extends those defined in
+     RFC 7407.
+
+     Copyright (c) 2019-2025 Watsen Networks.  All Rights Reserved.";
+
+  revision 2025-07-08 {
+    description
+      "Initial version";
+  }
+
+  /**************/
+  /* Identities */
+  /**************/
+
+  identity serial-number {
+    base x509c2n:cert-to-name;
+    description
+      "Maps the X.520 'serialNumber' attribute, from IEEE 802.1AR's DevID
+       certificate, in the X.509 certificate's 'subject' field to a name.
+       This serial number relates to the serial-number of the device, e.g.,
+       printed on its chassis.  The 'serialNumber' attribute is not to be
+       confused with the certificate's serial number, which is a value
+       assigned by the certificate's issuer.";
+    reference
+      "X.520:    ITU-T Recommendation X.520 (2005) | ISO/IEC 9594-6:2005,
+                 Information technology - Open Systems Interconnection -
+                 The Directory: Selected attribute types.
+
+       IEEE 802.1AR: IEEE Standard for Local and metropolitan area
+                     networks - Secure Device Identity";
+  }
+}

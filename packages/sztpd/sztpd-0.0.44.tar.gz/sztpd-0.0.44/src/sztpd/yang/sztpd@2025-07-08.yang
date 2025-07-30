@@ -1,0 +1,1158 @@
+module sztpd {
+  yang-version 1.1;
+  namespace "https://watsen.net/sztpd";
+  prefix sztpd;
+
+  import ietf-yang-types {
+    prefix yang;
+    reference
+      "RFC 6991: Common YANG Data Types";
+  }
+
+  import ietf-inet-types {
+    prefix inet;
+    reference
+      "RFC 6991: Common YANG Data Types";
+  }
+
+  import iana-crypt-hash {
+    prefix ianach;
+    reference
+      "RFC 7317: A YANG Data Model for System Management";
+  }
+
+  import ietf-x509-cert-to-name {
+    prefix x509c2n;
+    reference
+      "RFC 7407: A YANG Data Model for SNMP Configuration";
+  }
+
+  import ietf-sztp-conveyed-info {
+    prefix sztp-info;
+    reference
+      "RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+  }
+
+  import ietf-crypto-types {
+    prefix ct;
+    reference
+      "RFC 9640: Common YANG Data Types for Cryptography";
+  }
+
+  import ietf-truststore {
+    prefix ts;
+    reference
+      "RFC 9641: A YANG Data Model for a Truststore";
+  }
+
+  import ietf-keystore {
+    prefix ks;
+    reference
+      "RFC 9642: A YANG Data Model for a Keystore";
+  }
+
+  import wn-x509-c2n {
+    prefix wnc2n;
+    reference
+      "https://watsen.net/products/common";
+  }
+
+  import yangcore {
+    prefix yangcore;
+    reference
+      "https://watsen.net/yangcore";
+  }
+
+  import sztpd-common {
+    prefix sztpd-common;
+  }
+
+  organization
+    "Watsen Networks (https://watsen.net)";
+
+  description
+    "This module defines the data model for an SZTP bootstrap server.
+
+     Copyright (c) 2019-2025 Watsen Networks.  All Rights Reserved.";
+
+  revision 2025-07-08 {
+    description
+      "Initial version";
+  }
+
+
+  /**************/
+  /* Identities */
+  /**************/
+
+  identity rfc8572-interface {
+    base yangcore:interface-type;
+    description
+      "A derived 'interface-type' identity indicating the 'rfc8572'
+       interface, which presents the API defined in RFC 8572.";
+  }
+
+  identity verify-device-ownership {
+    base yangcore:dynamic-callout-type;
+    description
+      "A derived 'dynamic-callout-type' identity indicating
+       the 'verify-device-ownership' RPC, defined
+       in the 'sztpd-rpcs' YANG module.";
+  }
+/* not used?
+  identity get-bootstrapping-data {
+    base yangcore:dynamic-callout-type;
+    description
+      "A derived 'dynamic-callout-type' identity indicating
+       the 'get-bootstrapping-data' RPC, defined in the
+       'sztpd-rpcs' YANG module.";
+  }
+*/
+  identity get-conveyed-information {
+    base yangcore:dynamic-callout-type;
+    description
+      "A derived 'dynamic-callout-type' identity indicating
+       the 'get-conveyed-information' RPC, defined in the
+       'sztpd-rpcs' YANG module.";
+  }
+
+/* not used?
+  identity get-ownership-voucher {
+    base yangcore:dynamic-callout-type;
+    description
+      "A derived 'dynamic-callout-type' identity indicating
+       the 'get-ownership-voucher' RPC, defined in the
+       'sztpd-rpcs' YANG module.";
+  }
+*/
+
+  identity relay-progress-report {
+    base yangcore:dynamic-callout-type;
+    description
+      "Identifies the 'relay-progress-report' RPC
+       defined in the 'sztpd-rpcs' YANG module.";
+  }
+
+  identity relay-bootstrapping-log-record {
+    base yangcore:dynamic-callout-type;
+    description
+      "Identifies the 'relay-bootstrapping-log-record' RPC
+       defined in the 'sztpd-rpcs' YANG module.";
+  }
+
+
+  /*************/
+  /* Groupings */
+  /*************/
+
+  grouping match-criteria-grouping {
+    container match-criteria {
+      presence
+        "Enables criteria-matching.  If not specified, then it is
+         considered to be an implicit match, which should only be
+         used as a 'catch-all' at the end of a list of more
+         specific matches.";
+      description
+        "ALL specified match criteria MUST match provided input
+         in order for t to be considered a match.";
+      list match {
+        key "key";
+        min-elements 1;
+        description
+          "A match occurs if and only if the  device's request
+           includes a matching key having the matching value.";
+        leaf key {
+          type string;
+          mandatory true;
+          description
+            "The 'key' for this match.  Should use values such as
+             those in the `get-bootstrapping-data` RPC's 'input'
+             statement defined by the 'ietf-sztp-bootstrap-server'
+             module defined in RFC 8572 (e.g., hw-model, os-name).
+             This value is not enumerated so as to support possible
+             vendor-specific extensions.";
+          reference
+            "RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+        }
+        leaf not {
+          type empty;
+          description
+            "Negates the match expression.  Only matches if the key
+             is present (and fails the match criteria).";
+        }
+        choice test-type {
+          mandatory true;
+          case present {
+            leaf present {
+              type empty;
+              description
+                "Match occurs when the key/node is present. The
+                 key may be a terminal or a non-terminal node.";
+            }
+          }
+          case value {
+            leaf value {
+              type string;
+              description
+                "Match occurs when the value equals the specfied value.";
+            }
+          }
+          case regex {
+            leaf regex {
+              type string;
+              description
+                "Match occurs when the value matches the specfied regex.";
+            }
+          }
+        }
+      } // list match
+    } // container match-criteria
+  } // grouping match-criteria-grouping
+
+
+
+
+
+  grouping bootstrap-servers-grouping {
+    container bootstrap-servers {
+      list bootstrap-server {
+        key "name";
+        leaf name {
+          type string;
+          description
+            "An arbitrarary name for this bootstrap server.";
+        }
+        leaf address {
+          type inet:host;
+          mandatory true;
+          description
+            "The IP address or hostname of the bootstrap server the
+             device should redirect to.";
+        }
+        leaf port {
+          type inet:port-number;
+          default "443";
+          description
+            "The port number the bootstrap server listens on.  If no
+             port is specified, the IANA-assigned port for 'https'
+             (443) is used.";
+        }
+        leaf trust-anchor {
+          type ct:trust-anchor-cert-cms;
+          description
+            "A trust-anchor that the bootstrapping device can use to
+             authenticate the bootstrap server with.  If not specified,
+             the device may attempt to establish an 'untrusted'
+             (RFC 8572) connection to the bootstrap server.";
+          reference
+            "RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+        }
+        uses yangcore:auto-reclamation-grouping;
+      } // list bootstrap-server
+    } // container bootstrap-servers
+  } // grouping bootstrap-servers-grouping
+
+  grouping boot-images-grouping {
+    container boot-images {
+      when "/yangcore:preferences/sztpd:bootstrapping/onboarding-supported = 'true'";
+      list boot-image {
+        key "name";
+        leaf name {
+          type string;
+          description
+            "An arbitrary name (e.g., filename) for this boot image.";
+        }
+        leaf os-name {
+          type string;
+          mandatory true;
+          description
+            "The 'os-name' for this boot image, as should be sent to
+             the device, per Section 2.2 in RFC 8572.";
+          reference
+            "RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+        }
+        leaf os-version {
+          type string;
+          mandatory true;
+          description
+            "The 'os-version' for this boot image, as should be sent
+             to the device, per Section 2.2 in RFC 8572.";
+          reference
+            "RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+        }
+        leaf-list download-uri {
+          type inet:uri;
+          ordered-by user;
+          description
+            "An ordered list of URIs to where the same boot image
+             file may be obtained.  How the URI schemes (http, ftp,
+             etc.) a device supports are known is vendor specific.
+             If a secure scheme (e.g., https) is provided, a device
+             MAY establish an untrusted connection to the remote
+             server, by blindly accepting the server's end-entity
+             certificate, to obtain the boot image.";
+        }
+        list image-verification {
+          must '../download-uri' {
+            description
+              "Download URIs must be provided if an image is to
+               be verified.";
+          }
+          key "hash-algorithm";
+          description
+            "A list of hash values that a device can use to verify
+             boot image files with.";
+          leaf hash-algorithm {
+            type identityref {
+              base sztp-info:hash-algorithm;
+            }
+            description
+              "Identifies the hash algorithm used.";
+          }
+          leaf hash-value {
+            type yang:hex-string;
+            mandatory true;
+            description
+              "The hex-encoded value of the specified hash
+               algorithm over the contents of the boot image
+               file.";
+          }
+        }
+        uses yangcore:auto-reclamation-grouping;
+      } // list boot-image
+    } // container boot-images
+  } // grouping boot-images-grouping
+
+  grouping scripts-grouping {
+    container scripts {
+      when "/yangcore:preferences/sztpd:bootstrapping/onboarding-supported = 'true'";
+      description
+        "An unordered list of scripts that can be referenced
+         by per-device configuration.  It is okay for multiple
+         devices to reference the same script, so long as the
+         script doesn't contain any device-specific parameters.";
+      list script {
+        key "name";
+        leaf name {
+          type string;
+          description
+            "An arbitrary name.";
+        }
+        leaf type {
+          mandatory true;
+          type enumeration {
+            enum PRE-CONFIG {
+              description
+                "Indicates that this is a pre-configuration script.";
+            }
+            enum POST-CONFIG {
+              description
+                "Indicates that this is a post-configuration script.";
+            }
+          }
+          description
+            "Identifies the type of script this script is.";
+        }
+        leaf code {
+          type sztp-info:script;
+          mandatory true;
+          description
+            "A pre- or post- script that is executed before- or
+             after- the configuration has been processed by the
+             bootstrapping device.";
+        }
+        uses yangcore:auto-reclamation-grouping;
+      }
+    } // container scripts
+  } // grouping scripts-grouping
+
+  grouping configurations-grouping {
+    container configurations {
+      when "/yangcore:preferences/sztpd:bootstrapping/onboarding-supported = 'true'";
+      list configuration {
+        key "name";
+        leaf name {
+          type string;
+          description
+            "An arbitrary name";
+        }
+        leaf handling {
+          type enumeration {
+            enum merge {
+              description
+                "Merge configuration into the running datastore.";
+            }
+            enum replace {
+              description
+                "Replace the existing running datastore with the
+                 passed configuration.";
+            }
+          }
+          must '../config-data';
+          description
+            "This enumeration indicates how the server should process
+             (handle) the provided configuration.";
+        }
+        leaf config-data {
+          type binary;
+          must '../handling';
+          description
+            "Any configuration known to the device.  The use of
+             the 'binary' type enables e.g., XML-content to be
+             embedded into a JSON document.  The exact encoding
+             of the content, as with the scripts, is vendor
+             specific.";
+        }
+        leaf media-type {
+          type enumeration {
+            enum TEXT-PLAIN {
+              description
+                "Indicates that the 'config-data' node is known to
+                 be 'text/plain', and therefore it is possible to
+                 create templates using text-based substitution.";
+            }
+          }
+          must '../config-data';
+        }
+        uses yangcore:auto-reclamation-grouping;
+      }
+    }
+  } // grouping configurations-grouping
+
+  grouping responses-grouping {
+    container responses {
+      description
+        "Unordered lists of different types of conveyed information
+         responses that may be referenced by device records.  A
+         response may be referenced by more than one device, so
+         long as the response is not a device-specific response.";
+      list cms-response {
+        if-feature "sztpd-common:signed-managed-data-implemented";
+        when "/yangcore:preferences/sztpd:bootstrapping/onboarding-supported = 'true'";
+        key "name";
+        leaf name {
+          type string;
+          description
+            "An arbitrary name.";
+        }
+        leaf cms-information {
+          type ct:cms;
+          mandatory true;
+          description
+            "An SZTP conveyed information artifact, as described in
+             Section 3.1 of RFC 8572.  It may be signed and/or encrypted.
+             If signed, an owner certificate and an ownership voucher
+             need to be returned as well.  When encrypted, it is not
+             possible for SZTPD to know if the artifact is
+             signed, and thus the client must ensure the additional
+             two artifacts are returned when needed.";
+          reference
+            "RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+        }
+        uses yangcore:auto-reclamation-grouping;
+      }
+      list redirect-response {
+        key "name";
+        leaf name {
+          type string;
+          description
+            "An arbitrary name.";
+        }
+        container redirect-information {
+          description
+            "Information that can be used to construct an SZTP
+             redirect information artifact, as described in
+             Section 2.2 of RFC 8572.";
+          reference
+            "RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+          leaf-list bootstrap-server {
+            type leafref {
+              path "/conveyed-information/bootstrap-servers/bootstrap-server/name";
+            }
+            min-elements 1;
+            ordered-by user;
+          }
+        }
+        uses yangcore:auto-reclamation-grouping;
+      }
+      list onboarding-response {
+        when "/yangcore:preferences/sztpd:bootstrapping/onboarding-supported = 'true'";
+        key "name";
+        leaf name {
+          type string;
+          description
+            "An arbitrary name.";
+        }
+        container onboarding-information {
+          description
+            "Information that can be used to construct an SZTP
+             onboarding information artifact, as described in
+             Section 2.2 of RFC 8572.";
+          reference
+            "RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+          leaf boot-image {
+            type leafref {
+              path "/conveyed-information/boot-images/boot-image/name";
+            }
+            description
+              "A reference to the image file (and associated
+               information) that bootstrapping devices
+               should use.";
+          }
+          leaf pre-configuration-script {
+            must 'deref(.)/../sztpd:type = "PRE-CONFIG"';
+            type leafref {
+              path "/conveyed-information/scripts/script/name";
+            }
+          }
+          leaf configuration {
+            type leafref {
+              path "/conveyed-information/configurations/configuration/name";
+            }
+          }
+          leaf post-configuration-script {
+            must 'deref(.)/../sztpd:type = "POST-CONFIG"';
+            type leafref {
+              path "/conveyed-information/scripts/script/name";
+            }
+          }
+        } // container onboarding-information
+        uses yangcore:auto-reclamation-grouping;
+      }
+    } // container responses
+  } // grouping responses-grouping
+
+  grouping owner-certificates-grouping {
+    container owner-certificates {
+      if-feature "sztpd-common:signed-managed-data-implemented";
+      description
+        "A list of owner certificates, typically just one for each
+         vendor.  Though there may be more than one for the same
+         vendor if ever transitioning to a new private key.
+
+         Each owner certificate may be associated with a private
+         key, enabling SZTPD to sign the conveyed information
+         artifact prior to sending it to devices.";
+      list owner-certificate {
+        key "name";
+        description
+          "An owner certificate (Section 3.2) and associated private
+           key, that may be used to sign the 'conveyed-information'
+           (Section 3.1) artifacts.";
+        reference
+          "RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+        leaf name {
+          type string;
+          description
+            "An arbitrary name for thiis owner certificate.";
+        }
+        choice with-or-without-pki {
+          mandatory true;
+          case with-pki {
+            if-feature "sztpd-common:signing-supported";
+            container with-pki {
+              uses ks:inline-or-keystore-end-entity-cert-with-key-grouping;
+            }
+          }
+          case without-pki {
+            container without-pki {
+              uses ct:end-entity-cert-grouping;
+            }
+          }
+        }
+        uses yangcore:auto-reclamation-grouping;
+      }
+    }
+  } // grouping owner-certificates-grouping
+
+
+
+  grouping prefs-storage-management-grouping {
+    container unused-device-records {
+      description
+        "Configures timeout for when unused (never accessed by a
+         device) device records are purged.";
+      uses yangcore:purge-timeout-grouping;
+    }
+    container used-device-records {
+      description
+        "Configures timeout for when used (accessed by a device)
+         device records are purged.";
+      uses yangcore:purge-timeout-grouping;
+    }
+    container bootstrap-servers {
+      description
+        "Configures timeout for when unreferenced (reference count
+         is zero) bootstrap servers are purged.";
+      uses yangcore:purge-timeout-grouping;
+    }
+    container boot-images {
+      when "/yangcore:preferences/sztpd:bootstrapping/onboarding-supported = 'true'";
+      description
+        "Configures timeout for when unreferenced (reference count
+         is zero) boot-images are purged.";
+      uses yangcore:purge-timeout-grouping;
+    }
+    container scripts {
+      when "/yangcore:preferences/sztpd:bootstrapping/onboarding-supported = 'true'";
+      description
+        "Configures timeout for when unreferenced (reference count
+         is zero) scripts are purged.";
+      uses yangcore:purge-timeout-grouping;
+    }
+    container configurations {
+      when "/yangcore:preferences/sztpd:bootstrapping/onboarding-supported = 'true'";
+      description
+        "Configures timeout for when unreferenced (reference count
+         is zero) configurations are purged.";
+      uses yangcore:purge-timeout-grouping;
+    }
+    container conveyed-information {
+      description
+        "Configures timeout for when unreferenced (reference count
+         is zero) conveyed information are purged.";
+      uses yangcore:purge-timeout-grouping;
+    }
+  } // grouping prefs-storage-management-grouping
+
+
+  grouping device-types-grouping {
+    container device-types {
+      list device-type {
+        key "name";
+        leaf name {
+          type string;
+          description
+            "An arbitrary name for this device-type.";
+        }
+        container identity-certificates {  // FIXME: plural?
+          presence
+            "Indicates that devices of this type must present
+             an identity certificate having a chain of trust
+             to the specified CA certificate when connecting
+             to SZTPD.";
+          container verification {
+            container central-truststore-reference {
+              if-feature "ts:certificates";
+              uses ts:central-certificate-ref-grouping;
+              description
+                "A reference to the specific trust anchor certificate
+                 that devices having this device type must authenticate
+                 to.  The bag that contains the trust anchor certificate
+                 must also be specified to avoid ambiguitities, in case
+                 the case certificate 'name' appears in another bag.";
+            }
+          }
+          leaf serial-number-extraction {
+            //must '. = wnc2n:serial-number'; // all that is supported currently
+            must 'derived-from-or-self(., "wnc2n:serial-number")'; // all that is supported currently
+            type identityref {
+              base x509c2n:cert-to-name;
+            }
+            default "wnc2n:serial-number";
+            description
+              "Indicates where in the device's serial number
+               is in the identity certificate.";
+          }
+        }
+        container ownership-authorization {
+          presence
+            "Indicates that SZTPD must validate ownership for devices of this type.";
+          container dynamic-callout {
+            leaf reference {
+              must "derived-from-or-self(/yangcore:dynamic-callouts/yangcore:dynamic-callout[yangcore:name=current()]/yangcore:rpc-supported, 'sztpd:verify-device-ownership')";
+              type leafref {
+                path "/yangcore:dynamic-callouts/yangcore:dynamic-callout/yangcore:name";
+              }
+            }
+          }
+        }
+        /*
+        container voucher-aquisition {
+          presence // FIXME: https://github.com/CESNET/libyang/issues/999
+            "Indicates that SZTPD may aquire vouchers for devices of this type."; 
+          container dynamic-callout {
+            leaf reference {
+              type leafref {
+                path "/yangcore:dynamic-callouts/yangcore:dynamic-callout/yangcore:name";
+              }
+            }
+          }
+        }
+        */
+        uses response-manager-grouping;
+      }
+    }
+  } // grouping device-types-grouping
+
+
+  /*************/
+  /* Groupings */
+  /*************/
+
+  grouping response-manager-grouping {
+    container response-manager {
+      presence
+        "Indicates that response-manager has been created.  This
+         statement is present so the mandatory descendant nodes
+         do not imply that this node must be configured.";
+      description
+        "For the 'get-bootstrapping-data' RPC only, a user-ordered
+         list of possible responses based on various criterea.  The
+         list is evaluated against the 'input' parameters passed
+         by the device in its 'get-bootstrapping-data' RPC.  The
+         first 'matched-response' having matching criteria is used.
+
+         This mechanism can be used, for instance, to promote a
+         device's connection from untrusted to trusted, as described
+         in Appendix B of RFC 8572.";
+      reference
+        "RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+      list matched-response {
+        key "name";
+        ordered-by user;
+        min-elements 1;
+        description
+          "The 'response' that is used if and only if the 'match-
+           criteria' is satified.";
+        leaf name {
+          type string;
+          description
+            "An arbitrary name for this matched-response.";
+        }
+        uses match-criteria-grouping;
+        container response {
+          leaf reporting-level {
+            when "/yangcore:preferences/sztpd:bootstrapping/onboarding-supported = 'true'";
+            type enumeration {
+              enum minimal {
+                description
+                  "Send just the progress reports required by RFC 8572.";
+                reference
+                  "RFC 8572: Secure Zero Touch Provisioning (SZTP)";
+              }
+              enum verbose {
+                description
+                  "Send additional progress reports that might help
+                   troubleshooting an SZTP bootstrapping issue.";
+              }
+            }
+            default "minimal";
+            description
+              "Specifies the reporting level for progress reports the
+               bootstrap server would like to receive when processing
+               onboarding information.  Progress reports are not sent
+               when processing redirect information or when the
+               bootstrap server is untrusted (e.g., device sent the
+               '<signed-data-preferred>' input parameter).";
+          } // reporting-level
+          choice response-handler {
+            mandatory true;
+            case none {
+              description
+                "Used to return HTTP status code 404 back to the
+                 device.  This response might be configured, e.g.,
+                 for when 'signed-data-preferred' is requested, but
+                 the server is neither able to provide a signed
+                 response nor redirect the device to another
+                 bootstrap server.";
+              leaf none {
+                type empty;
+              }
+            }
+            /*
+            case use-dynamic-callout {
+              description
+                "The bootstrapping data is obtained dynamically via a
+                 callout, enabling the deployment-specific business logic
+                 to provide a just-in-time response, e.g., taking into
+                 account the 'input' parameters provided by the device
+                 in its 'get-bootstrapping-data' RPC.
+
+                 The dynamic callout may be implemented either as callback
+                 into a dynamically-linked plugin or as a webhook to an
+                 external system.
+
+                 The dynamic callout must implement the data model described
+                 by 'sztpd:get-bootstrapping-data' RPC, but
+                 noting that, for plugins, the documents are passed as
+                 Python objects.
+
+                 The RPC takes as input various details about the device's
+                 request (e.g., its 'input' params, IDevID cert, etc.) and
+                 returns three CMS structures.  In essence, removing SZTPD
+                 almost entirely from processing the request.
+
+                 SZTPD will encapsulate the CMS structures into the response
+                 sent to the device.";
+              container dynamic-callout {
+                if-feature "sztpd-common:artifact-callbacks-implemented";
+                // a leafref to be added here (used to be augmented-in per 'mode')
+              }
+            } // case use-dynamic-callout
+            */
+            case managed-response {
+              description
+                "A customizable response handler, providing variations
+                 in how the bootstrapping artifacts are obtained.";
+              container conveyed-information {
+                description
+                  "Specifies the conveyed information sent to the
+                   the bootstrapping device.  The conveyed information
+                   may either be obtained dynamically, via a webhook
+                   callback, or pre-staged on the SZTPD.";
+                choice conveyed-information-handler {
+                  mandatory true;
+
+                  case dynamic-callout {
+                    description
+                      "The conveyed information is obtained dynamically via a
+                       callout, enabling the deployment-specific business logic
+                       to provide a just-in-time response, e.g., taking into
+                       account the 'input' parameters provided by the device
+                       in its 'get-bootstrapping-data' RPC.
+
+                       The dynamic callout may be implemented either as callback
+                       into a dynamically-linked plugin or as a webhook to an
+                       external system.
+
+                       The dynamic callout must implement the data model described
+                       by sztpd:get-conveyed-information RPC, but
+                       noting that, for plugins, the documents are passed as
+                       Python objects.
+
+                       The RPC takes as input various details about the device's
+                       request (e.g., its 'input' params, IDevID cert, etc.) and
+                       returns an 'ietf-sztp-conveyed-info:conveyed-infomation'
+                       document (not a CMS structure).
+
+                       SZTPD will encapsulate the response into a CMS structure
+                       returned to the device.";
+                    container via-dynamic-callout {
+                      leaf reference {
+                        must "derived-from-or-self(/yangcore:dynamic-callouts/yangcore:dynamic-callout[yangcore:name=current()]/yangcore:rpc-supported, 'sztpd:get-conveyed-information')";
+                        mandatory true;
+                        type leafref {
+                          path "/yangcore:dynamic-callouts/yangcore:dynamic-callout/yangcore:name";
+                        }
+                      }
+                    }
+                  } // case use-dynamic-callout
+
+                  /*
+                  case cms-information {
+                    if-feature "sztpd-common:signed-managed-data-implemented";
+                    when "/yangcore:preferences/sztpd:bootstrapping/onboarding-supported = 'true'";
+                    container via-cms-response {
+                      leaf reference {
+                        type leafref {
+                          path "/responses/cms-response/name";
+                        }
+                      }
+                    }
+                  } // case "cms-information" */
+
+                  case redirect-information {
+                    container via-redirect-response {
+                      leaf reference {
+                        mandatory true;
+                        type leafref {
+                          path "/responses/redirect-response/name";
+                        }
+                      }
+                    }
+                  } // case "redirect-information"
+
+                  case onboarding-information {
+                    when "/yangcore:preferences/sztpd:bootstrapping/onboarding-supported = 'true'";
+                    container via-onboarding-response {
+                      leaf reference {
+                        mandatory true;
+                        type leafref {
+                          path "/responses/onboarding-response/name";
+                        }
+                      }
+                      container config-template-params {
+                        list config-template-param {
+                          key key;
+                          leaf key {
+                            type string;
+                            mandatory true;
+                          }
+                          leaf value {
+                            type string;
+                            mandatory true;
+                          }
+                        }
+                      }
+                    }
+                  } // case "onboarding-information"
+                } // choice conveyed-information-handler
+              } // container conveyed-information
+
+              /*
+              container owner-certificate {
+                if-feature "sztpd-common:signed-managed-data-implemented";
+                description
+                  "Specifies the owner certificate is to be sent to
+                   the bootstrapping device.  Additionally specifies
+                   is the SZTPD should use the owner certificate
+                   to sign the conveyed information artifact.";
+
+                must '../ownership-voucher' {
+                  description
+                    "An ownership voucher is required whenever an
+                     owner certificate is provided.";
+                }
+                presence
+                  "Indicates that an owner certificate must be returned.";
+                leaf certificate-reference {
+                  description
+                    "A reference to the owner certificate to return.";
+                  type leafref {
+                    path "/owner-certificates/owner-certificate/name";
+                  }
+                  mandatory true;
+                }
+                leaf signing-needed {
+                  if-feature "sztpd-common:signing-supported";
+                  description
+                    "Indicates that SZTPD should sign the
+                     conveyed information artifact.  This flag
+                     should not be set if the conveyed information
+                     artifact is already signed and/or encrypted.
+                     This flag entails that SZTPD posseses
+                     the private key, as well as the certificate
+                     itself.";
+                  type empty;
+                }
+              } // container owner-certificate
+
+              container ownership-voucher {
+                if-feature "sztpd-common:signed-managed-data-implemented";
+                description
+                  "Specifies the ownership voucher sent to the
+                   bootstrapping device.  The voucher may be
+                   obtained dynamically via a webhook or be
+                   statically configured.";
+                must '../owner-certificate' {
+                  description
+                    "An owner certificate is required whenever
+                     an ownership voucher is provided.";
+                }
+                presence
+                  "Indicates that an ownership voucher must be
+                   returned.";
+                choice voucher-access {
+                  mandatory true;
+                  case dynamic-voucher {
+                    description
+                      "Indicates that the ownership voucher should
+                       be obtained by the webhook, e.g., in order
+                       to obtain a 'nonced' voucher.";
+                    container webhook { // should use dynamic-callout
+                      description
+                        "The webhook MUST implement the data model described
+                         by sztpd:get-ownership-voucher. RPC";
+                      //uses yangcore:webhook-grouping;
+                    }
+                  }
+                  case static-voucher {
+                    container static {
+                      leaf voucher {
+                        type ct:signed-data-cms;
+                        description
+                          "An ownership voucher artifact, as described
+                           by Section 3.3 of RFC 8572.  This leaf is
+                           optional because it is only needed when the
+                           conveyed information artifact is signed.";
+                        reference
+                          "RFC 8572:
+                             Secure Zero Touch Provisioning (SZTP)";
+                      }
+                      notification voucher-expiration {
+                        description
+                          "A notification indicating that the configured voucher is
+                           either about to expire or has already expired.  When to
+                           send notifications is an implementation specific decision,
+                           but it is RECOMMENDED that a notification be sent once a
+                           month for 3 months, then once a week for four weeks, and
+                           then once a day thereafter until the issue is resolved.";
+                        leaf expiration-date {
+                          type yang:date-and-time;
+                          mandatory true;
+                          description
+                            "Identifies the expiration date on the voucher.";
+                        }
+                      }
+                    }
+                  }
+                } // choice voucher-access
+              } // container ownership-voucher
+              */
+            } // case managed-response
+          } // choice response-handler
+        } // container response
+      } // list matched-response
+    } // container response-manager
+  } // response-manager-grouping
+
+  grouping devices-grouping {
+    container devices {
+      list device {
+        key "serial-number";
+        must 'activation-code or /device-types/device-type[name=current()/device-type]/identity-certificates';
+        leaf serial-number {
+          yangcore:globally-unique;
+          type string;
+          description
+            "An arbitrary name for this device.";
+        }
+        leaf device-type {
+          // this ct-leaf is "immutable" in the tenant's view?
+          type leafref {
+            path "/device-types/device-type/name";
+          }
+          mandatory true;
+          description
+            "The type of device this device is.";
+        }
+        leaf activation-code {
+          type ianach:crypt-hash;
+          description
+            "Indicates that the device must authenticate using an
+             HTTP-level 'Basic' authentication, whereby the 'username'
+             is the device's serial number and the 'password' is
+             the configured value.
+
+             This authentication is in addition to any required
+             TLS-level` 'client-authentication' configured under
+             the top-level 'transport' node.";
+        }
+        uses response-manager-grouping;
+        container bootstrapping-log {
+          config false;
+          description
+            "Time-sorted list of all device interactions: both the
+             'get-bootstrapping-data' and 'report-progress' RPCs.
+ 
+             Note that these entries are only for post-authentication
+             interactions, see the audit-log for failed authentication
+             attempts.";
+
+          list bootstrapping-log-record {
+            uses sztpd-common:bootstrapping-log-record;
+          }
+        }
+        grouping device-record-nbi-access-stats-grouping {
+          container nbi-access-stats {
+            leaf created {
+              type yang:date-and-time;
+              mandatory true; // init value is time when the record is created
+            }
+            leaf num-times-modified {
+              type uint16; // init value is 0 
+              mandatory true;
+            }
+            leaf last-modified {
+              when '../num-times-modified != 0';
+              type yang:date-and-time;
+              mandatory true;
+            }
+          }
+        }
+        grouping device-record-sbi-access-stats-grouping {
+          container sbi-access-stats {
+            leaf num-times-accessed {
+              type uint16; // init value is 0
+              mandatory true;
+            }
+            leaf first-accessed {
+              when '../num-times-accessed != 0';
+              type yang:date-and-time;
+              mandatory true;
+            }
+            leaf last-accessed {
+              when '../num-times-accessed != 0';
+              type yang:date-and-time;
+              mandatory true;
+            }
+          }
+        }
+        container lifecycle-statistics {
+          config false;
+          uses device-record-nbi-access-stats-grouping;
+          uses device-record-sbi-access-stats-grouping;
+        }
+        /*
+        notification unused-device-record-lingering {
+          if-feature "yangcore:storage-reclamation-implemented";
+          uses device-record-nbi-access-stats-grouping;
+        }
+        notification unused-device-record-purged {
+          if-feature "yangcore:storage-reclamation-implemented";
+          uses device-record-nbi-access-stats-grouping;
+        }
+        notification used-device-record-lingering {
+          if-feature "yangcore:storage-reclamation-implemented";
+          uses device-record-nbi-access-stats-grouping;
+          uses device-record-sbi-access-stats-grouping;
+        }
+        notification used-device-record-purged {
+          if-feature "yangcore:storage-reclamation-implemented";
+          uses device-record-nbi-access-stats-grouping;
+          uses device-record-sbi-access-stats-grouping;
+        }
+        */
+      }
+    }
+  }
+
+  /*******************************************************/
+  /* Protocol-Accessible Nodes (when module implemented) */
+  /*******************************************************/
+
+  container conveyed-information {
+    uses bootstrap-servers-grouping;
+    uses boot-images-grouping;
+    uses scripts-grouping;
+    uses configurations-grouping;
+  }
+  uses responses-grouping;
+  uses device-types-grouping;
+  uses devices-grouping;
+
+  augment "/yangcore:preferences" {
+    container bootstrapping {
+      leaf onboarding-supported {
+        type boolean;
+        default "true";
+        description
+          "Indicates whether the 'onboarding-supported' feature is
+           supported.  When not supported, the SZTPD is only able to
+           redirect devices (i.e., redirect-information, per RFC 8572).";
+      }
+    }
+  }
+
+  augment "/yangcore:preferences/yangcore:storage-management" {
+    if-feature "yangcore:storage-reclamation-implemented";
+    uses sztpd:prefs-storage-management-grouping;
+  }
+
+  augment "/yangcore:preferences/yangcore:outbound-interactions" {
+    leaf relay-progress-report-callout {
+      must "derived-from-or-self(/yangcore:dynamic-callouts/yangcore:dynamic-callout[yangcore:name=current()]/yangcore:rpc-supported, 'sztpd:relay-progress-report')";
+      type leafref {
+        path "/yangcore:dynamic-callouts/yangcore:dynamic-callout/yangcore:name";
+      }
+    }
+    leaf relay-bootstrapping-log-record-callout {
+      must "derived-from-or-self(/yangcore:dynamic-callouts/yangcore:dynamic-callout[yangcore:name=current()]/yangcore:rpc-supported, 'sztpd:relay-bootstrapping-log-record')";
+      type leafref {
+        path "/yangcore:dynamic-callouts/yangcore:dynamic-callout/yangcore:name";
+      }
+    }
+  }
+
+}
