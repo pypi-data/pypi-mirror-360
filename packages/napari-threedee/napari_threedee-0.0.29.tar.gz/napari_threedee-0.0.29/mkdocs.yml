@@ -1,0 +1,155 @@
+site_name: napari-threedee
+site_url: https://github.com/napari-threedee/napari-threedee
+site_author: Alister Burt and Kevin Yamauchi
+site_description: >-
+  Documentation for napari-threedee, a toolkit for interactive,
+  human-in-the loop, 3D image analysis.
+# Repository
+repo_name: napari-threedee/napari-threedee
+repo_url: https://github.com/napari-threedee/napari-threedee
+
+# Copyright
+copyright: Copyright &copy; 2022 Alister Burt and Kevin Yamauchi
+
+watch:
+  - src/napari_threedee
+
+theme:
+  icon:
+    logo: material/home-circle
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: blue grey
+      accent: blue grey
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to light mode
+
+  features:
+    #- navigation.instant
+    #- navigation.tabs
+    #- navigation.top
+    #- navigation.tracking
+    - search.highlight
+    - search.suggest
+    # - toc.follow
+    # - content.code.annotate
+    # - navigation.sections
+    - content.tabs.link
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - tables
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
+
+
+extra:
+  analytics:
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/emoticon-happy-outline
+          name: This page was helpful
+          data: 1
+          note: >-
+            Thanks for your feedback!
+        - icon: material/emoticon-sad-outline
+          name: This page could be improved
+          data: 0
+          note: >-
+            Thanks for your feedback! Help us improve this page by
+            using our <a href="..." target="_blank" rel="noopener">feedback form</a>.
+
+nav:
+  - 'Overview': index.md
+  - 'Getting started':
+    - 'for users': getting_started/users.md
+    - 'for developers': getting_started/developers.md
+  - 'Tutorials':
+      - '3D segmentation': tutorials/segmentation_tutorial.md
+  - 'How do I...':
+      - 'interactively position a render plane': how_to/render_plane_manipulator.md
+      - 'interactively position points': how_to/point_manipulator.md
+      - 'interactively position layers': how_to/layer_manipulator.md
+      - 'annotate points in 3D': how_to/point_annotator.md
+      - 'annotate spheres in 3D': how_to/sphere_annotator.md
+      - 'annotate paths in 3D': how_to/path_annotator.md
+      - 'add ambient occlusion to a surface': how_to/ambient_occlusion.md
+      - 'paint labels on arbitrary planes': how_to/label_annotator.md
+  - 'Explanations':
+      - dev_guides/core_concepts.md
+      - dev_guides/manipulators.md
+  - 'Annotations':
+      - annotations/specifications.md
+      - annotations/io.md
+      - annotations/point_spec.md
+      - annotations/sphere_spec.md
+      - annotations/spline_spec.md
+  - 'Examples gallery': generated/gallery  # This node will automatically be named and have sub-nodes.
+  - 'API':
+      - API/napari_utilities.md
+      - API/selection_utilities.md
+      - API/geometry_utilities.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          inventories:
+            - https://docs.python.org/3/objects.inv
+          options:
+            docstring_style: numpy
+            filters: [ "!^_" ]
+            show_root_heading: true
+            show_root_toc_entry: true
+            show_root_full_path: true
+            show_object_full_path: false
+            # show_root_members_full_path: false
+            # show_category_heading: false
+            show_if_no_docstring: false
+            # show_signature: true
+            show_signature_annotations: true
+            show_source: true
+            # show_bases: true
+            # group_by_category: true
+            # heading_level: 2
+            members_order: source  # alphabetical/source
+
+            ## experimental
+            docstring_section_style: spacy  # or table/list/spacy
+  - mkdocs-video:
+      is_video: True
+      video_autoplay: True
+      video_loop: True
+  - gallery:
+      conf_script: docs/gallery_conf.py
+      examples_dirs: [docs/examples]
+      gallery_dirs: [docs/generated/gallery]
+      filename_pattern: /*.py  # which scripts will be executed for the docs
+      ignore_pattern: /__init__.py  # ignore these example files completely
+      run_stale_examples: True
+
+extra_css:
+  - stylesheets/extra.css
