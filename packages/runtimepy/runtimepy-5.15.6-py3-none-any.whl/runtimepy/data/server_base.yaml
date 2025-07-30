@@ -1,0 +1,19 @@
+---
+includes:
+  - package://runtimepy/base.yaml
+
+ports:
+  - {name: runtimepy_http_server, type: tcp}
+  - {name: runtimepy_websocket_json_server, type: tcp}
+  - {name: runtimepy_websocket_data_server, type: tcp}
+
+structs:
+  - {name: ui, factory: ui_state}
+
+servers:
+  - factory: runtimepy_http
+    kwargs: {port: "$runtimepy_http_server"}
+  - factory: runtimepy_websocket_json
+    kwargs: {port: "$runtimepy_websocket_json_server"}
+  - factory: runtimepy_websocket_data
+    kwargs: {port: "$runtimepy_websocket_data_server"}

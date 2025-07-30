@@ -1,0 +1,55 @@
+---
+# Connection factories.
+factories:
+  # JSON messaging.
+  - {name: runtimepy.net.factories.TcpJson}
+  - {name: runtimepy.net.factories.UdpJson}
+  - {name: runtimepy.net.factories.WebsocketJson}
+
+  # Queue wrappers.
+  - {name: runtimepy.net.factories.UdpQueue}
+
+  # Echo and null connections (useful for testing and debugging).
+  - {name: runtimepy.net.factories.TcpEcho, namespaces: [tcp, echo]}
+  - {name: runtimepy.net.factories.UdpEcho, namespaces: [udp, echo]}
+  - name: runtimepy.net.factories.WebsocketEcho
+    namespaces: [websocket, echo]
+  - {name: runtimepy.net.factories.TcpNull, namespaces: [tcp, "null"]}
+  - {name: runtimepy.net.factories.UdpNull, namespaces: [udp, "null"]}
+  - name: runtimepy.net.factories.WebsocketNull
+    namespaces: [websocket, "null"]
+
+  # Useful protocols.
+  - {name: runtimepy.net.factories.Tftp}
+  - {name: runtimepy.net.factories.Http}
+  - {name: runtimepy.net.factories.RuntimepyHttp}
+  - {name: runtimepy.net.factories.RuntimepyWebsocketJson}
+  - {name: runtimepy.net.factories.RuntimepyWebsocketData}
+
+  # Device drivers.
+  - {name: runtimepy.net.factories.Np05b}
+  - {name: runtimepy.net.tcp.scpi.ScpiConn}
+
+  # Useful tasks.
+  - {name: runtimepy.task.trig.Sinusoid}
+  - {name: runtimepy.task.sample.Sample}
+  - {name: runtimepy.task.sample.SampleApp}
+  - {name: runtimepy.control.step.StepperToggler}
+
+  # Useful structs.
+  - {name: runtimepy.net.arbiter.info.RuntimeStruct}
+  - {name: runtimepy.net.arbiter.info.TrigStruct}
+  - {name: runtimepy.net.arbiter.info.SampleStruct}
+  - {name: runtimepy.net.server.struct.UiState}
+  - {name: runtimepy.control.step.ToggleStepper}
+  - {name: runtimepy.noise.GaussianSource}
+
+  # Useful subprocess peer interfaces.
+  - {name: runtimepy.sample.peer.SamplePeer}
+  - {name: runtimepy.subprocess.peer.RuntimepyPeer}
+
+ports:
+  # Reserve ports for JSON listeners.
+  - {name: udp_json, type: udp}
+  - {name: tcp_json, type: tcp}
+  - {name: websocket_json, type: tcp}
