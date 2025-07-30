@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fluidic Graph Editor</title>
+  <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+    <div id="toolbar">
+        <button id="copyBtn">Copy (Ctrl+C)</button>
+        <button id="pasteBtn">Paste (Ctrl+V)</button>
+        <button id="deleteBtn">Delete (Del)</button>
+        <button id="saveBtn">Save (Ctrl+S)</button>
+        <button id="undoBtn">Go Back (Ctrl+Z)</button>
+        <button id="exportBtn">Export</button>
+        <button id="exitBtn" title="Exit Designer">Exit</button>
+      </div>
+    
+      <div id="container">
+        <div id="sidebar">
+          <img src="icons/pump.svg"    class="draggable" data-type="pump"    draggable="true" alt="Pump">
+          <img src="icons/valve.svg"   class="draggable" data-type="valve"   draggable="true" alt="Valve">
+          <img src="icons/relay.svg"   class="draggable" data-type="relay"   draggable="true" alt="Relay">
+          <img src="icons/hotplate.svg"class="draggable" data-type="hotplate"draggable="true" alt="Hotplate">
+          <img src="icons/vessel.svg"  class="draggable" data-type="vessel"  draggable="true" alt="Vessel">
+          <img src="icons/serial_device.svg"  class="draggable" data-type="serial_device"  draggable="true" alt="SerialDevice">
+        </div>
+        <div id="cy"></div>
+      </div>
+
+  <!-- Node properties modal -->
+  <div id="nodeModal" class="modal">
+    <div class="content">
+      <span class="close">&times;</span>
+      <h3>Edit Node</h3>
+      <form id="nodeForm"></form>
+      <button id="saveNodeBtn" style="margin-top:10px;">Save</button>
+    </div>
+  </div>
+
+  <!-- Edge properties modal -->
+  <div id="edgeModal" class="modal">
+    <div class="content">
+      <span class="close">&times;</span>
+      <h3>New Edge</h3>
+      <form id="edgeForm">
+        <label>Type
+          <select id="edgeType">
+            <option value="volumetric">volumetric</option>
+            <option value="gas">gas</option>
+            <option value="thermal">thermal</option>
+          </select>
+        </label>
+        <div id="portField" style="display:none;">
+          <label>Source Port
+            <input type="number" id="edgePort" min="0" value="0">
+          </label>
+        </div>
+      </form>
+      <button id="saveEdgeBtn" style="margin-top:10px;">Create Edge</button>
+    </div>
+  </div>
+
+  <!-- libraries -->
+  <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/cytoscape-edgehandles/cytoscape-edgehandles.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

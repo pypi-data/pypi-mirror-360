@@ -1,0 +1,123 @@
+{
+  "nodes": [
+    {
+      "type": "TecanXCPump",
+      "name": "Pump",
+      "settings": {
+        "com_port": "COM4",
+        "address": 0,
+        "syringe_volume": 0.5e-3,
+        "num_valve_port": 12,
+        "init_valve": 1,
+        "out_valve": 1
+      }
+    },
+    {
+      "type": "ValcoSelectionValve",
+      "name": "Valve1",
+      "settings": {
+        "com_port": "COM5",
+        "num_port": 10
+      }
+    },
+    {
+      "type":   "IKAHotplate",
+      "name":   "Hotplate",
+      "settings": {
+        "com_port": "COM7",
+        "max_temp": 130,
+        "max_rpm": 1000
+      }
+    },
+    {
+      "type": "R421B16Relay",
+      "name": "Relay1",
+      "settings": {
+        "com_port": "COM4",
+        "address": 1,
+        "channel": 1
+      }
+    },
+    {
+      "type": "Vessel",
+      "name": "Vial1",
+      "settings": {
+        "max_volume": 5,
+        "addable": true,
+        "removable": true,
+        "content": "water",
+        "current_volume": 1.0
+      }
+    },
+    {
+      "type": "Vessel",
+      "name": "Gas Reservoir Vessel",
+      "settings": {
+        "max_volume": 1e6,
+        "addable": false,
+        "removable": true,
+        "current_volume": 1e6
+      }
+    },
+    {
+      "type": "Vessel",
+      "name": "Waste Vessel",
+      "settings": {
+        "max_volume": 1000,
+        "addable": true,
+        "removable": false,
+        "current_volume": 0
+      }
+    }
+
+  ],
+  "links": [
+    {
+      "type": "volumetric",
+      "source": "Pump",
+      "source_port": 5,
+      "target": "Valve1"
+    },
+    {
+      "type": "volumetric",
+      "source": "Valve1",
+      "source_port": 1,
+      "target": "Vial1"
+    },
+    {
+      "type": "volumetric",
+      "source": "Pump",
+      "source_port": 12,
+      "target": "Waste Vessel"
+    },
+    {
+      "type": "volumetric",
+      "source": "Valve1",
+      "source_port": 10,
+      "target": "Waste Vessel"
+    },
+    {
+      "type": "volumetric",
+      "source": "Pump",
+      "source_port": 7,
+      "target": "Gas Reservoir Vessel"
+    },
+    {
+      "type": "gas",
+      "source": "Vial1",
+      "source_port": 0,
+      "target": "Relay1"
+    },
+    {
+      "type": "gas",
+      "source": "Relay1",
+      "source_port": 0,
+      "target": "Gas Reservoir Vessel"
+    },
+    {
+      "type": "thermal",
+      "source": "Hotplate",
+      "target": "Vial1"
+    }
+  ]
+}
