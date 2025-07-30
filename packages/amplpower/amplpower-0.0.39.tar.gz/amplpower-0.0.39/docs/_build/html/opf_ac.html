@@ -1,0 +1,174 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AC Optimal Power Flow (polar coordinates) &mdash; amplpower 0.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=34bb78ad" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=7026087e"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" />
+    <link rel="prev" title="DC Optimal Power Flow" href="opf_dc.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            amplpower
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="readme.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nomenclature.html">Nomenclature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="opf_dc.html">DC Optimal Power Flow</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">AC Optimal Power Flow (polar coordinates)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#objective-function">Objective Function</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#constraints">Constraints</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference/index.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">amplpower</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">AC Optimal Power Flow (polar coordinates)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/opf_ac.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ac-optimal-power-flow-polar-coordinates">
+<h1>AC Optimal Power Flow (polar coordinates)<a class="headerlink" href="#ac-optimal-power-flow-polar-coordinates" title="Link to this heading"></a></h1>
+<p>The AC-OPF formulation considers the full nonlinear power flow equations, including both active and reactive power, voltage magnitudes, and angles.</p>
+<section id="objective-function">
+<h2>Objective Function<a class="headerlink" href="#objective-function" title="Link to this heading"></a></h2>
+<p>The objective is to minimize the total generation cost:</p>
+<div class="math notranslate nohighlight">
+\[\text{Minimize: } \sum_{g} \left( a_{g} \cdot p_g^2 + b_{g} \cdot p_g + c_{g} \right)\]</div>
+</section>
+<section id="constraints">
+<h2>Constraints<a class="headerlink" href="#constraints" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p><strong>Power Balance Equations</strong>:</p>
+<div class="math notranslate nohighlight">
+\[\sum_{g\in\mathcal{G}_n} p_g - p^d_n = v_n^2 G^{sh}_n + \sum_{l} \left( F_{ln} \cdot p^f_l + T_{ln} \cdot p^t_l \right), \quad \forall n\]</div>
+<div class="math notranslate nohighlight">
+\[\sum_{g\in\mathcal{G}_n} q_g - q^d_n = -v_n^2 G^{sh}_n + \sum_{l} \left( F_{ln} \cdot q^f_l + T_{ln} \cdot q^t_l \right), \quad \forall n\]</div>
+</li>
+<li><p><strong>Line Flow Equations</strong>:</p>
+<div class="math notranslate nohighlight">
+\[p^f_l = v_n^2 G^{ff}_l + v_n v_m \left( G^{ft}_l \cos(\theta_{nm}) + B^{ft}_l \sin(\theta_{nm}) \right), \quad \forall (l, n, m): F_{ln} = 1, T_{lm} = 1\]</div>
+<div class="math notranslate nohighlight">
+\[q^f_l = -v_n^2 B^{ff}_l + v_n v_m \left( G^{ft}_l \sin(\theta_{nm}) - B^{ft}_l \cos(\theta_{nm}) \right), \quad \forall (l, n, m): F_{ln} = 1, T_{lm} = 1\]</div>
+<div class="math notranslate nohighlight">
+\[p^t_l = v_m^2 G^{tt}_l + v_n v_m \left( G^{tf}_l \cos(\theta_{mn}) + B^{tf}_l \sin(\theta_{mn}) \right), \quad \forall (l, n, m): F_{ln} = 1, T_{lm} = 1\]</div>
+<div class="math notranslate nohighlight">
+\[q^t_l = -v_m^2 B^{tt}_l + v_n v_m \left( G^{tf}_l \sin(\theta_{mn}) - B^{tf}_l \cos(\theta_{mn}) \right), \quad \forall (l, n, m): F_{ln} = 1, T_{lm} = 1\]</div>
+</li>
+<li><p><strong>Generator Limits</strong>:</p>
+<div class="math notranslate nohighlight">
+\[\underline{p}_g \leq p_g \leq \overline{p}_g, \quad \forall g\]</div>
+<div class="math notranslate nohighlight">
+\[\underline{q}_g \leq q_g \leq \overline{q}_g, \quad \forall g\]</div>
+</li>
+<li><p><strong>Line Flow Limits</strong>:</p>
+<div class="math notranslate nohighlight">
+\[(p^f_l)^2 + (q^f_l)^2 \leq (\overline{s}_l)^2, \quad \forall l\]</div>
+<div class="math notranslate nohighlight">
+\[(p^t_l)^2 + (q^t_l)^2 \leq (\overline{s}_l)^2, \quad \forall l\]</div>
+</li>
+<li><p><strong>Voltage Magnitude Limits</strong>:</p>
+<div class="math notranslate nohighlight">
+\[\underline{v}_n \leq v_n \leq \overline{v}_n, \quad \forall n\]</div>
+<div class="math notranslate nohighlight">
+\[\underline{\theta}_n \leq \theta_n \leq \overline{\theta}_n, \quad \forall n\]</div>
+</li>
+<li><p><strong>Voltage Angle Reference</strong>:</p>
+<div class="math notranslate nohighlight">
+\[\theta_{0} = 0\]</div>
+</li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="opf_dc.html" class="btn btn-neutral float-left" title="DC Optimal Power Flow" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Salvador Pineda Morente.
+      <span class="lastupdated">Last updated on Apr 01, 2025.
+      </span></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
