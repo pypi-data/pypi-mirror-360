@@ -1,0 +1,71 @@
+workflow: data/noetl/workflows/export_data_ng.yaml
+system:
+    dataPath: data/noetl
+    outputPath: "{{ system.dataPath }}/output/"
+    templatePath: "{{ system.dataPath }}/templates/default.tpl"
+    workflowPath: "{{ system.dataPath }}/workflows/export_data_ng.yaml"
+    executionPath: "{{ system.dataPath }}/executions/job_{{ jobId }}.json"
+    storageType: json  # Options: 'json' or 'sqlite'
+    sqlitePath: "{{ system.dataPath }}/state/noetl.database"  # Used when storage_type is 'sqlite'
+    logPath: "{{ system.dataPath }}/logs/noetl_{{ jobId }}.log"
+    logLevel: DEBUG
+    logFormat: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+variables:
+  baseUrl: "http://localhost:8000"  # Base URL for endpoints
+  load: remote  # Local mode or remote mode
+  baseBlobPath: data  # Base path for blobs
+  ngBlobPath: data/raw_data/NG
+  baseFilePath: /usr/data/cleansing  # Base path for local files
+  bucket: tradetrend  # bucket name for the data
+  break: False
+  retry: 0
+
+steps:  # High-level workflow steps
+  - step: export_data_ng  # Logical step name
+    tasks:  # Tasks within this step
+      - export_data_ng
+
+tasks:
+  - task: export_data_ng
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/admin/postgres/sql"
+        params:
+          query: "CALL f_upload_data2data_volfix('MAY25');"
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting active contract NG data"
+          table: data_volfix
+          blob: "{{ ngBlobPath }}/NGMAY25crop.csv"
+          file: "{{ baseFilePath }}/NGMAY25crop.csv"
+          export: true
+          bucket: "{{ bucket }}"
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/admin/postgres/sql"
+        params:
+          query: "DELETE FROM data_volfix;"
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/admin/postgres/sql"
+        params:
+          query: "CALL f_upload_data2data_volfix('JUN25');"
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting active contract NG data"
+          table: data_volfix
+          blob: "{{ ngBlobPath }}/NGJUN25crop.csv"
+          file: "{{ baseFilePath }}/NGJUN25crop.csv"
+          export: true
+          bucket: "{{ bucket }}"
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/admin/postgres/sql"
+        params:
+          query: "DELETE FROM data_volfix;"

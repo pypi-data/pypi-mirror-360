@@ -1,0 +1,75 @@
+workflow: ../../data/noetl/workflows/config_instance.yaml
+system:
+    dataPath: ../../data/noetl
+    outputPath: "{{ system.dataPath }}/output/"
+    templatePath: "{{ system.dataPath }}/templates/default.tpl"
+    workflowPath: "{{ system.dataPath }}/workflows/config_instance.yaml"
+    executionPath: "{{ system.dataPath }}/executions/job_{{ jobId }}.json"
+    storageType: json  # Options: 'json' or 'sqlite'
+    sqlitePath: "{{ system.dataPath }}/state/noetl.database"  # Used when storage_type is 'sqlite'
+    logPath: "{{ system.dataPath }}/logs/noetl_{{ jobId }}.log"
+    logLevel: DEBUG
+    logFormat: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+variables:
+  baseUrl: "http://localhost:8000"  # Base URL for endpoints
+  baseInput: "Data for active client {client_id}"
+  clientId: ""  #"CALL f_set_active_client('{client_id}');"
+  load: remote  # Local mode or remote mode
+  baseBlobPath: data  # Base path for blobs
+  dictBlobPath: data/dictionary
+  baseFilePath: /usr/data/cleansing  # Base path for local files
+  bucket: tradetrend  # bucket name for the data
+
+steps:  # High-level workflow steps
+  - step: config_instance  # Logical step name
+    tasks:  # Tasks within this step
+      - start_instance
+      - start_alex
+      - start_alexis
+
+tasks:
+  - task: start_instance
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/admin/postgres/sql"
+        params:
+          query: "SELECT start_instance();"
+
+#      - type: HTTP
+#        method: POST
+#        endpoint: "{{ baseUrl }}/admin/postgres/sql"
+#        params:
+#          query: "SELECT '❌ ' || sender, count(*)  FROM sys_log WHERE code > 20 AND sender LIKE '%cleansing%' GROUP BY sender;"
+
+  - task: start_alex
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/admin/postgres/sql"
+        params:
+          query: "CALL f_set_active_client('{{ client_id }}');"
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/admin/postgres/sql"
+        params:
+          query: "CALL f_set_sys_param('ibkr_qoutes_reader_mode', 'NULL');"
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/admin/postgres/sql"
+        params:
+          query: "CALL f_set_sys_param('ibkr_qoutes_reader_mode_test_key', 'NULL');"
+
+  - task: start_alexis
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/admin/postgres/sql"
+        params:
+          query: "CALL f_set_active_client('{{ client_id }}');"
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/admin/postgres/sql"
+        params:
+          query: "CALL f_set_sys_param('ibkr_qoutes_reader_mode', '0');"

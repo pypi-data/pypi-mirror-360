@@ -1,0 +1,204 @@
+workflow: data/noetl/workflows/export_dict.yaml
+system:
+    dataPath: ../../data/noetl
+    outputPath: "{{ system.dataPath }}/output/"
+    templatePath: "{{ system.dataPath }}/templates/default.tpl"
+    workflowPath: "{{ system.dataPath }}/workflows/export_dict.yaml"
+    executionPath: "{{ system.dataPath }}/executions/job_{{ jobId }}.json"
+    storageType: json  # Options: 'json' or 'sqlite'
+    sqlitePath: "{{ system.dataPath }}/state/noetl.database"  # Used when storage_type is 'sqlite'
+    logPath: "{{ system.dataPath }}/logs/noetl_{{ jobId }}.log"
+    logLevel: DEBUG
+    logFormat: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+variables:
+  baseUrl: "http://localhost:8000"  # Base URL for endpoints
+  load: remote  # Local mode or remote mode
+  baseBlobPath: data  # Base path for blobs
+  dictBlobPath: data/dictionary
+  baseFilePath: /usr/data/cleansing  # Base path for local files
+  bucket: tradetrend  # bucket name for the data
+  break: False
+  retry: 0
+
+steps:  # High-level workflow steps
+  - step: export_all_dict  # Logical step name
+    tasks:  # Tasks within this step
+      - export_sys_param
+      - export_symbol
+      - export_symb_limit
+      - export_contract
+      - export_exclusion
+      - export_client_symb
+      - export_at_setup_group
+      - export_at_setup_type
+      - export_operand
+      - export_operand_function
+      - export_operand_settings
+      - export_operand_check
+tasks:
+  - task: export_sys_param
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting sys_param table"
+          table: sys_param
+          blob: "{{ dictBlobPath }}/sys_param.csv"
+          file: "{{ baseFilePath }}/sys_param.csv"
+          export: true
+          bucket: "{{ bucket }}"
+
+  - task: export_symbol
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting symbol table"
+          table: symbol
+          blob: "{{ dictBlobPath }}/symbol.csv"
+          file: "{{ baseFilePath }}/symbol.csv"
+          export: true
+          bucket: "{{ bucket }}"
+
+  - task: export_symb_limit
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting symb_limit table"
+          table: symb_limit
+          blob: "{{ dictBlobPath }}/symb_limit.csv"
+          file: "{{ baseFilePath }}/symb_limit.csv"
+          export: true
+          bucket: "{{ bucket }}"
+
+  - task: export_contract
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting contract table"
+          table: contract
+          blob: "{{ dictBlobPath }}/contract.csv"
+          file: "{{ baseFilePath }}/contract.csv"
+          export: true
+          bucket: "{{ bucket }}"
+
+  - task: export_exclusion
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting exclusion table"
+          table: exclusion
+          blob: "{{ dictBlobPath }}/exclusion.csv"
+          file: "{{ baseFilePath }}/exclusion.csv"
+          export: true
+          bucket: "{{ bucket }}"
+
+  - task: export_client_symb
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting client_symb table"
+          table: client_symb
+          blob: "{{ dictBlobPath }}/client_symb.csv"
+          file: "{{ baseFilePath }}/client_symb.csv"
+          export: true
+          bucket: "{{ bucket }}"
+
+  - task: export_at_setup_group
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting at_setup_group table"
+          table: at_setup_group
+          blob: "{{ dictBlobPath }}/at_setup_group.csv"
+          file: "{{ baseFilePath }}/at_setup_group.csv"
+          export: true
+          bucket: "{{ bucket }}"
+
+  - task: export_at_setup_type
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting at_setup_group table"
+          table: at_setup_group
+          blob: "{{ dictBlobPath }}/at_setup_group.csv"
+          file: "{{ baseFilePath }}/at_setup_group.csv"
+          export: true
+          bucket: "{{ bucket }}"
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting at_setup_type table"
+          table: at_setup_type
+          blob: "{{ dictBlobPath }}/at_setup_type.csv"
+          file: "{{ baseFilePath }}/at_setup_type.csv"
+          export: true
+          bucket: "{{ bucket }}"
+
+  - task: export_operand
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting operand table"
+          table: operand
+          blob: "{{ dictBlobPath }}/operand.csv"
+          file: "{{ baseFilePath }}/operand.csv"
+          export: true
+          bucket: "{{ bucket }}"
+
+  - task: export_operand_function
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting operand_function table"
+          table: operand_function
+          blob: "{{ dictBlobPath }}/operand_function.csv"
+          file: "{{ baseFilePath }}/operand_function.csv"
+          export: true
+          bucket: "{{ bucket }}"
+
+  - task: export_operand_settings
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting operand_settings table"
+          table: operand_settings
+          blob: "{{ dictBlobPath }}/operand_settings.csv"
+          file: "{{ baseFilePath }}/operand_settings.csv"
+          export: true
+          bucket: "{{ bucket }}"
+
+  - task: export_operand_check
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting operand_check table"
+          table: operand_check
+          blob: "{{ dictBlobPath }}/operand_check.csv"
+          file: "{{ baseFilePath }}/operand_check.csv"
+          export: true
+          bucket: "{{ bucket }}"

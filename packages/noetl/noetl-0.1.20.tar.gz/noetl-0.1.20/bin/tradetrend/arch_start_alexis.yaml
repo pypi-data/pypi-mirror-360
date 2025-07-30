@@ -1,0 +1,19 @@
+variables:
+  base_input: "Data for active client {client_id}"
+  client_id: DU7705327
+  base_url: "http://localhost:8000"
+
+
+tasks:
+  start_alexis:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/admin/postgres/sql"
+        params:
+          query: "CALL f_set_active_client('{client_id}');"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/admin/postgres/sql"
+        params:
+          query: "CALL f_set_sys_param('ibkr_qoutes_reader_mode', '0');"

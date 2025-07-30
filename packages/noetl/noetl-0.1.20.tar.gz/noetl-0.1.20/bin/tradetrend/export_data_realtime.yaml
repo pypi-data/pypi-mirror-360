@@ -1,0 +1,80 @@
+workflow: data/noetl/workflows/export_data_realtime.yaml
+system:
+    dataPath: data/noetl
+    outputPath: "{{ system.dataPath }}/output/"
+    templatePath: "{{ system.dataPath }}/templates/default.tpl"
+    workflowPath: "{{ system.dataPath }}/workflows/export_data_realtime.yaml"
+    executionPath: "{{ system.dataPath }}/executions/job_{{ jobId }}.json"
+    storageType: json  # Options: 'json' or 'sqlite'
+    sqlitePath: "{{ system.dataPath }}/state/noetl.database"  # Used when storage_type is 'sqlite'
+    logPath: "{{ system.dataPath }}/logs/noetl_{{ jobId }}.log"
+    logLevel: DEBUG
+    logFormat: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+variables:
+  baseUrl: "http://localhost:8000"  # Base URL for endpoints
+  load: remote  # Local mode or remote mode
+  baseBlobPath: data/raw_data/new_data
+  baseFilePath: /usr/data/cleansing  # Base path for local files
+  bucket: tradetrend  # bucket name for the data
+
+steps:  # High-level workflow steps
+  - step: export_data_realtime  # Logical step name
+    tasks:  # Tasks within this step
+      - export_data_realtime
+#      - export_ibkr_client_current_trading_data
+
+
+#variables:
+#  baseUrl: "http://localhost:8000"  # Base URL for endpoints
+#  load: remote  # Local mode or remote mode (can be remote or local)
+#  baseBlobPath: data/raw_data/new_data  # Base cleansing blob path
+#  baseFilePath: /usr/data  # Base path for local files
+#  bucket: tradetrend  # bucket name for the data
+#
+tasks:
+  - task: export_data_realtime
+    actions:
+      - action: http
+        method: post
+        endpoint: "{{ baseUrl }}/cleansing/process"
+        params:
+          input: "Exporting IBKR realtime data"
+          table: v_data_ibkr_realtime
+          blob: "{{ baseBlobPath }}/data_ibkr_realtime.csv"
+          file: "{{ baseFilePath }}/data_ibkr_realtime.csv"
+          export: true
+          bucket: "{{ bucket }}"
+
+#  - task: export_ibkr_client_current_trading_data
+#    actions:
+#      - action: http
+#        method: post
+#        endpoint: "{{ baseUrl }}/cleansing/process"
+#        params:
+#          input: "Exporting client_ibkr_exposition table"
+#          table: client_ibkr_exposition
+#          blob: "{{ baseBlobPath }}/client_ibkr_exposition.csv"
+#          file: "{{ baseFilePath }}/client_ibkr_exposition.csv"
+#          export: true
+#          bucket: "{{ bucket }}"
+#      - action: http
+#        method: post
+#        endpoint: "{{ baseUrl }}/cleansing/process"
+#        params:
+#          input: "Exporting client_ibkr_order table"
+#          table: client_ibkr_order
+#          blob: "{{ baseBlobPath }}/client_ibkr_order.csv"
+#          file: "{{ baseFilePath }}/client_ibkr_order.csv"
+#          export: true
+#          bucket: "{{ bucket }}"
+#      - action: http
+#        method: post
+#        endpoint: "{{ baseUrl }}/cleansing/process"
+#        params:
+#          input: "Exporting ibkr_order_status table"
+#          table: ibkr_order_status
+#          blob: "{{ baseBlobPath }}/ibkr_order_status.csv"
+#          file: "{{ baseFilePath }}/ibkr_order_status.csv"
+#          export: true
+#          bucket: "{{ bucket }}"
