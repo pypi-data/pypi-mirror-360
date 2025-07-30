@@ -1,0 +1,33 @@
+Metadata-Version: 2.4
+Name: kuv
+Version: 0.1.3
+Summary: A jupyter kernel with automatic PEP723 environments, using uv
+Author-email: Tobin Jones <tobin@davisjones.nz>
+License-Expression: MIT
+License-File: LICENSE
+Requires-Python: >=3.11
+Requires-Dist: nbformat>=5.10.4
+Requires-Dist: uv>=0.7.19
+Description-Content-Type: text/markdown
+
+# Project Overview
+This is a Jupyter kernel implementation that provides on-demand IPython kernels with dependencies pulled from PEP723 metadata. Each kernel instance is an on-demand virtual environment managed by `uv`. This is kernel compatible with notebooks created by `juv` 
+
+# Installation and use
+```bash
+uv tool run --with kuv --from jupyterlab jupyter-lab 
+```
+
+# Known limitations
+- The kernel doesn't automatically install new dependencies, it must be manually restarted when the metadata changes.
+
+# Architecture
+1. **Kernel Launcher** (`src/kuv/kernel_launcher.py`): The main entry point that launches an IPython kernel via a subprocess that runs `uv` with PEP723 dependencies parsed from the notebook 
+2. **Kernel Configuration** (`kernels/kuv/kernel.json`): Jupyter kernel specification installed to `share/jupyter/kernels/`
+
+# Development Commands
+Install uv manually and then:
+```bash
+# Test the installation with jupyter-lab
+uv tool run --with . --from jupyterlab jupyter-lab
+```
