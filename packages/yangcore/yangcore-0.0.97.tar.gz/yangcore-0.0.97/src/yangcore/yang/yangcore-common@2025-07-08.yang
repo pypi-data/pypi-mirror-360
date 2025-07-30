@@ -1,0 +1,151 @@
+module yangcore-common {
+    yang-version 1.1;
+    namespace "https://watsen.net/yangcore-common";
+    prefix yangcore-common;
+
+    import ietf-yang-types {
+        prefix yang;
+        reference
+            "RFC 6991: Common YANG Data Types";
+    }
+
+    import ietf-inet-types {
+        prefix inet;
+        reference
+            "RFC 6991: Common YANG Data Types";
+    }
+
+    organization
+        "Watsen Networks (https://watsen.net)";
+
+    description
+        "This module defines groupings shared by both the 'yangcore'
+         and 'yangcore-rpcs' modules. 
+
+         Copyright (c) 2021-2025 Watsen Networks. All Rights Reserved.";
+
+    revision "2025-07-08" {
+        description
+            "Initial version";
+    }
+
+
+    /***************/
+    /*  Groupings  */
+    /***************/
+
+
+    grouping notification-log-record {
+        description
+            "A grouping that both defines the notification log record persisted
+             in YANGcore's notification log (i.e., /yangcore:notification-log)
+             and also the notification log record passed as input into the
+             'relay-notification-log-record' dynamic callout function.";
+        leaf timestamp {
+            type yang:date-and-time;
+            mandatory true;
+            description
+                "When the notification occurred.";
+        }
+        anydata notification {
+            mandatory true;
+            description
+                "The notification-specific notification.";
+        }
+    }
+
+
+    grouping audit-log-record {
+        description
+            "A grouping that both defines the audit log record persisted
+             in YANGcore's audit log (i.e., /yangcore:audit-log) and
+             also the audit log record passed as input into the
+             'relay-audit-log-record' dynamic callout function.";
+    
+        leaf timestamp {
+            type yang:date-and-time;
+            mandatory true;
+            description
+                "When the event occurred.";
+        }
+        leaf source-ip {
+            type inet:ip-address;
+            mandatory true;
+            description
+                "The source IP address of the HTTP client, as it was
+                 presented to YANGcore. This IP address may not be
+                 the client's real IP address, as intermediates may
+                 have performed network address translation (NAT).";
+        }
+        leaf-list source-proxies {
+            type string;
+            description
+                "List of any intermediate proxies specified in the
+                 HTTP header, per RFC 7239.";
+        }
+        leaf host {
+            type string;
+            mandatory true;
+            description
+                "The host reached. The value is either via the HTTP
+                 header 'Host' field or, if not present, the returned
+                 by socket.gtfqdn().";
+        }
+        leaf username {
+            type string;
+            description
+                "The authenticated username, when available.  When
+                 the request is to YANGcore's native interface, the
+                 username value is the user's 'login' value.";
+        }
+        leaf method {
+            type enumeration {
+                enum UNKNOWN;
+                enum HEAD;
+                enum GET;
+                enum PUT;
+                enum POST;
+                enum PATCH;
+                enum DELETE;
+                enum OPTIONS;
+            }
+            mandatory true;
+            description
+                "The HTTP method used in the request.";
+        }
+        leaf path {
+            type string;
+            mandatory true;
+            description
+                "The relative URL requested by the request.";
+        }
+        anydata input {
+            description
+                "The notification of the input request, if any.
+                 Only set when preference enabled.";
+        }
+        leaf outcome {
+            type enumeration {
+                enum success;
+                enum failure;
+            }
+            mandatory true;
+            description
+                "Indicates if the request was authorized.";
+        }
+        leaf comment {
+            type string;
+            mandatory false; // only present on failures
+            description
+                "Additional information for unauthorized requests.
+
+                 Note that clients only receive a '401 Unauthorized' response,
+                 with no reason provided for why. This field enables users
+                 to see the *why*.
+
+                 Per security best practice, neither usernames nor passwords
+                 are shown in the 'comment'.";
+        }
+    }
+
+}

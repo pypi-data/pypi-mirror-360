@@ -1,0 +1,1186 @@
+module yangcore {
+  yang-version 1.1;
+  namespace "https://watsen.net/yangcore";
+  prefix yangcore;
+
+  import ietf-yang-types {
+    prefix yang;
+    reference
+      "RFC 6991: Common YANG Data Types";
+  }
+
+  import ietf-inet-types {
+    prefix inet;
+    reference
+      "RFC 6991: Common YANG Data Types";
+  }
+
+  import iana-crypt-hash {
+    prefix ianach;
+    reference
+      "RFC 7317: A YANG Data Model for System Management";
+  }
+
+  import ietf-yang-library {
+    prefix yl;
+    reference
+      "RFC 8525: YANG Library";
+  }
+
+  import ietf-crypto-types {
+    prefix ct;
+    reference "RFC 9640: YANG Data Types and Groupings for Cryptography";
+  }
+
+  import ietf-truststore {
+    prefix ts;
+    reference "RFC 9641: A YANG Data Model for a Truststore";
+  }
+
+  import ietf-keystore {
+    prefix ks;
+    reference "RFC 9642: A YANG Data Model for a Keystore";
+  }
+
+  import ietf-restconf-server {
+    prefix rcs;
+    reference
+      "RFC XXXX: RESTCONF Client and Server Models
+         - draft-ietf-netconf-restconf-client-server (work in progress)";
+  }
+
+  import yangcore-common {
+    prefix yangcore-common;
+  }
+
+  organization
+    "Watsen Networks (https://watsen.net)";
+
+  description
+    "This module defines YANGcore's 'native' API.
+
+     Copyright (c) 2021-2025 Watsen Networks.  All Rights Reserved.";
+
+
+  revision "2025-07-08" {
+    description
+      "Initial version";
+  }
+
+  /*****************************************************************/
+  /* Features                                                      */
+  /*                                                               */
+  /* Features are used to enable ideas to be modeled for potential */
+  /* future use.  To be clear, none of these are implemented yet!  */
+  /*****************************************************************/
+
+  feature webhook-based-callouts-implemented {
+    description
+      "Indicates that the server supports webhook-based callouts.";
+  }
+
+  feature http-based-webhooks-implemented {
+    description
+      "Indicates that the server supports webhooks without TLS.
+       Non TLS-based RESTCONF-clients isn't supported here for
+       convenience during development.";
+  }
+
+  feature account-verification-implemented {
+    description
+      "Indicates that the YANGcore supports being able to verify
+       new user accounts by sending an email containing a URL
+       that validates the email address.";
+  }
+
+  feature alarms-implemented {
+    description
+      "Indicates that the server supports alarms.";
+  }
+
+  feature account-activation-expiration-implemented {
+    description
+      "Indicates that the YANGcore supports activation-axirations.";
+  }
+
+  feature password-reuse-limits-implemented {
+    description
+      "Indicates that the YANGcore supports password ueuse limits.";
+  }
+
+  feature password-strength-testing-implemented {
+    description
+      "Indicates that the YANGcore supports password stregnth testing.";
+  }
+
+  feature cert-based-user-auth-implemented {
+    description
+      "Indicates that the YANGcore supports authenticating
+       users via client certificates.";
+  }
+
+  feature external-user-auth-implemented {
+    description
+      "Indicates that YANGcore supports authenticating users
+       via an external authentication server.";
+  }
+
+  feature audit-log-extras-implemented {
+    // FIXME: add a user-configurable /prefs/features/feature knob
+    description
+      "Indicates that the YANGcore supports storing 'extras'
+       (i.e., read-only requests and client-input payloads).";
+  }
+
+  feature storage-reclamation-implemented {
+    description
+      "Indicates that the YANGcore supports garbage collecting
+       lingering items.";
+  }
+
+  feature security-protections-implemented {
+    description
+      "Indicates that the YANGcore supports protecting admin
+       accounts.";
+  }
+
+  feature multi-tenancy-implemented {
+    description
+      "Indicates that the YANGcore supports protecting admin
+       accounts.";
+  }
+
+
+  /**************/
+  /* Extensions */
+  /**************/
+
+  extension ref-stats {
+    description
+      "Indicates that this node reports reference statistics.  The ref-stats' indicates
+       that reference tracking should be enabled for the node.  In particular, that
+       leafrefs to the object (or any descendant node of the object, e.g., a list's
+       key field) should be tracked.
+
+       Reference tracking includes both counting the total number of references as
+       well as updating a timestamp wherever a reference is added or removed.
+
+       The count and timestamp values are reported via the 'auto-reclamation-grouping' as
+       opstate values, and used to determine when to send the 'unreferenced-node-lingering'
+       notification, and when to purge the node (and send the 'unreferenced-node-purged'
+       notification).
+      ";
+  }
+
+  extension globally-unique {
+    description
+      "Used only on 'list' key leaf nodes to indicate that, not only are they unique,
+       but they are globally unique (i.e., across tenants).  Used for client identities.";
+  }
+
+
+  /**************/
+  /* Identities */
+  /**************/
+
+  identity interface-type {
+    description
+      "The base identity for interface types.  YANGcore currently supports own
+       interface type. Higher level applications can add their one interface types
+       by extending this base identity type.";
+  }
+  identity native-interface {
+    base interface-type;
+    description
+      "A derived identity indicating the 'native' interface, which presents a RESTCONF
+       API over the YANG-modelled data tree.";
+  }
+
+  identity dynamic-callout-type {
+    description
+      "The base identity for dynamic callout types.  YANGcore currently supports
+       two dynamic callout types.  Higher level applications can add their own
+       dynamic callout types, by extending this base identity type.
+
+       Each dynamic callout type identifies an RPC defined in the 'yangcore-rpcs'
+       YANG module.  Please note that YANGcore does not itself implement these
+       RPCs, but rather assumes that these RPCs are implemented by functions
+       loaded into memory via a plugin.
+
+       Essentially, the RPCs defined in the yangcore-rpcs file define the inputs
+       passed into the function and the outputs the function is expected to
+       return.";
+  }
+
+  identity relay-notification-log-record {
+    base dynamic-callout-type;
+    description
+      "Identifies the 'relay-notification-log-record' RPC, defined in the
+       'yangcore-rpcs' YANG module.";
+  }
+
+  identity relay-audit-log-record {
+    base dynamic-callout-type;
+    description
+      "Identifies the 'relay-audit-log-record' RPC, defined in the
+      'yangcore-rpcs' YANG module.";
+  }
+
+  /*************/
+  /* Groupings */
+  /*************/
+
+  grouping amount-and-units-grouping {
+    leaf amount {
+      must '../units';
+      type uint16;
+    }
+    leaf units {
+      must '../amount';
+      type enumeration {
+        enum seconds;
+        enum minutes;  // 60 seconds
+        enum hours;    // 60 minutes
+        enum days;     // 24 hours
+        enum weeks;    // 7 days
+        enum months;   // 4 weeks (28 days)
+        enum years;    // 12 months (336 days)
+      }
+    }
+  } // grouping amount-and-units-grouping
+
+  grouping purge-timeout-grouping {
+    description
+      "Specifies when data will be purged after having remained
+       unreferenced or, in the case of device records, inactive.
+
+       Prior to the data-type being purged, several data-type
+       specific 'lingering' notifications are sent.  The
+       schedule for when these warnings are sent is as follows:
+
+         - 1 month prior to expiration
+         - 2 weeks prior to expiration
+         - 1 week prior to expiration
+         - 3 days prior to expiration
+         - 2 days prior to expiration
+         - 1 day prior to expiration
+
+       When the data is purged, a data-type specific 'purged'
+       message is sent.  ";
+    uses amount-and-units-grouping {
+      refine "amount" {
+        default "3";
+      }
+      refine "units" {
+        default "months";
+      }
+    }
+  }
+
+  grouping auto-reclamation-grouping {
+    description
+      "A grouping that enables a referenceable item to indicate
+       how many times it is currently referenced and when the
+       last time it was referenced (if ever).";
+    /*
+    grouping last-referenced-grouping {
+      leaf last-referenced {
+        type union {
+          type yang:date-and-time;
+          type enumeration {
+            enum never;
+          }
+        }
+        //mandatory true;  # since cannot augment a "mandatory true" UNLESS governed by a 'when'
+        description
+          "Indicate when this item was last referenced, if ever.";
+      }
+    }
+    container reference-statistics {
+      yangcore:ref-stats;
+      config false;
+      leaf reference-count {
+        type uint32;
+        //mandatory true;  # since cannot augment a "mandatory true" UNLESS governed by a 'when'
+        description
+          "The number of current references to this referenceable item.";
+      }
+      uses last-referenced-grouping;
+    }
+    notification unreferenced-node-lingering {
+      if-feature "storage-reclamation-implemented";
+      uses last-referenced-grouping;
+    }
+    notification unreferenced-node-purged {
+      if-feature "storage-reclamation-implemented";
+      uses last-referenced-grouping;
+    }
+    */
+  } // grouping auto-reclamation-grouping
+
+  // plugins-grouping
+  grouping plugins-grouping {
+    container plugins {
+      description
+        "A list of known plugins.  Only configured plugins may be
+         used, thus enabling safe use by sub-tenants (if supported).";
+      list plugin {
+        description
+          "A plugin.";
+        key "name";
+        leaf name {
+          type string;
+          description
+            "The name of the plugin (e.g., 'foo.py').  There MUST be a
+             Python module having this name in the 'plugins' directory.";
+        }
+        container functions {
+          description
+            "A list of known functions.  Only configured functions
+             may be called, thus enabling safe use by sub-tenants
+             (if supported).";
+          list function {
+            description
+              "A function defined inside the plugin.  The function MUST
+               be stateless and idempotent.";
+            key "name";
+            min-elements 1;
+            leaf name {
+              type string;
+              description
+                "The name of the function (e.g., 'generate_foo').  There
+                 MUST be a Python function having this name in the plugin.";
+            }
+          }
+        }
+      }
+    }
+  } // plugins-grouping
+
+  // preferences-grouping
+  grouping preferences-grouping {
+    container preferences {
+      description
+        "Preferences for the account (operator or tenant).";
+
+      container general {
+        leaf hostname {
+          type inet:host;
+          description
+            "The hostname (recommended) or IP address clients should use to
+             access the northbound interface. This value is used in user-facing
+             messages to users, e.g., an email containing a hyperlink back to
+             the server.";
+        }
+        leaf email-address {
+          type string;
+          description
+            "The 'From' email address to use when sending emails.";
+        }
+      } // general (prefs)
+
+      container authentication {
+        description
+          "Preferences for how NBI-clients are authenticated.";
+        must 'internal-authenticator or external-authenticator' {
+          error-message
+            "How users accessing this account are authenticated must "
+            + "be configured.  Both an 'internal-authenticator' and "
+            + "an 'external-authenticator' users may be configured "
+            + "simultaneously.";
+        }
+        container internal-authenticator {
+          presence
+            "Indicates that NBI-clients may be authenticated using the
+             internal local user database (i.e., /yangcore:users).";
+          must 'passwords-allowed or client-certificates-allowed' {
+            error-message
+              "How NBI-clients authenticate must be configured.  Both "
+              + "password and client-certificate may be used simultaneously.";
+          }
+          container passwords-allowed {
+            presence
+              "Indicates that passwords may be configured and used.";
+            leaf is-required {
+              description
+                "Indicates that passwords must be configured and used.";
+              type boolean;
+              default false;
+            }
+            container aging-timeout {
+              presence
+                "Indicates that password aging is enabled.";
+              description
+                "How long after a password's 'last-modified' date until
+                 the password is disabled.
+                
+                 Prior to a password's expiration, 'user-password-aging'
+                 notifications are generated (when implemented).
+    
+                 If a password expires, a 'user-password-expired'
+                 notification is generated.  The user must change their
+                 password the next time attempting to login.";
+              uses amount-and-units-grouping {
+                refine "amount" {
+                  default "1";
+                }
+                refine "units" {
+                  default "years";
+                }
+              }
+            }
+            container strength-testing {
+              if-feature "password-strength-testing-implemented";
+              presence
+                "Indicates that password-strength testing will be applied
+                 to new passwords.  Enabling this option disables the
+                 ability for new passwords to be created using an external
+                 hashing program; that is, they must be created using
+                 cleartext (e.g., '$0$').";
+              leaf min-length {
+                description
+                  "Specifies the minimum number of characters";
+                type uint16;
+                default "16";
+              }
+            }
+            container reuse-limits {
+              if-feature "password-reuse-limits-implemented";
+              presence
+                "Indicates that password-reuse limits are enabled.";
+              container reuse-timeout {
+                description
+                  "An admin account may reuse a password after the specified
+                   amount of time has elapsed.";
+                uses amount-and-units-grouping {
+                  refine "amount" {
+                    default "3";
+                  }
+                  refine "units" {
+                    default "years";
+                  }
+                }
+              }
+            }
+          }
+          container client-certificates-allowed {
+            if-feature "cert-based-user-auth-implemented";
+            presence
+              "Indicates that client-certificates may be configured and used.";
+            leaf is-required {
+              description
+                "Indicates that client-certificates must be configured and used.";
+              type boolean;
+              default false;
+            }
+          }
+          container inactivity-handling {
+            if-feature "storage-reclamation-implemented";
+            presence "Indicates that inactivity handling is enabled.";
+            container disable-timeout {
+              description
+                "Configures timeout for when an inactive (based on last
+                 use of the NBI) user account is disabled.";
+              uses amount-and-units-grouping {
+                refine "amount" {
+                  default "3";
+                }
+                refine "units" {
+                  default "months";
+                }
+              }
+            }
+            container purge-timeout {
+              must '../disable-timeout' {
+                description
+                  "An account should be disabled before it is purged.";
+              }
+              description
+                "Configures timeout after a disabled user account is purged.";
+              uses purge-timeout-grouping;
+            }
+          }
+        }
+        container external-authenticator {
+          if-feature "external-user-auth-implemented";
+          presence
+            "Indicates that NBI-clients may be authenticated using an external
+             authenticator (e.g., LDAP, Radius/Diameter, Active Directory, etc.";
+        }
+      } // authentication (prefs)
+
+      container authorization {
+        description
+          "Preferences for how NBI-clients are authorized.";
+      } // authorization (prefs)
+
+      container accounting {
+        description
+          "Preferences for accounting (audit log, etc.).
+
+           The audit log always (cannot be disabled) records:
+             - unsuccessful pre-auth connections
+             - unsuccessful authentications
+             - unsuccessful authorizations";
+        leaf record-successful-reads {
+          if-feature "audit-log-extras-implemented";
+          type boolean;
+          default "false";
+          description
+            "Indicates that the system should also record successful
+             read-only authorizations (i.e., HEAD, GET).  Disabled by
+             default because it can generate a lot of log records.";
+        }
+        leaf record-successful-writes {
+          if-feature "audit-log-extras-implemented";
+          type boolean;
+          default "true";
+          description
+            "Indicates that the system should also record successful
+             write authorizations (i.e., POST, PUT, DELETE, PATCH).
+             Enabled by default because commonly desired.  Disabling
+             makes the audit-log more like a security-log.";
+        }
+        leaf record-successful-rpcs {
+          if-feature "audit-log-extras-implemented";
+          type boolean;
+          default "true";
+          description
+            "Indicates that the system should also record successful
+             RPC/action authorizations.  Enabled by default because
+             commonly desired.  Note: the system is currently unable
+             to distinguish between an RPC/action that is read-only
+             (e.g., generates a report) vs one that affects the
+             (i.e., reboot).";
+        }
+        leaf record-input-contents {
+          if-feature "audit-log-extras-implemented";
+          type boolean;
+          default "false";
+          description
+            "Indicates that the system should also record any input
+             data sent by the clients.  Disabled by default as input
+             contents may be huge.";
+        }
+        container purge-timeout {
+          if-feature "storage-reclamation-implemented";
+          description
+            "Configures timeout for when audit log records are purged.";
+          uses purge-timeout-grouping;
+        }
+      } // accounting (prefs)
+
+      container outbound-interactions {
+        description
+          "Outbound (a.k.a. West/East) interactions enable the server to 
+           to interact with other infrastructure.  Sometimes interactions
+           are synchronous (i.e., a response is required) and other times
+           durable (i.e., guaranteed delivery).  How each interaction 
+           behaves is specific to the interaction.";
+        leaf relay-audit-log-record-callout {
+          description
+            "Specifies a callout used to relay audit log records.";
+          must "derived-from-or-self(/dynamic-callouts/dynamic-callout[name=current()]/rpc-supported, 'yangcore:relay-audit-log-record')";
+          type leafref {
+            path "/dynamic-callouts/dynamic-callout/name";
+          }
+        }
+        leaf relay-notification-log-record-callout {
+          description
+            "Specifies a callout used to relay notification log records.";
+          must "derived-from-or-self(/dynamic-callouts/dynamic-callout[name=current()]/rpc-supported, 'yangcore:relay-notification-log-record')";
+          type leafref {
+            path "/dynamic-callouts/dynamic-callout/name";
+          }
+        }
+      }
+
+      container security {
+        if-feature "security-protections-implemented";
+        container brute-force-attack-protection {
+          container same-ip-testing {
+            container max-num-consecutive-failures {
+              presence
+                "Indicates that consecutive-failure testing is enabled.";
+              description
+                "Specifies the number of consecutive login failures
+                 from the same IP address in a period of time before
+                 that IP address is blocked.";
+              leaf how-many-allowed {
+                type uint16;
+                default "20";
+              }
+              container auto-resets-allowed {
+                presence
+                  "Indicates that auto-reset is enabled.";
+                container reset-timeout {
+                  uses amount-and-units-grouping {
+                    refine "amount" {
+                      default "5";
+                    }
+                    refine "units" {
+                      default "minutes";
+                    }
+                  }
+                }
+              }
+            }
+            container max-num-usernames {
+              presence
+                "Indicates that max-username limits are enabled.";
+              description
+                "Specifies the number of usernames that can be used in
+                 unsuccessful login attempts from the same IP address
+                 in a period of time before that IP address is blocked.";
+              leaf how-many-allowed {
+                type uint16;
+                default "3";
+              }
+              container over-what-period-of-time {
+                uses amount-and-units-grouping {
+                  refine "amount" {
+                    default "5";
+                  }
+                  refine "units" {
+                    default "minutes";
+                  }
+                }
+              }
+              container auto-resets-allowed {
+                presence
+                  "Indicates that auto-reset is enabled.";
+                container reset-timeout {
+                  uses amount-and-units-grouping {
+                    refine "amount" {
+                      default "5";
+                    }
+                    refine "units" {
+                      default "minutes";
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        container hacked-account-protection {
+          container multi-ip-testing {
+            container same-username-limit {
+              presence
+                "Indicates that cross-IP same-username limits
+                 are enabled.";
+              description
+                "Specifies the maximum number of unique IP addresses
+                 that can login using the same username in a given
+                 span of time before that account is disabled.";
+              leaf how-many-ip-allowed {
+                type uint16;
+                default "20";
+              }
+              container over-what-period-of-time {
+                uses amount-and-units-grouping {
+                  refine "amount" {
+                    default "5";
+                  }
+                  refine "units" {
+                    default "minutes";
+                  }
+                }
+              }
+              container auto-resets-allowed {
+                presence
+                  "Indicates that auto-reset is enabled.";
+                container reset-timeout {
+                  uses amount-and-units-grouping {
+                    refine "amount" {
+                      default "5";
+                    }
+                    refine "units" {
+                      default "minutes";
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      } // security (prefs)
+
+      container storage-management {
+        if-feature "storage-reclamation-implemented";
+        description
+          "Configures various timeouts for automated storage management,
+           specifically garbage collection for unused or abandoned items.
+
+           Note that the default purge timeout for all items is 3 months.
+           Assuming the default values are used, and a fully-configured
+           system remains completely dormant, all items would be purged
+           in 6 months (3 months to purge the device records, which
+           would then cause all the other item reference counts to go
+           to zero, and thus would be purged 3 months later).";
+  
+        container truststore-certificates {
+          description
+            "Configures timeout for when unreferenced truststore
+             certificate are purged.";
+          uses purge-timeout-grouping;
+        }
+      } // container storage-management
+    }
+  } // grouping preferences-grouping
+
+
+
+  grouping users-grouping {
+    container users {
+      description
+        "Users authorized to access the northbound interface (NBI).
+         Note that YANGcore may auto-create 'user' records for when
+         external authenticator is used, in order to, e.g., configure
+         authorization (in case the autheniticator doesn't return),
+         configure preferences (in case they cannot be stored on the
+         authenticator), etc.";
+      must '/yangcore:users/user/authorization/unrestricted' {
+        error-message
+          "There must be at least one user with unrestricted access.";
+      }
+      list user {
+        key "login";
+        min-elements 1;
+        description
+          "A user authorized to access the northbound interface (NBI).";
+        leaf login {
+          yangcore:globally-unique;
+          type string;
+          description
+            "The user's login identifier.  May be the same as the user's
+             email address.";
+        }
+        leaf email-address {
+          yangcore:globally-unique;
+          type string;
+          mandatory true;
+          description
+            "The user's email address.  Used for sending emails regarding
+             to users, e.g., regarding their password expiring.";
+        }
+        leaf fullname {
+          type string;
+          description
+            "The user's full name (e.g. John Smith).";
+        }
+        container preferences {
+          description
+            "User-specific preferences...someday.";
+        }
+        container authentication {
+          when '/preferences/authentication/internal-authenticator';
+          description
+            "The user's authentication credentials, for when the (operator
+             or tenant) account's preferences indicate that authentication
+             credentials may be configured on the Yangcore server.";
+          must 'password-based/password or certificate-based/certificate' {
+            error-message
+              "User must have an authentication credential configured.";
+          }
+          container password-based {
+            when '/preferences/authentication/internal-authenticator/passwords-allowed';
+            description
+              "When the account's preferences indicate that user authentication
+               credentials may be configured using passwords.";
+            leaf password {
+              type ianach:crypt-hash;
+              description
+                "The user's hashed password.";
+            }
+            leaf password-last-modified {
+              type yang:date-and-time;
+              config false;
+            }
+          }
+          container certificate-based {
+            if-feature "cert-based-user-auth-implemented";
+            when '/preferences/authentication/internal-authenticator/client-certificates-allowed';
+            description
+              "When the account's preferences indicate that user authentication
+               credentials may be configured using certificates.";
+            leaf certificate {
+              type ct:trust-anchor-cert-cms;
+              description
+                "The user's end-entity certificate.";
+            }
+            uses ct:certificate-expiration-grouping;
+          }
+        } // authentication
+
+        container authorization {
+          description
+            "This node is operator-specified, even though it it under the
+             user's node.  The system will (doesn't yet) prevent restricted
+             users from being able to edit their own authorization.";
+          choice auth-type {
+            description
+              "A choice amongst authentiacation type.  Currently there is
+               only one type, for unrestricted users.";
+            mandatory true;
+            case unrestricted {
+              leaf unrestricted {
+                description
+                  "Indicates that the user is unrestricted.";
+                type empty;
+              }
+            }
+          }
+        }
+
+        action resend-activation-email {
+          if-feature account-verification-implemented;
+          description
+            "Can be used by an admin if another admin didn't activate
+             their account in time or allowed their password to expire.";
+        }
+        notification user-password-aging {
+          leaf user {
+            type string;
+            mandatory true;
+            description
+              "The user 'login' identifier";
+          }
+          leaf expiration-date {
+            type yang:date-and-time;
+            mandatory true;
+            description
+              "Specifies when the password is set to expire.";
+          }
+        }
+        notification user-password-expired {
+          leaf user {
+            type string;
+            mandatory true;
+            description
+              "The user ID (email-address)";
+          }
+          leaf expiration-date {
+            type yang:date-and-time;
+            mandatory true;
+            description
+              "Specifies when the password expired.";
+          }
+        }
+        notification user-activation-expired {
+          if-feature "account-activation-expiration-implemented";
+        }
+        notification user-disabled {
+          if-feature "storage-reclamation-implemented";
+        }
+        notification user-purged {
+          if-feature "storage-reclamation-implemented";
+        }
+      }
+    }
+  } // users-grouping
+
+  grouping audit-log-grouping {
+    container audit-log {
+      config false;
+      description
+        "A log of all requests sent to any transport interface,
+         primarily indicating if the request was authorized.
+
+         Entries do not capture how the request was processed or
+         the nature of any response that may have been returned.";
+      list audit-log-record {
+        uses yangcore-common:audit-log-record;
+      }
+      notification audit-log-records-purged {
+        if-feature storage-reclamation-implemented;
+        description
+          "Indicates that audit-logs in a time-range  were purged.";
+      }
+    }
+  } // audit-log-grouping
+
+
+  grouping notification-log-grouping {
+    container notification-log {
+      config false;
+      description
+        "A log of all notifications generated by YANGcore and
+        its higher-level applications.";
+      list notification-log-record {
+        uses yangcore-common:notification-log-record;
+      }
+      notification notification-log-purged {
+        if-feature storage-reclamation-implemented;
+        description
+          "Indicates that notification-logs in a time-range were purged.";
+      }
+    }
+  } // notification-log-grouping
+
+
+  /* for future standing alarms feature
+  grouping alarms-grouping {
+    container alarms {
+      if-feature "alarms-implemented";
+      config false;
+      description
+        "A list of current alarms.  The only way to clear an alarm is
+         to resolve the underlying issue causing the alarm (e.g., by
+         reissuing a certificate that is about to expire or deleting
+         an object that is about to be purged.";
+      list alarm {
+        leaf raised {
+          type yang:date-and-time;
+          mandatory true;
+          description
+            "When the alarm was raised.";
+        }
+        leaf issue {
+          type string;
+          mandatory true;
+          description
+            "A description of the issue that caused the alarm.";
+        }
+        leaf object {
+          type instance-identifier;
+          description
+            "A reference to the specific object having the issue.
+             This node is not 'mandatory true' as some alarms
+             may not regard any object in particular.";
+        }
+      }
+    }
+  } // alarms-grouping
+  */
+
+
+  grouping dynamic-callouts-grouping {
+    container dynamic-callouts {
+      list dynamic-callout {
+        key "name";
+        leaf name {
+          type string;
+          description
+            "An arbitrarary name for this dynamic callout.";
+        }
+        leaf rpc-supported {
+          mandatory true;
+          type identityref {
+            base yangcore:dynamic-callout-type;
+          }
+          description
+            "Identifies the RPC this dynamic callout supports.
+             This enables references to specific dynamic callouts
+             elsewhere in the configuration, further preventing
+             possible misconfigurations.";
+        }
+        choice callout-type {
+          mandatory true;
+          case call-function {
+            description
+              "The external logic is implemented as a callback
+               (i.e., a plugin linked into the Python executable).";
+            container call-function {
+              description
+                "Identify a function inside of a plugin.";
+              leaf plugin {
+                //must "../function";
+                mandatory true;
+                type leafref {
+                  path "/plugins/plugin/name";
+                }
+                description
+                  "A reference to the plugin that contains the function.";
+              }
+              leaf function {
+                //must "../plugin";
+                mandatory true;
+                type leafref {
+                  path "/plugins/plugin[name = current()/../plugin]/functions/function/name";
+                }
+                description
+                  "A reference to the function.";
+              }
+            }
+            anydata opaque {
+              description
+                "Optional additional configuration that will be passed
+                 into the function, as the 'opaque' parameter.";
+            }
+          }
+          case call-webhooks {
+            if-feature "webhook-based-callouts-implemented";
+            description
+              "The external logic is implemented as a webhook
+               (i.e., an RPC call to a remote RESTCONF server).";
+            container call-webhooks {
+              description
+                "The list of webhooks are configurable for HA purposes
+                 only.  The entries are tried in order until either a
+                 response is obtained or the end of the list is reached,
+                 unless the 'round-robin' flag is set, in which case
+                 the logic will loop until the 'timeout' is reached.";
+              list webhook { // FIXME: augment-in "ordered-by user" where needed
+                key "name";
+                leaf name {
+                  type string;
+                  description
+                    "An arbitrary name for this webhook.";
+                }
+                leaf encoding {
+                  description
+                    "Specifies the encoding to use for the invocation.
+                     The response (if any) MUST use the same encoding.";
+                  default "json";
+                  type enumeration {
+                    enum xml;
+                    enum json;
+                  }
+                }
+                /* FIXME: wait for final ietf-restconf-client before reenabling webhooks
+                uses rcc:restconf-client-initiate-stack-grouping {
+                  augment "transport" {
+                    if-feature "http-based-webhooks-implemented";
+                    case http {
+                      description
+                        "Non TLS-based RESTCONF-clients are not supported by RFC 8040,
+                         but supported (though protected by a feature statement) by
+                         YANGcore just in case.";
+                      container http {
+                        description
+                          "TCP client parameters.";
+                        container tcp-client-parameters {
+                          description
+                            "TCP client parameters.";
+                          uses tcpc:tcp-client-grouping {
+                            refine "remote-port" {
+                              default "80";
+                            }
+                          }
+                        }
+                        container http-client-parameters {
+                          description
+                            "HTTP client parameters.";
+                          uses httpc:http-client-grouping;
+                        }
+                      }
+                    }
+                  }
+                }*/
+              }
+              container round-robin {
+                presence
+                  "Indicates that looping behavior is desired.
+                   Present so that the 'timeout' node's mandatory
+                   true doesn't imply that round-robin must be
+                   configured.";
+                uses amount-and-units-grouping {
+                  refine "amount" {
+                    mandatory true;
+                  }
+                  refine "units" {
+                    mandatory true;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } // container dynamic-callouts
+  } // dynamic-callouts-grouping
+ 
+
+  grouping tenants-grouping {
+    container tenants {
+      if-feature multi-tenancy-implemented;
+      presence
+        "Indicates that tenants have been configured.
+         This statement ensures that mandatory descendants
+         do not imply that this container must exist.";
+      list tenant {
+        key name;
+        min-elements 1;
+        leaf name {
+          type string;
+          description
+            "Arbitrary name for the tenant.";
+          /* wait, how does this make sense with new multi-tenancy approach?!
+          must '/users/user[tenant-ref=current()]/access = "unrestricted"' {
+            // this requires a PUT to set the user and tenant at the same time, which isn't nice
+            error-message
+              "There must be at least one tenant-level user with unrestricted access.";
+          }
+          */
+        }
+      }
+    }
+  } // tenants-grouping
+
+
+  /*****************************/
+  /* Protocol-accessible Nodes */
+  /*****************************/
+
+  // sort not necessary
+  uses audit-log-grouping;
+  uses dynamic-callouts-grouping;
+  uses notification-log-grouping;
+  uses plugins-grouping;
+  uses preferences-grouping;
+  uses tenants-grouping;
+  uses users-grouping;
+
+  augment "/ts:truststore/ts:certificate-bags/ts:certificate-bag" {
+    uses auto-reclamation-grouping;
+  }
+
+  augment "/ts:truststore/ts:certificate-bags/ts:certificate-bag/ts:certificate" {
+    uses auto-reclamation-grouping;
+  }
+
+  augment "/ks:keystore/ks:asymmetric-keys/ks:asymmetric-key" {
+    uses auto-reclamation-grouping;
+  }
+
+  augment "/ks:keystore/ks:asymmetric-keys/ks:asymmetric-key/ks:certificates/ks:certificate" {
+    uses auto-reclamation-grouping;
+  }
+
+  augment "/rcs:restconf-server/rcs:listen/rcs:endpoints/rcs:endpoint" {
+    description
+      "Augments in an enumeration for the interface the RESTCONF
+       server instance supports.
+
+       While there must be exactly one 'native' interface, there
+       may be any number of 'tenant' (or other) interfaces.";
+    leaf use-for {
+      when 'true()'; // cannot augment a "mandatory true" unless prtoected by a 'when'
+      // FIXME: bug in yanglint?
+      //https://datatracker.ietf.org/doc/html/rfc7950#section-7.17
+      //"If the augmentation adds mandatory nodes (see Section 3) that
+      //represent configuration to a target node in another module, the
+      //augmentation MUST be made conditional with a "when" statement.  Care
+      //must be taken when defining the "when" expression so that clients
+      //that do not know about the augmenting module do not break."
+      mandatory true; // STRIP_4CLI
+      type identityref {
+        base yangcore:interface-type;
+      }
+      //default native-interface;
+      must 'derived-from-or-self(/rcs:restconf-server/rcs:listen/rcs:endpoints/rcs:endpoint/yangcore:use-for, "yangcore:native-interface")' {
+        error-message "There must be at least one endpoint presenting the native API.";
+      }
+    }
+  }
+
+  // disable legacy YL API
+  deviation /yl:modules-state {
+    deviate not-supported;
+  }
+  deviation /yl:yang-library-change {
+    deviate not-supported;
+  }
+
+} // module

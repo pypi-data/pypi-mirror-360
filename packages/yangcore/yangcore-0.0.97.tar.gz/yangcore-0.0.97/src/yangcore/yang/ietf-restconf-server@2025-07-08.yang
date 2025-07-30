@@ -1,0 +1,662 @@
+module ietf-restconf-server {
+  yang-version 1.1;
+  namespace "urn:ietf:params:xml:ns:yang:ietf-restconf-server";
+  prefix rcs;
+
+  import ietf-yang-types {
+    prefix yang;
+    reference
+      "RFC 6991: Common YANG Data Types";
+  }
+
+  import ietf-inet-types {
+    prefix inet;
+    reference
+      "RFC 6991: Common YANG Data Types";
+  }
+
+  import ietf-x509-cert-to-name {
+    prefix x509c2n;
+    reference
+      "RFC 7407: A YANG Data Model for SNMP Configuration";
+  }
+
+  import ietf-tcp-client {
+    prefix tcpc;
+    reference
+      "RFC DDDD: YANG Groupings for TCP Clients and TCP Servers";
+  }
+
+  import ietf-tcp-server {
+    prefix tcps;
+    reference
+      "RFC DDDD: YANG Groupings for TCP Clients and TCP Servers";
+  }
+
+  import ietf-tls-server {
+    prefix tlss;
+    reference
+      "RFC FFFF: YANG Groupings for TLS Clients and TLS Servers";
+  }
+
+  import ietf-http-server {
+    prefix https;
+    reference
+      "RFC GGGG: YANG Groupings for HTTP Clients and HTTP Servers";
+  }
+
+  import ietf-udp-server {
+    prefix udps;
+    reference
+      "RFC JJJJ: YANG Groupings for UDP Clients and UDP Servers";
+  }
+
+  organization
+    "IETF NETCONF (Network Configuration) Working Group";
+
+  contact
+    "WG Web:   https://datatracker.ietf.org/wg/netconf
+     WG List:  NETCONF WG list <mailto:netconf@ietf.org>
+     Author:   Kent Watsen <mailto:kent+ietf@watsen.net>";
+
+  description
+    "This module contains a collection of YANG definitions
+     for configuring RESTCONF servers.
+
+     Copyright (c) 2025 IETF Trust and the persons identified
+     as authors of the code. All rights reserved.
+
+     Redistribution and use in source and binary forms, with
+     or without modification, is permitted pursuant to, and
+     subject to the license terms contained in, the Revised
+     BSD License set forth in Section 4.c of the IETF Trust's
+     Legal Provisions Relating to IETF Documents
+     (https://trustee.ietf.org/license-info).
+
+     This version of this YANG module is part of RFC IIII
+     (https://www.rfc-editor.org/info/rfcIIII); see the RFC
+     itself for full legal notices.
+
+     The key words 'MUST', 'MUST NOT', 'REQUIRED', 'SHALL',
+     'SHALL NOT', 'SHOULD', 'SHOULD NOT', 'RECOMMENDED',
+     'NOT RECOMMENDED', 'MAY', and 'OPTIONAL' in this document
+     are to be interpreted as described in BCP 14 (RFC 2119)
+     (RFC 8174) when, and only when, they appear in all
+     capitals, as shown here.";
+
+  revision 2025-07-08 {
+    description
+      "Initial version";
+    reference
+      "RFC IIII: A YANG Data Model for RESTCONF Clients and Server";
+  }
+
+  // Features
+
+  feature listen {
+    description
+      "The 'listen' feature indicates that the RESTCONF server
+       supports listening for RESTCONF client connections.";
+    reference
+      "RFC 8040: RESTCONF Protocol";
+  }
+
+  feature tcp-listen {
+    if-feature listen;
+    description
+      "The 'tcp-listen' feature indicates that the RESTCONF server
+       supports opening a port to listen for incoming RESTCONF over
+       TCP client connections.  The TLS connections are expected to
+       be terminated by an external system.";
+    reference
+      "RFC 8040: RESTCONF Protocol";
+  }
+
+  feature tls-listen {
+    if-feature listen;
+    description
+      "The 'tls-listen' feature indicates that the RESTCONF server
+       supports opening a port to listen for incoming RESTCONF over
+       TLS client connections, whereby the TLS connections are
+       terminated by the server itself.";
+    reference
+      "RFC 8040: RESTCONF Protocol";
+  }
+
+  feature quic-listen {
+    if-feature listen;
+    description
+      "The 'quic-listen' feature indicates that the RESTCONF server
+       supports opening a port to listen for incoming RESTCONF over
+       QUIC client connections.";
+    reference
+      "RFC 8040: RESTCONF Protocol";
+  }
+
+  feature callhome {
+    description
+      "The 'callhome' feature indicates that the RESTCONF server
+       supports initiating 'call home' connections to RESTCONF
+       clients.";
+    reference
+      "RFC 8071: NETCONF Call Home and RESTCONF Call Home";
+  }
+
+  feature tls-callhome {
+    if-feature callhome;
+    description
+      "The 'tls-callhome' feature indicates that the RESTCONF server
+       supports initiating 'call home' connections to RESTCONF
+       clients using TLS per RFC 8071.";
+    reference
+      "RFC 8071: NETCONF Call Home and RESTCONF Call Home";
+  }
+
+  feature central-restconf-server-supported {
+   description
+      "The 'central-restconf-server-supported' feature indicates
+       that the server supports the top-level 'restconf-server'
+       node.
+
+       This feature is needed as some servers may want to use
+       features defined in this module, which requires this
+       module to be implemented, without having to support
+       the top-level 'restconf-server' node.";
+  }
+
+  // Groupings
+
+  grouping restconf-server-grouping {
+    description
+      "A grouping for configuring a RESTCONF server
+       without any consideration for how underlying transport
+       sessions are established.
+
+       Note that this grouping uses a fairly typical descendant
+       node name such that a stack of 'uses' statements will
+       have name conflicts.  It is intended that the consuming
+       data model will resolve the issue by wrapping the 'uses'
+       statement in a container called, e.g.,
+       'restconf-server-parameters'.  This model purposely does
+       not do this itself so as to provide maximum flexibility
+       to consuming models.";
+
+    container client-identity-mappings {
+      description
+        "Specifies mappings through which RESTCONF client X.509
+         certificates are used to determine a RESTCONF username.
+         If no matching and valid cert-to-name list entry can be
+         found, then the RESTCONF server MUST close the connection,
+         and MUST NOT accept RESTCONF messages over it.";
+      reference
+        "RFC 7407: A YANG Data Model for SNMP Configuration.";
+      uses x509c2n:cert-to-name {
+        refine "cert-to-name/fingerprint" {
+          mandatory false;
+          description
+            "A 'fingerprint' value does not need to be specified
+             when the 'cert-to-name' mapping is independent of
+             fingerprint matching.  A 'cert-to-name' having no
+             fingerprint value will match any client certificate
+             and therefore SHOULD only be present at the end of
+             the user-ordered 'cert-to-name' list.";
+        }
+      }
+    }
+  }
+
+  grouping restconf-server-listen-stack-grouping {
+    description
+      "A grouping for configuring a RESTCONF server
+       'listen' protocol stack for listening on a single port.";
+    choice transport {
+      mandatory true;
+      description
+        "Selects between available transports.";
+      case http-over-tcp {
+        if-feature "tcp-listen";
+        container http-over-tcp {
+          description
+            "Configures RESTCONF server stack assuming that
+             TLS-termination is handled externally.";
+          container external-endpoint {
+            presence
+              "Identifies that an external endpoint has been
+               configured.  This statement is present so the
+               mandatory descendant nodes do not imply that
+               this node must be configured.";
+            description
+              "Provides information for the external endpoint.";
+            leaf address {
+              type inet:host;
+              mandatory true;
+              description
+                "The IP address or hostname of the external
+                 endpoint clients connect to.  This value may
+                 be used in server-generated messages sent to
+                 clients.";
+            }
+            leaf port {
+              type inet:port-number;
+              default "443";
+              description
+                "The port number on the external system clients
+                 connect to. This value may be used in server 
+                 generated messages sent to clients. If no value
+                 is specified, the IANA-assigned well-known port
+                 value for 'https' (443) is assumed.";
+            }
+            leaf trusted-proxy-count {
+              type uint8 {
+                range "1..max"; // non-zero
+              }
+              default 1;
+              description
+                "The number of proxies in front of the RESTCONF
+                 server, including the external endpoint.  This
+                 value may be used to assist parsing proxy-sensitive
+                 HTTP header fields.  If no value is specified, the
+                 value '1' is assumed.";
+            }
+            leaf client-cert-var {
+              type string;
+              description
+                "The HTTP header variable used by the external
+                 TLS-terminator to relay client certificates to this
+                 RESTCONF server (e.g., 'X-Client-Cert').  This field
+                 is not mandatory as RESTCONF client authentication
+                 does not require client certificates.";
+            }
+          }
+          container tcp-server-parameters {
+            description
+              "TCP-level server parameters.";
+            uses tcps:tcp-server-grouping {
+              refine "local-bind/local-port" {
+                default "80";
+                description
+                  "The RESTCONF server will listen on the IANA-
+                   assigned well-known port value for 'http'
+                   (80) if no value is specified.";
+              }
+            }
+          }
+          container http-server-parameters {
+            description
+              "HTTP-level server parameters.";
+            uses https:http-server-grouping;
+          }
+          container restconf-server-parameters {
+            description
+              "RESTCONF-level server parameters.";
+            uses rcs:restconf-server-grouping;
+          }
+        }
+      }
+      case http-over-tls {
+        if-feature "tls-listen";
+        container http-over-tls {
+          description
+            "Configures RESTCONF server stack assuming that
+             TLS-termination is handled internally (i.e.,
+             not by a TLS-terminator in front of the RESTCONF
+             server).";
+          container tcp-server-parameters {
+            description
+              "TCP-level server parameters.";
+            uses tcps:tcp-server-grouping {
+              refine "local-bind/local-port" {
+                default "443";
+                description
+                  "The RESTCONF server will listen on the IANA-
+                   assigned well-known port value for 'https'
+                   (443) if no value is specified.";
+              }
+            }
+          }
+          container tls-server-parameters {
+            description
+              "TLS-level server parameters.";
+            uses tlss:tls-server-grouping;
+          }
+          container http-server-parameters {
+            description
+              "HTTP-level server parameters.";
+            uses https:http-server-grouping;
+          }
+          container restconf-server-parameters {
+            description
+              "RESTCONF-level server parameters.";
+            uses rcs:restconf-server-grouping;
+          }
+        }
+      }
+      case http-over-quic {
+        if-feature "quic-listen";
+        container http-over-quic {
+          description
+            "Configures RESTCONF server stack assuming that
+             TLS-termination is handled internally (i.e.,
+             not by a TLS-terminator in front of the RESTCONF
+             server).";
+          container udp-server-parameters {
+            description
+              "UDP-level server parameters.";
+            uses udps:udp-server {
+              refine "local-bind/local-port" {
+                default "443";
+                description
+                  "The RESTCONF server will listen on the IANA-
+                   assigned well-known port value for 'https'
+                   (443) if no value is specified.";
+              }
+            }
+          }
+          container tls-server-parameters {
+            description
+              "TLS-level server parameters.";
+            uses tlss:tls-server-grouping;
+          }
+          container http-server-parameters {
+            description
+              "HTTP-level server parameters.";
+            uses https:http-server-grouping;
+          }
+          container restconf-server-parameters {
+            description
+              "RESTCONF-level server parameters.";
+            uses rcs:restconf-server-grouping;
+          }
+        }
+      }
+    }
+  }
+
+  grouping restconf-server-callhome-stack-grouping {
+    description
+      "A grouping for configuring a RESTCONF server call home
+       protocol stack, for a single outbound connection.";
+    choice transport {
+      mandatory true;
+      description
+        "Selects between available transports.";
+      case http-over-tls {
+        if-feature tls-callhome;
+        container http-over-tls {
+          description
+            "Configures RESTCONF server stack assuming that
+             TLS-termination is handled internally.";
+          container tcp-client-parameters {
+            description
+              "TCP-level client parameters.";
+            uses tcpc:tcp-client-grouping {
+              refine "remote-port" {
+                default "4336";
+                description
+                  "The RESTCONF server will attempt to
+                   connect to the IANA-assigned well-known
+                   port for 'restconf-ch-tls' (4336) if no
+                   value is specified.";
+              }
+            }
+          }
+          container tls-server-parameters {
+            description
+              "TLS-level server parameters.";
+            uses tlss:tls-server-grouping;
+          }
+          container http-server-parameters {
+            description
+              "HTTP-level server parameters.";
+            uses https:http-server-grouping;
+          }
+          container restconf-server-parameters {
+            description
+              "RESTCONF-level server parameters.";
+            uses rcs:restconf-server-grouping;
+          }
+        }
+      }
+    }
+  }
+
+  grouping restconf-server-app-grouping {
+    description
+      "A grouping for configuring a RESTCONF server
+       application that supports both 'listen' and call home
+       protocol stacks for a multiplicity of connections.";
+    container listen {
+      if-feature listen;
+      presence
+        "Identifies that the server has been configured to
+         listen for incoming client connections.  This statement
+         is present so the mandatory descendant nodes do not
+         imply that this node must be configured.";
+      description
+        "Configures the RESTCONF server to listen for RESTCONF
+         client connections.";
+      container endpoints {
+        description
+          "Container for a list of endpoints.";
+        list endpoint {
+          key "name";
+          min-elements 1;
+          description
+            "List of endpoints to listen for RESTCONF connections.";
+          leaf name {
+            type string;
+            description
+              "An arbitrary name for the RESTCONF listen endpoint.";
+          }
+          uses restconf-server-listen-stack-grouping;
+        }
+      }
+    } // listen
+    container call-home {
+      if-feature callhome;
+      presence
+        "Identifies that the server has been configured to initiate
+         call home connections.  This statement is present so the
+         mandatory descendant nodes do not imply that this node
+         must be configured.";
+      description
+        "Configures the RESTCONF server to initiate the underlying
+         transport connection to RESTCONF clients.";
+      list restconf-client {
+        key "name";
+        min-elements 1;
+        description
+          "List of RESTCONF clients the RESTCONF server is to
+           maintain simultaneous call home connections with.";
+        leaf name {
+          type string;
+          description
+            "An arbitrary name for the remote RESTCONF client.";
+        }
+        container endpoints {
+          description
+            "Container for the list of endpoints.";
+          list endpoint {
+            key "name";
+            min-elements 1;
+            ordered-by user;
+            description
+              "User-ordered list of endpoints for this RESTCONF
+               client.  Defining more than one enables high-
+               availability.";
+            leaf name {
+              type string;
+              description
+                "An arbitrary name for this endpoint.";
+            }
+            uses restconf-server-callhome-stack-grouping;
+          }
+        }
+        container connection-type {
+          description
+            "Indicates the RESTCONF server's preference for how the
+             RESTCONF connection is maintained.";
+          choice connection-type {
+            mandatory true;
+            description
+              "Selects between available connection types.";
+            case persistent-connection {
+              container persistent {
+                presence
+                  "Indicates that a persistent connection is to be
+                   maintained.";
+                description
+                  "Maintain a persistent connection to the RESTCONF
+                   client. If the connection goes down, immediately
+                   start trying to reconnect to the RESTCONF client,
+                   using the reconnection strategy.
+
+                   This connection type minimizes any RESTCONF
+                   client to RESTCONF server data-transfer delay,
+                   albeit at the expense of holding resources
+                   longer.";
+              }
+            }
+            case periodic-connection {
+              container periodic {
+                presence
+                  "Indicates that a periodic connection is to be
+                   maintained.";
+                description
+                  "Periodically connect to the RESTCONF client.
+
+                   This connection type decreases resource
+                   utilization, albeit with increased delay in
+                   RESTCONF client to RESTCONF server interactions.
+
+                   The RESTCONF client SHOULD gracefully close
+                   the underlying TLS connection upon completing
+                   planned activities.  If the underlying TLS
+                   connection is not closed gracefully, the
+                   RESTCONF server MUST immediately attempt
+                   to reestablish the connection.
+
+                   Connections are established at the same start
+                   time regardless how long the previous connection
+                   stayed open.
+
+                   In the case that the previous connection is
+                   still active (i.e., the RESTCONF client has not
+                   closed it yet), establishing a new connection
+                   is NOT RECOMMENDED.";
+
+                leaf period {
+                  type uint16;
+                  units "minutes";
+                  default "60";
+                  description
+                    "Duration of time between periodic connections.";
+                }
+                leaf anchor-time {
+                  type yang:date-and-time {
+                    // constrained to minute-level granularity
+                    pattern '[0-9]{4}-(1[0-2]|0[1-9])-(0[1-9]|[1-2]'
+                          + '[0-9]|3[0-1])T(0[0-9]|1[0-9]|2[0-3]):['
+                          + '0-5][0-9]:00(Z|[\+\-]((1[0-3]|0[0-9]):'
+                          + '([0-5][0-9])|14:00))?';
+                  }
+                  description
+                    "Designates a timestamp before or after which a
+                     series of periodic connections are determined.
+                     The periodic connections occur at a whole
+                     multiple interval from the anchor time.
+
+                     If an 'anchor-time' is not provided, then the
+                     server MAY implicitly set it to the time when
+                     this configuraton is applied (e.g., on boot).
+
+                     For example, for an anchor time is 15 minutes
+                     past midnight and a period interval of 24 hours,
+                     then a periodic connection will occur 15 minutes
+                     past midnight everyday.";
+                }
+                leaf idle-timeout {
+                  type uint16;
+                  units "seconds";
+                  default "180";
+                  description
+                    "Specifies the maximum number of seconds that
+                     the underlying TCP session may remain idle.
+                     A TCP session will be dropped if it is idle
+                     for an interval longer than this number of
+                     seconds.  If set to zero, then the server
+                     will never drop a session because it is idle.";
+                }
+              }
+            }
+          }
+        }
+        container reconnect-strategy {
+          description
+            "The reconnection strategy directs how a RESTCONF server
+             reconnects to a RESTCONF client after discovering its
+             connection to the client has dropped, even if due to a
+             reboot.  The RESTCONF server starts with the specified
+             endpoint and tries to connect to it max-attempts times
+             before trying the next endpoint in the list (round
+             robin).";
+          leaf start-with {
+            type enumeration {
+              enum first-listed {
+                description
+                  "Indicates that reconnections should start with
+                   the first endpoint listed.";
+              }
+              enum last-connected {
+                description
+                  "Indicates that reconnections should start with
+                   the endpoint last connected to, if known.  If
+                   no previous connection is known, then the
+                   first endpoint configured is used.";
+              }
+              enum random-selection {
+                description
+                  "Indicates that reconnections should start with
+                   a random endpoint.";
+              }
+            }
+            default "first-listed";
+            description
+              "Specifies which of the RESTCONF client's endpoints
+               the RESTCONF server should start with when trying
+               to connect to the RESTCONF client.";
+          }
+          leaf max-wait {
+            type uint16 {
+              range "1..max";
+            }
+            units "seconds";
+            default "5";
+            description
+              "Specifies the amount of time in seconds after which,
+               if the connection is not established, an endpoint
+               connection attempt is considered unsuccessful.";
+          }
+          leaf max-attempts {
+            type uint8 {
+              range "1..max";
+            }
+            default "3";
+            description
+              "Specifies the number times the RESTCONF server tries
+               to connect to a specific endpoint before moving on to
+               the next endpoint in the list (round robin).";
+          }
+        }
+      }
+    } // call-home
+  } // restconf-server-app-grouping
+
+  // Protocol accessible node for servers that implement this module.
+  container restconf-server {
+    if-feature central-restconf-server-supported;
+    uses restconf-server-app-grouping;
+    description
+      "Top-level container for RESTCONF server configuration.";
+  }
+}

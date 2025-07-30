@@ -1,0 +1,65 @@
+module yangcore-rpcs {
+    yang-version 1.1;
+    namespace "https://watsen.net/yangcore-rpcs";
+    prefix yangcore-rpcs;
+
+    import yangcore-common {
+        prefix yangcore-common;
+    }
+
+    organization
+        "Watsen Networks (https://watsen.net)";
+
+    description
+        "This module defines RPCs used by YABNGcore's Eastbound interface.
+         Copyright (c) 2019-2025 Watsen Networks. All Rights Reserved.";
+
+    revision 2025-07-08 {
+        description
+            "Initial version";
+    }
+
+    /**********/
+    /*  RPCs  */
+    /**********/
+
+    rpc relay-notification-log-record {
+        description
+            "An RPC for relaying a single 'notification-log-record',
+             as defined in the 'yangcore-common' YANG module.
+
+             In the case of an error, the RPC MUST return
+             the 'ietf-restconf:errors' structure defined
+             in Section 7.1 in RFC 8040.";
+        input {
+            container notification-log-record {
+                uses yangcore-common:notification-log-record;
+            }
+            anydata opaque {
+              description
+                "Optional additional configuration set for the
+                 dynamic callout.";
+            }
+        }
+    }
+
+    rpc relay-audit-log-record {
+        description
+            "An RPC for relaying a single 'audit-log-record', as
+             defined by the 'yangcore-common' YANG module.
+
+             In the case of an error, the RPC MUST return
+             the 'ietf-restconf:errors' structure defined
+             in Section 7.1 in RFC 8040.";
+        input {
+            container audit-log-record {
+                uses yangcore-common:audit-log-record;
+            }
+            anydata opaque {
+              description
+                "Optional additional configuration set for the
+                 dynamic callout.";
+            }
+        }
+    }
+}
