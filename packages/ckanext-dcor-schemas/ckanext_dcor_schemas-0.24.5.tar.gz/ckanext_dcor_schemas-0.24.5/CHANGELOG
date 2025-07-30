@@ -1,0 +1,260 @@
+0.24.5
+ - fix: add anonymous user check when extending group listing
+0.24.4
+ - reg: double check whether resource changed when setting basic metadata
+0.24.3
+ - fix: only update basic resource metadata in background job when necessary
+ - enh: add "licenses_medical.json" for non-open instances
+0.24.2
+ - enh: removing draft datasets did not work when search index was outdated
+0.24.1
+ - enh: ignore invalid, non-JSON-encodable resource metadata
+ - enh: relax maximum email length to 40 characters
+ - tests: add test for displaying dataset on web interface as anon user (#21)
+0.24.0
+ - feat: new CLI script `dcor-prune-orphaned-s3-artifacts`
+ - feat: new CLI script `dcor-prune-draft-datasets`
+0.23.0
+ - feat: add `send_mail` CLI plugin for sending emails with CKAN SMTP
+ - enh: restrict fetching user info for unauthorized parties
+ - tests: improve dataset migration tests
+0.22.0
+ - integration with DCOR version bump for CKAN 2.11.3
+ - BREAKING: remove `DISABLE_AFTER_DATASET_CREATE_FOR_CONCURRENT_JOB_TESTS`
+ - fix: correctly detect missing `licenses_grou_url`
+ - fix: hide featured collections and circles on landing page for CKAN 2.11
+ - ref: migrate S3 public-tagging of resources from ckanext-dcor_depot
+ - enh: add condition and replicate to supplementary resource schemas
+0.21.5
+ - fix: extract correct package_id when updating resource
+ - ci: update GitHub Actions workflow to use Docker for testing
+ - tests: migrate all tests to S3 upload
+0.21.4
+ - fix: `get_base_metadata` failed when resource not defined yet
+0.21.3
+ - fix: do not modify `licenses_group_url` (#32)
+0.21.2
+ - fix: search and fail better when looking for licenses.json
+ - enh: update list of common model organisms
+ - enh: add condition and repetition to resource supplement
+0.21.1
+ - docs: correct title of job_set_resource_metadata_base
+0.21.0
+ - ref: migrate to dcor_shared.RQJob for background jobs
+ - enh: introduce "is_background_job" context
+0.20.6
+ - ref: enqueue eTag retrieval "at front"
+ - ref: introduce `IS_BACKGROUND_JOB` as workaround to prevent background
+   jobs to enqueue other background jobs via `after_dataset_update`
+ - ref: other code cleanup
+0.20.5
+ - fix: avoid excessive API calls in auth.package_update (performance)
+ - ref: remove unused and broken plugin..after_resource_update
+ - ref: minor reduction in API calls in plugin..after_dataset_update
+0.20.4
+ - fix: datetime.UTC does not exist in Python < 3.11
+0.20.3
+ - enh: improve spam user signup detection
+ - ref: replace deprecations
+ - ci: update workflows
+0.20.2
+ - setup: fix ckanext namespace
+0.20.1
+ - build: fix CI pipeline
+0.20.0
+ - fix: register validators instead of calling them directly (#30)
+ - fix: allow to restrict content visibility with config option
+   ckanext.dcor_schemas.allow_content_listing_for_anon
+ - enh: declare custom configuration options in IConfigDeclaration
+ - setup: bump dclab to 0.60.9
+ - setup: migrate to pyproject.toml
+0.19.2
+ - enh: add CLI script for moving a dataset to a different circle
+0.19.1
+ - fix: list-group-resources CLI should return draft and deleted resources
+0.19.0
+ - feat: implement resource_upload_s3_urls API method
+ - feat: CLI command list-group-resources for listing all resources
+   in a circle or collection
+ - feat: add ETag property which is populated with ETag from S3 via a job
+ - fix: non-sysadmins may not specify dataset ID
+ - fix: improper extraction of resource suffix for mimetype
+ - enh: more strict resource and dataset id validators
+ - enh: do not allow user to specify SHA256 hash
+ - setup: migrate to dcor_shared 0.10.0
+ - tests: migrate to helper methods from dcor_shared
+ - tests: increased coverage
+0.18.11
+ - maintenance release
+0.18.10
+ - ref: use `url_validator` that works with ports in CKAN 2.10.3
+0.18.9
+ - fix: invalid validator check for context keyword
+0.18.8
+ - fix: list-zombie-users still relied on activities
+0.18.7
+ - enh: let admin users validate invalid DC resources
+0.18.6
+ - fix: create default resource views since CKAN 2.10.1 does not
+ - fix: deprecation in dclab.dfn
+ - fix: url validator not working
+0.18.5
+ - enh: add `url_with_port_validator` validator
+ - enh: add CLI `list-circles` and `list-collections`
+ - ref: move sha256sum to dcor_shared
+0.18.4
+ - enh: update the resource schema with 's3_available' and 's3_url'
+ - ref: make sha256sum available as separate method
+0.18.3
+ - enh: more protection against script kiddies
+0.18.2
+ - tests: don't use the new `after_dataset_update` during concurrent job tests
+0.18.1
+ - fix: call `after_resource_create` via custom `after_dataset_update` for
+   all plugins (because this is not done by CKAN)
+ - tests: fix cli tests
+0.18.0
+ - ref: migration to CKAN 2.10
+0.17.2
+ - enh: make bot registration detection more verbose
+ - ref: minor regex optimization
+ - ref: change "Package ID" to "Dataset ID" in dataset view
+0.17.1
+ - enh: next escalation step against spam registration (#14)
+0.17.0
+ - fix: disallow bulk menu for making datasets private (#23)
+ - enh: don't show package editing options to users who don't
+   have access (#22)
+ - ref: removed templates related to data upload via the web
+   interface which has been disabled in 0.16.0 (commit bd5461e)
+0.16.4
+ - fix: typo in run_jobs_dcor_schemas CLI cause OSError
+0.16.3
+ - fix: handle errors during run_jobs_dcor_schemas CLI operations
+0.16.2
+ - fix: displaying dataset failed when user not logged-in
+0.16.1
+ - tests: add authfunction test for collaborators (#10)
+ - enh: only allow datasets with at least one valid .rtdc file (#5)
+ - tests: use create_with_upload fixture for resource creation
+0.16.0
+ - fix: disable browser-based uploads (#20)
+ - ref: use the original auth function for package_create to
+   make things more transparent (even though now the error
+   messages are the default ones again)
+0.15.13
+ - enh: do not allow signing up from gmail addresses (#14)
+0.15.12
+ - fix: add redis connection
+0.15.11
+ - fix: prevent enqueueing of same background job twice
+0.15.10
+ - ref: decomplicate after_create (b/c package_revise now kind of works)
+ - tests: remove dcor_depot dependency
+0.15.9
+ - ref: Implement workaround to support package_revise (see #19)
+0.15.8
+ - fix: regression where resource supplement data could not be
+   written to resource metadata
+0.15.7
+ - fix: seal auth functions for usage with package_revise
+0.15.6
+ - fix: prevent removal or addition of resources to active datasets
+   via package_revise
+0.15.5
+ - setup: bump rq to actual supported version
+0.15.4
+ - enh: add --modified-days argument to CLI run-jobs-dcor-schemas
+0.15.3
+ - setup: bump rq to >=1.8.0, because we need multiple job dependencies
+0.15.2
+ - fix: run all background jobs sequentially to avoid race conditions
+   with package_revise
+ - ref: change background job IDs to "{package_id}_{position}_{task}}"
+0.15.1
+ - enh: allow resources with .poly and .sof suffix
+0.15.0
+ - feat: add new "run-jobs-dcor-schemas" CLI command that runs all
+   background jobs on all dataset resources
+ - enh: increase timeout values for jobs (things might be slower
+   if `/data` is a network share)
+ - setup: bump dcor_shared from 0.2.9 to 0.2.10
+0.14.7
+ - setup: bump dclab to 0.35.1
+0.14.6
+ - fix: remove redunant entry for "chip: comment" in the "experiment"
+   section of the supplementary resource metadata schema
+0.14.5
+ - tests: increase coverage for empty uploads
+ - build: bump dcor_shared from 0.2.8 to 0.2.9 (handle small files)
+0.14.4
+ - fix: allow uploading .ini files to DCOR
+0.14.3
+ - fix: raise tk.Invalid when the state of a package is set to "active"
+   and it does not have any resources
+0.14.2
+ - enh: add individual resource supplement section for chip information
+0.14.1
+ - fix: ckanext.dcor_schemas.allow_public_datasets was not parsed
+   correctly (string == True instead of boolean)
+ - ci: fix codecov
+0.14.0
+ - feat: add new configuration option to disable public datasets
+   "ckanext.dcor_schemas.allow_public_datasets"
+0.13.0
+ - feat: allow to optionally set a custom licenses_group_url
+   in ckan.ini without breaking things
+ - fix: setting custom json_resource_schema_dir did not work
+ - setup: setup.py test is deprecated
+0.12.4
+ - tests: implement testing pipeline using vagrant and GH Actions
+0.12.3
+ - fix: regression where some dataset edit pages could not be accessed
+ - fix: "private" key was not parsed correctly in auth.py when updating
+   a dataset
+ - tests: increase coverage
+ - setup: bump dcor_shared from 0.2.0 to 0.2.8
+0.12.2
+ - fix: regression where a new dataset could not be created via the
+   web interface
+ - tests: increase coverage
+0.12.1
+ - fix: browsing to "/dataset" resulted in 500 Internal Error
+0.12.0
+ - enh: allow users to keep a draft dataset and remove the option
+   to upload additional datasets to active datasets within 3h
+ - fix: users could create resources in datasets of other users
+ - ref: made it more clear what is auth and what is validate
+ - tests: increase coverage
+0.11.2
+ - build: use install_requires instead of requirements.txt
+0.11.1
+ - ci: migrate to GH Actions
+0.11.0
+ - enh: add CLI "list-zombie-users" to list users with no datasets
+   and no activity for a certain amount of time
+0.10.1
+ - enh: update supplementary resource schema
+0.10.0
+ - enh: implement supplementary resource json files (#6)
+ - enh: allow to get supported resource suffixes via API
+ - fix: TemplateSyntaxError in bulk_process.html
+ - fix: use package_revise to avoid concurrency issues with
+   background jobs that set resource metadata
+ - ref: remove custom form fileds in favor of
+   supplementary resource data
+0.9.5
+ - enh: only create relevant jobs for DC mimetype data
+0.9.4
+ - fix: permissions issue when patching resources in jobs
+0.9.3
+ - enh: add a ``job_id`` for all background jobs and put them
+   in different queues
+ - ref: reworked dataset slug validation (dashes instead of
+   underscores)
+0.9.2
+ - fix: manifest did not include .yml
+0.9.1
+ - maintenance release
+0.9.0
+ - initial open-sourced version
