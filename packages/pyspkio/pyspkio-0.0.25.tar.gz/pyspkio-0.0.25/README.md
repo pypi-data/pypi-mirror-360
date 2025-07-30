@@ -1,0 +1,129 @@
+# pyspkio
+
+## Package for SPKIO API
+
+### to build
+
+```console
+. env/bin/activate
+pip install -r requirements.txt
+python3 -m build
+```
+
+### to upload
+
+```console
+python3 -m twine upload --repository pypi dist/*
+```
+
+---
+ref:
+
+[Packaging project](https://packaging.python.org/en/latest/tutorials/packaging-projects/)
+
+
+## To use
+
+```python
+from pyspkio import SPKIO
+
+spk = SPKIO(host='localhost', token='your_token', pool_connections=10, pool_maxsize=12)
+```
+
+### Nodes
+
+```python
+# Create a source
+id_src = spk.createSource({
+    'source': 'Test Source',
+    'date': {
+        'year': 2023,
+        'month': 10,
+        'day': None
+    }
+})
+```
+```python
+# Create a glossary
+id_glossary = spk.createGlossary({
+    'tx_text': '{{test:key}}'
+}, idSource, relevance=0, searchable=False)
+```
+```python
+# Create a node
+id_node = spk.createNode({
+    'idFrom': None,  # None for root node
+    'idTo': None,
+    'idKey': 'test_key', # this is high priority key than the pass by argument
+    'idContent': None,
+
+    'text': 'test',
+    'integer': 6,
+    'decimal': 1.2,
+    'datetime': {
+        'year': 2025,
+        'month': 7,
+        'day': 12,
+        'hour': 23,
+        'minute': 45,
+        'second': 4,
+        'timezone': 3,
+        'about': 1
+    }
+}, idKey=id_glossary, idSource=id_src)
+```
+### Links
+```python
+# Create a link
+# Create a node and, after, bind it to the node
+id_link = spk.createLink(
+    idFrom=id_node,
+    idKey=id_glossary, # key for the node
+    el={
+        'idContent': None,
+        'text': 'test link',
+        'integer': 6,
+        'decimal': 1.2,
+        'datetime': {
+            'year': 2025,
+            'month': 7,
+            'day': 12,
+            'hour': 23,
+            'minute': 45,
+            'second': 4,
+            'timezone': 3,
+            'about': 1
+        }
+    },
+    idSource=id_src,
+    idKeyBind=id_glossary  # this is the key for the link, default is None
+)
+```
+```python
+# Create a bind link
+# This creates a link between the node and another node
+id_link = spk.bindLink(
+    idFrom=id_node,
+    idKey=id_glossary,
+    idTo='id_another_node', 
+    idSource=id_src
+)
+```
+
+### Acquisition
+
+
+```python
+# Verify an acquisition by SHA512
+id_acquisition = spk.getAcquisitionBySha512({
+    'sha512': 'sha512_hash_of_the_file'
+})
+```
+
+```python
+# Notify an acquisition
+id_acquisition = spk.postAcquisitionBySha512MarkDone({
+    'sha512': 'sha512_hash_of_the_file',
+    'tag': 'acquisition_tag'
+})
+```
