@@ -1,0 +1,179 @@
+Metadata-Version: 2.4
+Name: solr-helper
+Version: 1.1.0
+Summary: Tool zum Anzeigen und Bearbeiten von Solr-Dokumenten.
+Author-email: Thomas Baer <thomas.baer@slub-dresden.de>
+License: MIT License
+        
+        Copyright (c) 2025 Thomas Baer
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/thomsbe/SolrHelper
+Project-URL: Repository, https://github.com/thomsbe/SolrHelper
+Project-URL: Bug Tracker, https://github.com/thomsbe/SolrHelper/issues
+Keywords: solr,helper,flask,htmx,search,admin
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Framework :: Flask
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Internet :: WWW/HTTP :: WSGI :: Application
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: <3.13,>=3.12
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: flask>=3.1.1
+Requires-Dist: click>=8.2.1
+Requires-Dist: loguru>=0.7.3
+Requires-Dist: pysolr>=3.10.0
+Requires-Dist: requests>=2.32.4
+Requires-Dist: toml>=0.10.2
+Dynamic: license-file
+
+# Slub SolrHelper
+
+Willkommen beim Slub SolrHelper!
+
+Dieses Tool hilft Bibliothekaren und Softwareentwicklern dabei, Dokumente in einem Solr-Index einfach anzusehen und zu bearbeiten.
+
+Es handelt sich um eine kleine Webanwendung, die lokal gestartet werden kann.
+
+## Features
+
+- Verbindung zu einem beliebigen Solr-Core.
+- Web-Oberfläche zur interaktiven Suche und Anzeige von Dokumenten.
+- Interaktives Bearbeiten einzelner Dokumentenfelder direkt im Browser.
+- Automatische Erkennung der Solr-Server-Fähigkeiten für sichere Updates (Atomic Updates vs. Full Re-Index).
+
+## Installation
+
+Die empfohlene Methode zur Installation und Ausführung des `solr-helper` ist die Verwendung von `uv`, einem extrem schnellen Python-Paketmanager.
+
+### 1. uv installieren
+
+Falls du `uv` noch nicht installiert hast, kannst du dies mit einem der folgenden Befehle tun:
+
+**Linux und macOS:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Windows:**
+```powershell
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Weitere Installationsmethoden findest du in der [offiziellen `uv` Dokumentation](https://github.com/astral-sh/uv#installation).
+
+### 2. solr-helper ausführen
+
+Es gibt zwei empfohlene Wege, den `solr-helper` zu nutzen:
+
+**Option A: Direkte Ausführung mit `uvx` (Empfohlen)**
+
+`uvx` ist ein Werkzeug, das `npx` aus der Node.js-Welt ähnelt. Es lädt das Paket in eine temporäre, isolierte Umgebung herunter, führt es aus und räumt danach wieder auf. So bleibt dein System sauber.
+
+```bash
+uvx solr-helper start-web --solr-url http://dein-solr:8983 --core dein-core
+```
+
+**Option B: Permanente Installation**
+
+Wenn du das Tool systemweit oder in einer bestimmten virtuellen Umgebung installieren möchtest:
+
+```bash
+uv pip install solr-helper
+```
+
+Danach kannst du es direkt aufrufen:
+
+```bash
+solr-helper start-web --solr-url http://dein-solr:8983 --core dein-core
+```
+
+## Benutzung der Web-Oberfläche
+
+Um die Web-Anwendung zu starten, führe folgenden Befehl aus:
+
+```bash
+solr-helper start-web --solr-url http://dein-solr:8983 --core dein-core
+```
+
+Die Anwendung ist dann unter `http://127.0.0.1:5000` erreichbar.
+
+1.  **Suchen:** Gib einen Suchbegriff in das Suchfeld ein, um Dokumente zu finden.
+2.  **Anzeigen:** Klicke auf die ID eines Dokuments in der Ergebnisliste, um die Detailansicht zu öffnen.
+3.  **Bearbeiten:**
+    - Klicke in der Detailansicht auf den "Bearbeiten"-Button neben einem Feld.
+    - Ein Formular erscheint, in dem du den neuen Wert eingeben kannst.
+    - Beim Speichern wird das Feld im Solr-Index aktualisiert.
+    - **Hinweis:** Das Tool prüft, ob der Solr-Server "atomare Updates" unterstützt. Wenn nicht, wird eine Warnung angezeigt, da das Bearbeiten von Feldern zu Datenverlust in anderen, nicht gespeicherten Feldern führen kann.
+
+## Konfiguration
+
+Die Verbindung zu Solr kann auf drei Arten konfiguriert werden (Priorität: CLI > ENV > config.toml > Default):
+
+1. **CLI-Optionen:**
+   - `--solr-url` (z.B. `http://localhost:8983`)
+   - `--core` (z.B. `testing`)
+   - Beispiel:
+     ```bash
+     solr-helper show-schema --solr-url http://sdvdmgtestsolr01.slub-dresden.de:8984 --core ahn-release
+     ```
+2. **Umgebungsvariablen:**
+   - `SOLRHELPER_SOLR_URL`
+   - `SOLRHELPER_CORE`
+3. **Konfigurationsdatei:**
+   - `config.toml` im Projektverzeichnis oder `~/.solrhelper/config.toml`
+   - Beispiel-Inhalt:
+     ```toml
+     solr_url = "http://localhost:8983"
+     core = "testing"
+     ```
+4. **Defaults:**
+   - `solr_url = "http://localhost:8983"`
+   - `core = "testing"`
+
+## Entwicklung
+
+Um die Anwendung lokal zu entwickeln:
+
+1.  **Virtuelle Umgebung anlegen:**
+    ```bash
+    uv venv
+    source .venv/bin/activate.fish
+    ```
+2.  **Abhängigkeiten installieren:**
+    ```bash
+    uv pip install -e .
+    ```
+3.  **Solr-Helper CLI nutzen:**
+    ```bash
+    # Verbindung testen
+    solr-helper test-connection --solr-url http://dein-solr:8983 --core dein-core
+
+    # Schema anzeigen
+    solr-helper show-schema --solr-url http://dein-solr:8983 --core dein-core
+
+    # Web-Oberfläche starten
+    solr-helper start-web --solr-url http://dein-solr:8983 --core dein-core
+    ```
