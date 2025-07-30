@@ -1,0 +1,144 @@
+Metadata-Version: 2.4
+Name: confidentialmind-core
+Version: 0.1.13
+Summary: Core functionality for interfacing with the ConfidentialMind stack
+Author-email: confidentialmind <info@confidentialmind.com>
+License: Apache-2.0
+Project-URL: Homepage, https://www.confidentialmind.com/
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+License-File: NOTICE
+Requires-Dist: pydantic<3.0.0,>=2.8.2
+Requires-Dist: websockets>=12.0
+Requires-Dist: requests~=2.32.0
+Requires-Dist: python-dotenv
+Dynamic: license-file
+
+# ConfidentialMind Core
+
+## Overview
+
+The ConfidentialMind core package is a Python library that provides core functionality for interfacing with the ConfidentialMind stack. It manages configurations, handles connections between services, and provides utilities for both local development and deployment within the ConfidentialMind ecosystem.
+
+## Installation
+
+
+```
+pip install confidentialmind-core
+```
+
+
+
+## Features
+
+- Configuration management with real-time updates
+- Service connectivity within the ConfidentialMind stack
+- Support for local development and stack deployment
+
+## Usage
+
+### Initializing the ConfigManager
+
+```python
+from confidentialmind_core.config_manager import ConfigManager, ConnectorSchema
+
+config_manager = ConfigManager()
+config_manager.init_manager(
+    config_model=YourConfigModel,
+    connectors=[ConnectorSchema(...)]
+)
+```
+
+### Using ConfigManager with Streamlit
+(Requires Streamlit and the confidentialmind-app-helpers package)
+
+```python
+from confidentialmind_app_helpers.streamlit_utils.config_manager_streamlit import init_config_manager
+
+config_manager = init_config_manager(
+    config_model=YourConfigModel,
+    connectors=[ConnectorSchema(...)]
+)
+```
+
+### Accessing Configurations and Connectors
+
+```python
+# Get the current configuration
+config = config_manager.config
+
+# Get the list of connectors
+connectors = config_manager.connectors
+
+# Get the stack ID for a specific connector
+stack_id = config_manager.getStackIdForConnector("connector_config_id")
+
+# Get the URL for a specific connector
+url = config_manager.getUrlForConnector("connector_config_id")
+```
+
+## Local Development
+
+For local development:
+
+1. Create a `.env` file in the root directory of your project.
+2. Add the following lines to the `.env` file:
+    ```
+    CONFIDENTIAL_MIND_LOCAL_CONFIG=True
+    ```
+3. If your software has connectors and the respective service is also running locally, add the connector URLs to the `.env` file as well. For example, if the connector ID is `llm_connector` and the URL is `http://localhost:8083`, add the following line:
+    ```
+    llm_connector_URL=http://localhost:8083
+    ```
+4. If you want to **connect a locally running service to a service running on a remote ConfidentialMind stack**, add the URL and API key for the remote service to the `.env` file. For example, if the connector ID is `llm_connector` and the API key is `your-api-key`, add the following lines:
+    ```
+    llm_connector_URL=https://api.example.com/api/hrevxyjgdfwxkaguhpab/
+    llm_connector_APIKEY=your-api-key
+    ```
+    **Note:** The URL and API key can be created and obtained from the ConfidentialMind portal: navigate to the service you want to connect to, click on the "API Keys" tab, and create a new API key. The URL and API key will be displayed there. You can also click the "Copy .env" button to copy the required environment variables to your clipboard. However, you must still replace the placeholder connector ID with the correct ID in the `.env` file.
+4. The environment variables will be automatically loaded when you run the application.
+
+
+The `ConfigManager` will use these environment variables to configure the application for local development.
+
+## Local Development with Array Connectors
+
+For local development with array connectors, you can set environment variables in your .env file using this pattern:
+
+```env
+# For a regular connector:
+CONNECTOR_ID_URL=http://localhost:8000
+CONNECTOR_ID_APIKEY=your.jwt.token
+
+# For an array connector with multiple services:
+ARRAY_CONNECTOR_ID_0_URL=http://localhost:8001
+ARRAY_CONNECTOR_ID_0_APIKEY=first.jwt.token
+ARRAY_CONNECTOR_ID_1_URL=http://localhost:8002
+ARRAY_CONNECTOR_ID_1_APIKEY=second.jwt.token
+ARRAY_CONNECTOR_ID_2_URL=http://localhost:8003
+ARRAY_CONNECTOR_ID_2_APIKEY=third.jwt.token
+```
+## Usage example
+
+Here's an example of how to use this for array connectors:
+
+```python
+# For a single connector
+url, headers = get_api_parameters("CONNECTOR_ID")
+response = requests.get(url, headers=headers)
+
+# For an array connector
+connector_params = get_array_api_parameters("ARRAY_CONNECTOR_ID")
+for url, headers in connector_params:
+    response = requests.get(url, headers=headers)
+    # Process each response
+```
+## Note
+
+This package is designed to work within the ConfidentialMind ecosystem. Ensure you have the necessary permissions and access to the ConfidentialMind stack before using this package in a production environment.
+
+For more detailed information on the ConfidentialMind SDK and its capabilities, please refer to the main SDK documentation.

@@ -1,0 +1,2 @@
+LOCAL_DEV = False
+LOCAL_CONFIGS = False
