@@ -1,0 +1,90 @@
+name: build_and_test
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+    paths-ignore:
+      - "README.md"
+  pull_request:
+    branches:
+      - master
+      - dev
+    paths-ignore:
+      - "README.md"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.10", "3.12"]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Update Submodules
+        run: git submodule update --init --recursive
+
+      - name: Install scikit-robot
+        run: |
+          sudo apt-get update
+          sudo apt-get install libspatialindex-dev freeglut3-dev libsuitesparse-dev libblas-dev liblapack-dev
+          pip install scikit-robot
+
+      - name: Install This Package
+        run: |
+          sudo apt-get install libeigen3-dev libboost-all-dev libompl-dev
+          python3 -m pip install --upgrade pip
+          python3 -m pip install build
+          python3 -m build . --sdist  # install sdist version to detect packaging-related issues
+          MAKEFLAGS="-j$(nproc)" pip install dist/*.tar.gz
+
+      - name: Test
+        run: |
+          pip install pytest
+          for i in {1..3}; do
+            if pytest tests; then
+              exit 0
+            fi
+            echo "Test failed... retrying ($i)"
+          done
+          echo "All test attempts failed"
+          exit 1
+        timeout-minutes: 5
+
+      - name: Run Examples
+        run: |
+          run_example() {
+            for i in {1..3}; do
+              if python3 "$1" $2; then
+                return 0
+              fi
+              echo "$1 failed... retrying ($i)"
+            done
+            echo "All attempts for $1 failed"
+            return 1
+          }
+
+          run_example "example/fetch_ik.py" || exit 1
+          run_example "example/fetch_ik.py" "--pcloud" || exit 1
+          run_example "example/fetch_plan.py" || exit 1
+          run_example "example/fetch_plan.py" "--pcloud" || exit 1
+          run_example "example/panda_plan.py" || exit 1
+          run_example "example/panda_plan.py" "--difficult" || exit 1
+          run_example "example/pr2_rarm_ik_and_plan.py" || exit 1
+          run_example "example/pr2_rarm_ik_and_plan.py" "--simplify" || exit 1
+          run_example "example/pr2_dualarm_ik_and_plan.py" || exit 1
+          run_example "example/pr2_dualarm_ik_and_plan.py" "--simplify" || exit 1
+          run_example "example/pr2_with_mobile_base.py" || exit 1
+          run_example "example/pr2_with_mobile_base.py" "--simplify" || exit 1
+          run_example "example/attach_box_ik_and_plan.py" || exit 1
+          run_example "example/beta/humanoid_planning.py" || exit 1
+          run_example "example/beta/humanoid_lift_and_place_box.py" || exit 1
+        timeout-minutes: 10
