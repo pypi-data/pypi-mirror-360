@@ -1,0 +1,52 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "customManagers:githubActionsVersions",
+    ":semanticCommitTypeAll(build)"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": "every 4 week on Monday"
+  },
+  "pyenv": {
+    "enabled": false
+  },
+  "rangeStrategy": "update-lockfile",
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "matchManagers": ["pep621"],
+      "matchDepTypes": ["dependency-groups"],
+      "rangeStrategy": "pin"
+    },
+    {
+      "matchCategories": ["python"],
+      "addLabels": ["python"]
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "addLabels": ["github_actions"]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)devbox\\.json$/"],
+      "matchStrings": ["/(?<currentValue>\\d+(\\.\\d+)*)/.schema/devbox.schema.json"],
+      "datasourceTemplate": "github-tags",
+      "packageNameTemplate": "jetify-com/devbox",
+      "depNameTemplate": "devbox",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["**/*"],
+      "matchStrings": ["docker.io/jetpackio/devbox:(?<currentValue>\\d+(\\.\\d+)*)"],
+      "datasourceTemplate": "github-tags",
+      "packageNameTemplate": "jetify-com/devbox",
+      "depNameTemplate": "devbox",
+      "versioningTemplate": "semver"
+    }
+  ]
+}
