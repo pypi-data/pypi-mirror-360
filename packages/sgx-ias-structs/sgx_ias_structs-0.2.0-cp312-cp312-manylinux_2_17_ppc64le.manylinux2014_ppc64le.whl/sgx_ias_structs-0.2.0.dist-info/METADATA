@@ -1,0 +1,72 @@
+Metadata-Version: 2.4
+Name: sgx-ias-structs
+Version: 0.2.0
+Summary: SGX structures parsing wrapper library for the Decentriq platform.
+Author: "decentriq" <opensource@decentriq.ch>
+Author-email: "decentriq" <opensource@decentriq.ch>
+Maintainer-email: decentriq <opensource@decentriq.ch>
+License: LicenseRef-DECENTRIQ-Proprietary
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown; charset=UTF-8; variant=GFM
+
+# sgx-ias-structs
+Constants and structures related to the Intel SGX ISA extension.
+
+## Getting started
+
+### JavaScript / TypeScript
+
+Add the package from folder `js/pkg` as dependency to the `package.json` in your project:
+```
+  "dependencies": {
+    "sgx-ias-structs": "file:sgx-ias-structs-[version].tgz"
+  }
+```
+
+## Python
+
+Install the wheel from folder `py/pkg` by running `pip3 install sgx_ias_structs.whl`
+and then just `import sgx_ias_structs` at the top of your python script
+
+## 🎁 Build & Package 
+
+### JavaScript / TypeScript
+To build the wasm code and the js/ts binding run in the `js` folder:
+* `npm run build-node` for nodejs
+* `npm run build-bundler` for browser / webpack
+* `npm run build` for one compatible with both
+
+Then package the dependency by running `npm pack` in the corresponding `pkg` dir.
+
+### Python
+ To build the python bindings you'll need `maturin`. Run in the `py` folder:
+ * `pip3 install maturin` to install maturin
+ * `./build.sh` to build the wheel for the current platform in the pkg folder
+
+## 🛠️ Test
+We have four different test stages.
+
+### Rust
+Regular tests written in Rust. Just call `cargo test`.
+
+### WASM
+Some test can be specified to run in the node wasm interpreter. They are defined using the `[wasm_bindgen_test]` attribute.  In order to run them go execute the following command in the `js` folder:
+```bash
+npm run wasm-test
+```
+
+### JavaScript / TypeScript 
+There also are some tests for the JavaScript bindings using `mocha` and `chai`.  
+They are defined in the folder `js/tests` and can be run  using the following command:
+```bash
+npm run test
+```
+
+### Python
+There also are some tests for the Python bindings using `tox`.  
+They are defined in the folder `py/tests` and can be run  using the following command:
+```bash
+tox
+```
+
+
