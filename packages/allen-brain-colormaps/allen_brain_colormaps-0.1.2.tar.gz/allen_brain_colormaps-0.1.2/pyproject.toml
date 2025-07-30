@@ -1,0 +1,197 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "allen-brain-colormaps"
+version = "0.1.2"
+authors = [
+    {name = "Matthias Flotho", email = "matthias.flotho@ccb.uni-saarland.de "},
+]
+maintainers = [
+    {name = "Matthias Flotho", email = "matthias.flotho@ccb.uni-saarland.de"},
+]
+description = "Matplotlib and seaborn compatible colormaps for human brain cell types from the Allen Institute Brain Atlas"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.8"
+keywords = [
+    "neuroscience", 
+    "single-cell", 
+    "visualization", 
+    "colormap", 
+    "matplotlib", 
+    "seaborn", 
+    "allen-brain-atlas",
+    "human-brain",
+    "cell-types",
+    "transcriptomics"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Natural Language :: English",
+]
+dependencies = [
+    "matplotlib>=3.5.0",
+    "seaborn>=0.11.0",
+    "numpy>=1.19.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=22.0",
+    "flake8>=5.0",
+    "isort>=5.0",
+    "mypy>=1.0",
+    "pre-commit>=2.20",
+]
+docs = [
+    "sphinx>=5.0",
+    "sphinx-rtd-theme>=1.0",
+    "myst-parser>=0.18",
+    "sphinx-autodoc-typehints>=1.19",
+]
+test = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pytest-xdist>=2.5",
+]
+all = [
+    "allen-brain-colormaps[dev,docs,test]"
+]
+
+[project.urls]
+Homepage = "https://github.com/maflot/allen-brain-colormaps"
+Repository = "https://github.com/maflot/allen-brain-colormaps"
+Documentation = "https://allen-brain-colormaps.readthedocs.io/"
+"Bug Tracker" = "https://github.com/maflot/allen-brain-colormaps/issues"
+"Release Notes" = "https://github.com/maflot/allen-brain-colormaps/releases"
+"Allen Institute" = "https://alleninstitute.org/"
+"Brain Atlas" = "https://portal.brain-map.org/"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+packages = ["allen_brain_colormaps"]
+
+[tool.setuptools.package-data]
+allen_brain_colormaps = ["py.typed"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["allen_brain_colormaps"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=allen_brain_colormaps",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+]
+testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]
+
+[tool.coverage.run]
+source = ["allen_brain_colormaps"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "setup.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_column_numbers = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "matplotlib.*",
+    "seaborn.*",
+    "numpy.*",
+]
+ignore_missing_imports = true
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = [
+    "E203",  # whitespace before ':'
+    "E501",  # line too long (handled by black)
+    "W503",  # line break before binary operator
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".eggs",
+    "*.egg-info",
+    ".venv",
+    ".tox",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101"]  # Skip assert_used test
+
+[project.entry-points."matplotlib.colormaps"]
+allen_brain_class = "allen_brain_colormaps:get_brain_cmap_class"
+allen_brain_subclass = "allen_brain_colormaps:get_brain_cmap_subclass"
+allen_brain_supertype = "allen_brain_colormaps:get_brain_cmap_supertype"
