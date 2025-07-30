@@ -1,0 +1,81 @@
+[tool.poetry]
+name = "speedy-utils"
+version = "1.1.0"
+description = "Fast and easy-to-use package for data science"
+authors = ["AnhVTH <anhvth.226@gmail.com>"]
+readme = "README.md"
+homepage = "https://github.com/anhvth/speedy"
+packages = [
+    { include = "speedy_utils", from = "src" },
+    { include = "llm_utils", from = "src" },
+]
+
+[build-system]
+requires = ["poetry-core>=1.0.15"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+strict_optional = true
+
+[tool.poetry.dependencies]
+python = ">=3.8"
+numpy = "*"
+requests = "*"
+xxhash = "*"
+loguru = "*"
+fastcore = "*"
+debugpy = "*"
+ipywidgets = "*"
+jupyterlab = "*"
+ipdb = "*"
+scikit-learn = "*"
+matplotlib = "*"
+pandas = "*"
+tabulate = "*"
+pydantic = "*"
+tqdm = "*"
+cachetools = "*"
+bump2version = "*"
+json-repair = ">=0.25.0,<0.31.0"
+fastprogress = "*"
+freezegun = "^1.5.1"
+packaging = ">=23.2,<25"
+
+[tool.poetry.scripts]
+mpython = "speedy_utils.scripts.mpython:main"
+svllm = "llm_utils.scripts.vllm_serve:main"
+svllm-lb = "llm_utils.scripts.vllm_load_balancer:run_load_balancer"
+openapi_client_codegen = "speedy_utils.scripts.openapi_client_codegen:main"
+
+
+[tool.ruff.format]
+quote-style = "double"
+line-ending = "lf"
+docstring-code-format = true
+[tool.ruff]
+exclude = ["**/*.ipynb", "poly_frontend_controler/*", "poly_client/", "legacy"]
+ignore = [
+    "E501", # Line too long
+    "F401", # Unused import
+    "F403", # Wildcard import
+    "F841", # Local variable is assigned to but never used
+    "T201", # Use of `print` statement
+]
