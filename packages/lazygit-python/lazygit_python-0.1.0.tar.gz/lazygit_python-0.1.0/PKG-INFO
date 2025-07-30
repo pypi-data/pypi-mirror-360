@@ -1,0 +1,279 @@
+Metadata-Version: 2.4
+Name: lazygit-python
+Version: 0.1.0
+Summary: A Python clone of lazygit with TUI interface
+Author-email: Jordan Diaz <jordandiazdiaz@gmail.com>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/jordandiazdiaz/lazygit-python
+Project-URL: Bug Tracker, https://github.com/jordandiazdiaz/lazygit-python/issues
+Keywords: git,terminal,tui,lazygit,version-control
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Version Control :: Git
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: textual>=0.47.0
+Requires-Dist: GitPython>=3.1.40
+Requires-Dist: click>=8.1.7
+Requires-Dist: pyyaml>=6.0.1
+
+# lazygit-python
+
+A Python clone of lazygit with terminal UI for Git operations.
+
+## 🚀 Quick Start
+
+```bash
+python -m lazygit
+```
+
+## Features
+
+- 📁 File staging/unstaging with visual status indicators
+- 📝 Commit creation with message editor
+- 🌿 Branch management (create, checkout, delete)
+- 🔄 Push/Pull/Fetch operations
+- 📊 Repository status overview
+- 📜 Commit history viewer
+- 🔍 Diff viewer for files and commits
+- 💾 Stash management
+- 🔀 Merge and rebase operations
+- ⌨️  Keyboard-driven interface
+
+## Installation
+
+### Method 1: Install from source (recommended)
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd lazygit-python
+
+# Install using pip
+pip install .
+
+# Or install in development mode
+pip install -e .
+```
+
+### Method 2: Install from PyPI (when available)
+
+```bash
+pip install lazygit-python
+```
+
+### Method 3: Standalone Installers
+
+Download pre-built installers for your platform:
+
+#### Windows
+- Download `lazygit-python-0.1.0-setup.exe` from releases
+- Run the installer and follow the setup wizard
+- The application will be available in Start Menu and Desktop
+
+#### macOS
+- Download `lazygit-python-0.1.0.dmg` from releases
+- Open the DMG and drag the app to Applications
+- Run from Applications or use `lazygit-py` in terminal
+
+#### Linux
+- **AppImage**: Download `lazygit-python-0.1.0-x86_64.AppImage`, make executable with `chmod +x`, and run
+- **Debian/Ubuntu**: Download `lazygit-python_0.1.0_all.deb` and install with `sudo dpkg -i`
+- **Snap**: `sudo snap install lazygit-python` (when available)
+
+### Method 4: Build from source
+
+```bash
+# Clone and enter directory
+git clone <repository-url>
+cd lazygit-python
+
+# Build standalone executable
+make installer
+
+# Or build specific format
+python build_installers.py [pyinstaller|windows|macos|linux]
+```
+
+## 🔧 Building Installers
+
+You can create platform-specific installers using the included build script:
+
+### Prerequisites
+
+- Python 3.8+
+- Git
+- Platform-specific tools (see below)
+
+### Build Commands
+
+```bash
+# Build for current platform (auto-detects)
+python build_installers.py
+
+# Build PyInstaller executable only
+python build_installers.py pyinstaller
+
+# Build Windows installer (.exe)
+python build_installers.py windows
+
+# Build macOS app bundle and DMG
+python build_installers.py macos
+
+# Build Linux packages (deb, AppImage)
+python build_installers.py linux
+```
+
+### Platform-Specific Requirements
+
+#### Windows
+- **NSIS** (Nullsoft Scriptable Install System) for `.exe` installer
+- Install from: https://nsis.sourceforge.io/
+- After running the build script, execute: `makensis installer.nsi`
+
+#### macOS
+- **Xcode Command Line Tools** for DMG creation
+- Install with: `xcode-select --install`
+- After running the build script, execute: `./create_dmg.sh`
+
+#### Linux
+- **Standard build tools** (gcc, make, etc.)
+- **wget** for AppImage tools
+- For Debian packages: `sudo apt-get install build-essential`
+- After running the build script, execute: `./build_appimage.sh`
+
+### Build Output
+
+The build process creates the following files:
+
+- **Windows**: `lazygit-python-0.1.0-setup.exe`
+- **macOS**: `lazygit-python-0.1.0.dmg`
+- **Linux**: 
+  - `lazygit-python-0.1.0-x86_64.AppImage`
+  - `lazygit-python_0.1.0_all.deb`
+- **All platforms**: `dist/lazygit-py` (standalone executable)
+
+### Distribution
+
+1. Run the appropriate build command for your platform
+2. Test the generated installer/package
+3. Upload to GitHub Releases or your preferred distribution method
+
+### Troubleshooting
+
+**PyInstaller Issues:**
+- Ensure all dependencies are installed: `pip install -r requirements.txt`
+- For missing modules, add them to `hiddenimports` in the spec file
+
+**Windows NSIS Issues:**
+- Make sure NSIS is in your PATH
+- Check that `dist/lazygit-py.exe` exists before running NSIS
+
+**macOS Code Signing:**
+- For distribution, you may need to sign the app: `codesign -s "Your Developer ID" dist/lazygit-py`
+- For notarization, use `xcrun notarytool`
+
+**Linux Dependencies:**
+- AppImage requires `fuse` to run: `sudo apt-get install fuse`
+- For older systems, you may need to install `libfuse2`
+
+## Usage
+
+Run from within a git repository:
+
+```bash
+# If installed via pip or installer
+lazygit-py
+
+# Short alias
+lgpy
+
+# Or run directly with Python
+python -m lazygit
+```
+
+## Keyboard Shortcuts
+
+### Navigation
+- `Tab` - Next panel
+- `Shift+Tab` - Previous panel
+- `↑/↓` - Navigate items
+- `q` - Quit
+
+### Files
+- `s` - Stage/Unstage selected file
+- `a` - Stage all files
+- `u` - Unstage all files
+- `D` - View diff of selected file
+
+### Commits
+- `c` - Create commit
+- `Enter` - Show commit details
+
+### Branches
+- `b` - Checkout branch
+- `n` - Create new branch
+- `d` - Delete branch
+- `m` - Merge selected branch
+- `R` - Rebase onto selected branch
+
+### Remote Operations
+- `p` - Push
+- `P` - Pull
+- `f` - Fetch
+
+### Stash
+- `S` - Stash changes
+- `Ctrl+S` - Pop latest stash
+
+### Other
+- `r` - Refresh
+- `?` - Show help
+
+## Requirements
+
+- Python 3.8+
+- Git installed and accessible from command line
+- Terminal with Unicode support
+
+## Dependencies
+
+- `textual` - Terminal UI framework
+- `GitPython` - Git operations
+- `click` - CLI framework
+- `pyyaml` - Configuration support
+
+## Project Structure
+
+```
+lazygit-python/
+├── lazygit/
+│   ├── __init__.py
+│   ├── __main__.py
+│   ├── git_operations.py    # Git command wrapper
+│   └── ui/
+│       ├── __init__.py
+│       ├── app.py           # Main TUI application
+│       └── dialogs.py       # Dialog components
+├── requirements.txt
+├── setup.py
+└── README.md
+```
+
+## Limitations
+
+- Some advanced Git features are not yet implemented
+- Remote branch deletion is not supported from the UI
+- Interactive rebase is not supported
+- Cherry-pick is not implemented
+
+## License
+
+This is a educational project inspired by the original lazygit.
