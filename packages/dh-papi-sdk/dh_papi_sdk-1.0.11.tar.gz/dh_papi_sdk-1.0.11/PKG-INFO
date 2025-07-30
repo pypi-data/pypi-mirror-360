@@ -1,0 +1,186 @@
+Metadata-Version: 2.4
+Name: dh-papi-sdk
+Version: 1.0.11
+Summary: Python SDK for Delivery Hero's Platform API APIGee routers
+Author-email: Delivery Hero Platform Team <dh_salesforce_platform_api@deliveryhero.com>
+License: MIT
+Project-URL: Repository, https://github.com/deliveryhero/dh-sf-pa-apigee
+Keywords: salesforce,api,sdk,bulk,deliveryhero
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: requests<3.0.0,>=2.25.0
+Requires-Dist: pydantic<3.0.0,>=2.0.0
+Requires-Dist: typing-extensions>=4.7.1
+Requires-Dist: urllib3<1.27.0,>=1.26.0
+Requires-Dist: python-dateutil>=2.8.0
+Requires-Dist: certifi>=2021.5.25
+
+# Delivery Hero Platform API - Python SDK
+
+[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![urllib3-compatible](https://img.shields.io/badge/urllib3-compatible-green.svg)](https://github.com/urllib3/urllib3)
+
+A Python SDK for accessing Delivery Hero's Salesforce Platform API (PAPI) APIGee Proxies.
+
+
+## 🚀 Quick Start
+
+```python
+import papi_sdk
+
+# Initialize client
+client = papi_sdk.Client(
+    client_id="your-client-id",
+    client_secret="your-client-secret",
+    environment="stg"  # or "prod", "dev"
+)
+
+# Use VRM Bulk operations
+jobs = client.vrm_bulk.get_all_jobs()
+new_job = client.vrm_bulk.create_job("Account", "insert")
+```
+
+## 📦 Installation
+
+### From Source (Current)
+```bash
+git clone <repository>
+cd sdk/py/papi-sdk
+pip install -e .
+```
+
+### From Package Repository
+https://pypi.org/project/dh-papi-sdk/1.0.0/
+
+```bash
+pip install dh-papi-sdk
+```
+
+## 🔧 Configuration
+
+### Environment Options
+- `prod` - Production: `platformapi.salesforce.deliveryhero.io`
+- `stg` - Staging: `platformapi-stg.salesforce.deliveryhero.io`
+- `dev` - Development: `platformapi-dev.salesforce.deliveryhero.io`
+
+### Authentication
+Contact the Platform API team to obtain your `client_id` and `client_secret`.
+
+## 📋 API Modules
+
+### VRM Bulk Operations
+Complete Salesforce bulk API integration with 100% endpoint coverage.
+
+```python
+# Get bulk client
+bulk = client.vrm_bulk
+
+# Core operations
+jobs = bulk.get_all_jobs()                    # List all jobs
+job = bulk.create_job("Account", "insert")    # Create job
+info = bulk.get_job_info(job_id)             # Get job status
+bulk.upload_job_data(job_id, csv_data)       # Upload data
+bulk.close_job(job_id)                       # Close for processing
+
+# Results retrieval
+successful = bulk.get_successful_results(job_id)   # Get successful records
+failed = bulk.get_failed_results(job_id)           # Get failed records  
+unprocessed = bulk.get_unprocessed_records(job_id) # Get unprocessed records
+
+# Management
+bulk.delete_job(job_id)                      # Delete job
+```
+
+**📚 [Complete VRM Bulk API Documentation →](sdk/py/docs/vrm-bulk.md)**
+
+*Includes all 9 methods, complete workflow examples, and production-ready code samples.*
+
+### Additional API Modules
+*More API proxy modules will be documented here as they are added to the SDK.*
+
+## 🏗️ Architecture
+
+This SDK uses **runtime compatibility patches** to solve urllib3 issues in OpenAPI-generated clients:
+
+```
+┌─────────────────┐
+│   Your Code     │
+└─────────┬───────┘
+          │
+┌─────────▼───────┐
+│ PAPI SDK Client │
+│ + Compatibility │ ← urllib3 patches applied at runtime
+│     Patches     │
+└─────────┬───────┘
+          │
+┌─────────▼───────┐    ┌──────────────┐
+│ OpenAPI Client  │────│ Platform API │
+│   + urllib3     │    │   APIGee     │
+└─────────────────┘    └──────────────┘
+```
+
+## 🔍 Troubleshooting
+
+### Authentication Issues
+```python
+# Test connection
+if client.test_connection():
+    print("✅ Authentication working")
+else:
+    print("❌ Check credentials")
+```
+
+### Debug Mode
+```python
+# Enable detailed logging in your application
+import logging
+logging.basicConfig(level=logging.DEBUG)
+```
+
+## 🏢 For Development Teams
+
+### Alternative Import Styles
+```python
+# Main recommended style
+from papi_sdk import Client
+
+# Direct component access
+from papi_sdk import AuthClient, BulkAPI
+```
+
+
+## 📚 Documentation
+
+- **[VRM Bulk API Guide](sdk/py/docs/vrm-bulk.md)** - Complete guide with all 9 methods and examples
+- **[Publishing Guide](PUBLISHING.md)** - How to publish new versions of this package
+- **More documentation coming soon** - Additional API modules will be documented as they are added
+
+## 📞 Support
+
+For questions or issues:
+1. Check the `example_usage.py` file
+2. Review the [documentation](sdk/py/docs/) for your specific API module
+3. Contact the Platform API team
+4. Create an issue in the repository
+
+## 🔄 Version History
+
+- **v1.0.0** - Production release
+- **v1.0.1** - Updated README.md and docs
+
+
+---
+
+**Built with ❤️ by the Delivery Hero Platform API team**
+
+*This SDK includes runtime patches that solve urllib3 compatibility issues commonly found in OpenAPI-generated Python clients.*
