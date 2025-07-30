@@ -1,0 +1,35 @@
+# 数据加载配置
+- loader:
+    _target_: quda.ml.transformer.Function
+    fn:
+      _target_: quda.ml.registry.FUNC_SQL_LOCAL
+      _partial_: true
+      ds_path: ${ds_path}
+- drop_null:
+    _target_: quda.ml.transformer.FilterNotNull
+    subset: ${price_tag}
+- target:
+    _target_: quda.ml.transformer.Target
+    price_tag: ${price_tag}
+    frequency: ${pred_freq}
+    gap: ${gap}
+    target: ${pred_period}
+    partition_by: asset
+    order_by: time
+- imputer:
+    _target_: quda.ml.transformer.Imputer
+    strategy: forward
+    over_spec:
+      partition_by: asset
+      order_by: time
+    columns: ${features}
+- cast:
+    _target_: quda.ml.transformer.Cast
+    old: ${features}
+    new:
+      _target_: polars.Float32
+- replace_inf:
+    _target_: quda.ml.transformer.Replace
+    columns: ${features}
+    old: [inf, -inf]
+    new: null

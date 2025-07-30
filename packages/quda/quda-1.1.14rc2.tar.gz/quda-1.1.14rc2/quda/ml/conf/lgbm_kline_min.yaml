@@ -1,0 +1,30 @@
+# 分钟级别-lightgbm
+defaults:
+  - _self_
+  - data: local
+  - preprocessor: scaler
+  - trainer: lightgbm
+
+# 特征集配置
+ds_path: mc/stock_kline_minute
+# 预测周期
+pred_period: 5min
+# 预测频率
+pred_freq: 1min
+# 价格字段
+price_tag: if(volume > 0, amount/volume, null) as vwap
+gap: 1min
+
+
+# 运行配置
+iterables:
+  _target_: xcals.get_tradingdays
+  beg_date: 2023-01-01
+  end_date: 2023-03-01
+batch_size: 20
+shuffle: true
+random_state: 42
+concat_size: -1
+features: [open, high, low, close, volume, amount]
+
+

@@ -1,0 +1,42 @@
+defaults:
+  - _self_
+  - data: local
+  - preprocessor: scaler
+  - trainer: lightgbm
+
+# 特征集配置
+ds_path: ds/l1
+# 预测周期
+pred_period: 5min
+# 预测频率
+pred_freq: 3s
+# 价格字段
+price_tag: price
+
+gap: 3s
+
+
+# 运行配置
+iterables:
+  _target_: xcals.get_tradingdays
+  beg_date: 2023-01-01
+  end_date: 2023-03-01
+batch_size: 20
+shuffle: true
+random_state: 42
+features:
+  _target_: quda.ml.utils.fast_rfe
+  df:
+    _target_: quda.ml.registry.FUNC_SQL_LOCAL
+    _partial_: true
+    ds_path: ${ds_path}
+    date: 2025-05-06
+  target_col: ${pred_period}
+  tail_label: [5, 95]
+  index: [date, time, asset]
+  missing_threshold: 0.4
+  standardize: true
+  var_threshold: 0.1
+  fill_null_strategy: forward
+
+
