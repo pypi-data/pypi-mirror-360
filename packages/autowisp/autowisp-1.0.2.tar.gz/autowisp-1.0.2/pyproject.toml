@@ -1,0 +1,100 @@
+#Control file for cibuildwheel (generate PIP wheels using github actions)
+
+[build-system]
+build-backend = 'mesonpy'
+requires = ['meson-python']
+
+[project]
+name = 'autowisp'
+
+authors = [
+    { name = 'Kaloyan Penev', email = 'Kaloyan.Penev@utdallas.edu' },
+    { name = 'Angel Romero', email = 'Angel.Romero@utdallas.edu' },
+    { name = 'Ashkan Jafarzadeh', email = 'ashkan.jafarzadeh@utdallas.edu' },
+]
+
+maintainers = [
+    { name = 'Kaloyan Penev', email = 'Kaloyan.Penev@utdallas.edu' },
+    { name = 'Angel Romero', email = 'Angel.Romero@utdallas.edu' },
+    { name = 'Ashkan Jafarzadeh', email = 'ashkan.jafarzadeh@utdallas.edu' }
+]
+
+license = { file = 'LICENSE' }
+
+classifiers = [
+    'Development Status :: 4 - Beta',
+    'Environment :: Console',
+    'Operating System :: Microsoft :: Windows',
+    'Operating System :: MacOS',
+    'Operating System :: POSIX :: Linux',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: MIT License',
+    'Programming Language :: C++',
+    'Programming Language :: C',
+    'Programming Language :: Python :: 3',
+    'Topic :: Scientific/Engineering :: Image Processing',
+    'Topic :: Scientific/Engineering :: Astronomy',
+    'Topic :: Scientific/Engineering :: Physics'
+]
+
+dependencies = [
+    'antlr4-python3-runtime',
+    'asteval',
+    'astropy',
+    'astroquery',
+    'astrowisp >= 1.5',
+    'configargparse',
+    'h5py',
+    'lxml',
+    'matplotlib',
+    'numpy < 2',
+    'pandas',
+    'pillow',
+    'psutil',
+    'pytransit',
+    'rechunker',
+    'requests',
+    'scipy',
+    'sqlalchemy',
+    'zarr',
+]
+
+description = 'Pipeline for extracting photometry from wide-field night sky images'
+
+readme = 'README.rst'
+
+requires-python = '>3.7'
+
+dynamic = ['version']
+
+[project.urls]
+source = 'https://github.com/kpenev/AutoWISP'
+documentation = 'https://kpenev.github.io/AutoWISP/'
+
+[project.optional-dependencies]
+test = []
+
+browser_interface = [
+    'Django'
+]
+
+[tool.black]
+line-length = 80
+
+[project.scripts]
+wisp-calibrate = 'autowisp.processing_steps.calibrate:main'
+wisp-stack-to-master = 'autowisp.processing_steps.stack_to_master:main'
+wisp-stack-to-master-flat = 'autowisp.processing_steps.stack_to_master_flat:main'
+wisp-find-stars = 'autowisp.processing_steps.find_stars:main'
+wisp-solve-astrometry = 'autowisp.processing_steps.solve_astrometry:main'
+wisp-fit-star-shape = 'autowisp.processing_steps.fit_star_shape:main'
+wisp-measure-aperture-photometry = 'autowisp.processing_steps.measure_aperture_photometry:main'
+wisp-fit-source-extracted-psf-map = 'autowisp.processing_steps.fit_source_extracted_psf_map:main'
+wisp-fit-magnitudes = 'autowisp.processing_steps.fit_magnitudes:main'
+wisp-create-lightcurves = 'autowisp.processing_steps.create_lightcurves:main'
+wisp-epd = 'autowisp.processing_steps.epd:main'
+wisp-generate-epd-statistics = 'autowisp.processing_steps.generate_epd_statistics:main'
+wisp-tfa = 'autowisp.processing_steps.tfa:main'
+wisp-generate-tfa-statistics = 'autowisp.processing_steps.generate_tfa_statistics:main'
+wisp-get-from-lc = 'autowisp.diagnostics.get_from_lc:main'

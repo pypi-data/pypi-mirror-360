@@ -1,0 +1,156 @@
+{% extends 'core/lcars_app.html' %}
+{% load static %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'css/fits_app.css' %}"/>
+{% endblock extra_head %}
+
+
+{% block header_bar_extra %}
+<div class="lcars-bar
+            horizontal
+            lcars-u-2">
+    Intensity range:
+</div>
+
+<div class="lcars-bar horizontal spacer"></div>
+{% if range != "minmax" %}
+<div onclick="updateView({'range': 'minmax'})"
+     class="lcars-bar
+             button
+             horizontal
+             lcars-chestnut-rose-bg
+             lcars-u-1"
+     >
+     <div style="white-space: nowrap; margin-left: 1em; margin-right:1em">
+         min/max
+     </div>
+</div>
+<div class="lcars-bar horizontal spacer"></div>
+{% endif %}
+
+{% if range != "zscale" %}
+<div onclick="updateView({'range': 'zscale'})"
+     class="lcars-bar
+            button
+            horizontal
+            lcars-chestnut-rose-bg
+            lcars-u-1">
+    <div style="white-space: nowrap; margin-left: 1em; margin-right:1em">
+        zscale
+    </div>
+</div>
+<div class="lcars-bar horizontal spacer"></div>
+{% endif %}
+
+{% with image_index1=image_index|add:"1" %}
+<div class="lcars-bar
+            {% if image_index1 > 1 %}
+            button
+            {% endif %}
+            horizontal
+            lcars-melrose-bg
+            lcars-u-2"
+     {% if image_index1 > 1 %}
+     onclick="updateView('previous image')"
+     {% endif %}
+     >
+    <div style="white-space: nowrap; margin-left: 1em; margin-right:1em">
+        <<< prev. image
+    </div>
+</div>
+
+<input type="text" 
+       class="lcars-text-input
+              decorated
+              lcars-melrose-color
+              lcars-black-bg
+              rounded
+              lcars-bar horizontal
+              lcars-u-1"
+       value="{{image_index1}}/{{num_images}}"
+       autocomplete="off"
+       onchange="updateView({'image_index': this.value.split('/', 1)[0]});">
+</input>
+
+<div class="lcars-bar
+            {% if image_index1 < num_images %}
+            button
+            {% endif %}
+            horizontal
+            lcars-melrose-bg
+            lcars-u-2"
+     {% if image_index1 < num_images %}
+     onclick="updateView('next image')"
+     {% endif %}
+     >
+    <div style="white-space: nowrap; margin-left: 1em; margin-right:1em">
+        next image >>>
+    </div>
+</div>
+{% endwith %}
+{% endblock header_bar_extra %}
+
+{% block footer_bar_extra %}
+<div class="lcars-bar
+            bottom
+            horizontal
+            lcars-u-3">
+    Transform intensity:
+</div>
+
+{% if transform %}
+<div class="lcars-bar horizontal spacer"></div>
+<div onclick="updateView({'transform': null})"
+     class="lcars-bar
+            horizontal
+            button
+            bottom
+            lcars-chestnut-rose-bg
+            lcars-u-1"
+     >
+     <div style="white-space: nowrap; margin-left: 1em; margin-right:1em">
+         None
+     </div>
+</div>
+{% endif %}
+<div class="lcars-bar horizontal spacer"></div>
+{% for trans_choice in transform_list %}
+{% if trans_choice != transform %}
+<div onclick="updateView({'transform': '{{trans_choice}}'})"
+     class="lcars-bar
+            button
+            horizontal
+            bottom
+            lcars-chestnut-rose-bg
+            lcars-u-1"
+     >
+     <div style="white-space: nowrap; margin-left: 1em; margin-right:1em">
+         {{trans_choice}}
+   </div>
+</div>
+<div class="lcars-bar horizontal spacer"></div>
+{% endif %}
+{% endfor %}
+{% endblock footer_bar_extra %}
+
+{% block main %}
+<div id="full-view" class="lcars-row">
+    {% block full_view %}
+    <div id="img-parent"> 
+        <img id="main-image" src="data:image/png;base64,{{image}}"></img>
+    </div>
+    {% endblock full_view %}
+</div>
+
+<script src="{% static 'js/autowisp.util.js' %}"></script>
+<script src="{% static 'js/display.fits.js' %}"></script>
+{% block add_js %}
+{% endblock add_js %}
+
+{% url 'processing:update_fits_display' as updateURL %}
+<script type="text/javascript">
+    updateView.URL = "{{updateURL}}";
+    initView({{ view_config|safe }});
+</script> 
+{% endblock main %}

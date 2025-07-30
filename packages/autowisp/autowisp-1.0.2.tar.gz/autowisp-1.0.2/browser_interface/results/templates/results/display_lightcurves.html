@@ -1,0 +1,115 @@
+{% extends 'core/lcars_app.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" 
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="{% static 'results/css/display_lightcurves.css' %}">
+
+{% endblock extra_head %}
+
+{% block header_title %}{% block app_title %}
+Preview Lightcurves
+{% endblock %}{% endblock %}
+
+{% block left_menu %}
+
+<a id="download-button" 
+   href="{% url 'results:download_lightcurve_figure' %}">
+    <div class="lcars-element 
+                button 
+                lcars-melrose-bg
+                lcars-u-1">
+        Download Figure
+    </div>
+</a>
+
+<a href="{% url 'results:clear_lightcurve_buffer' %}">
+    <div class="lcars-element 
+                button 
+                lcars-husk-bg
+                lcars-u-1">
+        Clear LC Buffer
+    </div>
+</a>
+{% endblock left_menu %}
+
+{% block header_bar_extra %}
+<div class="lcars-bar horizontal spacer"></div>
+<div id="apply"
+     class="lcars-bar
+            button
+            lcars-husk-bg
+            horizontal
+            lcars-u-1">
+    Apply
+</div>
+<div class="lcars-bar horizontal spacer"></div>
+<div id="rcParams"
+     class="lcars-bar
+            button
+            lcars-melrose-bg
+            horizontal
+            lcars-u-1">
+    Figure Config.
+</div>
+{% endblock header_bar_extra %}
+
+{% block main %}
+<div id="active-area" class="lcars-row fill-space">
+    <div class="fill-space lcars-column centered">
+        <div class="lcars-row centered">
+            <select name="star-id-type" 
+                    id="star-id-type"
+                    class="lcars-text-box lcars-gray-bg lcars-husk-color param lcars-u-2">
+                <option value="GDR3" selected>
+                    Gaia DR3
+                </option>
+                <option value="TIC">
+                    TIC ID
+                </option>
+                <option value="ExoArch">
+                    NASA Exoplanet Archive
+                </option>
+            </select>
+            <input type="text" id="star-id" class="param lcars-u-5" value="">
+        </div>
+        <div id="figure-parent" class="fill-space lcars-row">
+            <div id="plot-split" class="lcars-bracket hollow"></div>
+            <div id="plot-highlight"></div>
+        </div>
+    </div>
+    <div id="side-panel" 
+         class="lcars-row lcars-u-5"
+         {% if not config %}
+         style="display:none"
+         {% endif %}>
+
+        <div id="resize-config" class="lcars-bracket left">
+        </div>
+
+        <div id="config-parent" class="lcars-column">
+            {% if config %}
+            {% include "./"|add:config.0|add:"_config.html" with config=config.1 %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/autowisp.util.js' %}"></script>
+<script src="{% static 'results/js/display.lightcurves.js' %}"></script>
+{% url 'results:update_lightcurve_figure' as updateURL %}
+{% url 'results:edit_subplot' plot_id=0 as editSubPlotURL %}
+{% url 'results:edit_rcparams' as rcParamsURL%}
+{% url 'results:edit_model' model_type='m' data_select_index=0 as editModelURL %}
+<script type="text/javascript">
+    initLightcurveDisplay({update: "{{ updateURL }}", 
+                           subplot: "{{ editSubPlotURL }}",
+                           rcParams: "{{ rcParamsURL }}",
+                           editModel: "{{ editModelURL }}"});
+</script> 
+{% endblock main %}
+
+
+
+

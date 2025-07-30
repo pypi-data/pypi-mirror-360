@@ -1,0 +1,177 @@
+{% extends 'core/lcars_app.html' %}
+{% load static %}
+
+{% block header_title %}
+AutoWISP Reductions Progress
+{% endblock header_title %}
+
+{% block extra_head %}
+{% if refresh_seconds %}
+<meta http-equiv="refresh" content="{{refresh_seconds}}">
+{% endif %}
+<link rel="stylesheet" 
+      href="{% static 'processing/css/jquery.orgchart.css' %}">
+<link rel="stylesheet" 
+      href="{% static 'processing/css/progress_bar.css' %}">
+<link rel="stylesheet" href="{% static 'css/navbar.css' %}">
+
+<style type="text/css">
+#chart-container { text-align: left; }
+
+.dropdown:hover .dropbtn {
+    display: none;
+}
+</style>
+{% endblock extra_head %}
+
+{% block app_title %}
+Processing Progress
+{% endblock app_title %}
+
+{% block left_menu %}
+{% if not running %}
+<a href="{% url 'processing:start_processing' %}">
+    <div class="lcars-element 
+                              button 
+                              lcars-melrose-bg
+                              lcars-u-1">
+        Start Processing
+    </div>
+</a>
+{% endif %}
+
+<a href="{% url 'processing:select_raw_images' %}">
+    <div class="lcars-element 
+                              button 
+                              lcars-husk-bg
+                              lcars-u-1">
+        Add New Images
+    </div>
+</a>
+{% endblock left_menu %}
+
+{% block main %}
+<table class="lcars-table standard-header">
+    <thead>
+        <tr>
+            <th>Step</th>
+            <th>Image Type</th>
+            {% for channel in channels %}
+            <th style="justify-content: center;">{{ channel }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    {% for step, imtype, by_channel, runs in progress %}
+    <tr style="border-bottom: 3px dotted white;">
+        <td class="tooltip">
+            <span class="tooltiptext">step configuration</span>
+            <a href="{% url 'configuration:config_tree' step=step|join:"_" version=0 %}">
+                <div class="lcars-element 
+                                          button 
+                                          rounded 
+                                          lcars-chestnut-rose-bg
+                                          lcars-u-2"
+                     style="align-items: center;">
+                    {{ step|join:" " }}
+                </div>
+            </a>
+        </td>
+        <td class="tooltip">
+            {% if step.0 == 'fit' and step.1 == 'magnitudes' or step.0 == 'find' and step.1 == 'stars' %}
+                {% if step.0 == 'fit' and step.1 == 'magnitudes' %}
+                <a href="{% url 'processing:select_photref_target' %}">
+                    <span class="tooltiptext">select reference image</span>
+                {% else %}
+                <a href="{% url 'processing:select_starfind_batch' %}">
+                    <span class="tooltiptext">tune source extraction</span>
+                {% endif %}
+                    <div class="lcars-element 
+                                button 
+                                rounded 
+                                lcars-chestnut-rose-bg"
+                         style="align-items: center; justify-content: left;">
+                        {{ imtype }}
+                    </div>
+                </a>
+            {% else %}
+            {{ imtype }}
+            {% endif %}
+        </td>
+        {% for success, failure, pending, by_status in by_channel %}
+        {% with final=success|add:failure %}
+        {% with total=final|add:pending %}
+        <td>
+            <table>
+                <tr>
+                    <td colspan=2 class="tooltip">
+                        {% if step.0 == 'fit' and step.1 == 'magnitudes' or step.0 == 'epd' or step.0 == 'tfa' or step.1 == 'epd' or step.1 == 'tfa' %}
+                        <span class="tooltiptext">Review magnitude fitting performance </span>
+                        <a href="{% url 'processing:display_detrending_diagnostics' %}">
+                        {% endif %}
+
+                        <div id="progress-with-label">
+                            <span style="width: {% widthratio final total 100 %}%;">
+                                {{success}}/{{total}}
+                                {% if failure > 0 %}
+                                | {{failure}}/{{total}}
+                                {% endif %}
+                            </span>
+                            <div class="progress-success" 
+                                 style="width: {% widthratio success total 100 %}%">
+                            </div>
+                            <div class="progress-failure" 
+                                 style="width: {% widthratio failure total 100 %}%">
+                            </div>
+                        </div>
+                        {% if step.0 == 'fit' and step.1 == 'magnitudes' %}
+                        </a">
+                        {% endif %}
+                    </td>
+                </tr>
+                {% for status, count in by_status %}
+                <tr>
+                    <td class="lcars-u-1">Status {{ status }}</td>
+                    <td>
+                        <div id="progress-with-label" 
+                             style="width: 100%">
+                            <span style="width:{% widthratio count pending 100 %}%">
+                                {{count}}/{{pending}}
+                            </span>
+                            <div class="progress-success" 
+                                 style="width: {% widthratio count pending 100 %}%">
+                            </div>
+                        </div>
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </table>
+        </td>
+        {% endwith %}
+        {% endwith %}
+        {% endfor %}
+        <td class="dropdown">
+            {% if runs %}
+            <div class="dropbtn
+                               lcars-element 
+                               button 
+                               rounded 
+                               lcars-husk-bg"
+                 style="align-items: center;">
+                Logs
+            </div>
+            <div class="dropdown-content">
+                {% for run_id, started, finished in runs %}
+                <a href="{% url 'processing:review' run_id 'INFO' %}"
+                   class="dropdown-content">
+                    Started {{started}}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock main %}
+

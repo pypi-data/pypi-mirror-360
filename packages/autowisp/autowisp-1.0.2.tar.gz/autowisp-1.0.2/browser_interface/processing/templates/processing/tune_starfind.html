@@ -1,0 +1,99 @@
+{% extends 'core/fits_app.html' %}
+{% load static %}
+
+{% block extra_head %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'processing/css/floating_params.css' %}"/>
+{% endblock extra_head %}
+
+
+{% block header_title %}{% block app_title %}
+Tune Source Extraction
+{% endblock %}{% endblock %}
+
+{% block left_menu %}
+    <input type="submit"
+           form="save_config"
+           class="lcars-element 
+                  button 
+                  lcars-melrose-bg
+                  lcars-u-1-2"
+           value="SAVE &#10; CURRENT">
+    </input>
+</a>
+
+{% url 'processing:find_stars' fits_fname=fits_fname as starfindURL %}
+<div onclick="showSources('{{ starfindURL }}', true)">
+    <div class="lcars-element 
+                button 
+                lcars-husk-bg
+                lcars-u-1-1">
+        Update
+    </div>
+</div>
+
+{% url 'processing:project_catalog' fits_fname=fits_fname as projectCatURL %}
+<div onclick="showSources('{{ projectCatURL }}', 
+                          false, 
+                          {'shape': 'circle', 'r': 8.0, 'color': '#f00'})">
+    <div class="lcars-element 
+                button 
+                lcars-husk-bg
+                lcars-u-1-1">
+        Project Catalog
+    </div>
+</div>
+{% endblock left_menu %}
+
+{% block full_view %}
+{{ block.super }}
+
+{% url 'processing:save_starfind_config' imtype=imtype batch_index=batch_index as save_url %}
+<form id="save_config" 
+      action="{{ save_url }}" 
+      method="post" 
+      class="param-parent"
+      onkeydown="return event.key != 'Enter';">
+    {% csrf_token %}
+
+    <div class="param">
+        <label for="srcfind-tool">Tool:</label>
+        <input class="param"
+               id="srcfind-tool"
+               name="srcfind-tool"
+               type="text"
+               value="fistar">
+    </div>
+    <br/>
+    <div class="param">
+        <label for="brightness-threshold">Brightness threshold:</label>
+        <input class="param"
+               id="brightness-threshold"
+               name="brightness-threshold"
+               type="text"
+               value="1000">
+    </div>
+    <br/>
+    <div class="param">
+        <label for="filter-sources">Filter sources:</label>
+        <input class="param"
+               id="filter-sources"
+               name="filter-sources"
+               type="text"
+               value="True">
+    </div>
+    <br/>
+    <div class="param">
+        <label for="max-sources">Max sources:</label>
+        <input class="param"
+               id="max-sources"
+               name="srcextract-max-sources"
+               type="text"
+               value="0">
+    </div>
+</form>
+{% endblock full_view %}
+
+{% block add_js %}
+<script src="{% static 'processing/js/tune.starfind.js' %}"></script>
+{% endblock add_js %}

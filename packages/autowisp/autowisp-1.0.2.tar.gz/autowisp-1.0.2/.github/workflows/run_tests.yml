@@ -1,0 +1,49 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Test pipeline steps
+
+on: workflow_dispatch
+# on:
+#   push:
+#     branches: [ "master" ]
+#   pull_request:
+#     branches: [ "master" ]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        #os: [ubuntu-latest, windows-2022, macos-13, macos-14]
+        os: [macos-13]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.12"
+    - name: Install AutoWISP
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade pylint
+        pip install .
+    #- name: Lint with pylint
+    #  run: |
+    #    pylint --exit-zero .
+    - name: Run tests
+      run: |
+        python3 -m autowisp.tests failed_test -v -v -v -v -k fit_star_shape
+    - name: Upload failed test
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: failed-test
+        path: failed_test
+        if-no-files-found: ignore
+        retention-days: 1
+        overwrite: true
