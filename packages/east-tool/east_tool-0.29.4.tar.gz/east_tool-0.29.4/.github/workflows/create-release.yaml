@@ -1,0 +1,133 @@
+name: "Create Release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description:
+          "The version you want to release [v##.##.##]? (BTW, did you update
+          changelog?)"
+        required: true
+env:
+  GIT_TERMINAL_PROMPT: 0
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch history for all branches and tags
+
+      - name: Validate version input
+        id: validate-input
+        run: |
+          # Check if input version is in correct format
+          if [[ ! ${{ inputs.version }} =~ v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid input version: wrong format!"
+            exit 1
+          fi
+          # Check if input version already exists as git tag
+          if [[ ! -z $(git tag | grep ${{ inputs.version }}) ]]; then
+            echo "::error::Invalid input version: it already exists!"
+            exit 1
+          fi
+
+      - name: Update Changelog
+        uses: thomaseizinger/keep-a-changelog-new-release@3.1.0
+        with:
+          tag: ${{ inputs.version }}
+
+      # In order to make a commit, we need to initialize a user.
+      - name: Create Robot user
+        run: |
+          git config user.name "github-bot :robot:"
+          git config user.email noreply@github.com
+
+      - name: Commit Changelog, create tag and push
+        run: |
+          git add CHANGELOG.md
+          git commit -m "docs: Update CHANGELOG.md for release ${{ inputs.version }}"
+          git tag ${{ inputs.version }}
+          git push
+          git push origin ${{ inputs.version }}
+
+  call-build:
+    needs: update-changelog
+    uses: ./.github/workflows/build.yaml
+    with:
+      checkout_ref: ${{ inputs.version }}
+
+  publish-release:
+    needs: call-build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/east-tool
+    permissions:
+      id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
+      contents: write
+
+    steps:
+      - name: Start
+        run: |
+          version_cut=$(echo "${{ inputs.version }}" | cut -c 2-)
+          echo "release_version=${{ inputs.version }}" >> $GITHUB_ENV
+          echo "release_version_cut=$version_cut" >> $GITHUB_ENV
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.release_version }}
+
+      - name: Get latest Changelog entry
+        id: changelog-reader
+        uses: mindsers/changelog-reader-action@v2.2.3
+        with:
+          version: ${{ env.release_version_cut }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      # You wonder how there isn't any token? east is configured to use OIDC,
+      # check on pypi under Publishing section what is that.
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Publish Release
+        if: ${{ !env.ACT }}
+        uses: softprops/action-gh-release@v2.3.2
+        with:
+          files: dist/*
+          tag_name: ${{ env.release_version }}
+          body: |
+            # Release notes
+
+            ${{ steps.changelog-reader.outputs.changes }}
+
+  cleanup-on-failure:
+    # Only run cleanup if either call-build or publish-release fail.
+    needs: [call-build, publish-release]
+    if: ${{ always() && contains(join(needs.*.result, ','), 'failure') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
+          # Fetch two commits, so you can hard reset below
+          fetch-depth: 2
+
+      - name: Cleanup tag and Changelog
+        run: |
+          git config user.name "github-bot :robot:"
+          git config user.email noreply@github.com
+          git reset --hard HEAD~1
+          git push --force origin HEAD:main
+          git tag -d ${{ inputs.version }}
+          git push --delete origin  ${{ inputs.version }}
