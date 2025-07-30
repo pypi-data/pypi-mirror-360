@@ -1,0 +1,55 @@
+[project]
+name = "haplohub-cli"
+description = "HaploHub Command Line Interface"
+readme = "README.md"
+authors = [
+    { name = "Mike Polcari", email = "mike@haplotype-labs.com" },
+    { name = "Ilya Khrustalev", email = "ilya@haplotype-labs.com" },
+]
+requires-python = ">=3.8"
+dynamic = ["version"]
+dependencies = [
+    "auth0-python>=4.8.0",
+    "click>=8.1.8",
+    "haplohub>=1.0.11",
+    "pendulum>=3.0.0",
+    "python-dotenv>=1.0.1",
+    "requests>=2.32.0",
+    "rich>=13.9.4"
+]
+
+[project.scripts]
+haplohub = "haplohub_cli.cli:cli"
+
+[build-system]
+requires = ["setuptools", "setuptools_scm[toml]"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "haplohub_cli/_version.py"
+tag_regex = "^v(?P<version>.*)$"
+local_scheme = "no-local-version"
+
+[tool.setuptools.packages.find]
+include = ["haplohub_cli"]
+exclude = [".venv", "tests/*", "*/tests/*"]
+
+[tool.ruff]
+line-length = 127
+exclude = [".venv", "haplohub_cli/_version.py"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
+[tool.uv]
+dev-dependencies = [
+    "pre-commit>=3.5.0",
+    "pyfakefs>=5.7.4",
+    "pytest>=8.3.4",
+    "ruff>=0.9.6",
+]
