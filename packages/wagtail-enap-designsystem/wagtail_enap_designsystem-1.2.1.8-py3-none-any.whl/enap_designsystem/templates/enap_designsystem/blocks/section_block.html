@@ -1,0 +1,28 @@
+{% load wagtailcore_tags %}
+{% load static %}
+
+{% block content %}
+<section class="section-card {{self.custom_class}}" style="{% if self.custom_class == 'bg-blue' %}background-color: #EBEFF5;{% elif self.custom_class == 'bg-gray' %}background-color: #F5F7FA;{% elif self.custom_class == 'bg-whitetwo' %}background-color: #F7F7F7;{% elif self.custom_class == 'bg-darkgreen' %}background-color: #012124;{% else %}background-color: #ffffff;{% endif %}">
+        <div style="height: 40px;"></div>
+        <div class="container-medium">
+        <div class="padding-global">
+        <div class="wrapper-text-blue">
+            <h2 class="h2-blue-large {% if self.custom_class == 'bg-darkgreen' %}white{% endif %}">{{self.title}}</h2>
+            <div class="{% if self.custom_class == 'bg-darkgreen' %}white{% endif %}">
+                {{self.subtitle}}
+             </div>
+        </div>
+        </div>
+        </div>
+        
+        <div class="container-medium">
+        <div class="padding-global">
+        {% for block in self.content %}
+            {% include_block block %}
+        {% endfor %}
+        </div>
+        </div>
+        <div style="height: 40px;"></div>
+    </section>
+{% endblock %}
+

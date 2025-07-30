@@ -1,0 +1,59 @@
+{% load static %}
+{% load wagtailcore_tags coderedcms_tags %}
+{% block content %}
+{% with a_id=self.accordion.id accordion=self.accordion %}
+
+<script src="https://kit.fontawesome.com/2e8803d931.js" crossorigin="anonymous"></script>
+
+<section style="max-width: 1142px; margin: auto;">
+{% for panel in accordion.panels_content %}
+    {% with panel_id=forloop.counter %}
+    <button class="accordion" onclick="togglePanel('panel{{ panel_id }}')">
+        <div class="flex-accordion">
+            <h2 class="h2-accordion">{{panel.value.title}}</h2>
+            <div class="wrapper-icon">
+                <i style="font-size: 18px;" class="fa-solid fa-chevron-down"></i>
+            </div>
+        </div>
+        <div class="line-accordions"></div>
+    </button>
+
+    <div id="panel{{ panel_id }}" class="panel" style="display: none;">
+        <p class="p-accordion">
+            {% include_block panel.value.content %}
+        </p>
+    </div>
+    {% endwith %}
+{% endfor %}
+</section>
+
+<script>
+    function togglePanel(panelId) {
+    // Obter o painel
+    const panel = document.getElementById(panelId);
+    
+    // Obter o botão que foi clicado
+    const clickedButton = event.currentTarget;
+    
+    // Obter o ícone de seta dentro do botão
+    const arrowIcon = clickedButton.querySelector('.fa-chevron-down');
+    
+    // Verificar o estado atual
+    const isVisible = panel.style.display === "block";
+    
+    if (isVisible) {
+        // Se estiver visível, feche
+        panel.style.display = "none";
+        clickedButton.classList.remove('accordion-open');
+        arrowIcon.style.transform = 'rotate(0deg)';
+    } else {
+        // Se estiver fechado, abra
+        panel.style.display = "block";
+        clickedButton.classList.add('accordion-open');
+        arrowIcon.style.transform = 'rotate(180deg)';
+    }
+}
+</script>
+
+{% endwith %}
+{% endblock %}

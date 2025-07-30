@@ -1,0 +1,47 @@
+{% extends "enap_designsystem/base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<article class="enap-noticia">
+
+	<h1>{{ page.title }}</h1>
+
+	{# Imagem destacada via StreamField #}
+	{% if page.featured_image %}
+		{% for block in page.featured_image %}
+			{% if block.block_type == "image" %}
+				{% image block.value.image original as img %}
+				<div class="featured-image">
+					<img src="{{ img.url }}" alt="{{ block.value.caption|default:page.title }}">
+					{% if block.value.caption %}
+						<p class="caption">{{ block.value.caption }}</p>
+					{% endif %}
+				</div>
+			{% endif %}
+		{% endfor %}
+	{% endif %}
+
+	{# Informações de publicação #}
+	<div class="noticia-meta">
+		{% if page.author_display %}
+			<p><strong>Autor:</strong> {{ page.author_display }}</p>
+		{% elif page.author %}
+			<p><strong>Autor:</strong> {{ page.author.get_full_name|default:page.author.username }}</p>
+		{% endif %}
+		{% if page.date_display %}
+			<p><strong>Publicado em:</strong> {{ page.date_display|date:"d \d\e F \d\e Y" }}</p>
+		{% endif %}
+	</div>
+
+	{# Legenda #}
+	{% if page.caption %}
+		<p class="noticia-caption">{{ page.caption }}</p>
+	{% endif %}
+
+	{# Conteúdo do corpo da notícia #}
+	<div class="noticia-body">
+		{% include_block page.body %}
+	</div>
+
+</article>
+{% endblock %}
