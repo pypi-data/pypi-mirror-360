@@ -1,0 +1,100 @@
+[tool.poetry]
+name = "autonomize-model-sdk"
+version = "1.1.37"
+description = "SDK for creating and managing machine learning pipelines."
+authors = ["Jagveer Singh <jagveer@autonomize.ai>"]
+license = "Proprietary"
+repository = "https://github.com/autonomize-ai/autonomize-model-sdk.git"
+homepage = "https://github.com/autonomize-ai/autonomize-model-sdk.git"
+readme = "README.md"
+packages = [
+    { include = "modelhub" }
+]
+keywords = ["machine learning", "sdk", "mlflow", "modelhub", "inference"]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+# Core dependencies that should always be installed
+pydantic = "^2.10.6"
+pyyaml = "^6.0"
+requests = "^2.32.2"
+python-dotenv = "^1.0.1"
+httpx = "^0.28.1"
+datasets = "^3.2.0"
+
+# Base utilities
+aiohttp = {version = "^3.8.3", optional = true}
+graphviz = {version = "^0.20.1", optional = true}
+networkx = {version = "^2.8.8", optional = true}
+jinja2 = {version = "^3.1.2", optional = true}
+cloudpickle = {version = "^2.2.1", optional = true}
+
+# Optional functional dependencies
+pandas = {version = "^2.2.3", optional = true}
+mlflow = {version = "3.1.0", optional = true}
+pillow = {version = "^10.2.0", optional = true}
+platformdirs = {version = "^4.3.6", optional = true}
+kubernetes = {version = "^32.0.0", optional = true}
+pytest-asyncio = {version = "^0.25.3", optional = true}
+
+# Cloud dependencies
+azure-storage-blob = {version = "^12.14.2", optional = true}
+azure-identity = {version = "^1.12.0", optional = true}
+
+# Monitoring dependencies
+evidently = {version = "^0.6.5", optional = true}
+IPython = {version = "^8.12.0", optional = true}
+
+# ML/AI dependencies
+transformers = {version = "^4.25.1", optional = true}
+sentencepiece = {version = "^0.2.0", optional = true}
+pymupdf = {version = "^1.23.5", optional = true}
+torch = {version = "^2.0.1", optional = true}
+torchvision = {version = "^0.20.1", optional = true}
+timm = {version = "^0.5.4", optional = true}
+albumentations = {version = "^1.3.1", optional = true}
+python-multipart = {version = "^0.0.20", optional = true}
+autonomize-core = "^0.1.10"
+
+[tool.poetry.extras]
+# Core functional groupings
+base = ["pandas"]
+mlflow = ["mlflow", "pandas", "jinja2", "IPython"]
+pipeline = ["kubernetes", "graphviz", "networkx", "jinja2", "pandas"]
+datasets = ["datasets", "pandas"]
+monitoring = ["evidently", "pandas", "platformdirs", "IPython"]
+
+# Cloud-specific extras
+azure = ["azure-storage-blob", "azure-identity"]
+
+# Serving and inference extras
+serving = ["cloudpickle", "pillow", "aiohttp", "python-multipart"]
+text-serving = ["transformers", "sentencepiece", "serving"]
+image-serving = ["pymupdf", "pillow", "serving"]
+vision-models = ["torch", "torchvision", "timm", "albumentations", "image-serving"]
+
+# Combined extras
+core = ["base", "mlflow", "pipeline", "datasets", "monitoring"]
+full = ["base", "mlflow", "pipeline", "datasets", "monitoring", "azure", "serving", "text-serving", "image-serving", "vision-models"]
+data-science = ["base", "mlflow", "datasets", "monitoring"]
+deployment = ["serving", "monitoring", "kubernetes"]
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.2"
+black = {version = "24.4.2", extras = ["jupyter"]}
+pylint = "^3.2.6"
+mypy = "^1.11.1"
+pre-commit = "^3.8.0"
+pytest-cov = "^5.0.0"
+pytest-asyncio = "^0.25.3"
+
+[tool.poetry.scripts]
+pipeline = "modelhub.cli:main"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
