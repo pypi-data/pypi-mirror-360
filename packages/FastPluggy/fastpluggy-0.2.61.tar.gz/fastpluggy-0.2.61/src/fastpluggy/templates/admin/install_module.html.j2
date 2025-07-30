@@ -1,0 +1,72 @@
+<!-- Cards with tabs component -->
+{% if widget.install_enabled %}
+<div class="card mb-3">
+    <div class="card-tabs">
+        <!-- Cards navigation -->
+        <ul class="nav nav-tabs">
+            <li class="nav-item">
+                <a href="#tab-top-1" class="nav-link active" data-bs-toggle="tab">Fetch Plugins from URL</a>
+            </li>
+            <li class="nav-item">
+                <a href="#tab-top-2" class="nav-link" data-bs-toggle="tab">Install New Plugin via Git URL</a>
+            </li>
+            <li class="nav-item">
+                <a href="#tab-top-3" class="nav-link" data-bs-toggle="tab">Install New Plugin via ZIP</a>
+            </li>
+        </ul>
+        <div class="tab-content">
+            <!-- Tab for fetching available plugins from URL -->
+            <div id="tab-top-1" class="card tab-pane active show">
+                <div class="card-body">
+                    <form action="{{ widget.fetch_plugin_url }}" method="post">
+                        <div class="mb-3">
+                            <label for="url" class="form-label">Plugin List URL</label>
+                            <input type="url" class="form-control" id="url" name="url"
+                                   value="{{ default_plugin_url }}"
+                                   placeholder="https://example.com/plugins.json"
+                                   required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Fetch Plugins</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tab for installing a plugin via Git URL -->
+            <div id="tab-top-2" class="card tab-pane">
+                <div class="card-body">
+                    <form action="{{ widget.install_plugin_url }}" method="post">
+                        <div class="mb-3">
+                            <label for="git_url" class="form-label">Plugin Git URL</label>
+                            <input class="form-control" type="url" id="git_url" name="git_url"
+                                   placeholder="https://github.com/user/plugin-repo.git" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Install from Git</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tab for installing a plugin via ZIP file -->
+            <div id="tab-top-3" class="card tab-pane">
+                <div class="card-body">
+                    <form action="{{ widget.install_plugin_url }}" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Plugin ZIP File</label>
+                            <input class="form-control" type="file" id="file" name="file" accept=".zip" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Install from ZIP</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <h4 class="alert-title">Plugin installation is disabled</h4>
+            <div class="text-muted">Plugin installation has been disabled by the system administrator. Please contact your administrator to enable this feature.</div>
+        </div>
+    </div>
+</div>
+{% endif %}
