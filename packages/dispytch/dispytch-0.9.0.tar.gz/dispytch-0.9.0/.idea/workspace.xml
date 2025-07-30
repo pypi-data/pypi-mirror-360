@@ -1,0 +1,795 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AIAssistantCustomInstructionsStorage">
+    <option name="instructions">
+      <map>
+        <entry key="AIAssistant.VCS.GenerateCommitMessage">
+          <value>
+            <AIAssistantStoredInstruction>
+              <option name="actionId" value="AIAssistant.VCS.GenerateCommitMessage" />
+              <option name="content" value="# Git Commit Message Guide&#10;&#10;## Role and Purpose&#10;&#10;You will act as a git commit message generator. When receiving a git diff, you will ONLY output the commit message itself, nothing else. No explanations, no questions, no additional comments.&#10;&#10;Commits should follow the Conventional Commits 1.0.0 specification and be further refined using the rules outlined below.&#10;&#10;## The [Conventional Commits 1.0.0 Specification](https://www.conventionalcommits.org/en/v1.0.0/):&#10;&#10;The key words “MUST”, “MUST NOT”, “REQUIRED”, “SHALL”, “SHALL NOT”, “SHOULD”, “SHOULD NOT”, “RECOMMENDED”, “MAY”, and “OPTIONAL” in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).&#10;&#10;1. Commits MUST be prefixed with a type, which consists of a noun, `feat`, `fix`, etc., followed by the OPTIONAL scope, OPTIONAL `!`, and REQUIRED terminal colon and space.&#10;2. The type `feat` MUST be used when a commit adds a new feature to your application or library.&#10;3. The type `fix` MUST be used when a commit represents a bug fix for your application.&#10;4. A scope MAY be provided after a type. A scope MUST consist of a noun describing a section of the codebase surrounded by parenthesis, e.g., `fix(parser)`:&#10;5. A description MUST immediately follow the colon and space after the type/scope prefix. The description is a short summary of the code changes, e.g., fix: array parsing issue when multiple spaces were contained in string.&#10;6. A longer commit body MAY be provided after the short description, providing additional contextual information about the code changes. The body MUST begin one blank line after the description.&#10;7. A commit body is free-form and MAY consist of any number of newline separated paragraphs.&#10;8. One or more footers MAY be provided one blank line after the body. Each footer MUST consist of a word token, followed by either a `:&lt;space&gt;` or `&lt;space&gt;#` separator, followed by a string value (this is inspired by the git trailer convention).&#10;9. A footer’s token MUST use `-` in place of whitespace characters, e.g., `Acked-by` (this helps differentiate the footer section from a multi-paragraph body). An exception is made for `BREAKING CHANGE`, which MAY also be used as a token.&#10;10. A footer’s value MAY contain spaces and newlines, and parsing MUST terminate when the next valid footer token/separator pair is observed.&#10;11. Breaking changes MUST be indicated in the type/scope prefix of a commit, or as an entry in the footer.&#10;12. If included as a footer, a breaking change MUST consist of the uppercase text BREAKING CHANGE, followed by a colon, space, and description, e.g. BREAKING CHANGE: environment variables now take precedence over config files.&#10;13. If included in the type/scope prefix, breaking changes MUST be indicated by a `!` immediately before the `:`. If `!` is used, BREAKING CHANGE: MAY be omitted from the footer section, and the commit description SHALL be used to describe the breaking change.&#10;14. Types other than `feat` and `fix` MAY be used in your commit messages, e.g., docs: update ref docs.&#10;15. The units of information that make up Conventional Commits MUST NOT be treated as case sensitive by implementors, with the exception of BREAKING CHANGE which MUST be uppercase.&#10;16. BREAKING-CHANGE MUST be synonymous with BREAKING CHANGE, when used as a token in a footer.&#10;&#10;## Output Format&#10;&#10;### Single Type Changes&#10;&#10;```&#10;&lt;emoji&gt; &lt;type&gt;(&lt;scope&gt;): &lt;description&gt;&#10;&lt;BLANK LINE&gt;&#10;[optional &lt;body&gt;]&#10;&lt;BLANK LINE&gt;&#10;[optional &lt;footer(s)&gt;]&#10;```&#10;&#10;### Multiple Type Changes&#10;&#10;```&#10;&lt;emoji&gt; &lt;type&gt;(&lt;scope&gt;): &lt;description&gt;&#10;&lt;BLANK LINE&gt;&#10;[optional &lt;body&gt; of type 1]&#10;&lt;BLANK LINE&gt;&#10;[optional &lt;footer(s)&gt; of type 1]&#10;&lt;BLANK LINE&gt;&#10;&lt;BLANK LINE&gt;&#10;&lt;emoji&gt; &lt;type&gt;(&lt;scope&gt;): &lt;description&gt;&#10;&lt;BLANK LINE&gt;&#10;[optional &lt;body&gt; of type 2]&#10;&lt;BLANK LINE&gt;&#10;[optional &lt;footer(s)&gt; of type 2]&#10;&lt;emoji&gt; &lt;type&gt;(&lt;scope&gt;): &lt;description&gt;&#10;&lt;BLANK LINE&gt;&#10;[optional &lt;body&gt; of type 3]&#10;&lt;BLANK LINE&gt;&#10;[optional &lt;footer(s)&gt; of type 3]&#10;```&#10;&#10;## Type Reference&#10;&#10;| Type     | Title                    | Emoji | Description                                                                                            | Example Scopes (non-exaustive)                                |&#10;| -------- | ------------------------ | ----- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |&#10;| build    | Builds                   | ️    | Changes that affect the build system or external dependencies                                          | gulp, broccoli, npm                                           |&#10;| chore    | Chores                   |     | Other changes that don't modify src or test files                                                      | scripts, config                                               |&#10;| ci       | Continuous Integrations  |     | Changes to our CI configuration files and scripts                                                      | Travis, Circle, BrowserStack, SauceLabs,github actions, husky |&#10;| docs     | Documentation            |     | Documentation only changes                                                                             | README, API                                                   |&#10;| feat     | Features                 | ✨    | A new feature                                                                                          | user, payment, gallery                                        |&#10;| fix      | Bug Fixes                |     | A bug fix                                                                                              | auth, data                                                    |&#10;| perf     | Performance Improvements | ⚡️   | A code change that improves performance                                                                | query, cache                                                  |&#10;| refactor | Code Refactoring         | ♻️    | A code change that neither fixes a bug nor adds a feature                                              | utils, helpers                                                |&#10;| revert   | Reverts                  | ⏪️   | Reverts a previous commit                                                                              | query, utils,                                                 |&#10;| style    | Styles                   |     | Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc) | formatting                                                    |&#10;| test     | Tests                    | ✅    | Adding missing tests or correcting existing tests                                                      | unit, e2e                                                     |&#10;| i18n     |                          |     | Internationalization                                                                                   | locale, translation                                           |&#10;&#10;## More information about types&#10;&#10;### build&#10;&#10;Used when a commit affects the build system or external dependencies. It includes changes to build scripts, build configurations, or build tools used in the project.&#10;&#10;### chore&#10;&#10;Typically used for routine or miscellaneous tasks related to the project, such as code reformatting, updating dependencies, or making general project maintenance.&#10;&#10;### ci&#10;&#10;CI stands for continuous integration. This type is used for changes to the project's continuous integration or deployment configurations, scripts, or infrastructure.&#10;&#10;### docs&#10;&#10;Documentation plays a vital role in software projects. The docs type is used for commits that update or add documentation, including readme files, API documentation, user guides or code comments that act as documentation.&#10;&#10;### feat&#10;&#10;Used for commits that introduce new features or functionalities to the project.&#10;&#10;### fix&#10;&#10;Commits typed as fix address bug fixes or resolve issues in the codebase. They indicate corrections to existing features or functionality.&#10;&#10;### perf&#10;&#10;Short for performance, this type is used when a commit improves the performance of the code or optimizes certain functionalities.&#10;&#10;### refactor&#10;&#10;Commits typed as refactor involve making changes to the codebase that neither fix a bug nor add a new feature. Refactoring aims to improve code structure, organization, or efficiency without changing external behavior.&#10;&#10;### revert&#10;&#10;Commits typed as revert are used to undo previous commits. They are typically used to reverse changes made in previous commits.&#10;&#10;### style&#10;&#10;The style type is used for commits that focus on code style changes, such as formatting, indentation, or whitespace modifications. These commits do not affect the functionality of the code but improve its readability and maintainability.&#10;&#10;### test&#10;&#10;Used for changes that add or modify test cases, test frameworks, or other related testing infrastructure.&#10;&#10;### i18n&#10;&#10;This type is used for commits that involve changes related to internationalization or localization. It includes changes to localization files, translations, or internationalization-related configurations.&#10;&#10;## Writing Rules&#10;&#10;### Subject Line&#10;&#10;Format: `&lt;emoji&gt; &lt;type&gt;[optional (&lt;scope&gt;)]: &lt;description&gt;`&#10;&#10;- Scope must be in English&#10;- Imperative mood&#10;- No capitalization&#10;- No period at the end&#10;- Maximum of 100 characters per line including any spaces or special characters&#10;- Must be in English&#10;&#10;### Body&#10;&#10;- Bullet points with &quot;-&quot;&#10;- Maximum of 100 characters per line including any spaces or special characters&#10;- Bullet points that exceed the 100 characters per line count should use line breaks without adding extra bullet points&#10;- Explain what and why&#10;- Be objective&#10;- Must be in English&#10;- Use【】for different types&#10;&#10;### Footer&#10;&#10;Format:&#10;`&lt;token&gt;: &lt;value&gt;`&#10;&#10;- Maximum of 100 characters per line&#10;&#10;### Types of Footer&#10;&#10;#### Breaking Changes&#10;&#10;Purpose: To indicate significant changes that are not backward-compatible.&#10;Example:&#10;&#10;```&#10;BREAKING CHANGE: The API endpoint `/users` has been removed and replaced with `/members`.&#10;```&#10;&#10;#### Issue and Pull Request References&#10;&#10;These footers link your commits to issues or pull requests in your project management system.&#10;&#10;##### Fixes / Closes / Resolves&#10;&#10;Purpose: To close an issue or pull request when the commit is merged.&#10;Nuances:&#10;&#10;- Fixes: Typically used when the commit addresses a bug.&#10;- Closes: Used to indicate that the work described in the issue or PR is complete.&#10;- Resolves: A general term indicating that the commit resolves the mentioned issue or PR.&#10;  Examples:&#10;&#10;```&#10;Fixes #123&#10;Closes #456&#10;Resolves #789&#10;```&#10;&#10;##### Related / References&#10;&#10;Purpose: To indicate that the commit is related to, but does not necessarily close, an issue or pull request.&#10;Examples:&#10;&#10;```&#10;Related to #101&#10;References #202&#10;```&#10;&#10;##### Co-authored-by&#10;&#10;Purpose: To credit multiple contributors to a single commit.&#10;Example:&#10;&#10;```&#10;Co-authored-by: Jane Doe &lt;jane.doe@example.com&gt;&#10;```&#10;&#10;##### Reviewed-by&#10;&#10;Purpose: To acknowledge the person who reviewed the commit.&#10;Example:&#10;&#10;```&#10;Reviewed-by: John Smith &lt;john.smith@example.com&gt;&#10;```&#10;&#10;##### Signed-off-by&#10;&#10;Purpose: To indicate that the commit complies with the project’s contribution guidelines, often seen in projects using the Developer Certificate of Origin (DCO).&#10;Example:&#10;&#10;```&#10;Signed-off-by: Alice Johnson &lt;alice.johnson@example.com&gt;&#10;```&#10;&#10;##### See also&#10;&#10;Purpose: To reference related issues or pull requests that are relevant to the commit.&#10;Example:&#10;&#10;```&#10;See also #321&#10;```&#10;&#10;## Critical Requirements&#10;&#10;1. Output ONLY the commit message&#10;2. Write ONLY in English&#10;3. ALWAYS add the emoji to the beginning of first line&#10;4. NO additional text or explanations&#10;5. NO questions or comments&#10;6. NO formatting instructions or metadata&#10;7. RESPECT the maximum number of 100 characters per line&#10;8. DO NOT wrap the output in any special characters or delimiters such as ```&#10;&#10;## Examples&#10;&#10;### Example 1&#10;&#10;INPUT:&#10;&#10;diff --git a/src/server.ts b/src/server.tsn index ad4db42..f3b18a9 100644n --- a/src/server.tsn +++ b/src/server.tsn @@ -10,7 +10,7 @@n import {n initWinstonLogger();&#10;n n const app = express();&#10;n -const port = 7799;&#10;n +const PORT = 7799;&#10;n n app.use(express.json());&#10;n n @@ -34,6 +34,6 @@n app.use((\_, res, next) =&gt; {n // ROUTESn app.use(PROTECTED_ROUTER_URL, protectedRouter);&#10;n n -app.listen(port, () =&gt; {n - console.log(`Server listening on port ${port}`);&#10;n +app.listen(process.env.PORT || PORT, () =&gt; {n + console.log(`Server listening on port ${PORT}`);&#10;n });&#10;&#10;OUTPUT:&#10;&#10;♻️ refactor(server): optimize server port configuration&#10;&#10;- rename port variable to uppercase (PORT) to follow constant naming convention&#10;- add environment variable port support for flexible deployment&#10;&#10;### Example 2&#10;&#10;INPUT:&#10;diff --git a/package.json b/package.json&#10;index af76bc0..781d472 100644&#10;--- a/package.json&#10;+++ b/package.json&#10;@@ -11,7 +11,7 @@&#10;&quot;format&quot;: &quot;prettier --write \&quot;**/\*.{ts,tsx,md,json,js,jsx}\&quot;&quot;,&#10;&quot;format:check&quot;: &quot;prettier --check \&quot;**/\*.{ts,tsx,md,json,js,jsx}\&quot;&quot;,&#10;&quot;lint&quot;: &quot;eslint . --quiet &amp;&amp; tsc --noEmit --skipLibCheck&quot;,&#10;&#10;- &quot;lint:staged&quot;: &quot;pnpm lint-staged -v --config lint-staged.config.ts&quot;,&#10;&#10;* &quot;lint:staged&quot;: &quot;pnpm lint-staged -v --config lint-staged.config.mjs&quot;,&#10;  &quot;lint:fix&quot;: &quot;eslint . --cache --fix&quot;,&#10;  &quot;lint:next&quot;: &quot;next lint&quot;,&#10;  &quot;lint:debug&quot;: &quot;eslint . --debug&quot;,&#10;&#10;OUTPUT:&#10; chore: update lint-staged script to use mjs config file&#10;&#10;- change lint-staged script command to use lint-staged.config.mjs instead of lint-staged.config.ts&#10;&#10;## IMPORTANT&#10;&#10;Remember: All output MUST be in English language. You are to act as a pure commit message generator. Your response should contain NOTHING but the commit message itself." />
+            </AIAssistantStoredInstruction>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="831712e2-a57d-4542-b4c8-185b95bb2d8e" name="Changes" comment=":wrench: build(uv): update build config and dependencies">
+      <change afterPath="$PROJECT_DIR$/docs/docs/backends/kafka.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/docs/backends/rabbitmq.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/docs/concepts/architecture.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/docs/concepts/di.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/docs/concepts/emitter.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/docs/concepts/handler-groups.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/docs/concepts/listener.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/docs/getting-started/installation.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/docs/getting-started/quickstart.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/docs/index.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/mkdocs.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/integration/basic_integration_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/integration/basic_integration_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/playground/receiver.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/playground/receiver.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/playground/sender.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/playground/sender.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RESET_MODE" value="HARD" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;ivan-22-3-5&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/ivan-22-3-5/dispytch.git&quot;,
+    &quot;accountId&quot;: &quot;ddb9d18d-ea1f-4136-a444-312bca8ad649&quot;
+  }
+}</component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/.venv/Lib/site-packages/_pytest/unraisableexception.py" root0="SKIP_INSPECTION" />
+  </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
+  <component name="ProjectId" id="2z6DyI0C0hGSwpQoQIOH0kr65KU" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python tests.Python tests for async_utilization_test.test_dependency_caching_within_the_same_context.executor": "Run",
+    "Python tests.Python tests for basic_event_dependency_test.test_event_dependency.executor": "Run",
+    "Python tests.Python tests for basic_event_dependency_test.test_mixed_event_and_regular_params.executor": "Run",
+    "Python tests.Python tests for basic_event_dependency_test.test_multiple_event_dependencies.executor": "Run",
+    "Python tests.Python tests for basic_integration_test.test_emit_and_receive.executor": "Run",
+    "Python tests.Python tests for basic_integration_test.test_kafka_emit_and_receive.executor": "Run",
+    "Python tests.Python tests for dependency_caching_test.test_dependency_caching_disabled.executor": "Run",
+    "Python tests.Python tests for dependency_test.test_dependency_hashing.executor": "Run",
+    "Python tests.Python tests for dependency_test.test_dependency_hashing_with_different_functions.executor": "Run",
+    "Python tests.Python tests for dependency_test.test_dependency_hashing_with_different_functions_with_the_same_meaning.executor": "Run",
+    "Python tests.Python tests for edge_cases_partition_key_test.test_send_with_number_intermediate_value.executor": "Run",
+    "Python tests.Python tests for event_dependency_resolution_test.test_single_event_dependency.executor": "Run",
+    "Python tests.Python tests for event_dependency_resolution_test.test_various_body_models.executor": "Run",
+    "Python tests.Python tests for event_dependency_test.test_additional_event_data.executor": "Run",
+    "Python tests.Python tests for event_dependency_test.test_empty_event_body.executor": "Run",
+    "Python tests.Python tests for event_dependency_test.test_event_dependency.executor": "Run",
+    "Python tests.Python tests for event_dependency_test.test_getting_all_event_data_as_dict.executor": "Run",
+    "Python tests.Python tests for event_dependency_test.test_mixed_event_and_regular_params.executor": "Run",
+    "Python tests.Python tests for event_dependency_test.test_multiple_event_dependencies.executor": "Run",
+    "Python tests.Python tests for event_dependency_test.test_multiple_event_dependencies_with_different_fields_of_event_needed.executor": "Run",
+    "Python tests.Python tests for event_dependency_test.test_single_event_dependency.executor": "Run",
+    "Python tests.Python tests for event_with_inappropriate_body_model_test.test_non_basemodel_event_body.executor": "Run",
+    "Python tests.Python tests for nested_event_model_test.test_nested_event.executor": "Run",
+    "Python tests.Python tests in dependency_test.py.executor": "Run",
+    "Python tests.Python tests in playground.py.executor": "Run",
+    "Python tests.Python tests in receiver.py.executor": "Run",
+    "Python.emitter.executor": "Run",
+    "Python.event.executor": "Run",
+    "Python.handler_group.executor": "Run",
+    "Python.listener.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.model.executor": "Run",
+    "Python.playground.executor": "Run",
+    "Python.rabbitmq.executor": "Run",
+    "Python.receiver (1).executor": "Run",
+    "Python.receiver.executor": "Run",
+    "Python.sender (1).executor": "Run",
+    "Python.sender.executor": "Run",
+    "Python.solv.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "com.codeium.enabled": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "ignore_missing_gitignore": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "C:/projects/dispytch/tests/playground",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\projects\dispytch\tests\playground" />
+      <recent name="C:\projects\dispytch\src" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\projects\dispytch\docs\docs" />
+      <recent name="C:\projects\dispytch\examples\basic_example" />
+      <recent name="C:\projects\dispytch\examples\handling-service" />
+      <recent name="C:\projects\dispytch\tests\playground" />
+      <recent name="C:\projects\dispytch\tests\playground\kafka" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python tests.Python tests for basic_integration_test.test_emit_and_receive">
+    <configuration name="emitter" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="dispytch" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/dispytch/emitter" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/dispytch/emitter/emitter.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="event" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="dispytch" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/dispytch/emitter" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/dispytch/emitter/event.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="playground" type="PythonConfigurationType" factoryName="Python">
+      <module name="dispytch" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="SDK_NAME" value="uv (dispytch)" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="C:\projects\dispytch\tests\playground\kafka\receiver.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="rabbitmq" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="dispytch" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/dispytch/producers" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/dispytch/producers/rabbitmq.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Python tests for basic_integration_test.test_emit_and_receive" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="dispytch" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests/integration" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;basic_integration_test.test_emit_and_receive&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Python tests for edge_cases_partition_key_test.test_send_with_number_intermediate_value" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="dispytch" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests/producers_test/kafka" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;edge_cases_partition_key_test.test_send_with_number_intermediate_value&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Python.playground" />
+      <item itemvalue="Python.event" />
+      <item itemvalue="Python.rabbitmq" />
+      <item itemvalue="Python.emitter" />
+      <item itemvalue="Python tests.Python tests for basic_integration_test.test_emit_and_receive" />
+      <item itemvalue="Python tests.Python tests for edge_cases_partition_key_test.test_send_with_number_intermediate_value" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python tests.Python tests for basic_integration_test.test_emit_and_receive" />
+        <item itemvalue="Python.rabbitmq" />
+        <item itemvalue="Python.emitter" />
+        <item itemvalue="Python.event" />
+        <item itemvalue="Python tests.Python tests for edge_cases_partition_key_test.test_send_with_number_intermediate_value" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-09060db00ec0-JavaScript-PY-251.26927.74" />
+        <option value="bundled-python-sdk-657d8234b839-64d779b69b7a-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-251.26927.74" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="831712e2-a57d-4542-b4c8-185b95bb2d8e" name="Changes" comment="" />
+      <created>1751042882186</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1751042882186</updated>
+      <workItem from="1751042883517" duration="7548000" />
+      <workItem from="1751108478189" duration="7074000" />
+      <workItem from="1751121112068" duration="5728000" />
+      <workItem from="1751132398874" duration="4810000" />
+      <workItem from="1751185743294" duration="9492000" />
+      <workItem from="1751195362664" duration="4205000" />
+      <workItem from="1751204622543" duration="5852000" />
+      <workItem from="1751214536787" duration="4600000" />
+      <workItem from="1751282059795" duration="6331000" />
+      <workItem from="1751291514670" duration="2890000" />
+      <workItem from="1751294461063" duration="13960000" />
+      <workItem from="1751357633564" duration="11985000" />
+      <workItem from="1751379133423" duration="1714000" />
+      <workItem from="1751383737794" duration="5947000" />
+      <workItem from="1751451029068" duration="2434000" />
+      <workItem from="1751454174511" duration="3664000" />
+      <workItem from="1751460287609" duration="5594000" />
+      <workItem from="1751470618846" duration="1085000" />
+      <workItem from="1751534549265" duration="13246000" />
+      <workItem from="1751558669743" duration="1618000" />
+      <workItem from="1751560336334" duration="5726000" />
+      <workItem from="1751630341133" duration="17054000" />
+      <workItem from="1751652924366" duration="1008000" />
+      <workItem from="1751659787910" duration="790000" />
+      <workItem from="1751709423905" duration="5373000" />
+      <workItem from="1751716121345" duration="4119000" />
+      <workItem from="1751725126853" duration="4354000" />
+      <workItem from="1751733401950" duration="7109000" />
+      <workItem from="1751799413077" duration="13442000" />
+    </task>
+    <task id="LOCAL-00060" summary="♻️ fix(handler): don't mandatorily pass event body to event handler, pass only declared dependencies">
+      <option name="closed" value="true" />
+      <created>1751457506919</created>
+      <option name="number" value="00060" />
+      <option name="presentableId" value="LOCAL-00060" />
+      <option name="project" value="LOCAL" />
+      <updated>1751457506919</updated>
+    </task>
+    <task id="LOCAL-00061" summary="test(playground): add sender and receiver sides in playground">
+      <option name="closed" value="true" />
+      <created>1751457625749</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1751457625749</updated>
+    </task>
+    <task id="LOCAL-00062" summary="✨ feat(serializers/deserializers): add msgpack serializer and deserializer&#10;&#10;- introduce `MessagePackSerializer` for payload serialization&#10;- introduce `MessagePackDeserializer` for payload deserialization&#10;- add `msgpack` dependency to project files">
+      <option name="closed" value="true" />
+      <created>1751464834600</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1751464834600</updated>
+    </task>
+    <task id="LOCAL-00063" summary="♻️ refactor(consumers/producers): set default serializer and deserializer to JSON&#10;&#10;- update `KafkaConsumer` to use `JSONDeserializer` by default if none is provided&#10;- update `KafkaProducer` to use `JSONSerializer` by default if none is provided&#10;- remove explicit serializer/deserializer instantiation in playground tests">
+      <option name="closed" value="true" />
+      <created>1751465543066</created>
+      <option name="number" value="00063" />
+      <option name="presentableId" value="LOCAL-00063" />
+      <option name="project" value="LOCAL" />
+      <updated>1751465543067</updated>
+    </task>
+    <task id="LOCAL-00064" summary="✨ feat(consumers): add lifecycle management to kafka consumer&#10;&#10;- introduce `start` and `stop` methods for managing consumer lifecycle&#10;- refactor `listen` to remove inline lifecycle handling">
+      <option name="closed" value="true" />
+      <created>1751471462844</created>
+      <option name="number" value="00064" />
+      <option name="presentableId" value="LOCAL-00064" />
+      <option name="project" value="LOCAL" />
+      <updated>1751471462845</updated>
+    </task>
+    <task id="LOCAL-00065" summary="✨ feat(listener): improve task management in event listener&#10;&#10;- add task tracking to handle ongoing tasks in `listen` method&#10;- ensure tasks are awaited before `listen` method completion">
+      <option name="closed" value="true" />
+      <created>1751471491422</created>
+      <option name="number" value="00065" />
+      <option name="presentableId" value="LOCAL-00065" />
+      <option name="project" value="LOCAL" />
+      <updated>1751471491422</updated>
+    </task>
+    <task id="LOCAL-00066" summary="✨ feat(consumers): add event acknowledgment support in kafka consumer&#10;&#10;- add `ack` method for acknowledging events">
+      <option name="closed" value="true" />
+      <created>1751542465487</created>
+      <option name="number" value="00066" />
+      <option name="presentableId" value="LOCAL-00066" />
+      <option name="project" value="LOCAL" />
+      <updated>1751542465487</updated>
+    </task>
+    <task id="LOCAL-00067" summary="✨ feat(consumers): enhance kafka consumer acknowledgment handling&#10;&#10;- add logging for non-existent or already acknowledged events in `ack`&#10;- implement retry mechanism with backoff for committing offsets">
+      <option name="closed" value="true" />
+      <created>1751544612373</created>
+      <option name="number" value="00067" />
+      <option name="presentableId" value="LOCAL-00067" />
+      <option name="project" value="LOCAL" />
+      <updated>1751544612373</updated>
+    </task>
+    <task id="LOCAL-00068" summary="build(dependencies): add aio-pika dep">
+      <option name="closed" value="true" />
+      <created>1751546531595</created>
+      <option name="number" value="00068" />
+      <option name="presentableId" value="LOCAL-00068" />
+      <option name="project" value="LOCAL" />
+      <updated>1751546531595</updated>
+    </task>
+    <task id="LOCAL-00069" summary="✨ feat(consumers): add RabbitMQ consumer implementation&#10;&#10;- introduce `RabbitMQConsumer` for handling RabbitMQ message consumption&#10;- add `listen` method for consuming messages from specified queues&#10;- implement `ack` method for acknowledging processed events">
+      <option name="closed" value="true" />
+      <created>1751546573717</created>
+      <option name="number" value="00069" />
+      <option name="presentableId" value="LOCAL-00069" />
+      <option name="project" value="LOCAL" />
+      <updated>1751546573717</updated>
+    </task>
+    <task id="LOCAL-00070" summary="✨ feat(producers): add RabbitMQ producer implementation&#10;&#10;- introduce `RabbitMQProducer` for sending messages to RabbitMQ exchanges&#10;- use `JSONSerializer` as default serializer&#10;- update producers initializer to include `RabbitMQProducer`">
+      <option name="closed" value="true" />
+      <created>1751546638359</created>
+      <option name="number" value="00070" />
+      <option name="presentableId" value="LOCAL-00070" />
+      <option name="project" value="LOCAL" />
+      <updated>1751546638359</updated>
+    </task>
+    <task id="LOCAL-00071" summary="✨ feat(handler): add support for sync operations and retry intervals&#10;&#10;- enhance `Handler` to support sync functions&#10;- add retry interval functionality with `retry_interval_sec` parameter">
+      <option name="closed" value="true" />
+      <created>1751559448441</created>
+      <option name="number" value="00071" />
+      <option name="presentableId" value="LOCAL-00071" />
+      <option name="project" value="LOCAL" />
+      <updated>1751559448441</updated>
+    </task>
+    <task id="LOCAL-00072" summary="✨ feat(listener): add type hints and improve retry_interval_sec precision&#10;&#10;- update `retry_interval_sec` parameter to use float for better precision">
+      <option name="closed" value="true" />
+      <created>1751559657335</created>
+      <option name="number" value="00072" />
+      <option name="presentableId" value="LOCAL-00072" />
+      <option name="project" value="LOCAL" />
+      <updated>1751559657335</updated>
+    </task>
+    <task id="LOCAL-00073" summary="✅ test(integration): add kafka integration test setup&#10;&#10;- introduce kafka setup fixtures for integration tests">
+      <option name="closed" value="true" />
+      <created>1751565652658</created>
+      <option name="number" value="00073" />
+      <option name="presentableId" value="LOCAL-00073" />
+      <option name="project" value="LOCAL" />
+      <updated>1751565652659</updated>
+    </task>
+    <task id="LOCAL-00074" summary="✅ test(integration): add rabbitmq integration test setup&#10;&#10;- introduce rabbitmq setup fixtures for integration tests">
+      <option name="closed" value="true" />
+      <created>1751565677955</created>
+      <option name="number" value="00074" />
+      <option name="presentableId" value="LOCAL-00074" />
+      <option name="project" value="LOCAL" />
+      <updated>1751565677955</updated>
+    </task>
+    <task id="LOCAL-00075" summary="✅ test(integration): add basic integration tests for Kafka and RabbitMQ&#10;&#10;- add tests for event emission and reception using Kafka and RabbitMQ providers&#10;- test multiple events handling with sequence validation&#10;- test retry mechanism&#10;- test dependency injection functionality in event handlers">
+      <option name="closed" value="true" />
+      <created>1751565747604</created>
+      <option name="number" value="00075" />
+      <option name="presentableId" value="LOCAL-00075" />
+      <option name="project" value="LOCAL" />
+      <updated>1751565747604</updated>
+    </task>
+    <task id="LOCAL-00076" summary="✨ feat(deserializer): add field validation to msgpack deserializer&#10;&#10;- validate required fields `type` and `body` during deserialization&#10;- raise `FieldMissingError` for missing fields">
+      <option name="closed" value="true" />
+      <created>1751632319261</created>
+      <option name="number" value="00076" />
+      <option name="presentableId" value="LOCAL-00076" />
+      <option name="project" value="LOCAL" />
+      <updated>1751632319261</updated>
+    </task>
+    <task id="LOCAL-00077" summary="✨ feat(event): introduce event ID support for tracking and correlation&#10;&#10;- add `id` field to `Event` and `EventBase` for unique identification&#10;- update Kafka and RabbitMQ consumers to handle `id` from deserialized payload&#10;- include `id` in emitted events and exclude it from serialized body&#10;- validate `id` in JSON and Msgpack deserializers">
+      <option name="closed" value="true" />
+      <created>1751632704853</created>
+      <option name="number" value="00077" />
+      <option name="presentableId" value="LOCAL-00077" />
+      <option name="project" value="LOCAL" />
+      <updated>1751632704853</updated>
+    </task>
+    <task id="LOCAL-00078" summary="✨ feat(deserializer): extract payload validation logic to a shared module&#10;&#10;- introduce `validator.py` to handle payload validation for deserializers">
+      <option name="closed" value="true" />
+      <created>1751633037267</created>
+      <option name="number" value="00078" />
+      <option name="presentableId" value="LOCAL-00078" />
+      <option name="project" value="LOCAL" />
+      <updated>1751633037267</updated>
+    </task>
+    <task id="LOCAL-00079" summary="📝 docs: update README with framework details and example&#10;&#10;- add features section highlighting key capabilities of Dispytch&#10;- include installation instructions for quick setup&#10;- provide a code example demonstrating event handling with Dispytch&#10;- outline benefits of using the framework for event-driven services">
+      <option name="closed" value="true" />
+      <created>1751643151401</created>
+      <option name="number" value="00079" />
+      <option name="presentableId" value="LOCAL-00079" />
+      <option name="project" value="LOCAL" />
+      <updated>1751643151401</updated>
+    </task>
+    <task id="LOCAL-00080" summary="✨ feat(listener): add handler grouping functionality&#10;&#10;- introduce `HandlerGroup` class to manage grouped event handlers">
+      <option name="closed" value="true" />
+      <created>1751643872896</created>
+      <option name="number" value="00080" />
+      <option name="presentableId" value="LOCAL-00080" />
+      <option name="project" value="LOCAL" />
+      <updated>1751643872896</updated>
+    </task>
+    <task id="LOCAL-00081" summary="✨ feat(listener): support multiple handlers per event&#10;&#10;- update handler storage to support multiple handlers for the same event&#10;- execute all handlers asynchronously for matched events">
+      <option name="closed" value="true" />
+      <created>1751645686729</created>
+      <option name="number" value="00081" />
+      <option name="presentableId" value="LOCAL-00081" />
+      <option name="project" value="LOCAL" />
+      <updated>1751645686729</updated>
+    </task>
+    <task id="LOCAL-00082" summary="✨ feat(listener): add default topic and event support in HandlerGroup&#10;&#10;- enhance `HandlerGroup` to support default topic and event values">
+      <option name="closed" value="true" />
+      <created>1751646840296</created>
+      <option name="number" value="00082" />
+      <option name="presentableId" value="LOCAL-00082" />
+      <option name="project" value="LOCAL" />
+      <updated>1751646840296</updated>
+    </task>
+    <task id="LOCAL-00083" summary="✨ feat(examples): add basic framework usage example&#10;&#10;- implement `emitting-service` with `emitter.py` demonstrating event emission&#10;- implement `handling-service` with `listener.py`, `handlers.py`, and `service.py` for event handling">
+      <option name="closed" value="true" />
+      <created>1751649247575</created>
+      <option name="number" value="00083" />
+      <option name="presentableId" value="LOCAL-00083" />
+      <option name="project" value="LOCAL" />
+      <updated>1751649247575</updated>
+    </task>
+    <task id="LOCAL-00084" summary="📝 docs: update README with handler and emitter examples&#10;&#10;- enhance handler example with `HandlerGroup` usage and simplified service injection&#10;- add emitter example showcasing event emission with `UserRegistered` event">
+      <option name="closed" value="true" />
+      <created>1751649280569</created>
+      <option name="number" value="00084" />
+      <option name="presentableId" value="LOCAL-00084" />
+      <option name="project" value="LOCAL" />
+      <updated>1751649280569</updated>
+    </task>
+    <task id="LOCAL-00085" summary="♻️ refactor(kafka): remove unused start and stop methods from Kafka consumer&#10;&#10;- eliminate redundant `start` and `stop` methods to simplify the consumer implementation">
+      <option name="closed" value="true" />
+      <created>1751653115214</created>
+      <option name="number" value="00085" />
+      <option name="presentableId" value="LOCAL-00085" />
+      <option name="project" value="LOCAL" />
+      <updated>1751653115214</updated>
+    </task>
+    <task id="LOCAL-00086" summary="♻️ refactor(kafka): remove unused start and stop methods from Kafka producer">
+      <option name="closed" value="true" />
+      <created>1751653914147</created>
+      <option name="number" value="00086" />
+      <option name="presentableId" value="LOCAL-00086" />
+      <option name="project" value="LOCAL" />
+      <updated>1751653914147</updated>
+    </task>
+    <task id="LOCAL-00087" summary="✨ feat(emitter): add support for kafka partition key">
+      <option name="closed" value="true" />
+      <created>1751711637923</created>
+      <option name="number" value="00087" />
+      <option name="presentableId" value="LOCAL-00087" />
+      <option name="project" value="LOCAL" />
+      <updated>1751711637924</updated>
+    </task>
+    <task id="LOCAL-00088" summary="✨ feat(emitter): add support for kafka partition key">
+      <option name="closed" value="true" />
+      <created>1751711706557</created>
+      <option name="number" value="00088" />
+      <option name="presentableId" value="LOCAL-00088" />
+      <option name="project" value="LOCAL" />
+      <updated>1751711706557</updated>
+    </task>
+    <task id="LOCAL-00089" summary="✅ test(integration): fix incorrect routing key in rabbitmq setup">
+      <option name="closed" value="true" />
+      <created>1751713680096</created>
+      <option name="number" value="00089" />
+      <option name="presentableId" value="LOCAL-00089" />
+      <option name="project" value="LOCAL" />
+      <updated>1751713680096</updated>
+    </task>
+    <task id="LOCAL-00090" summary=":hammer: chore: add makefile">
+      <option name="closed" value="true" />
+      <created>1751714554087</created>
+      <option name="number" value="00090" />
+      <option name="presentableId" value="LOCAL-00090" />
+      <option name="project" value="LOCAL" />
+      <updated>1751714554087</updated>
+    </task>
+    <task id="LOCAL-00091" summary="✨ feat(event): add id field to the user-facing event model">
+      <option name="closed" value="true" />
+      <created>1751714789401</created>
+      <option name="number" value="00091" />
+      <option name="presentableId" value="LOCAL-00091" />
+      <option name="project" value="LOCAL" />
+      <updated>1751714789401</updated>
+    </task>
+    <task id="LOCAL-00092" summary=":memo: docs(di): add docstring for dependency class">
+      <option name="closed" value="true" />
+      <created>1751717021183</created>
+      <option name="number" value="00092" />
+      <option name="presentableId" value="LOCAL-00092" />
+      <option name="project" value="LOCAL" />
+      <updated>1751717021183</updated>
+    </task>
+    <task id="LOCAL-00093" summary=":memo: docs(di): add docstring for event class">
+      <option name="closed" value="true" />
+      <created>1751718012842</created>
+      <option name="number" value="00093" />
+      <option name="presentableId" value="LOCAL-00093" />
+      <option name="project" value="LOCAL" />
+      <updated>1751718012842</updated>
+    </task>
+    <task id="LOCAL-00094" summary=":bug: fix(emitter): extract partition_key from event data">
+      <option name="closed" value="true" />
+      <created>1751719990829</created>
+      <option name="number" value="00094" />
+      <option name="presentableId" value="LOCAL-00094" />
+      <option name="project" value="LOCAL" />
+      <updated>1751719990829</updated>
+    </task>
+    <task id="LOCAL-00095" summary=":memo: docs(emitter): add docstrings for emitter module">
+      <option name="closed" value="true" />
+      <created>1751720243797</created>
+      <option name="number" value="00095" />
+      <option name="presentableId" value="LOCAL-00095" />
+      <option name="project" value="LOCAL" />
+      <updated>1751720243797</updated>
+    </task>
+    <task id="LOCAL-00096" summary=":memo: docs(listener): add docstrings for listener module">
+      <option name="closed" value="true" />
+      <created>1751726365720</created>
+      <option name="number" value="00096" />
+      <option name="presentableId" value="LOCAL-00096" />
+      <option name="project" value="LOCAL" />
+      <updated>1751726365720</updated>
+    </task>
+    <task id="LOCAL-00097" summary=":white_check_mark: test(integration): fix tests names to be generic as they are used for different brokers">
+      <option name="closed" value="true" />
+      <created>1751726696062</created>
+      <option name="number" value="00097" />
+      <option name="presentableId" value="LOCAL-00097" />
+      <option name="project" value="LOCAL" />
+      <updated>1751726696062</updated>
+    </task>
+    <task id="LOCAL-00098" summary="✨ feat(event): add backend specific configuration field to the EventBase model">
+      <option name="closed" value="true" />
+      <created>1751735928149</created>
+      <option name="number" value="00098" />
+      <option name="presentableId" value="LOCAL-00098" />
+      <option name="project" value="LOCAL" />
+      <updated>1751735928149</updated>
+    </task>
+    <task id="LOCAL-00099" summary="✨ feat(event): add backend specific configuration field to the EventBase model">
+      <option name="closed" value="true" />
+      <created>1751736526706</created>
+      <option name="number" value="00099" />
+      <option name="presentableId" value="LOCAL-00099" />
+      <option name="project" value="LOCAL" />
+      <updated>1751736526706</updated>
+    </task>
+    <task id="LOCAL-00100" summary="✅ test(kafka-producer): add test for partitioning logic in kafka producer">
+      <option name="closed" value="true" />
+      <created>1751740544709</created>
+      <option name="number" value="00100" />
+      <option name="presentableId" value="LOCAL-00100" />
+      <option name="project" value="LOCAL" />
+      <updated>1751740544709</updated>
+    </task>
+    <task id="LOCAL-00101" summary="✨ feat(producers): extend KafkaProducer and RabbitMQProducer with additional config options&#10;&#10;- add new optional configuration fields to `KafkaEventConfig` and `RabbitMQEventConfig`&#10;- update `send` methods to support passing these configurations">
+      <option name="closed" value="true" />
+      <created>1751801442974</created>
+      <option name="number" value="00101" />
+      <option name="presentableId" value="LOCAL-00101" />
+      <option name="project" value="LOCAL" />
+      <updated>1751801442975</updated>
+    </task>
+    <task id="LOCAL-00102" summary="✨ feat(producers): handle timeout errors for Kafka and RabbitMQ producers&#10;&#10;- add timeout handling in `KafkaProducer.send_and_wait` using `KafkaTimeoutError` exception&#10;- add optional timeout parameter to `RabbitMQProducer` and handle `TimeoutError` during publish">
+      <option name="closed" value="true" />
+      <created>1751806237127</created>
+      <option name="number" value="00102" />
+      <option name="presentableId" value="LOCAL-00102" />
+      <option name="project" value="LOCAL" />
+      <updated>1751806237127</updated>
+    </task>
+    <task id="LOCAL-00103" summary="✨ feat(producers): handle timeout errors for Kafka and RabbitMQ producers&#10;&#10;- add timeout handling in `KafkaProducer.send_and_wait` using `KafkaTimeoutError` exception&#10;- add optional timeout parameter to `RabbitMQProducer` and handle `TimeoutError` during publish">
+      <option name="closed" value="true" />
+      <created>1751806493402</created>
+      <option name="number" value="00103" />
+      <option name="presentableId" value="LOCAL-00103" />
+      <option name="project" value="LOCAL" />
+      <updated>1751806493402</updated>
+    </task>
+    <task id="LOCAL-00104" summary="✨ feat(emitter): add timeout handling for event emission&#10;&#10;- implement `ProducerTimeout` exception for handling producer timeouts&#10;- introduce a customizable callback for handling timeout events in `EventEmitter`&#10;- update Kafka and RabbitMQ producers to raise `ProducerTimeout` on timeout scenarios">
+      <option name="closed" value="true" />
+      <created>1751807375346</created>
+      <option name="number" value="00104" />
+      <option name="presentableId" value="LOCAL-00104" />
+      <option name="project" value="LOCAL" />
+      <updated>1751807375346</updated>
+    </task>
+    <task id="LOCAL-00105" summary="✅ test(emitter): add tests for timeout handling in event emitter&#10;&#10;- add unit test to validate synchronous timeout callback execution&#10;- add unit test to validate asynchronous timeout callback execution">
+      <option name="closed" value="true" />
+      <created>1751808333694</created>
+      <option name="number" value="00105" />
+      <option name="presentableId" value="LOCAL-00105" />
+      <option name="project" value="LOCAL" />
+      <updated>1751808333694</updated>
+    </task>
+    <task id="LOCAL-00106" summary="✅ test(handler_group): add unit tests for handler group functionality&#10;&#10;- test registering handlers with explicit and default topics/events&#10;- validate retries, retry_on and retry_interval parameters on handlers&#10;- add tests for multiple handlers for the same topic/event&#10;- test cases for explicit topic and event overwriting defaults">
+      <option name="closed" value="true" />
+      <created>1751808955181</created>
+      <option name="number" value="00106" />
+      <option name="presentableId" value="LOCAL-00106" />
+      <option name="project" value="LOCAL" />
+      <updated>1751808955181</updated>
+    </task>
+    <task id="LOCAL-00107" summary=":bug: fix(producers): remove trailing commas in Kafka and RabbitMQ config models that led to interpreting values as tuples when they are not">
+      <option name="closed" value="true" />
+      <created>1751810473163</created>
+      <option name="number" value="00107" />
+      <option name="presentableId" value="LOCAL-00107" />
+      <option name="project" value="LOCAL" />
+      <updated>1751810473163</updated>
+    </task>
+    <task id="LOCAL-00108" summary=":wrench: build(uv): update build config and dependencies">
+      <option name="closed" value="true" />
+      <created>1751813380446</created>
+      <option name="number" value="00108" />
+      <option name="presentableId" value="LOCAL-00108" />
+      <option name="project" value="LOCAL" />
+      <updated>1751813380446</updated>
+    </task>
+    <option name="localTasksCounter" value="109" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value=" docs: update README with handler and emitter examples&#10;&#10;- enhance handler example with `HandlerGroup` usage and simplified service injection&#10;- add emitter example showcasing event emission with `UserRegistered` event" />
+    <MESSAGE value=" docs: update README with handler and emitter examples&#10;&#10;- enhance handler example with `HandlerGroup` usage and simplified service injection&#10;- add emitter example showcasing event emission with `UserRegistered` event" />
+    <MESSAGE value="♻️ refactor(kafka): remove unused start and stop methods from Kafka consumer&#10;&#10;- eliminate redundant `start` and `stop` methods to simplify the consumer implementation" />
+    <MESSAGE value="♻️ refactor(kafka): remove unused start and stop methods from Kafka producer" />
+    <MESSAGE value="✨ feat(emitter): add support for kafka partition key" />
+    <MESSAGE value="{&#13;&#10;    &quot;error&quot;: {&#13;&#10;        &quot;message&quot;: &quot;You didn't provide an API key. You need to provide your API key in an Authorization header using Bearer auth (i.e. Authorization: Bearer YOUR_KEY), or as the password field (with blank username) if you're accessing the API from your browser and are prompted for a username and password. You can obtain an API key from https://platform.openai.com/account/api-keys.&quot;,&#13;&#10;        &quot;type&quot;: &quot;invalid_request_error&quot;,&#13;&#10;        &quot;param&quot;: null,&#13;&#10;        &quot;code&quot;: null&#13;&#10;    }&#13;&#10;}" />
+    <MESSAGE value="{&#13;&#10;    &quot;error&quot;: {&#13;&#10;        &quot;message&quot;: &quot;You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.&quot;,&#13;&#10;        &quot;type&quot;: &quot;insufficient_quota&quot;,&#13;&#10;        &quot;param&quot;: null,&#13;&#10;        &quot;code&quot;: &quot;insufficient_quota&quot;&#13;&#10;    }&#13;&#10;}" />
+    <MESSAGE value="✅ test(integration): fix incorrect routing key in rabbitmq setup" />
+    <MESSAGE value=":hammer: chore: add makefile" />
+    <MESSAGE value="✨ feat(event): add id field to the user-facing event model" />
+    <MESSAGE value=":memo: docs(di): add docstring for dependency class" />
+    <MESSAGE value=":memo: docs(di): add docstring for event class" />
+    <MESSAGE value=":bug: fix(emitter): extract partition_key from event data" />
+    <MESSAGE value=":memo: docs(emitter): add docstrings for emitter module" />
+    <MESSAGE value=":memo: docs(listener): add docstrings for listener module" />
+    <MESSAGE value=":white_check_mark: test(integration): fix tests names to be generic as they are used for different brokers" />
+    <MESSAGE value="✨ feat(event): add backend specific configuration field to the EventBase model" />
+    <MESSAGE value="✅ test(kafka-producer): add test for partitioning logic in kafka producer" />
+    <MESSAGE value="✨ feat(producers): extend KafkaProducer and RabbitMQProducer with additional config options&#10;&#10;- add new optional configuration fields to `KafkaEventConfig` and `RabbitMQEventConfig`&#10;- update `send` methods to support passing these configurations" />
+    <MESSAGE value="✨ feat(producers): handle timeout errors for Kafka and RabbitMQ producers&#10;&#10;- add timeout handling in `KafkaProducer.send_and_wait` using `KafkaTimeoutError` exception&#10;- add optional timeout parameter to `RabbitMQProducer` and handle `TimeoutError` during publish" />
+    <MESSAGE value="✨ feat(emitter): add timeout handling for event emission&#10;&#10;- implement `ProducerTimeout` exception for handling producer timeouts&#10;- introduce a customizable callback for handling timeout events in `EventEmitter`&#10;- update Kafka and RabbitMQ producers to raise `ProducerTimeout` on timeout scenarios" />
+    <MESSAGE value="✅ test(emitter): add tests for timeout handling in event emitter&#10;&#10;- add unit test to validate synchronous timeout callback execution&#10;- add unit test to validate asynchronous timeout callback execution" />
+    <MESSAGE value="✅ test(handler_group): add unit tests for handler group functionality&#10;&#10;- test registering handlers with explicit and default topics/events&#10;- validate retries, retry_on and retry_interval parameters on handlers&#10;- add tests for multiple handlers for the same topic/event&#10;- test cases for explicit topic and event overwriting defaults" />
+    <MESSAGE value=":bug: fix(producers): remove trailing commas in Kafka and RabbitMQ config models that led to interpreting values as tuples when they are not" />
+    <MESSAGE value=":wrench: build(uv): update build config and dependencies" />
+    <option name="LAST_COMMIT_MESSAGE" value=":wrench: build(uv): update build config and dependencies" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/dispytch$receiver__1_.coverage" NAME="receiver (1) Coverage Results" MODIFIED="1751546298490" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests/playground/rabbitmq" />
+    <SUITE FILE_PATH="coverage/dispytch$playground.coverage" NAME="playground Coverage Results" MODIFIED="1751456623398" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
+    <SUITE FILE_PATH="coverage/dispytch$event.coverage" NAME="event Coverage Results" MODIFIED="1751801016539" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dispytch/emitter" />
+    <SUITE FILE_PATH="coverage/dispytch$emitter.coverage" NAME="emitter Coverage Results" MODIFIED="1751807064345" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dispytch/emitter" />
+    <SUITE FILE_PATH="coverage/dispytch$main.coverage" NAME="main Coverage Results" MODIFIED="1751647961929" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/basic_example/emitting-service" />
+    <SUITE FILE_PATH="coverage/dispytch$model.coverage" NAME="model Coverage Results" MODIFIED="1751454626070" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dispytch/emitter" />
+    <SUITE FILE_PATH="coverage/dispytch$listener.coverage" NAME="listener Coverage Results" MODIFIED="1751711420504" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/basic_example/handling-service" />
+    <SUITE FILE_PATH="coverage/dispytch$sender__1_.coverage" NAME="sender (1) Coverage Results" MODIFIED="1751546299872" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests/playground/rabbitmq" />
+    <SUITE FILE_PATH="coverage/dispytch$receiver.coverage" NAME="receiver Coverage Results" MODIFIED="1751809486836" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests/playground" />
+    <SUITE FILE_PATH="coverage/dispytch$handler_group.coverage" NAME="handler_group Coverage Results" MODIFIED="1751644690131" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dispytch/listener" />
+    <SUITE FILE_PATH="coverage/dispytch$sender.coverage" NAME="sender Coverage Results" MODIFIED="1751809625410" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests/playground" />
+    <SUITE FILE_PATH="coverage/dispytch$rabbitmq.coverage" NAME="rabbitmq Coverage Results" MODIFIED="1751809611453" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dispytch/producers" />
+    <SUITE FILE_PATH="coverage/dispytch$.coverage" NAME=" Coverage Results" MODIFIED="1751809993851" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests/integration" />
+    <SUITE FILE_PATH="coverage/dispytch$solv.coverage" NAME="solv Coverage Results" MODIFIED="1751305063632" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src/di" />
+  </component>
+</project>

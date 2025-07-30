@@ -1,0 +1,19 @@
+Index: src/di/solv/tree.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import asyncio\r\nfrom contextlib import AsyncExitStack, asynccontextmanager\r\n\r\nfrom src.di.dependency import Dependency\r\nfrom src.di.models import EventHandlerContext\r\n\r\n\r\nclass DependencyNode:\r\n    def __init__(self,\r\n                 dependency: Dependency,\r\n                 children: list['ChildNode']):\r\n        self.dependency = dependency\r\n        self.children = children\r\n        self._tasks: dict[AsyncExitStack, asyncio.Task] = {}\r\n\r\n    @asynccontextmanager\r\n    async def resolve(self, stack: AsyncExitStack, ctx: EventHandlerContext):\r\n        tasks = [asyncio.create_task(\r\n            stack.enter_async_context(\r\n                node.dependency.resolve(stack, ctx)\r\n            )\r\n        ) for node in self.children]\r\n\r\n        resolved = await asyncio.gather(*tasks)\r\n\r\n        kwargs = {child.param_name: res\r\n                  for child, res\r\n                  in zip(self.children, resolved)}\r\n\r\n        if self._tasks.get(stack, None) is None:\r\n            self._tasks[stack] = asyncio.create_task(\r\n                stack.enter_async_context(\r\n                    self.dependency(**kwargs, ctx=ctx)\r\n                ))\r\n\r\n        yield await self._tasks[stack]\r\n        self._tasks.pop(stack, None)\r\n\r\n\r\nclass ChildNode:\r\n    def __init__(self, param_name: str, dependency: DependencyNode):\r\n        self.param_name = param_name\r\n        self.dependency = dependency\r\n\r\n\r\nclass DependencyTree:\r\n    def __init__(self, root_nodes: list[ChildNode]):\r\n        self.root_nodes = root_nodes\r\n\r\n    @asynccontextmanager\r\n    async def resolve(self, ctx: EventHandlerContext):\r\n        async with AsyncExitStack() as stack:  # noqa\r\n            tasks = [asyncio.create_task(\r\n                stack.enter_async_context(\r\n                    node.dependency.resolve(stack, ctx)\r\n                )\r\n            ) for node in self.root_nodes]\r\n\r\n            resolved = await asyncio.gather(*tasks)\r\n\r\n            yield {node.param_name: dep for node, dep in zip(self.root_nodes, resolved)}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/di/solv/tree.py b/src/di/solv/tree.py
+--- a/src/di/solv/tree.py	(revision 9dbc73893b02f7f54da2d4a5a5b69de7fdbd2814)
++++ b/src/di/solv/tree.py	(date 1751366249978)
+@@ -34,7 +34,7 @@
+                 ))
+ 
+         yield await self._tasks[stack]
+-        self._tasks.pop(stack, None)
++        self._tasks.pop(stack, None)  # noqa. because of pop returning awaitable it says `couritine is not awaited`
+ 
+ 
+ class ChildNode:
