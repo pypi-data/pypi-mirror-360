@@ -1,0 +1,62 @@
+[project]
+name = "fairpredictor"
+version = "0.3.6"
+description = "A package for running predictions using fAIr"
+authors = [
+    {name = "kshitijrajsharma",email = "skshitizraj@gmail.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8,<4.0"
+dependencies = [
+    "ai-edge-litert>=1.2.0",
+    "geomltoolkits>=0.3.2",
+    "onnxruntime>=1.20.1",
+    "opencv-python-headless>=4.10.0.84",
+    "pillow>=9.1.0",
+    "requests>=2.32.3",
+    "tqdm>=4.67.0",
+]
+
+[dependency-groups]
+api = [
+    "fastapi>=0.115.12",
+    "python-dotenv>=1.0.1",
+    "slowapi>=0.1.9",
+    "uvicorn>=0.33.0",
+]
+dev = [
+    "black>=24.8.0",
+    "commitizen>=3.31.0",
+    "pytest>=8.3.5",
+]
+load-test = [
+    "locust>=2.25.0",
+]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "pep621"
+tag_format = "v$version"
+version_scheme = "semver"
+update_changelog_on_bump = true
+major_version_zero = true
+
+
+[tool.hatch.build.targets.wheel]
+only-include = ["predictor"]
+ackages = ["predictor"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "predictor/*.py",
+  "predictor/yoloseg/*.py",
+
+]
+exclude = [
+  "/tests",
+]
