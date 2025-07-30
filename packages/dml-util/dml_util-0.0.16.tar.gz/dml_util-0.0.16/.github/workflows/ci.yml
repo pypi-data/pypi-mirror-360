@@ -1,0 +1,81 @@
+name: CI
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+" # Semantic version tags
+  pull_request:
+jobs:
+  test-no-dml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .[test]
+      - name: pytest
+        run: pytest ./tests/unit/
+  test:
+    strategy:
+      matrix:
+        py: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.py }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pipx
+          python -m pip install .[nb,test] ./submodules/*
+          pipx install hatch
+      - name: create conda env
+        run: |
+          conda create -n dml-pandas python=3.12 pandas==2.2.3 pip
+          conda run -n dml-pandas pip install .[nb,test] ./submodules/*
+      - name: pytest
+        run: pytest
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install ruff
+        run: pip install ruff
+      - name: Run Ruff
+        run: ruff check --output-format=github .
+  publish:
+    needs: ["test", "lint", "test-no-dml"]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    name: Upload release to PyPI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install hatch
+        run: |
+          pip install hatch
+      - name: Build and publish
+        env:
+          HATCH_INDEX_USER: __token__
+          HATCH_INDEX_AUTH: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          hatch build
+          hatch publish
