@@ -1,0 +1,68 @@
+Metadata-Version: 2.4
+Name: fastapi-di-chain
+Version: 0.0.3
+Summary: Chain FastAPI dependencies without unused Depends!
+Project-URL: funding, https://github.com/sponsors/aleksul
+Project-URL: repository, https://github.com/aleksul/fastapi-di-chain
+Author-email: aleksul <me@aleksul.space>
+License-File: LICENSE
+Classifier: Development Status :: 4 - Beta
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Typing :: Typed
+Requires-Python: >=3.10
+Requires-Dist: fastapi>=0.115.14
+Description-Content-Type: text/markdown
+
+# fastapi-di-chain
+
+Chain FastAPI dependencies without unused Depends!
+
+## Overview
+
+`fastapi-di-chain` provides a utility to chain FastAPI dependencies in a way that avoids
+unused `Depends` parameters, making your dependency injection cleaner,
+more maintainable and easier to integrade.
+
+## Installation
+
+```bash
+pip install fastapi-di-chain
+```
+
+## Usage
+
+Suppose you have several dependencies that you want to chain together:
+
+```python
+from fastapi import FastAPI, Depends
+from fastapi_di_chain import DependsChain
+
+app = FastAPI()
+
+def my_rate_limiting_dependency() -> None:
+    # e.g. checks rate limiting
+    pass
+
+def my_authentication_dependency() -> None:
+    # e.g. checks that user is authenticated to do a request
+    pass
+
+dependency_chain = DependsChain | my_rate_limiting_dependency | my_authentication_dependency
+
+@app.get("/profile", dependencies=[dependency_chain])
+def profile() -> dict:
+    return {"user": 123}
+```
+
+## License
+
+**fastapi-di-chain** is distributed under the terms of the MIT license.
+Please see [License.md] for more information.
+
+[License.md]: https://github.com/aleksul/fastapi-di-chain/blob/main/LICENSE
