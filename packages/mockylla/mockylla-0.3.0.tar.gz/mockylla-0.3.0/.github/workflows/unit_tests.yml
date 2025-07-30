@@ -1,0 +1,34 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+    contents: write
+
+jobs:
+  build:
+    name: Build distributions (Py${{ matrix.python-version }} • ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-14]
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv & Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+
+      - name: Check files format
+        uses: astral-sh/ruff-action@v3
+
+      - name: Run Tests
+        run: uv run --frozen --all-extras pytest tests -vv
