@@ -1,0 +1,48 @@
+<project default="all" name="JPype - Native">
+
+	<!-- JAVA_VERSION must match the oldest supported Java version -->
+	<property name="JAVA_VERSION" value="11" />
+
+	<!-- src can't be "java" as it breaks nose tests -->
+	<property name="src" location="jpype_module/src/main/java"/>
+	<property name="build" location="build"/>
+
+	<target name="test" depends="compile">
+	</target>
+
+	<target name="compile">
+		<mkdir dir="${build}/classes"/>
+		<mkdir dir="${build}/classes/META-INF"/>
+		<mkdir dir="${build}/classes/META-INF/versions"/>
+		<mkdir dir="${build}/classes/META-INF/versions/0"/>
+		<mkdir dir="${build}/lib"/>
+		<javac destdir="${build}/classes"
+			source="${JAVA_VERSION}"
+			target="${JAVA_VERSION}"
+			excludes="**/Reflector0.java.java"
+            includeantruntime="false"
+			>
+			<src path="${src}"/>
+		</javac>
+		<javac destdir="${build}/classes/META-INF/versions/0"
+			source="${JAVA_VERSION}"
+			target="${JAVA_VERSION}"
+			includes="**/Reflector0.java"
+            includeantruntime="false"
+			>
+			<src path="${src}"/>
+		</javac>
+	</target>
+
+	<target name="jar" depends="compile">
+		<jar destfile="${build}/lib/org.jpype.jar"
+			basedir="${build}/classes" />
+  </target>
+
+	<target name="all" depends="jar" />
+
+	<target name="clean">
+		<delete dir="${build}"/>
+	</target>
+
+</project>
