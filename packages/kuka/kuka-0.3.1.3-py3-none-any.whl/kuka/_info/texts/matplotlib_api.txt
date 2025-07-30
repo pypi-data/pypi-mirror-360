@@ -1,0 +1,74 @@
+# CONFIGURAÇÕES DE ESTILO
+matplotlib.rcParams['font.size'] = 15.
+matplotlib.rcParams['font.family'] = "serif"
+plt.style.use('classic')
+plt.tight_layout()
+
+graph = ax.bar(count_pure_keys, count_pure.values(), width=0.8, color=sns.color_palette())
+ax.bar_label(graph, padding=0)
+
+ax.set( ylim=(min,max), xlim=(min,max), autoscale_on=False )
+plt.ylim(min,max)
+plt.xlim(min,max)
+ax.margins(x=0.1, y=0.1)
+
+ax.set_title('(a)')
+ax.set_ylabel('titulo do eixo y')
+ax.set_xlabel('titulo do eixo y ')
+
+ax.set_xticks(posição dos labels, labels=[valores dos labels])
+ax.tick_params(which='minor major or both',
+               length=4,
+               width=3,
+               color='r',
+               labelcolor='black',
+               labelsize='large',
+               grid_color='black',
+               grid_linestyle='dotted'
+               )
+plt.tick_params('x',
+                labelsize=6,
+                labelbottom=False)
+
+# LINHAS DE GRADE
+ax.grid(True,
+        which='both major or minor',
+        linestyle='-.',
+        axis='x y or both',
+        linestyle='dotted',
+        color='black'
+        )
+
+
+
+#Eixos em escala logarítima
+plt.yscale('log')
+plt.xscale('log')
+
+# POSIÇÂO E FORMATOS DOS TICKS
+LINK: https://matplotlib.org/3.1.1/gallery/ticks_and_spines/tick-locators.html
+locmaj = matplotlib.ticker.LogLocator(base=10,numticks=8)
+ax.xaxis.set_major_locator(locmaj)
+ax.yaxis.set_major_locator(locmaj)
+locmin = matplotlib.ticker.LogLocator(base=10.0,subs=(0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9),numticks=9)
+ax.xaxis.set_minor_locator(locmin)
+ax.yaxis.set_minor_locator(locmin)
+ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+#LINK: https://matplotlib.org/stable/gallery/ticks/tick-formatters.html
+ax.xaxis.set_minor_formatter(matplotlib.ticker.ScalarFormatter())
+
+
+# Retirar os números dos eixos
+ax.axes.yaxis.set_ticklabels([])
+ax.axes.xaxis.set_ticklabels([])
+
+#Retornar valores dos limites dos eixos
+ylim = plt.gca().get_ylim() OU ax.get_ylim()
+xlim = plt.gca().get_xlim() OU ax.get_xlim()
+
+#Add legenda
+plt.legend(loc='lower right')
+# Remover legenda:
+ax.get_legend().remove()
+# Alterar legenda:
+ax.legend(loc='best', ncols=3)

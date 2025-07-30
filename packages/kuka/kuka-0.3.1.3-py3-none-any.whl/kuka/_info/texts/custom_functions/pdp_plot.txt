@@ -1,0 +1,81 @@
+def pdp_plt(model = RF_model, #sklearn model
+            dataset = x_test, #Input DataFrame
+            list_var = ['specific_surface_area'],#x_test.columns, #Lista de strings. Colunas do "dataset"
+            n_samples = 1., #Se <=1 (float), proporção do dataset. Se >=1 (int), maximo absoluto de amostras/linhas
+            Zscores_dict = Zscores_dict_input,
+            ):
+
+  from random import sample
+  import pandas as pd
+  import numpy as np
+  import matplotlib
+  import matplotlib.pyplot as plt
+
+  ### DATASET ###
+  dataset = dataset.copy()
+  ### DATASET ###
+
+  for var in list_var:
+    # Valores únicos da variável de de interesse "var", ordenados de forma crescente
+    x_values = np.sort( dataset[var].unique() )
+
+    # índice relativo ao lugar da variável de interesse 'var' nas colunas do conjunto
+    loc_var = int(dataset.columns.get_loc(var))
+
+    #Pegar uma amostra aleatória de tamanho "n_samples" do dataset
+    if (n_samples<=1.) and (isinstance(n_samples, float)): n_samples = int(dataset.shape[0]*n_samples)
+    if (n_samples>dataset.shape[0]): n_samples = int(dataset.shape[0])
+    random_index = sample( list(dataset.index), n_samples )
+    subsample = dataset.loc[random_index].values
+
+
+    # A entrada do modelo("input_model") terá varias copias de "subsample", repetidas
+    input_model = subsample.copy()
+    for i in range(len(x_values)-1):
+      input_model = np.append(input_model,subsample,axis=0)
+
+    # Fazer com que a cada "n_samples" linhas de "input_model" exista um valor
+    # diferente unico para a variavel "var". Dessa forma, diferentes respostas do
+    # modelo para um determinado valor de "x_values":
+    for count,x in enumerate(x_values):
+      i = int(n_samples*count)
+      j = int(n_samples*(count+1))
+      input_model[ i:j, loc_var ] = x
+
+
+    ### MODELO ###
+    # Predizer os valores para cada registro de "input_model"
+    y_values = model.predict(input_model)
+
+
+    # Calcular a resposta média para cada valor de "x_values"
+    mean_y_values = []
+    for count,x in enumerate(x_values):
+      i = int(n_samples*count)
+      j = int(n_samples*(count+1))
+      mean_y_values += [y_values[i:j].mean()]
+
+
+    ### GRAFICO ### personalizar como queira
+
+    #destransformar os valores de x para plotar bonitinho
+    x_values = x_values*Zscores_dict[var]['std'] + Zscores_dict[var]['mean']
+
+    fig, ax = plt.subplots(figsize=(4, 2))
+    ax.plot(x_values, mean_y_values, color='tab:blue')
+    ax.set_title('x='+var)
+
+    #Colocar eventos (tracinhos)
+    ylim = plt.gca().get_ylim()
+    xlim = plt.gca().get_xlim()
+    linelength_x = (ylim[1]-ylim[0])*0.1
+    linelength_y = (xlim[1]-xlim[0])*0.06
+    xevents1 = EventCollection(x_values, lineoffset=ylim[0], linelength=linelength_x,
+                               color='black', alpha=0.6)
+    yevents1 = EventCollection(mean_y_values, lineoffset=xlim[0], linelength=linelength_y,
+                               color='black', orientation='vertical', alpha=0.6)
+
+    ax.add_collection(xevents1)
+    ax.add_collection(yevents1)
+
+pdp_plt()
