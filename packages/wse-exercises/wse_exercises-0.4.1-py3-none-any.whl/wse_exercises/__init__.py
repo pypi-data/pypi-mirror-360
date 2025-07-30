@@ -1,0 +1,1 @@
+"""WSE Exercise Series."""
