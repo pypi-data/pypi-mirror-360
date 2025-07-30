@@ -1,0 +1,69 @@
+defaults:
+  - /${oc.env:PANEL_ENV}
+
+dialect: postgresql
+driver: psycopg # Use psycopg3
+username: ${oc.env:DATA_LUNCH_DB_USER, data_lunch_rw}
+password: ${oc.env:DATA_LUNCH_DB_PASSWORD}
+host: ${oc.env:DATA_LUNCH_DB_HOST, db}
+port: ${oc.env:DATA_LUNCH_DB_PORT, 5432}
+database: ${oc.env:DATA_LUNCH_DB_DATABASE, data_lunch_database}
+schema: ${oc.env:DATA_LUNCH_DB_SCHEMA, webapp}
+url: ${db.dialect}+${db.driver}://${db.username}:${db.password}@${db.host}:${db.port}/${db.database}
+
+# QUERIES
+# Orders
+orders_query: |-
+  SELECT o.user, u.lunch_time, m.item, o.note
+  FROM {schema}.orders o
+  LEFT JOIN {schema}.menu m
+  ON m.id = o.menu_item_id
+  LEFT JOIN {schema}.users u
+  ON u.id = o.user;
+# Stats
+stats_query: |-
+  SELECT EXTRACT(YEAR FROM date)::varchar(4) AS "Year", 
+    EXTRACT(MONTH FROM date)::varchar(2) AS "Month",
+    guest AS "Guest",
+    SUM(hungry_people) AS "Hungry People"
+  FROM {schema}.stats
+  GROUP BY "Year", "Month", "Guest"
+  ORDER BY "Year", "Month", "Guest";
+# Birthdays
+birthdays_query: |-
+  SELECT "user", first_name, last_name, date,
+    make_date(
+      CASE
+        WHEN
+          TO_CHAR(date, 'MM-DD') >= TO_CHAR(CURRENT_DATE, 'MM-DD')
+        THEN
+          EXTRACT(YEAR FROM CURRENT_DATE)::int
+        ELSE
+          EXTRACT(YEAR FROM CURRENT_DATE)::int + 1
+      END,
+      EXTRACT(MONTH FROM date)::int,
+      EXTRACT(DAY FROM date)::int
+    ) AS next_birthday
+  FROM {schema}.birthdays
+  WHERE
+    make_date(
+      CASE
+        WHEN
+          TO_CHAR(date, 'MM-DD') >= TO_CHAR(CURRENT_DATE, 'MM-DD')
+        THEN
+          EXTRACT(YEAR FROM CURRENT_DATE)::int
+        ELSE
+          EXTRACT(YEAR FROM CURRENT_DATE)::int + 1
+      END,
+      EXTRACT(MONTH FROM date)::int,
+      EXTRACT(DAY FROM date)::int
+    ) 
+    BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '${panel.birthdays_notification.days_ahead} days'
+  ORDER BY next_birthday ASC, "user" ASC
+  LIMIT ${panel.birthdays_notification.max_birthdays_to_notify};
+
+# SAVE DATABASE TO CLOUD STORAGE
+ext_storage_upload:
+    enabled: false # Set to false to turn off database upload completely
+    source_file_name: null # No file to upload for postgresql
+    destination_blob_name: null # No file to upload for postgresql

@@ -1,0 +1,151 @@
+# APP
+title: Data-Lunch
+
+# FAVICON & LOGO
+favicon_static_dir: images
+favicon_filename: favicon.ico
+favicon_path: ${panel.gui.favicon_static_dir}/${panel.gui.favicon_filename}
+logo_filename: logo.png
+logo_static_dir: images
+logo_path: ${panel.gui.logo_static_dir}/${panel.gui.logo_filename}
+
+# IMAGES
+# No menu
+no_menu_image_static_dir: images
+no_menu_image_filename: no_menu.png
+no_menu_image_path: ${panel.gui.no_menu_image_static_dir}/${panel.gui.no_menu_image_filename}
+
+# CSS FILES
+css_static_dir: css
+css_files:
+  # App header
+  app_header_filename: app_header.css
+  app_header_path: ${panel.gui.css_static_dir}/${panel.gui.css_files.app_header_filename}
+  # No more orders flag
+  no_more_orders: flags.css
+  no_more_orders_path: ${panel.gui.css_static_dir}/${panel.gui.css_files.no_more_orders}
+  # Guest override toggle and flag
+  guest_override_filename: flags.css
+  guest_override_path: ${panel.gui.css_static_dir}/${panel.gui.css_files.guest_override_filename}
+  # Missing birthday flag
+  missing_birthday_filename: flags.css
+  missing_birthday_path: ${panel.gui.css_static_dir}/${panel.gui.css_files.missing_birthday_filename}
+  # Missing birthday flag
+  access_denied_filename: flags.css
+  access_denied_path: ${panel.gui.css_static_dir}/${panel.gui.css_files.access_denied_filename}
+  # Tabulator
+  custom_tabulator_filename: custom_tabulator.css
+  custom_tabulator_path: ${panel.gui.css_static_dir}/${panel.gui.css_files.custom_tabulator_filename}
+  # Stats & Info
+  stats_info_filename: stats_and_info.css
+  stats_info_path: ${panel.gui.css_static_dir}/${panel.gui.css_files.stats_info_filename}
+  # Stats tabulator
+  stats_tabulator_filename: stats_tabulator.css
+  stats_tabulator_path: ${panel.gui.css_static_dir}/${panel.gui.css_files.stats_tabulator_filename}
+  # Labels
+  labels_filename: labels.css
+  labels_path: ${panel.gui.css_static_dir}/${panel.gui.css_files.labels_filename}
+
+# TEMPLATE CSS
+template_css_files:
+  - ${panel.gui.css_files.app_header_path}
+template_raw_css: []
+
+# CSS CLASSES (used by time labels)
+# Restaurant lunches
+time_class_res_col:
+  - time-label-results-column
+time_class_time_col:
+  - time-label-time-column
+# Takeaway lunches
+takeaway_class_res_col:
+  - takeaway-label-results-column
+takeaway_class_time_col:
+  - takeaway-label-time-column
+# Birthdays
+not_today_class_birthday_col:
+  - birthday-label
+today_class_birthday_col:
+  - birthday-label-today
+  - flashing-animation
+
+# RESTAURANT LUNCHES
+restaurant_emoji: "🍴"
+food_emoji: [
+    "🍲",
+    "🌯",
+    "🌮",
+    "🌭",
+    "🥯",
+    "🍕",
+    "🍖",
+    "🍔",
+    "🥪",
+    "🍗",
+    "🥗",
+    "🥙",
+    "🍟",
+    "🥩",
+    "🥕",
+    "🥦",
+    "🥬",
+    "🥨",
+    "🥣",
+    "🍱",
+    "🍝",
+    "🍜",
+    ]
+
+# GUESTS ICONS
+guest_icons: # Keys of this dict shall match guest_types in panel config
+  Edison Guest: "🔸"
+  External Guest: "💰"
+
+# TAKEAWAY LUNCHES
+takeaway_id: TAKEAWAY
+takeaway_emoji: "🥡"
+takeaway_alert_icon_options: 'class="flashing-animation"'
+takeaway_svg_icon: |-
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-alert-triangle-filled" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+    <path d="M11.94 2a2.99 2.99 0 0 1 2.45 1.279l.108 .164l8.431 14.074a2.989 2.989 0 0 1 -2.366 4.474l-.2 .009h-16.856a2.99 2.99 0 0 1 -2.648 -4.308l.101 -.189l8.425 -14.065a2.989 2.989 0 0 1 2.555 -1.438zm.07 14l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007zm-.01 -8a1 1 0 0 0 -.993 .883l-.007 .117v4l.007 .117a1 1 0 0 0 1.986 0l.007 -.117v-4l-.007 -.117a1 1 0 0 0 -.993 -.883z" stroke-width="0" fill="currentColor"></path>
+  </svg>
+takeaway_alert_text_options: 'class="flashing-animation"'
+
+# MENU TABLE
+# Table column alignment
+menu_column_align:
+  id: center
+  item: left
+  order: center
+  note: left
+
+# ORDERS' TABLE
+# Name of the column with total values for orders
+total_column_name: totale
+# Name of the column with notes for orders
+note_column_name: note
+# Note separators
+note_sep:
+  count: " " # Between note and counter
+  element: ", " # Between notes
+
+# CUSTOMIZABLE GRAPHIC OBJECTS
+# Instantiate a panel object to be rendered on app's header
+# Set to null to ignore
+# e.g: _target_: panel.pane.HTML with _args_: - <img src="${panel.favicon_path}"> 
+header_object: null
+
+# ADDITIONAL ITEMS DETAILS
+additional_item_details_template: |
+  <details>
+      <summary><strong>Menu Details</strong></summary>
+      {% for item in items %}
+        {% if item.description is not none %}
+          {{ item.icon }} <strong>{{ item.short_name }}:</strong> <i>{{ item.description }}</i> <br>
+        {% endif %}
+      {% endfor %}
+  </details>
+
+# PASSWORD
+psw_text: "### Password rules\n- Minimum eight characters\n- At least one lower case letter\n- At least one upper case letter\n- At least one number\n- At least one special character."
