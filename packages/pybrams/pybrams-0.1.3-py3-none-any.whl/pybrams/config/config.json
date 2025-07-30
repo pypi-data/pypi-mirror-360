@@ -1,0 +1,187 @@
+{
+  "pybrams": {
+    "brams": {
+      "adsb": {
+        "api_endpoint": "adsb.php"
+      },
+      "fetch": {
+        "api": {
+          "base_url": "https://brams.aeronomie.be/v1/"
+        },
+        "archive": {
+          "base_path": "/bira-iasb/data/GROUNDBASED/BRAMS/wav"
+        }
+      },
+      "file": {
+        "api_endpoint": "file.php"
+      },
+      "location": {
+        "api_endpoint": "location.php"
+      },
+      "system": {
+        "api_endpoint": "system.php"
+      }
+    },
+    "event": {
+      "meteor": {
+        "identification_half_range_frequency": 100,
+        "filtering_half_range_frequency": 300,
+        "filtering_length_kernel": 2501,
+        "prepadding_duration": 2.5,
+        "postpadding_duration": 2.5,
+        "sg_order": 4,
+        "noise_duration": 1,
+        "ampl_sg_window_duration": 0.035,
+        "min_peak_height_ampl": 1,
+        "min_snr": 12,
+        "max_central_fresnel_duration": 0.05,
+        "min_central_fresnel_duration": 0.002,
+        "max_rise_duration": 1.5,
+        "min_rise_duration": 0.013,
+        "t0_ampl": 0.42710125034355456,
+        "max_central_fresnel_ampl": 0.5647331937199362,
+        "min_central_fresnel_ampl": 0.3228268134629456,
+        "t0_fill_value": 0.02,
+        "timing_corrections": {
+          "AR": 0.0245,
+          "ICOM": 0.0019,
+          "RSP2": 0.0333
+        },
+        "timing_uncertainties": {
+          "AR": 0.0001,
+          "ICOM": 0.0001,
+          "RSP2": 0.0002
+        },
+        "phase_sg_window": 1,
+        "prominence_phase": 1,
+        "min_phase_value": -14.098024352514232,
+        "max_phase_value": -0.5135047640574028,
+        "min_fresnel_parameter": -28.284271247461902,
+        "fresnel_parameter_at_max_phase": 0.5717405717405732,
+        "fresnel_parameter_at_max_ampl": 1.2171982434396487,
+        "number_fresnel_parameters": 10000,
+        "guess_duration_t0": 0.05,
+        "guess_duration_min_phase": 0.01,
+        "min_length_sliding_slope": 30,
+        "min_r_value_pre_t0": 0.995,
+        "min_size_histogram": 30,
+        "min_length_pssst_uncertainty": 2
+      }
+    },
+    "processing": {
+      "airplane_removal": {
+        "find_half_range_frequency": 100,
+        "fit_half_range_frequency": 1,
+        "max_spectral_width": 3,
+        "min_duration": 6,
+        "max_doppler_shift_derivative": 3.5,
+        "number_erosion_footprints": 10,
+        "meteor_max_duration": 2,
+        "meteor_min_spectral_width": 4,
+        "crossing_extra_duration": 0.0,
+        "crossing_extra_spectral_width": 0.0,
+        "interpolation_duration": 0.3,
+        "interval_duration": 3,
+        "interval_overlaps": 0.9,
+        "mode": 2
+      },
+      "beacon_removal": {
+        "fit_max_evaluations": 3000,
+        "find_half_range_frequency": 1,
+        "fit_half_range_frequency": 2,
+        "interval_duration": 1,
+        "interval_overlaps": 0
+      },
+      "calibrator_removal": {
+        "fit_max_evaluations": 3000,
+        "find_half_range_frequency": 1,
+        "fit_half_range_frequency": 2,
+        "interval_duration": 1,
+        "interval_overlaps": 0
+      },
+      "interference_removal": {
+        "noise_range_frequency": 100,
+        "noise_shift_frequency": 300
+      },
+      "signal": {
+        "beacon_min_frequency": 900,
+        "beacon_max_frequency": 1400,
+        "calibrator_min_frequency": 1400,
+        "calibrator_max_frequency": 1900,
+        "calibrator_subtraction": false,
+        "airplane_subtraction": false
+      }
+    },
+    "optical": {
+      "cams": {}
+    },
+    "trajectory": {
+      "analyzer": {
+        "weights_pre_t0_objective": [
+          0.030,
+          0.059,
+          0.111,
+          0.200,
+          0.333,
+          0.500,
+          0.667,
+          0.800,
+          0.889,
+          0.941,
+          0.970
+        ]
+      },
+      "solver": {
+        "default_velocity_model": "constant",
+        "minimum_number_systems": 1,
+        "maximum_time_of_flight": 1.5,
+        "maximum_speed_residual": 0.15,
+        "maximum_times_of_flight_residual": 25e-3,
+        "optimization_method": "SLSQP",
+        "solver_tolerance": 1e-16,
+        "default_weight_pre_t0_objective": 0.5,
+        "default_outlier_removal": true
+      },
+      "mcmc": {
+        "n_samples_mcmc": 300000,
+        "max_lag_autocovariance": 10000
+      },
+      "scam": {
+        "accept_max": 0.5,
+        "accept_min": 0.3,
+        "adapt_interval": 1000,
+        "proposal_adapt_interval": 1000,
+        "tune": 0,
+        "proposal": "adaptive",
+        "progress_bar": true
+      }
+    },
+    "utils": {
+      "http": {
+        "max_retries": 3,
+        "timeout": 60
+      },
+      "cache": {
+        "use": true
+      },
+      "coordinates": {
+        "grs80": [
+          6378.137,
+          298.257222100882711
+        ],
+        "wgs84": [
+          6378.137,
+          298.257223563
+        ]
+      }
+    },
+    "directories": {
+      "solution": "./pybrams_results"
+    },
+    "scripts": {
+      "trajectory": {
+        "filter_runtime_warnings": true
+      }
+    }
+  }
+}
