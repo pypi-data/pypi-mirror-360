@@ -1,0 +1,81 @@
+# pyproject.toml
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "microlens-submit"
+version = "0.16.0"
+authors = [
+  { name="Amber Malpas", email="malpas.1@osu.edu" },
+  {name = "Roman Science Platform Team", email = "roman-science-platform@stsci.edu"}
+]
+description = "A tool for managing and submitting microlensing solutions"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+keywords = ["astronomy", "microlensing", "data-challenge", "submission", "roman"]
+dependencies = [
+    "pydantic>=2.0.0",
+    "typer[all]>=0.9.0",
+    "rich>=13.0.0",
+    "pyyaml>=6.0",
+    "markdown>=3.4.0",
+    "importlib_resources>=1.0.0; python_version<\"3.9\"",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/AmberLee2427/microlens-submit"
+"Repository" = "https://github.com/AmberLee2427/microlens-submit"
+
+# This defines the command-line script entry point
+[project.scripts]
+microlens-submit = "microlens_submit.cli:app"
+
+# Optional dependencies for development and testing
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "build",
+    "twine",
+    "pre-commit",
+    "black",
+    "isort",
+    "sphinx",
+    "sphinx_rtd_theme",
+    "importlib_resources",
+]
+
+# Setuptools package configuration
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["microlens_submit*"]
+exclude = ["tests*", "docs*"]
+
+[tool.setuptools.package-data]
+microlens_submit = ["assets/*"]
+
+# Code formatting configuration
+[tool.black]
+line-length = 120
+target-version = ['py38']
+
+[tool.isort]
+profile = "black"
+line_length = 120
