@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.3.3/css/searchPanes.dataTables.css" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.3/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/searchpanes/2.3.3/js/dataTables.searchPanes.js"></script>
+    <script src="https://cdn.datatables.net/select/3.0.0/js/dataTables.select.js"></script>
+    <title>{% block title %} {% endblock %} AIND Data Transfer Service Job Parameters</title>
+    <style>
+        body {
+            margin: 20px;
+            font-family: arial, sans-serif;
+        }
+        nav {
+            height: 40px;
+        }
+        .modal-body {
+            max-height: calc(100vh - 200px);
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/">Submit Jobs</a> |
+        <a href="/jobs">Job Status</a> |
+        <a href="/job_params">Job Parameters</a> |
+        <a title="Download job template as .xslx" href= "/api/job_upload_template" download>Job Submit Template</a> |
+        <a title="List of project names" href= "{{ project_names_url }}" target="_blank" >Project Names</a> |
+        <a title="For more information click here" href="https://aind-data-transfer-service.readthedocs.io"  target="_blank" >Help</a> |
+        <a href="/admin">Admin</a>
+        {% if user_signed_in %}
+            <a href="/logout" class="float-end">Log out</a>
+        {% else %}
+            <a href="/login" class="float-end">Log in</a>
+        {% endif %}
+    </nav>
+    <div class="content">
+        <h4 class="mb-2">
+            <!-- dropdown to switch version -->
+            <div id="version-dropdown" class="btn-group mb-2">
+                <button id="version-button" type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    {{default_version}}
+                </button>
+                <ul class="dropdown-menu">
+                    {% for v in versions %}
+                    <button class="dropdown-item" type="button">{{ v }}</button>
+                    {% endfor %}
+                </ul>
+            </div>
+            <span>Job Parameters</span>
+        </h4>
+        <!-- button and modal for adding new parameters-->
+        {% if user_signed_in %}
+        <div class="mb-2">
+            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#param-modal" data-bs-action="new">
+                <i class="bi bi-plus-circle"></i> Add New Parameter
+            </button>
+        </div>
+        {% endif %}
+        <!-- job params table -->
+        <div>
+            <table id="job-params-table" class="display compact table table-bordered table-sm" style="font-size: small">
+                <thead>
+                    <tr>
+                        <th>Job Type</th>
+                        <th>Task ID</th>
+                        <th>Modality</th>
+                        <th>Parameter Name</th>
+                        <th>Last Modified</th>
+                    </tr>
+                </thead>
+            </table>
+            <!-- modal for displaying param value as json -->
+            <!-- if user is signed in, the textarea will be editable and the footer will display the Submit button -->
+            <div class="modal fade" id="param-modal" tabindex="-1" aria-labelledby="param-modal-label" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="param-modal-label"></h5>
+                            <span class="badge bg-primary ms-2" id="param-modal-version"></span>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- dropdowns for Add New Parameter -->
+                            <div class="row mb-2" id="param-modal-dropdowns" style="display:none;">
+                                <div class="col-md-4">
+                                    <label for="param-modal-job-type-select" class="form-label">Job Type</label>
+                                    <select id="param-modal-job-type-select" class="form-select form-select-sm mb-1"></select>
+                                    <input type="text" id="param-modal-job-type-input" class="form-control form-control-sm mt-1" placeholder="Enter new Job Type" style="display:none;" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="param-modal-task-id-select" class="form-label">Task ID</label>
+                                    <select id="param-modal-task-id-select" class="form-select form-select-sm"></select>
+                                    <input type="text" id="param-modal-task-id-input" class="form-control form-control-sm mt-1" placeholder="Enter new Task ID" style="display:none;" />
+                                </div>
+                                <div class="col-md-4" style="display:none;">
+                                    <label for="param-modal-modality-select" class="form-label">Modality</label>
+                                    <select id="param-modal-modality-select" class="form-select form-select-sm">
+                                        <option value="">Select Modality</option>
+                                        {% for modality in modalities %}
+                                        <option value="{{ modality }}">{{ modality }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- textarea for parameter value -->
+                            <textarea
+                                id="param-modal-content" class="bg-light form-control form-control-sm font-monospace" rows="15"
+                                placeholder='{"skip_task": false}' {% if not user_signed_in %}readonly{% endif %}
+                            ></textarea>
+                            <!-- message if parameter already exists -->
+                            <div id="param-modal-param-exists-alert" class="alert alert-info" role="alert" style="display:none;">
+                                This parameter already exists! To edit, please click on the parameter from the Job Parameters table.
+                            </div>
+                        </div>
+                        {% if user_signed_in %}
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-secondary" id="param-modal-reset-btn">Reset</button>
+                            <button type="button" class="btn btn-primary" id="param-modal-submit-btn">Submit</button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const MODALITY_TASKS = {{ modality_tasks | tojson }}; // from Jinja context
+        const MODAL_ID = 'param-modal';
+        $(document).ready(function() {
+            createJobParamsTable();
+            // Event listeners for modal to display/edit params
+            $(`#${MODAL_ID}`).on('show.bs.modal', function(event) {
+                // Add New Parameter: set label and dropdown options
+                // Edit Existing Parameter: set label and load intital value
+                const eventTarget = $(event.relatedTarget);
+                const action = eventTarget.data('bs-action');
+                const modal = $(`#${MODAL_ID}`);
+                modal.data('bs-action', action); // save action type
+                const isNew = action === 'new';
+                modal.find(`#${MODAL_ID}-label`).text(isNew ? 'Add New Parameter' : eventTarget.data('bs-param-name'));
+                modal.find(`#${MODAL_ID}-version`).text(getCurrentVersion()).toggle(isNew);
+                modal.find(`#${MODAL_ID}-dropdowns`).toggle(isNew);
+                if (isNew) {
+                    ['Job Type', 'Task ID'].forEach(field => {
+                        const select = modal.find(`#${MODAL_ID}-${field.toLowerCase().replace(' ', '-')}-select`);
+                        select.empty()
+                            .append(`<option value="">Select ${field}</option>`)
+                            .append(getUniqueColumnValues(field).map(val => `<option value="${val}">${val}</option>`))
+                            .append(`<option value="__new__">Create new ${field}</option>`);
+                    });
+                } else {
+                    loadParameterValue(getParamUrlFromParamName(eventTarget.data('bs-param-name')));
+                }
+            });
+            $(`#${MODAL_ID}`).on('hidden.bs.modal', function() {
+                onResetModal();
+            });
+            $(`#${MODAL_ID}`).on('click', `#${MODAL_ID}-reset-btn`, function() {
+                onResetModal(true);
+            });
+            $(`#${MODAL_ID}`).on('click', `#${MODAL_ID}-submit-btn`, function() {
+                const modal = $(`#${MODAL_ID}`);
+                const action = modal.data('bs-action');
+                let url;
+                if (action === "new") {
+                    const version = getCurrentVersion();
+                    const jobType = getValidatedInputValue('Job Type', modal);
+                    const taskId = getValidatedInputValue('Task ID', modal);
+                    const modality = MODALITY_TASKS.includes(taskId) ? getValidatedInputValue('Modality', modal) : null;
+                    url = getParamUrlFromParamInfo(version, jobType, taskId, modality);
+                } else {
+                    const paramName = modal.find(`#${MODAL_ID}-label`).text();
+                    url = getParamUrlFromParamName(paramName);
+                }
+                const paramValue = modal.find(`#${MODAL_ID}-content`).val();
+                submitParameterValue(url, paramValue);
+            });
+            $(`#${MODAL_ID}-job-type-select`).on('change', function() {
+                $(`#${MODAL_ID}-job-type-input`).toggle($(this).val() === '__new__').focus();
+                handleExistingParam();
+            });
+            $(`#${MODAL_ID}-task-id-select`).on('change', function() {
+                $(`#${MODAL_ID}-task-id-input`).toggle($(this).val() === '__new__').focus();
+                $(`#${MODAL_ID}-modality-select`).val('').parent().toggle(MODALITY_TASKS.includes($(this).val()));
+                handleExistingParam();
+            });
+            $(`#${MODAL_ID}-modality-select`).on('change', function() {
+                handleExistingParam();
+            });
+            // Event listener for version dropdown
+            $('#version-dropdown .dropdown-item').on('click', function() {
+                var version = $(this).text();
+                if (version != getCurrentVersion()) {
+                    $('#version-button').text(version);
+                    $('#job-params-table').DataTable().ajax.url(`/api/${version}/parameters`).load();
+                }
+            });
+        });
+        // Create DataTable for job params table
+        function createJobParamsTable() {
+            $('#job-params-table').DataTable({
+                ajax: {
+                    url: "/api/{{default_version}}/parameters",
+                    dataSrc: 'data'
+                },
+                processing: true,
+                columns: [
+                    { data: 'job_type', searchPanes: {show: true} },
+                    { data: 'task_id', searchPanes: {show: true} },
+                    { data: 'modality', searchPanes: {show: false} },
+                    { data: 'name', render: renderParameterButton },
+                    { data: 'last_modified', render: renderDatetime },
+                ],
+                order: [0, 'asc'],
+                // preselect "default" job_type
+                searchPanes: {
+                    preSelect: [ { rows: ['default'], column: 0 } ],
+                },
+                // options to match default jobs table
+                pageLength: 25,
+                layout: {
+                    topStart: null,
+                    topEnd: null,
+                    bottomStart: null,
+                    bottomEnd: null,
+                    top1Start: "searchPanes",
+                    top: [
+                        'pageLength',
+                        'info',
+                        { paging: { numbers: false } }
+                    ],
+                },
+                language: {
+                    info: "_START_ to _END_ of _TOTAL_",
+                    infoEmpty: "0 to 0 of 0",
+                    entries: { _: "parameters", 1: "parameter" },
+                    paginate: {
+                        first: '&laquo; First',
+                        previous: '&lsaquo; Prev',
+                        next: 'Next &rsaquo;',
+                        last: 'Last &raquo;'
+                    },
+                },
+            });
+        }
+        function renderDatetime(data, type, row) {
+            return (type === 'display') ? moment.utc(data).local().format('YYYY-MM-DD h:mm:ss a') : data;
+        }
+        function renderParameterButton(data, type, row) {
+            if (type == 'display') {
+                return (
+                    `<button type="button" class="btn btn-link btn-sm" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#${MODAL_ID}"
+                        data-bs-action="edit"
+                        data-bs-param-name=${data} 
+                        data-bs-job-type=${row.job_type} 
+                        data-bs-task-id=${row.task_id}
+                        data-bs-modality=${row.modality}
+                    >${data}
+                    </button>`
+                );
+            }
+            return data;
+        }
+        // Methods to load/submit param values in the modal
+        function getParamUrlFromParamInfo(version, jobType, taskId, modality) {
+            var baseUrl = `/api/${version}/parameters/job_types/${jobType}/tasks/${taskId}`;
+            return modality ? `${baseUrl}/${modality}` : baseUrl;
+        }
+        function getParamUrlFromParamName(paramName) {
+            const match = paramName.match(/job_types\/(v\d+)?\/?(.*)/);
+            const version = match && match[1] ? match[1] : 'v1';
+            const cleanedParamName = match ? match[2] : paramName;
+            return `/api/${version}/parameters/job_types/${cleanedParamName}`;
+        }
+        function loadParameterValue(paramUrl) {
+            const modal = $(`#${MODAL_ID}`);
+            $.ajax({
+                url: paramUrl,
+                type: 'GET',
+                success: function (response) {
+                    jsonStr = JSON.stringify(response.data, null, 3);
+                    modal.find(`#${MODAL_ID}-content`).val(jsonStr);
+                },
+                error: function (xhr, status, error) {
+                    console.error(`Error fetching ${paramUrl}: ${error}`);
+                    modal.find(`#${MODAL_ID}-content`).val(error);
+                }
+            });
+        }
+        function submitParameterValue(paramUrl, paramValue) {
+            try {
+                JSON.parse(paramValue);
+            } catch (e) {
+                alert('Parameter value must be valid JSON:\n' + e.message);
+                return;
+            }
+            $.ajax({
+                url: paramUrl,
+                type: 'PUT',
+                contentType: 'application/json',
+                data: paramValue,
+                success: function (response) {
+                    alert('Parameter updated successfully');
+                    // reload the content to verify and reformat changes
+                    loadParameterValue(paramUrl);
+                },
+                error: function (xhr, status, error) {
+                    var msg = `Error submitting parameter: ${error}`;
+                    try {
+                        msg += `\n\n${JSON.stringify(JSON.parse(xhr.responseText), null, 3)}`;
+                    } catch (e) {
+                        console.error('Failed to parse error response:', e.message);
+                    }
+                    console.error(msg);
+                    alert(msg);
+                }
+            });
+        }
+        // Methods for param modal updates
+        function toggleParamTextArea(isEnabled){
+            const modal = $(`#${MODAL_ID}`);
+            modal.find(`#${MODAL_ID}-content`).toggle(isEnabled);
+            modal.find(`#${MODAL_ID}-param-exists-alert`).toggle(!isEnabled);
+            modal.find(`#${MODAL_ID}-submit-btn`).prop('disabled', !isEnabled);
+        }
+        function handleExistingParam() {
+            let exists = false;
+            const modal = $(`#${MODAL_ID}`);
+            const version = getCurrentVersion();
+            const jobType = getInputValues('Job Type', modal).input;
+            const taskId = getInputValues('Task ID', modal).input;
+            const modality = MODALITY_TASKS.includes(taskId) ? getInputValues('Modality', modal).input : null;
+            if (jobType && taskId && (!MODALITY_TASKS.includes(taskId) || modality)) {
+                const table = $('#job-params-table').DataTable();
+                const searchStr = `/${jobType}/tasks/${taskId}` + (modality ? `/${modality}` : '');
+                exists = table.column('Parameter Name:title').data().toArray().some(val => val.endsWith(searchStr));
+            }
+            toggleParamTextArea(!exists);
+        }
+        function onResetModal(reload = false) {
+            const modal = $(`#${MODAL_ID}`);
+            const action = modal.data('bs-action');
+            if (action === "new") {
+                modal.find(`#${MODAL_ID}-dropdowns input`).val('').hide();
+                modal.find(`#${MODAL_ID}-dropdowns select`).val('');
+                modal.find(`#${MODAL_ID}-modality-select`).parent().hide();
+                modal.find(`#${MODAL_ID}-content`).val('');
+                toggleParamTextArea(true);
+            } else if (action === "edit") {
+                if (reload) {
+                    const paramName = modal.find(`#${MODAL_ID}-label`).text();
+                    loadParameterValue(getParamUrlFromParamName(paramName));
+                } else {
+                    modal.find(`#${MODAL_ID}-label, #${MODAL_ID}-content`).text('').val('');
+                }
+            }
+        }
+        // Helper methods to get current values
+        function getCurrentVersion() {
+            return $('#version-button').text().trim();
+        }
+        function getUniqueColumnValues(columnTitle) {
+            return Array.from(new Set($('#job-params-table').DataTable().column(`${columnTitle}:title`).data().toArray()));
+        }
+        function getInputValues(inputField, modal) {
+            const selector = `#${MODAL_ID}-${inputField.toLowerCase().replace(' ', '-')}`;
+            const dropdown = modal.find(`${selector}-select`).val()?.trim() || '';
+            const input = (dropdown === '__new__') ? (modal.find(`${selector}-input`).val()?.trim() || '') : dropdown;
+            return { dropdown, input };
+        }
+        function getValidatedInputValue(inputField, modal) {
+            // Check for empty string, spaces, slashes, or existing values
+            const { dropdown, input } = getInputValues(inputField, modal);
+            var error = false;
+            if (!input) {
+                error = `${inputField} cannot be empty`;
+            } else if (input.includes(' ') || input.includes('/')) {
+                error = `${inputField} cannot contain spaces or slashes`;
+            } else if (
+                dropdown === '__new__' &&
+                getUniqueColumnValues(inputField).some(val => val.toLowerCase() === input.toLowerCase())
+            ) {
+                error = `${inputField} "${input}" already exists. Please select it from the dropdown.`;
+            }
+            if (error) {
+                alert(error);
+                throw new Error(error);
+            }
+            return input;
+        }
+    </script>
+</body>
+</html>
