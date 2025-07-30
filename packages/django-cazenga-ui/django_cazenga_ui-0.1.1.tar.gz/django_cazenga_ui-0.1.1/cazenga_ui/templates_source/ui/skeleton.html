@@ -1,0 +1,57 @@
+<!--
+Componente: Skeleton
+Uso: include "components/skeleton.html" with width="200px" height="20px"
+
+Parâmetros:
+- width: Largura do skeleton (padrão: 100%)
+- height: Altura do skeleton (padrão: 1rem)
+- variant: default, text, circular, rectangular (padrão: default)
+- animation: pulse, wave, none (padrão: pulse)
+- count: Número de skeletons para exibir (padrão: 1)
+- class: Classes CSS adicionais (opcional)
+
+Exemplo:
+include "components/skeleton.html" with 
+    width="300px" 
+    height="200px" 
+    variant="rectangular"
+-->
+{% with variant=variant|default:"default" animation=animation|default:"pulse" count=count|default:1 width=width|default:"100%" height=height|default:"1rem" %}
+<div class="{{ class|default:'' }}">
+    {% for i in "x"|ljust:count %}
+        <div 
+            class="
+                {% if variant == 'circular' %}
+                    rounded-full aspect-square
+                {% elif variant == 'rectangular' %}
+                    rounded-md
+                {% elif variant == 'text' %}
+                    rounded-md h-4
+                {% else %}
+                    rounded-md
+                {% endif %}
+                
+                {% if animation == 'pulse' %}
+                    animate-pulse
+                {% elif animation == 'wave' %}
+                    animate-shimmer bg-gradient-to-r from-muted via-muted/50 to-muted bg-[length:200%_100%]
+                {% endif %}
+                
+                bg-muted
+            "
+            x-data
+            :style="(() => {
+                const variant = '{{ variant }}';
+                if (variant === 'circular') return { width: '{{ width }}', height: '{{ width }}' };
+                if (variant === 'text') return { width: '{{ width }}' };
+                return { width: '{{ width }}', height: '{{ height }}' };
+            })()"
+            aria-label="Carregando..."
+            role="status"
+        ></div>
+        {% if not forloop.last %}
+            <div class="mt-2"></div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endwith %}

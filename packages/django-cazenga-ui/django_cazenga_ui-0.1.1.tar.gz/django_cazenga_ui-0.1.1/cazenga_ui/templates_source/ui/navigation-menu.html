@@ -1,0 +1,128 @@
+
+<!-- 
+Componente: Navigation Menu
+Uso: include "components/navigation-menu.html" with menu_items=nav_items
+
+Parâmetros:
+- menu_items: Lista de itens do menu (obrigatório)
+- class: Classes CSS adicionais (opcional)
+- orientation: horizontal, vertical (padrão: horizontal)
+
+Exemplo de menu_items:
+[
+    {
+        "title": "Produtos",
+        "href": "/produtos",
+        "description": "Nossos produtos",
+        "submenu": [
+            {"title": "Categoria 1", "href": "/cat1", "description": "Desc 1"},
+            {"title": "Categoria 2", "href": "/cat2", "description": "Desc 2"}
+        ]
+    },
+    {
+        "title": "Sobre",
+        "href": "/sobre"
+    }
+]
+-->
+
+{% with orientation=orientation|default:"horizontal" %}
+<nav 
+    x-data="{ 
+        activeItem: null,
+        hoveredItem: null,
+        openItem: null,
+        setActive(item) { this.activeItem = item; },
+        setHovered(item) { this.hoveredItem = item; },
+        setOpen(item) { this.openItem = this.openItem === item ? null : item; },
+        isOpen(item) { return this.openItem === item; }
+    }"
+    class="relative flex max-w-max flex-1 items-center justify-center {{ class|default:'' }}"
+    role="navigation"
+    aria-label="Menu principal"
+>
+    <ul class="group flex flex-1 list-none items-center justify-center gap-1
+        {% if orientation == 'vertical' %}flex-col{% endif %}">
+        {% for item in menu_items %}
+            <li class="relative" 
+                x-data="{ open: false }"
+                @mouseenter="setHovered('{{ item.title }}')"
+                @mouseleave="setHovered(null)">
+                
+                {% if item.submenu %}
+                    <!-- Item com submenu -->
+                    <button
+                        @click="setOpen('{{ item.title }}')"
+                        @mouseenter="open = true"
+                        @mouseleave="open = false"
+                        :class="{ 'bg-accent text-accent-foreground': isOpen('{{ item.title }}') }"
+                        class="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 outline-none transition-[color,box-shadow] focus-visible:ring-2 focus-visible:ring-ring/50"
+                        aria-expanded="false"
+                        :aria-expanded="isOpen('{{ item.title }}')"
+                    >
+                        {{ item.title }}
+                        <svg 
+                            class="relative top-[1px] ml-1 size-3 transition duration-300"
+                            :class="{ 'rotate-180': isOpen('{{ item.title }}') }"
+                            aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg" 
+                            fill="none" 
+                            viewBox="0 0 24 24" 
+                            stroke-width="1.5" 
+                            stroke="currentColor"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
+                    
+                    <!-- Submenu -->
+                    <div 
+                        x-show="isOpen('{{ item.title }}') || open"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-75"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
+                        @mouseenter="open = true"
+                        @mouseleave="open = false"
+                        class="absolute top-full left-0 z-50 mt-1.5 w-full min-w-[400px] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md"
+                        style="display: none;"
+                    >
+                        <div class="p-2">
+                            {% if item.description %}
+                                <div class="mb-3 p-2">
+                                    <h4 class="font-medium">{{ item.title }}</h4>
+                                    <p class="text-sm text-muted-foreground">{{ item.description }}</p>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="grid gap-1">
+                                {% for subitem in item.submenu %}
+                                    <a 
+                                        href="{{ subitem.href }}"
+                                        class="flex flex-col gap-1 rounded-sm p-2 text-sm transition-all outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+                                    >
+                                        <div class="font-medium">{{ subitem.title }}</div>
+                                        {% if subitem.description %}
+                                            <div class="text-muted-foreground">{{ subitem.description }}</div>
+                                        {% endif %}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- Item simples -->
+                    <a
+                        href="{{ item.href }}"
+                        class="group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground outline-none transition-[color,box-shadow] focus-visible:ring-2 focus-visible:ring-ring/50"
+                    >
+                        {{ item.title }}
+                    </a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</nav>
+{% endwith %}

@@ -1,0 +1,170 @@
+<!--
+Componente: Table
+Uso: include "components/table.html" with headers=headers data=data caption="Legenda da tabela"
+
+Parâmetros:
+- headers: Lista de cabeçalhos ["Nome", "Email", "Ações"] (obrigatório)
+- data: Lista de linhas [["João", "joao@email.com", "<button>Editar</button>"], ...] (obrigatório)
+- caption: Legenda da tabela (opcional)
+- selectable: true/false - permite seleção de linhas (padrão: false)
+- sortable: true/false - permite ordenação (padrão: false)
+- striped: true/false - linhas alternadas (padrão: false)
+- compact: true/false - espaçamento reduzido (padrão: false)
+- class: Classes CSS adicionais (opcional)
+- x_data: Dados Alpine.js adicionais (opcional)
+-->
+{% with selectable=selectable|default:False sortable=sortable|default:False striped=striped|default:False compact=compact|default:False %}
+<div 
+    {% if sortable or selectable %}
+        x-data="{ 
+            selectedRows: [],
+            sortColumn: null,
+            sortDirection: 'asc',
+            data: {{ data|safe }},
+            get sortedData() {
+                if (!this.sortColumn) return this.data;
+                return [...this.data].sort((a, b) => {
+                    const aVal = a[this.sortColumn];
+                    const bVal = b[this.sortColumn];
+                    if (this.sortDirection === 'asc') {
+                        return aVal > bVal ? 1 : -1;
+                    } else {
+                        return aVal < bVal ? 1 : -1;
+                    }
+                });
+            },
+            toggleSort(columnIndex) {
+                if (this.sortColumn === columnIndex) {
+                    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.sortColumn = columnIndex;
+                    this.sortDirection = 'asc';
+                }
+            },
+            toggleRow(index) {
+                if (this.selectedRows.includes(index)) {
+                    this.selectedRows = this.selectedRows.filter(i => i !== index);
+                } else {
+                    this.selectedRows.push(index);
+                }
+            },
+            toggleAll() {
+                if (this.selectedRows.length === this.data.length) {
+                    this.selectedRows = [];
+                } else {
+                    this.selectedRows = [...Array(this.data.length).keys()];
+                }
+            }
+        }"
+    {% endif %}
+    {% if x_data %}x-data="{{ x_data }}"{% endif %}
+    class="w-full {{ class|default:'' }}"
+>
+    <table class="w-full caption-bottom text-sm">
+        {% if caption %}
+            <caption class="text-muted-foreground mt-4 text-sm">{{ caption }}</caption>
+        {% endif %}
+        
+        <!-- Header -->
+        <thead class="[&_tr]:border-b">
+            <tr class="border-b transition-colors hover:bg-muted/50">
+                {% if selectable %}
+                    <th class="text-foreground h-10 px-2 text-left align-middle font-medium">
+                        <input 
+                            type="checkbox"
+                            @change="toggleAll()"
+                            :checked="selectedRows.length === data.length && data.length > 0"
+                            class="rounded border-input"
+                        />
+                    </th>
+                {% endif %}
+                
+                {% for header in headers %}
+                    <th class="text-foreground h-10 px-2 text-left align-middle font-medium 
+                        {% if compact %}px-1{% endif %}
+                        {% if sortable %}cursor-pointer hover:bg-muted/50{% endif %}">
+                        {% if sortable %}
+                            <div @click="toggleSort({{ forloop.counter0 }})" class="flex items-center gap-2">
+                                {{ header }}
+                                <svg 
+                                    class="size-4 transition-transform"
+                                    :class="{
+                                        'rotate-180': sortColumn === {{ forloop.counter0 }} && sortDirection === 'desc',
+                                        'opacity-50': sortColumn !== {{ forloop.counter0 }}
+                                    }"
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24" 
+                                    stroke-width="1.5" 
+                                    stroke="currentColor"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                </svg>
+                            </div>
+                        {% else %}
+                            {{ header }}
+                        {% endif %}
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        
+        <!-- Body -->
+        <tbody class="[&_tr:last-child]:border-0">
+            {% if sortable %}
+                <template x-for="(row, index) in sortedData" :key="index">
+                    <tr class="border-b transition-colors hover:bg-muted/50
+                        {% if striped %}odd:bg-muted/25{% endif %}
+                        {% if selectable %}cursor-pointer{% endif %}"
+                        :class="{ 'bg-muted': selectedRows.includes(index) }"
+                        {% if selectable %}@click="toggleRow(index)"{% endif %}
+                    >
+                        {% if selectable %}
+                            <td class="p-2 align-middle {% if compact %}p-1{% endif %}">
+                                <input 
+                                    type="checkbox"
+                                    :checked="selectedRows.includes(index)"
+                                    @click.stop="toggleRow(index)"
+                                    class="rounded border-input"
+                                />
+                            </td>
+                        {% endif %}
+                        
+                        <template x-for="(cell, cellIndex) in row" :key="cellIndex">
+                            <td class="p-2 align-middle {% if compact %}p-1{% endif %}" x-html="cell"></td>
+                        </template>
+                    </tr>
+                </template>
+            {% else %}
+                {% for row in data %}
+                    <tr class="border-b transition-colors hover:bg-muted/50
+                        {% if striped and forloop.counter|divisibleby:2 %}bg-muted/25{% endif %}
+                        {% if selectable %}cursor-pointer{% endif %}"
+                        {% if selectable %}
+                            :class="{ 'bg-muted': selectedRows.includes({{ forloop.counter0 }}) }"
+                            @click="toggleRow({{ forloop.counter0 }})"
+                        {% endif %}
+                    >
+                        {% if selectable %}
+                            <td class="p-2 align-middle {% if compact %}p-1{% endif %}">
+                                <input 
+                                    type="checkbox"
+                                    :checked="selectedRows.includes({{ forloop.counter0 }})"
+                                    @click.stop="toggleRow({{ forloop.counter0 }})"
+                                    class="rounded border-input"
+                                />
+                            </td>
+                        {% endif %}
+                        
+                        {% for cell in row %}
+                            <td class="p-2 align-middle {% if compact %}p-1{% endif %}">
+                                {{ cell|safe }}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endwith %}
