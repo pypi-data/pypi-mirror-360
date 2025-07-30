@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Graphite-Dev</title>
+
+    <!-- Tailwind & HTMX -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <!-- Cytoscape & dagre -->
+    <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
+    <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+    <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+
+    <!-- js-yaml & Prism -->
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/themes/prism.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-yaml.min.js"></script>
+    
+    <!-- Marked for markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        margin: 0;
+      }
+      #split-container {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+      }
+      #graph-pane,
+      #inspector-pane {
+        flex: 0 0 calc(50% - 2px);
+        min-width: 100px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      #dragbar {
+        flex: 0 0 4px;
+        cursor: col-resize;
+        background: #ddd;
+      }
+      .yaml-block {
+        padding: 1em;
+        background: #f6f8fa;
+        border-radius: 0.375rem;
+        overflow: auto;
+        height: 100%;
+        box-sizing: border-box;
+      }
+      #tabBar nav {
+        width: 100%;
+        display: flex;
+      }
+      #tabBar button {
+        flex: 1;
+        text-align: center;
+      }
+      .history-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .bubble {
+        max-width: 80%;
+        padding: 0.5rem 1rem;
+        border-radius: 1rem;
+      }
+      .bubble.user {
+        background: #e5e7eb;
+        align-self: flex-start;
+      }
+      .bubble.assistant {
+        background: #bfdbfe;
+        align-self: flex-end;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Top Bar -->
+    <div class="p-4 flex gap-4 min-w-0 items-end">
+      <div class="flex flex-col flex-grow min-w-0">
+        <label for="convSelect" class="mb-1 font-medium truncate"
+          >Conversation ID</label
+        >
+        <select
+          id="convSelect"
+          class="border rounded px-2 py-1 w-full truncate"
+          hx-get="/conversations"
+          hx-trigger="load"
+          hx-target="#convSelect"
+          hx-swap="innerHTML"
+        ></select>
+      </div>
+      <div class="flex flex-col flex-grow min-w-0">
+        <label for="reqSelect" class="mb-1 font-medium truncate"
+          >Assistant Request ID</label
+        >
+        <select id="reqSelect" class="border rounded px-2 py-1 w-full truncate">
+          <option disabled selected>assistant request id</option>
+        </select>
+      </div>
+      <button
+        id="newConvBtn"
+        class="px-4 py-2 bg-blue-600 text-white rounded whitespace-nowrap"
+      >
+        New Conversation
+      </button>
+    </div>
+
+    <!-- Split Container -->
+    <div id="split-container">
+      <div id="graph-pane" class="border">
+        <div id="graph" class="w-full h-full flex-1"></div>
+      </div>
+      <div id="dragbar"></div>
+      <div id="inspector-pane" class="border">
+        <!-- Tabs -->
+        <div id="tabBar" class="border-b">
+          <nav>
+            <button
+              data-tab="Info"
+              class="px-2 py-2 font-medium text-blue-600 border-b-2 border-blue-600"
+            >
+              Info
+            </button>
+            <button
+              data-tab="Event"
+              class="px-2 py-2 font-medium text-gray-600 border-b-2 border-transparent hover:text-blue-600 hover:border-blue-600"
+            >
+              Event
+            </button>
+            <button
+              data-tab="History"
+              class="px-2 py-2 font-medium text-gray-600 border-b-2 border-transparent hover:text-blue-600 hover:border-blue-600"
+            >
+              History
+            </button>
+          </nav>
+        </div>
+        <!-- Panes -->
+        <div class="p-2 text-xs flex-1 overflow-auto">
+          <div id="pane-Info" class="yaml-block"></div>
+          <div id="pane-Event" class="flex flex-col gap-2 hidden">
+            <!-- view selector -->
+            <select
+              id="eventView"
+              class="border rounded px-2 py-1 self-start text-xs"
+            >
+              <option value="raw" selected>Raw Event</option>
+              <option value="formed">Formed Event</option>
+            </select>
+            <!-- where the render goes -->
+            <div id="eventRender" class="yaml-block flex-1 overflow-auto"></div>
+          </div>
+          <div id="pane-History" class="history-container hidden"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message Box -->
+    <form id="chatForm" class="border p-4 flex flex-col gap-2">
+      <textarea
+        name="text"
+        class="border p-2 h-24"
+        placeholder="Message"
+      ></textarea>
+      <button
+        type="submit"
+        class="self-end px-4 py-2 border rounded bg-green-500 text-white"
+      >
+        Send
+      </button>
+    </form>
+
+    <script>
+      let formedCurrent = []; // last list of events we rendered
+      const formedOpen = new Set(); // event_id values that are expanded
+      // YAML renderer
+      function renderYAML(container, obj) {
+        const yaml = jsyaml.dump(obj);
+        container.innerHTML = `<pre><code class="language-yaml">${yaml}</code></pre>`;
+        Prism.highlightElement(container.querySelector("code"));
+      }
+
+      // Render history chat bubbles
+      function renderHistory(container, events) {
+        container.innerHTML = "";
+        events.forEach((e) => {
+          (e.input_data || []).forEach((m) => {
+            const b = document.createElement("div");
+            b.className = "bubble user";
+            const content = m.content || "";
+            b.innerHTML = marked.parse(content);
+            container.appendChild(b);
+          });
+          (e.output_data || []).forEach((m) => {
+            const b = document.createElement("div");
+            b.className = "bubble assistant";
+            const content = m.content || "";
+            b.innerHTML = marked.parse(content);
+            container.appendChild(b);
+          });
+        });
+        container.lastChild?.scrollIntoView();
+      }
+
+      // Tabs
+      const panes = {
+        Info: document.getElementById("pane-Info"),
+        Event: document.getElementById("pane-Event"),
+        History: document.getElementById("pane-History"),
+      };
+      const tabs = document.querySelectorAll("#tabBar button[data-tab]");
+      let currentTab = "Info";
+      function showTab(name) {
+        currentTab = name;
+        tabs.forEach((b) => {
+          const active = b.dataset.tab === name;
+          b.classList.toggle("text-blue-600", active);
+          b.classList.toggle("border-blue-600", active);
+          b.classList.toggle("text-gray-600", !active);
+          b.classList.toggle("border-transparent", !active);
+        });
+        Object.entries(panes).forEach(([k, el]) => {
+          el.classList.toggle("hidden", k !== name);
+        });
+      }
+
+      // Dropdowns & new conversation
+      const convSelect = document.getElementById("convSelect"),
+        reqSelect = document.getElementById("reqSelect"),
+        newConvBtn = document.getElementById("newConvBtn");
+      newConvBtn.onclick = () => {
+        const c = crypto.randomUUID(),
+          r = crypto.randomUUID();
+        // Add new conversation to options and select it
+        const newOption = document.createElement("option");
+        newOption.text = c;
+        newOption.value = c;
+        convSelect.add(newOption, 0); // Add at the beginning
+        convSelect.value = c;
+
+        // Add new request to options and select it
+        const newReqOption = document.createElement("option");
+        newReqOption.text = r;
+        newReqOption.value = r;
+        reqSelect.innerHTML = ""; // Clear existing options
+        reqSelect.add(newReqOption);
+        reqSelect.value = r;
+        renderYAML(panes.Info, wf);
+        showTab("Info");
+        eventsCache = {};
+        // immediately cache events for new IDs
+        cacheEvents(c, r);
+      };
+
+      // events cache
+      let eventsCache = {};
+
+      // helper to fetch and cache
+      async function cacheEvents(conv) {
+        const evs = await fetch(`/events/${conv}`).then((r) => r.json());
+        eventsCache[conv] = evs;
+      }
+
+      // initialise dropdowns and cache initial events
+      async function ensureIds() {
+        let cs = await fetch("/conversations").then((r) => r.json());
+        if (!cs.length) cs = [crypto.randomUUID()];
+        convSelect.innerHTML = cs.map((c) => `<option>${c}</option>`).join("");
+        convSelect.value = cs[0];
+        let rs = await fetch(`/conversations/${cs[0]}/requests`).then((r) =>
+          r.json()
+        );
+        if (!rs.length) rs = [crypto.randomUUID()];
+        // if more than one request, add "All"
+        if (rs.length > 1) rs.unshift("All");
+        reqSelect.innerHTML = rs.map((r) => `<option>${r}</option>`).join("");
+        reqSelect.value = rs[0];
+        // cache events for initial selection
+        await cacheEvents(convSelect.value);
+      }
+
+      // handle conv change
+      convSelect.onchange = async () => {
+        let rs = await fetch(
+          `/conversations/${convSelect.value}/requests`
+        ).then((r) => r.json());
+        if (!rs.length) rs = [crypto.randomUUID()];
+        if (rs.length > 1) rs.unshift("All");
+        reqSelect.innerHTML = rs.map((r) => `<option>${r}</option>`).join("");
+        reqSelect.value = rs[0];
+        await cacheEvents(convSelect.value);
+        // reload current tab data
+        if (currentTab === "Event") {
+          document.querySelector('[data-tab="Event"]').onclick();
+        } else if (currentTab === "History") {
+          document.querySelector('[data-tab="History"]').onclick();
+        }
+      };
+      // handle req change
+      reqSelect.onchange = async () => {
+        document.querySelector('[data-tab="Event"]').onclick();
+        showTab("Event");
+      };
+
+      // track selected element
+      let selected = { type: null, id: null };
+
+      // build graph & interaction
+      let cy, wf;
+      (async () => {
+        assistant_json = await (await fetch("/workflow")).json();
+        renderYAML(panes.Info, assistant_json);
+
+        wf = assistant_json.workflow;
+        const elems = [];
+        Object.keys(wf.topics).forEach((t) =>
+          elems.push({ data: { id: t, label: t, type: "topic" } })
+        );
+        Object.values(wf.nodes).forEach((n) => {
+          elems.push({ data: { id: n.name, label: n.name, type: "node" } });
+          if (n.command) {
+            const commandName = Object.keys(n.command)[0];
+            const toolName = n.command[commandName].name || commandName;
+            const toolId = `${n.name}#tool#${toolName}`;
+
+            elems.push({ data: { id: toolId, label: toolName, type: "tool" } });
+            elems.push({
+              data: {
+                id: `${n.name}->${toolId}`,
+                source: n.name,
+                target: toolId,
+              },
+            });
+            elems.push({
+              data: {
+                id: `${toolId}->${n.name}`,
+                source: toolId,
+                target: n.name,
+              },
+            });
+          }
+          n.publish_to.forEach((t) =>
+            elems.push({
+              data: {
+                id: `${n.name}->${t.name}`,
+                source: n.name,
+                target: t.name,
+              },
+            })
+          );
+          n.subscribed_expressions.forEach((expr) => {
+            [expr.topic, expr.left?.topic, expr.right?.topic]
+              .filter((x) => x)
+              .forEach((x) => {
+                elems.push({
+                  data: {
+                    id: `${x.name}->${n.name}`,
+                    source: x.name,
+                    target: n.name,
+                  },
+                });
+              });
+          });
+        });
+
+        cytoscape.use(window.cytoscapeDagre);
+        cy = cytoscape({
+          container: document.getElementById("graph"),
+          elements: elems,
+          layout: {
+            name: "dagre",
+            rankDir: "TB",
+            nodeSep: 40, // Increased node separation
+            rankSep: 50, // Increased rank separation
+            ranker: "network-simplex",
+            edgeSep: 30, // Separation between parallel edges
+            padding: 10, // Padding around the graph
+          },
+          style: [
+            {
+              selector: 'node[type="node"]',
+              style: {
+                shape: "round-rectangle",
+                "background-color": "#60a5fa",
+                label: "data(label)",
+                "text-wrap": "wrap",
+                "text-valign": "center",
+                padding: "8px",
+                width: "label",
+                height: "label",
+              },
+            },
+            {
+              selector: 'node[type="topic"]',
+              style: {
+                shape: "rectangle",
+                "background-color": "#34d399",
+                label: "data(label)",
+                "text-wrap": "wrap",
+                "text-valign": "center",
+                padding: "4px",
+                width: "label",
+                height: "label",
+              },
+            },
+            {
+              selector: 'node[type="tool"]',
+              style: {
+                shape: "round-rectangle",
+                "background-color": "#fde047",
+                label: "data(label)",
+                "text-wrap": "wrap",
+                "text-valign": "center",
+                padding: "6px",
+                width: "label",
+                height: "label",
+                "font-size": 10,
+              },
+            },
+            {
+              selector: "edge",
+              style: {
+                "curve-style": "bezier",
+                "target-arrow-shape": "triangle",
+                width: 2,
+              },
+            },
+            {
+              selector: "node.highlighted",
+              style: { "border-width": "4px", "border-color": "#f97316" },
+            },
+            {
+              selector: "edge.highlighted",
+              style: {
+                "line-color": "#f97316",
+                "target-arrow-color": "#f97316",
+                width: 4,
+              },
+            },
+            {
+              selector: "node.highlighted",
+              style: { "border-width": 4, "border-color": "#f97316" },
+            },
+            {
+              selector: "edge.highlighted",
+              style: {
+                "line-color": "#f97316",
+                "target-arrow-color": "#f97316",
+                width: 4,
+              },
+            },
+            {
+              selector: "node.hovered",
+              style: { "border-width": 6, "border-color": "#fe0400" },
+            },
+          ],
+        });
+
+        // First run dagre layout to get initial positions
+        cy.layout({
+          name: "dagre",
+          rankDir: "TB",
+          nodeSep: 40,
+          rankSep: 50,
+          ranker: "network-simplex",
+          edgeSep: 30,
+          padding: 10,
+          // After layout is done, position special topics
+          ready: function () {
+            // Position tool nodes relative to their parent nodes
+            cy.nodes('[type="tool"]').forEach((toolNode) => {
+              const parentNodes = toolNode
+                .connectedEdges()
+                .connectedNodes()
+                .filter((n) => n.data("type") === "node");
+              if (parentNodes.length > 0) {
+                const parentNode = parentNodes[0];
+                const parentPos = parentNode.position();
+
+                // Position at top right of parent
+                toolNode.position({
+                  x: parentPos.x + 80, // Offset to the right
+                  y: parentPos.y - 30, // Offset to the top
+                });
+              }
+            });
+
+            // Special positioning for agent input/output topics
+            const inputTopic = cy.nodes('[label="agent_input_topic"]');
+            const outputTopic = cy.nodes('[label="agent_output_topic"]');
+
+            if (inputTopic.length > 0) {
+              // Position input topic at the top center
+              const boundingBox = cy.elements().boundingBox();
+              inputTopic.position({
+                x: boundingBox.x1 + boundingBox.w / 2,
+                y: boundingBox.y1 - 50, // Place above the top of the graph
+              });
+            }
+
+            if (outputTopic.length > 0) {
+              // Position output topic at the bottom center
+              const boundingBox = cy.elements().boundingBox();
+              outputTopic.position({
+                x: boundingBox.x1 + boundingBox.w / 2,
+                y: boundingBox.y2 + 50, // Place below the bottom of the graph
+              });
+            }
+
+            // Fit the graph after manual positioning
+            cy.fit(cy.elements(), 50);
+          },
+        }).run();
+
+        // Add event handler for node movement
+        cy.on("position", 'node[type="node"]', function (event) {
+          const nodeObj = event.target;
+          // Find all connected tool nodes
+          const toolNodes = nodeObj
+            .connectedEdges()
+            .connectedNodes()
+            .filter((n) => n.data("type") === "tool");
+
+          // Move each tool node to maintain relative position
+          toolNodes.forEach((toolNode) => {
+            toolNode.position({
+              x: nodeObj.position("x") + 60, // Keep the same offset
+              y: nodeObj.position("y") - 40,
+            });
+          });
+        });
+
+        // Ensure agent topics stay at top/bottom during any repositioning
+        cy.on("layoutstop", function () {
+          const inputTopic = cy.nodes('[label="agent_input_topic"]');
+          const outputTopic = cy.nodes('[label="agent_output_topic"]');
+
+          if (inputTopic.length > 0) {
+            const boundingBox = cy.elements().boundingBox();
+            inputTopic.position({
+              x: boundingBox.x1 + boundingBox.w / 2,
+              y: boundingBox.y1 - 50,
+            });
+          }
+
+          if (outputTopic.length > 0) {
+            const boundingBox = cy.elements().boundingBox();
+            outputTopic.position({
+              x: boundingBox.x1 + boundingBox.w / 2,
+              y: boundingBox.y2 + 50,
+            });
+          }
+
+          cy.fit(cy.elements(), 50);
+        });
+
+        // blank click
+        cy.on("tap", (evt) => {
+          if (evt.target === cy) {
+            cy.elements().removeClass("highlighted");
+            if (currentTab === "Info") {
+              selected = { type: null, id: null };
+              renderYAML(panes.Info, wf);
+            } else if (currentTab === "Event") {
+              selected = { type: null, id: null };
+              showTab("Event");
+              const key = `${convSelect.value}`;
+              evs = eventsCache[key] || [];
+              if (reqSelect.value !== "All") {
+                evs = evs.filter(
+                  (e) =>
+                    e.execution_context.assistant_request_id === reqSelect.value
+                );
+              }
+              switch (eventView.value) {
+                case "formed":
+                  renderFormedEvents(evs);
+                  break;
+                default:
+                  renderRawEvents(evs);
+              }
+            }
+          }
+        });
+
+        // node/tool/topic click
+        cy.on("tap", "node", async (evt) => {
+          // remove prior highlights
+          cy.elements().removeClass("highlighted");
+          // highlight this element
+          evt.target.addClass("highlighted");
+          const raw = evt.target.data("id"),
+            typ = evt.target.data("type");
+          selected = { type: typ, id: raw };
+          if (currentTab === "Info") {
+            if (typ === "tool") {
+              const node_name = raw.split("#tool#")[0]; // Extract node name from node_name#tool#tool_name
+              renderYAML(panes.Info, wf.nodes[node_name].command);
+            } else if (typ === "node") {
+              renderYAML(panes.Info, wf.nodes[raw]);
+            } else {
+              renderYAML(panes.Info, wf.topics[raw]);
+            }
+          } else if (currentTab === "Event") {
+            showTab("Event");
+            await document.querySelector('[data-tab="Event"]').onclick();
+          }
+        });
+      })();
+
+      // Info tab
+      document.querySelector('[data-tab="Info"]').onclick = () => {
+        selected = { type: null, id: null };
+        renderYAML(panes.Info, wf);
+        showTab("Info");
+      };
+
+      // Event tab
+
+      // ─── Event‑view render helpers ─────────────────────────────────────────────
+      function renderRawEvents(evts) {
+        renderYAML(document.getElementById("eventRender"), evts);
+      }
+
+      function renderFormedEvents(evts) {
+        /* remember the current list for re-rendering after toggles */
+        formedCurrent = evts;
+
+        /* ---------- helpers ---------- */
+        const esc = (s) => (s || "").replace(/"/g, "&quot;");
+
+        const getName = (e) =>
+          e.node_name ||
+          e.tool_name ||
+          e.topic_name ||
+          e.workflow_name ||
+          e.assistant_name ||
+          "";
+
+        const msgText = (m) => {
+          if (m?.content) return m.content;
+          if (m?.tool_calls?.length) {
+            const tc = m.tool_calls[0];
+            const fn = tc.function?.name ?? "tool";
+            let args = tc.function?.arguments ?? "";
+            if (typeof args === "string" && args.length > 60)
+              args = args.slice(0, 57) + "…";
+            return `[${fn}] ${args}`;
+          }
+          return "";
+        };
+
+        const collect = (arr) =>
+          (arr || []).map(msgText).filter(Boolean).join(" | ");
+        const collectNested = (items) =>
+          (items || [])
+            .flatMap((it) => collect(it.data ?? []).split(" | "))
+            .filter(Boolean)
+            .join(" | ");
+
+        const level = (e) => {
+          if (e.event_type.startsWith("Assistant")) return 0;
+          if (e.event_type.startsWith("Workflow")) return 1;
+          if (e.topic_name?.includes("_output_")) return 1;
+          if (e.event_type.startsWith("Node")) return 2;
+          if (e.event_type.includes("Topic")) return 2.5;
+          return 3; // tool
+        };
+
+        const lvlColor = {
+          0: "bg-sky-50",
+          1: "bg-indigo-50",
+          2: "bg-emerald-50",
+          3: "bg-amber-50",
+        };
+
+        /* ---------- build rows ---------- */
+        const rowsHtml = evts
+          .map((e) => {
+            const lvl = level(e);
+            const indent = lvl * 1.25; // rem
+            const name = getName(e);
+
+            /* short preview of the content ---------------------------------- */
+            let preview = "";
+            if (e.event_type === "NodeInvoke") {
+              preview = collectNested(e.input_data);
+            } else if (e.event_type === "NodeRespond") {
+              const i = collectNested(e.input_data),
+                o = collect(e.output_data);
+              preview = i && o ? `${i} → ${o}` : i || o;
+            } else if (e.input_data?.length) {
+              const i = collect(e.input_data);
+              if (e.output_data?.length) {
+                const o = collect(e.output_data);
+                preview = i && o ? `${i} → ${o}` : i;
+              } else preview = i;
+            } else if (Array.isArray(e.data) && e.data.length) {
+              preview = collect(e.data);
+            }
+
+            /* work out which node this row corresponds to (if any) ---------- */
+            const gId = e.node_name
+              ? e.node_name
+              : e.tool_name && e.node_name
+              ? `${e.node_name}#tool#${e.tool_name}`
+              : e.topic_name
+              ? e.topic_name
+              : ""; // assistant / workflow events don’t map to a graph node
+
+            const open = formedOpen.has(e.event_id);
+            const color = lvlColor[lvl] || "bg-white";
+
+            /* main (clickable & hoverable) row ------------------------------ */
+            let html = `
+          <div data-eid="${e.event_id}" data-gid="${gId}"
+              class="flex border-b py-1 ${color} cursor-pointer row-event"
+              style="margin-left:${indent}rem">
+            <div class="w-48 shrink-0 text-xs truncate" title="${esc(
+              name
+            )}">${name}</div>
+            <div class="w-40 shrink-0 font-medium text-xs"
+                title="${e.event_type}">${e.event_type}</div>
+            <div class="flex-1 text-xs text-gray-600 truncate"
+                title="${esc(preview)}">${preview}</div>
+          </div>`;
+
+            /* expanded YAML detail ------------------------------------------ */
+            if (open) {
+              html += `
+            <div class="border-l-4 border-dashed border-orange-400 pl-2 py-1 text-[10px]"
+                style="margin-left:${indent + 1.25}rem">
+              <pre>${esc(jsyaml.dump(e))}</pre>
+            </div>`;
+            }
+            return html;
+          })
+          .join("");
+
+        /* ---------- inject to DOM ---------- */
+        const renderArea = document.getElementById("eventRender");
+        renderArea.innerHTML = `<div class="text-xs">${
+          rowsHtml || "∅ No events"
+        }</div>`;
+
+        /* -----------------------------------------------------------------
+        Hover ⇢ highlight Cytoscape node
+        (delegate so we bind only once, even after re-renders)
+        ----------------------------------------------------------------- */
+        if (!renderArea._hoverBound) {
+          renderArea._hoverBound = true;
+
+          renderArea.addEventListener("mouseover", (ev) => {
+            const row = ev.target.closest(".row-event");
+            if (!row) return;
+            const gid = row.dataset.gid;
+            if (!gid) {
+              cy.elements().removeClass("hovered");
+              return;
+            }
+            cy.elements().removeClass("hovered");
+            cy.$id(gid).addClass("hovered");
+          });
+
+          /* when leaving the whole list or any row, clear hover ------------- */
+          renderArea.addEventListener("mouseout", (ev) => {
+            const to =
+              ev.relatedTarget && ev.relatedTarget.closest
+                ? ev.relatedTarget.closest(".row-event")
+                : null;
+            if (!to) {
+              // pointer left the rows area
+              cy.elements().removeClass("hovered");
+            }
+          });
+        }
+      }
+
+      // click / toggle row in Formed view
+      document.getElementById("eventRender").addEventListener("click", (e) => {
+        const row = e.target.closest("[data-eid]");
+        if (!row) return;
+        const id = row.dataset.eid;
+        if (formedOpen.has(id)) formedOpen.delete(id);
+        else formedOpen.add(id);
+        renderFormedEvents(formedCurrent); // re-render with new state
+      });
+
+      document.querySelector('[data-tab="Event"]').onclick = () => {
+        let evs = eventsCache[convSelect.value] || [];
+
+        // apply element filters
+        if (selected.type === "node") {
+          evs = evs.filter(
+            (e) =>
+              ["NodeInvoke", "NodeRespond"].includes(e.event_type) &&
+              e.node_name === selected.id
+          );
+        }
+        if (selected.type === "tool") {
+          const toolName = selected.id.split("#tool#")[1];
+          evs = evs.filter(
+            (e) =>
+              ["ToolInvoke", "ToolRespond"].includes(e.event_type) &&
+              e.tool_name === toolName
+          );
+        }
+        if (selected.type === "topic") {
+          evs = evs.filter(
+            (e) =>
+              ["PublishToTopic", "ConsumeFromTopic"].includes(e.event_type) &&
+              e.topic_name === selected.id
+          );
+        }
+        if (reqSelect.value !== "All") {
+          evs = evs.filter(
+            (e) => e.execution_context.assistant_request_id === reqSelect.value
+          );
+        }
+
+        // render according to drop‑down choice
+        switch (eventView.value) {
+          case "formed":
+            renderFormedEvents(evs);
+            break;
+          default:
+            renderRawEvents(evs);
+        }
+        showTab("Event");
+      };
+
+      // change view without leaving the tab
+      const eventView = document.getElementById("eventView");
+      eventView.onchange = () => {
+        // simply re‑invoke the Event tab click to re‑render
+        document.querySelector('[data-tab="Event"]').onclick();
+      };
+
+      // History tab
+      document.querySelector('[data-tab="History"]').onclick = () => {
+        const evs = eventsCache[convSelect.value] || [];
+        const hist = evs
+          .filter((e) => e.event_type === "AssistantRespond")
+          .map((e) => {
+            const inp = e.input_data
+              ? e.input_data.map((msg) => ({ content: msg.content }))
+              : [];
+            const out = e.output_data
+              ? e.output_data.map((msg) => ({ content: msg.content }))
+              : [];
+            return { input_data: inp, output_data: out };
+          });
+        renderHistory(panes.History, hist);
+        showTab("History");
+      };
+
+      // Chat submit
+      document.getElementById("chatForm").onsubmit = async (e) => {
+        e.preventDefault();
+        const conv = convSelect.value;
+        const req = reqSelect.value;
+        const sawOutput = (eventsCache[conv] || [])
+          .filter((ev) => ["OutputTopic"].includes(ev.event_type))
+          .some((ev) => ev.topic_name === "agent_output_topic");
+        const new_req = sawOutput ? crypto.randomUUID() : req;
+        // send the chat with the new request ID
+        await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            conversation_id: conv,
+            assistant_request_id: new_req,
+            messages: [{ role: "user", content: e.target.text.value }],
+          }),
+        });
+        // cache events for this conv+req
+        await cacheEvents(conv);
+        // only update the dropdown if we saw an agent_output_topic publish event
+
+        if (sawOutput) {
+            // Get existing requests
+            let requests = Array.from(reqSelect.options).map(opt => opt.value);
+            
+            // Add the new request if not already present
+            if (!requests.includes(new_req)) {
+            requests.push(new_req);
+            }
+            
+            // Add "All" at the top if it's not the only option
+            if (requests.length > 1 && !requests.includes("All")) {
+            requests.unshift("All");
+            }
+            
+            // Rebuild the select options
+            reqSelect.innerHTML = requests.map(r => `<option>${r}</option>`).join("");
+            reqSelect.value = new_req;
+          reqSelect.value = new_req;
+        }
+
+        // repopulate history and switch to History tab
+        document.querySelector('[data-tab="History"]').onclick();
+        showTab("History");
+
+        e.target.reset();
+      };
+
+      // Splitter drag
+      const dragbar = document.getElementById("dragbar"),
+        container = document.getElementById("split-container"),
+        leftPane = document.getElementById("graph-pane"),
+        rightPane = document.getElementById("inspector-pane");
+      let dragging = false;
+      dragbar.onmousedown = () => (dragging = true);
+      document.onmouseup = () => (dragging = false);
+      document.onmousemove = (e) => {
+        if (!dragging) return;
+        const rect = container.getBoundingClientRect(),
+          barW = dragbar.offsetWidth;
+        let x = e.clientX - rect.left;
+        x = Math.max(100, Math.min(rect.width - 100 - barW, x));
+        leftPane.style.flexBasis = x + "px";
+        rightPane.style.flexBasis = rect.width - x - barW + "px";
+        cy.resize();
+      };
+
+      document.addEventListener("DOMContentLoaded", ensureIds);
+    </script>
+  </body>
+</html>
