@@ -1,0 +1,147 @@
+Metadata-Version: 2.4
+Name: markdown-include-annotated
+Version: 1.0.2
+Summary: A Python-Markdown extension which provides an 'include' function with optional annotated line comments.
+Author-email: Chris MacMackin <cmacmackin@gmail.com>
+License: GNU General Public License v3 (GPLv3)
+Project-URL: project, https://github.com/cmacmackin/markdown-include
+Keywords: Markdown,typesetting,include,plugin,extension
+Classifier: Programming Language :: Python
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Internet :: WWW/HTTP :: Site Management
+Classifier: Topic :: Software Development :: Documentation
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Text Processing :: Filters
+Classifier: Topic :: Text Processing :: Markup :: HTML
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+Requires-Dist: markdown>=3.0
+Provides-Extra: tests
+Requires-Dist: pytest; extra == "tests"
+Dynamic: license-file
+
+# Markdown-Include 🚀
+
+Welcome to **Markdown-Include** v1.0.0! 🎉
+
+This is an extension to [Python-Markdown](https://pythonhosted.org/Markdown/)
+which provides an "include" function, similar to that found in
+LaTeX (and also the C pre-processor and Fortran). I originally wrote it for my
+[FORD](https://github.com/cmacmackin/ford) Fortran auto-documentation generator.
+
+✨ **New in v1.0.0:** Optional annotated line comments for included lines using the `annotated_comments` config option! 📝
+
+---
+
+## 📦 Installation
+Install with pip:
+
+```bash
+pip install markdown-include-annotated
+```
+
+---
+
+## 🧪 Tests
+Run the tests with:
+```bash
+python -m unittest discover unittests/
+```
+
+---
+
+## 🚦 Usage
+Use in your Python code:
+
+```python
+import markdown
+html = markdown.markdown(source, extensions=['markdown_include.include'])
+```
+
+Or in MkDocs:
+
+```yaml
+markdown_extensions:
+    - markdown_include.include:
+        base_path: docs
+```
+
+---
+
+## 🔗 Include Syntax
+
+Use `{!filename!}` in your Markdown files to include content from another file. Works recursively! 🪄
+
+- **Line Ranges:**
+  ```markdown
+  {!filename!lines=1 3 8-10 2}
+  ```
+  - This includes lines 1, 3, 8, 9, 10, and 2 (in that order) from `filename`.
+  - You can mix single lines and ranges, and even change the order!
+
+---
+
+## ⚙️ Configuration
+
+You can specify these settings when initializing the plugin:
+
+- `base_path`: 📁 Default location for relative paths (default: run-directory)
+- `encoding`: 🔤 File encoding (default: utf-8)
+- `inheritHeadingDepth`: 🔢 Inherit heading depth from parent (default: False)
+- `headingOffset`: ➕ Offset heading depth (default: 0)
+- `throwException`: 🚨 Throw if file not found (default: False)
+- `annotated_comments`: 📝 **NEW!** Add a comment with the filename and line number before each included line when using `lines` (default: False)
+
+---
+
+## 💡 Examples
+
+**Basic usage:**
+```python
+import markdown
+from markdown_include.include import MarkdownInclude
+
+markdown_include = MarkdownInclude(
+    configs={'base_path':'/srv/content/', 'encoding': 'iso-8859-1'}
+)
+html = markdown.markdown(source, extensions=[markdown_include])
+```
+
+**Enable annotated comments:**
+```python
+import markdown
+from markdown_include.include import MarkdownInclude
+
+markdown_include = MarkdownInclude(
+    configs={'base_path':'/srv/content/', 'annotated_comments': True}
+)
+html = markdown.markdown(source, extensions=[markdown_include])
+```
+
+**Or in mkdocs.yml:**
+```yaml
+markdown_extensions:
+    - markdown_include.include:
+        base_path: docs
+        annotated_comments: true
+```
+
+---
+
+## 📝 ChangeLog
+- **v1.0.0**: Annotated line comments feature! 🎉
+- v0.7.0: Python-Markdown 3.4 support
+- v0.6.0: Header offset, throw exception option, bugfixes
+- v0.5.1: Syntax error fix
+- v0.5: Encoding support, code tidy
+- v0.4: Config passing fix
+- v0.3: Python 3 support
+- v0.2: Safer API
+- v0.1: Initial release
+
+---
+
+Enjoy documenting with Markdown-Include-annotated! 😃
