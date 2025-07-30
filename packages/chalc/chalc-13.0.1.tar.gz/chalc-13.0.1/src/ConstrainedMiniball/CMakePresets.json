@@ -1,0 +1,118 @@
+{
+	"version": 7,
+	"cmakeMinimumRequired": {
+		"major": 3,
+		"minor": 23,
+		"patch": 0
+	},
+	"configurePresets": [
+		{
+			"name": "default",
+			"displayName": "Ninja Multi-Config",
+			"generator": "Ninja Multi-Config",
+			"toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+			"binaryDir": "${sourceDir}/build/",
+			"environment": {
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "YES"
+			}
+		}
+	],
+	"buildPresets": [
+		{
+			"name": "debug",
+			"displayName": "Debug",
+			"configurePreset": "default",
+			"configuration": "Debug"
+		},
+		{
+			"name": "rel-with-deb-info",
+			"displayName": "Release With Debug Info",
+			"configurePreset": "default",
+			"configuration": "RelWithDebInfo"
+		},
+		{
+			"name": "release",
+			"displayName": "Release",
+			"configurePreset": "default",
+			"configuration": "Release"
+		},
+		{
+			"name": "min-size-rel",
+			"displayName": "Minimal Release",
+			"configurePreset": "default",
+			"configuration": "MinSizeRel"
+		},
+		{
+			"name": "clean",
+			"displayName": "Clean",
+			"configurePreset": "default",
+			"targets": "clean"
+		}
+	],
+	"testPresets": [
+		{
+			"name": "test-debug-all",
+			"displayName": "Run all tests (Debug)",
+			"configurePreset": "default",
+			"configuration": "Debug",
+			"output": {
+				"shortProgress": true,
+				"outputOnFailure": true
+			},
+			"execution": {
+				"stopOnFailure": false
+			}
+		},
+		{
+			"name": "test-release-all",
+			"displayName": "Run all tests (Release)",
+			"configurePreset": "default",
+			"configuration": "Release",
+			"output": {
+				"shortProgress": true,
+				"outputOnFailure": true
+			},
+			"execution": {
+				"stopOnFailure": false
+			}
+		}
+	],
+	"workflowPresets": [
+		{
+			"name": "configure-build-test-debug",
+			"displayName": "Configure, Build, and Test (Debug)",
+			"steps": [
+				{
+					"type": "configure",
+					"name": "default"
+				},
+				{
+					"type": "build",
+					"name": "debug"
+				},
+				{
+					"type": "test",
+					"name": "test-debug-all"
+				}
+			]
+		},
+		{
+			"name": "configure-build-test-release",
+			"displayName": "Configure, Build, and Test (Release)",
+			"steps": [
+				{
+					"type": "configure",
+					"name": "default"
+				},
+				{
+					"type": "build",
+					"name": "release"
+				},
+				{
+					"type": "test",
+					"name": "test-release-all"
+				}
+			]
+		}
+	]
+}

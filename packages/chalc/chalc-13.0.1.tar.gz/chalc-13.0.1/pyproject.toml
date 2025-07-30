@@ -1,0 +1,139 @@
+[project]
+name = "chalc"
+version = "13.0.1"
+authors = [{ name = "Abhinav Natarajan", email = "natarajan@maths.ox.ac.uk" }]
+description = "Persistent homology of chromatic Delaunay filtrations"
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.13"
+license = { file = "COPYING" }
+keywords = [
+	"topological data analysis",
+	"TDA",
+	"chromatic Delaunay",
+	"computational geometry",
+	"computational topology",
+	"persistent homology",
+]
+dependencies = [
+	"numpy~=2.0",
+	"phimaker~=0.2.2",
+	"pandas~=2.2",
+	"matplotlib~=3.9",
+	"h5py~=3.12",
+]
+classifiers = [
+	"Development Status :: 3 - Alpha",
+	"Intended Audience :: Science/Research",
+	"Topic :: Scientific/Engineering :: Mathematics",
+	"License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+	"Programming Language :: C++",
+	"Programming Language :: Python :: 3",
+	"Programming Language :: Python :: Implementation :: CPython",
+	"Programming Language :: Python :: Implementation :: PyPy",
+]
+
+[project.urls]
+Homepage = "https://abhinavnatarajan.github.io/Chalc"
+Documentation = "https://abhinavnatarajan.github.io/Chalc"
+Repository = "https://github.com/abhinavnatarajan/Chalc.git"
+
+[dependency-groups]
+dev = [
+	"furo>=2024.8.6",
+	"ipykernel~=6.29",
+	"ipympl~=0.9",
+	"ipython~=8.29",
+	"nbsphinx~=0.9",
+	"pybind11-stubgen~=2.5",
+	"sphinx-autoapi~=3.3",
+	"sphinx-design~=0.6",
+	"sphinx-toolbox~=3.5",
+	"sphinx~=8.2",
+	# Pybind11 headers for LSP
+	# Needs to be kept in sync with build-system.requires below
+	"pybind11~=2.13",
+	"jupyterlab~=4.4",
+	"chromatic-tda~=1.1",
+	"tqdm>=4.67.1",
+]
+test = ["pytest~=8.3", "gudhi~=3.11"]
+
+[build-system]
+requires = ["scikit-build-core~=0.11.4", "pybind11~=2.13"]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+minimum-version = "build-system.requires"
+build.verbose = true
+# cmake.build-type = "Debug"
+cmake.build-type = "Release"
+logging.level = "DEBUG"
+build-dir = "build/{wheel_tag}"
+sdist.exclude = [
+	".github/",
+	".git/",
+	".clang-format",
+	".editorconfig",
+	".gitignore",
+	"hooks/",
+]
+wheel.packages = ["src/chalc"]
+wheel.install-dir = "chalc"
+experimental = true
+
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "tab"
+line-ending = "auto"
+docstring-code-format = false
+docstring-code-line-length = "dynamic"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+	"CPY",     # flake8-copyright
+	"ERA",     # eradicate: disallows commented code
+	"W191",    # pylint: disallows tab indentation
+	"D206",    # pydocstyle: disallows tab indentation in docstring
+	"PLR0913", # refactor: too many arguments in function signature
+	"PYI021",  # flake8-pyi: disallows docstrings in stub files
+	"TD003",   # flake8-todos: allow todos without an issue link
+	"ANN401",  # flake8-annotations: disallows type 'Any' in function signatures
+	"COM812",  # flake8-commas: missing-trailing-comma (recommended to disable by ruff)
+]
+pydocstyle.convention = "pep257"
+flake8-annotations.allow-star-arg-any = true
+
+[tool.ruff.per-file-ignores]
+"tests/**/*.py" = [
+	"S101",    # flake8-bandit: disallows use of assert statements
+	"PLR2004", # pylint: disallows magic values
+	"INP001",  # pylint: test folder does not need __init__.py
+	"D",       # pydocstyle
+]
+"**.pyi" = ["ALL"]
+"docs/**/*.py" = [
+	"INP001", # pylint: docs folder does not need __init__.py
+	"D",       # pydocstyle
+]
+
+[tool.cibuildwheel]
+archs = "auto64"
+build-verbosity = 1
+build-frontend = "build[uv]"
+skip = ["pp*", "*-musllinux_*"]
+test-command = "pytest {package}/tests"
+test-groups = ["test"]
+
+[tool.cibuildwheel.linux]
+# We need rustup to build phimaker from source if necessary
+# CIBW_BEFORE_ALL_LINUX: dnf install -y zip && curl -sSf https://sh.rustup.rs | sh -s -- -y
+environment = { PATH = "$HOME/.cargo/bin:$PATH" }
+environment-pass = "CI"
