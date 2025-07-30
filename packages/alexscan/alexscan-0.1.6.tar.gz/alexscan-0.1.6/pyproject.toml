@@ -1,0 +1,84 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alexscan"
+dynamic = ["version"]
+description = "Comprehensive domain security analysis tool with AI-powered insights"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Alex Christian", email = "13alexchristian@gmail.com"},
+]
+keywords = ["security", "domain", "analysis", "dns", "whois", "ssl", "malware", "dga", "cybersecurity"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Internet :: Name Service (DNS)",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Security",
+    "Topic :: Utilities",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=22.0.0",
+    "flake8>=4.0.0",
+    "mypy>=0.950",
+]
+
+[project.scripts]
+alexscan = "alexscan.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/alexevan13/domain-analyzer"
+Repository = "https://github.com/alexevan13/domain-analyzer"
+Documentation = "https://github.com/alexevan13/domain-analyzer#readme"
+Issues = "https://github.com/alexevan13/domain-analyzer/issues"
+Changelog = "https://github.com/alexevan13/domain-analyzer/blob/main/README.md#release-notes"
+
+[tool.setuptools]
+packages = ["alexscan", "alexscan.analyzers", "alexscan.utils"]
+
+[tool.setuptools.dynamic]
+version = {file = "alexscan/VERSION"}
+
+[tool.setuptools.package-data]
+alexscan = ["VERSION"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
