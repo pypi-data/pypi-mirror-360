@@ -1,0 +1,88 @@
+[project]
+name = "todolist-mcp-server"
+version = "0.1.1"
+description = "TodoList MCP Server - A Model Context Protocol server for managing todo lists"
+authors = [
+    {name = "GeeseDream",email = "GeeseDream@aliyun.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp[cli] (>=1.10.1,<2.0.0)"
+]
+
+[tool.poetry]
+packages = [
+    {include = "server.py", from = "src"},
+    {include = "__init__.py", from = "src"},
+]
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.12.2"
+pyright = "^1.1.402"
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.1.0",
+    "pyright>=1.1.0"
+]
+
+[project.scripts]
+todolist-mcp-server = "server:main"
+
+# 开发工具脚本
+[project.entry-points."todolist.dev"]
+lint = "ruff:check"
+format = "ruff:format"
+typecheck = "pyright:main"
+
+[project.urls]
+Homepage = "https://cnb.cool/hicaosen/todolist"
+Repository = "https://cnb.cool/hicaosen/todolist.git"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+target-version = "py312"
+
+# 源代码目录
+src = ["src"]
+
+# 行长度限制
+line-length = 88
+
+# 要排除的文件和目录
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+# 要启用的规则
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific rules
+]
+
+# 要忽略的规则
+ignore = [
+    "E501",  # 行长度过长（已由 line-length 处理）
+]
+
+[tool.ruff.lint.isort]
+# import 排序配置
+known-first-party = ["todolist_mcp_server"]
+force-single-line = false
