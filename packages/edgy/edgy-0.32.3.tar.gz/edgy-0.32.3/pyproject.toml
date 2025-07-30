@@ -1,0 +1,230 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "edgy"
+description = "🔥 The perfect ORM to work with complex databases 🔥"
+long_description = "🔥 The perfect ORM to work with complex databases 🔥"
+readme = "README.md"
+requires-python = ">=3.10"
+dynamic = ['version']
+authors = [{ name = "Tiago Silva", email = "tiago.arasilva@gmail.com" }]
+classifiers = [
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development",
+    "Typing :: Typed",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Environment :: Console",
+    "Environment :: Other Environment",
+    "Framework :: AsyncIO",
+    "Framework :: AnyIO",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "monkay>=0.4.2",
+    "orjson>=3.6.1",
+    "alembic>=1.11.3,<2.0.0",
+    "click>=8.1.3,<9.0.0",
+    "databasez>=0.10.3",
+    "loguru>=0.7.0,<0.10.0",
+    "pydantic>=2.5.3,<3.0.0",
+    "pydantic-settings>=2.0.0,<3.0.0",
+    "rich>=14.0.0",
+    "blinker>=1.8,<2.0",
+    'typing_extensions>=4.0; python_version<"3.11"'
+]
+keywords = [
+    "api",
+    "rest",
+    "http",
+    "asgi",
+    "pydantic",
+    "starlette",
+    "fastapi",
+    "framework",
+    "esmerald",
+    "orm",
+]
+
+[project.urls]
+Homepage = "https://github.com/dymmond/edgy"
+Documentation = "https://edgy.dymmond.com"
+Changelog = "https://edgy.dymmond.com/release-notes/"
+Funding = "https://github.com/sponsors/tarsil"
+Source = "https://github.com/dymmond/edgy"
+
+[project.scripts]
+edgy = "edgy.__main__:run_cli"
+
+[project.optional-dependencies]
+test = ["faker>=33.3.1", "sqlalchemy_utils>=0.41.1", "esmerald[test]>=3.2.0"]
+types = []
+testing = [
+    "anyio>=4.0.0,<5",
+    "asyncpg>=0.27.0,<1",
+    "esmerald[test]>=3.2.0",
+    "pytest-timeout",
+    "pytest-mock",
+    "ipdb",
+    "httpx",
+    "uvicorn",
+    "mypy[faster-cache]>=1.16,<2.0"
+]
+mime = ["python-magic"]
+image = ["pillow"]
+postgres = ["databasez[postgresql]"]
+mysql = ["databasez[mysql]"]
+sqlite = ["databasez[sqlite]"]
+mssql = ["databasez[aioodbc]"]
+jdbc = ["databasez[jdbc]"]
+admin = ["lilya>=0.16.7", "uvicorn", "jinja2", "itsdangerous", "python-multipart"]
+# all except testing
+all = [
+    "edgy[test,mime,image,postgres,mysql,sqlite,mssql,jdbc,admin]",
+    "ipython",
+    "ptpython",
+]
+
+[tool.hatch.envs.default]
+dependencies = ["pre-commit>=4.0.0,<5.0.0", "edgy[sqlite,admin,image,mime]", "mypy[faster-cache]>=1.16,<2.0"]
+
+[tool.hatch.envs.default.scripts]
+clean_pyc = "find . -type f -name \"*.pyc\" -delete"
+clean_pycache = "find . -type d -name \"*__pycache__*\" -delete"
+lint = "hatch fmt {args}; hatch run test:check_types"
+
+
+[tool.hatch.envs.docs]
+dependencies = [
+    "griffe-typingdoc>=0.2.2",
+    "mkautodoc>=0.2.0,<0.3.0",
+    "mkdocs>=1.1.2,<2.0.0",
+    "mkdocs-material>=9.4.4,<10.0.0",
+    "mdx-include>=1.4.2,<2.0.0",
+    "mkdocs-macros-plugin>=1.0.0,<2.0.0",
+    "mkdocs-meta-descriptions-plugin>=2.3.0",
+    "mkdocstrings[python]>=0.23.0,<0.30.0",
+    "pyyaml>=6.0,<7.0.0",
+    # for signature cleaning
+    "ruff",
+]
+[tool.hatch.envs.docs.scripts]
+build = "mkdocs build {args}"
+serve = "mkdocs serve --dev-addr localhost:8000"
+
+
+[tool.hatch.envs.test]
+# required for cli tests and check_types
+features = ["all", "testing"]
+# for typings
+extra-dependencies = ["pydantic>=2.10.1"]
+
+[tool.hatch.envs.test.env-vars]
+EDGY_TESTCLIENT_TEST_PREFIX = ""
+EDGY_TESTCLIENT_USE_EXISTING = "true"
+
+[tool.hatch.envs.test.scripts]
+test = "hatch test -- {args}"
+test_man = "hatch test -- {args} -s -vv"
+check_types = "mypy -p edgy {args}"
+
+[tool.hatch.envs.hatch-static-analysis]
+# disables custom ruff rules, required to align with pre-commit
+config-path = "none"
+dependencies = ["ruff==0.11.5"]
+
+[tool.hatch.envs.hatch-test]
+# needs docker services running
+features = ["all", "testing"]
+
+
+[tool.hatch.envs.hatch-test.env-vars]
+EDGY_TESTCLIENT_TEST_PREFIX = ""
+EDGY_TESTCLIENT_USE_EXISTING = "true"
+
+
+[tool.hatch.version]
+path = "edgy/__init__.py"
+
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+strict = true
+warn_unused_configs = true
+warn_unreachable = true
+warn_return_any = true
+disallow_untyped_decorators = true
+disallow_any_generics = false
+implicit_reexport = false
+show_error_codes = true
+disallow_incomplete_defs = true
+disable_error_code = "attr-defined,has-type,override,misc,safe-super"
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = false
+strict_equality = false
+strict_optional = false
+
+
+[tool.ruff]
+line-length = 99
+fix = true
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "C", "B", "I", "UP", "SIM"]
+ignore = ["E501", "B008", "C901", "B026", "SIM115"]
+exclude = ["docs_src/*", ".pdbrc"]
+
+[tool.ruff.lint.isort]
+known-third-party = ["esmerald", "pydantic", "starlette", "databasez"]
+
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = true
+
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 99
+max-doc-length = 120
+
+[[tool.mypy.overrides]]
+module = ["sqlalchemy.*", "asyncpg", "alembic", "ptpython.*"]
+ignore_missing_imports = true
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "docs_src.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
+
+[tool.pytest.ini_options]
+timeout = 30
+addopts = [
+    "--strict-config",
+    "--strict-markers",
+    "--pdbcls=IPython.terminal.debugger:Pdb",
+]
+xfail_strict = true
+junit_family = "xunit2"
+
+[tool.hatch.build.targets.sdist]
+include = ["/edgy"]
