@@ -1,0 +1,69 @@
+# Copyright © 2025 Triangle Robotics Co., Ltd. All rights reserved.
+# 
+# This software is proprietary and confidential.
+# Unauthorized copying of this file, via any medium, is strictly prohibited.
+#
+# Developed by Triangle Robotics
+
+import socket
+import time
+import keyboard
+import re
+# Server address and port
+SERVER_ADDRESS = '127.0.0.1'
+SERVER_PORT = 22222
+UDP_PORT = 33333
+
+last_motor_call_time = 0
+
+def init_motor():
+    send_message('45455009')
+
+def stop_motor():
+    send_message('45454500')
+
+def set_motor(left = 0,right = 0,speed = 0):
+
+    global last_motor_call_time
+    
+    # Enforce a 50Hz limit (minimum interval: 1/50 seconds = 0.02 seconds)
+    current_time = time.time()
+    #if current_time - last_motor_call_time < 1 / 50:  # 50Hz limit
+    #    return  # Skip execution if called too soon
+
+    last_motor_call_time = current_time  # Update the last call time
+
+    #clip the steering
+    if(left > 10):
+        left = 10
+    elif(left < -10):
+        left = -10
+    
+    if(right > 10):
+        right = 10  
+    elif(right < -10):  
+        right = -10
+
+    #clip the speed
+    if(speed > 30):
+        speed = 30
+    elif(speed < -30):
+        speed = -30
+
+    left = 45 - left
+    right = 45 - right
+    speed = 50 - speed 
+
+    message = f"{left}{right}{speed}09"
+    send_message(str(message))
+
+def send_message(message):
+    # Create a UDP socket
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    try:
+        # Send message to the server
+        client_socket.sendto(message.encode(), (SERVER_ADDRESS, SERVER_PORT))
+    finally:
+        # Close the socket
+        client_socket.close()
