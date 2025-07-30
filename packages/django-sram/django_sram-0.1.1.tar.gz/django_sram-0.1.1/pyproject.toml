@@ -1,0 +1,113 @@
+[build-system]
+requires = [
+    "setuptools>=70.0",
+    "setuptools_scm[toml]>=8.0",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_file = "django_sram/_version.py"
+
+[tool.ruff]
+exclude = [
+    ".venv",
+    ".git",
+    ".tox",
+    "dist",
+    "docs",
+    "*lib/python*",
+    "*egg",
+    "_version.py"
+]
+
+[tool.ruff.lint]
+ignore = ["E203"]
+
+[tool.tox]
+# Generative environment list to test all supported Python versions
+requires = ["tox>=4.21"]
+env_list = ["fix", "coverage", "lint", "format", "py{13, 12, 11, 10}"]
+
+[tool.tox.env_run_base]
+package = "editable"
+deps = [
+    "-r{toxinidir}/requirements.txt",
+    "-r{toxinidir}/tests/requirements.txt"]
+set_env = {LANGUAGE = "en_US", LC_ALL = "en_US.UTF-8", PYTHONWARNINGS = "default::DeprecationWarning", DJANGO_SETTINGS_MODULE = "tests.test_settings"}
+commands = [["python", "--version"], ["python", "-m", "pytest", "tests/{posargs}"]]
+
+[tool.tox.env.fix]
+description = "format the code base to adhere to our styles, and complain about what we cannot do automatically"
+skip_install = true
+deps = ["pre-commit-uv>=4.1.1"]
+commands = [["pre-commit", "run", "--all-files", "--show-diff-on-failure"]]
+
+[tool.tox.env.coverage]
+commands = [
+    ["python", "--version"],
+    ["python", "-m", "pytest", "--cov-report", "term", "--cov-report", "xml", "--cov-report", "html", "--cov=django_sram", "tests/{posargs}"]]
+
+# Command prefixes to reuse the same virtualenv for all linting jobs.
+[tool.tox.env.lint]
+deps = [
+    "ruff",
+    "-r{toxinidir}/tests/requirements.txt"]
+commands = [
+    ["python", "-m", "ruff", "--version"],
+    ["python", "-m", "ruff", "check", { replace = "posargs", default = ["django_sram", "tests"], extend = true }]
+]
+
+[tool.tox.env.format]
+deps = [
+    "ruff",
+    "-r{toxinidir}/tests/requirements.txt"]
+commands = [
+    ["python", "-m", "ruff", "format", "-v", { replace = "posargs", default = ["django_sram", "tests"], extend = true }]
+]
+
+[tool.tox.env.docs]
+deps = [
+    "-r{toxinidir}/requirements.txt",
+    "-r{toxinidir}/docs/requirements.txt"]
+# unset LC_ALL / LANGUAGE from testenv, would fail sphinx otherwise
+set_env = ""
+changedir = "{tox_root}"
+commands = [
+    ["python", "docs/cleanup.py"],
+    ["sphinx-build", "-b", "html", "docs/source", "docs/build/html"]
+]
+
+[tool.tox.env.build]
+package = "wheel"
+deps = ["build>=0.8.0"]
+commands = [["python", "-m", "build"]]
+
+[project]
+name = "django_sram"
+version = "0.1.1"
+maintainers = [
+    { name="K.Y. Kliffen", email="kliffen@astron.nl" },
+    { name="M. Altena", email="altena@astron.nl" },
+]
+description = "SURF Research Access Management integration for Django"
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Framework :: Django",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
+dependencies = [
+    "django >= 5",
+    "djangorestframework >= 3.16",
+    "djangorestframework-simplejwt[crypto] >= 5.5"
+]
+
+[project.urls]
+Homepage = "https://gitlab.com/astron-sdc/django_sram/"
+Issues = "https://gitlab.com/astron-sdc/django_sram/-/issues"
