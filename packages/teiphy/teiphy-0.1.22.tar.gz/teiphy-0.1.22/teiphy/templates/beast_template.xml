@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beast version="2.7" namespace="beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.inference.distribution:beast.base.inference.util:beast.base.evolution:beast.base.evolution.alignment:beast.base.evolution.datatype:beast.base.evolution.tree:beast.base.evolution.tree.coalescent:beast.base.evolution.branchratemodel:beast.evolution.nuc:beast.base.evolution.operator:beast.evolution.nuc:beast.base.evolution.operator.kernel:beast.base.inference.operator:beast.base.inference.operator.kernel:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood">
+    <data spec="Alignment" id="alignment" dataType="standard" statecount="{{ nsymbols }}">
+        <!-- Start witness sequences -->
+        {%- for wit in witnesses %}
+        <sequence spec="Sequence" taxon="{{ wit.id }}" uncertain="true" value="{{ wit.sequence }}"/>
+        {%- endfor %}
+        <userDataType spec="StandardData" nrOfStates="{{ nsymbols }}">
+            <!-- Start variation unit and state labels -->
+            {%- for vu in variation_units %}
+            <charstatelabels spec="UserDataType" characterName="{{ vu.id }}" states="{{ vu.nstates }}" codeMap="{{ vu.code_map }}" value="{{ vu.rdg_texts }}"/>
+            {%- endfor %}
+        </userDataType>
+    </data>
+    <tree spec="Tree" id="tree">
+        <trait spec="TraitSet" traitname="date" units="year" value="{{ date_map }}">
+            <taxa spec="TaxonSet" id="taxa" alignment="@alignment"/>
+        </trait>
+        <taxonset spec="TaxonSet" idref="taxa"/>
+    </tree>
+    <birthDeathSkylineModel spec="bdsky.evolution.speciation.BirthDeathSkylineModel" id="birthDeath" tree="@tree">
+        {%- if origin_span[1] %}
+        {%- if origin_span[1] == origin_span[0] %}
+        <origin spec="parameter.RealParameter" id="origin" lower="{{ origin_span[0] }}" upper="{{ origin_span[1] }}" value="{{ origin_span[0] }}" estimate="false"/>
+        {%- else %}
+        <origin spec="parameter.RealParameter" id="origin" lower="{{ origin_span[0] }}" upper="{{ origin_span[1] }}" value="{{ origin_span[0] }}"/>
+        {%- endif %}
+        {%- else %}
+        <origin spec="parameter.RealParameter" id="origin" lower="{{ origin_span[0] }}" upper="Infinity" value="{{ origin_span[0] }}"/>
+        {%- endif %}
+        <!-- The reciprocal of the expected waiting time (in years) before a manuscript is copied -->
+        <birthRate spec="parameter.RealParameter" id="birthRate" lower="0.0" upper="0.100" value="0.020"/>
+        <!-- The reciprocal of the expected waiting time (in years) before a manuscript is lost -->
+        <deathRate spec="parameter.RealParameter" id="deathRate" lower="0.0" upper="0.050" value="0.005"/>
+        <!-- The reciprocal of the expected waiting time (in years) before a manuscript is copied and goes on to be preserved -->
+        <samplingRate spec="parameter.RealParameter" id="samplingRate" lower="0.0" upper="0.100" value="0.010"/>
+    </birthDeathSkylineModel>
+    {%- if clock_model == "strict" %}
+    <branchRateModel spec="StrictClockModel" id="clock" clock.rate="@clock.mean"/>
+    {%- elif clock_model == "uncorrelated" %}
+    <branchRateModel spec="UCRelaxedClockModel" id="clock" tree="@tree" clock.rate="@clock.mean" rateCategories="@clock.rateCategories">
+        <distr spec="LogNormalDistributionModel" meanInRealSpace="true" M="1.0" S="@clock.stdDev"/><!-- this is expected to have a mean of 1; it is scaled by clock.mean -->
+    </branchRateModel>
+    {%- elif clock_model == "local" %}
+    <branchRateModel spec="RandomLocalClockModel" id="clock" tree="@tree" clock.rate="@clock.mean" indicators="@clock.indicators" rates="@clock.rates" includeRoot="true"/>
+    {%- endif %}
+    <!-- The chainLength attribute should be increased to a large number (e.g., 20000000) for non-test runs -->
+    <run spec="MCMC" id="mcmc" chainLength="100000">
+        <init spec="ClusterTree" id="initialTree" initial="@tree" clusterType="upgma" taxa="@alignment"/>
+        <state spec="State" id="state" storeEvery="5000">
+            <stateNode idref="tree"/>
+            <!-- Start Birth-Death Skyline model parameters -->
+            <stateNode idref="origin"/>
+            <stateNode idref="birthRate"/>
+            <stateNode idref="deathRate"/>
+            <stateNode idref="samplingRate"/>
+            <!-- Start clock parameters -->
+            {%- if clock_model == "strict" %}
+            <stateNode spec="parameter.RealParameter" id="clock.mean" lower="0.0" upper="Infinity" value="0.1"/>
+            {%- elif clock_model == "uncorrelated" %}
+            <stateNode spec="parameter.RealParameter" id="clock.mean" lower="0.0" upper="Infinity" value="0.1"/>
+            <stateNode spec="parameter.RealParameter" id="clock.stdDev" lower="0.0" upper="Infinity" value="1.0"/>
+            <stateNode spec="parameter.IntegerParameter" id="clock.rateCategories"  dimension="{{ clock_rate_categories }}" value="1"/>
+            {%- elif clock_model == "local" %}
+            <stateNode spec="parameter.RealParameter" id="clock.mean" lower="0.0" upper="Infinity" value="0.1"/>
+            <stateNode spec="parameter.BooleanParameter" id="clock.indicators" value="false"/>
+            <stateNode spec="parameter.RealParameter" id="clock.rates" lower="0.0" upper="Infinity" value="1.0"/>
+            {%- endif %}
+            <!-- Start intrinsic odds parameters -->
+
+            <!-- Start transcriptional rate parameters -->
+            {%- for tc in transcriptional_categories %}
+            <stateNode spec="parameter.RealParameter" id="{{ tc.id }}_rate" lower="0.0" upper="Infinity" value="{{ tc.rate }}" estimate="{{ tc.estimate }}"/>
+            {%- endfor %}
+            <!-- We include a "default" rate fixed at 1 that corresponds to (unlikely) transitions with no transcriptional explanation.
+            All other rates in the substitution matrices will be estimated relative to this.
+            If no other transcriptional rate parameters are specified, then the substitution matrices will correspond to those of the Lewis Mk model. -->
+            <stateNode spec="parameter.RealParameter" id="default_rate" value="1.0" estimate="false"/>
+        </state>
+        <distribution spec="CompoundDistribution" id="posterior">
+            <distribution spec="CompoundDistribution" id="prior">
+                <!-- Priors for the Birth-Death Skyline model -->
+                <distribution spec="CompoundDistribution" id="bdLikelihood">
+                    <distribution idref="birthDeath"/>
+                </distribution>
+                {%- if origin_span[1] %}
+                {%- if origin_span[1] != origin_span[0] %}
+                <distribution spec="Prior" id="originPrior" x="@origin">
+                    <distr spec="beast.base.inference.distribution.Uniform" lower="{{ origin_span[0] }}" upper="{{ origin_span[1] }}"/>
+                </distribution>
+                {%- endif %}
+                {%- else %}
+                <distribution spec="Prior" id="originPrior" x="@origin">
+                    <distr spec="LogNormalDistributionModel" M="0.0" S="1.0" offset="{{ origin_span[0] }}"/>
+                </distribution>
+                {%- endif %}
+                <!-- Priors for the clock model parameters -->
+                {%- if clock_model == "strict" %}
+                <distribution spec="Prior" id="clock.meanPrior" x="@clock.mean">
+                    <distr spec="LogNormalDistributionModel" M="0.0" S="1.0"/>
+                </distribution>
+                {%- elif clock_model == "uncorrelated" %}
+                <distribution spec="Prior" id="clock.meanPrior" x="@clock.mean">
+                    <distr spec="LogNormalDistributionModel" M="0.0" S="1.0"/>
+                </distribution>
+                <distribution spec="Prior" id="clock.stdDevPrior" x="@clock.stdDev">
+                    <distr spec="LogNormalDistributionModel" M="0.0" S="1.0"/>
+                </distribution>
+                {%- elif clock_model == "local" %}
+                <distribution spec="Prior" id="clock.meanPrior" x="@clock.mean">
+                    <distr spec="LogNormalDistributionModel" M="0.0" S="1.0"/>
+                </distribution>
+                <distribution spec="Prior" id="clock.ratesPrior" x="@clock.rates">
+                    <distr spec="LogNormalDistributionModel" M="0.0" S="1.0"/>
+                </distribution>
+                {%- endif %}
+                <!-- Priors for transcriptional rate parameters -->
+                {%- for tc in transcriptional_categories %}
+                {%- if tc.estimate == "true" %}
+                <distribution spec="Prior" id="{{ tc.id }}_ratePrior" x="@{{ tc.id }}_rate">
+                    <distr spec="Gamma" alpha="5.0" beta="2.0"/>
+                </distribution>
+                {%- endif %}
+                {%- endfor %}
+                <!-- Priors for witness dates -->
+                {%- for wit in witnesses %}
+                {%- if wit.min_date and wit.max_date and wit.min_date != wit.max_date %}
+                <distribution id="date.{{ wit.id }}" spec="MRCAPrior" tipsonly="true" tree="@tree">
+                    <taxonset id="taxonSet.{{ wit.id }}" spec="TaxonSet">
+                        <taxon id="{{ wit.id }}" spec="Taxon"/>
+                    </taxonset>
+                    <distr spec="beast.base.inference.distribution.Uniform" id="datePrior.{{ wit.id }}.Uniform" lower="{{ wit.min_date }}" upper="{{ wit.max_date }}"/>
+                </distribution>
+                {%- endif %}
+                {%- endfor %}
+            </distribution>
+            <distribution spec="CompoundDistribution" id="likelihood" useThreads="true">
+                <!-- Start character distributions -->
+                {%- for vu in variation_units %}
+                {%- set vu_ind = loop.index %}
+                <distribution spec="TreeLikelihood" id="morphTreeLikelihood.{{ vu_ind }}" useAmbiguities="true" useTipLikelihoods="true" tree="@tree">
+                    <data spec="FilteredAlignment" id="filter.{{ vu_ind }}" data="@alignment" filter="{{ vu_ind }}">
+                        <userDataType spec="StandardData" id="morphDataType.{{ vu_ind }}" nrOfStates="{{ vu.nstates }}"/>
+                    </data>
+                    <siteModel spec="SiteModel" id="morphSiteModel.{{ vu_ind }}">
+                        <mutationRate spec="parameter.RealParameter" id="mutationRate.{{ vu_ind }}" value="1.0"/>
+                        {%- if vu.epoch_heights_string != "" %}
+                        <substModel spec="beastlabs.evolution.substitutionmodel.EpochSubstitutionModel" id="substModel.{{ vu_ind }}">
+                            <epochDates spec="parameter.RealParameter">{{ vu.epoch_heights_string }}</epochDates>
+                            {%- for er in vu.epoch_rates %}
+                            {%- set er_ind = loop.index %}
+                            <model spec="ComplexSubstitutionModel" id="substModel.{{ vu_ind }}.{{ er_ind }}">
+                                <!-- Equilibrium frequencies -->
+                                <frequencies idref="equilibriumfreqs.{{ vu_ind }}"/>
+                                <rates spec="parameter.CompoundValuable" id="rates.{{ vu_ind }}.{{ er_ind }}">
+                                    <!-- Start transition rate matrix off-diagonal entries -->
+                                    {%- for r in er %}
+                                    {%- if r.expression %}
+                                    <var spec="RPNcalculator" expression="{{ r.expression }}">
+                                        {%- for tc in r.transcriptional_categories %}
+                                        <parameter idref="{{ tc }}_rate"/>
+                                        {%- endfor %}
+                                    </var>
+                                    {%- else %}
+                                    {%- for tc in r.transcriptional_categories %}
+                                    <var idref="{{ tc }}_rate"/>
+                                    {%- endfor %}
+                                    {%- endif %}
+                                    {%- endfor %}
+                                </rates>
+                            </model>
+                            {%- endfor %}
+                            <frequencies spec="Frequencies" id="equilibriumfreqs.{{ vu_ind }}">
+                                <frequencies spec="parameter.RealParameter" id="equilibriumfrequencies.{{ vu_ind }}" value="{{ vu.equilibrium_frequencies }}" estimate="false"/>
+                            </frequencies>
+                        </substModel>
+                        {%- else %}
+                        {%- for er in vu.epoch_rates %}
+                        {%- set er_ind = loop.index %}
+                        <substModel spec="ComplexSubstitutionModel" id="substModel.{{ vu_ind }}">
+                            <!-- Equilibrium frequencies -->
+                            <frequencies spec="Frequencies" id="equilibriumfreqs.{{ vu_ind }}">
+                                <frequencies spec="parameter.RealParameter" id="equilibriumfrequencies.{{ vu_ind }}" value="{{ vu.equilibrium_frequencies }}" estimate="false"/>
+                            </frequencies>
+                            <rates spec="parameter.CompoundValuable" id="rates.{{ vu_ind }}">
+                                <!-- Start transition rate matrix off-diagonal entries -->
+                                {%- for r in er %}
+                                {%- if r.expression %}
+                                <var spec="RPNcalculator" expression="{{ r.expression }}">
+                                    {%- for tc in r.transcriptional_categories %}
+                                    <parameter idref="{{ tc }}_rate"/>
+                                    {%- endfor %}
+                                </var>
+                                {%- else %}
+                                {%- for tc in r.transcriptional_categories %}
+                                <var idref="{{ tc }}_rate"/>
+                                {%- endfor %}
+                                {%- endif %}
+                                {%- endfor %}
+                            </rates>
+                        </substModel>
+                        {%- endfor %}
+                        {%- endif %}
+                    </siteModel>
+                    <!-- root frequencies -->
+                    <rootFrequencies spec="Frequencies" id="rootfreqs.{{ vu_ind }}">
+                        <frequencies spec="parameter.RealParameter" id="rootfrequencies.{{ vu_ind }}" value="{{ vu.root_frequencies }}" estimate="false"/>
+                    </rootFrequencies>
+                    <branchRateModel idref="clock"/>
+                </distribution>
+                {%- endfor %}
+            </distribution>
+        </distribution>
+        <!-- Operators for the tree -->
+        <operator spec="BactrianScaleOperator" id="treeScaler" scaleFactor="0.5" tree="@tree" weight="3.0"/>
+        <operator spec="BactrianScaleOperator" id="treeRootScaler" rootOnly="true" scaleFactor="0.5" tree="@tree" weight="3.0"/>
+        <operator spec="BactrianNodeOperator" id="treeUniformOperator" tree="@tree" weight="30.0"/>
+        <operator spec="BactrianSubtreeSlide" id="treeSubtreeSlide" tree="@tree" weight="15.0"/>
+        <operator spec="Exchange" id="treeNarrowExchange" tree="@tree" weight="15.0"/>
+        <operator spec="Exchange" id="treeWideExchange" isNarrow="false" tree="@tree" weight="3.0"/>
+        <operator spec="WilsonBalding" id="treeWilsonBalding" tree="@tree" weight="3.0"/>
+        <!-- Operators for the Birth-Death Skyline model -->
+        {%- if origin_span[1] %}
+        {%- if origin_span[1] != origin_span[0] %}
+        <operator spec="BactrianScaleOperator" id="originScaler" parameter="@origin" weight="3.0"/>
+        {%- endif %}
+        {%- else %}
+        <operator spec="BactrianScaleOperator" id="originScaler" parameter="@origin" weight="3.0"/>
+        {%- endif %}
+        <operator spec="BactrianScaleOperator" id="birthRateScaler" parameter="@birthRate" weight="10.0"/>
+        <operator spec="BactrianScaleOperator" id="deathRateScaler" parameter="@deathRate" weight="10.0"/>
+        <operator spec="BactrianScaleOperator" id="samplingRateScaler" parameter="@samplingRate" weight="10.0"/>
+        <!-- Operators for the clock model -->
+        {%- if clock_model == "strict" %}
+        <operator spec="BactrianScaleOperator" id="clock.rateScaler" scaleFactor=".75" parameter="@clock.mean" weight="10.0"/>
+        {%- elif clock_model == "uncorrelated" %}
+        <operator spec="BactrianScaleOperator" id="clock.rateScaler" scaleFactor=".75" parameter="@clock.mean" weight="10.0"/>
+        <operator spec="BactrianScaleOperator" id="clock.stdDevScaler" scaleFactor=".75" parameter="@clock.stdDev" weight="10.0"/>
+        <operator spec="UniformOperator" id="clock.rateCategoriesUniform" parameter="@clock.rateCategories" weight="10.0"/>
+        {%- elif clock_model == "local" %}
+        <operator spec="BactrianScaleOperator" id="clock.rateScaler" scaleFactor=".75" parameter="@clock.mean" weight="10.0"/>
+        <operator spec="BitFlipOperator" id="clock.indicatorFlip" parameter="@clock.indicators" weight="10.0"/>
+        <operator spec="BactrianScaleOperator" id="clock.ratesScaler" scaleFactor=".75" parameter="@clock.rates" weight="10.0"/>
+        {%- endif %}
+        <!-- Start intrinsic odds operators -->
+
+        <!-- Start transcriptional rate operators -->
+        {%- for tc in transcriptional_categories %}
+        {%- if tc.estimate == "true" %}
+        <operator spec="BactrianScaleOperator" id="scaler.{{ tc.id }}_rate" scaleFactor="0.5" parameter="@{{ tc.id }}_rate" weight="10.0"/>
+        {%- endif %}
+        {%- endfor %}
+        <!-- Start witness date operators -->
+        {%- for wit in witnesses %}
+        {%- if wit.min_date and wit.max_date and wit.min_date != wit.max_date %}
+        <operator spec="TipDatesRandomWalker" id="dateOperator.{{ wit.id }}" windowSize="1" taxonset="@taxonSet.{{ wit.id }}" tree="@tree" weight="1.0"/>
+        {%- endif %}
+        {%- endfor %}
+        <logger spec="Logger" id="tracelog" fileName="beast.log" logEvery="1000" model="@posterior" sanitiseHeaders="true" sort="smart">
+            <log idref="posterior"/>
+            <log idref="likelihood"/>
+            <log idref="prior"/>
+            <log spec="TreeHeightLogger" id="treeHeight" tree="@tree"/>
+            <log idref="birthDeath"/>
+            {%- if origin_span[1] %}
+            {%- if origin_span[1] != origin_span[0] %}
+            <log idref="origin"/>
+            {%- endif %}
+            {%- else %}
+            <log idref="origin"/>
+            {%- endif %}
+            <log idref="birthRate"/>
+            <log idref="deathRate"/>
+            <log idref="samplingRate"/>
+            <log spec="RateStatistic" id="rate" branchratemodel="@clock" tree="@tree"/>
+            {%- if clock_model == "strict" %}
+            <log idref="clock.mean"/>
+            {%- elif clock_model == "uncorrelated" %}
+            <log idref="clock.mean"/>
+            <log idref="clock.stdDev"/>
+            {%- elif clock_model == "local" %}
+            <log idref="clock.mean"/>
+            <log idref="clock.indicators"/>
+            <log idref="clock.rates"/>
+            {%- endif %}
+            <!-- Start intrinsic odds loggers -->
+
+            <!-- Start transcriptional rate loggers -->
+            {%- for tc in transcriptional_categories %}
+            {%- if tc.estimate == "true" %}
+            <log idref="{{ tc.id }}_rate"/>
+            {%- endif %}
+            {%- endfor %}
+            <!-- Start witness date loggers -->
+            {%- for wit in witnesses %}
+            {%- if wit.min_date and wit.max_date and wit.min_date != wit.max_date %}
+            <log idref="date.{{ wit.id }}"/>
+            {%- endif %}
+            {%- endfor %}
+        </logger>
+        <logger spec="Logger" id="screenlog" logEvery="1000">
+            <log idref="posterior"/>
+            <log idref="likelihood"/>
+            <log idref="prior"/>
+        </logger>
+        <logger spec="Logger" id="treelog" fileName="$(tree).trees" logEvery="1000" mode="tree">
+            <log spec="TreeWithMetaDataLogger" id="treeWithMetaDataLogger" branchratemodel="@clock" tree="@tree"/>
+        </logger>
+        <operatorschedule spec="OperatorSchedule" id="operatorSchedule"/>
+        {%- if ancestral_logger == "state" %}
+        <logger id="ancestralStateLogger" fileName="$(tree).ancestral.trees" logEvery="1000" mode="tree">
+            <!-- Start character ancestral state loggers -->
+            {%- for vu in variation_units %}
+            <log spec="beastlabs.evolution.likelihood.AncestralStateLogger" id="morphTreeLikelihood.character.{{ loop.index }}.anclogger" value="site.{{ loop.index }}" data="@filter.{{ loop.index }}" taxonset="@taxa" siteModel="@morphSiteModel.{{ loop.index }}" rootFrequencies="@rootfreqs.{{loop.index}}" branchRateModel="@clock" tree="@tree" useAmbiguities="true" useTipLikelihoods="true"/>
+            {%- endfor %}
+        </logger>
+        {%- elif ancestral_logger == "sequence" %}
+        <logger id="ancestralSequenceLogger" fileName="$(tree).ancestral.trees" logEvery="1000" mode="tree">
+            <!-- Start character ancestral sequence loggers -->
+            {%- for vu in variation_units %}
+            <log spec="beastclassic.evolution.likelihood.AncestralSequenceLogger" id="morphTreeLikelihood.character.{{ loop.index }}.anclogger" value="site.{{ loop.index }}" tag="morphTreeLikelihood.character.{{ loop.index }}" data="@filter.{{ loop.index }}" siteModel="@morphSiteModel.{{ loop.index }}" rootFrequencies="@rootfreqs.{{loop.index}}" branchRateModel="@clock" tree="@tree" useAmbiguities="true" useTipLikelihoods="true"/>
+            {%- endfor %}
+        </logger>
+        {%- endif %}
+    </run>
+</beast>
