@@ -1,0 +1,15 @@
+variables:
+  baseUrl: "http://localhost:8000"  # Base URL for endpoints
+  load: remote  # Local mode or remote mode
+  baseBlobPath: data/dictionary  # Base path for dictionary blobs
+  baseFilePath: /usr/data  # Base path for file storage
+  bucket: tradetrend  # bucket name for the data
+
+tasks:
+  delete_data_volfix:
+    steps:
+      - action: http
+        method: post
+        endpoint: "{baseUrl}/admin/postgres/sql"
+        params:
+          query: "DELETE FROM data_volfix;"

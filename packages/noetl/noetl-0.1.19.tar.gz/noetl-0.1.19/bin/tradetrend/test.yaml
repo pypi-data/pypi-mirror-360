@@ -1,0 +1,134 @@
+workflow: ../../data/noetl/workflows/test.yaml
+system:
+    dataPath: ../../data/noetl
+    outputPath: "{{ system.dataPath }}/output/"
+    templatePath: "{{ system.dataPath }}/templates/default.tpl"
+    workflowPath: "{{ system.dataPath }}/workflows/test.yaml"
+    executionPath: "{{ system.dataPath }}/executions/job_{{ jobId }}.json"
+    storageType: json  # Options: 'json' or 'sqlite'
+    sqlitePath: "{{ system.dataPath }}/state/noetl.database"  # Used when storage_type is 'sqlite'
+    logPath: "{{ system.dataPath }}/logs/noetl_{{ jobId }}.log"
+    logLevel: DEBUG
+    logFormat: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+variables:
+  baseUrl: "http://localhost:8000"  # Base URL for endpoints
+  load: remote  # Local mode or remote mode
+  baseBlobPath: data  # Base path for blobs
+  baseFilePath: /usr/data  # Base path for local files
+  bucket: tradetrend  # bucket name for the data
+  break: False
+  retry: 0
+
+steps:  # High-level workflow steps
+  - step: load_dict  # Logical step name
+    tasks:  # Tasks within this step
+      - sys_param
+  - step: load_ng  # Logical step name
+    tasks:  # Tasks within this step
+      - load_ng_realtime
+      - load_ng_2019
+
+tasks:  # Task definitions
+  - task: sys_param
+    actions:  # Detailed actions within the task
+      - action: http
+        method: post
+        endpoint: "{{ variables.baseUrl }}/cleansing/process"  # Using baseUrl variable
+        params:
+          input: "Primary cleansing input string"
+          table: sys_param
+          blob: "{{ variables.baseBlobPath }}/dictionary/sys_param.csv"  # Using baseBlobPath for blob
+          file: "{{ variables.baseFilePath }}/dictionary/sys_param.csv"  # Using baseFilePath for file
+          header: false  # Include headers in the API call
+          load: "{{ variables.load }}"  # Dynamic load mode (remote/local)
+          bucket: "{{ variables.bucket }}"  # Reference bucket variable
+      - action: http
+        method: post
+        endpoint: "{{ variables.baseUrl }}/admin/postgres/sql"
+        params:
+          query: "CALL f_set_sys_param('system_status', '0');"
+
+  - task: load_ng_realtime
+    actions:  # Actions to execute within this task
+      # Step 1: Delete all records from the table `data_ibkr_realtime`
+      - action: http
+        method: post
+        break: "{{ variables.break }}"
+        retry: "{{ variables.retry }}"
+        endpoint: "{{ variables.baseUrl }}/admin/postgres/sql"
+        params:
+          query: "DELETE FROM data_ibkr_realtime;"
+
+      # Step 2: Load new data into the table `data_ibkr_realtime`
+      - action: http
+        method: post
+        endpoint: "{{ variables.baseUrl }}/cleansing/process"
+        params:
+          input: "Processed load_ng_realtime"
+          bucket: "{{ variables.bucket }}"
+          blob: "data/raw_data/new_data/data_ibkr_realtime.csv"  # Define the source blob
+          file: "/usr/data/data_ibkr_realtime.csv"  # Define the destination file
+          table: "data_ibkr_realtime"  # Specify the target table
+          header: false  # Include headers
+          local: remote
+
+  - task: load_ng_2019
+    parallel: "{{ variables.parallel | default('false')  }}"  # Task-level parallelism
+    retry: "{{ variables.retry }}"
+    actions:  # Actions to execute within this task
+      - action: http
+        method: post
+        name: load_data
+        desc: "Load data for NG 2019 contracts"
+#        endpoint: "{{  variables.baseUrl }}/cleansing/process"
+        loop:  # Iterate over contracts dynamically
+          items:
+            - NGOCT18
+            - NGNOV18
+            - NGDEC18
+            - NGJAN19
+            - NGFEB19
+            - NGMAR19
+            - NGAPR19
+            - NGMAY19
+            - NGJUN19
+            - NGJUL19
+            - NGAUG19
+            - NGSEP19
+          iterator: contract  # Loop variable
+        params:
+          input: "Processed {{ contract }}"  # Dynamically use the iterator
+          bucket: "{{ variables.bucket }}"  # Reference the bucket
+          table: data_volfix  # Database table
+          blob: "{{ variables.baseBlobPath }}/raw_data/NG/{{ contract }}.csv"  # Use iterator in blob path
+          file: "{{ variables.baseFilePath }}/raw_data/NG/{{ contract }}.csv"  # Use iterator in file path
+          header: true  # Include headers in the API call
+          volfix: true  # Enable volfix formatting
+          fname: true  # Include file name
+          load: "{{ variables.load }}"  # Reference "load"
+
+  - task: load_ng_2020
+    parallel: "{{ variables.parallel | default('false')  }}"  # Task-level parallelism
+    retry: "{{ variables.retry }}"
+    actions:  # Actions to execute within this task
+      - action: http
+        method: post
+        name: load_data
+        desc: "Load data for NG 2019 contracts"
+        endpoint: "{{ variables.baseUrl }}/cleansing/process"
+        loop:  # Iterate over contracts dynamically
+          - NGOCT19
+          - NGNOV19
+          - NGDEC19
+          - NGJAN19
+        params:
+          input: "Processed {{ item }}"  # Dynamically use the iterator
+          bucket: "{{ variables.bucket }}"  # Reference the bucket
+          table: data_volfix  # Database table
+          blob: "{{ variables.baseBlobPath }}/{{ item }}.csv"  # Use iterator in blob path
+          file: "{{ variables.baseFilePath }}/{{ item }}.csv"  # Use iterator in file path
+          header: true  # Include headers in the API call
+          volfix: true  # Enable volfix formatting
+          fname: true  # Include file name
+          load: "{{ variables.load }}"  # Reference "load"

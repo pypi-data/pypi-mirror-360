@@ -1,0 +1,58 @@
+### Internal Workflow Engine Logic for `method`
+#1. Parse the `method` property to determine the transformation type.
+#2. Redirect the transformation to the appropriate handler:
+#    - `method: jinja` → Call templating function.
+#    - `method: json` → Process with jsonPath.
+#    - `method: python` → Execute the registered Python plugin.
+#
+#The workflow engine must handle:
+#- **Validation**: Ensure required options (like `template`, `expression`, or `plugin_name`) are present based on the `method`.
+#- **Error Handling**: Fail gracefully for unsupported methods or invalid transformations.
+
+
+tasks:
+  transform_user_data:
+    actions:
+      - action: transform
+        method: jinja
+        input:
+          user_data: "{{ results.user_data_raw }}"
+        result:
+          storage: results
+          key: formatted_user
+        options:
+          template: |
+            {
+              "userId": "{{ user_data.id }}",
+              "name": "{{ user_data.name }}",
+              "normalized_email": "{{ user_data.email.lower() }}"
+            }
+
+  extract_project_id:
+    actions:
+      - action: transform
+        method: json
+        input:
+          project_data: "{{ results.project_data_raw }}"
+        result:
+          storage: results
+          key: project_id_only
+        options:
+          expression:
+            "$.project_data.id": "projectId"
+
+  advanced_custom_transform:
+    actions:
+      - action: transform
+        method: python
+        input:
+          user_data: "{{ results.user_data_raw }}"
+          project_data: "{{ results.project_data_raw }}"
+        result:
+          storage: results
+          key: advanced_combined_data
+        options:
+          plugin_name: "custom_user_project_transform"
+          plugin_args:
+            user_info: "{{ user_data }}"
+            project_info: "{{ project_data }}"

@@ -1,0 +1,268 @@
+variables:
+  base_url: "http://localhost:8000"  # Base URL for endpoints
+  LOAD: remote  # Local mode or remote mode
+  BASE_BLOB_PATH: data/dictionary  # Base path for dictionary blobs
+  BASE_FILE_PATH: /usr/data  # Base path for file storage
+  BUCKET: tradetrend  # Bucket name for the data
+
+tasks:
+  sys_param:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "sys_param cleansing input string"
+          bucket: "{BUCKET}"
+          blob: "{BASE_BLOB_PATH}/sys_param.csv"
+          file: "{BASE_FILE_PATH}/sys_param.csv"
+          table: sys_param
+          local: "{LOAD}"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/admin/postgres/sql"
+        params:
+          query: "CALL f_set_sys_param('system_status', '0');"
+
+  symbol:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "symbol cleansing input string"
+          bucket: "{BUCKET}"
+          blob: "{BASE_BLOB_PATH}/symbol.csv"
+          file: "{BASE_FILE_PATH}/symbol.csv"
+          table: symbol
+          local: "{LOAD}"
+
+  symb_limit:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "symb_limit cleansing input string"
+          bucket: "{BUCKET}"
+          blob: "{BASE_BLOB_PATH}/symb_limit.csv"
+          file: "{BASE_FILE_PATH}/symb_limit.csv"
+          table: symb_limit
+          local: "{LOAD}"
+
+  contract:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "contract cleansing input string"
+          bucket: "{BUCKET}"
+          blob: "{BASE_BLOB_PATH}/contract.csv"
+          file: "{BASE_FILE_PATH}/contract.csv"
+          table: contract
+          local: "{LOAD}"
+
+  exclusion:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "exclusion cleansing input string"
+          bucket: "{BUCKET}"
+          blob: "{BASE_BLOB_PATH}/exclusion.csv"
+          file: "{BASE_FILE_PATH}/exclusion.csv"
+          table: exclusion
+          local: "{LOAD}"
+
+  client_symb:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "client_symb cleansing input string"
+          bucket: "{BUCKET}"
+          blob: "{BASE_BLOB_PATH}/client_symb.csv"
+          file: "{BASE_FILE_PATH}/client_symb.csv"
+          table: client_symb
+          local: "{LOAD}"
+
+  at_setup_group:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "at_setup_group cleansing input string"
+          bucket: "{BUCKET}"
+          blob: "{BASE_BLOB_PATH}/at_setup_group.csv"
+          file: "{BASE_FILE_PATH}/at_setup_group.csv"
+          table: at_setup_group
+          local: "{LOAD}"
+
+  at_setup_type:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/admin/postgres/sql"
+        params:
+          query: "CALL delete_at_all_calculated_data();"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/admin/postgres/sql"
+        params:
+          query: "DELETE FROM at_setup_type WHERE at_setup_type_id IS NULL;"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "at_setup_type cleansing input string"
+          bucket: "{BUCKET}"
+          blob: "{BASE_BLOB_PATH}/at_setup_type.csv"
+          file: "{BASE_FILE_PATH}/at_setup_type.csv"
+          table: at_setup_type
+          multiline: true
+          local: "{LOAD}"
+
+  at_setup_type_alex:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/admin/postgres/sql"
+        params:
+          query: "CALL delete_at_all_calculated_data();"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/admin/postgres/sql"
+        params:
+          query: "DELETE FROM at_setup_type WHERE at_setup_type_id IS NULL;"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "at_setup_type_alex cleansing input string"
+          bucket: "{BUCKET}"
+          blob: "{BASE_BLOB_PATH}/at_setup_type_alex.csv"
+          file: "{BASE_FILE_PATH}/at_setup_type_alex.csv"
+          table: at_setup_type
+          multiline: true
+          local: "{LOAD}"
+
+  # at_setup_type_serg:
+  #   steps:
+      # - type: HTTP
+      #   method: POST
+  #       endpoint: "{base_url}/admin/postgres/sql"
+  #       params:
+  #         query: "CALL delete_at_all_calculated_data();"
+      # - type: HTTP
+      #   method: POST
+  #       endpoint: "{base_url}/admin/postgres/sql"
+  #       params:
+  #         query: "DELETE FROM at_setup_type WHERE at_setup_type_id IS NULL;"
+      # - type: HTTP
+      #   method: POST
+  #       endpoint: "{base_url}/cleansing/process"
+  #       params:
+  #         input: "at_setup_type_serg cleansing input string"
+  #         bucket: "{BUCKET}"
+  #         blob: "{BASE_BLOB_PATH}/at_setup_type_serg.csv"
+  #         file: "{BASE_FILE_PATH}/at_setup_type_serg.csv"
+  #         table: at_setup_type
+  #         multiline: true
+  #         local: "{LOAD}"
+
+  operand:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "operand cleansing input string"
+          bucket: "{BUCKET}"
+          blob: "{BASE_BLOB_PATH}/operand.csv"
+          file: "{BASE_FILE_PATH}/operand.csv"
+          table: operand
+          local: "{LOAD}"
+
+  operand_function:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "operand_function cleansing input string"
+          bucket: "{BUCKET}"
+          blob: "{BASE_BLOB_PATH}/operand_function.csv"
+          file: "{BASE_FILE_PATH}/operand_function.csv"
+          table: operand_function
+          local: "{LOAD}"
+
+  operand_settings:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "operand_settings cleansing input string"
+          bucket: "{BUCKET}"
+          blob: "{BASE_BLOB_PATH}/operand_settings.csv"
+          file: "{BASE_FILE_PATH}/operand_settings.csv"
+          table: operand_settings
+          local: "{LOAD}"
+
+  operand_check:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/admin/postgres/sql"
+        params:
+          query: "DELETE FROM operand_check;"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "operand_check cleansing input string"
+          bucket: "{BUCKET}"
+          blob: "{BASE_BLOB_PATH}/operand_check.csv"
+          file: "{BASE_FILE_PATH}/operand_check.csv"
+          table: operand_check
+          local: "{LOAD}"
+
+  ov_poi_check:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "ov_poi_check cleansing input string"
+          bucket: "{BUCKET}"
+          blob: "{BASE_BLOB_PATH}/ov_poi_check.csv"
+          file: "{BASE_FILE_PATH}/ov_poi_check.csv"
+          table: ov_poi_check
+          local: "{LOAD}"
+
+  bias:
+    steps:
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/admin/postgres/sql"
+        params:
+          query: "DELETE FROM bias;"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/cleansing/process"
+        params:
+          input: "bias cleansing input string"
+          bucket: "{BUCKET}"
+          blob: "{BASE_BLOB_PATH}/bias.csv"
+          file: "{BASE_FILE_PATH}/bias.csv"
+          table: bias
+          local: "{LOAD}"
+      - type: HTTP
+        method: POST
+        endpoint: "{base_url}/admin/postgres/sql"
+        params:
+          query: "CALL f_set_sequence();"
