@@ -1,0 +1,87 @@
+# NaluACQ
+
+`naluacq` is a Rust crate for I/O with Nalu Scientific acquisitions in the GbE-compatible format.
+
+The crate encompasses the following:
+- Reading acquisitions
+- Writing acquisitions (mainly used by `naludaq_rs`)
+- Parsing events from acquisitions
+- Calibration of events
+- Exporting acquisitions to other formats
+
+Some of these features are made available in the Python (PyO3) bindings for this crate.
+
+# Structure of Acquisitions
+
+An acquisition in the new format is a directory containing multiple files describing various
+aspects of the acquisition.
+
+- `{n}.bin` - binary event data file "n" (up to 500 MB) containing raw events back-to-back
+- `{n}.idx` - index file containing the offset and length of each event in the corresponding .bin file
+- `metadata.yml` - user-defined string metadata. NaluDAQ uses this to store board parameters and registers.
+- `readout_metadata` - more user-defined binary metadata. NaluDAQ uses this for extra information about the readout.
+- `[pedestals_calibration]` - optional binary file containing pedestal calibration data
+- `[timing_calibration]` - optional binary file containing timing calibration data
+- `[adc2mv_calibration]` - optional binary file containing ADC to mV calibration data
+
+## Event Storage
+
+Events are stored in groups of 500 MB maximum known as "chunks." Each chunk is represented using two files: a `.bin` file
+which contains the raw event data and an `.idx` file which points to each event in the `.bin` file.
+
+### Bin File
+
+Events are stored back-to-back in the `.bin` files as unparsed binary data. A maximum of 500 MB (at the time of writing) is
+allowed to be stored in a single `.bin` file. The rough structure is as follows:
+
+1. Metadata Sector
+    - 8-byte header indicating file version type and sector length
+    - user-defined metadata stored as raw bytes
+2. Data Sector
+    - Event 1 (raw bytes)
+    - Event 2 (raw bytes)
+    - ...
+
+### Idx File
+
+Because searching through the entire file for a specific event would be painfully slow, an index file is
+used to store the offset and length of each event in the corresponding `.bin` file. The index file is
+comprised of several 8-byte entries, each indicating the offset and length of a single event in the `.bin` file.
+A specific event can be found by reading the entry at `8 * index` bytes and then reading `length` bytes from
+the `.bin` file starting at `offset` bytes.
+
+
+# Examples
+
+
+## Reading an Acquisition
+
+```rust
+use naluacq::Acquisition;
+
+let acq = Acquisition::open("path/to/acquisition.acq").unwrap();
+
+let idx = 0;
+let raw_event = acq.get(idx).unwrap()
+```
+
+
+### Parsing an Acquisitions
+
+```rust
+use naluacq::{Acquisition, Aardvarcv3Event, ParseInto};
+
+let acq = Acquisition::open("path/to/acquisition.acq").unwrap();
+
+let idx = 0;
+let raw_event = acq.get(idx).unwrap()
+
+let parsed_event: Aardvarcv3Event = raw_event.parse_into().unwrap();
+```
+
+
+# Building the Documentation
+
+```
+cargo doc --open
+```
