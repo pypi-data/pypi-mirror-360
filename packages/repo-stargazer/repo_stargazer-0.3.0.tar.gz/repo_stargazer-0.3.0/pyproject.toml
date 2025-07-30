@@ -1,0 +1,131 @@
+[project]
+name = "repo-stargazer"
+version = "0.3.0"
+description = "Tell me about my stars"
+readme = "README.md"
+authors = [
+    { name = "Sachdeva, Kapil"}
+]
+requires-python = ">=3.11"
+dependencies = [
+    "arize-phoenix-otel>=0.12.1",
+    "fastparquet>=2024.11.0",
+    "google-adk>=1.5.0",
+    "httpx>=0.28.1",
+    "lancedb>=0.23.0",
+    "langchain>=0.3.25",
+    "langchain-community>=0.3.24",
+    "langchain-core>=0.3.64",
+    "langchain-ollama>=0.3.3",
+    "langchain-openai>=0.3.21",
+    "langchain-text-splitters>=0.3.8",
+    "litellm>=1.73.0",
+    "mcp>=1.9.3",
+    "mpire>=2.10.2",
+    "openinference-instrumentation-google-adk>=0.1.1",
+    "pandas>=2.3.0",
+    "pydantic>=2.11.5",
+    "pydantic-settings>=2.9.1",
+    "pygithub>=2.6.1",
+    "rich>=14.0.0",
+    "typer>=0.16.0",
+    "xdg-base-dirs>=6.0.2",
+]
+
+classifiers = [
+  "Intended Audience :: Developers",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Operating System :: OS Independent",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "License :: OSI Approved :: Apache Software License",
+]
+
+[project.urls]
+repository = "https://github.com/ksachdeva/repo-stargazer"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+rsg = "repo_stargazer.__main__:cli_app"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.3.3",
+    "pytest-asyncio>=0.24.0",
+    "pytest-xdist>=3.6.1",
+    "pytest-mock>=3.14.0",
+    "poethepoet>=0.30.0",
+    "packaging>=24.2",
+    "pyright>=1.1.378",
+    "mypy>=1.10.0",
+    "ruff>=0.4.8",
+    "ipykernel>=6.29.5",
+    "textual-dev>=1.7.0",
+]
+
+[tool.ruff]
+line-length = 120
+fix = true
+target-version = "py311"
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "Q", "I", "ASYNC", "T20"]
+ignore = ["F401", "E501"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"unittest".msg = "Use `pytest` instead."
+
+[tool.ruff.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
+
+[tool.mypy]
+strict = true
+python_version = "3.11"
+ignore_missing_imports = true
+
+# from https://blog.wolt.com/engineering/2021/09/30/professional-grade-mypy-configuration/
+disallow_untyped_defs = true
+no_implicit_optional = true
+check_untyped_defs = true
+warn_return_any = true
+show_error_codes = true
+warn_unused_ignores = false
+
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+disallow_any_unimported = false
+
+[tool.pyright]
+include = ["src", "tests", "samples"]
+# typeCheckingMode = "strict"
+reportUnnecessaryIsInstance = false
+reportMissingTypeStubs = false
+
+[tool.poe.env]
+RSG_DATA_HOME = "tmp"
+
+[tool.poe.tasks.build]
+help = "Builds the database in RSG_DATA_HOME directory"
+cmd = "python src/repo_stargazer build"
+
+[tool.poe.tasks.mcp]
+help = "Runs the MCP server"
+cmd = "python src/repo_stargazer run-mcp-server"
+
+[tool.poe.tasks.a2a-server]
+help = "Runs the Google A2A server"
+cmd = "python src/repo_stargazer run-a2a-server"
+
+[tool.poe.tasks.adk-server]
+help = "Runs the Goole ADK server"
+cmd = "python src/repo_stargazer run-adk-server"

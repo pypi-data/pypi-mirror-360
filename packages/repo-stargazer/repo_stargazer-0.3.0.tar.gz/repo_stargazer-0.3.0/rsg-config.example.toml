@@ -1,0 +1,39 @@
+# Read https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+# to learn how to get the GitHub Personal Access Token
+github_pat = ""
+
+# uncomment this section & fill
+# required fields to enable traching to https://arize.com/docs/phoenix
+#[phoenix_otel]
+#api_key=""
+#project_name="default"
+#collection_endpoint=""
+
+[embedder]
+# possible values for provider_type are - ollama, azure_openai, openai 
+provider_type = "ollama" 
+model_name = "mxbai-embed-large:latest"
+api_endpoint = "http://host.docker.internal:11434"
+
+# depending on the provider_type you may have to supply other fields
+# they are
+# api_key <- required by azure_openai and openai
+# api_version <- required by azure_openai
+# api_deployment <- required by azure_openai
+
+chunk_size = 1000
+chunk_overlap = 120
+
+[agent.litellm_params]
+# you can consult LiteLLM documentation to learn 
+# about how to specify the models
+# generally it is "provider"/"model"
+model = "azure/gpt-4o"
+
+[agent.litellm_params.provider_config]
+# you should provide the necessary fields as per LiteLLM 
+# documentation for the model provided above
+api_key = ""
+api_base = ""
+api_version = ""
+
