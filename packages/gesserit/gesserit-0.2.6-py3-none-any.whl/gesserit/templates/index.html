@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>gesserit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto max-w-4xl px-4 py-8">
+        <div class="flex items-center justify-start mb-8">
+            <img src="{{ url_for('static', path='gesserit.svg') }}" alt="gesserit" class="w-12 h-12 mr-4">
+            <h1 class="text-4xl font-bold text-gray-900">Gesserit</h1>
+        </div>
+        <form id="searchForm" class="mb-8">
+            <div class="space-y-4">
+                {% for param in parameters %}
+                    <div class="flex flex-col">
+                        <label for="{{ param.name }}" class="text-sm font-medium text-gray-700 mb-2">
+                            {{ param.name }}{% if param.required and param.type.__name__ != 'bool' %} <span class="text-red-500">*</span>{% endif %}
+                        </label>
+                        
+                        {% if param.type.__name__ == 'bool' %}
+                            <div class="flex items-center">
+                                <input 
+                                    type="checkbox" 
+                                    id="{{ param.name }}"
+                                    name="{{ param.name }}"
+                                    {% if param.default %}checked{% endif %}
+                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                >
+                            </div>
+                        {% elif param.type.__name__ == 'int' %}
+                            <input 
+                                type="number" 
+                                id="{{ param.name }}"
+                                name="{{ param.name }}"
+                                step="1"
+                                {% if param.default is not none %}value="{{ param.default }}"{% endif %}
+                                {% if param.required %}required{% endif %}
+                                class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                        {% elif param.type.__name__ == 'float' %}
+                            <input 
+                                type="number" 
+                                id="{{ param.name }}"
+                                name="{{ param.name }}"
+                                step="0.01"
+                                {% if param.default is not none %}value="{{ param.default }}"{% endif %}
+                                {% if param.required %}required{% endif %}
+                                class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                        {% else %}
+                            <input 
+                                type="text" 
+                                id="{{ param.name }}"
+                                name="{{ param.name }}"
+                                {% if param.default is not none %}value="{{ param.default }}"{% endif %}
+                                {% if param.required %}required{% endif %}
+                                class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                
+                <div class="pt-4">
+                    <button 
+                        type="submit"
+                        class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium"
+                    >
+                        Search
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div id="resultsContainer">
+            {% if search_results %}
+                <div class="space-y-4">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Search Results</h2>
+                    {% for result in search_results %}
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                            <h3 class="text-lg font-medium text-gray-900 mb-3">Rank {{ loop.index }}</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="font-medium text-gray-700 mb-1">Text:</div>
+                                    <div class="text-gray-600">{{ result.text }}</div>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-gray-700">Metadata:</span>
+                                    <div class="mt-2 bg-gray-50 p-3 rounded border">
+                                        {% for key, value in result.metadata.items() %}
+                                            <div class="flex justify-between items-center py-1 {% if not loop.last %}border-b border-gray-200{% endif %}">
+                                                <span class="font-medium text-gray-600">{{ key }}:</span>
+                                                <span class="text-gray-700">{{ value }}</span>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <p class="text-gray-500 text-lg">Fill in the search parameters above to see results.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const resultsContainer = document.getElementById('resultsContainer');
+            resultsContainer.innerHTML = '<div class="text-center py-12"><p class="text-gray-500 text-lg">Searching...</p></div>';
+            
+            try {
+                // Collect all parameter values
+                const params = {};
+                {% for param in parameters %}
+                    const {{ param.name }}Element = document.getElementById('{{ param.name }}');
+                    {% if param.type.__name__ == 'bool' %}
+                        params['{{ param.name }}'] = {{ param.name }}Element.checked;
+                    {% elif param.type.__name__ == 'int' %}
+                        params['{{ param.name }}'] = {{ param.name }}Element.value ? parseInt({{ param.name }}Element.value) : ({{ param.default if param.default is not none else 0 }});
+                    {% elif param.type.__name__ == 'float' %}
+                        params['{{ param.name }}'] = {{ param.name }}Element.value ? parseFloat({{ param.name }}Element.value) : ({{ param.default if param.default is not none else 0.0 }});
+                    {% else %}
+                        params['{{ param.name }}'] = {{ param.name }}Element.value;
+                    {% endif %}
+                {% endfor %}
+
+                const formData = new FormData();
+                formData.append('query_param', JSON.stringify(params));
+
+                const response = await fetch('{{ url_for("search") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Search failed');
+                }
+                
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newResults = doc.getElementById('resultsContainer');
+                
+                if (newResults) {
+                    resultsContainer.innerHTML = newResults.innerHTML;
+                } else {
+                    resultsContainer.innerHTML = '<div class="text-center py-12"><p class="text-red-500 text-lg">No results found.</p></div>';
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                resultsContainer.innerHTML = '<div class="text-center py-12"><p class="text-red-500 text-lg">Search failed. Please try again.</p></div>';
+            }
+        });
+    </script>
+</body>
+</html>
