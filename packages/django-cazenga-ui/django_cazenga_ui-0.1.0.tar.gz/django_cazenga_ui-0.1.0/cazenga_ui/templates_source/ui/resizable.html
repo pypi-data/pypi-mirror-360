@@ -1,0 +1,151 @@
+<!--
+Componente: Resizable
+Uso: include "components/resizable.html" with panels=panel_list contents=content_list
+
+Parâmetros:
+- panels: Lista de IDs dos painéis (obrigatório) - ex: ["sidebar", "main"]
+- contents: Lista de conteúdos HTML (obrigatório) - ex: ["<p>Sidebar</p>", "<p>Conteúdo principal</p>"]
+- direction: horizontal, vertical (padrão: horizontal)
+- sizes: Lista de tamanhos iniciais em % (ex: [30, 70]) - padrão: distribuição igual
+- min_sizes: Lista de tamanhos mínimos em % (ex: [20, 20])
+- max_sizes: Lista de tamanhos máximos em % (ex: [80, 80])
+- with_handle: true/false - mostrar handle visual (padrão: true)
+- class: Classes CSS adicionais (opcional)
+- height: Altura do container (padrão: 400px)
+
+Exemplo:
+include "components/resizable.html" with 
+    panels=sidebar_panels
+    contents=sidebar_contents
+    direction="horizontal"
+    sizes=sidebar_sizes
+    with_handle=True
+
+Onde:
+- sidebar_panels = ["sidebar", "main"]
+- sidebar_contents = ["<p>Sidebar</p>", "<p>Conteúdo principal</p>"]
+- sidebar_sizes = [30, 70]
+-->
+{% with direction=direction|default:"horizontal" with_handle=with_handle|default:True height=height|default:"400px" %}
+<div 
+    x-data="{ 
+        panels: {{ panels|safe }},
+        contents: {{ contents|safe }},
+        sizes: (() => {
+            const providedSizes = {{ sizes|default:'[]'|safe }};
+            if (providedSizes.length > 0) {
+                return providedSizes;
+            } else {
+                const panelCount = {{ panels|length }};
+                const equalSize = Math.floor(100 / panelCount);
+                return Array(panelCount).fill(equalSize);
+            }
+        })(),
+        direction: '{{ direction }}',
+        isDragging: false,
+        currentHandle: null,
+        startPos: 0,
+        startSizes: [],
+        
+        initResize(handleIndex, e) {
+            this.isDragging = true;
+            this.currentHandle = handleIndex;
+            this.startPos = this.direction === 'horizontal' ? e.clientX : e.clientY;
+            this.startSizes = [...this.sizes];
+            document.addEventListener('mousemove', this.handleResize.bind(this));
+            document.addEventListener('mouseup', this.stopResize.bind(this));
+        },
+        
+        handleResize(e) {
+            if (!this.isDragging) return;
+            
+            const currentPos = this.direction === 'horizontal' ? e.clientX : e.clientY;
+            const delta = currentPos - this.startPos;
+            const containerSize = this.direction === 'horizontal' ? 
+                this.$refs.container.offsetWidth : this.$refs.container.offsetHeight;
+            const deltaPercent = (delta / containerSize) * 100;
+            
+            const newSizes = [...this.startSizes];
+            newSizes[this.currentHandle] = Math.max(10, Math.min(90, this.startSizes[this.currentHandle] + deltaPercent));
+            newSizes[this.currentHandle + 1] = Math.max(10, Math.min(90, this.startSizes[this.currentHandle + 1] - deltaPercent));
+            
+            this.sizes = newSizes;
+            this.updatePanelSizes();
+        },
+        
+        stopResize() {
+            this.isDragging = false;
+            this.currentHandle = null;
+            document.removeEventListener('mousemove', this.handleResize.bind(this));
+            document.removeEventListener('mouseup', this.stopResize.bind(this));
+        },
+        
+        updatePanelSizes() {
+            this.panels.forEach((panel, index) => {
+                const element = this.$refs[panel];
+                if (element) {
+                    if (this.direction === 'horizontal') {
+                        element.style.width = this.sizes[index] + '%';
+                    } else {
+                        element.style.height = this.sizes[index] + '%';
+                    }
+                }
+            });
+        }
+    }"
+    x-init="updatePanelSizes()"
+    class="flex {% if direction == 'vertical' %}flex-col{% else %}flex-row{% endif %} w-full border rounded-lg overflow-hidden {{ class|default:'' }}"
+    :style="{ height: '{{ height }}' }"
+    x-ref="container"
+>
+    {% for panel in panels %}
+        <!-- Panel {{ forloop.counter }} -->
+        <div 
+            x-ref="{{ panel }}"
+            class="bg-background border-border overflow-auto
+                {% if direction == 'horizontal' %}{% if not forloop.last %}border-r{% endif %}
+                {% else %}{% if not forloop.last %}border-b{% endif %}{% endif %}"
+            :style="direction === 'horizontal' ? `width: ${sizes[{{ forloop.counter0 }}]}%` : `height: ${sizes[{{ forloop.counter0 }}]}%`"
+        >
+            <div class="p-4 h-full">
+                {% if contents and forloop.counter0 < contents|length %}
+                    {% for content in contents %}
+                        {% if forloop.counter0 == forloop.parentloop.counter0 %}
+                            {{ content|safe }}
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted-foreground">Painel {{ forloop.counter }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Resize Handle -->
+        {% if not forloop.last %}
+            <div 
+                @mousedown="initResize({{ forloop.counter0 }}, $event)"
+                class="bg-border hover:bg-accent-foreground/20 active:bg-accent-foreground/30 cursor-col-resize relative flex items-center justify-center transition-colors
+                    {% if direction == 'horizontal' %}w-1 hover:w-2 group
+                    {% else %}h-1 hover:h-2 cursor-row-resize group{% endif %}"
+            >
+                {% if with_handle %}
+                    <div class="bg-border border rounded-sm flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100
+                        {% if direction == 'horizontal' %}h-8 w-3 flex-col
+                        {% else %}w-8 h-3 flex-row{% endif %}">
+                        <svg 
+                            class="size-2.5 text-muted-foreground {% if direction == 'vertical' %}rotate-90{% endif %}" 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            fill="none" 
+                            viewBox="0 0 24 24" 
+                            stroke-width="1.5" 
+                            stroke="currentColor"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+                        </svg>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endwith %}

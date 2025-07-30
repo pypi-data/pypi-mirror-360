@@ -1,0 +1,69 @@
+<!--
+Componente: Radio Group
+Uso: include "components/radio-group.html" with name="payment" options=payment_options value="card"
+
+Parâmetros:
+- name: Nome do grupo de radio buttons (obrigatório)
+- options: Lista de opções [{"value": "card", "label": "Cartão", "description": "Pagar com cartão"}, ...] (obrigatório)
+- value: Valor selecionado inicialmente (opcional)
+- orientation: vertical, horizontal (padrão: vertical)
+- disabled: true/false - desabilitar todo o grupo (padrão: false)
+- class: Classes CSS adicionais (opcional)
+- x_model: Modelo Alpine.js (opcional)
+- on_change: Função JavaScript no change (opcional)
+
+Exemplo de options:
+[
+    {"value": "card", "label": "Cartão de Crédito", "description": "Pagar com cartão"},
+    {"value": "pix", "label": "PIX", "description": "Pagamento instantâneo"},
+    {"value": "boleto", "label": "Boleto", "disabled": true}
+]
+-->
+{% with orientation=orientation|default:"vertical" disabled=disabled|default:False %}
+<div 
+    {% if x_model %}
+        x-data="{ selected: '{{ value|default:'' }}' }"
+        x-modelable="selected"
+        x-model="{{ x_model }}"
+    {% endif %}
+    class="grid gap-3 
+        {% if orientation == 'horizontal' %}grid-flow-col auto-cols-max{% endif %}
+        {{ class|default:'' }}"
+    role="radiogroup"
+    {% if disabled %}aria-disabled="true"{% endif %}
+>
+    {% for option in options %}
+        <div class="flex items-center space-x-2">
+            <input
+                type="radio"
+                name="{{ name }}"
+                id="{{ name }}_{{ option.value }}"
+                value="{{ option.value }}"
+                {% if option.value == value %}checked{% endif %}
+                {% if disabled or option.disabled %}disabled{% endif %}
+                {% if x_model %}x-model="selected"{% endif %}
+                {% if on_change %}onchange="{{ on_change }}(this.value)"{% endif %}
+                class="w-4 h-4 text-primary border-input focus:ring-ring focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+            
+            <label
+                for="{{ name }}_{{ option.value }}"
+                class="flex cursor-pointer items-center gap-2 text-sm font-medium leading-none
+                    {% if disabled or option.disabled %}cursor-not-allowed opacity-50{% endif %}"
+            >
+                <!-- Label and description -->
+                <div class="grid gap-1.5 leading-none">
+                    <span class="text-sm font-medium leading-none">
+                        {{ option.label }}
+                    </span>
+                    {% if option.description %}
+                        <p class="text-xs text-muted-foreground">
+                            {{ option.description }}
+                        </p>
+                    {% endif %}
+                </div>
+            </label>
+        </div>
+    {% endfor %}
+</div>
+{% endwith %}

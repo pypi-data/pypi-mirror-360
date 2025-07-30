@@ -1,0 +1,233 @@
+<!--
+Componente: Pagination
+Uso: include "components/pagination.html" with current_page=1 total_pages=10 base_url="/produtos"
+
+Parâmetros:
+- current_page: Página atual (obrigatório)
+- total_pages: Total de páginas (obrigatório)
+- base_url: URL base para links (opcional, padrão: usar JavaScript)
+- show_labels: true/false - mostrar "Anterior/Próximo" (padrão: true)
+- show_first_last: true/false - mostrar primeira/última página (padrão: true)
+- max_visible: Número máximo de páginas visíveis (padrão: 7)
+- class: Classes CSS adicionais (opcional)
+- on_page_change: Função JavaScript para mudança de página (opcional)
+-->
+{% with show_labels=show_labels|default:True show_first_last=show_first_last|default:True max_visible=max_visible|default:7 %}
+<nav 
+    role="navigation" 
+    aria-label="pagination" 
+    class="mx-auto flex w-full justify-center {{ class|default:'' }}"
+    {% if on_page_change %}
+        x-data="{ 
+            currentPage: {{ current_page }},
+            totalPages: {{ total_pages }},
+            changePage(page) {
+                if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+                    this.currentPage = page;
+                    {{ on_page_change }}(page);
+                }
+            }
+        }"
+    {% endif %}
+>
+    <ul class="flex flex-row items-center gap-1">
+        <!-- Previous -->
+        <li>
+            {% if base_url %}
+                <a 
+                    href="{% if current_page > 1 %}{{ base_url }}?page={{ current_page|add:'-1' }}{% else %}#{% endif %}"
+                    {% if current_page <= 1 %}aria-disabled="true"{% endif %}
+                    aria-label="Ir para página anterior"
+                    class="inline-flex items-center justify-center gap-1 px-2.5 sm:pl-2.5 h-9 
+                        rounded-md text-sm font-medium transition-all outline-none 
+                        focus-visible:ring-[3px] focus-visible:border-ring focus-visible:ring-ring/50
+                        {% if current_page <= 1 %}
+                            pointer-events-none opacity-50 bg-background border
+                        {% else %}
+                            hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50
+                        {% endif %}"
+                >
+                    <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                    {% if show_labels %}<span class="hidden sm:block">Anterior</span>{% endif %}
+                </a>
+            {% else %}
+                <button
+                    @click="changePage(currentPage - 1)"
+                    :disabled="currentPage <= 1"
+                    aria-label="Ir para página anterior"
+                    class="inline-flex items-center justify-center gap-1 px-2.5 sm:pl-2.5 h-9 
+                        rounded-md text-sm font-medium transition-all outline-none 
+                        focus-visible:ring-[3px] focus-visible:border-ring focus-visible:ring-ring/50
+                        disabled:pointer-events-none disabled:opacity-50
+                        hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50"
+                >
+                    <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                    {% if show_labels %}<span class="hidden sm:block">Anterior</span>{% endif %}
+                </button>
+            {% endif %}
+        </li>
+
+        <!-- First page -->
+        {% if show_first_last and current_page > 3 %}
+            <li>
+                {% if base_url %}
+                    <a 
+                        href="{{ base_url }}?page=1"
+                        aria-label="Ir para página 1"
+                        class="inline-flex items-center justify-center size-9 rounded-md text-sm font-medium 
+                            transition-all outline-none focus-visible:ring-[3px] focus-visible:border-ring 
+                            focus-visible:ring-ring/50 hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50"
+                    >
+                        1
+                    </a>
+                {% else %}
+                    <button
+                        @click="changePage(1)"
+                        aria-label="Ir para página 1"
+                        class="inline-flex items-center justify-center size-9 rounded-md text-sm font-medium 
+                            transition-all outline-none focus-visible:ring-[3px] focus-visible:border-ring 
+                            focus-visible:ring-ring/50 hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50"
+                    >
+                        1
+                    </button>
+                {% endif %}
+            </li>
+            
+            {% if current_page > 4 %}
+                <!-- Ellipsis -->
+                <li>
+                    <span aria-hidden="true" class="flex size-9 items-center justify-center">
+                        <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                        </svg>
+                        <span class="sr-only">Mais páginas</span>
+                    </span>
+                </li>
+            {% endif %}
+        {% endif %}
+
+        <!-- Page numbers -->
+        {% for page in total_pages|make_list %}
+            {% if forloop.counter >= current_page|add:'-2' and forloop.counter <= current_page|add:'2' %}
+                <li>
+                    {% if forloop.counter == current_page %}
+                        <span 
+                            aria-current="page"
+                            class="inline-flex items-center justify-center size-9 rounded-md text-sm font-medium 
+                                bg-background border shadow-xs"
+                        >
+                            {{ forloop.counter }}
+                        </span>
+                    {% else %}
+                        {% if base_url %}
+                            <a 
+                                href="{{ base_url }}?page={{ forloop.counter }}"
+                                aria-label="Ir para página {{ forloop.counter }}"
+                                class="inline-flex items-center justify-center size-9 rounded-md text-sm font-medium 
+                                    transition-all outline-none focus-visible:ring-[3px] focus-visible:border-ring 
+                                    focus-visible:ring-ring/50 hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50"
+                            >
+                                {{ forloop.counter }}
+                            </a>
+                        {% else %}
+                            <button
+                                @click="changePage({{ forloop.counter }})"
+                                aria-label="Ir para página {{ forloop.counter }}"
+                                class="inline-flex items-center justify-center size-9 rounded-md text-sm font-medium 
+                                    transition-all outline-none focus-visible:ring-[3px] focus-visible:border-ring 
+                                    focus-visible:ring-ring/50 hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50"
+                                :class="{ 'bg-background border shadow-xs': currentPage === {{ forloop.counter }} }"
+                            >
+                                {{ forloop.counter }}
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        <!-- Last page -->
+        {% if show_first_last and current_page < total_pages|add:'-2' %}
+            {% if current_page < total_pages|add:'-3' %}
+                <!-- Ellipsis -->
+                <li>
+                    <span aria-hidden="true" class="flex size-9 items-center justify-center">
+                        <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                        </svg>
+                        <span class="sr-only">Mais páginas</span>
+                    </span>
+                </li>
+            {% endif %}
+            
+            <li>
+                {% if base_url %}
+                    <a 
+                        href="{{ base_url }}?page={{ total_pages }}"
+                        aria-label="Ir para página {{ total_pages }}"
+                        class="inline-flex items-center justify-center size-9 rounded-md text-sm font-medium 
+                            transition-all outline-none focus-visible:ring-[3px] focus-visible:border-ring 
+                            focus-visible:ring-ring/50 hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50"
+                    >
+                        {{ total_pages }}
+                    </a>
+                {% else %}
+                    <button
+                        @click="changePage(totalPages)"
+                        aria-label="Ir para última página"
+                        class="inline-flex items-center justify-center size-9 rounded-md text-sm font-medium 
+                            transition-all outline-none focus-visible:ring-[3px] focus-visible:border-ring 
+                            focus-visible:ring-ring/50 hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50"
+                    >
+                        {{ total_pages }}
+                    </button>
+                {% endif %}
+            </li>
+        {% endif %}
+
+        <!-- Next -->
+        <li>
+            {% if base_url %}
+                <a 
+                    href="{% if current_page < total_pages %}{{ base_url }}?page={{ current_page|add:'1' }}{% else %}#{% endif %}"
+                    {% if current_page >= total_pages %}aria-disabled="true"{% endif %}
+                    aria-label="Ir para próxima página"
+                    class="inline-flex items-center justify-center gap-1 px-2.5 sm:pr-2.5 h-9 
+                        rounded-md text-sm font-medium transition-all outline-none 
+                        focus-visible:ring-[3px] focus-visible:border-ring focus-visible:ring-ring/50
+                        {% if current_page >= total_pages %}
+                            pointer-events-none opacity-50 bg-background border
+                        {% else %}
+                            hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50
+                        {% endif %}"
+                >
+                    {% if show_labels %}<span class="hidden sm:block">Próximo</span>{% endif %}
+                    <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </a>
+            {% else %}
+                <button
+                    @click="changePage(currentPage + 1)"
+                    :disabled="currentPage >= totalPages"
+                    aria-label="Ir para próxima página"
+                    class="inline-flex items-center justify-center gap-1 px-2.5 sm:pr-2.5 h-9 
+                        rounded-md text-sm font-medium transition-all outline-none 
+                        focus-visible:ring-[3px] focus-visible:border-ring focus-visible:ring-ring/50
+                        disabled:pointer-events-none disabled:opacity-50
+                        hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50"
+                >
+                    {% if show_labels %}<span class="hidden sm:block">Próximo</span>{% endif %}
+                    <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </button>
+            {% endif %}
+        </li>
+    </ul>
+</nav>
+{% endwith %}

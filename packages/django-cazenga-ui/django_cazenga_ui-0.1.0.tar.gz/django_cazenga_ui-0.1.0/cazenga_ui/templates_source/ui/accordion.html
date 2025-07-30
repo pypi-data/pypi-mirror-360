@@ -1,0 +1,112 @@
+<!--
+Componente: Accordion
+Uso: include "components/accordion.html" with items=accordion_items
+
+Parâmetros:
+- items: Lista de itens [{"title": "Título", "content": "Conteúdo", "open": true}, ...] (obrigatório)
+- type: single, multiple (padrão: single - apenas um item aberto por vez)
+- collapsible: true/false - permite fechar todos os itens (padrão: true)
+- class: Classes CSS adicionais (opcional)
+- x_data: Dados Alpine.js adicionais (opcional)
+
+Exemplo de items:
+[
+    {"title": "Pergunta 1", "content": "Resposta 1", "open": true},
+    {"title": "Pergunta 2", "content": "Resposta 2"}
+]
+-->
+{% with type=type|default:"single" collapsible=collapsible|default:True %}
+<div 
+    x-data="{ 
+        openItems: {% if type == 'single' %}null{% else %}[]{% endif %},
+        toggle(index) {
+            {% if type == 'single' %}
+                if (this.openItems === index) {
+                    {% if collapsible %}this.openItems = null;{% endif %}
+                } else {
+                    this.openItems = index;
+                }
+            {% else %}
+                if (this.openItems.includes(index)) {
+                    this.openItems = this.openItems.filter(i => i !== index);
+                } else {
+                    this.openItems.push(index);
+                }
+            {% endif %}
+        },
+        isOpen(index) {
+            {% if type == 'single' %}
+                return this.openItems === index;
+            {% else %}
+                return this.openItems.includes(index);
+            {% endif %}
+        }
+    }"
+    x-init="
+        // Inicializar itens abertos
+        {% if type == 'single' %}
+            {% for item in items %}
+                {% if item.open %}openItems = {{ forloop.counter0 }};{% endif %}
+            {% endfor %}
+        {% else %}
+            openItems = [
+                {% for item in items %}
+                    {% if item.open %}{{ forloop.counter0 }}{% if not forloop.last %},{% endif %}{% endif %}
+                {% endfor %}
+            ];
+        {% endif %}
+    "
+    {% if x_data %}x-data="{{ x_data }}"{% endif %}
+    class="{{ class|default:'' }}"
+>
+    {% for item in items %}
+        <div class="border-b {% if forloop.last %}last:border-b-0{% endif %}">
+            <!-- Trigger -->
+            <div class="flex">
+                <button
+                    @click="toggle({{ forloop.counter0 }})"
+                    class="focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 items-start 
+                        justify-between gap-4 rounded-md py-4 text-left text-sm font-medium transition-all 
+                        outline-none hover:underline focus-visible:ring-[3px] disabled:pointer-events-none 
+                        disabled:opacity-50"
+                    :aria-expanded="isOpen({{ forloop.counter0 }})"
+                    aria-controls="accordion-content-{{ forloop.counter0 }}"
+                >
+                    {{ item.title }}
+                    <svg 
+                        class="text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 
+                            transition-transform duration-200"
+                        :class="{ 'rotate-180': isOpen({{ forloop.counter0 }}) }"
+                        xmlns="http://www.w3.org/2000/svg" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke-width="1.5" 
+                        stroke="currentColor"
+                    >
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Content -->
+            <div 
+                x-show="isOpen({{ forloop.counter0 }})"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 max-h-0"
+                x-transition:enter-end="opacity-100 max-h-screen"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 max-h-screen"
+                x-transition:leave-end="opacity-0 max-h-0"
+                class="overflow-hidden text-sm"
+                id="accordion-content-{{ forloop.counter0 }}"
+                role="region"
+                aria-labelledby="accordion-trigger-{{ forloop.counter0 }}"
+            >
+                <div class="pt-0 pb-4">
+                    {{ item.content|safe }}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endwith %}

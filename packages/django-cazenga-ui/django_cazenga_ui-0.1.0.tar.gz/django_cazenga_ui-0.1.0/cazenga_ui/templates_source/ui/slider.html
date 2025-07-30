@@ -1,0 +1,227 @@
+<!--
+Componente: Slider
+Uso: include "components/slider.html" with min=0 max=100 value=50
+
+Parâmetros:
+- min: Valor mínimo (padrão: 0)
+- max: Valor máximo (padrão: 100)
+- value: Valor inicial (single) ou string "valor1,valor2" para range (padrão: min)
+- step: Incremento do slider (padrão: 1)
+- orientation: horizontal, vertical (padrão: horizontal)
+- disabled: true/false (padrão: false)
+- name: Nome do input hidden (obrigatório para formulários)
+- label: Label do slider (opcional)
+- show_value: true/false - mostrar valor atual (padrão: false)
+- class: Classes CSS adicionais (opcional)
+- onchange: Função JavaScript para executar na mudança (opcional)
+
+Exemplo:
+include "components/slider.html" with 
+    min=0 
+    max=100 
+    value=25
+    step=5
+    name="volume"
+    label="Volume"
+    show_value=True
+
+Para range:
+include "components/slider.html" with 
+    min=0 
+    max=1000 
+    value="200,800"
+    name="price_range"
+    label="Faixa de Preço"
+-->
+{% with min=min|default:0 max=max|default:100 step=step|default:1 orientation=orientation|default:"horizontal" disabled=disabled|default:False show_value=show_value|default:False %}
+<div 
+    x-data="{ 
+        values: (() => {
+            const valueStr = '{{ value|default:min }}';
+            if (valueStr.includes(',')) {
+                return valueStr.split(',').map(v => parseFloat(v.trim()));
+            } else {
+                return [parseFloat(valueStr)];
+            }
+        })(),
+        min: {{ min }},
+        max: {{ max }},
+        step: {{ step }},
+        orientation: '{{ orientation }}',
+        disabled: {{ disabled|yesno:'true,false' }},
+        isDragging: false,
+        activeThumb: null,
+        
+        getValue(index = 0) {
+            return this.values[index] || this.min;
+        },
+        
+        setValue(index, value) {
+            const clampedValue = Math.max(this.min, Math.min(this.max, value));
+            const steppedValue = Math.round(clampedValue / this.step) * this.step;
+            this.values[index] = steppedValue;
+            
+            // Garantir ordem correta para ranges
+            if (this.values.length > 1) {
+                this.values.sort((a, b) => a - b);
+            }
+            
+            {% if onchange %}{{ onchange }}{% endif %}
+        },
+        
+        getPercentage(value) {
+            return ((value - this.min) / (this.max - this.min)) * 100;
+        },
+        
+        getValueFromPosition(position, containerSize) {
+            const percentage = this.orientation === 'horizontal' 
+                ? position / containerSize 
+                : 1 - (position / containerSize);
+            return this.min + (percentage * (this.max - this.min));
+        },
+        
+        handleMouseDown(event, thumbIndex) {
+            if (this.disabled) return;
+            this.isDragging = true;
+            this.activeThumb = thumbIndex;
+            this.handleMouseMove(event);
+            
+            const handleMouseMove = (e) => this.handleMouseMove(e);
+            const handleMouseUp = () => {
+                this.isDragging = false;
+                this.activeThumb = null;
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
+            
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        },
+        
+        handleMouseMove(event) {
+            if (!this.isDragging || this.activeThumb === null) return;
+            
+            const track = this.$refs.track;
+            const rect = track.getBoundingClientRect();
+            
+            let position;
+            let containerSize;
+            
+            if (this.orientation === 'horizontal') {
+                position = event.clientX - rect.left;
+                containerSize = rect.width;
+            } else {
+                position = event.clientY - rect.top;
+                containerSize = rect.height;
+            }
+            
+            const value = this.getValueFromPosition(position, containerSize);
+            this.setValue(this.activeThumb, value);
+        },
+        
+        handleTrackClick(event) {
+            if (this.disabled) return;
+            
+            const track = this.$refs.track;
+            const rect = track.getBoundingClientRect();
+            
+            let position;
+            let containerSize;
+            
+            if (this.orientation === 'horizontal') {
+                position = event.clientX - rect.left;
+                containerSize = rect.width;
+            } else {
+                position = event.clientY - rect.top;
+                containerSize = rect.height;
+            }
+            
+            const value = this.getValueFromPosition(position, containerSize);
+            
+            // Encontra o thumb mais próximo
+            let closestThumb = 0;
+            let closestDistance = Math.abs(this.values[0] - value);
+            
+            for (let i = 1; i < this.values.length; i++) {
+                const distance = Math.abs(this.values[i] - value);
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestThumb = i;
+                }
+            }
+            
+            this.setValue(closestThumb, value);
+        }
+    }"
+    class="relative {{ class|default:'' }}"
+>
+    {% if label %}
+        <label class="block text-sm font-medium mb-2">
+            {{ label }}
+            {% if show_value %}
+                <span class="ml-2 text-muted-foreground">
+                    (<span x-text="values.length === 1 ? values[0] : values.join(' - ')"></span>)
+                </span>
+            {% endif %}
+        </label>
+    {% endif %}
+    
+    <div 
+        class="relative flex touch-none items-center select-none
+            {% if orientation == 'vertical' %}h-full min-h-44 w-auto flex-col
+            {% else %}w-full{% endif %}
+            {% if disabled %}opacity-50{% endif %}"
+        :class="{ 'cursor-not-allowed': disabled }"
+    >
+        <!-- Track -->
+        <div 
+            x-ref="track"
+            @click="handleTrackClick"
+            class="bg-muted relative grow overflow-hidden rounded-full cursor-pointer
+                {% if orientation == 'horizontal' %}h-1.5 w-full
+                {% else %}h-full w-1.5{% endif %}"
+        >
+            <!-- Range(s) -->
+            <template x-for="(value, index) in values" :key="index">
+                <div 
+                    class="bg-primary absolute
+                        {% if orientation == 'horizontal' %}h-full
+                        {% else %}w-full{% endif %}"
+                    :style="orientation === 'horizontal' 
+                        ? `left: ${index === 0 ? 0 : getPercentage(values[0])}%; width: ${getPercentage(value) - (index === 0 ? 0 : getPercentage(values[0]))}%`
+                        : `bottom: ${index === 0 ? 0 : getPercentage(values[0])}%; height: ${getPercentage(value) - (index === 0 ? 0 : getPercentage(values[0]))}%`"
+                ></div>
+            </template>
+        </div>
+        
+        <!-- Thumbs -->
+        <template x-for="(value, index) in values" :key="index">
+            <button
+                @mousedown="handleMouseDown($event, index)"
+                :disabled="disabled"
+                type="button"
+                class="border-primary bg-background ring-ring/50 absolute block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-grab active:cursor-grabbing"
+                :style="orientation === 'horizontal' 
+                    ? `left: calc(${getPercentage(value)}% - 8px)`
+                    : `bottom: calc(${getPercentage(value)}% - 8px)`"
+                :aria-valuenow="value"
+                :aria-valuemin="min"
+                :aria-valuemax="max"
+                role="slider"
+                :aria-label="`Slider ${index + 1}`"
+            ></button>
+        </template>
+    </div>
+    
+    <!-- Hidden inputs para formulários -->
+    {% if name %}
+        <template x-for="(value, index) in values" :key="index">
+            <input 
+                type="hidden" 
+                :name="values.length === 1 ? '{{ name }}' : '{{ name }}[' + index + ']'" 
+                :value="value"
+            >
+        </template>
+    {% endif %}
+</div>
+{% endwith %}

@@ -1,0 +1,153 @@
+<!--
+Componente: Scroll Area
+Uso: include "components/scroll-area.html" with content="Conteúdo longo"
+
+Parâmetros:
+- content: Conteúdo HTML da área de rolagem (obrigatório)
+- height: Altura da área de rolagem (padrão: 300px)
+- width: Largura da área de rolagem (padrão: 100%)
+- orientation: vertical, horizontal, both (padrão: vertical)
+- scrollbar_style: auto, always, never (padrão: auto)
+- class: Classes CSS adicionais (opcional)
+- thumb_class: Classes CSS adicionais para o thumb (opcional)
+
+Exemplo:
+include "components/scroll-area.html" with 
+    content="<p>Conteúdo muito longo...</p>"
+    height="200px"
+    orientation="vertical"
+    scrollbar_style="always"
+-->
+{% with height=height|default:"300px" width=width|default:"100%" orientation=orientation|default:"vertical" scrollbar_style=scrollbar_style|default:"auto" %}
+<div 
+    x-data="{ 
+        scrollTop: 0,
+        scrollLeft: 0,
+        scrollHeight: 0,
+        scrollWidth: 0,
+        clientHeight: 0,
+        clientWidth: 0,
+        showVerticalBar: false,
+        showHorizontalBar: false,
+        
+        updateScrollInfo() {
+            const viewport = this.$refs.viewport;
+            if (!viewport) return;
+            
+            this.scrollTop = viewport.scrollTop;
+            this.scrollLeft = viewport.scrollLeft;
+            this.scrollHeight = viewport.scrollHeight;
+            this.scrollWidth = viewport.scrollWidth;
+            this.clientHeight = viewport.clientHeight;
+            this.clientWidth = viewport.clientWidth;
+            
+            this.showVerticalBar = this.scrollHeight > this.clientHeight;
+            this.showHorizontalBar = this.scrollWidth > this.clientWidth;
+        },
+        
+        getVerticalThumbStyle() {
+            const ratio = this.clientHeight / this.scrollHeight;
+            const thumbHeight = Math.max(20, this.clientHeight * ratio);
+            const thumbTop = (this.scrollTop / this.scrollHeight) * this.clientHeight;
+            return {
+                height: thumbHeight + 'px',
+                transform: `translateY(${thumbTop}px)`
+            };
+        },
+        
+        getHorizontalThumbStyle() {
+            const ratio = this.clientWidth / this.scrollWidth;
+            const thumbWidth = Math.max(20, this.clientWidth * ratio);
+            const thumbLeft = (this.scrollLeft / this.scrollWidth) * this.clientWidth;
+            return {
+                width: thumbWidth + 'px',
+                transform: `translateX(${thumbLeft}px)`
+            };
+        }
+    }"
+    x-init="updateScrollInfo()"
+    class="relative overflow-hidden rounded-md border {{ class|default:'' }}"
+    :style="{ height: '{{ height }}', width: '{{ width }}' }"
+>
+    <!-- Viewport -->
+    <div 
+        x-ref="viewport"
+        @scroll="updateScrollInfo()"
+        class="size-full rounded-[inherit] 
+            {% if orientation == 'vertical' %}overflow-y-auto overflow-x-hidden
+            {% elif orientation == 'horizontal' %}overflow-x-auto overflow-y-hidden
+            {% else %}overflow-auto{% endif %}
+            {% if scrollbar_style == 'never' %}scrollbar-hide{% endif %}"
+        :style="'{{ scrollbar_style }}' === 'never' ? { scrollbarWidth: 'none', msOverflowStyle: 'none' } : {}"
+    >
+        <div class="p-4">
+            {% if content %}
+                {{ content|safe }}
+            {% else %}
+                {% block scroll_content %}
+                    <p class="text-muted-foreground">Conteúdo da área de rolagem...</p>
+                {% endblock %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Vertical Scrollbar -->
+    {% if orientation == 'vertical' or orientation == 'both' %}
+        <div 
+            x-show="showVerticalBar && '{{ scrollbar_style }}' !== 'never'"
+            x-transition:enter="transition-opacity ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="absolute right-0 top-0 h-full w-2.5 border-l border-l-transparent p-px flex touch-none select-none transition-colors hover:bg-accent/50"
+            style="display: none;"
+        >
+            <div 
+                class="bg-border hover:bg-accent-foreground/40 relative flex-1 rounded-full transition-colors {{ thumb_class|default:'' }}"
+                :style="getVerticalThumbStyle()"
+            ></div>
+        </div>
+    {% endif %}
+
+    <!-- Horizontal Scrollbar -->
+    {% if orientation == 'horizontal' or orientation == 'both' %}
+        <div 
+            x-show="showHorizontalBar && '{{ scrollbar_style }}' !== 'never'"
+            x-transition:enter="transition-opacity ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="absolute bottom-0 left-0 w-full h-2.5 border-t border-t-transparent p-px flex-col touch-none select-none transition-colors hover:bg-accent/50"
+            style="display: none;"
+        >
+            <div 
+                class="bg-border hover:bg-accent-foreground/40 relative flex-1 rounded-full transition-colors {{ thumb_class|default:'' }}"
+                :style="getHorizontalThumbStyle()"
+            ></div>
+        </div>
+    {% endif %}
+
+    <!-- Corner -->
+    {% if orientation == 'both' %}
+        <div 
+            x-show="showVerticalBar && showHorizontalBar"
+            class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-background"
+        ></div>
+    {% endif %}
+</div>
+
+<!-- CSS para esconder scrollbar nativa quando necessário -->
+<style>
+    .scrollbar-hide {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+</style>
+{% endwith %}

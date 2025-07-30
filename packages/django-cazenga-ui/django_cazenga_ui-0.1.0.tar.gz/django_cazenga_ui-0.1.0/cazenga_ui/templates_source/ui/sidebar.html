@@ -1,0 +1,167 @@
+<!--
+Componente: Sidebar
+Uso: include "components/sidebar.html" with content=sidebar_content
+
+Parâmetros:
+- content: Conteúdo da sidebar (obrigatório)
+- side: left, right (padrão: left)
+- collapsible: true/false (padrão: true)
+
+Exemplo de content:
+{
+    "header": {"title": "App", "logo": "<svg>...</svg>"},
+    "menu": [
+        {"title": "Dashboard", "href": "/dashboard", "icon": "<svg>...</svg>", "active": true},
+        {"title": "Produtos", "icon": "<svg>...</svg>", "submenu": [
+            {"title": "Lista", "href": "/produtos"},
+            {"title": "Novo", "href": "/produtos/novo"}
+        ]}
+    ],
+    "footer": {"user": "João", "avatar": "..."}
+}
+-->
+{% with side=side|default:"left" collapsible=collapsible|default:True %}
+<div 
+    x-data="{ 
+        open: true,
+        collapsed: false,
+        isMobile: window.innerWidth < 768,
+        
+        toggle() {
+            if (this.isMobile) {
+                this.open = !this.open;
+            } else {
+                this.collapsed = !this.collapsed;
+            }
+        }
+    }"
+    class="flex min-h-screen w-full {{ class|default:'' }}"
+>
+    <!-- Mobile Overlay -->
+    <div 
+        x-show="isMobile && open"
+        @click="open = false"
+        class="fixed inset-0 z-40 bg-black/50 md:hidden"
+        style="display: none;"
+    ></div>
+    
+    <!-- Sidebar -->
+    <aside 
+        :class="{ 
+            'translate-x-0': isMobile ? open : true,
+            '-translate-x-full': isMobile && !open,
+            'w-16': !isMobile && collapsed,
+            'w-64': !isMobile && !collapsed || isMobile
+        }"
+        class="fixed inset-y-0 z-50 flex flex-col border-r bg-background transition-all duration-300
+            {% if side == 'right' %}right-0{% else %}left-0{% endif %}
+            md:relative md:translate-x-0"
+    >
+        <!-- Header -->
+        {% if content.header %}
+            <div class="flex h-14 items-center gap-2 border-b px-3">
+                {% if content.header.logo %}
+                    <div class="flex size-8 items-center justify-center">
+                        {{ content.header.logo|safe }}
+                    </div>
+                {% endif %}
+                
+                <div x-show="!collapsed || isMobile" class="flex-1">
+                    <h2 class="text-lg font-semibold">{{ content.header.title }}</h2>
+                </div>
+                
+                {% if collapsible %}
+                    <button 
+                        @click="toggle()"
+                        class="flex size-8 items-center justify-center rounded-md hover:bg-accent"
+                    >
+                        <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+                        </svg>
+                    </button>
+                {% endif %}
+            </div>
+        {% endif %}
+        
+        <!-- Content -->
+        <div class="flex-1 overflow-y-auto p-2">
+            <!-- Menu -->
+            {% if content.menu %}
+                <nav class="space-y-1">
+                    {% for item in content.menu %}
+                        {% if item.submenu %}
+                            <!-- Item com submenu -->
+                            <div x-data="{ subOpen: false }">
+                                <button
+                                    @click="subOpen = !subOpen"
+                                    class="flex w-full items-center gap-2 rounded-md p-2 text-sm hover:bg-accent"
+                                >
+                                    {% if item.icon %}
+                                        <div class="flex size-4 shrink-0">{{ item.icon|safe }}</div>
+                                    {% endif %}
+                                    <span x-show="!collapsed || isMobile" class="flex-1 text-left">{{ item.title }}</span>
+                                    <svg x-show="!collapsed || isMobile" :class="{ 'rotate-90': subOpen }" class="size-4 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                    </svg>
+                                </button>
+                                
+                                <div x-show="subOpen && (!collapsed || isMobile)" class="ml-6 mt-1 space-y-1" style="display: none;">
+                                    {% for subitem in item.submenu %}
+                                        <a href="{{ subitem.href }}" class="flex items-center gap-2 rounded-md p-2 text-sm hover:bg-accent">
+                                            <span>{{ subitem.title }}</span>
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <!-- Item simples -->
+                            <a href="{{ item.href }}" class="flex items-center gap-2 rounded-md p-2 text-sm hover:bg-accent {% if item.active %}bg-accent font-medium{% endif %}">
+                                {% if item.icon %}
+                                    <div class="flex size-4 shrink-0">{{ item.icon|safe }}</div>
+                                {% endif %}
+                                <span x-show="!collapsed || isMobile">{{ item.title }}</span>
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                </nav>
+            {% endif %}
+        </div>
+        
+        <!-- Footer -->
+        {% if content.footer %}
+            <div class="border-t p-2">
+                {% if content.footer.user %}
+                    <div class="flex items-center gap-2 rounded-md p-2">
+                        <div class="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                            {{ content.footer.user|first|upper }}
+                        </div>
+                        <div x-show="!collapsed || isMobile" class="flex-1">
+                            <p class="text-sm font-medium">{{ content.footer.user }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </aside>
+    
+    <!-- Main Content -->
+    <main :class="{ 'ml-16': !isMobile && collapsed, 'ml-64': !isMobile && !collapsed, 'ml-0': isMobile }" class="flex-1 transition-all duration-300">
+        <!-- Mobile Header -->
+        <div class="flex h-14 items-center gap-4 border-b bg-background px-4 md:hidden">
+            <button @click="open = !open" class="flex size-8 items-center justify-center rounded-md hover:bg-accent">
+                <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+                </svg>
+            </button>
+            {% if content.header.title %}
+                <h1 class="text-lg font-semibold">{{ content.header.title }}</h1>
+            {% endif %}
+        </div>
+        
+        <!-- Page Content -->
+        <div class="p-4">
+            {% block sidebar_content %}{% endblock %}
+        </div>
+    </main>
+</div>
+{% endwith %}

@@ -1,0 +1,67 @@
+<!-- 
+Componente: Input
+Uso: include "components/input.html" with type="text" name="email" placeholder="Digite seu email"
+
+Parâmetros:
+- type: Tipo do input (text, email, password, number, etc.) (padrão: text)
+- name: Nome do campo (obrigatório para formulários)
+- id: ID do elemento (padrão: mesmo que name)
+- placeholder: Texto de placeholder (opcional)
+- value: Valor inicial (opcional)
+- required: true/false (padrão: false)
+- disabled: true/false (padrão: false)
+- readonly: true/false (padrão: false)
+- x_model: Modelo Alpine.js para two-way binding (opcional)
+- class: Classes CSS adicionais (opcional)
+- icon_left: Ícone SVG para mostrar à esquerda (opcional)
+- icon_right: Ícone SVG para mostrar à direita (opcional)
+-->
+
+{% with type=type|default:"text" input_id=id|default:"input" required=required|default:False disabled=disabled|default:False readonly=readonly|default:False %}
+<div class="relative">
+    {% if icon_left %}
+        <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+            <span class="size-4">{{ icon_left|safe }}</span>
+        </div>
+    {% endif %}
+    
+    <input
+        type="{{ type }}"
+        {% if name %}name="{{ name }}"{% endif %}
+        {% if input_id %}id="{{ input_id }}"{% endif %}
+        {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+        {% if value %}value="{{ value }}"{% endif %}
+        {% if required %}required{% endif %}
+        {% if disabled %}disabled{% endif %}
+        {% if readonly %}readonly{% endif %}
+        {% if x_model %}x-model="{{ x_model }}"{% endif %}
+        {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+        {% if min %}min="{{ min }}"{% endif %}
+        {% if max %}max="{{ max }}"{% endif %}
+        {% if step %}step="{{ step }}"{% endif %}
+        {% if pattern %}pattern="{{ pattern }}"{% endif %}
+        class="file:text-foreground placeholder:text-muted-foreground 
+            selection:bg-primary selection:text-primary-foreground 
+            dark:bg-input/30 border-input flex h-9 w-full min-w-0 
+            rounded-radius-md border bg-transparent text-base shadow-xs 
+            transition-[color,box-shadow] outline-none 
+            file:inline-flex file:h-7 file:border-0 file:bg-transparent 
+            file:text-sm file:font-medium 
+            disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 
+            md:text-sm
+            focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]
+            aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 
+            aria-invalid:border-destructive
+            {% if icon_left %}pl-10{% else %}px-3{% endif %}
+            {% if icon_right %}pr-10{% else %}px-3{% endif %}
+            py-1
+            {{ class|default:'' }}"
+    />
+    
+    {% if icon_right %}
+        <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+            <span class="size-4">{{ icon_right|safe }}</span>
+        </div>
+    {% endif %}
+</div>
+{% endwith %}

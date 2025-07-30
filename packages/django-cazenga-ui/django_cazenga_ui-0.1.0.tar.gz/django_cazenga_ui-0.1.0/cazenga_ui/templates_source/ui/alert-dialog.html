@@ -1,0 +1,100 @@
+<!--
+Componente: Alert Dialog
+Uso: include "components/alert-dialog.html" with trigger="<button>Deletar</button>" title="Confirmar exclusão"
+
+Parâmetros:
+- trigger: Conteúdo HTML do trigger (obrigatório)
+- title: Título do dialog (obrigatório)
+- description: Descrição/conteúdo do dialog (obrigatório)
+- action_text: Texto do botão de ação (padrão: "Confirmar")
+- cancel_text: Texto do botão cancelar (padrão: "Cancelar")
+- action_variant: Variante do botão de ação (padrão: destructive)
+- action_onclick: Função JavaScript para o botão de ação (opcional)
+- size: sm, md, lg (padrão: md)
+- class: Classes CSS adicionais (opcional)
+
+Exemplo:
+include "components/alert-dialog.html" with 
+    trigger="<button class='btn btn-destructive'>Deletar</button>"
+    title="Confirmar exclusão"
+    description="Esta ação não pode ser desfeita. O item será permanentemente removido."
+    action_text="Sim, deletar"
+    action_onclick="console.log('Item deletado!')"
+-->
+{% with action_text=action_text|default:"Confirmar" cancel_text=cancel_text|default:"Cancelar" action_variant=action_variant|default:"destructive" size=size|default:"md" %}
+<div 
+    x-data="{ open: false }"
+    @keydown.escape.window="open = false"
+    class="{{ class|default:'' }}"
+>
+    <!-- Trigger -->
+    <div @click="open = true">
+        {{ trigger|safe }}
+    </div>
+
+    <!-- Alert Dialog Overlay and Content -->
+    <div 
+        x-show="open"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 z-50 bg-black/50"
+        style="display: none;"
+    >
+        <!-- Dialog Content -->
+        <div 
+            @click.stop
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-background rounded-lg border shadow-lg w-full max-w-[calc(100%-2rem)] p-6
+                {% if size == 'sm' %}sm:max-w-sm
+                {% elif size == 'lg' %}sm:max-w-lg
+                {% else %}sm:max-w-md{% endif %}"
+            role="alertdialog"
+            aria-modal="true"
+        >
+            <!-- Header -->
+            <div class="flex flex-col gap-2 text-center sm:text-left mb-4">
+                <h2 class="text-lg font-semibold">
+                    {{ title }}
+                </h2>
+                
+                <p class="text-sm text-muted-foreground">
+                    {{ description }}
+                </p>
+            </div>
+
+            <!-- Footer -->
+            <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <!-- Cancel Button -->
+                <button
+                    @click="open = false"
+                    type="button"
+                    class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                >
+                    {{ cancel_text }}
+                </button>
+                
+                <!-- Action Button -->
+                <button
+                    @click="open = false; {% if action_onclick %}{{ action_onclick|safe }}{% endif %}"
+                    type="button"
+                    class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50
+                        {% if action_variant == 'default' %}bg-primary text-primary-foreground hover:bg-primary/90
+                        {% elif action_variant == 'destructive' %}bg-destructive text-destructive-foreground hover:bg-destructive/90
+                        {% else %}bg-destructive text-destructive-foreground hover:bg-destructive/90{% endif %}"
+                >
+                    {{ action_text }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endwith %}

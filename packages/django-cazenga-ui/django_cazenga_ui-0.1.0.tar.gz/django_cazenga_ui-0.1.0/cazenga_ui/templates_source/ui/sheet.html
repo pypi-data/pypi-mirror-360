@@ -1,0 +1,126 @@
+<!--
+Componente: Sheet
+Uso: include "components/sheet.html" with trigger_text="Abrir Sheet" title="Título" content="Conteúdo"
+
+Parâmetros:
+- trigger_text: Texto do botão trigger (obrigatório)
+- trigger_variant: Variante do botão trigger (padrão: default)
+- title: Título do sheet (opcional)
+- description: Descrição do sheet (opcional)
+- content: Conteúdo HTML do sheet (opcional)
+- footer: Conteúdo HTML do footer (opcional)
+- side: top, right, bottom, left (padrão: right)
+- size: sm, md, lg, xl, full (padrão: md)
+- class: Classes CSS adicionais (opcional)
+- close_button: true/false - mostrar botão fechar (padrão: true)
+
+Exemplo:
+include "components/sheet.html" with 
+    trigger_text="Configurações" 
+    title="Configurações do Sistema"
+    description="Ajuste suas preferências"
+    content="<p>Conteúdo das configurações...</p>"
+    side="right"
+    size="lg"
+-->
+{% with side=side|default:"right" size=size|default:"md" trigger_variant=trigger_variant|default:"default" close_button=close_button|default:True %}
+<div 
+    x-data="{ open: false }"
+    @keydown.escape.window="open = false"
+    class="{{ class|default:'' }}"
+>
+    <!-- Trigger Button -->
+    <button
+        @click="open = true"
+        type="button"
+        class="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50
+            {% if trigger_variant == 'default' %}bg-primary text-primary-foreground hover:bg-primary/90
+            {% elif trigger_variant == 'destructive' %}bg-destructive text-destructive-foreground hover:bg-destructive/90
+            {% elif trigger_variant == 'outline' %}border border-input bg-background hover:bg-accent hover:text-accent-foreground
+            {% elif trigger_variant == 'secondary' %}bg-secondary text-secondary-foreground hover:bg-secondary/80
+            {% elif trigger_variant == 'ghost' %}hover:bg-accent hover:text-accent-foreground
+            {% elif trigger_variant == 'link' %}text-primary underline-offset-4 hover:underline
+            {% else %}bg-primary text-primary-foreground hover:bg-primary/90{% endif %}"
+    >
+        {{ trigger_text }}
+    </button>
+
+    <!-- Sheet Overlay and Content -->
+    <div 
+        x-show="open"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        @click="open = false"
+        class="fixed inset-0 z-50 bg-black/50"
+        style="display: none;"
+    >
+        <!-- Sheet Panel -->
+        <div 
+            @click.stop
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="{% if side == 'right' %}translate-x-full{% elif side == 'left' %}-translate-x-full{% elif side == 'top' %}-translate-y-full{% elif side == 'bottom' %}translate-y-full{% endif %}"
+            x-transition:enter-end="translate-x-0 translate-y-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="translate-x-0 translate-y-0"
+            x-transition:leave-end="{% if side == 'right' %}translate-x-full{% elif side == 'left' %}-translate-x-full{% elif side == 'top' %}-translate-y-full{% elif side == 'bottom' %}translate-y-full{% endif %}"
+            class="fixed bg-background flex flex-col shadow-lg
+                {% if side == 'right' %}inset-y-0 right-0 h-full border-l
+                    {% if size == 'sm' %}w-80{% elif size == 'lg' %}w-96{% elif size == 'xl' %}w-1/2{% elif size == 'full' %}w-full{% else %}w-3/4 sm:max-w-sm{% endif %}
+                {% elif side == 'left' %}inset-y-0 left-0 h-full border-r
+                    {% if size == 'sm' %}w-80{% elif size == 'lg' %}w-96{% elif size == 'xl' %}w-1/2{% elif size == 'full' %}w-full{% else %}w-3/4 sm:max-w-sm{% endif %}
+                {% elif side == 'top' %}inset-x-0 top-0 border-b
+                    {% if size == 'sm' %}h-1/4{% elif size == 'lg' %}h-3/4{% elif size == 'xl' %}h-5/6{% elif size == 'full' %}h-full{% else %}h-1/2{% endif %}
+                {% elif side == 'bottom' %}inset-x-0 bottom-0 border-t
+                    {% if size == 'sm' %}h-1/4{% elif size == 'lg' %}h-3/4{% elif size == 'xl' %}h-5/6{% elif size == 'full' %}h-full{% else %}h-1/2{% endif %}
+                {% endif %}"
+        >
+            <!-- Close Button -->
+            {% if close_button %}
+                <button
+                    @click="open = false"
+                    class="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+                >
+                    <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <span class="sr-only">Fechar</span>
+                </button>
+            {% endif %}
+
+            <!-- Header -->
+            {% if title or description %}
+                <div class="flex flex-col gap-1.5 p-6 {% if close_button %}pr-12{% endif %}">
+                    {% if title %}
+                        <h2 class="text-lg font-semibold text-foreground">{{ title }}</h2>
+                    {% endif %}
+                    {% if description %}
+                        <p class="text-sm text-muted-foreground">{{ description }}</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <!-- Content -->
+            <div class="flex-1 overflow-y-auto p-6 {% if not title and not description %}{% if close_button %}pt-12{% endif %}{% endif %}">
+                {% if content %}
+                    {{ content|safe }}
+                {% else %}
+                    {% block sheet_content %}
+                        <p class="text-muted-foreground">Conteúdo do sheet...</p>
+                    {% endblock %}
+                {% endif %}
+            </div>
+
+            <!-- Footer -->
+            {% if footer %}
+                <div class="mt-auto flex flex-col gap-2 p-6 border-t">
+                    {{ footer|safe }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endwith %}
