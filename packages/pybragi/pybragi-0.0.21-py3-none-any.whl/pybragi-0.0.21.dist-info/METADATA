@@ -1,0 +1,120 @@
+Metadata-Version: 2.4
+Name: pybragi
+Version: 0.0.21
+Summary: pybragi is web server framework for fast&simple usage
+Author-email: DeJoker <localjie@163.com>
+License-Expression: Apache-2.0
+Project-URL: homepage, https://github.com/DeJoker/pybragi
+Project-URL: Repository, https://github.com/DeJoker/pybragi
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+Requires-Dist: pydantic
+Requires-Dist: ifaddr
+Requires-Dist: psutil>=5.9.1
+Requires-Dist: tornado>=6.0.2
+Requires-Dist: pymongo>=3.4.0
+Requires-Dist: kafka-python>=2.0.2
+Requires-Dist: requests>=2.22.0
+Requires-Dist: prometheus_client>=0.14.1
+Requires-Dist: numpy<2,>=1.25
+Requires-Dist: uvicorn
+Requires-Dist: nvidia-ml-py
+Requires-Dist: readerwriterlock
+Requires-Dist: pycryptodome
+Requires-Dist: websocket-client>=1.8.0
+Requires-Dist: tqdm
+Requires-Dist: pycurl
+Provides-Extra: audio
+Requires-Dist: av>=12.0.0; extra == "audio"
+Requires-Dist: librosa>=0.9.2; extra == "audio"
+Requires-Dist: scipy>=1.13.0; extra == "audio"
+Requires-Dist: soundfile>=0.12.1; extra == "audio"
+Provides-Extra: image
+Requires-Dist: opencv-python>=4.4.0; extra == "image"
+Requires-Dist: pillow; extra == "image"
+Provides-Extra: zy
+Requires-Dist: tos>=2.8.1; extra == "zy"
+Requires-Dist: volcengine>=1.0.174; extra == "zy"
+Requires-Dist: facebook-scribe==2.0.post1; extra == "zy"
+Requires-Dist: thrift; extra == "zy"
+Provides-Extra: test
+Requires-Dist: jsonlines; extra == "test"
+Requires-Dist: matplotlib; extra == "test"
+Requires-Dist: ujson>=1.35; extra == "test"
+Provides-Extra: all
+Requires-Dist: pybragi[image]; extra == "all"
+Requires-Dist: pybragi[zy]; extra == "all"
+Requires-Dist: pybragi[audio]; extra == "all"
+Provides-Extra: dev
+Requires-Dist: pybragi[all]; extra == "dev"
+Requires-Dist: pybragi[test]; extra == "dev"
+Dynamic: license-file
+
+
+# pybragi is web server framework
+- tronado http&websocket impl
+  - flask way
+  - fastapi way
+- service-discovery and service-register
+  - mongo way
+  - consul way
+- graceful shutdown
+- prometheus metrics
+- benchmark tools for openai_api and http_api
+- kafka producer and consumer
+  - sliding window 
+
+
+
+## commandline
+
+```bash
+# simple server
+python -m pybragi.base.base_handler --port=1122      
+
+# system info     eth0 ipv4/disk/memory/gpu
+python -m pybragi.base.ps
+
+```
+
+```bash
+# http prof
+python -m pybragi.bench.http_prof --url http://10.121.0.11:18000/healthcheck --num=100 --qps=40
+python -m pybragi.bench.http_prof --url http://10.121.0.11:19000/v1/chat/completions --method=POST -H "Content-Type: application/json" --body='{"model": "Qwen3-235B-A22B", "messages": [{"role": "user", "content": "你好"}], "stream": false}' --num=10 --qps=3
+
+
+# llm openai
+python -m pybragi.bench.llm_openai --qps=2 --url=http://localhost:30000 --api-key=aaabbb --jsonl-file=https://xxx.com/queue-2025-05-12.jsonl --num=10 --model=qwen3_235b_0419_25k  --metrics-dir='/home/cxj/self/py3_server/output'
+
+python -m pybragi.bench.llm_openai --show-metrics-pkl='/output/llm_openai_2025-05-12T15-48-27.pkl'
+
+
+| 统计类型 | prompt_len | output_len | 端到端 | ttft | itl |
+|---------|-----------|-----------|-------|------|-----|
+| 平均值 | 8172.300 | 235.500 | 5170.644 | 306.232 | 95.763 |
+| 中位数 | 8327.000 | 237.500 | 5211.785 | 305.749 | 89.392 |
+| 99分位 | 9312.820 | 270.640 | 6036.196 | 339.780 | 125.736 |
+| 最大值 | 9331.000 | 271.000 | 6069.074 | 340.317 | 127.126 |
+
+
+
+# server dao_server_discovery
+
+python -m pybragi.server.dao_server_discovery --mongo-url "mongodb://aa:bb@127.0.0.1:3717/?authSource=llm&retryWrites=true" --mongo-db=llm --action=show_type --model-type=openai
+
+# --mongo-db=llm --action=show --model-type=openai # openai同步流式调用
+
+# --mongo-db=llm --action=show_type_online # api+回调
+# --mongo-db=llm --action=show_type_online --model-type=openai # openai同步流式调用
+
+# --mongo-db=llm --action=show_type # api+回调
+# --mongo-db=llm --action=show_type --model-type=openai # openai同步流式调用
+
+# --mongo-db=llm --action=show_all_online # 完全所有
+# --mongo-db=llm --action=show_all # 完全所有
+
+
+
+```
