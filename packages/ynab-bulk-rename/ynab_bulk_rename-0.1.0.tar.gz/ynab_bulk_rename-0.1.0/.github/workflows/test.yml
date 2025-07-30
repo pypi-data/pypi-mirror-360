@@ -1,0 +1,51 @@
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install pytest
+    
+    - name: Test imports
+      run: |
+        python -c "from ynab_bulk_rename import YNABBulkRename; print('Import successful')"
+        python -c "from ynab_bulk_rename import main; print('Main function import successful')"
+    
+    - name: Test CLI help
+      run: |
+        python -m ynab_bulk_rename --help
+    
+    - name: Test version
+      run: |
+        python -m ynab_bulk_rename --version
+    
+    - name: Build package
+      run: |
+        pip install build
+        python -m build
+    
+    - name: Test installation from built package
+      run: |
+        pip install dist/*.whl
+        ynab-bulk-rename --version 
