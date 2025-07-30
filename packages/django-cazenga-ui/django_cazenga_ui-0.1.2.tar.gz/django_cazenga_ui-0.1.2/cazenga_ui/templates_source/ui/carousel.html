@@ -1,0 +1,143 @@
+<!--
+Componente: Carousel
+Uso: include "components/carousel.html" with images=image_list
+
+Parâmetros:
+- images: Lista de URLs de imagens (obrigatório) - ex: ["img1.jpg", "img2.jpg", "img3.jpg"]
+- titles: Lista de títulos (opcional) - ex: ["Slide 1", "Slide 2", "Slide 3"]
+- descriptions: Lista de descrições (opcional) - ex: ["Descrição 1", "Descrição 2", "Descrição 3"]
+- auto_play: true/false - reprodução automática (padrão: false)
+- auto_play_interval: Intervalo em ms para auto play (padrão: 5000)
+- show_dots: true/false - mostrar indicadores (padrão: true)
+- show_arrows: true/false - mostrar setas de navegação (padrão: true)
+- class: Classes CSS adicionais (opcional)
+
+Exemplo:
+include "components/carousel.html" with 
+    images=carousel_images
+    titles=carousel_titles
+    auto_play=True
+
+Onde:
+- carousel_images = ["img1.jpg", "img2.jpg", "img3.jpg"]
+- carousel_titles = ["Slide 1", "Slide 2", "Slide 3"]
+-->
+{% with auto_play=auto_play|default:False auto_play_interval=auto_play_interval|default:5000 show_dots=show_dots|default:True show_arrows=show_arrows|default:True %}
+<div 
+    x-data="{ 
+        currentIndex: 0,
+        totalSlides: {{ images|length }},
+        autoPlay: {{ auto_play|yesno:'true,false' }},
+        autoPlayInterval: {{ auto_play_interval }},
+        autoPlayTimer: null,
+        
+        goToSlide(index) {
+            this.currentIndex = index;
+        },
+        
+        goToPrevious() {
+            this.currentIndex = this.currentIndex === 0 ? this.totalSlides - 1 : this.currentIndex - 1;
+        },
+        
+        goToNext() {
+            this.currentIndex = this.currentIndex === this.totalSlides - 1 ? 0 : this.currentIndex + 1;
+        },
+        
+        startAutoPlay() {
+            if (this.autoPlay) {
+                this.autoPlayTimer = setInterval(() => {
+                    this.goToNext();
+                }, this.autoPlayInterval);
+            }
+        },
+        
+        stopAutoPlay() {
+            if (this.autoPlayTimer) {
+                clearInterval(this.autoPlayTimer);
+                this.autoPlayTimer = null;
+            }
+        },
+        
+        init() {
+            this.startAutoPlay();
+        }
+    }"
+    @mouseenter="stopAutoPlay()"
+    @mouseleave="startAutoPlay()"
+    class="relative {{ class|default:'' }}"
+>
+    <!-- Carousel Container -->
+    <div class="overflow-hidden rounded-lg">
+        <div 
+            class="flex transition-transform duration-500 ease-in-out"
+            :style="{ transform: `translateX(-${currentIndex * 100}%)` }"
+        >
+            {% for image in images %}
+                <div class="w-full flex-shrink-0 relative">
+                    <img 
+                        src="{{ image }}" 
+                        alt="{% if titles and forloop.counter0 < titles|length %}{% for title in titles %}{% if forloop.counter0 == forloop.parentloop.counter0 %}{{ title }}{% endif %}{% endfor %}{% else %}Slide {{ forloop.counter }}{% endif %}"
+                        class="w-full h-64 object-cover"
+                    >
+                    {% if titles and forloop.counter0 < titles|length or descriptions and forloop.counter0 < descriptions|length %}
+                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                            {% if titles and forloop.counter0 < titles|length %}
+                                <h3 class="text-white font-semibold text-lg mb-1">
+                                    {% for title in titles %}
+                                        {% if forloop.counter0 == forloop.parentloop.counter0 %}
+                                            {{ title }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </h3>
+                            {% endif %}
+                            {% if descriptions and forloop.counter0 < descriptions|length %}
+                                <p class="text-white/90 text-sm">
+                                    {% for description in descriptions %}
+                                        {% if forloop.counter0 == forloop.parentloop.counter0 %}
+                                            {{ description }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Navigation Arrows -->
+    {% if show_arrows %}
+        <button
+            @click="goToPrevious()"
+            class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-black rounded-full p-2 shadow-lg transition-all"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m15 18-6-6 6-6"/>
+            </svg>
+        </button>
+        
+        <button
+            @click="goToNext()"
+            class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white text-black rounded-full p-2 shadow-lg transition-all"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m9 18 6-6-6-6"/>
+            </svg>
+        </button>
+    {% endif %}
+    
+    <!-- Dots Indicators -->
+    {% if show_dots %}
+        <div class="flex justify-center gap-2 mt-4">
+            {% for image in images %}
+                <button
+                    @click="goToSlide({{ forloop.counter0 }})"
+                    :class="{ 'bg-primary': currentIndex === {{ forloop.counter0 }}, 'bg-muted': currentIndex !== {{ forloop.counter0 }} }"
+                    class="w-2 h-2 rounded-full transition-colors"
+                ></button>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endwith %}

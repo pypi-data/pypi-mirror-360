@@ -1,0 +1,115 @@
+<!-- 
+Componente: Button
+Uso: include "components/button.html" with text="Clique aqui" variant="primary" size="md"
+
+Parâmetros:
+- text: Texto do botão (obrigatório)
+- variant: default, destructive, outline, secondary, ghost, link (padrão: default)
+- size: default, sm, lg, icon (padrão: default)
+- type: button, submit, reset (padrão: button)
+- disabled: true/false (padrão: false)
+- icon: HTML do ícone (opcional)
+- icon_position: left, right (padrão: left)
+- href: URL para link (transforma em <a>) (opcional)
+- target: _blank, _self, etc. (para links) (opcional)
+- class: Classes CSS adicionais (opcional)
+- onclick: Função JavaScript (opcional)
+- x_data: Dados Alpine.js (opcional)
+- x_click: Ação Alpine.js no click (opcional)
+-->
+
+{% with variant=variant|default:"default" size=size|default:"default" type=type|default:"button" icon_position=icon_position|default:"left" disabled=disabled|default:False %}
+{% if href %}
+    <a
+        href="{{ href }}"
+        {% if target %}target="{{ target }}"{% endif %}
+        {% if disabled %}aria-disabled="true" tabindex="-1"{% endif %}
+        {% if x_data %}x-data="{{ x_data }}"{% endif %}
+        {% if x_click %}@click="{{ x_click }}"{% endif %}
+        {% if onclick %}onclick="{{ onclick }}"{% endif %}
+        class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-radius-md text-sm font-medium transition-all 
+            outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] 
+            aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive
+            [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0
+            {% if disabled %}pointer-events-none opacity-50{% endif %}
+            {% if variant == 'destructive' %}
+                bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60
+            {% elif variant == 'outline' %}
+                border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50
+            {% elif variant == 'secondary' %}
+                bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80
+            {% elif variant == 'ghost' %}
+                hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50
+            {% elif variant == 'link' %}
+                text-primary underline-offset-4 hover:underline
+            {% else %}
+                bg-primary text-primary-foreground shadow-xs hover:bg-primary/90
+            {% endif %}
+            {% if size == 'sm' %}
+                h-8 rounded-radius-sm gap-1.5 px-3 has-[>svg]:px-2.5
+            {% elif size == 'lg' %}
+                h-10 rounded-radius-md px-6 has-[>svg]:px-4
+            {% elif size == 'icon' %}
+                size-9 rounded-radius-md
+            {% else %}
+                h-9 px-4 py-2 has-[>svg]:px-3
+            {% endif %}
+            {{ class|default:'' }}"
+    >
+        {% if icon and icon_position == 'left' %}
+            <span class="shrink-0">{{ icon|safe }}</span>
+        {% endif %}
+        
+        {% if text %}{{ text }}{% endif %}
+        
+        {% if icon and icon_position == 'right' %}
+            <span class="shrink-0">{{ icon|safe }}</span>
+        {% endif %}
+    </a>
+{% else %}
+    <button
+        type="{{ type }}"
+        {% if disabled %}disabled{% endif %}
+        {% if x_data %}x-data="{{ x_data }}"{% endif %}
+        {% if x_click %}@click="{{ x_click }}"{% endif %}
+        {% if onclick %}onclick="{{ onclick }}"{% endif %}
+        class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-radius-md text-sm font-medium transition-all 
+            disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] 
+            aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive
+            [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0
+            {% if variant == 'destructive' %}
+                bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60
+            {% elif variant == 'outline' %}
+                border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50
+            {% elif variant == 'secondary' %}
+                bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80
+            {% elif variant == 'ghost' %}
+                hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50
+            {% elif variant == 'link' %}
+                text-primary underline-offset-4 hover:underline
+            {% else %}
+                bg-primary text-primary-foreground shadow-xs hover:bg-primary/90
+            {% endif %}
+            {% if size == 'sm' %}
+                h-8 rounded-radius-sm gap-1.5 px-3 has-[>svg]:px-2.5
+            {% elif size == 'lg' %}
+                h-10 rounded-radius-md px-6 has-[>svg]:px-4
+            {% elif size == 'icon' %}
+                size-9 rounded-radius-md
+            {% else %}
+                h-9 px-4 py-2 has-[>svg]:px-3
+            {% endif %}
+            {{ class|default:'' }}"
+    >
+        {% if icon and icon_position == 'left' %}
+            <span class="shrink-0">{{ icon|safe }}</span>
+        {% endif %}
+        
+        {% if text %}{{ text }}{% endif %}
+        
+        {% if icon and icon_position == 'right' %}
+            <span class="shrink-0">{{ icon|safe }}</span>
+        {% endif %}
+    </button>
+{% endif %}
+{% endwith %}

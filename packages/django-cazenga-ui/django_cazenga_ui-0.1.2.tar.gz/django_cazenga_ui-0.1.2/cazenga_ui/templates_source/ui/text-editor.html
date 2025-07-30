@@ -1,0 +1,415 @@
+{% load icon_tags %}
+
+<!-- Componente Text Editor -->
+<div class="text-editor-container {{ class|default:'' }}" 
+     x-data="textEditor()">
+
+    <!-- Toolbar -->
+    <div x-show="editable && hasToolbar" 
+         class="border border-border border-b-0 rounded-t-md bg-muted p-3">
+        <div class="flex flex-wrap items-center gap-2">
+            <!-- Botões de formatação básica -->
+            <div class="flex items-center gap-1">
+                <button type="button" 
+                        @click="execCommand('bold')"
+                        :class="{ 'bg-primary text-primary-foreground': isActive('bold') }"
+                        class="inline-flex items-center justify-center rounded-radius-sm text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                        title="Negrito (Ctrl+B)">
+                    {% include "components/icon.html" with name="font-bold" size="size-4" %}
+                </button>
+                
+                <button type="button" 
+                        @click="execCommand('italic')"
+                        :class="{ 'bg-primary text-primary-foreground': isActive('italic') }"
+                        class="inline-flex items-center justify-center rounded-radius-sm text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                        title="Itálico (Ctrl+I)">
+                    {% include "components/icon.html" with name="font-italic" size="size-4" %}
+                </button>
+                
+                <button type="button" 
+                        @click="execCommand('underline')"
+                        :class="{ 'bg-primary text-primary-foreground': isActive('underline') }"
+                        class="inline-flex items-center justify-center rounded-radius-sm text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                        title="Sublinhado (Ctrl+U)">
+                    {% include "components/icon.html" with name="underline" size="size-4" %}
+                </button>
+                
+                <button type="button" 
+                        @click="execCommand('strikeThrough')"
+                        :class="{ 'bg-primary text-primary-foreground': isActive('strikeThrough') }"
+                        class="inline-flex items-center justify-center rounded-radius-sm text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                        title="Riscado">
+                    {% include "components/icon.html" with name="strikethrough" size="size-4" %}
+                </button>
+            </div>
+
+            <!-- Separador -->
+            <div class="w-px h-6 bg-border"></div>
+
+            <!-- Cabeçalhos -->
+            <div class="flex items-center gap-1">
+                <select @change="execCommand('formatBlock', $event.target.value); $event.target.value = ''"
+                        class="h-8 px-2 text-sm border border-input bg-background rounded-radius-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                    <option value="">Estilo</option>
+                    <option value="<h1>">Título 1</option>
+                    <option value="<h2>">Título 2</option>
+                    <option value="<h3>">Título 3</option>
+                    <option value="<p>">Parágrafo</option>
+                </select>
+            </div>
+
+            <!-- Separador -->
+            <div class="w-px h-6 bg-border"></div>
+
+            <!-- Listas -->
+            <div class="flex items-center gap-1">
+                <button type="button" 
+                        @click="execCommand('insertUnorderedList')"
+                        :class="{ 'bg-primary text-primary-foreground': isActive('insertUnorderedList') }"
+                        class="inline-flex items-center justify-center rounded-radius-sm text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                        title="Lista com marcadores">
+                    {% include "components/icon.html" with name="list-bullet" size="size-4" %}
+                </button>
+                
+                <button type="button" 
+                        @click="execCommand('insertOrderedList')"
+                        :class="{ 'bg-primary text-primary-foreground': isActive('insertOrderedList') }"
+                        class="inline-flex items-center justify-center rounded-radius-sm text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                        title="Lista numerada">
+                    {% include "components/icon.html" with name="list-bullet" size="size-4" %}
+                </button>
+            </div>
+
+            <!-- Separador -->
+            <div class="w-px h-6 bg-border"></div>
+
+            <!-- Links e imagens -->
+            <div class="flex items-center gap-1">
+                <button type="button" 
+                        @click="insertLink()"
+                        class="inline-flex items-center justify-center rounded-radius-sm text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                        title="Inserir link">
+                    {% include "components/icon.html" with name="link-1" size="size-4" %}
+                </button>
+                
+                <button type="button" 
+                        @click="insertImage()"
+                        class="inline-flex items-center justify-center rounded-radius-sm text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                        title="Inserir imagem">
+                    {% include "components/icon.html" with name="image" size="size-4" %}
+                </button>
+            </div>
+
+            <!-- Separador -->
+            <div class="w-px h-6 bg-border"></div>
+
+            <!-- Utilitários -->
+            <div class="flex items-center gap-1">
+                <button type="button" 
+                        @click="execCommand('undo')"
+                        class="inline-flex items-center justify-center rounded-radius-sm text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                        title="Desfazer (Ctrl+Z)">
+                    {% include "components/icon.html" with name="arrow-left" size="size-4" %}
+                </button>
+                
+                <button type="button" 
+                        @click="execCommand('redo')"
+                        class="inline-flex items-center justify-center rounded-radius-sm text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                        title="Refazer (Ctrl+Y)">
+                    {% include "components/icon.html" with name="arrow-right" size="size-4" %}
+                </button>
+            </div>
+
+            <!-- Contador de palavras (se habilitado) -->
+            <div x-show="wordCount" class="ml-auto text-sm text-muted-foreground">
+                <span x-text="getWordCount()"></span> palavras
+            </div>
+        </div>
+    </div>
+
+    <!-- Área do Editor -->
+    <div class="relative {{ height|default:'h-64' }}">
+        <!-- Editor WYSIWYG -->
+        <div x-show="mode === 'wysiwyg'"
+             class="w-full h-full border border-border rounded-b-md"
+             :class="{ 'rounded-md': !hasToolbar, 'focus-within:ring-2 focus-within:ring-ring': editable }">
+            <div contenteditable="{{ editable|default:'true'|yesno:'true,false' }}"
+                 x-ref="editor"
+                 @input="updateContent"
+                 @focus="onFocus"
+                 @blur="onBlur"
+                 dir="ltr"
+                 data-placeholder="{{ placeholder|default:'Digite aqui...' }}"
+                 class="w-full h-full p-4 focus:outline-none overflow-auto prose prose-sm max-w-none text-foreground editor-content"
+                 style="min-height: inherit;">
+            </div>
+        </div>
+
+        <!-- Editor de Código/Markdown -->
+        <div x-show="mode !== 'wysiwyg'" class="relative h-full">
+            <textarea x-ref="codeEditor"
+                      x-model="content"
+                      @input="updateContent"
+                      :placeholder="placeholder"
+                      :readonly="!editable"
+                      dir="ltr"
+                      class="w-full h-full p-4 font-mono text-sm border border-border rounded-b-md focus:outline-none focus:ring-2 focus:ring-ring resize-none bg-background text-foreground"
+                      :class="{ 'rounded-md': !hasToolbar, 'bg-gray-900 text-green-400': mode === 'code' }"></textarea>
+        </div>
+
+        <!-- Overlay para modo foco -->
+        <div x-show="focusMode && !focused" 
+             class="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center cursor-pointer rounded-md"
+             @click="$refs.editor ? $refs.editor.focus() : $refs.codeEditor.focus()">
+            <div class="text-center">
+                <div class="text-4xl mb-2">{% include "components/icon.html" with name="pencil-1" size="size-8" %}</div>
+                <p class="text-muted-foreground">Clique para começar a escrever...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra de status -->
+    <div x-show="editable && (wordCount || characterCount || autoSave)" 
+         class="flex items-center justify-between px-4 py-2 bg-muted border border-border border-t-0 rounded-b-md text-sm text-muted-foreground">
+        <div class="flex items-center space-x-4">
+            <span x-show="wordCount" x-text="`${getWordCount()} palavras`"></span>
+            <span x-show="characterCount" x-text="`${getCharacterCount()} caracteres`"></span>
+            <span x-show="wordCount" x-text="`~${Math.ceil(getWordCount() / 200)} min de leitura`"></span>
+        </div>
+        <div class="flex items-center space-x-2">
+            <div x-show="autoSave" class="flex items-center space-x-1">
+                <div x-show="saving" class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                <div x-show="saved && !saving" class="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span x-text="saving ? 'Salvando...' : (saved ? 'Salvo automaticamente' : '')"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comentários colaborativos -->
+    <div x-show="collaborative && comments.length > 0" class="mt-4 space-y-3">
+        <h4 class="font-medium text-sm text-foreground flex items-center gap-2">
+            {% include "components/icon.html" with name="chat-bubble" size="size-4" %}
+            Comentários
+        </h4>
+        <template x-for="comment in comments" :key="comment.id">
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md p-3">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-medium text-sm" x-text="comment.author"></span>
+                    <span class="text-xs text-muted-foreground" x-text="comment.time"></span>
+                </div>
+                <p class="text-sm" x-text="comment.text"></p>
+            </div>
+        </template>
+    </div>
+</div>
+
+<script>
+function textEditor() {
+    return {
+        // Configurações vindas do template
+        content: '{{ content|default:""|escapejs }}',
+        editable: {{ editable|default:'true'|yesno:'true,false' }},
+        mode: '{{ mode|default:"wysiwyg" }}',
+        placeholder: '{{ placeholder|default:"Digite aqui..." }}',
+        height: '{{ height|default:"h-64" }}',
+        wordCount: {{ word_count|default:'false'|yesno:'true,false' }},
+        characterCount: {{ character_count|default:'false'|yesno:'true,false' }},
+        autoSave: {{ auto_save|default:'false'|yesno:'true,false' }},
+        minimalUI: {{ minimal_ui|default:'false'|yesno:'true,false' }},
+        focusMode: {{ focus_mode|default:'false'|yesno:'true,false' }},
+        collaborative: {{ collaborative|default:'false'|yesno:'true,false' }},
+        
+        // Estados internos
+        focused: false,
+        saving: false,
+        saved: false,
+        hasToolbar: true,
+        comments: [],
+        
+        init() {
+            // Configurar conteúdo inicial
+            if (this.$refs.editor) {
+                if (this.content) {
+                    this.$refs.editor.innerHTML = this.content;
+                }
+                this.updatePlaceholder();
+            }
+            
+            // Auto-save
+            if (this.autoSave) {
+                this.$watch('content', () => {
+                    this.autoSaveContent();
+                });
+            }
+            
+            // Comentários colaborativos de exemplo
+            if (this.collaborative) {
+                this.comments = [
+                    { 
+                        id: 1, 
+                        author: 'Ana Silva', 
+                        text: 'Ótimo início! Que tal expandir essa seção?', 
+                        time: 'há 5 min' 
+                    },
+                    { 
+                        id: 2, 
+                        author: 'João Santos', 
+                        text: 'Concordo com a Ana. Podemos adicionar exemplos aqui.', 
+                        time: 'há 2 min' 
+                    }
+                ];
+            }
+        },
+        
+        updateContent() {
+            if (this.mode === 'wysiwyg' && this.$refs.editor) {
+                this.content = this.$refs.editor.innerHTML;
+                this.updatePlaceholder();
+            }
+        },
+        
+        updatePlaceholder() {
+            if (this.$refs.editor) {
+                const isEmpty = this.$refs.editor.innerHTML.trim() === '' || 
+                               this.$refs.editor.innerHTML === '<br>' ||
+                               this.$refs.editor.innerHTML === '<div><br></div>' ||
+                               this.$refs.editor.innerHTML === '<p><br></p>';
+                
+                if (isEmpty) {
+                    this.$refs.editor.classList.add('editor-empty');
+                    this.$refs.editor.innerHTML = '';
+                } else {
+                    this.$refs.editor.classList.remove('editor-empty');
+                }
+            }
+        },
+        
+        onFocus() {
+            this.focused = true;
+            if (this.$refs.editor) {
+                this.$refs.editor.classList.remove('editor-empty');
+            }
+        },
+        
+        onBlur() {
+            this.focused = false;
+            this.updatePlaceholder();
+        },
+        
+        execCommand(command, value = null) {
+            if (!this.editable || this.mode !== 'wysiwyg') return;
+            
+            document.execCommand(command, false, value);
+            this.updateContent();
+            this.$refs.editor.focus();
+        },
+        
+        isActive(command) {
+            if (!this.editable || this.mode !== 'wysiwyg') return false;
+            
+            try {
+                return document.queryCommandState(command);
+            } catch (e) {
+                return false;
+            }
+        },
+        
+        insertLink() {
+            const url = prompt('Digite a URL do link:');
+            if (url) {
+                this.execCommand('createLink', url);
+            }
+        },
+        
+        insertImage() {
+            const url = prompt('Digite a URL da imagem:');
+            if (url) {
+                this.execCommand('insertImage', url);
+            }
+        },
+        
+        getWordCount() {
+            const text = this.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            return text ? text.split(' ').length : 0;
+        },
+        
+        getCharacterCount() {
+            return this.content.replace(/<[^>]*>/g, '').length;
+        },
+        
+        autoSaveContent() {
+            this.saving = true;
+            setTimeout(() => {
+                this.saving = false;
+                this.saved = true;
+                setTimeout(() => {
+                    this.saved = false;
+                }, 3000);
+            }, 1000);
+        }
+    }
+}
+</script>
+
+<style>
+/* Estilização do placeholder para contenteditable */
+.editor-content.editor-empty:before {
+    content: attr(data-placeholder);
+    color: hsl(var(--muted-foreground));
+    pointer-events: none;
+    position: absolute;
+    opacity: 0.7;
+}
+
+.editor-content.editor-empty:focus:before {
+    opacity: 0.5;
+}
+
+/* Garantir direção LTR */
+.editor-content {
+    direction: ltr;
+    text-align: left;
+}
+
+/* Melhorar aparência do editor */
+.editor-content {
+    outline: none;
+}
+
+.editor-content:focus {
+    outline: none;
+}
+
+/* Estilização de listas dentro do editor */
+.editor-content ul, .editor-content ol {
+    padding-left: 1.5rem;
+    margin: 0.5rem 0;
+}
+
+.editor-content li {
+    margin: 0.25rem 0;
+}
+
+/* Estilização de links dentro do editor */
+.editor-content a {
+    color: hsl(var(--primary));
+    text-decoration: underline;
+}
+
+/* Estilização de imagens dentro do editor */
+.editor-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: calc(var(--radius) - 2px);
+    margin: 0.5rem 0;
+}
+
+/* Garantir que o texto apareça corretamente */
+.editor-content p {
+    margin: 0.5rem 0;
+}
+
+.editor-content h1, .editor-content h2, .editor-content h3 {
+    margin: 1rem 0 0.5rem 0;
+}
+</style> 
