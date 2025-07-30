@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "comando"
+dynamic = ["version"]
+description = "A next-generation modeling framework for component-oriented modeling and optimization for nonlinear design and operation of integrated energy systems"
+authors = [
+        { name = "Marco Langiu", email = "marco.langiu@rwth-aachen.de" }
+]
+license = {file = "LICENSE"}
+readme = "README.md"
+classifiers=[
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.7"
+dependencies = [
+    "pandas",
+    "sympy>=1.6"
+    ]
+
+[project.optional-dependencies]
+symengine = ["symengine"]
+linearization = ["scipy", "scikit-learn"]
+visualization = ["matplotlib"]
+pyomo = ["pyomo>=6"]
+gurobi = ["gurobipy"]
+dev = ["pytest", "pytest-cov", "sphinx", "pypandoc", "sphinx_rtd_theme", "sphinx-math-dollar"]
+test = ["comando[dev]", "comando[pyomo]", "comando[linearization]", "comando[gurobipy]"]
+all = [
+    "symengine",
+    "scipy",
+    "scikit-learn",
+    "matplotlib",
+    "pyomo>=6",
+    "pytest",
+    "pytest-cov",
+    "sphinx",
+    "pypandoc",
+    "sphinx_rtd_theme",
+    "sphinx-math-dollar"
+]
+
+[project.urls]
+Homepage = "https://jugit.fz-juelich.de/iek-10/core-projects/comando/comando"
+Documentation = "https://comando.readthedocs.io/en/latest/"
+Issues = "https://jugit.fz-juelich.de/iek-10/public/optimization/comando/-/issues"
+
+[tool.setuptools.packages.find]
+include = ["comando", "comando.*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "comando.__version__"}
