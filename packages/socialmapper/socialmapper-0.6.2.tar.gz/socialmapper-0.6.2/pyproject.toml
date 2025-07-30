@@ -1,0 +1,181 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "socialmapper"
+version = "0.6.2"
+description = "An open-source Python toolkit that helps understand community connections through mapping demographics and access to points of interest"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+license = {file = "LICENSE"}
+authors = [
+    {name = "mihiarc", email = "mihiarc@example.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: GIS",
+]
+keywords = ["gis", "mapping", "demographics", "census", "OpenStreetMap"]
+dependencies = [
+    "geopandas>=1.1.0",  # Latest version as of 2025
+    "pandas>=2.3.0",  # Latest version as of June 2025
+    "numpy>=2.1.0,<2.2",  # Constrained by numba compatibility
+    "requests>=2.32.4",  # Latest version as of Jun 2025
+    "python-dotenv>=1.1.0",  # Latest version as of Mar 2025
+    "scipy>=1.15.3",  # Latest version as of May 2025
+    "overpy>=0.7",  # Latest version as of 2025
+    "osmnx>=2.0.3",  # Latest version as of 2025
+    "shapely>=2.0.0",
+    "networkx>=3.5",  # Latest version as of May 2025
+    "cenpy>=1.0.0",  # Latest available as of May 2025
+    "mapclassify>=2.4.0",
+    "pyyaml>=6.0",
+    "pyogrio>=0.11.0",  # Latest version as of 2025
+    "pyarrow>=12.0.0",  # Latest as of Apr 2025
+    "tqdm>=4.67.1",  # Latest version as of 2025
+    "httpx>=0.28.1",  # Latest version as of Dec 2024
+    "ratelimit",
+    "psutil>=7.0.0",  # Latest version as of Feb 2025
+    "pyproj>=3.7.1",  # Latest version as of Feb 2025
+    "numba>=0.61.2",  # Latest version as of 2025
+    "polars>=0.20.0",
+    "pydantic>=2.11.7",  # Latest version as of 2025
+    "rich>=14.0.0",  # Latest version as of Mar 2025
+    "matplotlib>=3.10.3",  # Latest version as of May 2025
+    "contextily>=1.6.2",  # Latest version as of 2025
+    "mkdocs>=1.6.1",  # Latest version as of 2025
+    "mkdocs-material-extensions>=1.3.1",  # Fixed typo in package name
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.4.0",  # Latest version as of Jun 2025
+    "ty>=0.0.1a10",  # Ultra-fast Rust-based type checker from Astral
+    "ruff>=0.12.0",  # Latest version as of Jun 2025
+]
+ui = [
+    "streamlit>=1.46.0",  # Latest version as of June 2025
+    "streamlit-folium>=0.25.0",  # Latest version as of April 2025
+]
+
+[project.urls]
+"Homepage" = "https://github.com/mihiarc/socialmapper"
+"Bug Tracker" = "https://github.com/mihiarc/socialmapper/issues"
+
+[project.scripts]
+socialmapper = "socialmapper.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["socialmapper"]
+include = [
+    "socialmapper/data/neighbors/*.parquet",
+]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"socialmapper/data" = "socialmapper/data"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+fix = true
+
+[tool.ruff.lint]
+# Enable comprehensive rule sets for 2025 best practices
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings  
+    "F",      # Pyflakes
+    "I",      # isort (import sorting)
+    "N",      # pep8-naming
+    "D",      # pydocstyle (docstring conventions)
+    "UP",     # pyupgrade (modernize Python syntax)
+    "B",      # flake8-bugbear (common bugs)
+    "C4",     # flake8-comprehensions (list/dict comprehensions)
+    "PIE",    # flake8-pie (misc best practices)
+    "PL",     # Pylint
+    "RUF",    # Ruff-specific rules
+    "SIM",    # flake8-simplify
+    "TCH",    # flake8-type-checking (type import optimization)
+    "PTH",    # flake8-use-pathlib (prefer pathlib over os.path)
+    "FURB",   # refurb (modernize code patterns)
+    "PERF",   # Perflint (performance anti-patterns)
+    "LOG",    # flake8-logging (logging best practices)
+]
+
+ignore = [
+    "E501",   # Line too long - handled by formatter
+    "D100",   # Missing docstring in public module
+    "D104",   # Missing docstring in public package
+    "D107",   # Missing docstring in __init__
+    "PLR0913", # Too many arguments to function call
+    "PLR0912", # Too many branches
+    "PLR0915", # Too many statements
+    "B008",   # Do not perform function calls in argument defaults (common in FastAPI/typer)
+]
+
+# Modern pydocstyle configuration
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+# Per-file ignores for common patterns
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403", "E402"]  # Allow unused imports and import ordering in __init__.py
+"tests/*" = ["D", "PLR2004", "S101"]     # Disable docstring and assert rules in tests
+"examples/*" = ["D", "T201"]             # Allow print statements in examples
+"scripts/*" = ["D", "T201"]              # Allow print statements in scripts
+
+# Import sorting configuration (replaces isort)
+[tool.ruff.lint.isort]
+known-first-party = ["socialmapper"]
+force-single-line = false
+split-on-trailing-comma = true
+
+# Modern formatting configuration (replaces Black)
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = 80
+
+[tool.pytest.ini_options]
+markers = [
+    "unit: marks tests as unit tests (fast, isolated)",
+    "integration: marks tests as integration tests (slower, may use external resources)",
+    "slow: marks tests as slow running (may take several seconds)",
+    "api: marks tests for new API components",
+    "async: marks tests that use async/await",
+    "asyncio: marks tests that use asyncio",
+    "performance: marks tests that measure performance",
+    "benchmark: marks tests that measure performance benchmarks",
+    "regression: marks tests that prevent known regressions",
+    "external: marks tests that require external services (network, APIs)",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::FutureWarning:pandas.*",
+    "ignore::UserWarning:geopandas.*",
+]
+
+# ty configuration (ultra-fast Rust-based type checker)
+# Note: ty is pre-alpha and configuration is minimal
+# Most configuration is done via command-line flags
