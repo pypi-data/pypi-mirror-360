@@ -1,0 +1,181 @@
+# MCP Image Reader Server
+
+[![PyPI version](https://badge.fury.io/py/mcp-image-reader.svg)](https://badge.fury.io/py/mcp-image-reader)
+[![Python Support](https://img.shields.io/pypi/pyversions/mcp-image-reader.svg)](https://pypi.org/project/mcp-image-reader/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub](https://img.shields.io/github/stars/thanhma/mcp-image-reader?style=social)](https://github.com/thanhma/mcp-image-reader)
+
+MCP server cung cấp các công cụ để đọc và phân tích nội dung từ ảnh sử dụng OCR và AI vision.
+
+## 🚀 Cài đặt nhanh với uvx
+
+```bash
+# Cài đặt và chạy trực tiếp
+uvx mcp-image-reader
+
+# Hoặc cài đặt global
+pip install mcp-image-reader
+```
+
+## ✨ Tính năng
+
+- **🔤 Đọc text từ ảnh**: Sử dụng Tesseract OCR để trích xuất text từ các định dạng ảnh phổ biến
+- **📊 Phân tích bảng**: Phát hiện và trích xuất dữ liệu từ bảng trong ảnh
+- **🖼️ Mô tả ảnh**: Phân tích và mô tả nội dung tổng quát của ảnh
+- **🎯 Phát hiện đối tượng**: Nhận diện các đối tượng và thành phần trong ảnh
+- **⚡ Xử lý ảnh**: Cải thiện chất lượng ảnh trước khi phân tích
+- **🌍 Đa ngôn ngữ**: Hỗ trợ tiếng Việt, tiếng Anh và nhiều ngôn ngữ khác
+
+## 📋 Yêu cầu hệ thống
+
+### Tesseract OCR
+
+**macOS:**
+```bash
+brew install tesseract tesseract-lang
+```
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get install tesseract-ocr tesseract-ocr-vie
+```
+
+**Windows:**
+Tải từ: https://github.com/UB-Mannheim/tesseract/wiki
+
+## 🔧 Cấu hình MCP Client
+
+### Claude Desktop
+
+Thêm vào `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "image-reader": {
+      "command": "uvx",
+      "args": ["mcp-image-reader"]
+    }
+  }
+}
+```
+
+### Cline (VS Code)
+
+```json
+{
+  "cline.mcpServers": {
+    "image-reader": {
+      "command": "uvx", 
+      "args": ["mcp-image-reader"]
+    }
+  }
+}
+```
+
+## 🛠️ Các công cụ có sẵn
+
+| Tool | Mô tả | Input | Output |
+|------|-------|-------|--------|
+| `read_image_text` | Đọc text từ ảnh | image_path, language, preprocess | Text + confidence scores |
+| `analyze_image_table` | Phân tích bảng | image_path, output_format | Structured table data |
+| `detect_objects` | Phát hiện đối tượng | image_path, min_area | Object list with properties |
+| `preprocess_image` | Xử lý ảnh | image_path, output_path, options | Processed image |
+| `get_image_info` | Thông tin ảnh | image_path | File info + dimensions |
+| `convert_to_svg` | Convert sang SVG | image_path, output_path, method | SVG file + conversion info |
+
+## 💡 Ví dụ sử dụng
+
+### Đọc text từ ảnh
+```
+Hãy đọc text từ ảnh này: /path/to/document.jpg
+```
+
+### Phân tích bảng
+```
+Trích xuất dữ liệu từ bảng trong ảnh: /path/to/table.png
+```
+
+### Phát hiện đối tượng
+```
+Phát hiện các đối tượng trong ảnh: /path/to/image.jpg
+```
+
+### Convert sang SVG với fs_read
+```
+Convert ảnh này sang SVG với fs_read: /path/to/image.png
+Convert với method=hybrid và use_fs_read=true
+```
+
+## 🎨 Định dạng ảnh được hỗ trợ
+
+- PNG
+- JPG/JPEG  
+- BMP
+- TIFF
+- GIF
+- WebP
+
+## 🌍 Ngôn ngữ OCR được hỗ trợ
+
+- `eng` - Tiếng Anh
+- `vie` - Tiếng Việt
+- `vie+eng` - Kết hợp (khuyến nghị cho văn bản hỗn hợp)
+- Các ngôn ngữ khác được Tesseract hỗ trợ
+
+## 🔍 Use Cases
+
+- **📄 Xử lý tài liệu**: Scan tài liệu giấy thành text, trích xuất thông tin từ hóa đơn
+- **📊 Phân tích dữ liệu**: Đọc bảng từ screenshot, trích xuất dữ liệu từ biểu đồ  
+- **🎓 Hỗ trợ giáo dục**: Đọc bài tập từ ảnh, phân tích sơ đồ
+- **♿ Accessibility**: Mô tả ảnh cho người khiếm thị, chuyển đổi nội dung visual
+
+## 🚀 Development
+
+### Cài đặt từ source
+
+```bash
+git clone https://github.com/thanhma/mcp-image-reader.git
+cd mcp-image-reader
+pip install -e ".[dev]"
+```
+
+### Chạy tests
+
+```bash
+python test_server.py
+python demo.py
+```
+
+## 📚 Tài liệu
+
+- [📖 Quick Start Guide](QUICKSTART.md)
+- [🔧 Installation Guide](INSTALLATION.md) 
+- [💡 Examples](examples.md)
+- [📋 Technical Summary](SUMMARY.md)
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) for OCR capabilities
+- [OpenCV](https://opencv.org/) for image processing
+- [MCP](https://modelcontextprotocol.io/) for the protocol specification
+
+## 📞 Support
+
+- 🐛 [Report Issues](https://github.com/thanhma/mcp-image-reader/issues)
+- 💬 [Discussions](https://github.com/thanhma/mcp-image-reader/discussions)
+- 📧 [Email Support](mailto:thanhma@example.com)
