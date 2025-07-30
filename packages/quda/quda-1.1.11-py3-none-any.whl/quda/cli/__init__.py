@@ -1,0 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+---------------------------------------------
+Copyright (c) 2025 ZhangYundi
+Licensed under the MIT License. 
+Created on 2025/6/26 15:52
+Email: yundi.xxii@outlook.com
+Description: 
+---------------------------------------------
+"""
