@@ -1,0 +1,73 @@
+[build-system]
+requires = [
+    "pip",
+    "setuptools>=42",
+    "scikit-build",
+    "cmake>=3.20",
+    "ninja",
+    "pybind11>=2.6",
+    "libcasm-global>=2.1.0",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "libcasm-xtal"
+version = "2.1.0"
+authors = [
+  { name="CASM developers", email="casm-developers@lists.engr.ucsb.edu" },
+]
+description = "CASM crystallography"
+readme = "README.md"
+requires-python = ">=3.9,<3.14"
+license = "LGPL-2.1-or-later"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+  "libcasm-global>=2.1.0",
+  "numpy",
+]
+
+[project.urls]
+Homepage = "https://prisms-center.github.io/CASMcode_docs/"
+Repository = "https://github.com/prisms-center/CASMcode_crystallography"
+
+[build_sphinx]
+source-dir = "doc"
+build-dir  = "doc/build"
+all_files  = 1
+
+[tool.ruff.lint]
+select = ["NPY201", "E", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["libcasm", "casm"]
+
+[tool.cibuildwheel]
+# Build for python3.9, 3.10, 3.11, 3.12
+build = "cp39-* cp310-* cp311-* cp312-* cp313-*"
+
+# Need libcasm-global at wheel repair stage
+before-build = "pip install libcasm-global>=2.1.0"
+
+# Testing
+test-requires = "pytest pytest-datadir"
+test-command = "pytest -rsap {project}/python/tests"
+
+[tool.cibuildwheel.macos]
+# C++17
+environment = { MACOSX_DEPLOYMENT_TARGET="10.15" }
+
+repair-wheel-command = ""
+
+[tool.cibuildwheel.linux]
+# dependencies do not build for musl
+skip = ["*musllinux*"]
+
+repair-wheel-command = ""
