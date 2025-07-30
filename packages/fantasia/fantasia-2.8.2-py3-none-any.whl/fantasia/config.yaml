@@ -1,0 +1,144 @@
+# ==========================
+# 🌍 Global Configuration
+# ==========================
+
+# Maximum number of worker threads for parallel processing.
+max_workers: 1
+
+# Path to the system constants file.
+constants: "./fantasia/constants.yaml"
+
+# Monitoring interval in seconds (for processes that require periodic checks).
+monitor_interval: 10
+
+# Debug feature: limits the number of input samples processed if set > 0.
+limit_execution: 0
+
+# Path to the log file or directory.
+log_path: ~/fantasia/logs/
+
+# ==========================
+# 🗄️ Database (PostgreSQL)
+# ==========================
+
+DB_USERNAME: usuario         # Database username.
+DB_PASSWORD: clave           # Database password.
+DB_HOST: localhost           # Host where the database server is running.
+DB_PORT: 5432                # Port used for the database connection.
+DB_NAME: BioData             # Name of the database to use.
+
+# ==========================
+# 📨 Message Queue (RabbitMQ)
+# ==========================
+
+rabbitmq_host: localhost     # RabbitMQ server hostname.
+rabbitmq_port: 5672          # RabbitMQ server port.
+rabbitmq_user: guest         # RabbitMQ username for authentication.
+rabbitmq_password: guest     # RabbitMQ password for authentication.
+
+# ====================================================================
+# 🔄 Data Source Configuration
+# ====================================================================
+
+# URL to download the embeddings database dump used as reference.
+embeddings_url: "https://zenodo.org/records/15705162/files/PIS_2025_ankh_exp.dump?download=1"
+
+# ==========================
+# 📂 Directory Configuration
+# ==========================
+
+base_directory: ~/fantasia/
+
+# ==========================
+# 🔬 Pipeline Configuration
+# ==========================
+
+# Path to the input file: FASTA for full pipeline or HDF5 if only_lookup is true.
+input: data_sample/sample.fasta
+
+# Set to true to skip embedding generation and use precomputed HDF5 file.
+only_lookup: false
+
+# Number of sequences per batch during embedding or lookup.
+batch_size: 512
+
+# Number of top matches to retrieve per query.
+limit_per_entry: 5
+
+# Prefix for output files.
+prefix: sample
+
+# Maximum allowed sequence length.
+length_filter: 5000000
+
+# Redundancy filtering threshold (e.g., 0.95 = 95% identity); 0 disables it.
+redundancy_filter: 0
+
+# Minimum coverage for redundancy alignment.
+alignment_coverage: 0.7
+
+# =====================================
+# 🧬 Taxonomy Filtering Configuration
+# =====================================
+
+# Taxonomy IDs to exclude from the reference database.
+
+taxonomy_ids_to_exclude: [ ] # Empty List for no filtering
+# Example: 559292 = S. cerevisiae, 6239 = C. elegans
+#  - 559292   # Saccharomyces cerevisiae
+#  - 6239     # Caenorhabditis elegans
+
+# If non-empty, only these taxonomy IDs will be used (overrides exclude list).
+taxonomy_ids_included_exclusively: [ ]
+
+# Set to true to include descendants of the given taxonomy IDs.
+get_descendants: False
+
+# Number of sequences per queue batch (for multiprocessing).
+sequence_queue_package: 512
+
+# Remove existing queues before execution.
+delete_queues: true
+
+# ==========================
+# 🧬 Embedding Configuration
+# ==========================
+embedding:
+  device: cuda  # Options: "cpu", "cuda", or "cuda:N"
+  distance_metric: cosine  # Options: "euclidean", "cosine"
+
+  models:
+    esm:
+      enabled: true
+      distance_threshold: 0
+      batch_size: 1
+
+    prost_t5:
+      enabled: true
+      distance_threshold: 0
+      batch_size: 1
+
+    prot_t5:
+      enabled: true
+      distance_threshold: 0
+      batch_size: 1
+
+    ankh3:
+      enabled: true
+      distance_threshold: 0
+      batch_size: 1
+
+
+
+# Enable GPU usage globally.
+use_gpu: true
+
+# Number of workers for postprocessing (pairwise sequence alignment).
+store_workers: 1
+
+# ==========================
+# 🧠 Functional Analysis
+# ==========================
+
+# Enable TopGO-compatible output format.
+topgo: true
