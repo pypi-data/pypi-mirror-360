@@ -1,0 +1,103 @@
+Metadata-Version: 2.4
+Name: rastertoolkit
+Version: 0.3.12
+Summary: Raster and shape tools
+Author-email: Kurt Frey <kurt.frey@gatesfoundation.org>, Dejan Lukacevic <dejan.lukacevic@gatesfoundation.org>, Katherine Rosenfeld <katherine.rosenfeld@gatesfoundation.org>
+License: MIT License
+        
+        Copyright (c) 2025 Institute for Disease Modeling
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/InstituteforDiseaseModeling/RasterToolkit
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: matplotlib~=3.9
+Requires-Dist: pyshp~=2.3
+Requires-Dist: pyproj~=3.6
+Requires-Dist: scikit-learn~=1.5
+Requires-Dist: shapely~=2.0
+Dynamic: license-file
+
+# RasterToolkit
+
+RasterToolkit is a Python package for processing rasters with minimal dependencies. For example, with rastertoolkit you can extract populations corresponding to an administrative shapefile from a raster file.
+
+## Setup
+
+Install from github:
+
+    pip install git+https://github.com/InstituteforDiseaseModeling/RasterToolkit.git
+
+## Getting Started
+
+A typical `raster_clip` API usage scenario:
+```
+    from rastertoolkit import raster_clip
+
+    # Clipping raster with shapes  
+    pop_dict = raster_clip(raster_file, shape_file)  
+```
+See the complete code in the WorldPop example (examples/worldpop)
+
+A typical `shape_subdivide` API usage scenario:
+```
+    from rastertoolkit import shape_subdivide
+
+    # Create shape subdivision layer
+    subdiv_stem = shape_subdivide(shape_stem=shape_file)
+```
+See the complete code in the Shape Subdivision example (examples/shape_subdivide)
+
+## Developer Setup 
+
+1. Clone or download this GitHub repo and navigate to the root directory.
+```
+    git clone git@github.com:InstituteforDiseaseModeling/RasterToolkit.git
+    cd RasterToolkit
+```
+2. Create a Python virtual environment (here useing `uv`; see https://astral.sh/uv/):
+```
+    uv venv --python 3.10
+    source .venv/bin/activate
+```
+3. Install this package in editable mode (this also installs all the requirements).::
+```
+    uv pip install -e .   
+```
+
+## Running Tests
+
+Install additional packages (like pytest)::
+```
+    uv pip install -r requirements-test.txt
+```
+Run `pytest` command::
+```
+    # Run unit tests (recommended during development)
+    pytest -m unit -v
+
+    # Run test for a specific module, for example
+    pytest tests/test_shape.py -v     # run shape unit tests
+    pytest tests/test_download.py -v  # run GDx download tests
+
+    # All tests (before a commit or merging a PR)
+    pytest -v
+```
