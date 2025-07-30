@@ -1,0 +1,61 @@
+[project]
+name = "nervous-sensors"
+version = "0.2.2"
+description = "Python backend for connection to ECG and EDA sensors from the Lyon Institute of Nanotechnology (INL)"
+authors = [
+    {name = "Bertrand Massot", email = "bertrand.massot@insa-lyon.fr"},
+    {name = "Tristan Habemont"},
+    {name = "Hugo Buy"}
+]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "nervous_sensors" }
+]
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "bleak>=0.22.2",
+    "cobs>=1.2.0",
+    "numpy>=1.26.4",
+    "protobuf>=4.23.4",
+    "pylsl>=1.16.2",
+    "pandas>=2.2.1",
+    "plotly>=5.22.0",
+    "dash>=2.16.1",
+    "dash_bootstrap_components>=1.6.0",
+    "click>=8.1.7",
+    "aioconsole>=0.7.1",
+    "nervous-analytics>=0.3.4"
+]
+
+[project.urls]
+repository = "https://github.com/sensors-inl/Nervous-Sensors"
+
+[project.scripts]
+nervous = "nervous_sensors.cli:cli"
+nervous_gui = "nervous_sensors.gui:gui"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+pytest-asyncio = "^0.23.8"
+pre-commit = "^3.7.1"
+ruff = "^0.4.2"
+
+[tool.setuptools.packages.find]
+exclude = ["tests"]
+
+[tool.ruff]
+line-length = 119
+target-version = "py312"
+lint.select = ["I", "E", "F", "C"]
+fix = true
+
+[tool.ruff.lint.per-file-ignores]
+"nervous_sensors/pb2.py" = ["F821", "E501"]
+"nervous_sensors/nervous_sensor.py" = ["E722"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
