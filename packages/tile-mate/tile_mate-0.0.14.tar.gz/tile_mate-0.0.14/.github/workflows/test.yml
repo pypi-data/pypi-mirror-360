@@ -1,0 +1,24 @@
+name: Test
+
+on:
+  workflow_dispatch:
+    branches:
+      - dev
+      - main
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  call-pytest-workflow:
+    # Docs: https://github.com/ASFHyP3/actions
+    uses: ASFHyP3/actions/.github/workflows/reusable-pytest.yml@v0.20.0
+    with:
+      local_package_name: tile_mate
+      python_versions: >-
+        ["3.9", "3.10", "3.11", "3.12", "3.13"]
