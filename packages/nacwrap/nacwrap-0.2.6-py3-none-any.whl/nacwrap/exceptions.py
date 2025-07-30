@@ -1,0 +1,2 @@
+class WorkflowApiError(Exception):
+    pass
