@@ -1,0 +1,117 @@
+{% macro sse_style(is_debug) %}
+{% if is_debug %}
+  <style>
+    #debug-sse-box {
+      position: fixed;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 75px;
+      background-color: rgba(104, 184, 93, 0.8);
+      border: 1px solid #dee2e6;
+      box-shadow: 0 4px 6px rgba(104, 184, 93, 0.5);
+      border-radius: 4px;
+      color: #343a40;
+      font-size: 16px;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: auto;
+      z-index: 9999;
+    }
+
+    #debug-sse-box.show {
+      display: flex;
+    }
+
+    #debug-sse-box .outter-box {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75rem;
+    }
+
+    #debug-sse-box .outter-box .progress-icon {
+      color: rgb(255 255 255);
+      animation: spin 1s linear infinite;
+      width: 1.25rem;
+      height: 1.25rem;
+      margin-right: .75rem;
+      margin-left: -.25rem;
+    }
+
+    @keyframes spin {
+      100% {
+        transform: rotate(1turn);
+      }
+    }
+  </style>
+{% endif %}
+{% endmacro %}
+
+{% macro sse_html(is_debug) %}
+{% if is_debug %}
+    <div id="debug-sse-box">
+    <div class="outter-box">
+        <svg class="progress-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle style="opacity: 0.25;" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path style="opacity: 0.75;" fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+        </path>
+        </svg>
+        <span class="msg" style="font-size: 1.25rem;">server reloading...</span>
+    </div>
+    </div>
+{% endif %}
+{% endmacro %}
+
+{% macro sse_script(is_debug) %}
+{% if is_debug %}
+<script type="text/javascript">
+    window.addEventListener('load', () => {
+      const dom_debug_box = document.querySelector('#debug-sse-box');
+      const dom_progress_icon = dom_debug_box.querySelector('#debug-sse-box .progress-icon');
+      const dom_msg = dom_debug_box.querySelector('#debug-sse-box .msg');
+
+      function toggleMessageBox(show) {
+        dom_debug_box.classList.toggle('show', show);
+      }
+
+      let retryCount = 0;
+      const maxRetries = 3;
+      const tryIntervalMs = 800;
+
+      function connect() {
+        const eventSource = new EventSource("/instaui/debug-sse");
+
+        eventSource.onopen = function () {
+          toggleMessageBox(false)
+          console.log('debug-sse connection opened');
+          if (retryCount > 0) {
+            window.location.reload(true);
+          }
+        }
+
+        eventSource.onerror = function () {
+          toggleMessageBox(true)
+          console.error("Connection to server failed.");
+          eventSource.close();
+          retryCount++;
+          if (retryCount >= maxRetries) {
+            console.log("Max retries reached. Giving up.");
+            dom_msg.textContent = "Server reload failed.";
+            dom_progress_icon.style.display = "none";
+            return;
+          }
+          setTimeout(connect, tryIntervalMs);
+        };
+      }
+
+      connect();
+    })
+</script>
+{% endif %}
+{% endmacro %}
