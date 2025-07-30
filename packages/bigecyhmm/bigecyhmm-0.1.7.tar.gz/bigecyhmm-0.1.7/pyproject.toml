@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bigecyhmm"
+dynamic = ["version"]
+readme = "README.md"
+description = "Predict biogeochemical cycles from protein fasta files."
+license = {text = "GPL-3.0-or-later"}
+
+dependencies = [
+  'pyhmmer',
+  'pillow'
+]
+
+[project.scripts]
+bigecyhmm = "bigecyhmm.__main__:main"
+bigecyhmm_visualisation = "bigecyhmm.visualisation:main"
+bigecyhmm_custom = "bigecyhmm.custom_db:main"
+
+[project.urls]
+Homepage = "https://github.com/ArnaudBelcour/bigecyhmm"
+Changelog = "https://github.com/ArnaudBelcour/bigecyhmm/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+visualisation = ['pandas',
+  'plotly',
+  'kaleido',
+  'seaborn'
+]
+custom = ['networkx',
+  'matplotlib'
+]
+test = ['pytest']
+
+[tool.setuptools]
+packages = ['bigecyhmm', 'bigecyhmm.hmm_databases', 'bigecyhmm.templates']
+package-dir = {'bigecyhmm'= 'bigecyhmm', 'bigecyhmm.hmm_databases' = 'bigecyhmm/hmm_databases', 'bigecyhmm.templates' = 'bigecyhmm/templates'}
+package-data = {'bigecyhmm.hmm_databases'= ['*.zip', '*.tsv', '*.md', '*.json'], 'bigecyhmm.templates' = ['*.png']}
+
+[tool.setuptools.dynamic]
+version = { attr = "bigecyhmm.__version__" }
+dependencies = {file = ["requirements.txt"]}
