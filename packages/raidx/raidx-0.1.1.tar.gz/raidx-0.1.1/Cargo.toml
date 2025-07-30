@@ -1,0 +1,33 @@
+[package]
+name = "raidx"
+version = "0.1.1"
+edition = "2021"
+
+[lib]
+name = "raidx"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.25.1", features = ["extension-module"] }
+memmap2 = "0.9"
+flate2 = "1.0"
+regex = "1.10"
+thiserror = "1.0"
+byteorder = "1.5"
+rayon = "1.8"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+opt-level = 3
+overflow-checks = false
+debug-assertions = false
+
+# Additional performance flags (set via RUSTFLAGS environment variable)
+# RUSTFLAGS = "-C target-cpu=native -C target-feature=+crt-static"
+
+# Profile-guided optimization support
+[profile.release-with-debug]
+inherits = "release"
+debug = true

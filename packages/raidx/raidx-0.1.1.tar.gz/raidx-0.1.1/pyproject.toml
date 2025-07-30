@@ -1,0 +1,59 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "raidx"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dynamic = ["version"]
+
+# Optional dependencies for benchmarks
+[project.optional-dependencies]
+benchmark = [
+    "pytest-benchmark>=4.0.0",
+    "pyfaidx>=0.6.0",
+    "click>=8.0.0",
+    "tabulate>=0.9.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-benchmark>=4.0.0",
+    "pyfaidx>=0.6.0",
+    "click>=8.0.0",
+    "tabulate>=0.9.0",
+]
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "benchmarks"]
+python_files = ["test_*.py", "benchmark_*.py"]
+python_functions = ["test_*", "benchmark_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+]
+markers = [
+    "benchmark: marks tests as benchmarks (deselect with '-m \"not benchmark\"')",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]
+
+# Benchmark-specific configuration
+[tool.pytest-benchmark]
+min_rounds = 5
+max_time = 1.0
+min_time = 0.05
+sort = "fullname"
+group-by = "func"
+histogram = true
+save = "benchmarks/reports/{date}_{time}_benchmark.json"
+save-data = true
+compare-fail = ["min:15%", "mean:10%"]
