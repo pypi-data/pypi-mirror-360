@@ -1,0 +1,441 @@
+# Tavix
+
+> **Your AI-powered shell assistant and coding companion**
+
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![PyPI](https://img.shields.io/badge/PyPI-tavix-blue.svg)](https://pypi.org/project/tavix/)
+
+Tavix is a powerful command-line interface (CLI) tool that leverages Google's Gemini AI to transform your terminal experience. Whether you're a developer, system administrator, or tech enthusiast, Tavix helps you generate, understand, and fix commands and code with natural language.
+
+## Table of Contents
+- [Quick Start Guide](#quick-start-guide)
+  - [Step 1: Prerequisites](#step-1-prerequisites)
+  - [Step 2: Installation](#step-2-installation)
+  - [Step 3: Get Your Gemini API Key](#step-3-get-your-gemini-api-key)
+  - [Step 4: Configure Tavix](#step-4-configure-tavix)
+  - [Step 5: Restart Your Terminal](#step-5-restart-your-terminal)
+  - [Step 6: Test Your Installation](#step-6-test-your-installation)
+- [Features](#features)
+- [Usage Guide](#usage-guide)
+- [Command Reference](#command-reference)
+- [Troubleshooting](#troubleshooting)
+- [Use Cases](#use-cases)
+- [Alternative Usage: Python Module](#alternative-usage-python-module)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+- [Support](#support)
+- [Author](#author)
+
+## Quick Start Guide
+
+### Step 1: Prerequisites
+Before installing Tavix, ensure you have:
+- Python 3.8 or higher installed on your system
+- A Google Gemini API key (we'll help you get this in Step 3)
+
+### Step 2: Installation
+Choose your preferred installation method:
+
+**Option A: Easy Installation (Recommended)**
+```bash
+pip install tavix
+```
+
+**Option B: Platform-Specific Installation**
+
+_For Linux Users:_
+```bash
+# Option 1: Global install with sudo
+sudo pip install tavix
+
+# Option 2: For Ubuntu 22.04+ (if Option 1 fails)
+sudo pip install tavix --break-system-packages
+```
+
+_For macOS Users:_
+```bash
+# Using virtual environment (recommended)
+python3 -m venv tavix-venv
+source tavix-venv/bin/activate
+pip install tavix
+```
+
+**Option C: Development Installation**
+```bash
+# Clone the repository
+git clone https://github.com/Atharvadethe/Tavix.git
+cd Tavix
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Install in development mode
+pip install -e .
+```
+
+### Step 3: Get Your Gemini API Key
+1. Visit Google AI Studio: https://aistudio.google.com/app/apikey
+2. Sign in with your Google account
+3. Create a new API key by clicking the "Create API Key" button
+4. Copy the API key - you'll need it in the next step
+
+### Step 4: Configure Tavix
+Run the interactive setup to configure your API key:
+```bash
+tavix setup
+# or
+tavix setup
+```
+The setup wizard will guide you through:
+- Setting up your Gemini API key securely
+- Choosing the best configuration method for your system
+- Testing the connection to ensure everything works
+
+_Alternative Manual Setup:_
+```bash
+# Windows (PowerShell)
+$env:GEMINI_API_KEY="your_api_key_here"
+
+# Windows (CMD)
+set GEMINI_API_KEY=your_api_key_here
+
+# Linux/macOS
+export GEMINI_API_KEY=your_api_key_here
+```
+> **Note:** These commands set the API key only for the current terminal session. If you open a new terminal, you will need to set the variable again. To make it permanent, add the appropriate line to your shell profile or environment settings.
+
+### Step 5: Restart Your Terminal
+**IMPORTANT: RESTART YOUR TERMINAL AFTER SETUP**
+This ensures the environment variables are properly loaded.
+
+> **Note:** You can use the alias `tx` for all Tavix commands. For example, `tx generate ...` is equivalent to `tavix generate ...`.
+
+### Step 6: Test Your Installation
+Verify everything is working:
+```bash
+# Check Tavix status
+tavix status
+
+# Try a simple command
+tavix generate "List all Python files"
+```
+
+## Features
+
+### Core Capabilities
+- Generate shell commands and code snippets from natural language descriptions
+- Explain complex shell commands line by line
+- Fix broken or incorrect shell commands
+- Explain code snippets in any programming language
+- Ask anything - general knowledge, concepts, and explanations
+
+### Advanced Features
+- Multi-language Support: Bash, Python, JavaScript, Java, C++, SQL, and more
+- Rich Output: Beautiful, formatted responses with syntax highlighting
+- Clipboard Integration: Copy results directly to clipboard
+- File Export: Save generated code to files
+- Smart Explanations: Get detailed explanations with examples
+
+## Usage Guide
+
+### Basic Commands
+```bash
+# Generate a shell command
+tavix generate "List all Python files in the current directory" --lang bash --explain
+# or
+tx generate "List all Python files in the current directory" --lang bash --explain
+
+# Explain a complex command
+tavix explain "find . -name '*.py' -exec grep -l 'import' {} \;"
+# or
+tx explain "find . -name '*.py' -exec grep -l 'import' {} \;"
+
+# Fix a broken command
+tavix fix "ls -l | grpe py"
+# or
+tx fix "ls -l | grpe py"
+
+# Explain code
+tavix explain-code "for i in range(10): print(i**2)"
+# or
+tx explain-code "for i in range(10): print(i**2)"
+
+# Ask anything
+tavix ask "How do neural networks work?"
+# or
+tx ask "How do neural networks work?"
+```
+
+### Advanced Usage
+```bash
+# Generate and save to file
+tavix generate "Create a web scraper" --lang python --save scraper.py --copy
+
+# Generate with explanation
+tavix generate "Backup all .py files with timestamp" --lang bash --explain
+
+# Ask about current events
+tavix ask "What are the latest developments in AI technology?"
+```
+
+## Command Reference
+
+### generate - Generate Commands and Code
+Generate shell commands or code snippets from natural language descriptions.
+```bash
+tavix generate "your task description" [OPTIONS]
+```
+**Options:**
+- `--lang <language>` - Specify programming language (bash, python, cpp, java, etc.)
+- `--explain` - Add detailed explanation
+- `--save <filename>` - Save result to file
+- `--copy` - Copy result to clipboard
+
+**Examples:**
+```bash
+tavix generate "Create a backup script" --lang bash --explain
+tavix generate "Web scraper using requests" --lang python --save scraper.py
+```
+
+### explain - Explain Shell Commands
+Get line-by-line explanations of shell commands.
+```bash
+tavix explain "your shell command"
+```
+**Examples:**
+```bash
+tavix explain "ls -la | grep py | wc -l"
+tavix explain "find . -name '*.py' -exec grep -l 'import' {} \;"
+```
+
+### fix - Fix Broken Commands
+Fix and explain broken or incorrect shell commands.
+```bash
+tavix fix "broken shell command"
+```
+**Examples:**
+```bash
+tavix fix "ls -l | grpe py"
+tavix fix "docker run -p 8000 myapp"
+```
+
+### explain-code - Explain Code Snippets
+Get detailed explanations of code in any programming language.
+```bash
+tavix explain-code "your code snippet"
+```
+**Examples:**
+```bash
+tavix explain-code "def factorial(n): return 1 if n <= 1 else n * factorial(n-1)"
+tavix explain-code "async def fetch_data(): return await requests.get(url)"
+```
+
+### ask - Ask Anything
+Get answers and explanations on any topic.
+```bash
+tavix ask "your question or topic"
+```
+**Examples:**
+```bash
+tavix ask "How do quantum computers work?"
+tavix ask "What are the benefits of renewable energy?"
+tavix ask "Explain the history of artificial intelligence"
+```
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+**1. "GEMINI_API_KEY environment variable not set"**
+- Problem: Tavix can't find your API key.
+- Solutions:
+  ```bash
+  # Check your current setup
+  tavix status
+
+  # Run the interactive setup
+  tavix setup
+
+  # Or set manually for current session:
+  # Windows PowerShell:
+  $env:GEMINI_API_KEY="your_api_key_here"
+
+  # Windows CMD:
+  set GEMINI_API_KEY=your_api_key_here
+
+  # Linux/macOS:
+  export GEMINI_API_KEY=your_api_key_here
+  ```
+
+**2. API Key works in setup but not in commands**
+- Problem: Environment variable isn't persisting between sessions.
+- Solutions:
+  - Windows: Use `tavix setup` and choose option 3 (system environment variables)
+  - PowerShell: Use `tavix setup` and choose option 2 (PowerShell profile)
+  - Linux/macOS: Add to your shell profile file (`~/.bashrc`, `~/.zshrc`, etc.)
+  - Alternative: Create a `.env` file in your current directory
+
+**3. "No compatible Gemini models found"**
+- Problem: API key doesn't have access to Gemini models.
+- Solutions:
+  - Check your API key at Google AI Studio
+  - Ensure you have access to Gemini models
+  - Try regenerating your API key
+  - Check your internet connection
+
+**4. Command not found: tavix**
+- Problem: Tavix isn't installed or not in PATH.
+- Solutions:
+  ```bash
+  # Reinstall Tavix
+  pip install --upgrade tavix
+
+  # Or use as Python module
+  python -m tavix.main --help
+
+  # Check installation
+  pip show tavix
+  ```
+
+**5. Permission errors on Windows**
+- Problem: Can't set environment variables due to permissions.
+- Solutions:
+  - Run PowerShell as Administrator
+  - Use `tavix setup` and choose option 4 (`.env` file)
+  - Set environment variables manually through System Properties
+
+## Use Cases
+
+### System Administration
+```bash
+# Generate monitoring scripts
+tavix generate "Monitor system resources and log to file" --lang bash
+
+# Fix complex commands
+tavix fix "ps aux | grep python | awk '{print $2}' | xargs kill -9"
+```
+
+### Development
+```bash
+# Generate API testing scripts
+tavix generate "Test REST API endpoints with curl" --lang bash
+
+# Explain complex algorithms
+tavix explain-code "def quicksort(arr): return sorted(arr)"
+```
+
+### Data Processing
+```bash
+# Generate data analysis scripts
+tavix generate "Process CSV files and create summary" --lang python
+
+# Explain data commands
+tavix explain "cat data.csv | awk -F',' '{sum+=$3} END {print sum}'"
+```
+
+### Creative Projects
+```bash
+# Generate games and utilities
+tavix generate "Create a number guessing game" --lang python
+
+# Ask for inspiration
+tavix ask "What are some creative project ideas for beginners?"
+```
+
+## Alternative Usage: Python Module
+If the `tavix` command is not recognized globally, you can use Tavix via Python's module system:
+```bash
+python -m tavix.main --help
+```
+**Examples:**
+```bash
+python -m tavix.main generate "List all files" --lang bash --explain
+python -m tavix.main ask "What is quantum computing?"
+```
+**When to use this:**
+- If the `tavix` command is not found in your terminal
+- If you want to use Tavix in a virtual environment
+- If you're on Windows and don't want to edit your PATH
+
+## Project Structure
+```
+Tavix/
+├── .gitignore              # Git ignore rules
+├── README.md               # Project documentation
+├── requirements.txt        # Python dependencies
+├── setup.py                # Package configuration
+└── tavix/              # Main package
+    ├── __init__.py
+    ├── main.py             # CLI entry point
+    ├── commands/           # Command modules
+    │   ├── __init__.py
+    │   ├── generate.py     # Generate command
+    │   ├── explain.py      # Explain command
+    │   ├── fix.py          # Fix command
+    │   ├── explain_code.py # Explain code command
+    │   └── ask.py          # Ask command
+    └── core/               # Core functionality
+        ├── __init__.py
+        ├── llm.py          # Gemini API wrapper
+        └── prompts.py      # Prompt templates
+```
+
+## Contributing
+We welcome contributions! Here's how to get started:
+
+### Development Setup
+1. Fork the repository on GitHub
+2. Clone your fork locally:
+   ```bash
+   git clone https://github.com/Atharvadethe/Tavix.git
+   cd tavix
+   ```
+3. Create a feature branch:
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+4. Make your changes and test them
+5. Commit your changes:
+   ```bash
+   git commit -m 'Add amazing feature'
+   ```
+6. Push to your branch:
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+7. Open a Pull Request on GitHub
+
+For major changes, please open an issue first to discuss what you would like to change.
+
+## License
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+- Built with Typer for CLI
+- Powered by Google Gemini AI
+- Styled with Rich for beautiful output
+- Icons by Shields.io
+
+## Support
+- Issues: GitHub Issues
+- Discussions: GitHub Discussions
+- Documentation: Wiki
+
+### Getting Help
+- Check setup status: `tavix status`
+- Reconfigure: `tavix setup`
+- View help: `tavix --help`
+- Report issues: GitHub Issues
+
+---
+
+<div align="center">
+Made By Atharva Dethe
+</div>
