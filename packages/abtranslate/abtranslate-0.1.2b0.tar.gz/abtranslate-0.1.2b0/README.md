@@ -1,0 +1,1 @@
+Deployment friendly package supported with Argostranslate translation model
