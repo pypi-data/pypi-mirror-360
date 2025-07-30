@@ -1,0 +1,50 @@
+[project]
+name = "nervous-analytics"
+version = "0.3.4"
+description = "Package implementing modular processes for real-time feature localization on ECG and EDA signals."
+authors = [
+    {name = "Bertrand Massot", email = "bertrand.massot@insa-lyon.fr"},
+    {name = "Matthieu Mesnage"},
+    {name = "Tristan Habemont"}
+]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "nervous_analytics" }
+]
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "numpy>=1.26.4",
+    "scipy>=1.14.0",
+    "pandas>=2.2.2",
+    "PyWavelets>=1.6.0",
+    "matplotlib>=3.8.3",
+    "sleepecg>=0.5.9",
+    "neurokit2>=0.2.9",
+    "openpyxl (>=3.1.5,<4.0.0)"
+]
+
+[project.urls]
+repository = "https://github.com/sensors-inl/Nervous-Sensors"
+
+[project.scripts]
+nervous_ecg_analyzer = "nervous_analytics.analyzers.ecg_analyzer_gui:run_gui"
+nervous_eda_analyzer = "nervous_analytics.analyzers.eda_analyzer_gui:run_gui"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.7.1"
+ruff = "^0.4.2"
+
+[tool.ruff]
+line-length = 119
+target-version = "py310"
+lint.select = ["I", "E", "F", "C"]
+lint.ignore = ["C901"]
+fix = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
