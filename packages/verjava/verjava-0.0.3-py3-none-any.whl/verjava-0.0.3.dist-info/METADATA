@@ -1,0 +1,51 @@
+Metadata-Version: 2.4
+Name: verjava
+Version: 0.0.3
+Summary: Replication of VERJava
+Author-email: SunBK201 <sunbk201gm@gmail.com>
+Project-URL: Homepage, https://github.com/SunBK201/VERJava
+Project-URL: Issues, https://github.com/SunBK201/VERJava/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: scubatrace==0.7.0
+Requires-Dist: GitPython>=3.1.43
+Dynamic: license-file
+
+# VERJava
+
+Replication of VERJava. [VERJava](https://ieeexplore.ieee.org/document/9978189/) is a two-stage approach for identifying vulnerable versions of Java Open Source Software (OSS) projects.
+
+# Install
+
+```bash
+pip install verjava
+```
+
+# Usage
+
+```python
+from verjava import verjava
+
+# results will be a list of vulnerability repo tags
+vul_tags: list[str] = verjava(
+    repo_path="/path/to/your/repo",
+    commit_id="your_commit_id", # Patch Commit
+)
+```
+
+If you want to adjust the parameters, you can do so by passing them as keyword arguments:
+
+```python
+vul_tags: list[str] = verjava(
+    repo_path="/path/to/your/repo",
+    commit_id="your_commit_id",
+    tDel=1.0,  # Threshold for deleted lines similarity
+    tAdd=0.9,  # Threshold for added lines similarity
+    T=0.8,     # Threshold for vulnerability ratio
+)
+```
