@@ -1,0 +1,216 @@
+# block_spec.yaml
+
+body:
+  version: 1
+  kind: workflow
+  metadata:
+    name: workflow-block
+    title: Workflow Block
+    summary: Workflow Block
+    description: Creating a new workflow block spec
+    descriptionContentType: text/markdown
+    imageUrl: https://my-block-pics.com/image-0.jpg
+    tags:
+      - name: CLI
+  release:
+    version: 1.0.0
+    notes: This is the original release
+  config:
+    steps:
+      step1:
+        command: echo 1
+        type: standard
+        image:
+          context: "."
+          dockerfile: Dockerfile
+          version: 0.0.1
+          buildArguments:
+            git_token: random_token_1
+            npm_token: random_token_2
+          useCache: "@param:use_cache"
+        resources:
+          instanceTypeId: 21
+          storage: 10GB
+        stepTimeout: 30
+        clearImageCache: true
+        parameters:
+          env:
+            key: value
+          secrets:
+            - secret-1
+            - secret-2
+        repository:
+          branch: main
+          token: random_token
+          url: "https://github.com/org/repo"
+      step2:
+        type: http
+        method: post
+        url: "https://peak.ai"
+        payload: "{}"
+        auth:
+          type: no-auth
+        headers:
+          absolute:
+            Content-Type: application/json
+          secrets:
+            token: some-token
+      step3:
+        type: sql
+        repository:
+          branch: main
+          token: random_token
+          url: "https://example.com"
+          filePath: "path/to/file.sql"
+        parameters:
+          env:
+            key1: value1
+            key2: value2
+          inherit:
+            key3: value3
+            key4: value4
+      step4:
+        type: export
+        schema: schema_name
+        table: table_name
+        sortBy: column_name
+        sortOrder: asc
+        compression: false
+    triggers:
+      - cron: "0 0 * * *"
+    watchers:
+      - user: "@param:watcher_user"
+        events:
+          success: false
+          fail: true
+      - webhook:
+          name: info
+          url: https://abc.com/post
+          payload: |
+            {
+              "system": "external_system",
+              "action": "update",
+              "data": {
+                "field": "value",
+                "timestamp": "2024-05-20T12:00:00Z"
+              }
+            }
+        events:
+          success: false
+          fail: true
+          runtimeExceeded: "@param:runtime_exceeded"
+      - email:
+          name: "email-watcher-1"
+          recipients:
+            to:
+              - "user1@peak.ai"
+              - "user2@peak.ai"
+        events:
+          success: false
+          fail: true
+          runtimeExceeded: "@param:runtime_exceeded"
+parameters:
+  build:
+    - name: watcher_user
+      type: string
+      required: true
+      title: Watcher User Email
+      description: Set the watcher user email
+      defaultValue: user@peak.ai
+      hideValue: false
+    - name: use_cache
+      type: boolean
+      required: false
+      title: Image Caching
+      description: Enable image caching for the workflow
+      defaultValue: false
+    - name: runtime_exceeded
+      type: number
+      required: false
+      title: Runtime Exceeded
+      description: Select the runtime exceeded value to trigger a failed notification for the workflow (in minutes)
+      options:
+        - title: Low
+          value: 10
+        - title: Medium
+          value: 50
+        - title: High
+          value: 100
+      defaultValue: 10
+  run:
+    - name: agg_type
+      type: string
+      required: false
+      title: Agg Type
+      description: Select an aggregation function (e.g., AVG, SUM, COUNT)
+      defaultValue: AVG
+      hideValue: true
+    - name: email_notifications
+      type: boolean
+      required: false
+      title: Email Notifications
+      description: Enable email notifications
+      defaultValue: false
+    - name: num_iterations
+      type: number
+      required: false
+      title: Number of Iterations
+      description: Select the number of iterations
+      options:
+        - title: Low
+          value: 10
+        - title: Medium
+          value: 50
+        - title: High
+          value: 100
+      defaultValue: 10
+    - name: file_names
+      type: string_array
+      required: true
+      title: File Names
+      description: Specify input and output file names
+      defaultValue:
+        - input.csv
+        - output.csv
+    - name: max_retries
+      type: number
+      required: false
+      title: Maximum Retries
+      description: Set maximum number of retry attempts
+      defaultValue: 3
+    - description: "specify the method to aggregate the data"
+      hideValue: true
+      required: true
+      title: "Aggregation Method"
+      name: "aggregation_method"
+      type: "string"
+      conditions:
+        - conditionType: "AND"
+          conditions:
+            - dependsOn: "max_retries"
+              operator: "equals"
+              value: 3
+            - dependsOn: "agg_type"
+              operator: "equals"
+              value: "AVG"
+    - description: "Specify the filtering criteria for data processing"
+      hideValue: true
+      required: true
+      title: "Filter Condition"
+      name: "filter_condition"
+      type: "string"
+      conditions:
+        - dependsOn: "max_retries"
+          operator: "equals"
+          value: 3
+artifact:
+  path: "."
+  ignore_files:
+    - ".gitignore"
+    - ".dockerignore"
+featured: true
+autoRunOnDeploy: true
+scope: shared
+tenants:
+  - tenant1
+  - tenant2

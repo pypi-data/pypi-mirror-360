@@ -1,0 +1,64 @@
+# workflow_output_parameters.yaml
+
+body:
+  name: new-workflow
+  triggers:
+    - cron: 0 0 * * *
+  steps:
+    step-1:
+      type: standard
+      imageId: 100
+      imageVersionId: 100
+      command: python script1.py > output.txt
+      resources:
+        instanceTypeId: 21
+        storage: 10GB
+      parents: []
+      stepTimeout: 30
+      clearImageCache: true
+      repository:
+        branch: main
+        token: random_token
+        url: "https://github.com/org/repo"
+      outputParameters:
+        scriptOutput: output.txt
+    step-2:
+      type: http
+      parents: []
+      url: "https://peak.ai"
+      payload: |
+        {
+          "data": "{{output}}",
+          "secret": "{{SECRET_CUSTOM}}"
+        }
+      auth:
+        type: bearer-token
+        bearerToken: token
+      headers:
+        absolute:
+          Content-Type: application/json
+      outputParameters:
+        http_response: response.txt
+      parameters:
+        inherit:
+          output: scriptOutput
+    step-3:
+      type: sql
+      repository:
+        branch: main
+        token: random_token
+        url: "https://example.com"
+        filePath: "path/to/file.sql"
+      parameters:
+        env:
+          key1: value1
+          key2: value2
+        inherit:
+          output: scriptOutput
+    step-4:
+      type: export
+      schema: schema_name
+      table: table_name
+      sortBy: column_name
+      sortOrder: asc
+      compression: false

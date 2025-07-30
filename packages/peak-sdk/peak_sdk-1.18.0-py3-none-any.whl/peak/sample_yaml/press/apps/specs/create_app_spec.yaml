@@ -1,0 +1,125 @@
+# app_spec.yaml
+
+body:
+  version: 1
+  kind: app
+  metadata:
+    name: example-app
+    title: Example App
+    summary: Example App
+    description: Creating a new app from CLI
+    descriptionContentType: text/markdown
+    imageUrl: https://my-block-pics.com/image-0.jpg
+    tags:
+      - name: CLI
+  release:
+    version: 1.0.0
+    notes: This is the original release
+  config:
+    - id: existing_block_spec_id_1
+      release:
+        version: 1.0.0
+      autoRunOnDeploy: True
+    - id: existing_block_spec_id_2
+      release:
+        version: 1.0.0
+      autoRunOnDeploy: False
+parameters:
+  build:
+    - name: watcher_user
+      type: string
+      required: true
+      title: Watcher User Email
+      description: Set the watcher user email
+      defaultValue: user@peak.ai
+      hideValue: false
+    - name: use_cache
+      type: boolean
+      required: false
+      title: Image Caching
+      description: Enable image caching for the workflow
+      defaultValue: false
+    - name: runtime_exceeded
+      type: number
+      required: false
+      title: Runtime Exceeded
+      description: Select the runtime exceeded value to trigger a failed notification for the workflow (in minutes)
+      options:
+        - title: Low
+          value: 10
+        - title: Medium
+          value: 50
+        - title: High
+          value: 100
+      defaultValue: 10
+  run:
+    - name: agg_type
+      type: string
+      required: false
+      title: Agg Type
+      description: Select an aggregation function (e.g., AVG, SUM, COUNT)
+      defaultValue: AVG
+      hideValue: true
+    - name: email_notifications
+      type: boolean
+      required: false
+      title: Email Notifications
+      description: Enable email notifications
+      defaultValue: false
+    - name: num_iterations
+      type: number
+      required: false
+      title: Number of Iterations
+      description: Select the number of iterations
+      options:
+        - title: Low
+          value: 10
+        - title: Medium
+          value: 50
+        - title: High
+          value: 100
+      defaultValue: 10
+    - name: file_names
+      type: string_array
+      required: true
+      title: File Names
+      description: Specify input and output file names
+      defaultValue:
+        - input.csv
+        - output.csv
+    - name: max_retries
+      type: number
+      required: false
+      title: Maximum Retries
+      description: Set maximum number of retry attempts
+      defaultValue: 3
+    - description: "specify the method to aggregate the data"
+      hideValue: true
+      required: true
+      title: "Aggregation Method"
+      name: "aggregation_method"
+      type: "string"
+      conditions:
+        - conditionType: "AND"
+          conditions:
+            - dependsOn: "max_retries"
+              operator: "equals"
+              value: 3
+            - dependsOn: "agg_type"
+              operator: "equals"
+              value: "AVG"
+    - description: "Specify the filtering criteria for data processing"
+      hideValue: true
+      required: true
+      title: "Filter Condition"
+      name: "filter_condition"
+      type: "string"
+      conditions:
+        - dependsOn: "max_retries"
+          operator: "equals"
+          value: 3
+featured: true
+scope: shared
+tenants:
+  - tenant1
+  - tenant2
