@@ -1,0 +1,102 @@
+version: 1
+send_anonymous_usage_stats: true
+project_id: target-firebase
+default_environment: test
+
+venv:
+  backend: uv
+
+environments:
+- name: test
+
+plugins:
+  extractors:
+  - name: tap-smoke-test
+    variant: meltano
+    pip_url: git+https://github.com/meltano/tap-smoke-test.git
+    config:
+      streams:
+      - stream_name: animals
+        input_filename:
+          https://raw.githubusercontent.com/meltano/tap-smoke-test/main/demo-data/animals-data.jsonl
+
+  loaders:
+  - name: target-firebase
+    namespace: target_firebase
+    pip_url: -e .
+    repo: https://github.com/edgarrmondragon/target-firebase
+    capabilities:
+    - about
+    - stream-maps
+    - schema-flattening
+
+    settings_group_validation:
+    - - credential.client_email
+      - credential.token_uri
+      - credential.project_id
+      - credential.private_key
+      - credential.private_key_id
+
+    settings:
+    - name: credential_file
+      kind: string
+      label: Credential File
+      description: The path to the Google Cloud Firestore credential file. If none
+        is provided, Google Application Default Credentials are used.
+
+    - name: credential.type
+      kind: string
+      label: Type
+      description: The type of credential.
+
+    - name: credential.client_email
+      kind: string
+      label: Client Email
+      description: The service account’s email.
+
+    - name: credential.token_uri
+      kind: string
+      label: Token URI
+      description: The OAuth 2.0 Token URI.
+      value: https://oauth2.googleapis.com/token
+
+    - name: credential.project_id
+      kind: string
+      label: Project ID
+      description: Project ID associated with the service account credential.
+
+    - name: credential.private_key
+      kind: password
+      label: Private Key
+      description: The service account’s private key.
+      sensitive: true
+
+    - name: credential.private_key_id
+      kind: password
+      label: Private Key ID
+      description: The service account's private key ID.
+      sensitive: true
+
+    - name: credential.universe_domain
+      kind: string
+      label: Universe Domain
+      description: The universe domain. The default universe domain is googleapis.com.
+        For default value self signed jwt is used for token refresh.
+
+    - name: credential.trust_boundary
+      kind: string
+      label: Trust Boundary
+      description: String representation of trust boundary meta.
+
+    - name: firebase_app
+      kind: string
+      label: Firebase App
+      description: The Firebase app name to be used. Defaults to the default Firebase
+        app if not specified or an empty string.
+
+    - name: database_id
+      kind: string
+      label: Database ID
+      description: The database ID of the Google Cloud Firestore database to be used.
+        Defaults to the default Firestore database ID if not specified or an empty
+        string.

@@ -1,0 +1,54 @@
+### A CI workflow template that runs linting and python testing
+### TODO: Modify as needed or as desired.
+
+name: Test target-firebase
+
+on:
+  push:
+    branches: [main]
+    paths:
+    - .github/workflows/test.yml
+    - target_firebase/**
+    - tests/**
+    - pyproject.toml
+    - tox.ini
+    - uv.lock
+  pull_request:
+    branches: [main]
+    paths:
+    - .github/workflows/test.yml
+    - target_firebase/**
+    - tests/**
+    - pyproject.toml
+    - tox.ini
+    - uv.lock
+  workflow_dispatch:
+
+env:
+  FORCE_COLOR: 1
+
+jobs:
+  pytest:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        python-version:
+        # - "3.14"  # https://github.com/grpc/grpc/issues/39506
+        - "3.13"
+        - "3.12"
+        - "3.11"
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
+    - run: pipx install tox
+    - name: Run Tox
+      env:
+        TARGET_FIREBASE_CREDENTIAL: ${{ secrets.TARGET_FIREBASE_CREDENTIAL }}
+      run: |
+        tox -e $(echo py${{ matrix.python-version }} | tr -d .)
