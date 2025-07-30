@@ -1,0 +1,72 @@
+[project]
+name = "hacs-api"
+version = "0.2.0"
+description = "FastAPI service for HACS (Healthcare Agent Communication Standard)"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Solano Todeschini", email = "solano.todeschini@gmail.com" }
+]
+maintainers = [
+    { name = "Solano Todeschini", email = "solano.todeschini@gmail.com" }
+]
+keywords = ["healthcare", "agents", "api", "fastapi", "fhir"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Healthcare Industry", 
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11", 
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed"
+]
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0", 
+    "pydantic>=2.7.0",
+    "python-jose[cryptography]>=3.3.0",
+    "python-multipart>=0.0.6",
+    "hacs-core",
+    "hacs-models",
+    "hacs-fhir", 
+    "hacs-tools",
+]
+
+[project.urls]
+Homepage = "https://github.com/solanovisitor/hacs"
+Documentation = "https://github.com/solanovisitor/hacs/blob/main/docs/README.md"
+Repository = "https://github.com/solanovisitor/hacs"
+"Bug Tracker" = "https://github.com/solanovisitor/hacs/issues"
+Changelog = "https://github.com/solanovisitor/hacs/blob/main/docs/reference/changelog.md"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "httpx>=0.25.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.4.0",
+    "pyright>=1.1.0",
+]
+
+[project.scripts]
+hacs-api = "hacs_api.main:app"
+
+[tool.uv.sources]
+hacs-core = { workspace = true }
+hacs-models = { workspace = true }
+hacs-fhir = { workspace = true }
+hacs-tools = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hacs_api"]

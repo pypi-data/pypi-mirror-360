@@ -1,0 +1,310 @@
+# HACS – Healthcare Agent Communication Standard
+
+<div align="center">
+
+![HACS Version](https://img.shields.io/badge/HACS-v0.1.0-blue?style=for-the-badge&logo=healthcare&logoColor=white)
+![Type Safety](https://img.shields.io/badge/Type_Safety-100%25-success?style=for-the-badge&logo=typescript&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-6/6_Passing-success?style=for-the-badge&logo=pytest&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.10+_|_3.13-blue?style=for-the-badge&logo=python&logoColor=white)
+
+**A simple, standardized way for healthcare AI agents to communicate**
+
+*FHIR-compatible • Type-safe • Production-ready • Open Source*
+
+[**📚 Documentation**](docs/README.md) • [**🚀 Quick Start**](#-quick-start) • [**🤝 Contributing**](CONTRIBUTING.md)
+
+</div>
+
+---
+
+## 🎯 What is HACS?
+
+HACS provides a **simple, standardized framework** for healthcare AI agents to communicate effectively while maintaining clinical accuracy and regulatory compliance. Think of it as a common language for healthcare AI systems.
+
+### 🏥 Built for Healthcare
+
+- **Patient Records**: Create and manage patient data with full FHIR compatibility
+- **Clinical Observations**: Track vital signs, lab results, and assessments  
+- **AI Agent Memory**: Store and recall important clinical information with structured memory types
+- **Evidence Tracking**: Link decisions to medical guidelines and research with confidence scoring
+- **Actor Security**: Role-based permissions and authentication for healthcare professionals
+
+### 🤖 AI-Friendly
+
+- **Multiple Frameworks**: Tested adapters for LangGraph, CrewAI, and custom agents
+- **Vector Storage**: Pinecone and Qdrant integration for semantic search of clinical data
+- **Memory Management**: Episodic, procedural, and executive memory types for AI decision-making
+- **Type Safety**: Comprehensive validation prevents clinical data errors
+
+## 🚀 Quick Start
+
+### 1. Install HACS
+
+```bash
+# Using pip (recommended)
+pip install healthcare-hacs
+
+# For development with uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+git clone https://github.com/solanovisitor/hacs.git
+cd hacs
+uv sync
+```
+
+**Python 3.13 Support**: HACS fully supports Python 3.13! If you encounter `pygraphviz` build errors:
+```bash
+# Install without visualization dependencies (recommended)
+uv sync --extra dev --extra examples --extra vectorization-all
+
+# pygraphviz is only needed for optional LangGraph workflow diagrams
+```
+
+### 2. Verify Installation
+
+```bash
+# Run the comprehensive test suite
+uv run python tests/test_quick_start.py
+
+# Or with pytest
+uv run pytest tests/test_quick_start.py -v
+```
+
+You should see:
+```
+🎉 All tests passed! Your HACS installation is working correctly.
+
+🚀 Next steps:
+   • Check out examples/ for usage examples
+   • Read docs/ for detailed documentation
+   • Try the LangGraph example in examples/langgraph/
+```
+
+### 3. Try a Simple Example
+
+```python
+from hacs_models import Patient, Observation
+from hacs_core import Actor
+from datetime import datetime, timezone
+
+# Create a healthcare professional with permissions
+doctor = Actor(
+    id="dr-smith-001",
+    name="Dr. Jane Smith",
+    role="physician",
+    permissions=["patient:*", "observation:*"],
+    is_active=True
+)
+
+# Start a session for security context
+doctor.start_session("session-001")
+
+# Create a patient record with FHIR compliance
+patient = Patient(
+    id="patient-001",
+    given=["John"],
+    family="Doe", 
+    gender="male",
+    birth_date="1985-03-15",
+    active=True
+)
+
+# Record a clinical observation
+blood_pressure = Observation(
+    id="bp-001",
+    status="final",
+    code={
+        "coding": [{
+            "system": "http://loinc.org",
+            "code": "8480-6", 
+            "display": "Systolic blood pressure"
+        }]
+    },
+    subject=patient.id,
+    value_quantity={"value": 120, "unit": "mmHg"},
+    effective_datetime=datetime.now(timezone.utc)
+)
+
+print(f"Created patient: {patient.display_name}, Age: {patient.age_years}")
+print(f"Recorded BP: {blood_pressure.value_quantity['value']} mmHg")
+print(f"LOINC Code: {blood_pressure.primary_code}")
+```
+
+## 📚 Learn More
+
+### 📖 Core Documentation
+
+- **[Quick Start Guide](docs/getting-started/quickstart.md)** - 5-minute setup tutorial
+- **[Installation Guide](docs/getting-started/installation.md)** - Comprehensive installation with Python 3.13 support
+- **[Architecture Overview](docs/getting-started/architecture.md)** - How HACS works
+- **[Core Concepts](docs/getting-started/concepts.md)** - Understanding HACS fundamentals
+
+### 🧪 Working Examples
+
+- **[Basic Usage](docs/examples/basic-usage.md)** - Patient records and observations
+- **[LangGraph Integration](examples/langgraph/README.md)** - Production-ready AI clinical workflow
+- **[Vector Storage](examples/vectorization_example.py)** - Semantic search for clinical data
+
+### 🔧 Module Documentation
+
+- **[HACS Core](docs/modules/hacs-core.md)** - Actor security, memory, and evidence
+- **[HACS Models](docs/modules/hacs-models.md)** - Patient, Observation, Encounter, AgentMessage
+- **[HACS Vectorization](docs/modules/hacs-vectorization.md)** - Vector storage and semantic search
+
+## 🛠️ Development
+
+### Running Tests
+
+```bash
+# Quick tests - validates core functionality (6 tests)
+uv run python tests/test_quick_start.py
+
+# All available tests
+uv run pytest tests/ -v
+
+# Specific test files
+uv run pytest tests/test_models.py -v
+uv run pytest tests/test_core.py -v
+```
+
+### Code Quality
+
+```bash
+# Lint code (required for CI)
+uv run ruff check .
+
+# Format code
+uv run ruff format .
+
+# Check types
+uv run pyright
+```
+
+### Project Structure
+
+```
+hacs/
+├── packages/           # Individual HACS packages (9 packages)
+│   ├── hacs-core/     # Foundation: Actor, Memory, Evidence
+│   ├── hacs-models/   # Clinical: Patient, Observation, Encounter
+│   ├── hacs-tools/    # CRUD operations and AI adapters
+│   ├── hacs-fhir/     # FHIR R5 bidirectional conversion
+│   ├── hacs-api/      # Basic FastAPI service
+│   ├── hacs-cli/      # Command-line interface
+│   ├── hacs-qdrant/   # Qdrant vector store integration
+│   ├── hacs-openai/   # OpenAI embeddings integration
+│   └── hacs-pinecone/ # Pinecone vector store integration
+├── docs/              # Comprehensive documentation
+├── examples/          # Working examples with tests
+├── tests/             # Test suite (6/6 passing)
+└── samples/           # Sample data files
+```
+
+## 🤝 Contributing
+
+We welcome contributions! The project is designed to be newcomer-friendly.
+
+### For Newcomers
+
+1. **Start Small**: Look for [good first issues](https://github.com/solanovisitor/hacs/labels/good%20first%20issue)
+2. **Quick Setup**: `git clone` → `uv sync` → `uv run python tests/test_quick_start.py`
+3. **Read the Guide**: Check our [Contributing Guidelines](docs/contributing/guidelines.md)
+4. **Ask Questions**: Use [GitHub Discussions](https://github.com/solanovisitor/hacs/discussions) for help
+
+### For Healthcare Professionals
+
+- Validate clinical workflows and terminology
+- Review clinical accuracy of examples and documentation
+- Suggest improvements to patient safety features
+
+### For Developers
+
+- Improve code quality and performance
+- Add support for new AI frameworks
+- Enhance testing and documentation
+
+### Contribution Process
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Make your changes and add tests
+4. Run tests: `uv run python tests/test_quick_start.py`
+5. Ensure code quality: `uv run ruff check .`
+6. Submit a pull request
+
+## 📦 Packages
+
+| Package | Purpose | Status | Install |
+|---------|---------|--------|---------|
+| **hacs-core** | Actor security, Memory, Evidence | ✅ Stable | `pip install hacs-core` |
+| **hacs-models** | Patient, Observation, Encounter | ✅ Stable | `pip install hacs-models` |
+| **hacs-tools** | CRUD operations, AI adapters | ✅ Stable | `pip install hacs-tools` |
+| **hacs-fhir** | FHIR R5 bidirectional conversion | ✅ Stable | `pip install hacs-fhir` |
+| **hacs-cli** | Command-line interface | ✅ Stable | `pip install hacs-cli` |
+| **hacs-api** | Basic FastAPI service | ⚠️ Basic | `pip install hacs-api` |
+| **hacs-qdrant** | Qdrant vector store | ✅ Stable | `pip install hacs-qdrant` |
+| **hacs-openai** | OpenAI embeddings | ✅ Stable | `pip install hacs-openai` |
+| **hacs-pinecone** | Pinecone vector store | ✅ Stable | `pip install hacs-pinecone` |
+| **healthcare-hacs** | Complete suite | ✅ Stable | `pip install healthcare-hacs` |
+
+## 🌟 Why Use HACS?
+
+### Before HACS
+```python
+# Inconsistent, unvalidated data structures
+patient_data = {"name": "John", "age": 39}  # No validation, no standards
+bp_reading = {"systolic": 120}               # Missing metadata, no FHIR compliance
+# No connection between data and AI decisions, no audit trail
+```
+
+### With HACS
+```python
+# Standardized, validated, FHIR-compatible healthcare data
+patient = Patient(given=["John"], family="Doe", birth_date="1985-03-15")
+observation = Observation(
+    code={"coding": [{"system": "http://loinc.org", "code": "8480-6"}]},
+    value_quantity={"value": 120, "unit": "mmHg"},
+    subject=patient.id
+)
+# Built-in AI memory, evidence tracking, and audit trails
+```
+
+## 🔒 Security & Compliance
+
+- **Healthcare-First Design**: Built with HIPAA and clinical safety in mind
+- **Actor-Based Security**: Role-based permissions (physician, nurse, admin, etc.)
+- **Session Management**: Secure authentication and authorization
+- **Audit Trails**: Complete logging for regulatory compliance
+- **Type Safety**: Comprehensive validation prevents clinical data errors
+- **FHIR Compliance**: Full bidirectional conversion with FHIR R5
+
+## 🚀 Production Ready
+
+HACS is production-ready with:
+
+- **✅ 6/6 Tests Passing**: Comprehensive test coverage
+- **✅ Cross-Platform**: Works on macOS, Linux, Windows
+- **✅ Python 3.10-3.13**: Full compatibility including latest Python
+- **✅ CI/CD Pipeline**: Automated testing and quality checks
+- **✅ Type Safety**: 100% type-safe with mypy/pyright
+- **✅ Code Quality**: Enforced with ruff linting and formatting
+- **✅ Documentation**: Comprehensive, accurate, and tested
+
+## 📄 License
+
+Apache-2.0 License - see [LICENSE](LICENSE) for details.
+
+## 🙏 Acknowledgments
+
+Built by healthcare professionals, AI researchers, and software developers who believe in making healthcare AI more accessible, reliable, and safe.
+
+---
+
+<div align="center">
+
+**Ready to build better healthcare AI?**
+
+[Get Started](docs/getting-started/quickstart.md) • [View Examples](examples/README.md) • [Join Community](https://github.com/solanovisitor/hacs/discussions)
+
+[![Star on GitHub](https://img.shields.io/github/stars/solanovisitor/hacs?style=social)](https://github.com/solanovisitor/hacs)
+
+</div>

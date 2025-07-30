@@ -1,0 +1,170 @@
+[project]
+name = "healthcare-hacs"
+version = "0.2.0"
+description = "Healthcare Agent Communication Standard - Production-ready multi-package workspace"
+readme = "readme.md"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Solano Todeschini", email = "solano.todeschini@gmail.com" }
+]
+maintainers = [
+    { name = "Solano Todeschini", email = "solano.todeschini@gmail.com" }
+]
+keywords = [
+    "healthcare",
+    "ai",
+    "agents",
+    "fhir",
+    "clinical",
+    "communication",
+    "standard",
+    "interoperability"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Healthcare Industry",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Typing :: Typed"
+]
+requires-python = ">=3.10"
+dependencies = [
+    "hacs-core>=0.2.0",
+    "hacs-models>=0.2.0",
+    "hacs-tools>=0.2.0",
+    "hacs-fhir>=0.2.0",
+    "hacs-api>=0.2.0",
+    "hacs-cli>=0.2.0",
+    "langchain-core>=0.3.66",
+    "langgraph>=0.5.0",
+    "rich>=14.0.0",
+    "python-dotenv>=1.1.1",
+    "anthropic>=0.57.1",
+    "google-generativeai>=0.8.5",
+    "openai>=1.93.0",
+    "qdrant-client>=1.14.3",
+    "pinecone>=7.3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/solanovisitor/hacs"
+Documentation = "https://github.com/solanovisitor/hacs/blob/main/docs/README.md"
+Repository = "https://github.com/solanovisitor/hacs"
+"Bug Tracker" = "https://github.com/solanovisitor/hacs/issues"
+Changelog = "https://github.com/solanovisitor/hacs/blob/main/docs/reference/changelog.md"
+
+[tool.uv.sources]
+# Workspace sources for development
+hacs-core = { workspace = true }
+hacs-models = { workspace = true }
+hacs-tools = { workspace = true }
+hacs-fhir = { workspace = true }
+hacs-api = { workspace = true }
+hacs-cli = { workspace = true }
+hacs-qdrant = { workspace = true }
+hacs-openai = { workspace = true }
+hacs-pinecone = { workspace = true }
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.4.0",
+    "pyright>=1.1.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+examples = [
+    "psutil>=5.9.0",
+    # Note: pygraphviz requires system graphviz library
+    # Install manually if needed: pip install pygraphviz
+    # Alternative: pip install graphviz (Python-only)
+]
+viz = [
+    # Optional visualization dependencies
+    # Requires system graphviz: apt-get install graphviz (Ubuntu) or brew install graphviz (macOS)
+    "pygraphviz>=1.11",
+]
+# Vector store integrations
+vectorization-qdrant = [
+    "hacs-qdrant>=0.1.0",
+    "sentence-transformers>=2.2.0",  # Local embeddings
+]
+vectorization-openai = [
+    "hacs-openai>=0.1.0",
+    "hacs-qdrant>=0.1.0",  # Default vector store
+]
+vectorization-pinecone = [
+    "hacs-pinecone>=0.1.0",
+    "hacs-openai>=0.1.0",  # Default embeddings
+]
+vectorization-all = [
+    "hacs-qdrant>=0.1.0",
+    "hacs-openai>=0.1.0",
+    "hacs-pinecone>=0.1.0",
+    "sentence-transformers>=2.2.0",
+]
+all = [
+    "psutil>=5.9.0",
+    # Include all vectorization packages
+    "hacs-qdrant>=0.1.0",
+    "hacs-openai>=0.1.0",
+    "hacs-pinecone>=0.1.0",
+    "sentence-transformers>=2.2.0",
+    # pygraphviz excluded from 'all' due to system dependency requirements
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "twine>=6.1.0",
+]
+
+[tool.hatch.build.targets.wheel]
+# This is a meta-package that only provides dependencies
+# Include only essential files
+include = [
+    "readme.md",
+    "LICENSE",
+    "main.py",
+]
+
+[tool.uv.workspace]
+members = [
+    "packages/hacs-core",
+    "packages/hacs-models",
+    "packages/hacs-fhir",
+    "packages/hacs-cli",
+    "packages/hacs-tools",
+    "packages/hacs-api",
+    "packages/hacs-qdrant",
+    "packages/hacs-openai",
+    "packages/hacs-pinecone",
+]
+
+[tool.pyright]
+include = [
+    "packages/",
+    "tests/",
+    "main.py",
+]
+exclude = [
+    "examples/",
+    "samples/",
+    ".trunk/",
+    "**/__pycache__",
+    "**/node_modules",
+]
+reportMissingImports = true
+reportMissingTypeStubs = false
+pythonVersion = "3.10"
