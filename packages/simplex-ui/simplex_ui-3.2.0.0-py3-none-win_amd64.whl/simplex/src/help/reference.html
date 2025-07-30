@@ -1,0 +1,3351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Reference Manual for SIMPLEX 3.1</title>
+<link rel="stylesheet" type="text/css" href="reference.css">
+<script>MathJax = {chtml: {matchFontHeight: false}, tex: { inlineMath: [['$', '$']] }};</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+<div style="display: flex;">
+<div class="sidemenu">
+<div><a href="#Copyright Notice">Copyright Notice</a></div><details><summary>Introduction</summary><ul><li><a href="#Overview">Overview</a></li><li><a href="#Simulation Modes">Simulation Modes</a></li><li><a href="#Functions Available">Functions Available</a></li><li><a href="#Getting Started">Getting Started</a></li></ul></details><details><summary>Operation of the GUI</summary><ul><li><a href="#Tab Panels">Tab Panels</a></li><li><a href="#Menu Commands">Menu Commands</a></li><li><a href="#Edit the Plot">Edit the Plot</a></li></ul></details><details><summary>Simulation Setup</summary><ul><li><a href="#General Method">General Method</a></li><li><a href="#Create a New Process">Create a New Process</a></li><li><a href="#Scanning a Parameter">Scanning a Parameter</a></li></ul></details><details><summary>Parameter List</summary><ul><li><a href="#Electron Beam">Electron Beam</a></li><li><a href="#Seed Light">Seed Light</a></li><li><a href="#SIMPLEX Output">SIMPLEX Output</a></li><li><a href="#Undulator">Undulator</a></li><li><a href="#Lattice">Lattice</a></li><li><a href="#Alignment">Alignment</a></li><li><a href="#Wakefield">Wakefield</a></li><li><a href="#Chicane">Chicane</a></li><li><a href="#Dispersion">Dispersion</a></li><li><a href="#Simulation Conditions">Simulation Conditions</a></li><li><a href="#Data Dump Configurations">Data Dump Configurations</a></li><li><a href="#Output File">Output File</a></li><li><a href="#FEL Performance">FEL Performance</a></li></ul></details><details><summary>Pre-Processing</summary><ul><li><a href="#Graphical Plot">Graphical Plot</a></li><li><a href="#Import Custom Data">Import Custom Data</a></li><li><a href="#Analyze Particle Data">Analyze Particle Data</a></li><li><a href="#Simplified Microbunch Evaluation">Simplified Microbunch Evaluation</a></li><li><a href="#Arrange Undulator Data">Arrange Undulator Data</a></li><li><a href="#Optimize Lattice Function">Optimize Lattice Function</a></li></ul></details><details><summary>Post-Processing</summary><ul><li><a href="#Visualization">Visualization</a></li><li><a href="#Raw Data Processing">Raw Data Processing</a></li></ul></details><details><summary>File Format</summary><ul><li><a href="#JSON Format">JSON Format</a></li><li><a href="#Input Format">Input Format</a></li><li><a href="#Output Format">Output Format</a></li><li><a href="#Binary File Format">Binary File Format</a></li></ul></details><div><a href="#Standalone Mode">Standalone Mode</a></div><div><a href="#Python User Interface">Python User Interface</a></div><div><a href="#References">References</a></div><div><a href="#Acknowledgements">Acknowledgements</a></div></div>
+<div class="main"><h1 id="Copyright Notice">Copyright Notice</h1>
+
+<p><em>Copyright 2004-2024 Takashi Tanaka</em></p>
+
+<p>This software is free for use, however, the author retains the copyright to this software. It may be distributed in its entirety only and may not be included in any other product or be distributed as part of any commercial software.</p>
+
+<p>This software is distributed with <em>NO WARRANTY OF ANY KIND</em>. Use at your own risk. The author is not responsible for any damage done by using this software and no compensation is made for it.</p>
+
+<p>This software has been developed, improved and maintained as voluntary work of the author. Even if problems and bugs are found, the author is not responsible for improvement of them or version up of the software.</p>
+
+<p><em>If you are submitting articles to scientific journals with the results obtained by using this software, please cite the relevant references.</em> For details, refer to <a href="#Introduction">Introduction</a>.</p>
+<h1 id="Introduction">Introduction</h1>
+
+<p>This document describes the instruction to use the free software SIMPLEX, a free electron laser simulation (FEL) code, and is located in "[SIMPLEX Home]/help", where "[SIMPLEX Home]" is the directory where SIMPLEX has been installed. Brief explanations on the software and numerical implementation of FEL equations are given here, together with a simple instruction of how to get started. Note that <a href="https://www.mathjax.org/">"MathJax"</a> javascript library is needed to correctly display the mathematical formulas, which is available online. If you need to read this document offline, "MathJax" should be installed in "[SIMPLEX Home]/help" directory.</p>
+<h2 id="Overview">Overview</h2>
+
+<p>SIMPLEX, which stands for SIMulator &amp; Postprocessor for free electron Laser EXperiments, is a computer program to simulate the amplification process of free electron lasers (FELs) and evaluate the light source performances, such as the radiation power growth, electron motion in the phase space, evolution of angular and spatial profiles of radiation field, etc. In order to perform the FEL simulations, a lot of parameters are required to specify the electron beam, lattice function, undulator, and numerical &amp; boundary conditions. SIMPLEX is equipped with a graphical user interface (GUI), which helps the user to input these parameters. Possible errors in the undulator such as the magnetic field and trajectory errors can also be handled in the GUI.</p>
+
+<p>Besides the above standard functions, the GUI automatically computes and shows relevant parameters related to the FEL system, such as the Pierce parameter, 1D &amp; 3D gain lengths, and saturation power, so that the user can quickly check if their parameters are realistic in advance of actually starting the simulation. Light source characteristics, such as the lasing wavelength, bandwidth, source size and brilliance, are also estimated based on an assumption that the FEL radiation is spatially coherent.</p>
+
+<p>In addition to pre-processing mentioned above, SIMPLEX offers a GUI-based postprocessor to facilitate retrieving desired information from the simulation results. For example, light source characteristics of FEL radiation can be retrieved from the radiation field profile, and the electron motion can be retrieved from the numerical data on macroparticles modeling the electron beam.</p>
+
+<p>The numerical part of SIMPLEX ("solver") is written in C++11 with the standard template library (STL), which solves the equations describing the FEL process in the 3-dimensional (3-D) form. As explained in the next section, the simulations can be classified into two types according to how to deal with the slippage between electrons and radiation emitted by them. For details of numerical implementation, refer to <a href="#simplexjsr">[1]</a>.</p>
+
+<p>In ver. 3.0, the solver has been widely revised to be consistent with the C++11 standard and to facilitate the maintenance and bug fix. In addition, numerical implementation of FEL equations has been improved to be more CPU-efficient and to reduce the simulation time. In addition to the above revisions, two important upgrades have been made. First, the format of the input parameter file has been changed from the original (and thus not readable in other applications) one to JSON (JavaScript Object Notation) format. Because the output data is also given by a JSON file, it is now easy to communicate with other 3rd-party applications.</p>
+<h2 id="Simulation Modes">Simulation Modes</h2>
+
+<p>In order to investigate the FEL amplification process, it is necessary to solve three equations: (1) equation of motion to describe the motion of each electron in the phase 6-D (x,x',y,y',t,γ) space, (2) energy equation to describe the energy exchange between electrons and radiation, and (3) wave equation to describe the evolution of radiation field. Let us call these equations "FEL equations" hereinafter. The main function of an FEL simulator is to numerically solve the FEL equations.</p>
+
+<p>The wave equation describes evolution of the electric field of radiation and is given by \[\left[\nabla^2+2i\frac{\omega}{c}\left(\frac{\partial}{\partial z}+\frac{1}{c}\frac{\partial}{\partial t}\right)\right]\mathbf{E}\mbox{e}^{-i\omega(z/c-t)}+\mbox{c.c.}=\mu_0\frac{\partial\mathbf{j}}{\partial t}+\frac{\nabla\rho}{\varepsilon_0},\] where E is the complex amplitude of radiation field, ω is the frequency of radiation, j and ρ are the current and charge densities of the electron beam.</p>
+
+<p>Assuming that the electron beam is infinitely long with constant beam parameters such as the emittance, energy, current, and offset (angular and positional), and also the radiation is completely monochromatic, the partial differentiation with respect to time can be dropped from the wave equation. In such a case, the simulation algorithm is considerably simplified and the simulation is referred to as "steady-state".</p>
+
+<p>If the above assumption cannot be applied, the wave equation should be solved with the time dependence taken into account, namely, the slippage between the electron beam and radiation should be considered. To be specific, the radiation emitted by the electrons slips out of them by the so-called slippage length, which equals the fundamental wavelength of undulator radiation. The FEL simulation that takes into account the slippage effect is referred to as "time-dependent", which requires a lot of computation time because the algorithm to solve the FEL equations should be applied over the whole electron bunch.</p>
+
+<p>In order to roughly estimate the FEL performance such as the saturation power, saturation length, radiation spatial profile and motion of the electrons in the 6-D phase space, the steady-state simulation suffices. On the other hand, the time-dependent simulation should be performed for various purposes, e.g., the start-to-end simulations for SASE (self-amplified spontaneous emis-sion) FELs, and investigations of the effects due to the wakefield induced in the undulator line.</p>
+<h2 id="Functions Available">Functions Available</h2>
+
+<p>Besides the normal FEL simulation procedures described in the preceding section, SIMPLEX offers various functions to investigate the performance of FEL.</p>
+<h3 id="Rough Estimation of FEL Performances">Rough Estimation of FEL Performances</h3>
+
+<p>A number of FEL parameters and light source characteristics can be roughly estimated by an-alytical formulae instead of rigorous simulations. SIMPLEX preprocessor automatically computes these values with the given conditions, in order to help the users not only to check if their pa-rameters are valid but also to understand the meanings of parameters.</p>
+<h3 id="Electron Beam Data Manipulation">Electron Beam Data Manipulation</h3>
+
+<p>In order to perform the so-called start-to-end simulation, initial conditions of the electron beam injected to the undulator should be specified. SIMPLEX accepts the user input by importing a file that stores the numerical data of the sliced beam parameters along the bunch. Another way is to load the macroparticle distribution in the 6-D phase space, which is probably generated by an external program. In addition, the preprocessor offers a function to analyze the macroparticle distribution to obtain the sliced beam parameters such as the current, emittance, energy spread, and so on.</p>
+<h3 id="Modeling the Undulator Field Error">Modeling the Undulator Field Error</h3>
+
+<p>In normal FEL simulations, the undulator magnetic field is assumed to be completely sinusoidal, which is not the case for the real undulator. SIMPLEX can import the magnetic field distribution data actually measured with a field measurement apparatus such as Hall-effect sensors. Other possible errors of the magnetic field, such as the geomagnetic field and demagnetization due to radiation damage, can be investigated by importing the field-distribution data including these effects. In addition to the above function to specify the undulator error, SIMPLEX offers an option to automatically generate the field errors which reproduce the phase error and trajectory wander in respective undulator segments.</p>
+<h3 id="Modeling the Alignment Error">Modeling the Alignment Error</h3>
+
+<p>Besides the magnetic field error, there is another error source in the undulator line: alignment errors such as the discrepancy in the gap value between undulator segments, tilt and offset in the vertical position of each undulator, the trajectory error due to misalignment of beam position monitors, and so on. SIMPLEX can perform FEL simulations with all these misalignment effects taken into account.</p>
+<h3 id="Wakefield Effects">Wakefield Effects</h3>
+
+<p>The wakefield is induced by interaction between the electron and surrounding environment such as the beam pipe, and induces correlated energy variation in the electron bunch. In order to investigate the wakefield effects on the FEL amplification process, it is required to specify the profile of the wakefield along the electron bunch. In SIMPLEX, the wakefield can be computed internally using analytical expressions derived in several research papers. It is also possible to specify the wakefield distribution by importing the wakefield data.</p>
+<h3 id="Configuration of Lattice Functions">Configuration of Lattice Functions</h3>
+
+<p>In general, there exists an optimum betatron function for a given set of electron-beam and undulator parameters and thus the layout and strength of focusing magnets in the undulator line should be designed so that the average betatron function is optimized. SIMPLEX offers a couple of focusing magnet layouts that are periodically arranged with the undulator segments, which are supposed to be regularly spaced. SIMPLEX preprocessor offers an option to compute the optimum initial Twiss parameters for such a periodic lattice.</p>
+<h3 id="Post-Processing">Post-Processing</h3>
+
+<p>The raw data of simulation results of SIMPLEX, i.e., the complex amplitude of radiation field and macro-particle distribution at each slice are saved in binary files. In order to process them and visualize the results (post-processing), such as the spectrum, instantaneous radiation power, and bunch factor, a GUI-based post-processor is available.</p>
+<h2 id="Getting Started">Getting Started</h2>
+<ol><li>Open a parameter file by running [File]-[Open a Parameter File] command.</li><li>Edit or input parameters in the GUI window. All the parameters and configurations are categorized into several categories, and are shown in a box titled with each category name. To change the category shown in the GUI, select a relevant tab window.</li><li>Run [Run]-[Start Simulation] command to start a simulation with current parameters.</li><li>A "Progressbar" appears to inform the simulation status.</li><li>The simulation results are saved in files specified by the user with different suffices. For example, the radiation power and bunch factor averaged over the whole bunch are saved in a file with a suffix "json" in the JSON format, together with the input parameters used in the simulation</li><li>To verify the simulation results, click "Post-Processing" tab, select the name of the output JSON file, and item(s) to check for visualization. Refer to <a href="#Post-Processing">Post-Processing</a> for details.</li></ol><h1 id="Operation of the GUI">Operation of the GUI</h1>
+<h2 id="Tab Panels">Tab Panels</h2>
+
+<p>SIMPLEX GUI is composed of 6 tab panels entitled as <b>Electron Beam &amp; Seed</b>, <b>Undulator Line</b>, <b>Options</b>, <b>Simulation Controls</b>, <b>Pre-Processing</b>, and <b>Post-Processing</b>. Note that <a href="#FEL Performance">FEL Performance</a> and <a href="#Output File">Output File</a> subpanels are shown when one of "Electron Beam &amp; Seed", "Undulator Line", "Options" and "Simulation Controls" tab panels is selected.</p>
+<figure id="gui.png"><img src="gui.png" style="width: 717px;"><figcaption>Example of tab panels in the SIMPLEX GUI.</figcaption></figure><table><caption>Summary of tab panels in the SIMPLEX GUI</caption><tbody>
+
+<tr>
+<td class="title">Title</td>
+<td class="title">Operation</td>
+<td class="title">Related Subpanels</td>
+</tr>
+<tr>
+<td>Electron Beam &amp; Seed</td>
+<td>Display and edit the parameters and configurations related to the electron beam, seed light, and importing the former simulation result.</td>
+<td><a href="#Electron Beam">Electron Beam</a>, <a href="#Seed Light">Seed Light</a> and <a href="#SIMPLEX Output">SIMPLEX Output</a></td>
+</tr>
+<tr>
+<td>Undulator Line</td>
+<td>Display and edit the parameters and configurations related to the undulator and lattice functions.</td>
+<td><a href="#Undulator">Undulator</a> and <a href="#Lattice">Lattice</a></td>
+</tr>
+<tr>
+<td>Options</td>
+<td>Display and edit the parameters and configurations related to the alitmnent tolerance, wakefield in the undulator, chicane to be inserted in the undulator line, and trajectory error and sources to spoil the overlap between the electron beam and seed light.</td>
+<td><a href="#Alignment">Alignment</a>, <a href="#Wakefield">Wakefield</a>, <a href="#Chicane">Chicane</a> and <a href="#Dispersion">Dispersion</a></td>
+</tr>
+<tr>
+<td>Simulation Controls</td>
+<td>Display and edit the parameters and configurations related to the simulation conditions and data save.</td>
+<td><a href="#Simulation Conditions">Simulation Conditions</a> and <a href="#Data Dump Configurations">Data Dump Configurations</a></td>
+</tr>
+<tr>
+<td>Pre-Processing</td>
+<td>Assist the pre-processing, i.e., visualization and configuration of the simulation conditions, which are not displayed in the subpanels explained above.</td>
+<td><a href="#Pre-Processing">Pre-Processing</a></td>
+</tr>
+<tr>
+<td>Post-Processing</td>
+<td>Assist the post-processing, i.e., visualization of the simulation results.</td>
+<td><a href="#Post-Processing">Post-Processing</a></td>
+</tr>
+</tbody></table>
+
+<h2 id="Menu Commands">Menu Commands</h2>
+
+<p>Menu commands available in SIMPLEX are described below.</p>
+<h3 id="File">File</h3>
+<table><caption>Contents of "File" main menu.</caption><tbody>
+
+<tr>
+<td class="title">Menu</td>
+<td class="title">Details</td>
+</tr>
+<tr>
+<td>Open a Parameter File</td>
+<td>Open a SIMPLEX parameter file. Although those for older (≦ 2.1) versions are automatically converted to the new format, the user is strongly recommended to check if the conversion is OK.</td>
+</tr>
+<tr>
+<td>Save</td>
+<td>Save all the parameters and options in the current file.</td>
+</tr>
+<tr>
+<td>Save As</td>
+<td>Save all the parameters and options in a new file.</td>
+</tr>
+<tr>
+<td>Load Output File</td>
+<td>Import the former simulation results for visualization.</td>
+</tr>
+<tr>
+<td>Load Post-Processed Result</td>
+<td id="Load Post-Processed Result">Import the former post-processred results for visualization</td>
+</tr>
+<tr>
+<td>Exit</td>
+<td>Quit SIMPLEX and Exit</td>
+</tr>
+</tbody></table>
+
+<h3 id="Run">Run</h3>
+<table><caption>Contents of "Run" main menu</caption><tbody>
+
+<tr>
+<td class="title">Menu</td>
+<td class="title">Details</td>
+</tr>
+<tr>
+<td>Create a New Process</td>
+<td>Create a simulation process with the current parameters and options.</td>
+</tr>
+<tr>
+<td>Export Simulation Settings</td>
+<td>Export the current parameters and options to a file, or download it (web-application mode), which can be used as an input file to directly call the solver.</td>
+</tr>
+<tr>
+<td>Start Simulation</td>
+<td>Start a new simulation, or launch the simulation process.</td>
+</tr>
+</tbody></table>
+
+<h3 id="Help">Help</h3>
+
+<p>Open the reference manual or show the information about SIMPLEX.</p>
+<h2 id="Edit the Plot">Edit the Plot</h2>
+
+<p>Besides standard Plotly.js configurations, a number of options to edit the graphical plot in the post- and pre-processors are available. To do so, click the small icon located in the top-right side of the plot. Then a dialog box pops up to let the user edit the plot in the following configurations.</p>
+<table><caption>Options for the graphical plot</caption><tbody>
+
+<tr>
+<td class="title">Item</td>
+<td class="title">Details</td>
+<td class="title">Available Options</td>
+</tr>
+<tr>
+<td rowspan="2">Scale</td>
+<td rowspan="2">Select how to normalize the animation plot</td>
+<td>For Each: y-/z-axis scale is normalized by the maximum value for each slide</td>
+</tr>
+<tr>
+<td>By Maximum: y-/z-axis scale is normalized by the maximum value over the whole slides</td>
+</tr>
+<tr>
+<td>X-axis Scale</td>
+<td>Select the scale for x axis</td>
+<td>Linear, Logarithmic</td>
+</tr>
+<tr>
+<td>Y-axis Scale</td>
+<td>Select the scale for y axis</td>
+<td>Linear, Logarithmic</td>
+</tr>
+<tr>
+<td>Plot Type</td>
+<td>Select the type of the 1D plot</td>
+<td>Line, Line &amp; Symbol, Symbol</td>
+</tr>
+<tr>
+<td>Symbol Size</td>
+<td>Size of the symbol</td>
+<td>Input a number</td>
+</tr>
+<tr>
+<td>Line Width</td>
+<td>Width of the line</td>
+<td>Input a number</td>
+</tr>
+<tr>
+<td rowspan="3">2D Plot Type</td>
+<td rowspan="3">Select the type of the 2D plot</td>
+<td>Contour: contour plot with a specific color map</td>
+</tr>
+<tr>
+<td>Surface (Color Scale): surface plot painted with a specific color map</td>
+</tr>
+<tr>
+<td>Surface (Shading): shaded surface plot illuminated by a specific light source</td>
+</tr>
+<tr>
+<td>Color</td>
+<td>Select the color of the light source to create a shaded surface plot</td>
+<td>Select from the color picker dialog.</td>
+</tr>
+<tr>
+<td>Color Map</td>
+<td>Select the color map. Several built-in options are available but cannot be customized</td>
+<td>Default, Rainbow, Blackbody, Earth, Greys</td>
+</tr>
+<tr>
+<td>Wireframe</td>
+<td>If checked, grid lines are shown on the surface plot</td>
+<td></td>
+</tr>
+</tbody></table>
+
+<h1 id="Simulation Setup">Simulation Setup</h1>
+
+<p>Details of how to setup and start the simulations are presented here.</p>
+<h2 id="General Method">General Method</h2>
+<h3 id="Open a Parameter File">Open a Parameter File</h3>
+
+<p>Upon being started, SIMPLEX tries to load parameters from the parameter file that was opened last time. If successful, the parameters are shown in the GUI. If SIMPLEX is run for the first time after installation, default parameters will be shown. To open a new SIMPLEX parameter file, run [File]-[Open a Parameter File] command. In the initial setting, the parameter files are found in the directory "[SIMPLEX Home]/prm" with a default suffix "json", where "[SIMPLEX Home]" is the directory in which SIMPLEX has been installed.</p>
+<h3 id="Rough Estimation">Rough Estimation</h3>
+
+<p>Before starting a simulation, the user is recommended to  roughly estimate the expected performances of the FEL system, such as the gain length, saturation power, lasing wavelength, brilliance, etc., to make sure that the input parameters are not far from reasonable ones. In SIMPLEX, these values to represent the FEL performance are automatically evaluated using analytical and empirical expressions on FEL physics <a href="#rhooc">[2]</a>-<a href="#scaling">[4]</a> and shown in the <a href="#FEL Performance">FEL Performance</a> subpanel. Note that these values are approximate ones and are given just for reference.</p>
+<h3 id="Arrange the Output File">Arrange the Output File</h3>
+
+<p>Arrange the output JSON file to save the simulation results in the <a href="#Output File">Output File</a> subpanel. SIMPLEX generates at most 3 files (or more, dependenig on the maximum harmonic number) to save the simulation result with the names of *.json, *.par, *.fld, where * stands for the data name specified by the user. Refer to <a href="#Output File">Output File</a> about how the data name is given.</p>
+
+<p>The gain curve (growth of the pulse energy etc. along the undulator line) is saved in the "*.json" file (hereafter, "output JSON file") together with the input parameters and configurations. In addition, temporal, spectral, spatial and angular profiles of radiation are optionally saved if specified. For details, refer to <a href="#Data Dump Configurations">Data Dump Configurations</a>. Note that the data is saved in the <a href="#JSON Format">JSON Format</a>. The output JSON file can be loaded for visualization of the gain curve and radiation profiles, or for <a href="#Raw Data Processing">Raw Data Processing</a>. Besides such post-processing operations, it can be  loaded as a parameter file for another simulation.</p>
+
+<p>The radiation and particle data (raw data) are saved in the "*.fld" and "*.par" files, respectively, in a binary format. The raw data in these files will be used in another simulation, or post-processed later with the assistance of the output JSON file as mentioned above.</p>
+<h3 id="Start Simulation">Start Simulation</h3>
+
+<p>Run [Run]-[Start Simulation] command to start a single simulation. Then "Create a New Process" subpanel is displayed to indicate the progress of simulation. To cancel the simulation, click "Cancel" button.</p>
+<figure id="simstatus.png"><img src="simstatus.png" style="width: 226px;"><figcaption>Progress bar to indicate the simulation status.</figcaption></figure>
+<p>Note that the serial number is automatically incremented once the simulation is started, unless it is not negative (-1). This is to avoid the overlap of data names in performing successive simulations. When the simulation is completed, the "Create a New Process" subpanel vanishes and the result is imported in the "Post-Processing" panel for visualization.</p>
+<h3 id="Verify the Result">Verify the Result</h3>
+
+<p>Upon completion of a simulation, the output JSON file is automatically loaded and the gain curve (pulse energy vs. longitudinal position) is plotted in the "Post-Processing" subpanel to quickly view the results. Refer to <a href="#Post-Processing">Post-Processing</a> for details about how to operate the Post-Processing.</p>
+<h2 id="Create a New Process">Create a New Process</h2>
+
+<p>To configure a number of simulations with different conditions, run [Run]-[Create Process] command every time you finish specifying all the parameters. Then the "Create a New Process" subpanel appears to show the simulation list currently saved in a temporary memory. Repeat the above porcess until all the simulations are specified. Click "Remove" button to delete the selected process, or "Cancel All" to clear out all the processes. Run [Run]-[Start Simulation] command to start the simulation processes, then a progressbar is displayed to show the status of each process as shown below.</p>
+<figure id="simprocs.png"><img src="simprocs.png" style="width: 226px;"><figcaption>List of simulation processes.</figcaption></figure><h2 id="Scanning a Parameter">Scanning a Parameter</h2>
+
+<p>Besides the method described above, it is possible to configure a lot of processes at once by scanning a specific parameter. To do so, right click the target parameter in one of the subpanels, and click [Scan This Parameter] in the context menu. Then specify the configurations for scanning in the dialog box as shown below. Note that the context menu does not pop up for parameters that cannot be used for scanning.</p>
+<figure id="scan.png"><img src="scan.png" style="width: 230px;"><figcaption>Configuration for scanning a parameter; the normalized emittance is to be scanned in this example.</figcaption></figure>
+<p>Input the initial &amp; final values, and number of points for scanning. For several parameters to be specified by an integer, scanning interval instead of the number of points should be given. If the target parameter forms a pair, such as ε<sub>x, y</sub> (horizontal and vertical normalized emittances), the user is requested to select "Scan Type". "1D: Single" means that only the target parameter (ε<sub>x</sub> or ε<sub>y</sub> in this example) is varied from the inital to the final values. "1D: Link 1st/2nd" means that both of the pair are simultaneously varied. In contrast to these 1D scan types, "2D Mesh" varies the both parameters in a 2D manner, and thus N<sub>1</sub>N<sub>2</sub> processes are created, where N<sub>1,2</sub> stands for "Scan Points (1,2)" parameters.</p>
+
+<p>After configuration, click "OK" button. Then the specified parameters are saved in a temporary memory and the scanning process is saved in the simulation list. Run [Run]-[Start Simulation] command to start the simulation. Note that a serial number starting from "Initial S/N" is attached to the data name to avoid overlap. If "2D Mesh" is chosen, the serial number is given like "_m_n", where m and n mean the serial numbers corresponding to the 1st and 2nd parameters of the pair.</p>
+<h1 id="Parameter List">Parameter List</h1>
+
+<p>All the parameters and configurations needed to perform an FEL simulation are classified into several categories in SIMPLEX, and can be edited in the subpanels tiltled with the category name. Details of them are explained in the followings for each category.</p>
+<h2 id="Electron Beam">Electron Beam</h2>
+
+<p>The parameters and configurations in the "Electron Beam" subpanel are related to the specifications of the electron beam. Details are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Bunch Profile</td>
+<td>Bunch profile of the electron beam in the 6D phase space. For details, refer to <a href="#Bunch Profile">Bunch Profile</a>.</td>
+</tr>
+<tr>
+<td id="Particle Distribution">Particle Distribution</td>
+<td>Path to a local file containing the particle data. Input the absolute path in the text box, or click "Browse" and specify the file in the dialog box. Note that the data file should be an ASCII file, and each line is composed of 6 values specifying the position of a single macroparticle in the 6D phase space. After specifying the data, the user is strongly recommended to perform "Analyze Particle Data" for configuration of the particle data such as the units and column indices for respective coordinates.</td>
+</tr>
+<tr>
+<td>Electron Energy (GeV)</td>
+<td>Slice (representative) energy of the electron beam.</td>
+</tr>
+<tr>
+<td>RMS Bunch Length (m)</td>
+<td>RMS bunch length of the electron beam.</td>
+</tr>
+<tr>
+<td>Bunch Length (m)</td>
+<td>Full bunch length of the electron beam. Available if "Boxcar" is chosen for the electron bunch profile.</td>
+</tr>
+<tr>
+<td>Bunch Charge (nC)</td>
+<td>Bunch charge of the electron beam.</td>
+</tr>
+<tr>
+<td>ε<sub>x,y</sub> (mm.mrad)</td>
+<td>Normalized emittance of the electron beam.</td>
+</tr>
+<tr>
+<td>RMS Energy Spread</td>
+<td rowspan="2">Energy spread and chirp of the electron beam.</td>
+</tr>
+<tr>
+<td>Energy Chirp (m<sup>-1</sup>)</td>
+</tr>
+<tr>
+<td>η<sub>x,y</sub> (m)</td>
+<td>Dispersion functions of the electron beam.</td>
+</tr>
+<tr>
+<td>Peak Current (A)</td>
+<td>Peak current of the electron beam evaluated from relevant parameters.</td>
+</tr>
+<tr>
+<td>σ<sub>0x,0y</sub> (mm)</td>
+<td rowspan="2">Beam size and angular divergence at the undulator entrance.</td>
+</tr>
+<tr>
+<td>σ<sub>0x',0y'</sub> (mrad)</td>
+</tr>
+<tr>
+<td>R<sub>56</sub> (m)</td>
+<td>Strength of the virtual dispersive section located in front of the undulator. Available if "SIMPLEX Output" is chosen for the electron bunch profile, and may be needed to simulate the HGHG/EEHG FELs. Refer to <a href="#Configuration to Use the Former Result">Configuration to Use the Former Result</a> for details.</td>
+</tr>
+</tbody></table>
+
+<h3 id="Bunch Profile">Bunch Profile</h3>
+
+<p>The distribution functions of the electron beam assumed in the FEL simulation, or the profiles in the 6D phase space available in SIMPLEX,  are summarized below. Note that the custom data needed for several types can be imported in the <a href="#Import Custom Data">Import Custom Data</a> tab panel.</p>
+<table><tbody>
+
+<tr>
+<td class="title">Type</td>
+<td class="title">Detail</td>
+</tr>
+<tr>
+<td>Gaussian</td>
+<td>Distribution function in the 6D phase space is given by a 6D Gaussian function.</td>
+</tr>
+<tr>
+<td>Boxcar</td>
+<td>Same as "Gaussian", but the current profile is given by a boxcar function.</td>
+</tr>
+<tr>
+<td>SIMPLEX Output</td>
+<td>Macroparticles are loaded from the former simulation result. To specify the former simulation, refer to <a href="#SIMPLEX Output">SIMPLEX Output</a>.</td>
+</tr>
+<tr>
+<td>Current Profile</td>
+<td>Same as "Gaussian", but the current profile is given by custom data.</td>
+</tr>
+<tr>
+<td>Slice Parameters</td>
+<td>Same as "Current Profile", but the slice parameters are given by custom data.</td>
+</tr>
+<tr>
+<td>E-t Profile</td>
+<td>Same as "Gaussian", but the profile in the (E-t) phase space is given by custom data.</td>
+</tr>
+<tr>
+<td>Particle Distribution</td>
+<td>Beamlets are loaded from a data file that contains the particle distribution in the 6D phase space. The user should specify the path of the data in "Particle Distribution" and specify its format. Refer to <a href="#Analyze Particle Data">Analyze Particle Data</a> for details of how to specify the data format and how to verify its validity.</td>
+</tr>
+</tbody></table>
+
+<h2 id="Seed Light">Seed Light</h2>
+
+<p>The parameters and configurations in the "Seed Light" subpanel are related to the specifications of the electron beam. Details are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Seed Light</td>
+<td>Type of the seed light. For details, refer to <a href="#Seed Type">Seed Type</a>.</td>
+</tr>
+<tr>
+<td>Peak Power (W)</td>
+<td>Peak power of the seed light.</td>
+</tr>
+<tr>
+<td>Δλ/λ<sub>1</sub></td>
+<td>Wavelength of the seed light relative to the undulator fundamental wavelength.</td>
+</tr>
+<tr>
+<td>Wavelength (nm)</td>
+<td>Wavelength of the seed light.</td>
+</tr>
+<tr>
+<td>Pulse Energy (J)</td>
+<td rowspan="2">Pulse energy and pulse length of the seed light.</td>
+</tr>
+<tr>
+<td>FWHM Pulse Length (fs)</td>
+</tr>
+<tr>
+<td>FWHM Spot Size (mm)</td>
+<td rowspan="2">Source size and Rayleigh length of the seed light.</td>
+</tr>
+<tr>
+<td>Rayleigh Length (m)</td>
+</tr>
+<tr>
+<td>Position of Waist (m)</td>
+<td>Longitudinal position where the seed light forms a beam waist</td>
+</tr>
+<tr>
+<td>Carrier Envelope Phase (°)</td>
+<td rowspan="3">Carrier envelope phase, group delay dispersion and third order dispersion of the seed light.</td>
+</tr>
+<tr>
+<td>GDD (fs<sup>2</sup>)</td>
+</tr>
+<tr>
+<td>TOD (fs<sup>3</sup>)</td>
+</tr>
+</tbody></table>
+
+<h3 id="Seed Type">Seed Type</h3>
+
+<p>Types of the Seed light available in SIMPLEX are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class="title">Type</td>
+<td class="title">Detail</td>
+</tr>
+<tr>
+<td>N.A.</td>
+<td>No seed light is supposed.</td>
+</tr>
+<tr>
+<td>Gaussian Beam</td>
+<td>Transform-limited Gaussian beam is supposed.</td>
+</tr>
+<tr>
+<td>Chirp Pulse</td>
+<td>Chirped Gaussian beam is supposed.</td>
+</tr>
+<tr>
+<td>SIMPLEX Output</td>
+<td>Radiation profiles are loaded from the former simulation result.</td>
+</tr>
+</tbody></table>
+
+<h2 id="SIMPLEX Output">SIMPLEX Output</h2>
+
+<p>The results of the former simulation, namely, the distribution of the macripartiles and radiation profiles can be reused in another simulation. To enable this option, related raw data should be exported in the former simulation (<a href="#Data Dump Configurations">Data Dump Configurations</a>).</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Data Name</td>
+<td>Path to the output data file</td>
+</tr>
+<tr>
+<td>Step Index to Retrieve Data</td>
+<td>Step index to retrieve the raw data of the former simulation, counted from the final step. For example, "-1" means that the raw data at the (N-1)-th step are used.</td>
+</tr>
+<tr>
+<td>z (m)</td>
+<td>Longitudinal position corresponding to the above index.</td>
+</tr>
+<tr>
+<td>undefined</td>
+<td>Length of the drift section between the exit of the former simulation and the entrance of the current one.</td>
+</tr>
+<tr>
+<td>Photon Energy (eV)</td>
+<td>Fundamental energy used in the former simulation</td>
+</tr>
+</tbody></table>
+
+<h3 id="Configuration to Use the Former Result">Configuration to Use the Former Result</h3>
+
+<p>To use the former simulation result as </p>
+<figure id="ulinestr.png"><img src="ulinestr.png" style="width: 450px;"><figcaption>Meanings of parameters for using the former simulation result.</figcaption></figure><h2 id="Undulator">Undulator</h2>
+
+<p>The parameters and configurations in the "Undulator" subpanel are related to the specifications of the undulator. Details are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td colspan="2" class=" subtitle">Main Parameters</td>
+</tr>
+<tr>
+<td>Undulator Type</td>
+<td>Undulator type.  For details, refer to <a href="#Undulator Type">Undulator Type</a>.</td>
+</tr>
+<tr>
+<td>K Value</td>
+<td rowspan="2">Deflection parameter (K value) of the undulator. Note that K<sub>⊥</sub> is defined as \[K_{\perp}=\sqrt{K_x^2+K_y^2}\]</td>
+</tr>
+<tr>
+<td>K<sub>⊥</sub></td>
+</tr>
+<tr>
+<td>tan<sup>-1</sup>(K<sub>x</sub>/K<sub>y</sub>) (°)</td>
+<td>Specifies the ratio of the horizontal and vertical K values.</td>
+</tr>
+<tr>
+<td id="Multi-Harmonic Contents">Multi-Harmonic Contents</td>
+<td>Arrange the harmonic components of "Multi-Harmonic". For details, refer to <a href="#Multi-Harmonic">Multi-Harmonic</a>.</td>
+</tr>
+<tr>
+<td>λ<sub>u</sub> (mm)</td>
+<td>Magnetic Period Length of the undulator</td>
+</tr>
+<tr>
+<td>Length/Segment (m)</td>
+<td rowspan="3">Parameters to specify the undulator line, which is supposed to be composed of several segments and drift sections in between. For details, refer to <a href="#Undulator Line Parameters">Undulator Line Parameters</a>.</td>
+</tr>
+<tr>
+<td>Number of Segments</td>
+</tr>
+<tr>
+<td>Segment Interval</td>
+</tr>
+<tr>
+<td>Peak Field (T)</td>
+<td>Peak field of the undulator evaluate from the K value</td>
+</tr>
+<tr>
+<td>Periods/Segment</td>
+<td>Number of undulator periods/segment</td>
+</tr>
+<tr>
+<td>Slippage in Drift (2π)</td>
+<td>Number of slippage in the drift section</td>
+</tr>
+<tr>
+<td>Extra Slippage (°)</td>
+<td>Extra slippage in the drift section</td>
+</tr>
+<tr>
+<td>Tapering</td>
+<td>Type of undulator taper. For details, refer to <a href="#Taper Type">Taper Type</a>.</td>
+</tr>
+<tr>
+<td>Undulator Model</td>
+<td>Type of undulator model. For details, refer to <a href="#Undulator Models">Undulator Models</a>.</td>
+</tr>
+<tr>
+<td colspan="2" class=" subtitle">Undulator Taper Parameters</td>
+</tr>
+<tr>
+<td>Optimization</td>
+<td>Specifies how to optimize the taper rate. For details, refer to <a href="#Automatic Taper Optimization">Automatic Taper Optimization</a>.</td>
+</tr>
+<tr>
+<td>Target Slice Position (m)</td>
+<td>Target slice position for taper optimization</td>
+</tr>
+<tr>
+<td>Initial Segment</td>
+<td rowspan="4">Four parameters to specify the undulator taper. For details, refer to <a href="#How to Setup Tapering">How to Setup Tapering</a>.</td>
+</tr>
+<tr>
+<td>Increment Segment Interval</td>
+</tr>
+<tr>
+<td>Base Linear Taper (m<sup>-1</sup>)</td>
+</tr>
+<tr>
+<td>Taper Increment (m<sup>-1</sup>)</td>
+</tr>
+<tr>
+<td>K Value@Exit</td>
+<td>K value at the exit of the undulator</td>
+</tr>
+<tr>
+<td>Resonance Detuning@Exit</td>
+<td>Detuning at the exit of the undulator</td>
+</tr>
+<tr>
+<td colspan="2" class=" subtitle">Undulator Model Configurations</td>
+</tr>
+<tr>
+<td>Random Number Auto Seeding</td>
+<td>If enabled, seed number for the random number generator is automatically determined</td>
+</tr>
+<tr>
+<td>Random Number Seed</td>
+<td>Seed number for the random number generator to model the undulator error</td>
+</tr>
+<tr>
+<td>σ<sub>φ</sub> (°)</td>
+<td>RMS phase error</td>
+</tr>
+<tr>
+<td>σ<sub>B</sub>/B (%)</td>
+<td>RMS field deviation</td>
+</tr>
+<tr>
+<td>σ<sub>x,y</sub> (mm)</td>
+<td>RMS trajectory error</td>
+</tr>
+<tr>
+<td>Apply to All Segments</td>
+<td>Apply the error to all the segments</td>
+</tr>
+<tr>
+<td>undefined</td>
+<td>Target segment number to apply the error</td>
+</tr>
+</tbody></table>
+
+<h3 id="Undulator Type">Undulator Type</h3>
+
+<p>Undulator types available in SIMPLEX are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class="title">Type</td>
+<td class="title">Details</td>
+<td class="title">Radiation Field for Simulation</td>
+</tr>
+<tr>
+<td>Linear</td>
+<td>Conventional linear undualtor with a vertical magnetic filed to generate 100% linearly polarized radiation.</td>
+<td>Scalar: E<sub>x</sub></td>
+</tr>
+<tr>
+<td>Helical</td>
+<td>Helical undulator to generate 100% circularly polarized radiation.</td>
+<td>Scalar: E<sub>x</sub>+iE<sub>y</sub></td>
+</tr>
+<tr>
+<td>Elliptical</td>
+<td>Elliptical undulator to generate elliptically polarized radiation.</td>
+<td>Vector: (E<sub>x</sub>, E<sub>y</sub>)</td>
+</tr>
+<tr>
+<td>Multi-Harmonic</td>
+<td>Special undulator generating a magnetic field composed of multiple harmonic components.</td>
+<td>Vector: (E<sub>x</sub>, E<sub>y</sub>)</td>
+</tr>
+</tbody></table>
+
+<h3 id="Undulator Line Parameters">Undulator Line Parameters</h3>
+
+<p>The undulator line is supposed to be composed of a number of undulator segments and drift sections in between, where quadrupole magnets are installed (FODO etc. are selected for the <a href="#Lattice Type">Lattice Type</a>).</p>
+<figure id="undulatorline.png"><img src="undulatorline.png" style="width: 675px;"><figcaption>Parameters to specify the components in the undulator line</figcaption></figure><h3 id="Multi-Harmonic">Multi-Harmonic</h3>
+
+<p>This is an undulator scheme generating a magnetic field composed of multiple harmonic components, whose configuration is specified in the spreadsheed titled <a href="#Multi-Harmonic Contents">Multi-Harmonic Contents</a>.  K<sub>x</sub> Ratio ($=R_n$) and Phase ($=P_n$, in degrees) refer to the fraction and phase of the horizontal field of the n-th harmonic component, where n is the number indicated in the 1st column.</p>
+
+<p>The K value corresponding to the n-th harmonic is defined as \[K_{xn}=K_x\frac{R_n}{\sqrt{R_1^2+R_2^2+\cdots+R_N^2}},\] where $K_x$ is the (total) K value and $N$ is the maximum harmonic number.</p>
+
+<p>The field distribution is defined as \[B_{x}(z)=\sum_{n=1}^{N}B_{xn}\sin\left[2\pi\left(\frac{nz}{\lambda_u}+\frac{P_n}{360}\right)\right],\] where $B_{xn}$ is the peak field corresponding to the K value of the n-th harmonic.</p>
+
+<p>Similar definitions of $K_{yn}$ and $B_{y}(z)$ for the horizontal field componeents.</p>
+<h3 id="Taper Type">Taper Type</h3>
+
+<p>Tapering options available in SIMPLEX are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class="title">Type</td>
+<td class="title">Details</td>
+</tr>
+<tr>
+<td>N.A.</td>
+<td>Tapering is not applied.</td>
+</tr>
+<tr>
+<td>Stair-Like</td>
+<td>Each undulator segment cannot be tapered; the K value is constant within a single segment and jumps at the entrance of the next segment.</td>
+</tr>
+<tr>
+<td>Continuous</td>
+<td>Each undulator segment can be tapered; the K value changes gradually from the entrance to the exit in a single segment, and thus the K value varies continuously along the undulator.</td>
+</tr>
+<tr>
+<td>Custom</td>
+<td>Customize the K value offset and slope for each segment.</td>
+</tr>
+</tbody></table>
+
+<h3 id="Custom Taper">Custom Taper</h3>
+
+<p>Customize the K value and its gradient along the longitudinal axis for each undualtor segment, as defined below.</p>
+
+<p>\[K=K_0+\Delta K+\frac{dK}{dz}(z-z_{mid})\]</p>
+
+<p>where $K_0$ is the nominal K value, $\Delta K$ is the offset, $dK/dz$ is the gradient, and $z_{mid}$ is the longitudinal coordinate of the target segment.</p>
+<h3 id="Undulator Models">Undulator Models</h3>
+
+<p>Undulator models available in SIMPLEX are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class="title">Type</td>
+<td class="title">Details</td>
+</tr>
+<tr>
+<td>Ideal</td>
+<td>Magnetic fields of all the undulator segments are ideal.</td>
+</tr>
+<tr>
+<td>Specify Error</td>
+<td>Specify the magnetic field errors.</td>
+</tr>
+<tr>
+<td>Import Data</td>
+<td>Use the field distribution given by custom data. To import the custom data, refer to <a href="#Arrange Undulator Data">Arrange Undulator Data</a>.</td>
+</tr>
+</tbody></table>
+
+<h3 id="How to Setup Tapering">How to Setup Tapering</h3>
+<figure id="tapering.png"><img src="tapering.png" style="width: 540px;"><figcaption>Example of how to specify the undulator taper with the four parameters.</figcaption></figure>
+<p>In order to specify the undulator taper, four parameters should be specified: "Initial Segment", "Increment Segment Interval", "Base Linear Taper" (α<sub>1</sub>), and "Taper Increment" (α<sub>2</sub>). The meanings of these parameters are schematically illustrated in the above figure, in which the K value along the undulator axis is plotted when both "Initial Segment" and "Increment Segment Interval" are assumed to be 3. In this  example, the taper starts at the 3rd segment with the taper rate (dK/dz) of α<sub>1</sub>, which continues up to the 5th segment. Then the taper rate changes to α<sub>1</sub>+α<sub>2</sub> at the 6th segment and continues up to the 8th segment, and again changes to α<sub>1</sub>+2α<sub>2</sub> at the 9th segment. This kind of periodic increment continues up to the final undulator segment. The above taper configuration is to model the quadratic taper, and in fact is more convenient for the taper optimization than directly looking for the optimum coefficients of the 2nd order polynomial specifying the taper profile.</p>
+<h3 id="Automatic Taper Optimization">Automatic Taper Optimization</h3>
+
+<p>SIMPLEX offers a scheme to automatically adjust the taper rate to enhance the FEL output by a number of means as summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class="title">Type</td>
+<td class="title">Details</td>
+</tr>
+<tr>
+<td>N.A.</td>
+<td>Optimization is not applied.</td>
+</tr>
+<tr>
+<td>Compensate Wake</td>
+<td>Besides what is specified by the user, additional tapering is applied to compensate for the energy loss by the wakefield evaluated at the target slice position.</td>
+</tr>
+<tr>
+<td>Projection</td>
+<td>The taper rate is automatically determined to compensate for the energy loss in the whole electron bunch.</td>
+</tr>
+<tr>
+<td>Slice</td>
+<td>The taper rate is automatically determined to compensate for the energy loss at the target slice position.</td>
+</tr>
+</tbody></table>
+
+<h2 id="Lattice">Lattice</h2>
+
+<p>The parameters and configurations in the "Lattice" subpanel are related to the arrangement and specifications of the quadrupole magnets and initial Twiss parameters of the electron beam. Details are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Lattice Type</td>
+<td>Type of the lattice. Refer to <a href="#Lattice Type">Lattice Type</a> for details.</td>
+</tr>
+<tr>
+<td>QF Gradient (T/m)</td>
+<td rowspan="2">Field gradient of the quadrupole magnets.</td>
+</tr>
+<tr>
+<td>QD Gradient (T/m)</td>
+</tr>
+<tr>
+<td>QF Length (m)</td>
+<td rowspan="2">Length of the quadrupole magnets.</td>
+</tr>
+<tr>
+<td>QD Length (m)</td>
+</tr>
+<tr>
+<td>QF-QD Distance (m)</td>
+<td>Distance between the focusing and defocusing mangets.</td>
+</tr>
+<tr>
+<td># Periods/Segment</td>
+<td>Number of FODO periods in a single undulator segment.</td>
+</tr>
+<tr>
+<td>β<sub>x0,y0</sub> (m)</td>
+<td rowspan="2">Initial Twiss parameters at the undulator entrance.</td>
+</tr>
+<tr>
+<td>α<sub>x0,y0</sub> (m)</td>
+</tr>
+<tr>
+<td>Optimum β (m)</td>
+<td>Optimmum betatron function evaluate to maximize the saturation power.</td>
+</tr>
+</tbody></table>
+
+<h3 id="Lattice Type">Lattice Type</h3>
+
+<p>SIMPLEX offers 5 types of focusing magnet arrangements as shown below. Except for the "Undulator Combined" type, the focusing magnets are placed at the drift sections between undulator segments.</p>
+<figure id="latticetype.png"><img src="latticetype.png" style="width: 453px;"><figcaption>Focusing-magnet arrangements in each lattice type available in SIMPLEX</figcaption></figure><h2 id="Alignment">Alignment</h2>
+
+<p>The parameters and configurations in the "Alignment" subpanel are related to the alignment tolerance of the components in the undulator line; this is to evaluate the effects of the misalignment on the FEL amplification process. Details are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Undulator Alignment</td>
+<td>Type of the undulator alignment error. For details, refer to <a href="#How to Specify the Alignment Error">How to Specify the Alignment Error</a>.</td>
+</tr>
+<tr>
+<td>ΔK Tolerance</td>
+<td>RMS deviation of the K value</td>
+</tr>
+<tr>
+<td>Slippage Tolerance (°)</td>
+<td>RMS deviation of the phase slip</td>
+</tr>
+<tr>
+<td>Offset for Each Segment</td>
+<td>Specifies the offset of the K values and slippage for each segment</td>
+</tr>
+<tr>
+<td>BPM Alignment</td>
+<td>Type of the BPM alignment error. For details, refer to <a href="#How to Specify the Alignment Error">How to Specify the Alignment Error</a>.</td>
+</tr>
+<tr>
+<td>x,y Tolerance (mm)</td>
+<td>Tolerance of the BPM alignment</td>
+</tr>
+<tr>
+<td>Random Number Auto Seeding</td>
+<td>If enabled, seed number for the random number generator is automatically determined</td>
+</tr>
+<tr>
+<td>Random Number Seed</td>
+<td>Seed number for the random number generator to model the alignment errors</td>
+</tr>
+</tbody></table>
+
+<h3 id="How to Specify the Alignment Error">How to Specify the Alignment Error</h3>
+
+<p>Options to specify the alignment errors are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class="title">Type</td>
+<td class="title">Details</td>
+</tr>
+<tr>
+<td>Ideal</td>
+<td>All the components are aligned perfectly.</td>
+</tr>
+<tr>
+<td>Specify Offset</td>
+<td>K values and slippage values of target undulator segments are misaligned.</td>
+</tr>
+<tr>
+<td>Specify Tolerance</td>
+<td>Related components are aligned with a specific tolerance.</td>
+</tr>
+</tbody></table>
+
+<h2 id="Wakefield">Wakefield</h2>
+
+<p>The parameters and configurations in the "Wakefield" subpanel are related to the parameters and configurations related to the wakefield, which usually degrades the FEL gain.</p>
+<h3 id="Wakefield Evaluation">Wakefield Evaluation</h3>
+
+<p>Wakefield is an electromagnetic wave induced by interaction between electrons and surrounding environment, and induces an energy modulation in the electron bunch, which eventually degrades the FEL gain. In SIMPLEX, several wakefield types can be taken into account to investitage their effects. Note that the wakefield is evaluated only once, before starting a simulation using the current profile at the undulator entrance, and is not modified during the simulation process. This means that the density modulation of the electron beam induced by the FEL interaction is not taken into accout for evaluating the wakefield.</p>
+<ul><li>Resistive Wake; the resistive wakefield is evaluated using the expression derived in <a href="#resistive">[5]</a>.</li><li>Surface Roughness; the wakefield induced by the surface roughness can be in principle computed using the expressions derived in <a href="#rough1">[6]</a> and <a href="#rough2">[7]</a> with the knowledge of the surface profile. Instead of them, SIMPLEX uses modified expressions that denote the wakefield induced by the surface whose profile consists of randomly distributed bumps with a Gaussian spectrum.</li><li>Dielectric Layer: if the surrounding conductor is covered with a thin dielectric layer due to, e.g., oxidation, wakefield is induced as discussed in <a href="#synchro">[8]</a>.</li><li>Space Charge: the space charge, or the "self-induced wakefield without any surrounding structure", is evaluated using the expressions derived in <a href="#spcharge">[9]</a>.</li></ul>
+<p>Details of the parameters and configurations are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Wakefield On</td>
+<td>Enables the wakefield</td>
+</tr>
+<tr>
+<td>Aperture (m)</td>
+<td>Aperture of the surrounding beam duct</td>
+</tr>
+<tr>
+<td>Resistive</td>
+<td>Enables the resistive wall wakefield</td>
+</tr>
+<tr>
+<td>Resistivity (Ωm)</td>
+<td rowspan="2">Resistivity and relaxation time of the wall material</td>
+</tr>
+<tr>
+<td>Relaxation Time (sec)</td>
+</tr>
+<tr>
+<td>Parallel Plate</td>
+<td>If enabled, a parallel-plate configuration is used for the resistive-wall wakefield</td>
+</tr>
+<tr>
+<td>Surface Roughness</td>
+<td>Enables the wakefield induced by surface roughness</td>
+</tr>
+<tr>
+<td>RMS Height (m)</td>
+<td rowspan="2">Height and correlation length to specify the profile of the rough surface</td>
+</tr>
+<tr>
+<td>Correlation Length (m)</td>
+</tr>
+<tr>
+<td>Dielectric Layer</td>
+<td>Enables the wakefield induced by a dielectric layer</td>
+</tr>
+<tr>
+<td>ε/ε<sub>0</sub></td>
+<td rowspan="2">Permitivity and thickness of the dielectric layer</td>
+</tr>
+<tr>
+<td>Thickness (m)</td>
+</tr>
+<tr>
+<td>Dielectric Layer</td>
+<td>Enables the space charge effect</td>
+</tr>
+<tr>
+<td>Additional Custom Wake</td>
+<td>Enables the additional wakefield defined by custom data</td>
+</tr>
+</tbody></table>
+
+<h2 id="Chicane">Chicane</h2>
+
+<p>The parameters and configurations in the "Chicane" subpanel are related to the chicane to be inserted in the undulator line. The details are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Chicane On</td>
+<td>Replaces a single undulator segment by a magnetic chiane composed of 4 identical bending magnets.</td>
+</tr>
+<tr>
+<td>Dipole Field (T)</td>
+<td rowspan="3">Field strength, length, and distance of the bending magnets</td>
+</tr>
+<tr>
+<td>Dipole Length</td>
+</tr>
+<tr>
+<td>Dipole Distance</td>
+</tr>
+<tr>
+<td>Beam Offset (mm)</td>
+<td rowspan="2">Trajectory offset and time delay given by the chicane.</td>
+</tr>
+<tr>
+<td>Electron Delay (fs)</td>
+</tr>
+<tr>
+<td>Chicane Position</td>
+<td>Undulator segment number to be replace by the chicane.</td>
+</tr>
+<tr>
+<td>Rearrange After Chicane</td>
+<td>If enabled, the macroparticles are rearranged so that the microbunches induced before the chicane are smeared out.</td>
+</tr>
+<tr>
+<td>Monochromator Type</td>
+<td>Type of the monochromator to be inserted in the chicane for the self-seeding scheme <a href="#selfseed">[10]</a><a href="#sstrans">[11]</a>.</td>
+</tr>
+<tr>
+<td>Crystal Type</td>
+<td>Type of the crystal for the monochromator</td>
+</tr>
+<tr>
+<td>ℏω (eV)</td>
+<td>Photon energy of the monochromator</td>
+</tr>
+<tr>
+<td>Bragg Angle (°)</td>
+<td>Bragg angle for the monochromator energy</td>
+</tr>
+<tr>
+<td>|F<sub>g</sub>|</td>
+<td rowspan="3">Form factor, lattice constant, and unit cell volume of the crystal</td>
+</tr>
+<tr>
+<td>Lattice Spacing (nm)</td>
+</tr>
+<tr>
+<td>Unit Cell Volume (nm<sup>3</sup>)</td>
+</tr>
+<tr>
+<td>Bandwidth</td>
+<td>Bandwidth of the crystal monochromator</td>
+</tr>
+<tr>
+<td>Crystal Thickness (mm)</td>
+<td>Thickness of the crystal</td>
+</tr>
+<tr>
+<td>Relative Timing (fs)</td>
+<td>Arrival time of radiation with respect to the electron beam after the chicane</td>
+</tr>
+</tbody></table>
+
+<h2 id="Dispersion">Dispersion</h2>
+
+<p>The parameters and configurations in the "Dispersion" subpanel are related to the injection errors and single kick; this is to evaluate the effects of the trajectory error and loss of overlap between the electron beam and seed light.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>e<sup>-</sup> Injection Error</td>
+<td>Enables the injection error of the electron beam.</td>
+</tr>
+<tr>
+<td>Δx,y (mm)</td>
+<td rowspan="2">Positional and anglular offset of the electron beam at the undulator entrance.</td>
+</tr>
+<tr>
+<td>Δx',y' (mrad)</td>
+</tr>
+<tr>
+<td>Single Kick</td>
+<td>Adds a single kick at a certain position in the undulator line.</td>
+</tr>
+<tr>
+<td>Kick Position (m)</td>
+<td rowspan="2">Longitudinal position and angle of the single kick.</td>
+</tr>
+<tr>
+<td>Kick Angle x,y (mrad)</td>
+</tr>
+<tr>
+<td>Seed Injection Error</td>
+<td>Enables the injection error of the seed light.</td>
+</tr>
+<tr>
+<td>Seed Δx,y (mm)</td>
+<td rowspan="2">Positional and anglular offsets of the seed light at the undulator entrance.</td>
+</tr>
+<tr>
+<td>Seed Δx',y' (mrad)</td>
+</tr>
+</tbody></table>
+
+<h2 id="Simulation Conditions">Simulation Conditions</h2>
+
+<p>The parameters and configurations in the "Simulation Conditions" subpanel are related to the conditions to perform the FEL simulation. Detals are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Simulation Mode</td>
+<td>Selects the simulation mode. Refer to <a href="#Simulation Mode">Simulation Mode</a>.</td>
+</tr>
+<tr>
+<td>Simulation Option</td>
+<td>Enables a special numerical algorithm to reduce the number of macropaticles needed to obtain a resliable simulation result.</td>
+</tr>
+<tr>
+<td>Auto Integration Step</td>
+<td>The longitudinal step to solver the FEL equation is automatically determined based on the approximate gain length.</td>
+</tr>
+<tr>
+<td>Random Number Auto Seeding</td>
+<td>If enabled, seed number for the random number generator is automatically determined</td>
+</tr>
+<tr>
+<td>Random Number Seed</td>
+<td>Seed number for the random number generator to generate the macroparticles</td>
+</tr>
+<tr>
+<td>Integration Step</td>
+<td>Longitudinal step normalized by the undulator period to solve the FEL equation. Also refer to <a href="#Integration Step">Integration Step</a>.</td>
+</tr>
+<tr>
+<td>Steps/Segment</td>
+<td>Steps in a single undulator segment</td>
+</tr>
+<tr>
+<td>Steps in Drift Section</td>
+<td>Steps in a single drift section</td>
+</tr>
+<tr>
+<td>Total Beamlets</td>
+<td rowspan="2">Total number of beamlets and number of macroparticles in a single beamlet. For details, refer to <a href="#Structure of a Beamlet">Structure of a Beamlet</a>.</td>
+</tr>
+<tr>
+<td>Particles/Beamlet</td>
+</tr>
+<tr>
+<td>Max. Beamlets/Slice</td>
+<td rowspan="2">Maximum number of beamlets in a single slice</td>
+</tr>
+<tr>
+<td>Beamlets/Slice</td>
+</tr>
+<tr>
+<td>Max. Harmonic</td>
+<td>Maximum harmonic number to be considered</td>
+</tr>
+<tr>
+<td>Spatial Window/σ</td>
+<td>Specifies the spatial range to evaluate the radiation field</td>
+</tr>
+<tr>
+<td>Grid Points Level</td>
+<td rowspan="2">Specifies the number of spatial grid points</td>
+</tr>
+<tr>
+<td>Grid Points</td>
+</tr>
+<tr>
+<td>Temporal Window (m)</td>
+<td>Temporal window of the electron bunch</td>
+</tr>
+<tr>
+<td>Bunch Position (m)</td>
+<td>Slice position in the electron bunch</td>
+</tr>
+<tr>
+<td>Total Slices</td>
+<td>Total number of slices</td>
+</tr>
+<tr>
+<td>Enable Parallel Computing</td>
+<td>Enables the parallel computing by MPI. Note that MPI environment should be installed (Open MPI for LINUX and macOS, MS-MPI for MS-Windows) and path to mpiexec should be set.</td>
+</tr>
+<tr>
+<td>Number of Processes</td>
+<td>Number of MPI processes</td>
+</tr>
+</tbody></table>
+
+<h3 id="Simulation Mode">Simulation Mode</h3>
+
+<p>Specifies the simulation mode. Details are summarized below. Also refer to <a href="#Simulation Modes">Simulation Modes</a></p>
+<table><tbody>
+
+<tr>
+<td class="title">Type</td>
+<td class="title">Detail</td>
+</tr>
+<tr>
+<td>Steady State</td>
+<td>The simulation is performed in a steady-state mode.</td>
+</tr>
+<tr>
+<td>Time Dependent</td>
+<td>The simulation is performed in a time-dependent mode.</td>
+</tr>
+<tr>
+<td>Cyclic</td>
+<td>As the above, but the radiation field slipped out of the head of the temporal window of the electron bunch is reused, namely shifted to the tail. This is convenient when doing a simulation in a limited temporal window of a long electron bunch.</td>
+</tr>
+</tbody></table>
+
+<h3 id="Simulation Option">Simulation Option</h3>
+
+<p>Enables an option to be used in the simulation.</p>
+<table><tbody>
+
+<tr>
+<td class="title">Type</td>
+<td class="title">Detail</td>
+</tr>
+<tr>
+<td>N.A.</td>
+<td>No option is used.</td>
+</tr>
+<tr>
+<td>Gaussian Mode</td>
+<td>Apply a method to accelerate the numerical convergence in FEL simulations <a href="#tmethod">[12]</a>.</td>
+</tr>
+<tr>
+<td>Disable Quiet Loading</td>
+<td>Turn off the quiet loading scheme to model the shot noize <a href="#shotnoise">[13]</a>.</td>
+</tr>
+<tr>
+<td>Kill Shotnoize</td>
+<td>Artifically disable the shot noize effect; the macroparticles are longitudinally arranged with a regular interval and thus no radiation (including spontaneous one) is initially generated.</td>
+</tr>
+<tr>
+<td>Real Electron Number</td>
+<td>Use the real number of electrons, which are randomly distributed in the longitudinal direction.</td>
+</tr>
+</tbody></table>
+
+<h3 id="Integration Step">Integration Step</h3>
+<figure id="ulinesteps.png"><img src="ulinesteps.png" style="width: 525px;"><figcaption>Longitudinal step to solve the FEL equatio. In this example, "Integration Step" is 3, which means that the length of a single step is 3λ<sub>u</sub>, where λ<sub>u</sub> is the undulator period, and there are N steps in a single segment.</figcaption></figure><h3 id="Structure of a Beamlet">Structure of a Beamlet</h3>
+
+<p>In general, the number of macroparticles to be used in an FEL simulation is much less than the real number of electrons in the electron beam. This brings a problem of artificial (false) microbunching if the macroparticles are distributed randomly in the phase space. In order to solve the problem without increasing the number of macroparticles, Fawley's algorithm <a href="#shotnoise">[13]</a> of initial beam loading is implemented, in which all the macroparticles are divided into "beamlets" with the longitudinal length equal to the lasing wavelength; the macroparticles in the same beamlet have the identical initial position (x,y), angle (x',y') and energy (γ), and distributes almost evenly along the longitudinal axis with some perturbation to represent the shot noise.</p>
+<figure id="beamlet.png"><img src="beamlet.png" style="width: 450px;"><figcaption>Structure of the beamlet composed of a number of macroparticles</figcaption></figure>
+<p>The motion of a specific macroparticle traveling along the undulator line is given by solving the equation of motion. The longitudinal position s and energy γ of each macroparticle are given by solving a pair of equations describing the interaction with radiation and undulator field.</p>
+
+<p>In contrast, the transverse coordinate (x,y,x',y') of each macroparticle is determined by a linear transfer matrix along the undulator line. For example, the horizontal coordinate at the n-th step is given by</p>
+
+<p>\[ \left(\begin{array}{c}x_n \\ x'_n \\ 1 \\ \end{array} \right)=\left(\begin{array}{ccc}C_n &amp; S_n &amp; D_n  \\ C'_n &amp; S'_n &amp; D'_n \\ 0 &amp; 0 &amp; 1 \\ \end{array} \right)\left(\begin{array}{c}x_0 \\ x'_0 \\ 1 \\ \end{array} \right), \]</p>
+
+<p>where C, S, and D are linear matrix elements defined by the arrangement of the focusing magnets in the undulator line, and subscript 0 means the value at the undulator entrance. Note that effects due to the vaiation of γ along the undulator line, which comes from the interaction with radiation, are supposed to be negligibly small compared to other factors (emittance etc.). As a result, the macroparticles in the same beamlet always have identical transverse coordinate (x,y,x',y'). As a reslt, we need (4+2N<sub>p</sub>)N<sub>b</sub> variables to describe the motion of whole macroparticls in the 6-dimensional phase space; here N<sub>p</sub> is the number of macroparticls in a single beamlet specified by "Particles/Beamlet", while N<sub>b</sub> is the number of beamlets to be used in the simulation specified by "Total Beamlets".</p>
+<h2 id="Data Dump Configurations">Data Dump Configurations</h2>
+
+<p>The parameters and configurations in the "Data Dump Configurations" subpanel are related to the conditions to export the simulation results. Detals are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Temporal Profile</td>
+<td rowspan="4">Specifies if the related radiation profiles are saved in the output JSON file.</td>
+</tr>
+<tr>
+<td>Spectral Profile</td>
+</tr>
+<tr>
+<td>Spatial Profile</td>
+</tr>
+<tr>
+<td>Angular Profile</td>
+</tr>
+<tr>
+<td id="Output Interval">Output Interval</td>
+<td>Step interval to evaluate the above profiles. Note the results at the final step are always exported. For example, data export is done at the steps of the 1st, 4th, ... 97th and 100th, if the total number of steps is 100 and this parameter is set at 3.</td>
+</tr>
+<tr>
+<td>Particle Data</td>
+<td>Saves the macroparticle raw data in a binary file (*.par).</td>
+</tr>
+<tr>
+<td>Radiation Data</td>
+<td>Saves the radiation raw data in a binary file (*.fld).</td>
+</tr>
+<tr>
+<td>Output Steps</td>
+<td>Specifies the steps to save the raw data. For details, refer to <a href="#Steps to Export the Raw Data">Steps to Export the Raw Data</a>.</td>
+</tr>
+<tr>
+<td>Initial Segment</td>
+<td rowspan="2">Initial segment and segment interval to save the raw data.</td>
+</tr>
+<tr>
+<td>Segment Step</td>
+</tr>
+<tr>
+<td>Step Interval</td>
+<td>Step interval to save the raw data, if "Regular Interval" is chosen for "Output Steps". Note the results at the final step are always exported as explained <a href="#Output Interval">Output Interval</a>. In practice, too fine step interval is not recommended, because the file size to store the raw data can be huge.</td>
+</tr>
+<tr>
+<td>Particle Data Size (MB)</td>
+<td rowspan="2">Approximate file size of the birary file to save the raw data.</td>
+</tr>
+<tr>
+<td>Radiation Data Size (MB)</td>
+</tr>
+</tbody></table>
+
+<h3 id="Steps to Export the Raw Data">Steps to Export the Raw Data</h3>
+
+<p>Options to specify the steps to export the raw data are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class="title">Type</td>
+<td class="title">Details</td>
+</tr>
+<tr>
+<td>All Segments</td>
+<td>Export at the exit of every undulator segments.</td>
+</tr>
+<tr>
+<td>Specific Segments</td>
+<td>Export at the exit of specified undulator segments.</td>
+</tr>
+<tr>
+<td>Final Step</td>
+<td>Export once at the exit of the undulator line.</td>
+</tr>
+<tr>
+<td>Regular Interval</td>
+<td id="Regular Interval">Export with a regular step interval. Note that data at the final step is always exported.</td>
+</tr>
+</tbody></table>
+
+<h2 id="Output File">Output File</h2>
+
+<p>The parameters and configurations in the "Output File" subpanel are related to the name of the output JSON file and binary files to store the raw data. Detals are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Folder</td>
+<td rowspan="3">Input the path to the output JSON file in [Folder], a prefix text in [Prefix], and a serial number in [Serial Number]. The data name is given as [Folder]/[Prefix]-[Serial Number], like "/Users/data/test-1", where "/Users/data", "test", and 1 refer to [Folder], [Prefix] and [Serial Number]. Note that the serial number can be -1 (negative), in which case it is not attached to the data name.</td>
+</tr>
+<tr>
+<td>Prefix</td>
+</tr>
+<tr>
+<td>Serial Number</td>
+</tr>
+</tbody></table>
+
+<h2 id="FEL Performance">FEL Performance</h2>
+
+<p>The performances of the FEL system evaluated using analytical and empirical expressions are shown in the "FEL Performance" subpanel. Detals are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Shotnoise Power (W)</td>
+<td>Power of the shot noise to launch the SASE amplification process</td>
+</tr>
+<tr>
+<td>ρ</td>
+<td>Pierce parameter; refer to <a href="#rhooc">[2]</a> for details</td>
+</tr>
+<tr>
+<td>L<sub>g1D,3D</sub> (m)</td>
+<td>Gain length evaluated with an analytical formula under 1D approximation (1D), and with a more rigorous expression to consider adverse effects (3D)<a href="#scaling">[4]</a> for details</td>
+</tr>
+<tr>
+<td>P<sub>sat</sub> (GW)</td>
+<td rowspan="2">Satulation power and undulator length to reach saturation</td>
+</tr>
+<tr>
+<td>L<sub>sat</sub> (m)</td>
+</tr>
+<tr>
+<td>Pulse Energy (J)</td>
+<td>Pulse energy at the saturation</td>
+</tr>
+<tr>
+<td>ℏω<sub>1st</sub> (eV)</td>
+<td rowspan="2">Fundamental photon energy and wavelength</td>
+</tr>
+<tr>
+<td>λ<sub>1st</sub> (nm)</td>
+</tr>
+<tr>
+<td>FWHM Bandwidth</td>
+<td>Bandwidth of the FEL radiation; refer to <a href="#felbook">[3]</a> for details.</td>
+</tr>
+<tr>
+<td>Σ<sub>x,y</sub> (mm)</td>
+<td rowspan="2">RMS source size and angular divergence of the FEL radiation</td>
+</tr>
+<tr>
+<td>Σ<sub>x',y'</sub> (mrad)</td>
+</tr>
+</tbody></table>
+
+<h1 id="Pre-Processing">Pre-Processing</h1>
+
+<p>The "Pre-Processing" tab panel assists the pre-processing, i.e., visualization and configuration of the simulation conditions, which are not displayed in the subpanels explained above. Six pre-processing operations are available: "Graphical Plot", "Import Custom Data", "Analyze Particle Data", "Simplified Microbunch Evaluation", "Arrange Undulator Data" and "Optimize Lattice Function". Detail of each operation is explained below.</p>
+<h2 id="Graphical Plot">Graphical Plot</h2>
+
+<p>A number of items can be visualized to verify if the parameters and configurations specified in the subpanels are correct.</p>
+<figure id="visualize.png"><img src="visualize.png" style="width: 663px;"><figcaption>Example of the "Pre-Processing" tab panel. The betatron functions along the undulator line are plotted in this example.</figcaption></figure>
+<p>Items that can be visualized are listed in the left; just click one of them for visualization. Note that several of them are available only under specific conditions, which are summarized below. Note that "Export as ASCII" exports the current data set and saves as an ASCII file (select a file name in the dialog box), while "Duplicate Plot" creates a new window to duplicate the plot.</p>
+<table><caption>List of items available for visualization</caption><tbody>
+
+<tr>
+<td class=" title" colspan="2">Name in Pre-Processing Subpanel</td>
+<td class=" title">Details</td>
+<td class=" title">Available Condition</td>
+</tr>
+<tr>
+<td rowspan="5">Undulator</td>
+<td>Field Distribution</td>
+<td>Magnetic field distribution along the longitudinal axis in a specific segment.</td>
+<td></td>
+</tr>
+<tr>
+<td>1st Integral</td>
+<td>1st integrals of a specific segment, corresponding to the transverse velocity of an electron moving in the undulator</td>
+<td></td>
+</tr>
+<tr>
+<td>2nd Integral</td>
+<td>2nd integrals of a specific segment, corresponding to the electron trajectory</td>
+<td></td>
+</tr>
+<tr>
+<td>Phase Error</td>
+<td>Phase error <a href="#refperr">[14]</a> evaluated as a function the magnet pole number. Note that the number of end poles (used for the orbit adjustment and should be eliminated for the phase error evaluation) is automatically determined; to be specific, those with the peak field less than 95% of the average are ignored.</td>
+<td>"Undulator Model" is not Ideal</td>
+</tr>
+<tr>
+<td>K Value Trend</td>
+<td>Variation of the K value along the undulator line</td>
+<td>"Tapering" is not N.A.</td>
+</tr>
+<tr>
+<td rowspan="3">Lattice</td>
+<td>betatron Functions</td>
+<td>betatron functions along the undulator line</td>
+<td></td>
+</tr>
+<tr>
+<td>Optimization</td>
+<td>Optimization of the focusing strength and initial Twiss parameters</td>
+<td></td>
+</tr>
+<tr>
+<td>Focusing Strength</td>
+<td>Focusing strength along the undulator line</td>
+<td></td>
+</tr>
+<tr>
+<td rowspan="2">Wakefield</td>
+<td>Wakefield Temporal Profile</td>
+<td>Wakefield along the electron bunch</td>
+<td>"Wakefield On" is true</td>
+</tr>
+<tr>
+<td>Energy Distribution</td>
+<td>Variation of the energy distribution of the electron beam</td>
+<td>"Wakefield On" is true</td>
+</tr>
+<tr>
+<td rowspan="2">Others</td>
+<td>Dispersion</td>
+<td>Dispersion functions induced by injection and kick errors</td>
+<td>"BPM Alignment" is not Ideal, "e<sup>-</sup> Injection Error" is true, or "Single Kick" is true</td>
+</tr>
+<tr>
+<td>Mono. Spectrum</td>
+<td>Complex reflectance of the monochromator</td>
+<td>"Monochromator Type" is not N.A.</td>
+</tr>
+</tbody></table>
+
+<h2 id="Import Custom Data">Import Custom Data</h2>
+
+<p>Under a specific simulation condition, the user should prepare custom data and import it. For example, a data file containing the current profile should be imported, if "Current Profile" is chosen for "Bunch Profile" option.</p>
+<figure id="dataimport.png"><img src="dataimport.png" style="width: 660px;"><figcaption>Example of the "Pre-Processing" tab panel for importing a data set.</figcaption></figure>
+<p>Details of importing the data set are summarized below. The data file to be imported should be an ASCII file, where "Values" are given as a function of "Independent Variable". "Condition" defines the condition in which the relevant "Data Type" should be imported. To import the data file, select "Item to Visualize" in the list, click Import button, and select the data file, or drag-and-drop the file in the area for visualization (grey-painted region in the above example).</p>
+<table><caption>Data types that can be imported in the Pre-Processing tab panel</caption><tbody>
+
+<tr>
+<td class=" title">Data Type</td>
+<td class=" title">Independent Variable</td>
+<td class=" title">Values</td>
+<td class=" title">Condition</td>
+<td class=" title">Item to Visualize</td>
+</tr>
+<tr>
+<td>Slice parameters (current, electron energy, emittance, etc.)</td>
+<td>s </td>
+<td>I , Energy , Energy Spread, ε<sub>x</sub> , ε<sub>y</sub> , β<sub>x</sub> , β<sub>y</sub> , α<sub>x</sub>, α<sub>y</sub>, &lt;x&gt; , &lt;y&gt; , &lt;x'&gt; , &lt;y'&gt; </td>
+<td>"Bunch Profile" = "Slice Parameters"</td>
+<td>Current Profile<br>Slice Emittance<br>...</td>
+</tr>
+<tr>
+<td>Current profile</td>
+<td>s </td>
+<td>I </td>
+<td>"Bunch Profile" = "Current Profile"</td>
+<td>Current Profile</td>
+</tr>
+<tr>
+<td>Electron density in the (E-t) phase space</td>
+<td>s , Δγ/γ</td>
+<td>j </td>
+<td>"Bunch Profile" = "E-t Profile"</td>
+<td>E-t Distribution</td>
+</tr>
+<tr>
+<td>Wakefield function by a point unit charge</td>
+<td>s </td>
+<td>Point-Charge Wake </td>
+<td>"Additional Custom Wake" = "true"</td>
+<td>Custom Wakefield</td>
+</tr>
+<tr>
+<td>Complex reflectance of the monochromator</td>
+<td>Photon Energy </td>
+<td>Transmission Real, Transmission Imaginary</td>
+<td>"Monochromator Type" = "Customize"</td>
+<td>Custom Monochromator</td>
+</tr>
+</tbody></table>
+
+
+<p>Meanings of "Values" and "Independent Variable" are as follows with the units to be used in the data file. Note that the units of "s" and "Energy" should be chosen before importing the data file, in a dialog box to popup by clicking "Edit Units" button.</p>
+<ul><li>s: longitudinal position along the electron bunch</li><li>Energy: slice electron energy</li><li>Energy Spread: RMS slice energy spread (dimensionless)</li><li>I: beam current (A)</li><li>ε<sub>x,y</sub>: normalized emittance (mm.mrad)</li><li>β<sub>x,y</sub>: β Twiss parameter (m)</li><li>α<sub>x,y</sub>: α Twiss parameter (dimensionless)</li><li>&lt;x,y&gt;: Offsset position (m)</li><li>&lt;x',y'&gt;: Offset angle (rad)</li><li>Δγ/γ: normalized energy deviation (dimensionless)</li><li>j: beam current density (A/100%)</li></ul>
+<p>The unit of j may need to be explained; it is given as the current per unit energy band; in a mathematical form, \[I(t)=\int j\left(t, \frac{\Delta\gamma}{\gamma}\right) d\frac{\Delta\gamma}{\gamma},\] and thus is given in the unit of Ampere in 100% energy band.</p>
+
+<p>The data file should be an ASCII file with the format as follows. For the 1-dimensional (1D) data (current profile as an example),</p>
+
+<p><div class="direct"><pre><code>s        Current
+-4.00000e-2	1.61861e+2
+-3.99973e-2	1.61904e+2
+-3.99947e-2	1.61947e+2
+-3.99920e-2	1.61990e+2
+          (omitted)
+3.99919e-2	1.61992e+2
+3.99946e-2	1.61949e+2
+3.99972e-2	1.61905e+2
+3.99999e-2	1.61862e+2
+</code></pre></div></p>
+
+<p>where the 1st line (title) is optional. In the above format, the interval of the independent variable (s) does not have to be necessarily constant, which is not the case for the 2D data; the format should as follows</p>
+
+<p><div class="direct"><pre><code>time	DE/E	j
+-1.0e-3	-0.01	0.001
+-0.9e-3	-0.01	0.002
+-0.8e-3	-0.01	0.003
+    (omitted)
+0.8e-3	-0.01	0.003
+0.9e-3	-0.01	0.002
+1.0e-3	-0.01	0.001
+-1.0e-3	-0.008	0.001
+-0.9e-3	-0.008	0.002
+-0.8e-3	-0.008	0.003
+    (omitted)
+0.8e-3	-0.008	0.003
+0.9e-3	-0.008	0.002
+1.0e-3	-0.008	0.001
+    (omitted)
+-1.0e-3	0.01	0.001
+-0.9e-3	0.01	0.002
+-0.8e-3	0.01	0.003
+    (omitted)
+0.8e-3	0.01	0.003
+0.9e-3	0.01	0.002
+1.0e-3	0.01	0.001
+</code></pre></div></p>
+
+<p>For reference, such a data format is created in the C/C++ language as follows.</p>
+
+<p><div class="direct"><pre><code>for(n = 0; n &lt; N; n++){
+  for(m = 0; m &lt; M; m++){
+    cout &lt;&lt; t[m] &lt;&lt; " " &lt;&lt; de[n] &lt;&lt; " " &lt;&lt;  j[m][n] &lt;&lt; endl;
+  }
+}</code></pre></div></p>
+
+<p>Note that the order of the "for loop" is arbitrary; the 1st and 2nd lines can be swapped in the above example.</p>
+
+<p>After preparing the ASCII file, click "Import" button and specify the file name in the dialog box to import it. The unit of each item should be chosen before importing, in the <a href="#Edit Units">Edit Units</a> dialog box that pops up by running  command. Note that the unit of the imported data cannot be changed, so you need to import the data again with the correct unit in case a wrong unit has been chosen.</p>
+<h2 id="Analyze Particle Data">Analyze Particle Data</h2>
+
+<p>"Analyze Particle Data" pre-processing operation is available when "Particle Distribution" is selected as "Bunch Profile", as shown below. Note that the user needs to specify in advance the data file containing the macroparticle positions in the 6D phase space, which is usually generated by another simulation code. Refer to <a href="#Particle Distribution">Particle Distribution</a> for details.</p>
+<figure id="ppparticle.png"><img src="ppparticle.png" style="width: 998px;"><figcaption>Example of the Pre-Processing tab panel, under the process of "Analyze Particle Data"</figcaption></figure>
+<p>Once "Particle Distribution" is specified, SIMPLEX automatically loads the file to analyze the particle data. For convenience, part of the data file is shown in "File Contents" Select the unit and column index for each coordinate variable of the 6D (x,x',y,y',t,E) phase space and input relevant parameters. In the above example, each macroparticle has the charge of 3.5fC with "x" coordinate (horizontal position) located in the 1st column and the unit of m. Note that"Slices in 1σ<sub>s</sub>" specifies the number of bins in the  RMS bunch length, to be used for data analysis. Then, additional configurations appear in the GUI to specify how to visualize the results of analysis. In the above example, the current profile is plotted. Upon revision of the configurations above, SIMPLEX automatically analyzes the data with the new configuration and visualizes the result.</p>
+
+<p>Besides the slice parameters shown in the above example, macroparticle distributions can be directly plotted. For example, distribution in the (E-t) phase space is plotted in the figure below.</p>
+<figure id="ppparticle2.png"><img src="ppparticle2.png" style="width: 999px;"><figcaption>Example of "Analyze Particle Data" pre-processing operation: particle distribution in the (E-t) phase space is plotted.</figcaption></figure>
+<p>The result of analysis can be exported and saved as an ASCII file; "Export Selected" exports the data currently plotted, while "Export Slice Data" exports the whole slice data (slice paramters vs. s). The exported data file  can be used later as the custom data file for slice parameters or current profile.</p>
+<h2 id="Simplified Microbunch Evaluation">Simplified Microbunch Evaluation</h2>
+
+<p>"Simplified Microbunch Evaluation" pre-processing operation is available for seeded FEL simulations, namely, when options other than "N.A." is chosen as "Seed Light". This is to roughly evaluate the energy modulation in the electron beam through interaction with the seed light. Unlike the rigorous FEL simulation, it neglects the amplification of radiation and other 3D effects coming from the finite emittance of the electron beam, and thus is much faster. Although the result may be less reliable, it can be used to roughly estimate the microbunching in the seeded FELs.</p>
+<figure id="mbunch.png"><img src="mbunch.png" style="width: 666px;"><figcaption>Example of the Pre-Processing tab panel, under the process of "Simplified Microbunch Evaluation"</figcaption></figure>
+<p>To start evaluating the microbunching, edit the parameters and configurations listed in the left side, and click "Run" button.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Particles/λ</td>
+<td>Number of macroparticles per fundamental wavelength</td>
+</tr>
+<tr>
+<td>Accuracy of Integration</td>
+<td>Accuracy of integration to evaluate the current profile. Given by a positive integer; the larger the more accurate.</td>
+</tr>
+<tr>
+<td>Current Profile</td>
+<td>Evaluate the current profile</td>
+</tr>
+<tr>
+<td>E-t Profile</td>
+<td>Evaluate the density in the (E,t) phase space</td>
+</tr>
+<tr>
+<td>Temporal Range</td>
+<td>Temporal range to evaluate the current and E-t profiles</td>
+</tr>
+<tr>
+<td>Points/λ</td>
+<td>Number of points per fundamental wavelength to evaluate the current and E-t profiles</td>
+</tr>
+<tr>
+<td>Energy Range</td>
+<td>Energy range to evaluate the E-t profile</td>
+</tr>
+<tr>
+<td>Energy Points</td>
+<td>Number of energy points to evaluate the E-t profile</td>
+</tr>
+<tr>
+<td>R<sub>56</sub> (m)</td>
+<td>Longitudinal dispersion of a virtual chicane to be positioned after the undulator</td>
+</tr>
+<tr>
+<td>Optimize R<sub>56</sub></td>
+<td rowspan="2">If enabled, the longitudinal dispersion is given by R<sub>56</sub>=r×r<sub>56</sub> where r<sub>56</sub> is the dispersion to maximize the density modulation (peak current) to be automatically determined, while r is the normalized value that can be adjusted by the user.</td>
+</tr>
+<tr>
+<td>Normalized R<sub>56</sub></td>
+</tr>
+<tr>
+<td>Number of Undulators</td>
+<td>Number of undulator segments to be used for the numerical evaluation</td>
+</tr>
+<tr>
+<td>Double Pulse</td>
+<td>If enabled, another seed pulse with similar properties is supposed</td>
+</tr>
+<tr>
+<td>Δλ/λ</td>
+<td>Relative wavelength of the 2nd seed pulse</td>
+</tr>
+<tr>
+<td>CEP (°)</td>
+<td>Carrier envelope phase of the 2nd seed pulse</td>
+</tr>
+<tr>
+<td>GDD (fs<sup>2</sup>)</td>
+<td>Groupd delay dispersion of the 2nd seed pulse</td>
+</tr>
+<tr>
+<td>TOD (fs<sup>2</sup>)</td>
+<td>Third order dispersion of the 2nd seed pulse</td>
+</tr>
+<tr>
+<td>Time Delay (fs)</td>
+<td>Relative timing of the the 2nd seed pulse</td>
+</tr>
+</tbody></table>
+
+
+<p>The results of evaluation can be plotted in three different ways (depending on the configurations): distribution of the reference particle in the (E-t) space, current profile, or E-t profile. Select one of the available plots.</p>
+<h2 id="Arrange Undulator Data">Arrange Undulator Data</h2>
+
+<p>"Arrange Undulator Data" pre-processing operation is available when "Import Data" is selected as "Undulator Model". Example of the tab panel is shown below.</p>
+<figure id="impund.png"><img src="impund.png" style="width: 663px;"><figcaption>Example of the Pre-Processing tab panel, under the process of "Arrange Undulator Data"</figcaption></figure>
+<p>Click "Import" button and select the undulator data file or drag-and-drop the file in the area for visualization (grey-painted region in the above example). Be sure that the correct units are selected for the longitidunal position and magnetic field strength.</p>
+
+<p>The imported data name can be changed by clicking "Rename" button and input a desired name in the modal dialog box. If a certain data set is not necessary any more, click "Delete" button to delete it. "Clear" button deletes all the imported data sets.</p>
+<h2 id="Optimize Lattice Function">Optimize Lattice Function</h2>
+
+<p>"Optimize Lattice Function" pre-processing operation tries to optimize the betatron function through the undulator line.</p>
+<figure id="optbeta.png"><img src="optbeta.png" style="width: 687px;"><figcaption>Example of the Pre-Processing tab panel, under the process of "Optimize Lattice Function"</figcaption></figure>
+<p>We have two points to take care in optimization: betatron matching  and average over the whole undulator line. The former is related to the initial Twiss parameters, while the latter is determined by the strength of the quadrupole magnets. Click "Optimize" button to start the optimization process. After its completion, the betatron functions through the undulator line are plotted. Parameters needed for optimization are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Target Item</td>
+<td>Target of optimization. "Average" optimizes both of the quadrupole strength and initial Twiss parameters, while "Matching" does the Twiss parameters alone, without changing the qudrupole strength from the current value.</td>
+</tr>
+<tr>
+<td>&lt;β<sub>x,y</sub>&gt;</td>
+<td>Target average betatron functions. After the optimization process, they are updated by the actual values given by the quadrupole strengths and initial Twiss parameters determined by the optimization, and thus are not necessarily the same as the input values.</td>
+</tr>
+<tr>
+<td>Tolerance</td>
+<td>Optimization tolerance of the average betatron function</td>
+</tr>
+<tr>
+<td>QF Gradient (T/m)</td>
+<td rowspan="4">Quadrupole strengths and initial Twiss parameters determined by the optimization process. Note that these values, which are shown upon completion of the optimization process, are automatically copied to the same parameters in <a href="#Lattice">Lattice</a> parameter list.</td>
+</tr>
+<tr>
+<td>QD Gradient (T/m)</td>
+</tr>
+<tr>
+<td>β<sub>x0,y0</sub> (m)</td>
+</tr>
+<tr>
+<td>α<sub>x0,y0</sub> (m)</td>
+</tr>
+</tbody></table>
+
+
+<p>Note that the achieved values (&lt;β<sub>x,y</sub>&gt;) can be far from the target ones, in which case the structure of the undulator line (segment interval, lattice type, etc.) may not be consistent with the electron energy. Another issue is that no solutions are found for the initial Twiss parameters to satisfy the betatron matching condition, in which case the betatron functions (and thus the electron beam size) can diverge. Although the former issue may be probably acceptable, the latter one should be solved before starting a simulation.</p>
+<h1 id="Post-Processing">Post-Processing</h1>
+
+<p>The "Pre-Processing" tab panel assists the post-processing, i.e., visualization of the simulation results. Upon completion of a simulation, the output JSON file is automatically loaded, or alternatively, the existing output JSON files can be imported by clicking "Import" button and specify its path.</p>
+
+<p>Two post-processing operations are available: "Raw Data Processing" and "Visualization". The former post-processes the raw data saved in the binary files to evaluate certain items and save the results in a file to be used for visualization, while the latter configures the graphical plot to visualize the simulation results, including those obtained by <a href="#Raw Data Processing">Raw Data Processing</a>.</p>
+<h2 id="Visualization">Visualization</h2>
+
+<p>To visualize the simulation results such as the gain curve and radiation profiles saved in the output JSON file, and the post-processed data generated by <a href="#Raw Data Processing">Raw Data Processing</a>, select "Data Type" and "Items to Plot" from the list. For 1D plot, also select "x axis" to specify the item for the x axis of the plot. The details of Available Data Type are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class="title">Name</td>
+<td class="title">Detail</td>
+<td class="title">Plot Type</td>
+</tr>
+<tr>
+<td>Gain Curve</td>
+<td>Values integrated over the whole electron bunch, such as the pulse energy of radiation and bunch factor, evaluated as a function of the longitudinal position along the undulator line.</td>
+<td>1D</td>
+</tr>
+<tr>
+<td>Temporal Profile</td>
+<td>Radiation power integrated over the whole solid angle vs. the bunch,</td>
+<td>1D animation</td>
+</tr>
+<tr>
+<td>Spectral Profile</td>
+<td>Spectrum of radiation integrated over the whole solid angle.</td>
+<td>1D animation</td>
+</tr>
+<tr>
+<td>Spatial Profile</td>
+<td>Spatial profile of radiation integrated over the whole slice.</td>
+<td>2D animation</td>
+</tr>
+<tr>
+<td>Angular Profile</td>
+<td>Angular profile of radiation integrated over the whole slice. Note that the angular coordinate is normalized by the reciprocal of a harmonic order. Namely, it is given as h×&amp;theta, where h is the harmonic order.</td>
+<td>2D animation</td>
+</tr>
+<tr>
+<td>Processed [s/n]: *</td>
+<td>Result of <a href="#Raw Data Processing">Raw Data Processing</a>. "s/n" stands for the serial number specified by the user (optional), and * means the target item for post-processing.</td>
+<td>Depends on the configurations of Raw Data Processing</td>
+</tr>
+</tbody></table>
+
+<figure id="postproc.png"><img src="postproc.png" style="width: 644px;"><figcaption>Example of the Post-Processing tab panel, where the gain curve is plotted.</figcaption></figure>
+<p>The functions of the three buttons in the bottom right are as follows."Export as ASCII" exports the current data set and saves as an ASCII file (select a file name in the dialog box), "Save" saves all the configurations of the plot as well as the data in a JSON file, which can be imported later by <a href="#Load Post-Processed Result">Load Post-Processed Result</a>, and "Duplicate Plot" creates a new window to duplicate the plot.</p>
+
+<p>The dimension of the plot depends on the selected data type and item. In a 1D plot, a desired area can be zoomed in by dragging. Other options are available to operate the plot, by clicking one of the small icons located in the right top of the plot. For details, refer to the documents about "Plotly" library to be found online. Besides the above options, the plot can be configured by clicking the "pencil" icon and edit the parameters in the modal dialog box to pop up. The details of the parameters are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Scale</td>
+<td>Select the normalization scheme for animation plots. "For Each" means that the y(z) axis is normalized for each slide, while "By Maximum" means that it is normalized by a maximum value through the whole slides.</td>
+</tr>
+<tr>
+<td>X-axis Scale</td>
+<td rowspan="2">Select the linear/log scale for x and y axes.</td>
+</tr>
+<tr>
+<td>Y-axis Scale</td>
+</tr>
+<tr>
+<td>Plot Type</td>
+<td>Select the plot type for the 1D plot.</td>
+</tr>
+<tr>
+<td>Symbol Size</td>
+<td>Select the symbol size for the 1D plot.</td>
+</tr>
+<tr>
+<td>Line Width</td>
+<td>Select the line width for the 1D plot.</td>
+</tr>
+<tr>
+<td>2D Plot Type</td>
+<td>Select the plot type for the 2D plot.</td>
+</tr>
+<tr>
+<td>Color</td>
+<td>Select the color of the surface plot.</td>
+</tr>
+<tr>
+<td>Color Map</td>
+<td>Select the color scale pattern of the surface plot.</td>
+</tr>
+<tr>
+<td>Show Scale</td>
+<td>Enable the color scale.</td>
+</tr>
+<tr>
+<td>Wireframe</td>
+<td>Add a wire frame on the surface plot.</td>
+</tr>
+</tbody></table>
+
+<h3 id="Comparative Plot">Comparative Plot</h3>
+
+<p>If more than one output JSON file is loaded, and/or <a href="#Raw Data Processing">Raw Data Processing</a> has been performed before, "Comparative Plot" will be available depending on the simulation conditions. Select data names from the list to compare the results.</p>
+<h3 id="Multiple Plot">Multiple Plot</h3>
+
+<p>"Multiple Plot" creates more than one plot to view several results simultaneously. The difference from <a href="#Comparative Plot">Comparative Plot</a> is that this allows for selection of different items and variables, and the dimension of the plot can be different. Note, however, that the number of steps should be the same for an animation plot.</p>
+<h3 id="Plotting 3/4-Dimensional Data">Plotting 3/4-Dimensional Data</h3>
+
+<p>Depending on the configurations and target items, <a href="#Raw Data Processing">Raw Data Processing</a> pontentially generates 3D or 4D data, which cannot be plotted in a straightforward manner. In SIMPLEX, the 3D/4D data are "sliced" into a number of data sets and plotted as a 1D or 2D graph. Let f(z,s,x,y) be a function defined by 4 argument variables, z, s, x, and y. SIMPLEX offers several combinations for plotting and slicing variables. If a pair (x,y) is chosen as the plotting variable, then the data is sliced at each (z,s) position, and a 2D plot is created. Note that the coordinates of the slicing variables can be arbitrary chosen within the possible range, by dragging the sliders indicating their positions.</p>
+<h2 id="Raw Data Processing">Raw Data Processing</h2>
+<h3 id="General Instructions">General Instructions</h3>
+
+<p>To perform "Raw Data Processing", radiation/particle data should be saved, by enabling "Radiation Data"/"Particle Data" option before starting a simualtion. Then, as explained in <a href="#Arrange the Output File">Arrange the Output File</a>, two types of binary files "*.fld" and "*.par" are generated when a simulation is completed. In the former file, complex amplitudes of radiation are saved at specified steps, which are then retrieved to evaluate three different items: "Radiation Power", "Photon Flux" and "Complex Amplitude". In the latter file, coordinate variables of all the macroparticles in the 6D phase space are saved, which are then retrieved to evaluate "Bunch Factor" and "Energy Distribution" , as well as "Particle Motion".</p>
+<h3 id="Parameters and configurations">Parameters and configurations</h3>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Target </td>
+<td>Target item to be evaluate by Raw Data Processing</td>
+</tr>
+<tr>
+<td>Real/Imaginary Part</td>
+<td>Select real/imaginary component for an item given by a complex number</td>
+</tr>
+<tr>
+<td>E<sub>x,y</sub></td>
+<td>Select horizontal/vertical component for the radiation field</td>
+</tr>
+<tr>
+<td>S<sub>1</sub> (Horizontal)</td>
+<td rowspan="3">If enabled, relevant Stoke parameters are evaluated</td>
+</tr>
+<tr>
+<td>S<sub>2</sub> (45-deg.)</td>
+</tr>
+<tr>
+<td>S<sub>3</sub> (Circular)</td>
+</tr>
+<tr>
+<td>Harmonic Number</td>
+<td>Target harmonic number</td>
+</tr>
+<tr>
+<td>Zone</td>
+<td>Select the observation zone (near or far field)</td>
+</tr>
+<tr>
+<td>Coordinate System</td>
+<td>Select the coordinates to retrieve the macroparticle data</td>
+</tr>
+<tr>
+<td>Step</td>
+<td rowspan="5">Select how to specify the range of interest (ROI) for respective variables. "Whole" means that the whole range used in the simulation is assumed, while "Set Window" put a window on the ROI.</td>
+</tr>
+<tr>
+<td>Slice</td>
+</tr>
+<tr>
+<td>Photon Energy</td>
+</tr>
+<tr>
+<td>Space</td>
+</tr>
+<tr>
+<td>Angle</td>
+</tr>
+<tr>
+<td>Step (z)</td>
+<td rowspan="2">Range of the step and corresponding range of the longitudinal coordinate (z)</td>
+</tr>
+<tr>
+<td>z (m)</td>
+</tr>
+<tr>
+<td>Slice (s)</td>
+<td rowspan="2">Range of the slice and corresponding range of the bunch position (s)</td>
+</tr>
+<tr>
+<td>s (m)</td>
+</tr>
+<tr>
+<td>Energy (ℏω)</td>
+<td rowspan="2">Range of the photon energy</td>
+</tr>
+<tr>
+<td>ℏω (eV)</td>
+</tr>
+<tr>
+<td>Spatial (x,y)</td>
+<td rowspan="2">Half range of the transverse position</td>
+</tr>
+<tr>
+<td>Δx,y (mm)</td>
+</tr>
+<tr>
+<td>Angle</td>
+<td rowspan="2">Half range of the observation angle</td>
+</tr>
+<tr>
+<td>Δx',y' (mrad)</td>
+</tr>
+<tr>
+<td>Integration (s)</td>
+<td rowspan="3">Enable integration over the ROI</td>
+</tr>
+<tr>
+<td>Integration (x,y)</td>
+</tr>
+<tr>
+<td>Integration (x',y')</td>
+</tr>
+<tr>
+<td>R<sub>56</sub> (m)</td>
+<td>Virtual longitudinal dispersion to be added after each step. This is convenient to evaluate the reasonable R56 to enhance the microbunching.</td>
+</tr>
+<tr>
+<td>Data Serial Number</td>
+<td>Serial number to be attached to the data file to save the post-processed data.</td>
+</tr>
+</tbody></table>
+
+<h3 id="Perform Post-Processing">Perform Post-Processing</h3>
+
+<p>Once the configurations have been set, click "Run Data-Processing" to start post-processing. A progress bar appears to inform its progress. When completed, a new file is created to save the post-processed data, with the name "*-pp(s/n).json", wherer * is the data name and s/n is the serial number if specified (&gt;0). This file is automatically loaded and the data is visualized. For details of how to visualize the data, refer to <a href="#Visualization">Visualization</a>.</p>
+<h1 id="File Format">File Format</h1>
+
+<p>Besides the operation based on the GUI, SIMPLEX (more precisely, the solver) can be utilized to communicate with external codes for the so-called start-to-end simulations. This actually requires the knowledge of the format of the input and output files, which is explained in the followings.</p>
+<h2 id="JSON Format">JSON Format</h2>
+
+<p>To deal with the many parameters and options, SIMPLEX utilizes the JSON (JavaScript Object Notation) format, which is described by a number of "objects". The object contains a number of "pairs" formed by a "key" and "value", separated by a colon ":", and should be enclosed by a curly bracket {}. The value can be one of the followings: number, array, string and (another) object. An example of the SIMPLEX input file is as follows.</p>
+
+<p><div class="direct"><pre><code>{
+  "Electron Beam": {
+    "Bunch Profile": "Gaussian",
+    "Electron Energy (GeV)": 1,
+    ....
+  },
+  "Seed Light": {
+    "Seed Light": "Gaussian Beam",
+    "Peak Power (W)": 1000000,
+    ....
+  },
+  "Undulator": {
+    "Undulator Type": "Linear",
+    "K Value": 2.03161,
+    ....
+  },
+  "Lattice": {
+    "Lattice Type": "FUDU (QF-U-QD-U)",
+    "QF Gradient (T/m)": 5.89896,
+    ....
+  },
+  ....
+}</code></pre></div></p>
+
+<p>In this example, four JSON objects are found, whose keys are "Electron Beam", "Seed Light", "Undulator", and "Lattice". The value of each object is also an object, which actually specifies the parameters and options, such as "Energy (GeV)": 1, denoting the energy of the electron beam to be 1 GeV.</p>
+
+<p>For details of the JSON format, please refer to any document available online or found in a text book.</p>
+<h2 id="Input Format">Input Format</h2>
+
+<p>The input file to be loaded by the solver should have 4 JSON objects: "Electron Beam", "Seed Light", "Undulator", and"Simulation Conditions". Details of each object are summarized below, where "GUI Notation" is the parameter name displayed in the GUI panel, "Key" is the name of the key to be used in the input file, "Format" is the format of the value, and "Default" is the default value. Note that the key name can be either of the "Full" or "Simplified" expression.</p>
+<h3 id="Electron Beam Object">Electron Beam Object</h3>
+<table><tbody>
+
+<tr>
+<td class=" title" rowspan="2">GUI Notation</td>
+<td class=" title" colspan="2">Key</td>
+<td class=" title" width="200px" rowspan="2">Format</td>
+<td class=" title" rowspan="2">Default</td>
+</tr>
+<tr>
+<td class=" title">Full</td>
+<td class=" title">Simplified</td>
+</tr>
+<tr>
+<td>Bunch Profile</td>
+<td class=" prm">Bunch Profile</td>
+<td class=" prm">bmprofile</td>
+<td>Select from:<br>"Gaussian"<br>"Boxcar"<br>"SIMPLEX Output"<br>"[object Object]"</td>
+<td>Gaussian</td>
+</tr>
+<tr>
+<td>Slice Parameters</td>
+<td class=" prm">Slice Parameters</td>
+<td class=" prm">slicefile</td>
+<td>object</td>
+<td></td>
+</tr>
+<tr>
+<td>Current Profile</td>
+<td class=" prm">Current Profile</td>
+<td class=" prm">currfile</td>
+<td>object</td>
+<td></td>
+</tr>
+<tr>
+<td>E-t Profile</td>
+<td class=" prm">E-t Profile</td>
+<td class=" prm">etfile</td>
+<td>object</td>
+<td></td>
+</tr>
+<tr>
+<td>Particle Distribution</td>
+<td class=" prm">Particle Distribution</td>
+<td class=" prm">partfile</td>
+<td>file name</td>
+<td></td>
+</tr>
+<tr>
+<td>Electron Energy (GeV)</td>
+<td class=" prm">Electron Energy (GeV)</td>
+<td class=" prm">eenergy</td>
+<td>number</td>
+<td>8</td>
+</tr>
+<tr>
+<td>RMS Bunch Length (m)</td>
+<td class=" prm">RMS Bunch Length (m)</td>
+<td class=" prm">bunchleng</td>
+<td>number</td>
+<td>0.000005</td>
+</tr>
+<tr>
+<td>Bunch Length (m)</td>
+<td class=" prm">Bunch Length (m)</td>
+<td class=" prm">bunchlenr</td>
+<td>number</td>
+<td>0.00001</td>
+</tr>
+<tr>
+<td>Bunch Charge (nC)</td>
+<td class=" prm">Bunch Charge (nC)</td>
+<td class=" prm">bunchcharge</td>
+<td>number</td>
+<td>0.15</td>
+</tr>
+<tr>
+<td>ε<sub>x,y</sub> (mm.mrad)</td>
+<td class=" prm">&amp;epsilon;&lt;sub&gt;x,y&lt;/sub&gt; (mm.mrad)</td>
+<td class=" prm">emitt</td>
+<td>array</td>
+<td>[0.4, 0.4]</td>
+</tr>
+<tr>
+<td>RMS Energy Spread</td>
+<td class=" prm">RMS Energy Spread</td>
+<td class=" prm">espread</td>
+<td>number</td>
+<td>0.0001</td>
+</tr>
+<tr>
+<td>Energy Chirp (m<sup>-1</sup>)</td>
+<td class=" prm">Energy Chirp (m&lt;sup&gt;-1&lt;/sup&gt;)</td>
+<td class=" prm">echirp</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>η<sub>x,y</sub> (m)</td>
+<td class=" prm">&amp;eta;&lt;sub&gt;x,y&lt;/sub&gt; (m)</td>
+<td class=" prm">eta</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>Peak Current (A)</td>
+<td class=" prm">Peak Current (A)</td>
+<td class=" prm">pkcurr</td>
+<td>number</td>
+<td>3588</td>
+</tr>
+<tr>
+<td>σ<sub>0x,0y</sub> (mm)</td>
+<td class=" prm">&amp;sigma;&lt;sub&gt;0x,0y&lt;/sub&gt; (mm)</td>
+<td class=" prm">ebmsize</td>
+<td>array</td>
+<td>[0.02747649154431839, 0.023085244683238686]</td>
+</tr>
+<tr>
+<td>σ<sub>0x',0y'</sub> (mrad)</td>
+<td class=" prm">&amp;sigma;&lt;sub&gt;0x',0y'&lt;/sub&gt; (mrad)</td>
+<td class=" prm">ediv</td>
+<td>array</td>
+<td>[0.0013503330424008604, 0.0013881904776490983]</td>
+</tr>
+<tr>
+<td>&lt;σ<sub>x,y</sub>&gt; (mm)</td>
+<td class=" prm">&amp;lt;&amp;sigma;&lt;sub&gt;x,y&lt;/sub&gt;&amp;gt; (mm)</td>
+<td class=" prm">avgsize</td>
+<td>array</td>
+<td>[, ]</td>
+</tr>
+<tr>
+<td>R<sub>56</sub> (m)</td>
+<td class=" prm">R&lt;sub&gt;56&lt;/sub&gt; (m)</td>
+<td class=" prm">r56</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Bunch Twiss Prms.</td>
+<td class=" prm">Bunch Twiss Prms.</td>
+<td class=" prm">twissbunch</td>
+<td>Select from:<br>"Projected"<br>"Sliced (Optimized)"<br>"Sliced (Custom)"</td>
+<td>Projected</td>
+</tr>
+<tr>
+<td>Slice Position (m)</td>
+<td class=" prm">Slice Position (m)</td>
+<td class=" prm">twisspos</td>
+<td>number</td>
+<td>0</td>
+</tr>
+</tbody></table>
+
+<h3 id="Seed Light Object">Seed Light Object</h3>
+<table><tbody>
+
+<tr>
+<td class=" title" rowspan="2">GUI Notation</td>
+<td class=" title" colspan="2">Key</td>
+<td class=" title" width="200px" rowspan="2">Format</td>
+<td class=" title" rowspan="2">Default</td>
+</tr>
+<tr>
+<td class=" title">Full</td>
+<td class=" title">Simplified</td>
+</tr>
+<tr>
+<td>Seed Light</td>
+<td class=" prm">Seed Light</td>
+<td class=" prm">seedprofile</td>
+<td>Select from:<br>"N.A."<br>"Gaussian Beam"<br>"Chirp Pulse"<br>"SIMPLEX Output"</td>
+<td>N.A.</td>
+</tr>
+<tr>
+<td>Peak Power (W)</td>
+<td class=" prm">Peak Power (W)</td>
+<td class=" prm">pkpower</td>
+<td>number</td>
+<td>1000000000</td>
+</tr>
+<tr>
+<td>Δλ/λ<sub>1</sub></td>
+<td class=" prm">&amp;Delta;&amp;lambda;/&amp;lambda;&lt;sub&gt;1&lt;/sub&gt;</td>
+<td class=" prm">relwavelen</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>FWHM Pulse Length (fs)</td>
+<td class=" prm">FWHM Pulse Length (fs)</td>
+<td class=" prm">pulselen</td>
+<td>number</td>
+<td>40</td>
+</tr>
+<tr>
+<td>FWHM Spot Size (mm)</td>
+<td class=" prm">FWHM Spot Size (mm)</td>
+<td class=" prm">spotsize</td>
+<td>number</td>
+<td>0.05</td>
+</tr>
+<tr>
+<td>Position of Waist (m)</td>
+<td class=" prm">Position of Waist (m)</td>
+<td class=" prm">waistpos</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Relative Time (fs)</td>
+<td class=" prm">Relative Time (fs)</td>
+<td class=" prm">timing</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Carrier Envelope Phase (°)</td>
+<td class=" prm">Carrier Envelope Phase (&amp;deg;)</td>
+<td class=" prm">CEP</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>GDD (fs<sup>2</sup>)</td>
+<td class=" prm">GDD (fs&lt;sup&gt;2&lt;/sup&gt;)</td>
+<td class=" prm">gdd</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>TOD (fs<sup>3</sup>)</td>
+<td class=" prm">TOD (fs&lt;sup&gt;3&lt;/sup&gt;)</td>
+<td class=" prm">tod</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Phase Offset (°)</td>
+<td class=" prm">Phase Offset (&amp;deg;)</td>
+<td class=" prm">phase</td>
+<td>number</td>
+<td>0</td>
+</tr>
+</tbody></table>
+
+<h3 id="SIMPLEX Output Object">SIMPLEX Output Object</h3>
+<table><tbody>
+
+<tr>
+<td class=" title" rowspan="2">GUI Notation</td>
+<td class=" title" colspan="2">Key</td>
+<td class=" title" width="200px" rowspan="2">Format</td>
+<td class=" title" rowspan="2">Default</td>
+</tr>
+<tr>
+<td class=" title">Full</td>
+<td class=" title">Simplified</td>
+</tr>
+<tr>
+<td>Data Name</td>
+<td class=" prm">Data Name</td>
+<td class=" prm">spxfile</td>
+<td>file name</td>
+<td></td>
+</tr>
+<tr>
+<td>Step Index to Retrieve Data</td>
+<td class=" prm">Step Index to Retrieve Data</td>
+<td class=" prm">spxstep</td>
+<td>integer</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Exported Positions (m)</td>
+<td class=" prm">Exported Positions (m)</td>
+<td class=" prm">spxstepzarr</td>
+<td>array</td>
+<td>[]</td>
+</tr>
+<tr>
+<td>Total Beamlets</td>
+<td class=" prm">Total Beamlets</td>
+<td class=" prm">bmletsout</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Particles/Beamlet</td>
+<td class=" prm">Particles/Beamlet</td>
+<td class=" prm">paticlesout</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Drift Length (m)</td>
+<td class=" prm">Drift Length (m)</td>
+<td class=" prm">matching</td>
+<td>number</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Photon Energy (eV)</td>
+<td class=" prm">Photon Energy (eV)</td>
+<td class=" prm">spxenergy</td>
+<td>number</td>
+<td>10</td>
+</tr>
+</tbody></table>
+
+<h3 id="Undulator Object">Undulator Object</h3>
+<table><tbody>
+
+<tr>
+<td class=" title" rowspan="2">GUI Notation</td>
+<td class=" title" colspan="2">Key</td>
+<td class=" title" width="200px" rowspan="2">Format</td>
+<td class=" title" rowspan="2">Default</td>
+</tr>
+<tr>
+<td class=" title">Full</td>
+<td class=" title">Simplified</td>
+</tr>
+<tr>
+<td>Undulator Type</td>
+<td class=" prm">Undulator Type</td>
+<td class=" prm">utype</td>
+<td>Select from:<br>"Linear"<br>"Helical"<br>"Elliptical"<br>"Multi-Harmonic"</td>
+<td>Linear</td>
+</tr>
+<tr>
+<td>K Value</td>
+<td class=" prm">K Value</td>
+<td class=" prm">K</td>
+<td>number</td>
+<td>2.18</td>
+</tr>
+<tr>
+<td>K<sub>⊥</sub></td>
+<td class=" prm">K&lt;sub&gt;&amp;perp;&lt;/sub&gt;</td>
+<td class=" prm">Kperp</td>
+<td>number</td>
+<td>2.18</td>
+</tr>
+<tr>
+<td>Multi-Harmonic Contents</td>
+<td class=" prm">Multi-Harmonic Contents</td>
+<td class=" prm">multiharm</td>
+<td>array</td>
+<td>[]</td>
+</tr>
+<tr>
+<td>tan<sup>-1</sup>(K<sub>x</sub>/K<sub>y</sub>) (°)</td>
+<td class=" prm">tan&lt;sup&gt;-1&lt;/sup&gt;(K&lt;sub&gt;x&lt;/sub&gt;/K&lt;sub&gt;y&lt;/sub&gt;) (&amp;deg;)</td>
+<td class=" prm">epukratio</td>
+<td>number</td>
+<td>30</td>
+</tr>
+<tr>
+<td>λ<sub>u</sub> (mm)</td>
+<td class=" prm">&amp;lambda;&lt;sub&gt;u&lt;/sub&gt; (mm)</td>
+<td class=" prm">lu</td>
+<td>number</td>
+<td>18</td>
+</tr>
+<tr>
+<td>Length/Segment (m)</td>
+<td class=" prm">Length/Segment (m)</td>
+<td class=" prm">length</td>
+<td>number</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Number of Segments</td>
+<td class=" prm">Number of Segments</td>
+<td class=" prm">segments</td>
+<td>integer</td>
+<td>18</td>
+</tr>
+<tr>
+<td>Segment Interval</td>
+<td class=" prm">Segment Interval</td>
+<td class=" prm">interval</td>
+<td>number</td>
+<td>6.15</td>
+</tr>
+<tr>
+<td>Extra Slippage (°)</td>
+<td class=" prm">Extra Slippage (&amp;deg;)</td>
+<td class=" prm">exslippage</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Tapering</td>
+<td class=" prm">Tapering</td>
+<td class=" prm">taper</td>
+<td>Select from:<br>"N.A."<br>"Stair-Like"<br>"Continuous"<br>"Custom"</td>
+<td>N.A.</td>
+</tr>
+<tr>
+<td>Optimization</td>
+<td class=" prm">Optimization</td>
+<td class=" prm">opttype</td>
+<td>Select from:<br>"N.A."<br>"Compensate Wake"<br>"Projection"<br>"Slice"</td>
+<td>N.A.</td>
+</tr>
+<tr>
+<td>Target Slice Position (m)</td>
+<td class=" prm">Target Slice Position (m)</td>
+<td class=" prm">slicepos</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Initial Segment</td>
+<td class=" prm">Initial Segment</td>
+<td class=" prm">initial</td>
+<td>integer</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Increment Segment Interval</td>
+<td class=" prm">Increment Segment Interval</td>
+<td class=" prm">incrseg</td>
+<td>integer</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Base Linear Taper (m<sup>-1</sup>)</td>
+<td class=" prm">Base Linear Taper (m&lt;sup&gt;-1&lt;/sup&gt;)</td>
+<td class=" prm">base</td>
+<td>number</td>
+<td>0.001</td>
+</tr>
+<tr>
+<td>Taper Increment (m<sup>-1</sup>)</td>
+<td class=" prm">Taper Increment (m&lt;sup&gt;-1&lt;/sup&gt;)</td>
+<td class=" prm">incrtaper</td>
+<td>number</td>
+<td>0.001</td>
+</tr>
+<tr>
+<td>K Value@Exit</td>
+<td class=" prm">K Value@Exit</td>
+<td class=" prm">Kexit</td>
+<td>number</td>
+<td>2.024</td>
+</tr>
+<tr>
+<td>Resonance Detuning@Exit</td>
+<td class=" prm">Resonance Detuning@Exit</td>
+<td class=" prm">detune</td>
+<td>number</td>
+<td>0.08</td>
+</tr>
+<tr>
+<td>Custom Taper</td>
+<td class=" prm">Custom Taper</td>
+<td class=" prm">tapercustom</td>
+<td>array</td>
+<td>[]</td>
+</tr>
+<tr>
+<td>Undulator Model</td>
+<td class=" prm">Undulator Model</td>
+<td class=" prm">umodel</td>
+<td>Select from:<br>"Ideal"<br>"Specify Error"<br>"Import Data"</td>
+<td>Ideal</td>
+</tr>
+<tr>
+<td>Random Number Auto Seeding</td>
+<td class=" prm">Random Number Auto Seeding</td>
+<td class=" prm">umautoseed</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Random Number Seed</td>
+<td class=" prm">Random Number Seed</td>
+<td class=" prm">umrandseed</td>
+<td>integer</td>
+<td>1</td>
+</tr>
+<tr>
+<td>σ<sub>φ</sub> (°)</td>
+<td class=" prm">&amp;sigma;&lt;sub&gt;&amp;phi;&lt;/sub&gt; (&amp;deg;)</td>
+<td class=" prm">phaseerr</td>
+<td>number</td>
+<td>5</td>
+</tr>
+<tr>
+<td>σ<sub>B</sub>/B (%)</td>
+<td class=" prm">&amp;sigma;&lt;sub&gt;B&lt;/sub&gt;/B (%)</td>
+<td class=" prm">berr</td>
+<td>number</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>σ<sub>x,y</sub> (mm)</td>
+<td class=" prm">&amp;sigma;&lt;sub&gt;x,y&lt;/sub&gt; (mm)</td>
+<td class=" prm">xyerr</td>
+<td>array</td>
+<td>[0.001, 0.001]</td>
+</tr>
+<tr>
+<td>Apply to All Segments</td>
+<td class=" prm">Apply to All Segments</td>
+<td class=" prm">allsegment</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Target Segment</td>
+<td class=" prm">Target Segment</td>
+<td class=" prm">tgtsegment</td>
+<td>integer</td>
+<td>1</td>
+</tr>
+</tbody></table>
+
+<h3 id="Lattice Object">Lattice Object</h3>
+<table><tbody>
+
+<tr>
+<td class=" title" rowspan="2">GUI Notation</td>
+<td class=" title" colspan="2">Key</td>
+<td class=" title" width="200px" rowspan="2">Format</td>
+<td class=" title" rowspan="2">Default</td>
+</tr>
+<tr>
+<td class=" title">Full</td>
+<td class=" title">Simplified</td>
+</tr>
+<tr>
+<td>Lattice Type</td>
+<td class=" prm">Lattice Type</td>
+<td class=" prm">ltype</td>
+<td>Select from:<br>"FUDU (QF-U-QD-U)"<br>"DUFU (QD-U-QF-U)"<br>"FUFU (QF-U-QF-U)"<br>"Doublet (QF-QD-U)"<br>"Triplet (QF-QD-QF-U)"<br>"Undulator Combined"</td>
+<td>FUDU (QF-U-QD-U)</td>
+</tr>
+<tr>
+<td>QF Gradient (T/m)</td>
+<td class=" prm">QF Gradient (T/m)</td>
+<td class=" prm">qfg</td>
+<td>number</td>
+<td>18.99</td>
+</tr>
+<tr>
+<td>QD Gradient (T/m)</td>
+<td class=" prm">QD Gradient (T/m)</td>
+<td class=" prm">qdg</td>
+<td>number</td>
+<td>-17.44</td>
+</tr>
+<tr>
+<td>QF Length (m)</td>
+<td class=" prm">QF Length (m)</td>
+<td class=" prm">qfl</td>
+<td>number</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td>QD Length (m)</td>
+<td class=" prm">QD Length (m)</td>
+<td class=" prm">qdl</td>
+<td>number</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td>QF-QD Distance (m)</td>
+<td class=" prm">QF-QD Distance (m)</td>
+<td class=" prm">dist</td>
+<td>number</td>
+<td>0.02</td>
+</tr>
+<tr>
+<td># Periods/Segment</td>
+<td class=" prm"># Periods/Segment</td>
+<td class=" prm">lperiods</td>
+<td>integer</td>
+<td>18</td>
+</tr>
+<tr>
+<td>β<sub>x0,y0</sub> (m)</td>
+<td class=" prm">&amp;beta;&lt;sub&gt;x0,y0&lt;/sub&gt; (m)</td>
+<td class=" prm">betaxy0</td>
+<td>array</td>
+<td>[29.5483, 20.8583]</td>
+</tr>
+<tr>
+<td>α<sub>x0,y0</sub> (m)</td>
+<td class=" prm">&amp;alpha;&lt;sub&gt;x0,y0&lt;/sub&gt; (m)</td>
+<td class=" prm">alphaxy0</td>
+<td>array</td>
+<td>[1.05297, -0.757107]</td>
+</tr>
+</tbody></table>
+
+<h3 id="Wakefield Object">Wakefield Object</h3>
+<table><tbody>
+
+<tr>
+<td class=" title" rowspan="2">GUI Notation</td>
+<td class=" title" colspan="2">Key</td>
+<td class=" title" width="200px" rowspan="2">Format</td>
+<td class=" title" rowspan="2">Default</td>
+</tr>
+<tr>
+<td class=" title">Full</td>
+<td class=" title">Simplified</td>
+</tr>
+<tr>
+<td>Wakefield On</td>
+<td class=" prm">Wakefield On</td>
+<td class=" prm">wakeon</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Aperture (m)</td>
+<td class=" prm">Aperture (m)</td>
+<td class=" prm">aperture</td>
+<td>number</td>
+<td>0.0035</td>
+</tr>
+<tr>
+<td>Resistive</td>
+<td class=" prm">Resistive</td>
+<td class=" prm">resistive</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Resistivity (Ωm)</td>
+<td class=" prm">Resistivity (&amp;Omega;m)</td>
+<td class=" prm">resistivity</td>
+<td>number</td>
+<td>1.68e-8</td>
+</tr>
+<tr>
+<td>Relaxation Time (sec)</td>
+<td class=" prm">Relaxation Time (sec)</td>
+<td class=" prm">relaxtime</td>
+<td>number</td>
+<td>8e-15</td>
+</tr>
+<tr>
+<td>Parallel Plate</td>
+<td class=" prm">Parallel Plate</td>
+<td class=" prm">paralell</td>
+<td>boolean</td>
+<td>true</td>
+</tr>
+<tr>
+<td>Surface Roughness</td>
+<td class=" prm">Surface Roughness</td>
+<td class=" prm">roughness</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>RMS Height (m)</td>
+<td class=" prm">RMS Height (m)</td>
+<td class=" prm">height</td>
+<td>number</td>
+<td>0.000002</td>
+</tr>
+<tr>
+<td>Correlation Length (m)</td>
+<td class=" prm">Correlation Length (m)</td>
+<td class=" prm">corrlen</td>
+<td>number</td>
+<td>0.00004</td>
+</tr>
+<tr>
+<td>Dielectric Layer</td>
+<td class=" prm">Dielectric Layer</td>
+<td class=" prm">dielec</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>ε/ε<sub>0</sub></td>
+<td class=" prm">&amp;epsilon;/&amp;epsilon;&lt;sub&gt;0&lt;/sub&gt;</td>
+<td class=" prm">permit</td>
+<td>number</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Thickness (m)</td>
+<td class=" prm">Thickness (m)</td>
+<td class=" prm">thickness</td>
+<td>number</td>
+<td>2e-8</td>
+</tr>
+<tr>
+<td>Space Charge</td>
+<td class=" prm">Space Charge</td>
+<td class=" prm">spcharge</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Additional Custom Wake</td>
+<td class=" prm">Additional Custom Wake</td>
+<td class=" prm">wakecustom</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Wakefield Data</td>
+<td class=" prm">Wakefield Data</td>
+<td class=" prm">wakecustomdata</td>
+<td>object</td>
+<td></td>
+</tr>
+</tbody></table>
+
+<h3 id="Alignment Object">Alignment Object</h3>
+<table><tbody>
+
+<tr>
+<td class=" title" rowspan="2">GUI Notation</td>
+<td class=" title" colspan="2">Key</td>
+<td class=" title" width="200px" rowspan="2">Format</td>
+<td class=" title" rowspan="2">Default</td>
+</tr>
+<tr>
+<td class=" title">Full</td>
+<td class=" title">Simplified</td>
+</tr>
+<tr>
+<td>Undulator Alignment</td>
+<td class=" prm">Undulator Alignment</td>
+<td class=" prm">ualign</td>
+<td>Select from:<br>"Ideal"<br>"Specify Tolerance"<br>"Specify Offset"</td>
+<td>Ideal</td>
+</tr>
+<tr>
+<td>ΔK Tolerance</td>
+<td class=" prm">&amp;Delta;K Tolerance</td>
+<td class=" prm">Ktol</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Slippage Tolerance (°)</td>
+<td class=" prm">Slippage Tolerance (&amp;deg;)</td>
+<td class=" prm">sliptol</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Offset for Each Segment</td>
+<td class=" prm">Offset for Each Segment</td>
+<td class=" prm">sigsegment</td>
+<td>array</td>
+<td>[]</td>
+</tr>
+<tr>
+<td>BPM Alignment</td>
+<td class=" prm">BPM Alignment</td>
+<td class=" prm">BPMalign</td>
+<td>Select from:<br>"Ideal"<br>"Specify Tolerance"</td>
+<td>Ideal</td>
+</tr>
+<tr>
+<td>x,y Tolerance (mm)</td>
+<td class=" prm">x,y Tolerance (mm)</td>
+<td class=" prm">xytol</td>
+<td>array</td>
+<td>[0.05, 0.05]</td>
+</tr>
+<tr>
+<td>Random Number Auto Seeding</td>
+<td class=" prm">Random Number Auto Seeding</td>
+<td class=" prm">alautoseed</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Random Number Seed</td>
+<td class=" prm">Random Number Seed</td>
+<td class=" prm">alrandseed</td>
+<td>integer</td>
+<td>1</td>
+</tr>
+</tbody></table>
+
+<h3 id="Chicane Object">Chicane Object</h3>
+<table><tbody>
+
+<tr>
+<td class=" title" rowspan="2">GUI Notation</td>
+<td class=" title" colspan="2">Key</td>
+<td class=" title" width="200px" rowspan="2">Format</td>
+<td class=" title" rowspan="2">Default</td>
+</tr>
+<tr>
+<td class=" title">Full</td>
+<td class=" title">Simplified</td>
+</tr>
+<tr>
+<td>Chicane On</td>
+<td class=" prm">Chicane On</td>
+<td class=" prm">chicaneon</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Electron Delay (fs)</td>
+<td class=" prm">Electron Delay (fs)</td>
+<td class=" prm">delay</td>
+<td>number</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Chicane Position</td>
+<td class=" prm">Chicane Position</td>
+<td class=" prm">chpos</td>
+<td>integer</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Rearrange After Chicane</td>
+<td class=" prm">Rearrange After Chicane</td>
+<td class=" prm">rearrange</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Monochromator Type</td>
+<td class=" prm">Monochromator Type</td>
+<td class=" prm">monotype</td>
+<td>Select from:<br>"N.A."<br>"Transmission"<br>"Reflection"<br>"Customize"</td>
+<td>N.A.</td>
+</tr>
+<tr>
+<td>Monochromator Data</td>
+<td class=" prm">Monochromator Data</td>
+<td class=" prm">monodata</td>
+<td>object</td>
+<td></td>
+</tr>
+<tr>
+<td>Crystal Type</td>
+<td class=" prm">Crystal Type</td>
+<td class=" prm">xtaltype</td>
+<td>Select from:<br>"Diamond (400)"<br>"Diamond (220)"<br>"Silicon (111)"<br>"Customize"</td>
+<td>Diamond (400)</td>
+</tr>
+<tr>
+<td>ℏω (eV)</td>
+<td class=" prm">&amp;hbar;&amp;omega; (eV)</td>
+<td class=" prm">monoenergy</td>
+<td>number</td>
+<td>10000</td>
+</tr>
+<tr>
+<td>|F<sub>g</sub>|</td>
+<td class=" prm">|F&lt;sub&gt;g&lt;/sub&gt;|</td>
+<td class=" prm">formfactor</td>
+<td>number</td>
+<td>12.72</td>
+</tr>
+<tr>
+<td>Lattice Spacing (nm)</td>
+<td class=" prm">Lattice Spacing (nm)</td>
+<td class=" prm">latticespace</td>
+<td>number</td>
+<td>0.089175</td>
+</tr>
+<tr>
+<td>Unit Cell Volume (nm<sup>3</sup>)</td>
+<td class=" prm">Unit Cell Volume (nm&lt;sup&gt;3&lt;/sup&gt;)</td>
+<td class=" prm">unitvol</td>
+<td>number</td>
+<td>0.045385</td>
+</tr>
+<tr>
+<td>Crystal Thickness (mm)</td>
+<td class=" prm">Crystal Thickness (mm)</td>
+<td class=" prm">xtalthickness</td>
+<td>number</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td>Relative Timing (fs)</td>
+<td class=" prm">Relative Timing (fs)</td>
+<td class=" prm">reltiming</td>
+<td>number</td>
+<td>0</td>
+</tr>
+</tbody></table>
+
+<h3 id="Dispersion Object">Dispersion Object</h3>
+<table><tbody>
+
+<tr>
+<td class=" title" rowspan="2">GUI Notation</td>
+<td class=" title" colspan="2">Key</td>
+<td class=" title" width="200px" rowspan="2">Format</td>
+<td class=" title" rowspan="2">Default</td>
+</tr>
+<tr>
+<td class=" title">Full</td>
+<td class=" title">Simplified</td>
+</tr>
+<tr>
+<td>e<sup>-</sup> Injection Error</td>
+<td class=" prm">e&lt;sup&gt;-&lt;/sup&gt; Injection Error</td>
+<td class=" prm">einjec</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Δx,y (mm)</td>
+<td class=" prm">&amp;Delta;x,y (mm)</td>
+<td class=" prm">exy</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>Δx',y' (mrad)</td>
+<td class=" prm">&amp;Delta;x',y' (mrad)</td>
+<td class=" prm">exyp</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>Single Kick</td>
+<td class=" prm">Single Kick</td>
+<td class=" prm">kick</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Kick Position (m)</td>
+<td class=" prm">Kick Position (m)</td>
+<td class=" prm">kickpos</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Kick Angle x,y (mrad)</td>
+<td class=" prm">Kick Angle x,y (mrad)</td>
+<td class=" prm">kickangle</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>Seed Injection Error</td>
+<td class=" prm">Seed Injection Error</td>
+<td class=" prm">sinjec</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Seed Δx,y (mm)</td>
+<td class=" prm">Seed &amp;Delta;x,y (mm)</td>
+<td class=" prm">sxy</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>Seed Δx',y' (mrad)</td>
+<td class=" prm">Seed &amp;Delta;x',y' (mrad)</td>
+<td class=" prm">sxyp</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+</tbody></table>
+
+<h3 id="Simulation Conditions Object">Simulation Conditions Object</h3>
+<table><tbody>
+
+<tr>
+<td class=" title" rowspan="2">GUI Notation</td>
+<td class=" title" colspan="2">Key</td>
+<td class=" title" width="200px" rowspan="2">Format</td>
+<td class=" title" rowspan="2">Default</td>
+</tr>
+<tr>
+<td class=" title">Full</td>
+<td class=" title">Simplified</td>
+</tr>
+<tr>
+<td>Simulation Mode</td>
+<td class=" prm">Simulation Mode</td>
+<td class=" prm">simmode</td>
+<td>Select from:<br>"Time Dependent"<br>"Steady State"<br>"Cyclic"</td>
+<td>Time Dependent</td>
+</tr>
+<tr>
+<td>Simulation Option</td>
+<td class=" prm">Simulation Option</td>
+<td class=" prm">simoption</td>
+<td>Select from:<br>"N.A."<br>"Gaussian Mode"<br>"Disable Quiet Loading"<br>"Kill Shotnoize"<br>"Real Electron Number"</td>
+<td>N.A.</td>
+</tr>
+<tr>
+<td>Skip Wavefront Transfer Process</td>
+<td class=" prm">Skip Wavefront Transfer Process</td>
+<td class=" prm">skipwave</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Auto Integration Step</td>
+<td class=" prm">Auto Integration Step</td>
+<td class=" prm">autostep</td>
+<td>boolean</td>
+<td>true</td>
+</tr>
+<tr>
+<td>Random Number Auto Seeding</td>
+<td class=" prm">Random Number Auto Seeding</td>
+<td class=" prm">autoseed</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Random Number Seed</td>
+<td class=" prm">Random Number Seed</td>
+<td class=" prm">randseed</td>
+<td>integer</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Integration Step</td>
+<td class=" prm">Integration Step</td>
+<td class=" prm">step</td>
+<td>integer</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Total Beamlets</td>
+<td class=" prm">Total Beamlets</td>
+<td class=" prm">beamlets</td>
+<td>number</td>
+<td>10000000</td>
+</tr>
+<tr>
+<td>Total Electrons</td>
+<td class=" prm">Total Electrons</td>
+<td class=" prm">electrons</td>
+<td>number</td>
+<td>10000000</td>
+</tr>
+<tr>
+<td>Max. Electrons/Slice</td>
+<td class=" prm">Max. Electrons/Slice</td>
+<td class=" prm">sliceels</td>
+<td>number</td>
+<td>2000</td>
+</tr>
+<tr>
+<td>Electrons/Slice</td>
+<td class=" prm">Electrons/Slice</td>
+<td class=" prm">sliceelsss</td>
+<td>number</td>
+<td>2000</td>
+</tr>
+<tr>
+<td>Max. Harmonic</td>
+<td class=" prm">Max. Harmonic</td>
+<td class=" prm">maxharmonic</td>
+<td>integer</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Particles/Beamlet</td>
+<td class=" prm">Particles/Beamlet</td>
+<td class=" prm">particles</td>
+<td>integer</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Spatial Window/σ</td>
+<td class=" prm">Spatial Window/&amp;sigma;</td>
+<td class=" prm">spatwin</td>
+<td>integer</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Temporal Window (m)</td>
+<td class=" prm">Temporal Window (m)</td>
+<td class=" prm">simrange</td>
+<td>array</td>
+<td>[-0.000006, 0.000006]</td>
+</tr>
+<tr>
+<td>Bunch Position (m)</td>
+<td class=" prm">Bunch Position (m)</td>
+<td class=" prm">simpos</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Enable Parallel Computing</td>
+<td class=" prm">Enable Parallel Computing</td>
+<td class=" prm">enablempi</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Number of Processes</td>
+<td class=" prm">Number of Processes</td>
+<td class=" prm">mpiprocs</td>
+<td>integer</td>
+<td>4</td>
+</tr>
+</tbody></table>
+
+<h3 id="Data Dump Configurations Object">Data Dump Configurations Object</h3>
+<table><tbody>
+
+<tr>
+<td class=" title" rowspan="2">GUI Notation</td>
+<td class=" title" colspan="2">Key</td>
+<td class=" title" width="200px" rowspan="2">Format</td>
+<td class=" title" rowspan="2">Default</td>
+</tr>
+<tr>
+<td class=" title">Full</td>
+<td class=" title">Simplified</td>
+</tr>
+<tr>
+<td>Radiation Profile Data</td>
+<td class=" prm">Radiation Profile Data</td>
+<td class=" prm">procdata</td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td>Temporal Profile</td>
+<td class=" prm">Temporal Profile</td>
+<td class=" prm">temporal</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Spectral Profile</td>
+<td class=" prm">Spectral Profile</td>
+<td class=" prm">spectral</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Spatial Profile</td>
+<td class=" prm">Spatial Profile</td>
+<td class=" prm">spatial</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Angular Profile</td>
+<td class=" prm">Angular Profile</td>
+<td class=" prm">angular</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Output Interval</td>
+<td class=" prm">Output Interval</td>
+<td class=" prm">profstep</td>
+<td>integer</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Raw Data</td>
+<td class=" prm">Raw Data</td>
+<td class=" prm">rawdata</td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td>Particle Data</td>
+<td class=" prm">Particle Data</td>
+<td class=" prm">particle</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Radiation Data</td>
+<td class=" prm">Radiation Data</td>
+<td class=" prm">radiation</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Output Steps</td>
+<td class=" prm">Output Steps</td>
+<td class=" prm">expstep</td>
+<td>Select from:<br>"All Segments"<br>"Specific Segments"<br>"Final Step"<br>"Regular Interval"</td>
+<td>All Segments</td>
+</tr>
+<tr>
+<td>Initial Segment</td>
+<td class=" prm">Initial Segment</td>
+<td class=" prm">iniseg</td>
+<td>integer</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Segment Step</td>
+<td class=" prm">Segment Step</td>
+<td class=" prm">segint</td>
+<td>integer</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Step Interval</td>
+<td class=" prm">Step Interval</td>
+<td class=" prm">stepinterv</td>
+<td>integer</td>
+<td>1</td>
+</tr>
+</tbody></table>
+
+<h2 id="Output Format">Output Format</h2>
+
+<p>To facilitate further processing of the simulation result with other external codes, the structure of the output JSON file is explained below. Note that the order index (for example of an array, column, etc.) in the followings is defined as starting from "0", but not from "1".</p>
+<h3 id="&quot;Input&quot; Object">"Input" Object</h3>
+
+<p>All the parameters and options are stored in this object with the same format as the <a href="#Input Format">Input Format</a>. If the output JSON file is opened in the GUI (as an input parameter file), these parameters are displayed and can be used again.</p>
+<h3 id="Objects to Save the Simulation Results">Objects to Save the Simulation Results</h3>
+
+<p>The simulation results are saved in a number of objects with the keys of "Gain Curve", "Temporal Profile", "Spectral Profile", "Spatial Profile" and "Angular Profile" (last 4 are optional), and can be visualized by <a href="#Visualization">Visualization</a> as mentioned in <a href="#Post-Processing">Post-Processing</a>.</p>
+<table><caption>Format of the objects in the output JSON file</caption><tbody>
+
+<tr>
+<td class="title">Key</td>
+<td class="title">Details</td>
+<td class="title">Format</td>
+</tr>
+<tr>
+<td>dimension</td>
+<td>Dimension of the data</td>
+<td>number</td>
+</tr>
+<tr>
+<td>variables</td>
+<td>Number of independent variables for each sliced data. If "dimension" is 3 and "variables" is 2, then the 2D data (for example, spatial profile of radiation) was generated repeatedly at each step. These conditions are used later for visualization</td>
+<td>number</td>
+</tr>
+<tr>
+<td>titles</td>
+<td>Titles of individual arrays included in the "data" object.</td>
+<td>array (1D)</td>
+</tr>
+<tr>
+<td>units</td>
+<td>Units of individual arrays included in the "data" object.</td>
+<td>array (1D)</td>
+</tr>
+<tr>
+<td>data</td>
+<td>Main body of the simulation result data.</td>
+<td>array (2D or 3D)</td>
+</tr>
+</tbody></table>
+
+
+<p>The format of the "data" object (2D array) is as follows.</p>
+<ul><li>0th ~ (n-1)-th array: independent variables, where n is the dimension</li><li>n-th ~ (n+m-1)-th array: simulation results, where m is the number of items. The length of each array corresponds to the product of the lengths of the independent variable arrays.</li></ul>
+<p>As an example, let us consider the "Gain Curve" object as follows</p>
+
+<p><div class="direct"><pre><code>  "Gain Curve": {
+    "dimension": 1,
+    "titles": ["z","Pulse Energy","Spatial Energy Density","Angular Energy Density","Bunch Factor","Energy Loss"],
+    "units": ["m","J","J/mm<sup>2</sup>","J/mrad<sup>2</sup>","-","J"],
+    "data": [
+      [0.18,0.36,...,72.33,72.51],
+      [3.78429e-09,7.57999e-09,...,0.000767857,0.000768138],
+      [2.75008e-06,5.28602e-06,...,0.23161,0.230191,0.229851],
+      [2.20925e-06,4.46296e-06,...,126.883,126.987,127.091],
+      [0.00195631,0.00195761,...,0.0183189,0.0178893],
+      [-5.80174e-09,-5.30405e-09,...,-0.000779005,-0.000777961]
+    ]
+  },</code></pre></div></p>
+
+<p>The data is composed of 1 independent variable (z) and 5 items (Pulse Energy etc.). The 0th array ([0.18,...]) corresponds to the longitudinal coordinate, and the 1st ([3.78429e-09,...]) to the pulse energy, etc.</p>
+
+<p>In case the dimension is larger than 1 and thus more than one independent variables exist, the order index j of the item array is given as \[j=j_0+j_1N_0+j_2N_0N_1+\cdots,\] where $j_i$ and $N_i$ refer to the order index and number of data points of the $i$-th variable.</p>
+<h2 id="Binary File Format">Binary File Format</h2>
+
+<p>Besides the output JSON file described above to summarize the simulation results, SIMPLEX optionally exports "raw data", namely, the distribution of macroparticles and complex amplitude of radiation. Because these data can be potentially large, they are saved in a binary format to save the required memory size. Besides being used as input data for another simulation with SIMPLEX, they can be retrieved as numerical data for other applications. For this purpose, the format of these binary files are described below. Note that all of the raw data are saved as float (4-byte) numbers instead of double (8-byte) ones to reduce the file size.</p>
+<h3 id="Configurations">Configurations</h3>
+
+<p>To retrieve the binary data, its configurations are needed. In SIMPLEX, they are saved separately in the output file (*.json) as an object defined by "Raw Data Export" as follows.</p>
+
+<p><div class="direct"><pre><code>{
+  "Raw Data Export": {
+    ...,
+    "Steps (m)": [4.86,11.01,17.16,23.31,29.46,35.61],
+    "Slices (m)": [-9.99382e-07,-9.97437e-07,...,9.99382e-07],
+    "Grid Intervals (m,rad)": [2.13045e-06,1.23744e-06,4.75329e-07,8.18358e-07],
+    "Grid Points": [128,128],
+    "Beamlets": 500000,
+    "Particles/Beamlet": 4,
+    ....
+  },
+  ....
+}</code></pre></div></p>
+
+<p>In this example, the raw data are exported at 6 ($=K$) longitudinal positions defined as $z$ = 4.86, 11.01,... . The number of beamlets (=$N_b$) and particles per beamlet ($=N_p$) are 500000 and 4, respectively. The electron bunch is divided into 1209 slices ($=L$) with the slice positions of $s$ = -9.99382e-07,-9.97437e-07,..., and the radiation field is evaluated at 128 ($=M$) x 128 ($=N$) transverse grid points, with the intervals of $(\Delta x,\Delta y,\Delta x',\Delta y')=$(2.13045e-06,1.23744e-06,4.75329e-07,8.18358e-07).</p>
+<h3 id="Radiation Profiles">Radiation Profiles</h3>
+
+<p>The complex amplitude of radiation $E(z,s,\mathbf{r})$ is saved in file(s) named as "*-h.fld", with h being the harmonic number. For computational efficiency, the angular representation $\mathscr{E}$ is saved instead of $E$, which is defined by the spatial Fourier transform, \[\mathscr{E}(z,s,\mathbf{r}')=\int E(z,s,\mathbf{r})\exp(-i\kappa\mathbf{r}'\cdot\mathbf{r})d\mathbf{r},\] where $\kappa=2\pi/\lambda$ is the wavenumber of radiation, and $\mathbf{r}'=(x',y')$ is the angular coordinate defined as the Fourier conjugate of the transverse coordinate $\mathbf{r}$. The discrete data set of $A_{klmn}=\mathscr{E}(z_k,s_l,\mathbf{r}'_{m,n}=x'_m,y'_n)$ is saved in the format as follows.</p>
+
+<p>\[  \begin{array}{ccccccc}                                 A_{0000,re} &amp; A_{0000,im} &amp; A_{0001,re} &amp; A_{0001,im} &amp; \ldots &amp; A_{000N',re} &amp; A_{000N',im} \\                                 A_{0010,re} &amp; A_{0010,im} &amp; A_{0011,re} &amp; A_{0011,im} &amp; \ldots &amp; A_{00M'N',re} &amp; A_{00M'N',im} \\                                 \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots \\                                 A_{0100,re} &amp; A_{0100,im} &amp; A_{0101,re} &amp; A_{0101,im} &amp; \ldots &amp; A_{010N',re} &amp; A_{010N',im} \\                                 \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots \\                                 A_{1000,re} &amp; A_{1000,im} &amp; A_{1001,re} &amp; A_{1001,im} &amp; \ldots &amp; A_{100N',re} &amp; A_{100N',im} \\                                 \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots \\                                 A_{K'L'M'0,re} &amp; A_{K'L'M'0,im} &amp; A_{K'L'M'1,re} &amp; A_{K'L'M'1,im} &amp; \ldots &amp; A_{K'L'M'N',re} &amp; A_{K'L'M'N',im} \\                                 \end{array} \]</p>
+
+<p>where subscripts re and im mean the real and imaginary parts and $K'=K-1$ being the maximum index for $z_k$, etc. Then, we have $2KLMN$ float numbers in total in this file.</p>
+
+<p>The relation between indices $(k,l,m,n)$ and real coordinates $(z,s,x',y')$ are given in the output file (*.json) in the former section. Note that the transverse grid points $x,y,x',y'$ are indexed by a common FFT algorithm, and are not as straightforward as $z$ and $s$. Namely, \[x_m=\left\{ \begin{array}{ll} m\Delta x&amp;;\: m\leq M/2 \\ (m-M)\Delta x&amp;;\: m&gt; M/2 \end{array} \right.\] and a similar expression for $y,x',y'$.</p>
+
+<p>The spatial profile of the complex amplitude, $E(\mathbf{r})$, can be restored by Fourier transforming $\mathscr{E}(\mathbf{r}')$, with which $E(\mathbf{r})$ is discretely given at transverse grid points $x_m$ and $y_m$. Note that we have a well-known relation \[\Delta x' = \frac{\lambda}{M\Delta x},\] and thus $\Delta x',\Delta y'$ should be divided by the harmonic number h for higher harmonics.</p>
+
+<p>If a special (neither linear nor helical) undulator is selected, the radiation field cannot be given by a scalar, and the file format is slghtly different. To be specific, the horizontal ($E_x$) and vertical ($E_y$) components are alternately saved at each longitudinal step, and the format looks as follows.</p>
+
+<p>\begin{eqnarray}                                \left.                                 \begin{array}{ccccccc}                                 A_{x,0000,re} &amp; A_{x,0000,im} &amp; A_{x,0001,re} &amp; A_{x,0001,im} &amp; \ldots &amp; A_{x,000N',re} &amp; A_{x,000N',im} \\                                 \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots \\                                 A_{x,0L'M'0,re} &amp; A_{x,0L'M'0,im} &amp; A_{x,0L'M'1,re} &amp; A_{x,0L'M'1,im} &amp; \ldots &amp; A_{x,0L'M'N',re} &amp; A_{x,0L'M'N',im} \\                                 \end{array}                                \right\} &amp;\Rightarrow&amp; \mbox{(0)} \\                                 \left.                                 \begin{array}{ccccccc}                                 A_{y,0000,re} &amp; A_{y,0000,im} &amp; A_{y,0001,re} &amp; A_{y,0001,im} &amp; \ldots &amp; A_{y,000N',re} &amp; A_{y,000N',im} \\                                 \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots \\                                 A_{y,0L'M'0,re} &amp; A_{y,0L'M'0,im} &amp; A_{y,0L'M'1,re} &amp; A_{y,0L'M'1,im} &amp; \ldots &amp; A_{y,0L'M'N',re} &amp; A_{y,0L'M'N',im} \\                                 \end{array}                                \right\} &amp;\Rightarrow&amp; \mbox{(1)} \\                                 \left.                                 \begin{array}{ccccccc}                                 A_{x,1000,re} &amp; A_{x,1000,im} &amp; A_{x,1001,re} &amp; A_{x,1001,im} &amp; \ldots &amp; A_{x,100N',re} &amp; A_{x,100N',im} \\                                 \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots \\                                 \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots \\                                 \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots &amp; \vdots \\                                 A_{y,K'L'M'0,re} &amp; A_{y,K'L'M'0,im} &amp; A_{y,K'L'M'1,re} &amp; A_{y,K'L'M'1,im} &amp; \ldots &amp; A_{y,K'L'M'N',re} &amp; A_{y,K'L'M'N',im} \\                                 \end{array}                                \right\} &amp;\Rightarrow&amp; \mbox{(2-K')} \\                                 \end{eqnarray}</p>
+
+<p>The section (0) indicted by a curly brace contains $2LMN$ float numbers, representing the horizontal components ($E_x$) over the whole slices and transverse grid points at the 0th step, and the section (1) represents the vertical components at the same step. This arrangement continues until the end of the longitudinal step ($K'$-th step).</p>
+<h3 id="Partile Distribution">Partile Distribution</h3>
+
+<p>The distribution of macroparticles is saved in a file named as "*.par". As explained in <a href="#Structure of a Beamlet">Structure of a Beamlet</a>, the electron beam in SIMPLEX is composed of $N_b$ beamlets, each of which is defined by $4+2N_p$ coordinate variables. The first 4 define the transverse position ($x,y$) and angle ($x',y'$) of each beamlet, while the latter $2N_p$ define the energy ($\Delta\gamma/\gamma$) and longitudinal position ($s$) of each macroparticle. In SIMPLEX, the tansverse coordinate of each beamlet is simply evaluated by the transfer matrix formalism, and can be easily evaluated at any longitudinal steps once the initial values are given. For example, we have \[                                \left[                                \begin{array}{c}                                x(z) \\ x'(z) \\ \eta                                 \end{array}                                 \right] =                                 \left[                                \begin{array}{ccc}                                C_x(z) &amp; S_x(z) &amp; D_x(z) \\ C'_x(z) &amp; S'_x(z) &amp; D'_x(z) \\ 0 &amp; 0 &amp; 1                                 \end{array}                                 \right]                                \left[                                \begin{array}{c}                                x(0) \\ x'(0) \\ \eta                                 \end{array}                                 \right]                                \] with $\eta\equiv\Delta\gamma/\gamma$ being relative energy, and a similar expression for $y$ and $y'$. In contrast, the energy and longitudinal position of each macroparticle are numerically evaluated by solving the relevant equations and are saved at each step. As a result, the particle data file has a data format as follows.</p>
+
+<p>\[\begin{eqnarray}                                \begin{array}{ccccccccccc}                                 x_0 &amp; y_0 &amp; x'_0 &amp; y'_0 &amp; x_1 &amp; \ldots &amp; x'_{N_b'-1} &amp; y'_{N_b'-1} &amp; x_{N_b'} &amp; y_{N_b'} &amp; x'_{N_b'} &amp; y'_{N_b'} \\                                 \end{array} \:\:\:\:\:\: &amp;\Rightarrow&amp; (0) \\                                 \left. \begin{array}{ccccccccccc}                                 C_{x,0} &amp; S_{x,0} &amp; D_{x,0} &amp; C'_{x,0} &amp; S'_{x,0} &amp; D'_{x,0} &amp; C_{y,0} &amp; S_{y,0} &amp; D_{y,0} &amp; C'_{y,0} &amp; S'_{y,0} &amp; D'_{y,0} \\                                 &amp; &amp; &amp; &amp; &amp; \vdots &amp; \vdots &amp; &amp; &amp; &amp; &amp; \\                                 C_{x,K'} &amp; S_{x,K'} &amp; D_{x,K'} &amp; C'_{x,K'} &amp; S'_{x,K'} &amp; D'_{x,K'} &amp; C_{y,K'} &amp; S_{y,K'} &amp; D_{y,K'} &amp; C'_{y,K'} &amp; S'_{y,K'} &amp; D'_{y,K'} \\                                 \end{array} \right\} &amp;\Rightarrow&amp; (1) \\                                 \left. \begin{array}{ccccccccccc}                                 s_{000} &amp; \eta_{000} &amp; s_{001} &amp; \eta_{001} &amp; \ldots &amp; s_{00N_p'} &amp; \eta_{00N_p'} &amp; s_{010} &amp; \eta_{010} &amp; \ldots &amp; s_{0N_b'N_p'} &amp; \eta_{0N_b'N_p'} \\                                 s_{100} &amp; \eta_{100} &amp; s_{101} &amp; \eta_{101} &amp; \ldots &amp; s_{10N_p'} &amp; \eta_{10N_p'} &amp; s_{110} &amp; \eta_{110} &amp; \ldots &amp; s_{1N_b'N_p'} &amp; \eta_{1N_b'N_p'} \\                                 &amp; &amp; &amp; &amp; &amp; \vdots &amp; \vdots &amp; &amp; &amp; &amp; &amp; \\                                 s_{K'00} &amp; \eta_{K'00} &amp; s_{K'01} &amp; \eta_{K'01} &amp; \ldots &amp; s_{K'0N_p'} &amp; \eta_{K'0N_p'} &amp; s_{K'10} &amp; \eta_{K'10} &amp; \ldots &amp; s_{K'N_b'N_p'} &amp; \eta_{K'N_b'N_p'} \\                                 \end{array} \right\} &amp;\Rightarrow&amp; (2)                                 \end{eqnarray}                                \]</p>
+
+<p>where $x_j, y_j, x_j', y_j'$ denote the transverse coordinate of the $j$-th beamlet, $C_{x,k}, S_{x,k}, ...$ denote the transfer matrix elements at the $k$-th step, and $s_{kji}$ and $\eta_{kji}$ denotes the longitudinal position and relative energy of the $i$-th particle in the $j$-th beamlet at the $k$-th step. As shown above, the data is composed of 3 sections. The section (0) contains $4N_b$ numbers defining the initial transverse coodrinate of the beamlets, section (1) contains $12K$ numbers to specify the transfer matrix, and section (2) contains $KN_bN_p$ numbers to describe the motion of macroparticles in the energy-time phase space while the electron bunch travels along the undulator.</p>
+<h1 id="Standalone Mode">Standalone Mode</h1>
+
+<p>Besides the desktop application as described above, the solver of SIMPLEX can be run in a standalone mode. Note that in the followings, [simplex_home] refers to the directory where SIMPLEX has been installed.</p>
+
+<p>When [Run]-[Start Simulation] command is executed, the SIMPLEX GUI creates an input parameter file ("*.json") and invokes the solver ("simplex_solver" or "simplex_solver_nompi" depending on whether the parallel computing option is enabled or not) located in the same directory as the main GUI program, with the input file as an argument. This means that SIMPLEX (solver) can be run without the GUI, if the input file is prepared by an alternative method, and a batch process will be possible. To do so, prepare the input file according to the descriptions in <a href="#Input Format">Input Format</a> and run the solver as follows</p>
+
+<p><div class="direct"><pre><code>[simplex_home]/simplex_solver_nompi -f [input file]</code></pre></div></p>
+
+<p>to start a simulation without parallel computing, or</p>
+
+<p><div class="direct"><pre><code>mpiexec -n 4 [simplex_home]/simplex_solver_nompi -f [input file]</code></pre></div></p>
+
+<p>with parallel computing (with 4 MPI processes in this case).</p>
+
+<p>It should be noted that the names of the parameters and options ("key" of the object) should be totally correct, including the units and inserted space characters. In addition, the number of parameters and options actually needed for a specific simulation depend on its condition. To avoid possible errors and complexity in preparing the input file, it is recommended to create a "master input file" specific to the desired simulation condition, by running [Run]-[Export Simulation Settings]. Then, just modify the values of desired parameters to prepare the input file.</p>
+
+<p>Note that this usage has not been officially supported before ver. 2.1, simply because the input file format was original and difficult to read.</p>
+<h1 id="Python User Interface">Python User Interface</h1>
+
+<p>To support the expanding users of python language, SIMPLEX has started official support for python, since ver. 3.1. To make use of this function, python version 3.8 or later is needed, and the user is requested to install a python package <span class="software">simplex-ui</span> (SIMPLEX User Interface). Refer to <a href="https://spectrax.org/simplex/app/3.1/python/docs/">the instructions</a> for details of <span class="software">simplex-ui</span>.</p>
+<h1 id="References">References</h1>
+<ol class="paren"><li id="simplexjsr">T. Tanaka, "SIMPLEX: SIMulator and Postprocessor for free electron Laser EXperiments," J. Synchrotron Radiation 22, 1319 (2015)</li><li id="rhooc">R. Bonifacio, C. Pellegrini and L. M. Narducci, "Collective instabilities and high-gain regime in a free electron laser," Optics Communications, 50 (1984) 373</li><li id="felbook">E. L. Saldin, E. A. Schneidmiller and M. V. Yurkov, The Physics of Free Electron Lasers, Springer, 2000</li><li id="scaling">M. Xie, "Exact and variational solutions of 3D eigenmodes in high gain FELs," Nucl. Instrum. Meth. A445 (2000) 59</li><li id="resistive">K. L. F. Bane and G. Stupakov, "Resistive wall wakefield in the LCLS undulator beam pipe," SLAC-PUB-10707 (2004)</li><li id="rough1">G. V. Stupakov, "Impedance of small obstacles and rough surfaces," Phys. Rev. ST-AB, 1 (1998) 064401</li><li id="rough2">G. V. Stupakov, "Surface roughness impedance," Proc. ICFA Workshop on Phys. Sci. X-ray FEL, 2000</li><li id="synchro">G. V. Stupakov, "Surface impedance and synchronous modes," Workshop on Instabilities of High Intensity Hadron Beams in Rings, 1999</li><li id="spcharge">M. Venturini, "Models of longitudinal space-charge impedance for microbunching instability," Phys. Rev. ST-AB 11, 034401 (2008)</li><li id="selfseed">J. Feldhaus et al., "Possible application of X-ray optical elements for reducing the spectral bandwidth of an X-ray SASE FEL," Optics Comm., 140 (1997) 341</li><li id="sstrans">G. Geloni, V. Kocharyan and E. Saldin, "A novel self-seeding scheme for hard x-ray FELs," J. Mod. Optics, 58 (2011) 1391</li><li id="tmethod">T. Tanaka "Accelerating the convergence of free electron laser simulations by retrieving a spatially-coherent component of microbunching," arXiv:2310.20197</li><li id="shotnoise">W. M. Fawley, "Algorithm for loading shot noise microbunching in multidimensional free-electron laser simulation codes," Phys. Rev. ST-AB, 5 (2002) 070701</li><li id="refperr">R. Walker, "Interference effects in undulator and wiggler radiation sources", Nucl. Instrum. Methods Phys. Res., Sect. A 335, 328 (1993)</li></ol><h1 id="Acknowledgements">Acknowledgements</h1>
+
+<p>This software includes the work that is distributed in the Apache License 2.0, and relies on a number of libraries as summarized below, which are gratefully appreciated.</p>
+<ul><li>Node.js: Javascript runtime environment to run Javascript code without a web browser (https://nodejs.org/en/).</li><li>Tauri: toolkit to build a desktop application with Javascript, HTML and CSS (https://www.electronjs.org/)</li><li>Plotly.js: Javascript graphing library to facilitate data visualization (https://nodejs.org/en/)</li><li>mathjax: Javascript library to display mathematical formulas in HTML documents (https://www.mathjax.org/)</li><li>picojson: JSON parser for C++ language (https://github.com/kazuho/picojson)</li><li>General Purpose FFT Package (https://www.kurims.kyoto-u.ac.jp/~ooura/fft.html)</li></ul></div>
+</body>
