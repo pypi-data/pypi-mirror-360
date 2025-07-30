@@ -1,0 +1,1484 @@
+from __future__ import annotations
+
+import typing as pt
+import warnings
+from collections.abc import Callable, Iterable
+from contextlib import contextmanager
+
+import pandas as pd
+from pandas._libs import lib
+
+if pt.TYPE_CHECKING:
+    from pandas._typing import (
+        AnyArrayLike,
+        Axis,
+        FilePath,
+        IgnoreRaise,
+        IndexLabel,
+        Level,
+        MergeHow,
+        MergeValidate,
+        Renamer,
+        SortKind,
+        StorageOptions,
+        Suffixes,
+        ValueKeyFunc,
+        WriteBuffer,
+    )
+    from pyiceberg.partitioning import PartitionSpec
+    from pyiceberg.table.sorting import SortOrder
+
+
+from pandas.core.indexing import _LocIndexer
+
+import bodo
+from bodo.ext import plan_optimizer
+from bodo.pandas.array_manager import LazyArrayManager
+from bodo.pandas.groupby import DataFrameGroupBy
+from bodo.pandas.lazy_metadata import LazyMetadata
+from bodo.pandas.lazy_wrapper import BodoLazyWrapper, ExecState
+from bodo.pandas.managers import LazyBlockManager, LazyMetadataMixin
+from bodo.pandas.series import BodoSeries
+from bodo.pandas.utils import (
+    BodoLibFallbackWarning,
+    BodoLibNotImplementedException,
+    LazyPlan,
+    LazyPlanDistributedArg,
+    _get_df_python_func_plan,
+    check_args_fallback,
+    execute_plan,
+    get_lazy_manager_class,
+    get_n_index_arrays,
+    get_proj_expr_single,
+    get_scalar_udf_result_type,
+    is_single_projection,
+    make_col_ref_exprs,
+    wrap_plan,
+)
+from bodo.utils.typing import (
+    BodoError,
+    check_unsupported_args,
+)
+
+
+class BodoDataFrameLocIndexer(_LocIndexer):
+    def __init__(self, name, obj):
+        self.df = obj
+        super().__init__(name, obj)
+
+    def __getitem__(self, key):
+        if isinstance(key, tuple) and len(key) == 2:
+            row_sel, col_sel = key
+            if row_sel == slice(None, None, None):
+                return self.df.__getitem__(col_sel)
+            else:
+                warnings.warn(
+                    BodoLibFallbackWarning(
+                        "Selected variant of BodoDataFrame.loc[] not supported."
+                    )
+                )
+                return super(self.df).loc.__getitem__(key)
+
+        warnings.warn(
+            BodoLibFallbackWarning(
+                "Selected variant of BodoDataFrame.loc[] not supported."
+            )
+        )
+        # Delegate to original behavior
+        return super(self.df).loc.__getitem__(key)
+
+
+class BodoDataFrame(pd.DataFrame, BodoLazyWrapper):
+    # We need to store the head_df to avoid data pull when head is called.
+    # Since BlockManagers are in Cython it's tricky to override all methods
+    # so some methods like head will still trigger data pull if we don't store head_df and
+    # use it directly when available.
+    _head_df: pd.DataFrame | None = None
+    _source_plan: LazyPlan | None = None
+
+    def __new__(cls, *args, **kwargs):
+        """Support bodo.pandas.DataFrame() constructor by creating a pandas DataFrame
+        and then converting it to a BodoDataFrame.
+        """
+        # Handle Pandas internal use which creates an empty object and then assigns the
+        # manager:
+        # https://github.com/pandas-dev/pandas/blob/1da0d022057862f4352113d884648606efd60099/pandas/core/generic.py#L309
+        if not args and not kwargs:
+            return super().__new__(cls, *args, **kwargs)
+
+        df = pd.DataFrame(*args, **kwargs)
+        return bodo.pandas.base.from_pandas(df)
+
+    def __init__(self, *args, **kwargs):
+        # No-op since already initialized by __new__
+        pass
+
+    @property
+    def loc(self):
+        return BodoDataFrameLocIndexer("loc", self)
+
+    def __setattr__(self, name, value):
+        # Intercept direct setting of columns attribute
+        # and copy new column names to _head_df if it
+        # exists so that when column names are propagated
+        # from there they match the latest dataframe
+        # column names.
+        if name == "columns":
+            if self._head_df is not None:
+                self._head_df.columns = value
+        super().__setattr__(name, value)
+
+    @property
+    def _plan(self):
+        if self.is_lazy_plan():
+            return self._mgr._plan
+        else:
+            """We can't create a new LazyPlan each time that _plan is called
+               because filtering checks that the projections that are part of
+               the filter all come from the same source and if you create a
+               new LazyPlan here each time then they will appear as different
+               sources.  We sometimes use a pandas manager which doesn't have
+               _source_plan so we have to do getattr check.
+            """
+            from bodo.pandas.base import _empty_like
+
+            empty_data = _empty_like(self)
+
+            """This caching also creates issues because you can materialize a
+               dataframe then ask for a plan and then add a column through
+               some pandas method we don't support and then you ask for the
+               _plan and you may get a source plan from before the column was
+               added.  To prevent problems, store the schema of the saved
+               source plan and only use it if the current schema is the same.
+            """
+            if getattr(self, "_source_plan", None) is not None:
+                # If the schema hasn't changed since the last time the source
+                # plan was generated then use the old source plan.
+                if empty_data.equals(self._source_plan[0]):
+                    return self._source_plan[1]
+
+            if bodo.dataframe_library_run_parallel:
+                nrows = len(self)
+                self._source_plan = (
+                    empty_data,
+                    LazyPlan(
+                        "LogicalGetPandasReadParallel",
+                        empty_data,
+                        nrows,
+                        LazyPlanDistributedArg(self),
+                    ),
+                )
+            else:
+                self._source_plan = (
+                    empty_data,
+                    LazyPlan(
+                        "LogicalGetPandasReadSeq",
+                        empty_data,
+                        self,
+                    ),
+                )
+
+            return self._source_plan[1]
+
+    @staticmethod
+    def from_lazy_mgr(
+        lazy_mgr: LazyArrayManager | LazyBlockManager,
+        head_df: pd.DataFrame | None,
+    ):
+        """
+        Create a BodoDataFrame from a lazy manager and possibly a head_df.
+        If you want to create a BodoDataFrame from a pandas manager use _from_mgr
+        """
+        df = BodoDataFrame._from_mgr(lazy_mgr, [])
+        df._head_df = head_df
+        return df
+
+    @classmethod
+    def from_lazy_metadata(
+        cls,
+        lazy_metadata: LazyMetadata,
+        collect_func: Callable[[str], pt.Any] | None = None,
+        del_func: Callable[[str], None] | None = None,
+        plan: plan_optimizer.LogicalOperator | None = None,
+    ) -> BodoDataFrame:
+        """
+        Create a BodoDataFrame from a lazy metadata object.
+        """
+        assert isinstance(lazy_metadata.head, pd.DataFrame)
+        lazy_mgr = get_lazy_manager_class()(
+            None,
+            None,
+            result_id=lazy_metadata.result_id,
+            nrows=lazy_metadata.nrows,
+            head=lazy_metadata.head._mgr,
+            collect_func=collect_func,
+            del_func=del_func,
+            index_data=lazy_metadata.index_data,
+            plan=plan,
+        )
+        return cls.from_lazy_mgr(lazy_mgr, lazy_metadata.head)
+
+    def update_from_lazy_metadata(self, lazy_metadata: LazyMetadata):
+        """
+        Update the dataframe with new metadata.
+        """
+        assert self._lazy
+        assert isinstance(lazy_metadata.head, pd.DataFrame)
+        # Call delfunc to delete the old data.
+        self._mgr._del_func(self._mgr._md_result_id)
+        self._head_df = lazy_metadata.head
+        self._mgr._md_nrows = lazy_metadata.nrows
+        self._mgr._md_result_id = lazy_metadata.result_id
+        self._mgr._md_head = lazy_metadata.head._mgr
+
+    def is_lazy_plan(self):
+        """Returns whether the BodoDataFrame is represented by a plan."""
+        return getattr(self._mgr, "_plan", None) is not None
+
+    def execute_plan(self):
+        if self.is_lazy_plan() and not self._mgr._disable_collect:
+            return self._mgr.execute_plan()
+
+    def head(self, n: int = 5):
+        """
+        Return the first n rows. If head_df is available and larger than n, then use it directly.
+        Otherwise, use the default head method which will trigger a data pull.
+        """
+        # Prevent infinite recursion when called from _empty_like and in general
+        # data is never required for head(0) so making a plan is never necessary.
+        if n == 0:
+            if self._exec_state == ExecState.COLLECTED:
+                return self.iloc[:0].copy()
+            else:
+                assert self._head_df is not None
+                return self._head_df.head(0).copy()
+
+        if (self._head_df is None) or (n > self._head_df.shape[0]):
+            if bodo.dataframe_library_enabled and isinstance(
+                self._mgr, LazyMetadataMixin
+            ):
+                from bodo.pandas.base import _empty_like
+
+                planLimit = LazyPlan(
+                    "LogicalLimit",
+                    _empty_like(self),
+                    self._plan,
+                    n,
+                )
+
+                return wrap_plan(planLimit)
+            else:
+                return super().head(n)
+        else:
+            # If head_df is available and larger than n, then use it directly.
+            return self._head_df.head(n)
+
+    def __len__(self):
+        from bodo.pandas.utils import count_plan
+
+        if self._exec_state == ExecState.PLAN:
+            return count_plan(self)
+        if self._exec_state == ExecState.DISTRIBUTED:
+            return self._mgr._md_nrows
+        if self._exec_state == ExecState.COLLECTED:
+            return super().__len__()
+
+    def __repr__(self):
+        # Pandas repr implementation calls len() first which will execute an extra
+        # count query before the actual plan which is unnecessary.
+        if self._exec_state == ExecState.PLAN:
+            self.execute_plan()
+        return super().__repr__()
+
+    @property
+    def index(self):
+        self.execute_plan()
+        return super().index
+
+    @index.setter
+    def index(self, value):
+        self.execute_plan()
+        super()._set_axis(1, value)
+
+    @property
+    def shape(self):
+        from bodo.pandas.utils import count_plan
+
+        if self._exec_state == ExecState.PLAN:
+            return (count_plan(self), len(self._head_df.columns))
+        if self._exec_state == ExecState.DISTRIBUTED:
+            return (self._mgr._md_nrows, len(self._head_df.columns))
+        if self._exec_state == ExecState.COLLECTED:
+            return super().shape
+
+    @check_args_fallback(supported=["columns", "copy"])
+    def rename(
+        self,
+        mapper: Renamer | None = None,
+        *,
+        index: Renamer | None = None,
+        columns: Renamer | None = None,
+        axis: Axis | None = None,
+        copy: bool | None = None,
+        inplace: bool = False,
+        level: Level | None = None,
+        errors: IgnoreRaise = "ignore",
+    ) -> BodoDataFrame | None:
+        orig_plan = self._plan
+        # TODO: The value of copy here is ignored.
+        # Most cases of copy=False we have are the idiom A=A.rename(copy=False) where there is still
+        # only one possible reference to the data so we can treat this case like copy=True since for us
+        # we only materialize as needed and so copying isn't an overhead.
+        if copy == False:
+            warnings.warn(
+                "BodoDataFrame::rename copy=False argument ignored assuming A=A.rename(copy=False) idiom."
+            )
+        renamed_plan = LazyPlan(
+            orig_plan.plan_class,
+            orig_plan.empty_data.rename(columns=columns),
+            *orig_plan.args,
+            **orig_plan.kwargs,
+        )
+        return wrap_plan(renamed_plan)
+
+    @check_args_fallback(supported=["path", "engine", "compression", "row_group_size"])
+    def to_parquet(
+        self,
+        path: FilePath | WriteBuffer[bytes] | None = None,
+        engine: pt.Literal["auto", "pyarrow", "fastparquet"] = "auto",
+        compression: str | None = "snappy",
+        index: bool | None = None,
+        partition_cols: list[str] | None = None,
+        storage_options: StorageOptions | None = None,
+        row_group_size: int = -1,
+        **kwargs,
+    ) -> bytes | None:
+        from bodo.pandas.base import _empty_like
+
+        if not isinstance(path, str):
+            raise BodoLibNotImplementedException(
+                "DataFrame.to_parquet(): path must be a string"
+            )
+
+        if engine not in ("auto", "pyarrow"):
+            raise BodoLibNotImplementedException(
+                "DataFrame.to_parquet(): only 'auto' and 'pyarrow' engines are supported"
+            )
+
+        if compression not in (None, "snappy", "gzip", "brotli"):
+            raise BodoLibNotImplementedException(
+                "DataFrame.to_parquet(): only None, 'snappy', 'gzip' and 'brotli' compressions are supported"
+            )
+
+        # Convert None to "none" as expected by the backend.
+        # https://github.com/bodo-ai/Bodo/blob/ff39453f07d8691751d95668ab06a72a5f742dff/bodo/hiframes/pd_dataframe_ext.py#L3795
+        if compression is None:
+            compression = "none"
+
+        if not isinstance(row_group_size, int):
+            raise BodoError("DataFrame.to_parquet(): row_group_size must be an integer")
+
+        bucket_region = bodo.io.fs_io.get_s3_bucket_region_wrapper(path, False)
+
+        write_plan = LazyPlan(
+            "LogicalParquetWrite",
+            _empty_like(self),
+            self._plan,
+            path,
+            compression,
+            bucket_region,
+            row_group_size,
+        )
+        execute_plan(write_plan)
+
+    @check_args_fallback(unsupported="none")
+    def to_iceberg(
+        self,
+        table_identifier: str,
+        catalog_name: str | None = None,
+        *,
+        catalog_properties: dict[str, pt.Any] | None = None,
+        location: str | None = None,
+        append: bool = False,
+        partition_spec: PartitionSpec | None = None,
+        sort_order: SortOrder | None = None,
+        properties: dict[str, pt.Any] | None = None,
+        snapshot_properties: dict[str, str] | None = None,
+    ) -> None:
+        # See Pandas implementation of to_iceberg:
+        # https://github.com/pandas-dev/pandas/blob/c5457f61d92b9428a56c619a6c420b122a41a347/pandas/core/frame.py#L3550
+        # https://github.com/pandas-dev/pandas/blob/c5457f61d92b9428a56c619a6c420b122a41a347/pandas/io/iceberg.py#L98
+        # See Bodo JIT implementation of streaming writes to Iceberg:
+        # https://github.com/bodo-ai/Bodo/blob/142678b2fe7217d80e233d201061debae2d47c13/bodo/io/iceberg/stream_iceberg_write.py#L535
+        import pyiceberg.catalog
+        import pyiceberg.partitioning
+        import pyiceberg.table.sorting
+
+        from bodo.pandas.base import _empty_like
+        from bodo.utils.typing import CreateTableMetaType
+
+        # Support simple directory only calls like:
+        # df.to_iceberg("table", location="/path/to/table")
+        if catalog_name is None and catalog_properties is None and location is not None:
+            if location.startswith("arn:aws:s3tables:"):
+                from bodo.io.iceberg.catalog.s3_tables import (
+                    construct_catalog_properties as construct_s3_tables_catalog_properties,
+                )
+
+                catalog_properties = construct_s3_tables_catalog_properties(location)
+            else:
+                catalog_properties = {
+                    pyiceberg.catalog.PY_CATALOG_IMPL: "bodo.io.iceberg.catalog.dir.DirCatalog",
+                    pyiceberg.catalog.WAREHOUSE_LOCATION: location,
+                }
+            # DirCatalog and S3TablesCatalog do not support extra location argument in create_table
+            location = None
+        elif catalog_properties is None:
+            catalog_properties = {}
+
+        if partition_spec is None:
+            partition_spec = pyiceberg.partitioning.UNPARTITIONED_PARTITION_SPEC
+
+        if sort_order is None:
+            sort_order = pyiceberg.table.sorting.UNSORTED_SORT_ORDER
+
+        if properties is None:
+            properties = ()
+        else:
+            if not isinstance(properties, dict):
+                raise BodoError(
+                    "Iceberg write properties must be a dictionary, got: "
+                    f"{type(properties)}"
+                )
+            # Convert properties to a tuple of items to match expected type in
+            # CreateTableMetaType
+            properties = tuple(properties.items())
+
+        if snapshot_properties is None:
+            snapshot_properties = {}
+
+        catalog = pyiceberg.catalog.load_catalog(catalog_name, **catalog_properties)
+
+        if_exists = "append" if append else "replace"
+        df_schema = self._plan.pa_schema
+        (
+            txn,
+            fs,
+            table_loc,
+            output_pa_schema,
+            iceberg_schema_str,
+            partition_spec,
+            partition_tuples,
+            sort_order_id,
+            sort_tuples,
+            properties,
+        ) = bodo.io.iceberg.write.start_write_rank_0(
+            catalog,
+            table_identifier,
+            df_schema,
+            if_exists,
+            False,
+            CreateTableMetaType(None, None, properties),
+            location,
+            partition_spec,
+            sort_order,
+            snapshot_properties,
+        )
+        bucket_region = bodo.io.fs_io.get_s3_bucket_region_wrapper(table_loc, False)
+        max_pq_chunksize = properties.get(
+            "write.target-file-size-bytes",
+            bodo.io.iceberg.stream_iceberg_write.ICEBERG_WRITE_PARQUET_CHUNK_SIZE,
+        )
+        compression = properties.get("write.parquet.compression-codec", "snappy")
+        # TODO: support Theta sketches
+
+        write_plan = LazyPlan(
+            "LogicalIcebergWrite",
+            _empty_like(self),
+            self._plan,
+            table_loc,
+            bucket_region,
+            max_pq_chunksize,
+            compression,
+            partition_tuples,
+            sort_tuples,
+            iceberg_schema_str,
+            output_pa_schema,
+            fs,
+        )
+        all_iceberg_files_infos = execute_plan(write_plan)
+        # Flatten the list of lists
+        all_iceberg_files_infos = (
+            [item for sub in all_iceberg_files_infos for item in sub]
+            if all_iceberg_files_infos
+            else None
+        )
+        (
+            fnames,
+            file_records,
+            partition_infos,
+        ) = bodo.io.iceberg.write.generate_data_file_info_seq(all_iceberg_files_infos)
+
+        # Register file names, metrics and schema in transaction
+        success = bodo.io.iceberg.write.register_table_write_seq(
+            txn,
+            fnames,
+            file_records,
+            partition_infos,
+            partition_spec,
+            sort_order_id,
+            snapshot_properties,
+        )
+        if not success:
+            raise BodoError("Iceberg write failed.")
+
+    def _get_result_id(self) -> str | None:
+        if isinstance(self._mgr, LazyMetadataMixin):
+            return self._mgr._md_result_id
+        return None
+
+    def to_sql(
+        self,
+        name,
+        con,
+        schema=None,
+        if_exists="fail",
+        index=True,
+        index_label=None,
+        chunksize=None,
+        dtype=None,
+        method=None,
+    ):
+        # argument defaults should match that of to_sql_overload in pd_dataframe_ext.py
+        @bodo.jit(spawn=True)
+        def to_sql_wrapper(
+            df: pd.DataFrame,
+            name,
+            con,
+            schema,
+            if_exists,
+            index,
+            index_label,
+            chunksize,
+            dtype,
+            method,
+        ):
+            return df.to_sql(
+                name,
+                con,
+                schema,
+                if_exists,
+                index,
+                index_label,
+                chunksize,
+                dtype,
+                method,
+            )
+
+        return to_sql_wrapper(
+            self,
+            name,
+            con,
+            schema,
+            if_exists,
+            index,
+            index_label,
+            chunksize,
+            dtype,
+            method,
+        )
+
+    def to_csv(
+        self,
+        path_or_buf=None,
+        sep=",",
+        na_rep="",
+        float_format=None,
+        columns=None,
+        header=True,
+        index=True,
+        index_label=None,
+        mode="w",
+        encoding=None,
+        compression=None,
+        quoting=None,
+        quotechar='"',
+        lineterminator=None,
+        chunksize=None,
+        date_format=None,
+        doublequote=True,
+        escapechar=None,
+        decimal=".",
+        errors="strict",
+        storage_options=None,
+    ):
+        # argument defaults should match that of to_csv_overload in pd_dataframe_ext.py
+
+        @bodo.jit(spawn=True)
+        def to_csv_wrapper(
+            df: pd.DataFrame,
+            path_or_buf,
+            sep=sep,
+            na_rep=na_rep,
+            float_format=float_format,
+            columns=columns,
+            header=header,
+            index=index,
+            index_label=index_label,
+            compression=compression,
+            quoting=quoting,
+            quotechar=quotechar,
+            lineterminator=lineterminator,
+            chunksize=chunksize,
+            date_format=date_format,
+            doublequote=doublequote,
+            escapechar=escapechar,
+            decimal=decimal,
+        ):
+            return df.to_csv(
+                path_or_buf=path_or_buf,
+                sep=sep,
+                na_rep=na_rep,
+                float_format=float_format,
+                columns=columns,
+                header=header,
+                index=index,
+                index_label=index_label,
+                compression=compression,
+                quoting=quoting,
+                quotechar=quotechar,
+                lineterminator=lineterminator,
+                chunksize=chunksize,
+                date_format=date_format,
+                doublequote=doublequote,
+                escapechar=escapechar,
+                decimal=decimal,
+                _bodo_concat_str_output=True,
+            )
+
+        # checks string arguments before jit performs conversion to unicode
+        # checks should match that of to_csv_overload in pd_dataframe_ext.py
+        check_unsupported_args(
+            "BodoDataFrame.to_csv",
+            {
+                "encoding": encoding,
+                "mode": mode,
+                "errors": errors,
+                "storage_options": storage_options,
+            },
+            {
+                "encoding": None,
+                "mode": "w",
+                "errors": "strict",
+                "storage_options": None,
+            },
+            package_name="pandas",
+            module_name="IO",
+        )
+
+        return to_csv_wrapper(
+            self,
+            path_or_buf,
+            sep=sep,
+            na_rep=na_rep,
+            float_format=float_format,
+            columns=columns,
+            header=header,
+            index=index,
+            index_label=index_label,
+            compression=compression,
+            quoting=quoting,
+            quotechar=quotechar,
+            lineterminator=lineterminator,
+            chunksize=chunksize,
+            date_format=date_format,
+            doublequote=doublequote,
+            escapechar=escapechar,
+            decimal=decimal,
+        )
+
+    def to_json(
+        self,
+        path_or_buf=None,
+        orient="records",
+        date_format=None,
+        double_precision=10,
+        force_ascii=True,
+        date_unit="ms",
+        default_handler=None,
+        lines=True,
+        compression="infer",
+        index=None,
+        indent=None,
+        storage_options=None,
+        mode="w",
+    ):
+        # Argument defaults should match that of to_json_overload in pd_dataframe_ext.py
+        # Passing orient and lines as free vars to become literals in the compiler
+
+        @bodo.jit(spawn=True)
+        def to_json_wrapper(
+            df: pd.DataFrame,
+            path_or_buf,
+            date_format=date_format,
+            double_precision=double_precision,
+            force_ascii=force_ascii,
+            date_unit=date_unit,
+            default_handler=default_handler,
+            compression=compression,
+            index=index,
+            indent=indent,
+            storage_options=storage_options,
+            mode=mode,
+        ):
+            return df.to_json(
+                path_or_buf,
+                orient=orient,
+                date_format=date_format,
+                double_precision=double_precision,
+                force_ascii=force_ascii,
+                date_unit=date_unit,
+                default_handler=default_handler,
+                lines=lines,
+                compression=compression,
+                index=index,
+                indent=indent,
+                storage_options=storage_options,
+                mode=mode,
+                _bodo_concat_str_output=True,
+            )
+
+        return to_json_wrapper(
+            self,
+            path_or_buf,
+            date_format=date_format,
+            double_precision=double_precision,
+            force_ascii=force_ascii,
+            date_unit=date_unit,
+            default_handler=default_handler,
+            compression=compression,
+            index=index,
+            indent=indent,
+            storage_options=storage_options,
+            mode=mode,
+        )
+
+    def map_partitions(self, func, *args, **kwargs):
+        """
+        Apply a function to each partition of the dataframe.
+
+        If self is a lazy plan, then the result will also be a lazy plan
+        (assuming result is Series and the dtype can be infered). Otherwise, the lazy
+        plan will be evaluated.
+        NOTE: this pickles the function and sends it to the workers, so globals are
+        pickled. The use of lazy data structures as globals causes issues.
+
+        Args:
+            func (Callable): A callable which takes in a DataFrame as its first
+                argument and returns a DataFrame or Series that has the same length
+                its input.
+            *args: Additional positional arguments to pass to func.
+            **kwargs: Additional key-word arguments to pass to func.
+
+        Returns:
+            DataFrame or Series: The result of applying the func.
+        """
+        import bodo.spawn.spawner
+
+        if self._exec_state == ExecState.PLAN:
+            required_fallback = False
+            try:
+                empty_series = get_scalar_udf_result_type(
+                    self, "map_partitions", func, *args, **kwargs
+                )
+            except BodoLibNotImplementedException as e:
+                required_fallback = True
+                msg = (
+                    f"map_paritions(): encountered exception: {e}, while trying to "
+                    "build lazy plan. Executing plan and running map_paritions on "
+                    "workers (may be slow or run out of memory)."
+                )
+                warnings.warn(BodoLibFallbackWarning(msg))
+
+                df_arg = self.execute_plan()
+
+            if not required_fallback:
+                return _get_df_python_func_plan(
+                    self._plan, empty_series, func, args, kwargs
+                )
+        else:
+            df_arg = self
+
+        return bodo.spawn.spawner.submit_func_to_workers(
+            func, [], df_arg, *args, **kwargs
+        )
+
+    @check_args_fallback(supported=["on", "left_on", "right_on"])
+    def merge(
+        self,
+        right: BodoDataFrame | BodoSeries,
+        how: MergeHow = "inner",
+        on: IndexLabel | AnyArrayLike | None = None,
+        left_on: IndexLabel | AnyArrayLike | None = None,
+        right_on: IndexLabel | AnyArrayLike | None = None,
+        left_index: bool = False,
+        right_index: bool = False,
+        sort: bool = False,
+        suffixes: Suffixes = ("_x", "_y"),
+        copy: bool | None = None,
+        indicator: str | bool = False,
+        validate: MergeValidate | None = None,
+    ):  # -> BodoDataFrame:
+        from bodo.pandas.base import _empty_like
+
+        # Validates only on, left_on and right_on for now
+        left_on, right_on = validate_merge_spec(self, right, on, left_on, right_on)
+
+        zero_size_self = _empty_like(self)
+        zero_size_right = _empty_like(right)
+        empty_data = zero_size_self.merge(
+            zero_size_right,
+            how=how,
+            on=None,
+            left_on=left_on,
+            right_on=right_on,
+            left_index=left_index,
+            right_index=right_index,
+            sort=sort,
+            suffixes=suffixes,
+        )
+
+        key_indices = [
+            (self.columns.get_loc(a), right.columns.get_loc(b))
+            for a, b in zip(left_on, right_on)
+        ]
+
+        # Dummy output with all probe/build columns with unique names to enable
+        # make_col_ref_exprs() below
+        empty_left = _empty_like(self)
+        empty_right = _empty_like(right)
+        empty_join_out = pd.concat([empty_left, empty_right], axis=1)
+        empty_join_out.columns = [
+            c + str(i) for i, c in enumerate(empty_join_out.columns)
+        ]
+
+        planComparisonJoin = LazyPlan(
+            "LogicalComparisonJoin",
+            empty_join_out,
+            self._plan,
+            right._plan,
+            plan_optimizer.CJoinType.INNER,
+            key_indices,
+        )
+
+        # Column indices in output that need to be selected
+        col_indices = list(range(len(self.columns)))
+        # Skip index columns
+        # TODO [BSE-4820]: unless indexes are a key.
+        n_left_indices = get_n_index_arrays(empty_left.index)
+        common_keys = set(left_on).intersection(set(right_on))
+        for i, col in enumerate(right.columns):
+            # Ignore common keys that are in the right side to match Pandas
+            if col not in common_keys:
+                col_indices.append(len(self.columns) + n_left_indices + i)
+
+        # Create column reference expressions for selected columns
+        exprs = make_col_ref_exprs(col_indices, planComparisonJoin)
+        proj_plan = LazyPlan(
+            "LogicalProjection",
+            empty_data,
+            planComparisonJoin,
+            exprs,
+        )
+
+        return wrap_plan(proj_plan)
+
+    @check_args_fallback(supported=["by", "as_index", "dropna"])
+    def groupby(
+        self,
+        by=None,
+        axis: Axis | lib.NoDefault = lib.no_default,
+        level: IndexLabel | None = None,
+        as_index: bool = True,
+        sort: bool = False,
+        group_keys: bool = True,
+        observed: bool | lib.NoDefault = lib.no_default,
+        dropna: bool = True,
+    ) -> DataFrameGroupBy:
+        """
+        Provides support for groupby similar to Pandas:
+        https://github.com/pandas-dev/pandas/blob/0691c5cf90477d3503834d983f69350f250a6ff7/pandas/core/frame.py#L9148
+        """
+        if isinstance(by, str):
+            by = [by]
+
+        # Only list of string column names for keys is supported for now.
+        if not isinstance(by, (list, tuple)) or not all(isinstance(b, str) for b in by):
+            raise BodoLibNotImplementedException(
+                "groupby: only string keys are supported"
+            )
+
+        return DataFrameGroupBy(self, by, as_index, dropna)
+
+    @check_args_fallback(supported=["columns"])
+    def drop(
+        self,
+        labels: IndexLabel | None = None,
+        *,
+        axis: Axis = 0,
+        index: IndexLabel | None = None,
+        columns: IndexLabel | None = None,
+        level: Level | None = None,
+        inplace: bool = False,
+        errors: IgnoreRaise = "raise",
+    ) -> BodoDataFrame | None:
+        if isinstance(columns, str):
+            columns = [columns]
+        if not isinstance(columns, list):
+            raise BodoError("drop columns must be string or list of string")
+        cur_col_names = self.columns.tolist()
+        columns_to_use = [x for x in cur_col_names if x not in columns]
+        if len(columns_to_use) != len(cur_col_names) - len(columns):
+            not_found = [x for x in columns if x not in cur_col_names]
+            raise KeyError(
+                f"drop columns includes names {not_found} not present in dataframe"
+            )
+        return self.__getitem__(columns_to_use)
+
+    @check_args_fallback("all")
+    def __getitem__(self, key):
+        """Called when df[key] is used."""
+
+        from bodo.pandas.base import _empty_like
+
+        # Only selecting columns or filtering with BodoSeries is supported
+        if not (
+            isinstance(key, (str, BodoSeries))
+            or (isinstance(key, list) and all(isinstance(k, str) for k in key))
+        ):
+            raise BodoLibNotImplementedException(
+                "only string and BodoSeries keys are supported"
+            )
+
+        """ Create 0 length versions of the dataframe and the key and
+            simulate the operation to see the resulting type. """
+        zero_size_self = _empty_like(self)
+        if isinstance(key, BodoSeries):
+            """ This is a masking operation. """
+            key_plan = (
+                # TODO: error checking for key to be a projection on the same dataframe
+                # with a binary operator
+                get_proj_expr_single(key._plan)
+                if key._plan is not None
+                else plan_optimizer.LogicalGetSeriesRead(key._mgr._md_result_id)
+            )
+            zero_size_key = _empty_like(key)
+            empty_data = zero_size_self.__getitem__(zero_size_key)
+            return wrap_plan(
+                plan=LazyPlan("LogicalFilter", empty_data, self._plan, key_plan),
+            )
+        else:
+            """ This is selecting one or more columns. Be a bit more
+                lenient than Pandas here which says that if you have
+                an iterable it has to be 2+ elements. We will allow
+                just one element. """
+            if isinstance(key, str):
+                key = [key]
+                output_series = True
+            else:
+                output_series = False
+            assert isinstance(key, Iterable)
+            key = list(key)
+            # convert column name to index
+            key_indices = [self.columns.get_loc(x) for x in key]
+
+            # Add Index column numbers to select as well if any,
+            # assuming Index columns are always at the end of the table (same as Arrow).
+            key_indices += [
+                len(self.columns) + i
+                for i in range(get_n_index_arrays(zero_size_self.index))
+            ]
+
+            # Create column reference expressions for selected columns
+            exprs = make_col_ref_exprs(key_indices, self._plan)
+
+            empty_data = zero_size_self.__getitem__(key[0] if output_series else key)
+            return wrap_plan(
+                plan=LazyPlan(
+                    "LogicalProjection",
+                    empty_data,
+                    self._plan,
+                    exprs,
+                ),
+            )
+
+    @check_args_fallback("none")
+    def __setitem__(self, key, value) -> None:
+        """Supports setting columns (df[key] = value) when value is a Series created
+        from the same dataframe.
+        This is done by creating a new plan that add the new
+        column in the existing dataframe plan using a projection.
+        """
+        import pyarrow as pa
+
+        from bodo.pandas.base import _empty_like
+
+        # Match cases like df["B"] = df["A"].str.lower()
+        if (
+            self.is_lazy_plan()
+            and isinstance(key, str)
+            and isinstance(value, BodoSeries)
+            and value.is_lazy_plan()
+        ):
+            if (
+                new_plan := _get_set_column_plan(self._plan, value._plan, key)
+            ) is not None:
+                head_val = value._head_s
+                self._update_setitem_internal_state(new_plan, key, head_val)
+                return
+
+        # Match cases like df["B"] = 1
+        if (
+            self.is_lazy_plan()
+            and isinstance(key, str)
+            and pd.api.types.is_scalar(value)
+        ):
+            # Create a projection with the scalar column included
+            empty_data = _empty_like(self)
+
+            # Check if the column already exists in the dataframe
+            if key in empty_data.columns:
+                ikey = empty_data.columns.get_loc(key)
+                is_replace = True
+            else:
+                ikey = None
+                is_replace = False
+
+            const_expr = LazyPlan(
+                "ConstantExpression",
+                # Dummy empty data for LazyPlan
+                empty_data,
+                value,
+            )
+            proj_exprs = _get_setitem_proj_exprs(
+                empty_data, self._plan, ikey, is_replace, const_expr
+            )
+            empty_data[key] = value
+
+            # Make sure proper Arrow type is used for the column to match backend and
+            # there is no object dtype.
+            pa_type = pa.scalar(value).type
+            if isinstance(pa_type, pa.TimestampType):
+                # Convert to nanosecond precision as required by backend
+                pa_type = pa.timestamp("ns", pa_type.tz)
+            empty_data[key] = empty_data[key].astype(pd.ArrowDtype(pa_type))
+
+            new_plan = LazyPlan(
+                "LogicalProjection",
+                empty_data,
+                self._plan,
+                proj_exprs,
+            )
+            self._update_setitem_internal_state(new_plan, key, value)
+            return
+
+        raise BodoLibNotImplementedException(
+            "Only setting a column with a Series created from the same dataframe is supported."
+        )
+
+    def _update_setitem_internal_state(
+        self, new_plan: LazyPlan, key: str, head_val: pd.Series
+    ):
+        """Update internal state of the dataframe for setting a column.
+        new_plan: the updated plan that adds the column to the dataframe.
+        key: the name of the column to be set.
+        head_val: new head value for the column to be set (Series, array or scalar).
+        """
+        self._mgr._plan = new_plan
+        new_column = key not in self.columns
+        # Copy and update head in case reused
+        new_df_head = self._head_df.copy()
+        new_df_head[key] = head_val
+        self._head_df = new_df_head
+        self._mgr._md_head = new_df_head._mgr
+        with self.disable_collect():
+            # Update internal data manager (e.g. insert a new block or update an
+            # existing one). See:
+            # https://github.com/pandas-dev/pandas/blob/0691c5cf90477d3503834d983f69350f250a6ff7/pandas/core/frame.py#L4481
+            if new_column:
+                self._mgr.insert(
+                    len(self._info_axis), key, *self._sanitize_column(head_val)
+                )
+            else:
+                super().__setitem__(key, head_val)
+
+    @check_args_fallback(supported=["func", "axis", "args"])
+    def apply(
+        self,
+        func,
+        axis=0,
+        raw=False,
+        result_type=None,
+        args=(),
+        by_row="compat",
+        engine="python",
+        engine_kwargs=None,
+        **kwargs,
+    ):
+        """
+        Apply a function along the axis of the dataframe.
+        """
+
+        if axis != 1:
+            raise BodoLibNotImplementedException(
+                "DataFrame.apply(): only axis=1 supported"
+            )
+
+        empty_series = get_scalar_udf_result_type(
+            self, "apply", func, axis=axis, args=args, **kwargs
+        )
+
+        apply_kwargs = {"axis": 1, "args": args} | kwargs
+
+        return _get_df_python_func_plan(
+            self._plan, empty_series, "apply", (func,), apply_kwargs
+        )
+
+    @check_args_fallback(supported=["by", "ascending", "na_position", "kind"])
+    def sort_values(
+        self,
+        by: IndexLabel,
+        *,
+        axis: Axis = 0,
+        ascending: bool | list[bool] | tuple[bool, ...] = True,
+        inplace: bool = False,
+        kind: SortKind | None = None,
+        na_position: str | list[str] | tuple[str, ...] = "last",
+        ignore_index: bool = False,
+        key: ValueKeyFunc | None = None,
+    ) -> BodoDataFrame | None:
+        from bodo.pandas.base import _empty_like
+
+        # Validate by argument.
+        if isinstance(by, str):
+            by = [by]
+        elif not isinstance(by, (list, tuple)):
+            raise BodoError(
+                "DataFrame.sort_values(): argument by not a string, list or tuple"
+            )
+
+        if not all(isinstance(item, str) for item in by):
+            raise BodoError(
+                "DataFrame.sort_values(): argument by iterable does not contain only strings"
+            )
+
+        # Validate ascending argument.
+        if isinstance(ascending, bool):
+            ascending = [ascending]
+        elif not isinstance(ascending, (list, tuple)):
+            raise BodoError(
+                "DataFrame.sort_values(): argument ascending not a bool, list or tuple"
+            )
+
+        if not all(isinstance(item, bool) for item in ascending):
+            raise BodoError(
+                "DataFrame.sort_values(): argument ascending iterable does not contain only boolean"
+            )
+
+        # Validate na_position argument.
+        if isinstance(na_position, str):
+            na_position = [na_position]
+        elif not isinstance(na_position, (list, tuple)):
+            raise BodoError(
+                "DataFrame.sort_values(): argument na_position not a string, list or tuple"
+            )
+
+        if not all(item in ["first", "last"] for item in na_position):
+            raise BodoError(
+                "DataFrame.sort_values(): argument na_position iterable does not contain only 'first' or 'last'"
+            )
+
+        if kind is not None:
+            warnings.warn("sort_values() kind argument ignored")
+
+        # Apply singular ascending param to all columns.
+        if len(by) != len(ascending):
+            if len(ascending) == 1:
+                ascending = ascending * len(by)
+            else:
+                raise BodoError(
+                    f"DataFrame.sort_values(): lengths of by {len(by)} and ascending {len(ascending)}"
+                )
+
+        # Apply singular na_position param to all columns.
+        if len(by) != len(na_position):
+            if len(na_position) == 1:
+                na_position = na_position * len(by)
+            else:
+                raise BodoError(
+                    f"DataFrame.sort_values(): lengths of by {len(by)} and na_position {len(na_position)}"
+                )
+        # Convert to True/False list instead of str.
+        na_position = [True if x == "first" else False for x in na_position]
+
+        # Convert column names to indices.
+        cols = [self.columns.get_loc(col) for col in by]
+
+        """ Create 0 length versions of the dataframe as sorted dataframe
+            has the same structure. """
+        zero_size_self = _empty_like(self)
+
+        return wrap_plan(
+            plan=LazyPlan(
+                "LogicalOrder",
+                zero_size_self,
+                self._plan,
+                ascending,
+                na_position,
+                cols,
+                self._plan.pa_schema,
+            ),
+        )
+
+    @contextmanager
+    def disable_collect(self):
+        """Disable collect calls in internal manager to allow updating internal state.
+        See __setitem__.
+        """
+        original_flag = self._mgr._disable_collect
+        self._mgr._disable_collect = True
+        try:
+            yield
+        finally:
+            self._mgr._disable_collect = original_flag
+
+
+def _update_func_expr_source(
+    func_expr: LazyPlan, new_source_plan: LazyPlan, col_index_offset: int
+):
+    """Update source plan of PythonScalarFuncExpression and add an offset to its
+    input data column index.
+    """
+    # Previous input data column index
+    in_col_ind = func_expr.args[2][0]
+    n_source_cols = len(new_source_plan.empty_data.columns)
+    # Add Index columns of the new source plan as input
+    index_cols = tuple(
+        range(
+            n_source_cols,
+            n_source_cols + get_n_index_arrays(new_source_plan.empty_data.index),
+        )
+    )
+    expr = LazyPlan(
+        "PythonScalarFuncExpression",
+        func_expr.empty_data,
+        new_source_plan,
+        func_expr.args[1],
+        (in_col_ind + col_index_offset,) + index_cols,
+    )
+    return expr
+
+
+def _add_proj_expr_to_plan(
+    df_plan: LazyPlan, value_plan: LazyPlan, key: str, replace_func_source=False
+):
+    """Add a projection on top of dataframe plan that adds or replaces a column
+    with output expression of value_plan (which is a single expression projection).
+    """
+    # Create column reference expressions for each column in the dataframe.
+    in_empty_df = df_plan.empty_data
+
+    # Check if the column already exists in the dataframe
+    if key in in_empty_df.columns:
+        ikey = in_empty_df.columns.get_loc(key)
+        is_replace = True
+    else:
+        ikey = None
+        is_replace = False
+
+    # Get the function expression from the value plan to be added
+    func_expr = get_proj_expr_single(value_plan)
+
+    if func_expr.plan_class == "PythonScalarFuncExpression":
+        func_expr = (
+            _update_func_expr_source(func_expr, df_plan, ikey)
+            if replace_func_source
+            # Copy the function expression to avoid modifying the original one below
+            else LazyPlan(
+                "PythonScalarFuncExpression",
+                func_expr.empty_data,
+                *func_expr.args,
+                **func_expr.kwargs,
+            )
+        )
+    else:
+        # Copy since empty_data is changed below
+        func_expr = LazyPlan(
+            func_expr.plan_class,
+            func_expr.empty_data,
+            *func_expr.args,
+            **func_expr.kwargs,
+        )
+
+    # Update output column name
+    func_expr.empty_data = func_expr.empty_data.set_axis([key], axis=1)
+
+    proj_exprs = _get_setitem_proj_exprs(
+        in_empty_df, df_plan, ikey, is_replace, func_expr
+    )
+    empty_data = df_plan.empty_data.copy()
+    empty_data[key] = value_plan.empty_data.copy()
+    new_plan = LazyPlan(
+        "LogicalProjection",
+        empty_data,
+        df_plan,
+        proj_exprs,
+    )
+    return new_plan
+
+
+def _get_setitem_proj_exprs(in_empty_df, df_plan, ikey, is_replace, func_expr):
+    """Create projection expressions for setting a column in a dataframe."""
+    n_cols = len(in_empty_df.columns)
+    key_indices = [k for k in range(n_cols) if (not is_replace or k != ikey)]
+    data_cols = make_col_ref_exprs(key_indices, df_plan)
+    if is_replace:
+        data_cols.insert(ikey, func_expr)
+    else:
+        # New column should be at the end of data columns to match Pandas
+        data_cols.append(func_expr)
+    index_cols = make_col_ref_exprs(
+        range(n_cols, n_cols + get_n_index_arrays(in_empty_df.index)), df_plan
+    )
+    return tuple(data_cols + index_cols)
+
+
+def _get_set_column_plan(
+    df_plan: LazyPlan,
+    value_plan: LazyPlan,
+    key: str,
+) -> LazyPlan | None:
+    """
+    Get the plan for setting a column in a dataframe or return None if not supported.
+    Creates a projection on top of the dataframe plan that adds original data columns as
+    well as the column from the value plan to be set.
+    For example, if the df schema is (a, b, c, I) where I is the index column and the
+    code is df["D"] = df["b"].str.lower(), then the value plan is:
+    ┌───────────────────────────┐
+    │         PROJECTION        │
+    │    ────────────────────   │
+    │        Expressions:       │
+    │ "bodo_udf"(#[0.1], #[0.3])│
+    │           #[0.3]          │
+    └─────────────┬─────────────┘
+    ┌─────────────┴─────────────┐
+    │        BODO_READ_DF       │
+    │    ────────────────────   │
+    └───────────────────────────┘
+    and the new dataframe plan with new column added is:
+    ┌───────────────────────────┐
+    │         PROJECTION        │
+    │    ────────────────────   │
+    │        Expressions:       │
+    │           #[0.0]          │
+    │           #[0.1]          │
+    │           #[0.2]          │
+    │ "bodo_udf"(#[0.1], #[0.3])│
+    │           #[0.3]          │
+    └─────────────┬─────────────┘
+    ┌─────────────┴─────────────┐
+    │        BODO_READ_DF       │
+    │    ────────────────────   │
+    └───────────────────────────┘
+    """
+
+    # Handle stacked projections like bdf["b"] = bdf["c"].str.lower().str.strip()
+    if (
+        is_single_projection(value_plan)
+        and value_plan.args[0] != df_plan
+        and (inner_plan := _get_set_column_plan(df_plan, value_plan.args[0], key))
+        is not None
+    ):
+        return _add_proj_expr_to_plan(inner_plan, value_plan, key, True)
+
+    # Check for simple projections like bdf["b"] = bdf["c"].str.lower()
+    if not is_single_projection(value_plan) or value_plan.args[0] != df_plan:
+        return None
+
+    return _add_proj_expr_to_plan(df_plan, value_plan, key)
+
+
+def validate_on(val):
+    """Validates single on-value"""
+    if val is not None:
+        if not (
+            isinstance(val, str)
+            or (isinstance(val, (list, tuple)) and all(isinstance(k, str) for k in val))
+        ):
+            raise ValueError(
+                "only str, str list, str tuple, or None are supported for on, left_on and right_on values"
+            )
+
+
+def validate_keys(keys, df):
+    """Utilizes set difference to check key membership in DataFrame df"""
+    key_diff = set(keys).difference(set(df.columns))
+    if len(key_diff) > 0:
+        raise KeyError(
+            f"merge(): invalid key {key_diff} for on/left_on/right_on\n"
+            f"merge supports only valid column names {df.columns}"
+        )
+
+
+def maybe_make_list(obj):
+    """If string input, turn into singleton list"""
+    if obj is None:
+        return []
+    elif not isinstance(obj, (tuple, list)):
+        return [obj]
+    return obj
+
+
+def validate_merge_spec(left, right, on, left_on, right_on):
+    """Check on, left_on and right_on values for type correctness
+    (currently only str, str list, str tuple, or None are supported)
+    and matching number of elements. If failed to validate, raise error.
+    Also checks membership in left and right DFs to validate keys.
+    """
+    validate_on(on)
+    validate_on(left_on)
+    validate_on(right_on)
+
+    if on is None and left_on is None and right_on is None:
+        # Join on common keys if keys not specified
+        common_cols = on = tuple(set(left.columns).intersection(set(right.columns)))
+        if len(common_cols) == 0:
+            raise ValueError(
+                "No common columns to perform merge on. "
+                f"Merge options: left_on={left_on}, "
+                f"right_on={right_on}"
+            )
+        left_on = right_on = common_cols
+        return left_on, right_on
+
+    elif on is not None:
+        if left_on is not None or right_on is not None:
+            raise ValueError(
+                'Can only pass argument "on" OR "left_on" '
+                'and "right_on", not a combination of both.'
+            )
+        left_on = right_on = maybe_make_list(on)
+
+    elif (left_on is not None) ^ (right_on is not None):
+        raise ValueError('Must pass both "left_on" and "right_on"')
+
+    elif left_on is not None and right_on is not None:
+        left_on, right_on = maybe_make_list(left_on), maybe_make_list(right_on)
+
+    if len(left_on) != len(right_on):
+        raise ValueError("len(right_on) must equal len(left_on)")
+
+    validate_keys(left_on, left)
+    validate_keys(right_on, right)
+
+    return left_on, right_on
