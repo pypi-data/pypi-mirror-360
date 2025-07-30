@@ -1,0 +1,129 @@
+<!--
+Componente: Form
+Uso: include "components/form.html" with fields=form_fields action="/submit" method="POST"
+
+Parâmetros:
+- fields: Lista de campos do formulário (obrigatório)
+- action: URL de ação do formulário (opcional)
+- method: GET, POST (padrão: POST)
+- enctype: application/x-www-form-urlencoded, multipart/form-data (opcional)
+- novalidate: true/false - desabilitar validação HTML5 (padrão: false)
+- class: Classes CSS adicionais (opcional)
+- x_data: Dados Alpine.js adicionais (opcional)
+- on_submit: Função JavaScript no submit (opcional)
+
+Exemplo de fields:
+[
+    {
+        "type": "text",
+        "name": "name", 
+        "label": "Nome",
+        "placeholder": "Digite seu nome",
+        "required": true,
+        "description": "Nome completo"
+    },
+    {
+        "type": "email",
+        "name": "email",
+        "label": "Email", 
+        "required": true,
+        "error": "Email inválido"
+    }
+]
+-->
+{% with fields_value=fields|default:"[]" %}
+{% with action_value=action|default:"" method_value=method|default:"POST" %}
+{% with enctype_value=enctype|default:"" novalidate_value=novalidate|default:False %}
+{% with class_value=class|default:"" x_data_value=x_data|default:"" %}
+{% with on_submit_value=on_submit|default:"" %}
+<form
+    {% if action_value %}action="{{ action_value }}"{% endif %}
+    method="{{ method_value }}"
+    {% if enctype_value %}enctype="{{ enctype_value }}"{% endif %}
+    {% if novalidate_value %}novalidate{% endif %}
+    {% if on_submit_value %}@submit="{{ on_submit_value }}"{% endif %}
+    {% if x_data_value %}x-data="{{ x_data_value }}"{% endif %}
+    class="space-y-6 {{ class_value }}"
+>
+    {% for field in fields_value %}
+        <div class="grid gap-2">
+            <!-- Label -->
+            {% if field.label %}
+                {% with label_for=field.name|default:"" label_required=field.required|default:False %}
+                {% with label_class=field.error|yesno:"text-destructive," %}
+                {% include "components/label.html" with text=field.label for=label_for required=label_required class=label_class %}
+                {% endwith %}
+                {% endwith %}
+            {% endif %}
+            
+            <!-- Field -->
+            <div class="space-y-1">
+                {% if field.type == "textarea" %}
+                    {% with field_class=field.error|yesno:"border-destructive," %}
+                    {% include "components/textarea.html" with name=field.name id=field.name placeholder=field.placeholder value=field.value rows=field.rows disabled=field.disabled readonly=field.readonly required=field.required maxlength=field.maxlength class=field_class %}
+                    {% endwith %}
+                
+                {% elif field.type == "select" %}
+                    {% with field_class=field.error|yesno:"border-destructive," %}
+                    {% include "components/select.html" with name=field.name options=field.options placeholder=field.placeholder value=field.value disabled=field.disabled searchable=field.searchable class=field_class %}
+                    {% endwith %}
+                
+                {% elif field.type == "checkbox" %}
+                    {% include "components/checkbox.html" with name=field.name label=field.label checked=field.checked disabled=field.disabled %}
+                
+                {% elif field.type == "radio" %}
+                    {% include "components/radio-group.html" with name=field.name options=field.options value=field.value orientation=field.orientation disabled=field.disabled %}
+                
+                {% elif field.type == "switch" %}
+                    {% include "components/switch.html" with name=field.name label=field.label checked=field.checked disabled=field.disabled %}
+                
+                {% else %}
+                    <!-- Input padrão (text, email, password, etc.) -->
+                    {% with field_class=field.error|yesno:"border-destructive," %}
+                    {% include "components/input.html" with type=field.type name=field.name id=field.name placeholder=field.placeholder value=field.value disabled=field.disabled readonly=field.readonly required=field.required maxlength=field.maxlength minlength=field.minlength pattern=field.pattern icon=field.icon class=field_class %}
+                    {% endwith %}
+                {% endif %}
+                
+                <!-- Description -->
+                {% if field.description %}
+                    <p class="text-muted-foreground text-sm">
+                        {{ field.description }}
+                    </p>
+                {% endif %}
+                
+                <!-- Error Message -->
+                {% if field.error %}
+                    <p class="text-destructive text-sm">
+                        {{ field.error }}
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    
+    <!-- Submit Button -->
+    {% if submit_button != False %}
+        <div class="flex justify-end gap-3">
+            {% if cancel_button %}
+                {% with cancel_text=cancel_button.text|default:"Cancelar" %}
+                {% with cancel_onclick=cancel_button.onclick|default:"" cancel_href=cancel_button.href|default:"" %}
+                {% include "components/button.html" with text=cancel_text variant="outline" type="button" onclick=cancel_onclick href=cancel_href %}
+                {% endwith %}
+                {% endwith %}
+            {% endif %}
+            
+            {% with submit_text=submit_button.text|default:"Enviar" %}
+            {% with submit_variant=submit_button.variant|default:"default" %}
+            {% with submit_disabled=submit_button.disabled|default:False %}
+            {% include "components/button.html" with text=submit_text variant=submit_variant type="submit" disabled=submit_disabled %}
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+        </div>
+    {% endif %}
+</form>
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}

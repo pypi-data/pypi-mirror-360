@@ -1,0 +1,171 @@
+# pyproject.toml
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "django-cazenga-ui"
+version = "0.1.4"
+authors = [
+    { name="Comunidade Cazenga", email="contato@cazenga.com" },
+]
+description = "Biblioteca moderna de componentes UI para Django usando Tailwind CSS v4 e Alpine.js"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 3.2",
+    "Framework :: Django :: 4.0",
+    "Framework :: Django :: 4.1",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
+    "Framework :: Django :: 5.1",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+keywords = ["django", "tailwind", "ui", "components", "alpine", "shadcn"]
+dependencies = [
+    "Django>=3.2",
+    "django-tailwind[reload]",
+    "django-browser-reload",
+    "django-mathfilters",
+]
+
+[project.optional-dependencies]
+tailwind = [
+    # Dependências já incluídas por padrão
+    # Mantida para compatibilidade com instruções existentes
+]
+dev = [
+    "pytest",
+    "pytest-django",
+    "black",
+    "isort",
+    "flake8",
+    "mypy",
+    "django-stubs[compatible-mypy]",
+]
+test = [
+    "pytest",
+    "pytest-django",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://github.com/cazenga/django-cazenga-ui"
+Documentation = "https://django-cazenga-ui.readthedocs.io"
+Repository = "https://github.com/cazenga/django-cazenga-ui"
+Issues = "https://github.com/cazenga/django-cazenga-ui/issues"
+Changelog = "https://github.com/cazenga/django-cazenga-ui/blob/main/CHANGELOG.md"
+
+[project.scripts]
+cazenga-setup = "cazenga_ui.cli:main"
+
+[tool.setuptools]
+packages = ["cazenga_ui"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+cazenga_ui = [
+    "templates_source/**/*",
+    "static_source/**/*",
+    "templatetags/*.py",
+]
+
+# Configuração do Black
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # Diretórios a serem ignorados
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | migrations
+)/
+'''
+
+# Configuração do isort
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["cazenga_ui"]
+known_django = ["django"]
+sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+# Configuração do pytest
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.settings"
+python_files = ["test_*.py", "*_test.py", "testing/python/*.py"]
+addopts = "--cov=cazenga_ui --cov-report=term-missing"
+
+# Configuração da cobertura de testes
+[tool.coverage.run]
+source = ["cazenga_ui"]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/venv/*",
+    "*/env/*",
+    "*/.venv/*",
+    "setup.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+show_missing = true
+skip_covered = false
+
+# Configuração do bandit (segurança)
+[tool.bandit]
+exclude_dirs = ["tests", "*/tests/*", "*/migrations/*"]
+skips = ["B101", "B601"]  # Skip assert_used e shell injection em testes
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+
+[tool.mypy]
+python_version = "3.8"
+check_untyped_defs = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
