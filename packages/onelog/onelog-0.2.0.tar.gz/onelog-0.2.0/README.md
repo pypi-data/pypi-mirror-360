@@ -1,0 +1,62 @@
+# onelog
+
+**onelog** is the simplest AI training logging library in the world. Just drop in a few log statements and immediately see your results in a single html file.
+
+## Installation
+
+```shell
+pip install onelog
+```
+
+## Usage
+
+### Basic Scalar Logging 📊
+
+```python
+import onelog
+
+onelog = onelog.Logger()
+
+for dummy_loss in range(20, 1, 0.1):
+    onelog.log_scalar(dummy_loss, "dummy_loss")
+
+onelog.finish()
+```
+
+### Advanced Logging with Hyperparameters and Images 🖼️
+
+```python
+import onelog
+from PIL import Image
+
+onelog = onelog.Logger()
+
+# Log hyperparameters ⚙️
+onelog.log_hyperparameters({
+    "learning_rate": 0.001,
+    "batch_size": 32,
+    "epochs": 100
+})
+
+# Log scalar values 📈
+for epoch in range(10):
+    loss = 1.0 / (epoch + 1)
+    accuracy = 0.8 + epoch * 0.02
+    onelog.log_scalar(loss, "training_loss")
+    onelog.log_scalar(accuracy, "accuracy")
+
+# Log images 🖼️
+sample_image = Image.new('RGB', (100, 100), color='red')
+onelog.log_image(sample_image, "sample_output")
+
+# Save as HTML report 📄
+onelog.save_html("training_report.html")
+```
+
+### Available Methods
+
+- **`log_scalar(value, name)`** 📊 - Log numeric values (int/float)
+- **`log_image(image, name)`** 🖼️ - Log PIL Image objects
+- **`log_hyperparameters(params)`** ⚙️ - Log training hyperparameters
+- **`finish(html_path=None)`** ✅ - Finish logging and optionally save HTML
+- **`save_html(target_path)`** 💾 - Save current data as HTML report

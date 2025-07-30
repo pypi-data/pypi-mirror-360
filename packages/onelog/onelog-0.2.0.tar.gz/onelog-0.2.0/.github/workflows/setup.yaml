@@ -1,0 +1,50 @@
+name: Testing and Publishing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [published]
+
+jobs:
+  Testing:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ['3.12', '3.13']
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PDM
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pdm sync -d -G testing
+      - name: Run Tests
+        run: |
+          pdm run test
+
+  pypi-publish:
+    name: upload release to PyPI
+    needs: Testing
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    permissions:
+      # This permission is needed for private repositories.
+      contents: read
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pdm-project/setup-pdm@v4
+
+      - name: Publish package distributions to PyPI
+        run: pdm publish
