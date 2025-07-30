@@ -1,0 +1,111 @@
+Metadata-Version: 2.4
+Name: copick-shared-ui
+Version: 0.1.0
+Summary: Shared UI components for copick visualization plugins
+Project-URL: Repository, https://github.com/copick/copick-shared-ui
+Project-URL: Issues, https://github.com/copick/copick-shared-ui/issues
+Project-URL: Documentation, https://github.com/copick/copick-shared-ui#README.md
+Project-URL: Bug Tracker, https://github.com/copick/copick-shared-ui/issues
+Project-URL: Source Code, https://github.com/copick/copick-shared-ui
+Project-URL: User Support, https://github.com/copick/copick-shared-ui/issues
+Author-email: "Utz H. Ermel" <utz@ermel.me>, Kyle Harrington <czi@kyleharrington.com>
+License: MIT License
+        
+        Copyright (c) 2025 Utz H. Ermel
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+License-File: LICENSE
+Keywords: annotation,copick,cryo-et,cryoet,qt,tomography,ui
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: Topic :: Scientific/Engineering :: Image Processing
+Requires-Python: >=3.9
+Requires-Dist: copick>=1.5.0
+Requires-Dist: numpy>=1.21.0
+Requires-Dist: pydantic>=2
+Requires-Dist: qtpy
+Requires-Dist: zarr>=2.10.0
+Provides-Extra: dev
+Requires-Dist: black>=25.1.0; extra == 'dev'
+Requires-Dist: hatch-vcs>=0.4.0; extra == 'dev'
+Requires-Dist: hatchling>=1.25.0; extra == 'dev'
+Requires-Dist: pre-commit>=4.2.0; extra == 'dev'
+Requires-Dist: ruff>=0.12.0; extra == 'dev'
+Provides-Extra: testing
+Requires-Dist: pyqt6; extra == 'testing'
+Requires-Dist: pytest; extra == 'testing'
+Requires-Dist: pytest-cov; extra == 'testing'
+Requires-Dist: pytest-qt; extra == 'testing'
+Requires-Dist: tox; extra == 'testing'
+Requires-Dist: tox-gh-actions; extra == 'testing'
+Requires-Dist: tox-uv; extra == 'testing'
+Description-Content-Type: text/markdown
+
+# copick-shared-ui
+
+Shared UI components for copick visualization plugins.
+
+This package provides reusable Qt-based UI components that can be used across different copick visualization plugins
+(napari-copick, chimerax-copick, etc.).
+
+## Installation
+
+```bash
+uv pip install copick-shared-ui
+```
+
+## Usage
+
+```python
+from copick_shared_ui import EditObjectTypesDialog, validate_copick_name
+
+# Use the object types editor
+dialog = EditObjectTypesDialog(parent=None, existing_objects=my_objects)
+if dialog.exec_() == QDialog.Accepted:
+    updated_objects = dialog.get_objects()
+
+# Validate copick names
+is_valid, sanitized, error_msg = validate_copick_name("my-object-name")
+```
+
+## Components
+
+### EditObjectTypesDialog
+
+A dialog for managing copick PickableObject types with features:
+- Add, edit, and delete object types
+- Real-time validation with visual feedback
+- Color selection and management
+- Support for all `copick.PickableObject` properties (EMDB/PDB IDs, thresholds, etc.)
+
+### Validation
+
+Utilities for validating copick entity names according to copick naming conventions.
