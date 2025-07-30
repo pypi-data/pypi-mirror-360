@@ -1,0 +1,173 @@
+Metadata-Version: 2.4
+Name: raidx
+Version: 0.1.1
+Classifier: Programming Language :: Rust
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Requires-Dist: pytest-benchmark>=4.0.0 ; extra == 'benchmark'
+Requires-Dist: pyfaidx>=0.6.0 ; extra == 'benchmark'
+Requires-Dist: click>=8.0.0 ; extra == 'benchmark'
+Requires-Dist: tabulate>=0.9.0 ; extra == 'benchmark'
+Requires-Dist: pytest>=7.0.0 ; extra == 'dev'
+Requires-Dist: pytest-benchmark>=4.0.0 ; extra == 'dev'
+Requires-Dist: pyfaidx>=0.6.0 ; extra == 'dev'
+Requires-Dist: click>=8.0.0 ; extra == 'dev'
+Requires-Dist: tabulate>=0.9.0 ; extra == 'dev'
+Provides-Extra: benchmark
+Provides-Extra: dev
+License-File: LICENSE
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown; charset=UTF-8; variant=GFM
+
+# raidx
+
+**High-performance FASTA file reader with Python bindings**
+
+raidx is a drop-in replacement for [pyfaidx](https://github.com/mdshw5/pyfaidx) implemented in Rust, providing **2-4x faster** performance for FASTA file operations while maintaining full API compatibility.
+
+## ⚡ Performance
+
+raidx is fast:
+
+| Operation | pyfaidx (ms) | raidx (ms) | **Speedup** |
+|-----------|--------------|------------|-------------|
+| 🚀 **File Opening** | 0.254 | 0.068 | **3.72x faster** |
+| 🧬 **Sequence Access** | 0.252 | 0.061 | **4.13x faster** |  
+| ✂️ **Sequence Slicing** | 0.259 | 0.077 | **3.35x faster** |
+| 🔍 **get_seq Method** | 0.268 | 0.071 | **3.76x faster** |
+| 🔄 **Reverse Complement** | 0.287 | 0.071 | **4.03x faster** |
+| 🔁 **Sequence Iteration** | 0.299 | 0.097 | **3.08x faster** |
+| 🎯 **Random Access** | 3.403 | 1.172 | **2.90x faster** |
+
+> 📊 *Benchmarked on the hg38 human genome assembly with 1000 iterations per test*
+
+## Installation
+
+```bash
+pip install .
+```
+
+## Quick Start
+
+raidx provides the same API as pyfaidx:
+
+```python
+>>> from raidx import Fasta
+>>> genome = Fasta('genome.fasta')
+>>> genome
+Fasta("genome.fasta")
+
+# Access sequences like a dictionary
+>>> genome['chr1'][1000:1100]  
+>chr1:1001-1100
+ATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGC...
+
+# Get sequence metadata
+>>> seq = genome['chr1'][1000:1100]
+>>> seq.name
+'chr1'
+>>> seq.start  # 1-based
+1001
+>>> seq.end    # 0-based  
+1100
+
+# String-like operations
+>>> genome['chr1'][1000:1100].complement
+>chr1 (complement):1001-1100
+TACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACG...
+
+>>> -genome['chr1'][1000:1100]  # reverse complement
+>chr1 (complement):1100-1001
+GCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCAT...
+
+# Method-based access
+>>> genome.get_seq('chr1', 1001, 1100)
+>chr1:1001-1100
+ATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGCATGC...
+
+# Iteration
+>>> for record in genome:
+...     print(f"{record.name}: {len(record)} bp")
+chr1: 248956422 bp
+chr2: 242193529 bp
+...
+```
+
+## Key Features
+
+- **Drop-in replacement** for pyfaidx - same API, same behavior
+- **Memory-mapped I/O** for efficient file access
+- **Rust performance** with Python convenience  
+- **Full compatibility** with existing pyfaidx code
+- **Comprehensive indexing** (.fai files compatible with samtools)
+- **Rich sequence objects** with metadata and methods
+- **String-like operations** (slicing, reverse, complement)
+
+## API Compatibility
+
+raidx implements the complete pyfaidx API:
+
+```python
+# All pyfaidx features work identically
+from raidx import Fasta
+
+# Indexing and slicing  
+genome = Fasta('genome.fasta')
+genome['chr1'][1000:2000]
+genome[0][:100]  # First sequence, first 100 bp
+
+# Sequence operations
+seq = genome['chr1'][1000:1100]
+seq.complement
+seq.reverse  
+-seq  # reverse complement
+
+# Method calls
+genome.get_seq('chr1', 1000, 2000)
+genome.keys()
+len(genome)
+
+# Iteration
+for record in genome:
+    print(record.name, len(record))
+```
+
+## Benchmarking
+
+raidx includes two benchmarking approaches for different use cases:
+
+### pytest-benchmark
+
+Use the organized `benchmarks/` directory with pytest-benchmark for development, CI/CD, and detailed performance analysis:
+
+```bash
+# Install benchmark dependencies
+pip install -e ".[benchmark]"
+
+# Run all benchmarks
+pytest benchmarks/
+
+# Run specific benchmark categories
+pytest benchmarks/benchmark_file_ops.py      # File operations
+pytest benchmarks/benchmark_sequence_ops.py  # Sequence operations
+
+# Save and compare results
+pytest benchmarks/ --benchmark-save=baseline
+pytest benchmarks/ --benchmark-compare=baseline
+```
+
+### Standalone Benchmarks
+
+Use the small benchmark tool for quick performance comparisons on your own files:
+
+```bash
+# Benchmark your files
+python benchmark_raidx.py your_genome.fasta
+
+# Adjust benchmarking details
+python benchmark_raidx.py genome.fasta --iterations 1000 --random-access 500
+```
+
+---
+
+**Why raidx?** raidx provides the same familiar pyfaidx interface, but with the performance of Rust underneath. Perfect for the pipelines that need to scale. 
