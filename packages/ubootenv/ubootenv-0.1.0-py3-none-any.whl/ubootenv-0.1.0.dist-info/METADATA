@@ -1,0 +1,49 @@
+Metadata-Version: 2.4
+Name: ubootenv
+Version: 0.1.0
+Summary: U-Boot environment setter and getter from the C library libubootenv
+Author-email: Pierre-Loup GOSSE <pierreloupgosse@gmail.com>
+License-Expression: MIT
+Project-URL: Homepage, https://gitlab.com/PierreLoupG/ubootenv
+Project-URL: Issues, https://gitlab.com/PierreLoupG/ubootenv/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+# UBootEnv package
+This package offers a Python implementation of the well-known `fw_setenv` and `fw_getenv` commands, based on the C library *libubootenv*.
+
+## Features
+- Read and modify variables in the U-Boot environment
+- Erase variable values
+- Shadow writing to minimize write cycles
+
+## Usage
+```python
+from ubootenv import UBootEnv
+
+uenv = UBootEnv()
+# Or specify a custom config path
+uenv = UBootEnv("/etc/fw_env.config")
+
+var = uenv.get("foo")
+print(var) # => None
+
+uenv.set("foo", "bar")
+var = uenv.get("foo")
+print(var) # => b'bar'
+
+# Use shadow writing, get method returns the shadow value
+uenv.shadow("foo", "foo")
+var = uenv.get("foo")
+print(var) # => b'foo'
+
+# Commit shadow values to disk
+uenv.store()
+
+```
+
+
