@@ -1,0 +1,55 @@
+{% load i18n %}
+
+<div class="container">
+  <h1>{{ quiz.name }}</h1>
+
+  {% if conclusion %}
+    <p class="quiz-conclusion">
+      <b>{% translate "You have a majority of" %} {{ symbol }} !</b>
+    </p>
+    <p class="quiz-conclusion-description">
+      {{ conclusion|safe }}
+    </p>
+    {% if relaunch_button %}
+      <a href="{% url 'interpretation_quiz' request.resolver_match.kwargs.pk %}">{% translate "Relaunch the quiz" %}</a>
+    {% endif %}
+    {% if final_quiz|length > 0 and weasyprint_download_uuid %}
+      <a href="{% url 'quiz_download_pdf' weasyprint_download_uuid %}?name={{ pdf_file_name }}" download="{{ pdf_file_name }}" target="_blank">{% translate "Download the summary in pdf" %}</a>
+    {% endif %}
+    {% if thank_you %}
+      <p class="thank_you">{% translate "Thank you for your answers." %}</p>
+    {% endif %}
+    {% if more_info_quiz and more_info_quiz_after_main_quiz %}
+      {% include "django_easy_quiz/more_info_quiz.html" %}
+    {% endif %}
+
+  {% else %}
+
+    {{ quiz.description|safe }}
+
+    <form method="post" autocomplete="off">
+      {% csrf_token %}
+      {% for form in formset.forms %}
+        <fieldset>
+          <legend>{{ form.initial.question.label|safe }}</legend>
+          {% for answer in form.initial.answers %}
+            <p>
+              <input type="radio" name="question_{{ form.initial.question.id }}" value="{{ answer.id }}" id="answer_{{ form.initial.question.id }}_{{ answer.id }}" required />
+              <label for="answer_{{ form.initial.question.id }}_{{ answer.id }}">
+                <span class="symbol" style="font-family: monospace">{{ answer.symbol }}</span>
+                <span class="answer">{{ answer.label|safe }}</span>
+              </label>
+            </p>
+          {% endfor %}
+        </fieldset>
+      {% endfor %}
+      {% if saved_quiz_id %}
+        <input type="hidden" name="saved_quiz" value="{{ saved_quiz_id }}" />
+      {% endif %}
+      {% if more_info_quiz and more_info_quiz_after_main_quiz == False %}
+        {% include "django_easy_quiz/more_info_quiz.html" with hide_submit_button_and_form=True %}
+      {% endif %}
+      <button type="submit">{% translate "Submit" %}</button>
+    </form>
+  {% endif %}
+</div>
