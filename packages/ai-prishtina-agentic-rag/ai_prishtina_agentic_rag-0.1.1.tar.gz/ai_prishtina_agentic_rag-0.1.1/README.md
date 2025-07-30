@@ -1,0 +1,498 @@
+# 🤖 Agentic RAG
+
+<div align="center">
+  <img src="assets/png/ai-prishtina.jpeg" alt="AI Prishtina Logo" width="200" height="auto">
+</div>
+
+
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: AGPL v3+](https://img.shields.io/badge/License-AGPL%20v3%2B-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Code Coverage](https://img.shields.io/badge/coverage-55%25-yellow.svg)](./htmlcov/index.html)
+[![PyPI version](https://badge.fury.io/py/ai-prishtina-agentic-rag.svg)](https://badge.fury.io/py/ai-prishtina-agentic-rag)
+
+A **comprehensive, professional-grade agentic Retrieval-Augmented Generation (RAG) library** that combines the power of large language models with intelligent agents, advanced retrieval mechanisms, and tool integration for building sophisticated AI applications.
+
+## 🌟 Key Features
+
+### 🧠 **Agentic Intelligence**
+- **Query Planning & Decomposition**: Intelligent multi-step query planning with reasoning
+- **Working & Long-term Memory**: Persistent memory systems for context retention
+- **Tool Integration**: Extensible tool ecosystem (web search, calculator, code execution)
+- **Multi-step Reasoning**: Complex problem-solving with iterative refinement
+
+### 🔍 **Advanced Retrieval**
+- **Multiple Vector Stores**: ChromaDB, Pinecone, Weaviate, FAISS support
+- **Hybrid Retrieval**: Combines semantic and keyword-based search
+- **Graph RAG**: Knowledge graph integration for enhanced context understanding
+- **Smart Reranking**: Cross-encoder and ColBERT reranking capabilities
+
+### 📚 **Document Processing**
+- **Multi-format Support**: PDF, DOCX, TXT, Markdown, HTML, and more
+- **Intelligent Chunking**: Fixed-size, semantic, and recursive chunking strategies
+- **Metadata Extraction**: Automatic extraction of document metadata
+- **Multi-modal Processing**: Image, audio, and video content support (optional)
+
+### 🚀 **LLM Integration**
+- **Multiple Providers**: OpenAI, Anthropic, Cohere, and local models
+- **Streaming Support**: Real-time response streaming
+- **Prompt Management**: Advanced prompt templating and optimization
+- **Response Generation**: Intelligent response synthesis and formatting
+
+### 📊 **Evaluation & Monitoring**
+- **Comprehensive Metrics**: Relevance, faithfulness, answer quality, and latency
+- **Benchmarking Suite**: Performance evaluation and comparison tools
+- **Real-time Monitoring**: System performance and quality tracking
+
+### 🔧 **Developer Experience**
+- **Plug-and-Play Architecture**: Modular components for easy customization
+- **Type Safety**: Full type hints and Pydantic validation
+- **Rich Configuration**: YAML, environment variables, and programmatic config
+- **Extensive Examples**: Complete examples and tutorials
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+# Basic installation
+pip install ai-prishtina-agentic-rag
+
+# With all optional dependencies
+pip install ai-prishtina-agentic-rag[all]
+
+# Development installation
+pip install ai-prishtina-agentic-rag[dev]
+```
+
+### Basic Usage
+
+```python
+from agentic_rag import AgenticRAG
+from agentic_rag.utils.config import Config
+
+# Initialize the system
+config = Config()
+rag = AgenticRAG(config=config, enable_agent=True)
+
+# Add documents
+documents = [
+    {"content": "Your document content here...", "metadata": {"source": "doc1.pdf"}},
+    # ... more documents
+]
+rag.add_documents(documents)
+
+# Query with agentic capabilities
+response = await rag.aquery(
+    "What are the key findings about climate change impacts?",
+    enable_planning=True,
+    use_tools=True
+)
+
+print(f"Answer: {response.answer}")
+print(f"Sources: {response.sources}")
+print(f"Reasoning: {response.reasoning_steps}")
+```
+
+## 📖 Documentation
+
+### Core Components
+
+#### 🤖 **AgenticRAG** - Main Interface
+The central orchestrator that coordinates all components:
+
+```python
+from agentic_rag import AgenticRAG, Config
+
+rag = AgenticRAG(
+    config=config,
+    enable_agent=True,        # Enable agentic capabilities
+    enable_memory=True,       # Enable memory systems
+    enable_tools=True,        # Enable tool integration
+    enable_streaming=True     # Enable response streaming
+)
+```
+
+#### 🧠 **Memory Systems**
+Persistent memory for context retention:
+
+```python
+from agentic_rag.core.memory import WorkingMemory, LongTermMemory
+
+# Working memory for current session
+working_memory = WorkingMemory(capacity=10)
+
+# Long-term memory for persistent storage
+long_term_memory = LongTermMemory(
+    storage_path="./memory",
+    embedding_model="sentence-transformers/all-MiniLM-L6-v2"
+)
+```
+
+#### 🔍 **Vector Stores**
+Multiple vector database options:
+
+```python
+from agentic_rag.retrieval import (
+    ChromaVectorStore,
+    PineconeVectorStore,
+    WeaviateVectorStore,
+    FAISSVectorStore
+)
+
+# ChromaDB (great for development)
+vector_store = ChromaVectorStore(collection_name="my_docs")
+
+# Pinecone (production-ready)
+vector_store = PineconeVectorStore(
+    api_key="your-key",
+    environment="us-west1-gcp",
+    index_name="my-index"
+)
+```
+
+#### 🤖 **LLM Providers**
+Support for multiple LLM providers:
+
+```python
+from agentic_rag.llm import OpenAIProvider, AnthropicProvider, LocalModelProvider
+
+# OpenAI
+llm = OpenAIProvider(
+    api_key="your-key",
+    model="gpt-4",
+    temperature=0.7
+)
+
+# Anthropic Claude
+llm = AnthropicProvider(
+    api_key="your-key",
+    model="claude-3-sonnet-20240229"
+)
+
+# Local model
+llm = LocalModelProvider(
+    model_path="./models/llama-2-7b",
+    device="cuda"
+)
+```
+
+### Advanced Features
+
+#### 🛠️ **Tool Integration**
+Extend capabilities with tools:
+
+```python
+from agentic_rag.tools import WebSearchTool, CalculatorTool, CodeExecutorTool
+
+# Register tools
+rag.register_tool(WebSearchTool(api_key="your-search-api-key"))
+rag.register_tool(CalculatorTool())
+rag.register_tool(CodeExecutorTool(allowed_languages=["python", "javascript"]))
+
+# Use tools in queries
+response = await rag.aquery(
+    "Search for recent papers on transformer architectures and calculate the average citation count",
+    use_tools=True
+)
+```
+
+#### 📊 **Graph RAG**
+Knowledge graph integration:
+
+```python
+from agentic_rag.graph import KnowledgeGraph
+
+# Enable graph RAG
+graph = KnowledgeGraph()
+rag = AgenticRAG(config=config, knowledge_graph=graph)
+
+# Automatic entity extraction and relationship building
+rag.add_documents(documents, extract_entities=True)
+```
+
+#### 🔄 **Streaming Responses**
+Real-time response streaming:
+
+```python
+async for chunk in rag.astream("Tell me about quantum computing"):
+    print(chunk.content, end="", flush=True)
+```
+
+## 🏗️ Architecture
+
+The library follows a modular, plug-and-play architecture:
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   AgenticRAG    │────│  QueryPlanner    │────│   Memory        │
+│   (Orchestrator)│    │  (Intelligence)  │    │   (Context)     │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Retrieval     │    │   LLM Providers  │    │     Tools       │
+│   (Vector/Graph)│    │   (OpenAI/etc)   │    │   (Web/Calc)    │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Document      │    │   Evaluation     │    │   Configuration │
+│   Processing    │    │   & Monitoring   │    │   & Logging     │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+```
+
+## 📊 Performance & Evaluation
+
+### Metrics & Benchmarking
+
+```python
+from agentic_rag.evaluation import ComprehensiveEvaluator, RAGBenchmark
+
+# Comprehensive evaluation
+evaluator = ComprehensiveEvaluator()
+results = await evaluator.evaluate(
+    rag_system=rag,
+    test_queries=test_queries,
+    ground_truth=ground_truth
+)
+
+print(f"Relevance Score: {results.relevance_score:.3f}")
+print(f"Faithfulness Score: {results.faithfulness_score:.3f}")
+print(f"Answer Quality: {results.answer_quality:.3f}")
+print(f"Average Latency: {results.avg_latency:.2f}s")
+
+# Benchmark against standard datasets
+benchmark = RAGBenchmark()
+benchmark_results = await benchmark.run(rag_system=rag)
+```
+
+### Current Test Coverage
+- **Overall Coverage**: 55% (actively improving)
+- **Core Components**: Well tested (84-91% coverage)
+- **Integration Tests**: Comprehensive test suite (183 tests)
+- **Test Results**: 167 passed, 7 failed, 9 errors (91% pass rate)
+- **Performance Tests**: Latency and throughput benchmarks
+
+## 🔧 Configuration
+
+### Environment Variables
+
+```bash
+# LLM Configuration
+OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_anthropic_key
+COHERE_API_KEY=your_cohere_key
+
+# Vector Store Configuration
+PINECONE_API_KEY=your_pinecone_key
+PINECONE_ENVIRONMENT=us-west1-gcp
+WEAVIATE_URL=http://localhost:8080
+
+# Tool Configuration
+SERP_API_KEY=your_search_api_key
+```
+
+### YAML Configuration
+
+```yaml
+# config.yaml
+llm:
+  provider: "openai"
+  model: "gpt-4"
+  temperature: 0.7
+  max_tokens: 2000
+
+vector_store:
+  provider: "chroma"
+  collection_name: "documents"
+
+retrieval:
+  top_k: 5
+  rerank: true
+  reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
+agent:
+  enable_planning: true
+  enable_memory: true
+  enable_tools: true
+  max_iterations: 5
+
+tools:
+  - name: "web_search"
+    enabled: true
+  - name: "calculator"
+    enabled: true
+```
+
+## 📚 Examples
+
+### Basic RAG System
+
+```python
+# examples/basic_example.py
+from agentic_rag import AgenticRAG
+from agentic_rag.document_processing import DocumentLoader
+
+# Load documents
+loader = DocumentLoader()
+documents = loader.load_directory("./documents")
+
+# Initialize RAG
+rag = AgenticRAG()
+rag.add_documents([doc.dict() for doc in documents])
+
+# Query
+response = await rag.aquery("What is the main topic of these documents?")
+print(response.answer)
+```
+
+### Advanced Agentic RAG
+
+```python
+# examples/advanced_rag.py
+from agentic_rag import AgenticRAG
+from agentic_rag.tools import WebSearchTool, CalculatorTool
+from agentic_rag.core.memory import LongTermMemory
+
+# Setup with advanced features
+rag = AgenticRAG(
+    enable_agent=True,
+    enable_memory=True,
+    memory_system=LongTermMemory(storage_path="./memory")
+)
+
+# Register tools
+rag.register_tool(WebSearchTool(api_key="your-key"))
+rag.register_tool(CalculatorTool())
+
+# Complex multi-step query
+response = await rag.aquery(
+    "Research the latest developments in quantum computing, "
+    "find the top 3 companies by investment, and calculate "
+    "the total funding amount",
+    enable_planning=True,
+    use_tools=True
+)
+```
+
+### Plug-and-Play Components
+
+```python
+# examples/plug_and_play_demo.py
+from agentic_rag import AgenticRAG
+from agentic_rag.retrieval import PineconeVectorStore
+from agentic_rag.llm import AnthropicProvider
+
+# Custom component configuration
+vector_store = PineconeVectorStore(
+    api_key="your-key",
+    environment="us-west1-gcp"
+)
+
+llm_provider = AnthropicProvider(
+    api_key="your-key",
+    model="claude-3-sonnet-20240229"
+)
+
+# Plug components together
+rag = AgenticRAG(
+    vector_store=vector_store,
+    llm_provider=llm_provider,
+    enable_agent=True
+)
+```
+
+## 🧪 Testing
+
+Run the comprehensive test suite:
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=agentic_rag --cov-report=html
+
+# Run specific test categories
+pytest tests/test_vector_stores.py
+pytest tests/test_llm_providers.py
+pytest tests/test_complete_features.py
+
+# Run performance benchmarks
+pytest tests/test_evaluation.py -v
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+### Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/ai-prishtina-agentic-rag.git
+cd ai-prishtina-agentic-rag
+
+# Install in development mode
+pip install -e .[dev]
+
+# Install pre-commit hooks
+pre-commit install
+
+# Run tests
+pytest
+```
+
+### Code Quality
+
+We maintain high code quality standards:
+
+- **Type Safety**: Full type hints with mypy validation
+- **Code Formatting**: Black and isort for consistent formatting
+- **Linting**: Flake8 for code quality checks
+- **Testing**: Comprehensive test suite with pytest
+- **Documentation**: Detailed docstrings and examples
+
+## 📄 License
+
+This project is dual-licensed under:
+
+- **GNU Affero General Public License v3 or later (AGPLv3+)** - for open source projects
+- **Commercial License** - for proprietary/commercial use
+
+### Open Source License (AGPLv3+)
+
+This software is free for use in open source projects under the GNU Affero General Public License v3 or later. This means:
+
+- ✅ **Free to use** for open source projects
+- ✅ **Modify and distribute** with source code
+- ✅ **Network use** requires source disclosure
+- ⚠️ **Copyleft**: Derivative works must also be AGPLv3+
+
+### Commercial License
+
+For commercial use, proprietary applications, or if you prefer not to comply with AGPLv3+ requirements:
+
+- 💼 **Commercial licensing available** for proprietary use
+- 🚀 **No copyleft obligations** for your application
+- 🛟 **Priority support** and maintenance included
+- 📞 **Contact**: info@albanmaxhuni.com
+
+See the [LICENSE](LICENSE) file for complete details.
+
+## 🙏 Acknowledgments
+
+- Built with ❤️ by the AI Prishtina team
+- Inspired by the latest research in RAG and agentic AI systems
+- Thanks to the open-source community for the foundational libraries
+
+## 📞 Support & Contact
+
+- **Documentation**: [https://ai-prishtina-agentic-rag.readthedocs.io](https://ai-prishtina-agentic-rag.readthedocs.io)
+- **Issues**: [GitHub Issues](https://github.com/albanmaxhuni/ai-prishtina-agentic-rag/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/albanmaxhuni/ai-prishtina-agentic-rag/discussions)
+- **Email**: info@albanmaxhuni.com
+
+---
+
+**Made with 🤖 by AI Prishtina** | **Empowering the future of intelligent information retrieval**
