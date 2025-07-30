@@ -1,0 +1,43 @@
+{#{% extends 'ui/layout.html' %}#}
+{% load i18n %}
+{% load partials %}
+{% load ui %}
+
+{% partialdef header %}
+    {% if not user.is_managed %}
+        <button class="button is-light" hx-get="{% url 'user:change_password' %}" hx-swap="none">
+            <span>{% translate 'Change Password' %}</span>
+        </button>
+        <button class="button is-light" hx-get="{% url 'user:change_email' %}" hx-swap="none">
+            <span>{% translate 'Change E-Mail' %}</span>
+        </button>
+    {% endif %}
+{% endpartialdef %}
+
+{% partialdef data %}
+    <section class="box">
+        <form id="user-form" hx-post="{% url 'user:detail' %}" hx-trigger="change changed" hx-select="#user-form" hx-swap="outerHTML" hx-select-oob="#navbar-user-name">
+            {% csrf_token %}
+            <div class="columns">
+                <div class="column">
+                    {% include 'ui/form_error.html' %}
+                </div>
+            </div>
+            <div class="columns">
+                <div class="column is-6">
+                    {% translate 'Username' as username %}
+                    {{ form.username|wrap_form_field:username }}
+                    {{ form.first_name|wrap_form_field }}
+                    {{ form.last_name|wrap_form_field }}
+                </div>
+                <div class="column is-6">
+                    {% if not user.is_managed %}
+                        {{ user|wrap_model_field:'email' }}
+                    {% endif %}
+                    {{ form.language_code|wrap_form_field }}
+                    {{ form.theme|wrap_form_field }}
+                </div>
+            </div>
+        </form>
+    </section>
+{% endpartialdef %}
