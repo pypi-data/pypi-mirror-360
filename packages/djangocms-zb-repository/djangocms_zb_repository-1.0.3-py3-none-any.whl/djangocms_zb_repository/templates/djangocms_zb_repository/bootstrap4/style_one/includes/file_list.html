@@ -1,0 +1,44 @@
+{% load i18n cms_tags zb_tags %}
+{# Template del listado de archivos #}
+{% for file in files %}
+    <div class="card mb-3 shadow-sm bg-white">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12 col-sm-12 col-md-2 text-center d-flex justify-content-center align-items-center">
+                    <a href="{{ file.file_url }}" target="{{ instance.target }}"
+                       class="{{ file.file_extended.published|yesno:"text-reset,text-danger" }}">
+                        <i class="{{ file.icon_class }} fa-3x"
+                           style="color: {{ file.file_extended.published|yesno:'#069169,red' }}"></i>
+                    </a>
+                </div>
+                <div class="col-10 {{ file.file_extended.published|yesno:",text-danger" }} mt-3 mt-sm-3">
+                    <h5 class="card-title">{{ file.file_extended.title }}</h5>
+                    <p class="card-text">{{ file.description }}</p>
+                </div>
+                {% if request.toolbar.edit_mode_active and perms.zb_repository.change_file and  perms.zb_repository.change_fileextended %}
+                    <div class="position-absolute d-flex justify-content-end" style="top: 0; right: 0">
+                        {% render_model_block file %}
+                            <button class="btn btn-info"><i class="fa-light fa-file-pen"></i></button>
+                        {% endrender_model_block %}
+                        <form action="" method="post">
+                            {% csrf_token %}
+                            <label for="file_id"></label>
+                            <input type="hidden" name="file_id" id="file_id" value="{{ file.id }}">
+                            <button class="btn {{ file.file_extended.published|yesno:"btn-danger,btn-info" }}">
+                                <i class="fa-light {{ file.file_extended.published|yesno:"fa-file-slash,fa-file-check" }}"></i>
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% if request.GET.search %}
+            {% zb_concat instance.category "|" as category_replace %}
+            <div class="card-footer text-black-50">
+                {% trans "Category" %}: {{ file.file_extended.category|stringformat:"s"|zb_replace:category_replace|slice:"3:" }}
+            </div>
+        {% endif %}
+    </div>
+{% endfor %}
+{% zb_concat "djangocms_zb_repository/" instance.template "/includes/pagination.html" as template %}
+{% include template %}

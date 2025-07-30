@@ -1,0 +1,19 @@
+{# Template para el manejo de la paginación #}
+{% load i18n cms_tags %}
+{% if paginator.num_pages > 1 %}
+    <nav style="text-align: center">
+        {% if files.has_previous %}
+            <a href="?page={{ files.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}#file-default{% endif %}">
+                &laquo; {% trans 'previous' %}
+            </a>
+        {% endif %}
+        <span class="current">
+            {% trans 'Page' %} {{ files.number }} {% trans 'of' %} {{ paginator.num_pages }}
+        </span>
+        {% if files.has_next %}
+            <a href="?page={{ files.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}#file-default{% endif %}">
+                {% trans 'next' %}&raquo;
+            </a>
+        {% endif %}
+    </nav>
+{% endif %}
