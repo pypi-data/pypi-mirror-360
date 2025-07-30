@@ -1,0 +1,58 @@
+# @package _global_
+
+# To start training, run:
+# export TOKENIZERS_PARALLELISM=false
+# lobster_train experiment=train_ume
+
+defaults:
+  - override /model: ume
+  - override /data: ume
+  - override /callbacks: [base]
+
+compile: false
+
+data:
+  _target_: lobster.data.UmeLightningDataModule
+  root: ${oc.env:LOBSTER_DATA_DIR} 
+  datasets: ["M320M", "Calm", "AMPLIFY", "ZINC"] # "OpenGenome2"]
+  batch_size: 128
+  tokenizer_max_length: ${model.max_length}
+  pin_memory: true
+  shuffle_buffer_size: 1000
+  num_workers: 4
+  seed: 0
+  download: true 
+  sample: true 
+  weights: null 
+
+paths:
+  root_dir: ${oc.env:LOBSTER_RUNS_DIR} 
+  
+trainer:
+  max_steps: 50_000
+  val_check_interval: 2000
+  precision: 16-mixed
+  gradient_clip_val: 0.5
+  accumulate_grad_batches: 8
+  max_time: "00:24:00:00"
+  limit_val_batches: 20_000
+  devices: auto
+
+model:
+  model_name: UME_small
+  max_length: 8192
+  
+callbacks:
+  moleculeace_linear_probe:
+    max_length: ${model.max_length}
+    run_every_n_epochs: 1
+  calm_linear_probe:
+    max_length: ${model.max_length}
+    run_every_n_epochs: 1
+
+logger:
+  name: ume_${model.model_name}_${now:%Y-%m-%d_%H-%M-%S}
+  project: lobster
+  group: ume-dev-${now:%Y-%m-%d-%H-%M-%S}
+  entity: ${oc.env:LOBSTER_USER}
+  save_dir: ${oc.env:LOBSTER_RUNS_DIR}

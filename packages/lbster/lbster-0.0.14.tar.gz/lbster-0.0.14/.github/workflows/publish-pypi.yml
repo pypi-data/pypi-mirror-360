@@ -1,0 +1,43 @@
+name: publish package on pypi
+
+on:
+  workflow_dispatch:
+  release:
+    types:
+      - published
+
+jobs:
+  build:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 0
+      - uses: "actions/setup-python@v5"
+        with:
+          python-version: "3.x"
+      - run: "python -m pip install --upgrade build"
+      - run: "python -m build ."
+      - uses: "actions/upload-artifact@v4"
+        with:
+          name: "python-package-distributions"
+          path: "dist/"
+
+  publish:
+    environment:
+      name: "pypi.org"
+      url: "https://pypi.org/project/lbster"
+    needs:
+      - "build"
+    permissions:
+      id-token: "write"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/download-artifact@v4"
+        with:
+          name: "python-package-distributions"
+          path: "dist/"
+      - uses: "pypa/gh-action-pypi-publish@release/v1"
+        with:
+          skip-existing: true
+          verbose: true
