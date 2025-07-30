@@ -1,0 +1,41 @@
+# Board Configurations
+board_configs:
+  rzsbc:
+    enabled: true
+    board_type: "rzsbc"
+    serial_port: "/dev/ttyUSB0"
+    baud_rate: 115200
+    platform: "rzg2l-sbc"
+    ip_addr_1: "169.254.43.10"
+    ip_addr_2: "169.254.43.20"
+    server_addr: "169.254.43.7"
+
+    usb_relay_config:
+      name: "usbrelay"
+      port: "0_1"
+      on_state: 1
+      off_state: 0
+
+      core-image-bsp:
+        enabled: true # User can disable entire BSP image
+        description: "BSP (Board Support Package) image with networking"
+        module_number: 2
+        features:
+
+          i2c:
+            enabled: true
+            order: 3
+            description: "I2C communication interface"
+            scripts_path: "test/i2c/i2c.robot"
+            config:
+              retry_count: 3
+              delay_between_commands: 1
+            instances:
+              i2c_0:
+                enabled: true
+                i2c_bus: 0
+                expected_addr: "12"
+              i2c_3:
+                enabled: true
+                i2c_bus: 3
+                expected_addr: "50"
