@@ -1,0 +1,134 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "link2abc"
+dynamic = ["version"]
+description = "Transform any link into music with AI - simple as that!"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Jerry G.Music Assembly", email = "jerry@gmusic.dev"},
+]
+keywords = ["music", "ai", "abc", "notation", "chatmusician", "orpheus", "link-to-abc", "web-to-music"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Artistic Software",
+    "Topic :: Internet :: WWW/HTTP",
+]
+
+# Core dependencies - minimal for 99% success rate
+dependencies = [
+    "requests>=2.25.0",
+    "beautifulsoup4>=4.9.0",
+    "lxml>=4.6.0",
+    "music21>=8.1.0",
+    "click>=8.0.0",
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0.0",
+]
+
+# Optional enhancement tiers
+[project.optional-dependencies]
+# Tier 2: AI Enhancement (ChatMusician focus)
+ai = [
+    "openai>=1.0.0",
+    "anthropic>=0.18.0",
+    "langfuse>=2.0.0",
+]
+
+# Tier 3: Neural Processing (Orpheus integration)
+neural = [
+    "torch>=2.0.0",
+    "torchaudio>=2.0.0", 
+    "symusic>=0.5.0",
+    "vosk>=0.3.0",
+]
+
+# Tier 4: Cloud Execution
+cloud = [
+    "boto3>=1.26.0",
+    "google-cloud-compute>=1.11.0",
+    "redis>=4.0.0",
+]
+
+# Development dependencies
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
+]
+
+# Full installation (everything)
+full = [
+    "link2abc[ai,neural,cloud]",
+]
+
+[project.urls]
+Homepage = "https://github.com/jgwill/link2abc"
+Documentation = "https://link2abc.readthedocs.io"
+Repository = "https://github.com/jgwill/link2abc"
+Issues = "https://github.com/jgwill/link2abc/issues"
+Changelog = "https://github.com/jgwill/link2abc/blob/main/CHANGELOG.md"
+
+[project.scripts]
+link2abc = "linktune.cli:main"
+
+[tool.hatch.version]
+path = "src/linktune/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/linktune"]
+
+# Development tools configuration
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+
+[tool.ruff]
+line-length = 88
+target-version = "py38"
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings  
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = ["tests"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "ai: Tests requiring AI services",
+    "neural: Tests requiring neural dependencies",
+    "cloud: Tests requiring cloud services",
+]
