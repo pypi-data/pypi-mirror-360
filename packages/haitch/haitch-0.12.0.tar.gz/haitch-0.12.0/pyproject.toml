@@ -1,0 +1,106 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "haitch"
+dynamic = ["version"]
+description = "simplify your HTML building."
+readme = "README.md"
+requires-python = ">=3.8"
+license = "BSD-3-Clause"
+authors = [
+  { name = "Logan Connolly", email = "me@loganconnolly.com" },
+]
+classifiers = [
+  "Operating System :: OS Independent",
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = ["typing-extensions"]
+
+[project.urls]
+Homepage = "https://sr.ht/~loges/haitch"
+Source = "https://git.sr.ht/~loges/haitch"
+Issues = "https://todo.sr.ht/~loges/haitch"
+
+[tool.hatch.version]
+path = "src/haitch/__about__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/CHANGELOG.md",
+    "/LICENSE.txt",
+    "/README.md",
+    "/tests",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/haitch"]
+
+[tool.hatch.envs.default]
+dependencies = [
+  "beautifulsoup4",
+  "coverage[toml]>=6.5",
+  "mypy>=1.0.0",
+  "pytest",
+  "pytest-snapshot",
+  "ruff",
+]
+[tool.hatch.envs.default.scripts]
+snap = "pytest --snapshot-update tests/snapshots"
+test = "pytest -vv {args:tests}"
+test-cov = "coverage run -m pytest {args:tests}"
+cov-report = [
+  "- coverage combine",
+  "coverage report -m",
+]
+cov = [
+  "test-cov",
+  "cov-report",
+]
+check = [
+  "ruff format --diff",
+  "ruff check {args:src/haitch}",
+  "mypy --install-types --non-interactive {args:src/haitch}"
+]
+format = "ruff format"
+
+[[tool.hatch.envs.all.matrix]]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+
+[tool.mypy]
+strict = true
+
+[tool.ruff]
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "PIE"]
+ignore = ["E501"]
+
+[tool.coverage.run]
+source_pkgs = ["haitch"]
+branch = true
+parallel = true
+omit = [
+  "src/haitch/__about__.py",
+]
+
+[tool.coverage.paths]
+haitch= ["src/haitch"]
+tests = ["tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
