@@ -1,0 +1,26 @@
+name: Scheduled PyInstaller Bundle
+
+on:
+  schedule:
+    - cron: "15 9 * * 2"
+  workflow_dispatch:
+
+jobs:
+  call-make-bundle:
+    uses: ./.github/workflows/make_bundle.yml
+    with:
+      git-ref: ${{ github.ref_name }}
+  update-downloads-page:
+    name: Trigger Downloads page generation
+    needs: call-make-bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger workflow
+        run: |
+          curl -L \
+          -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.DOWNLOADS_TRIGGER_TOKEN }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/spine-tools/Downloads/actions/workflows/generate_readme.yml/dispatches \
+          -d '{"ref":"main"}'

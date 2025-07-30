@@ -1,0 +1,44 @@
+# GitHub Action to run tests
+name: Test suite
+
+# Run workflow on every push that includes Python source files
+on:
+  push:
+    paths:
+      - "**.py"
+      - ".github/workflows/test_runner.yml"
+      - "requirements.txt"
+      - "pyproject.toml"
+      - "execution_tests/**"
+
+jobs:
+  call-unit-tests:
+    name: Unit tests
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: macos-latest
+            python-version: "3.13"
+    uses: ./.github/workflows/unit_tests.yml
+    with:
+      host-os: ${{ matrix.os }}
+      python-version: ${{ matrix.python-version }}
+    secrets: inherit
+  call-execution-tests:
+    name: Execution tests
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: macos-latest
+            python-version: "3.13"
+    uses: ./.github/workflows/execution_tests.yml
+    with:
+      host-os: ${{ matrix.os }}
+      python-version: ${{ matrix.python-version }}
+    secrets: inherit

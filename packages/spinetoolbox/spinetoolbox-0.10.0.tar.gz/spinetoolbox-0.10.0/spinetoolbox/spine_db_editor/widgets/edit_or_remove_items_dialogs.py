@@ -1,0 +1,343 @@
+######################################################################################################################
+# Copyright (C) 2017-2022 Spine project consortium
+# Copyright Spine Toolbox contributors
+# This file is part of Spine Toolbox.
+# Spine Toolbox is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General
+# Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option)
+# any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
+# Public License for more details. You should have received a copy of the GNU Lesser General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
+######################################################################################################################
+
+"""Classes for custom QDialogs to edit items in databases."""
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import QComboBox, QTabWidget, QVBoxLayout
+from ...helpers import DB_ITEM_SEPARATOR, default_icon_id
+from ...mvcmodels.minimal_table_model import MinimalTableModel
+from ..helpers import bool_to_string, optional_to_string, string_to_bool, string_to_display_icon
+from .custom_delegates import ManageEntitiesDelegate, ManageEntityClassesDelegate, RemoveEntitiesDelegate
+from .custom_qtableview import ManageEntityClassesTable
+from .manage_items_dialogs import (
+    DialogWithButtons,
+    GetEntitiesMixin,
+    GetEntityClassesMixin,
+    ManageItemsDialog,
+    ShowIconColorEditorMixin,
+)
+
+
+class EditOrRemoveItemsDialog(ManageItemsDialog):
+    def __init__(self, parent, db_mngr):
+        super().__init__(parent, db_mngr)
+        self.items = []
+
+    def all_databases(self, row):
+        """Returns a list of db names available for a given row."""
+        item = self.items[row]
+        return list(self.db_mngr.name_registry.display_name_iter(item.db_maps))
+
+
+class EditEntityClassesDialog(ShowIconColorEditorMixin, EditOrRemoveItemsDialog):
+    """A dialog to query user's preferences for updating entity classes."""
+
+    def __init__(self, parent, db_mngr, selected):
+        """
+        Args:
+            parent (SpineDBEditor): data store widget
+            db_mngr (SpineDBManager): the manager to do the update
+            selected (set): set of EntityClassItem instances to edit
+        """
+        super().__init__(parent, db_mngr)
+        self.setWindowTitle("Edit entity classes")
+        self.model = MinimalTableModel(self)
+        self.table_view.setModel(self.model)
+        self.table_view.setItemDelegate(ManageEntityClassesDelegate(self))
+        self.connect_signals()
+        self.model.set_horizontal_header_labels(
+            ["entity class name", "description", "display icon", "active by default", "databases"]
+        )
+        self.orig_data = []
+        self.default_display_icon = default_icon_id()
+        model_data = []
+        for item in selected:
+            data = item.db_map_data(item.first_db_map)
+            row_data = [item.name, data["description"], data["display_icon"], data["active_by_default"]]
+            self.orig_data.append(row_data.copy())
+            row_data.append(item.display_database)
+            model_data.append(row_data)
+            self.items.append(item)
+        self.model.reset_model(model_data)
+
+    def make_table_view(self):
+        table_view = ManageEntityClassesTable(self)
+        table_view.init_copy_and_paste_actions()
+        return table_view
+
+    def connect_signals(self):
+        super().connect_signals()
+        # pylint: disable=unnecessary-lambda
+        self.table_view.itemDelegate().icon_color_editor_requested.connect(
+            lambda index: self.show_icon_color_editor(index)
+        )
+
+    @Slot()
+    def accept(self):
+        """Collect info from dialog and try to update items."""
+        db_map_data = {}
+        for i in range(self.model.rowCount()):
+            name, description, display_icon, active_by_default, db_names = self.model.row_data(i)
+            if db_names is None:
+                db_names = ""
+            item = self.items[i]
+            db_maps = []
+            for database in db_names.split(", "):
+                db_map = next(
+                    (
+                        db_map
+                        for db_map in item.db_maps
+                        if self.db_mngr.name_registry.display_name(db_map.sa_url) == database
+                    ),
+                    None,
+                )
+                if db_map is None:
+                    self.parent().msg_error.emit(f"Invalid database {database} at row {i + 1}")
+                    return
+                db_maps.append(db_map)
+            if not name:
+                self.parent().msg_error.emit(f"Entity class name missing at row {i + 1}")
+                return
+            orig_row = self.orig_data[i]
+            if [name, description] == orig_row:
+                continue
+            if not display_icon:
+                display_icon = self.default_display_icon
+            for db_map in db_maps:
+                db_item = {
+                    "id": item.db_map_id(db_map),
+                    "name": name,
+                    "description": description,
+                    "display_icon": display_icon,
+                    "active_by_default": active_by_default,
+                }
+                db_map_data.setdefault(db_map, []).append(db_item)
+        if not db_map_data:
+            self.parent().msg_error.emit("Nothing to update")
+            return
+        self.db_mngr.update_items("entity_class", db_map_data)
+        super().accept()
+
+
+class EditEntitiesDialog(GetEntityClassesMixin, GetEntitiesMixin, EditOrRemoveItemsDialog):
+    """A dialog to query user's preferences for updating entities."""
+
+    def __init__(self, parent, db_mngr, selected, class_key):
+        """
+        Args:
+            parent (SpineDBEditor): data store widget
+            db_mngr (SpineDBManager): the manager to do the update
+            selected (set): set of EntityItem instances to edit
+            class_key (tuple): for identifying the entity class
+        """
+        super().__init__(parent, db_mngr)
+        self.setWindowTitle("Edit entities")
+        self.model = MinimalTableModel(self)
+        self.table_view.setModel(self.model)
+        self.table_view.setItemDelegate(ManageEntitiesDelegate(self))
+        self.connect_signals()
+        self.db_maps = set(db_map for item in selected for db_map in item.db_maps)
+        self.keyed_db_maps = self.db_mngr.name_registry.map_display_names_to_db_maps(self.db_maps)
+        self.class_key = class_key
+        self.model.set_horizontal_header_labels(
+            [x + " byname" for x in self.dimension_name_list] + ["entity name", "databases"]
+        )
+        self.orig_data = []
+        model_data = []
+        for item in selected:
+            data = item.db_map_data(item.first_db_map)
+            row_data = [DB_ITEM_SEPARATOR.join(byname) for byname in item.element_byname_list] + [data["name"]]
+            self.orig_data.append(row_data.copy())
+            row_data.append(item.display_database)
+            model_data.append(row_data)
+            self.items.append(item)
+        self.model.reset_model(model_data)
+
+    @Slot()
+    def accept(self):
+        """Collect info from dialog and try to update items."""
+        db_map_data = {}
+        name_column = self.model.horizontal_header_labels().index("entity name")
+        db_column = self.model.horizontal_header_labels().index("databases")
+        for i in range(self.model.rowCount()):
+            row_data = self.model.row_data(i)
+            item = self.items[i]
+            element_name_list = [row_data[column] for column in range(name_column)]
+            name = row_data[name_column]
+            if not name:
+                self.parent().msg_error.emit(f"Entity name missing at row {i + 1}")
+                return
+            orig_row = self.orig_data[i]
+            if [*element_name_list, name] == orig_row:
+                continue
+            db_names = row_data[db_column]
+            if db_names is None:
+                db_names = ""
+            db_maps = []
+            for database in db_names.split(", "):
+                try:
+                    db_map = next(
+                        (
+                            db_map
+                            for db_map in item.db_maps
+                            if self.db_mngr.name_registry.display_name(db_map.sa_url) == database
+                        )
+                    )
+                except StopIteration:
+                    self.parent().msg_error.emit(f"Invalid database {database} at row {i + 1}")
+                    return
+                db_maps.append(db_map)
+            pre_db_item = {"name": name}
+            for db_map in db_maps:
+                id_ = item.db_map_id(db_map)
+                # Find dimension_id_list
+                entity_classes = self.db_map_ent_cls_lookup[db_map]
+                if (self.class_key) not in entity_classes:
+                    self.parent().msg_error.emit(
+                        f"Invalid entity class '{self.class_name}' for db '{self.db_mngr.name_registry.display_name(db_map.sa_url)}' at row {i + 1}"
+                    )
+                    return
+                ent_cls = entity_classes[self.class_key]
+                dimension_id_list = ent_cls["dimension_id_list"]
+                entities = self.db_map_ent_lookup[db_map]
+                # Find element_id_list
+                element_id_list = []
+                for dimension_id, element_name in zip(dimension_id_list, element_name_list):
+                    if (dimension_id, element_name) not in entities:
+                        self.parent().msg_error.emit(
+                            f"Invalid entity '{element_name}' for db '{self.db_mngr.name_registry.display_name(db_map.sa_url)}' at row {i + 1}"
+                        )
+                        return
+                    element_id = entities[dimension_id, element_name]["id"]
+                    element_id_list.append(element_id)
+                db_item = pre_db_item.copy()
+                db_item.update({"id": id_, "element_id_list": element_id_list})
+                db_map_data.setdefault(db_map, []).append(db_item)
+        if not db_map_data:
+            self.parent().msg_error.emit("Nothing to update")
+            return
+        self.db_mngr.update_items("entity", db_map_data)
+        super().accept()
+
+
+class RemoveEntitiesDialog(EditOrRemoveItemsDialog):
+    """A dialog to query user's preferences for removing tree items."""
+
+    def __init__(self, parent, db_mngr, selected):
+        """
+        Args:
+            parent (SpineDBEditor): data store widget
+            db_mngr (SpineDBManager): the manager to do the removal
+            selected (dict): maps item type (class) to instances
+        """
+        super().__init__(parent, db_mngr)
+        self.setWindowTitle("Remove items")
+        self.model = MinimalTableModel(self)
+        self.table_view.setModel(self.model)
+        self.table_view.setItemDelegate(RemoveEntitiesDelegate(self))
+        self.connect_signals()
+        self.model.set_horizontal_header_labels(["type", "name", "databases"])
+        model_data = []
+        for item_type, items in selected.items():
+            for item in items:
+                row_data = [item_type, item.name, item.display_database]
+                model_data.append(row_data)
+                self.items.append(item)
+        self.model.reset_model(model_data)
+
+    @Slot()
+    def accept(self):
+        """Collect info from dialog and try to remove items."""
+        db_map_typed_data = {}
+        for i in range(self.model.rowCount()):
+            item_type, _, db_names = self.model.row_data(i)
+            if db_names is None:
+                db_names = ""
+            item = self.items[i]
+            db_maps = []
+            for database in db_names.split(", "):
+                db_map = next(
+                    (
+                        db_map
+                        for db_map in item.db_maps
+                        if self.db_mngr.name_registry.display_name(db_map.sa_url) == database
+                    ),
+                    None,
+                )
+                if db_map is None:
+                    self.parent().msg_error.emit(f"Invalid database {database} at row {i + 1}")
+                    return
+                db_maps.append(db_map)
+            for db_map in db_maps:
+                id_ = item.db_map_id(db_map)
+                db_map_typed_data.setdefault(db_map, {}).setdefault(item_type, set()).add(id_)
+        if not any(db_map_typed_data.values()):
+            self.parent().msg_error.emit("Nothing to remove")
+            return
+        self.db_mngr.remove_items(db_map_typed_data)
+        super().accept()
+
+
+class SelectSuperclassDialog(GetEntityClassesMixin, DialogWithButtons):
+    def __init__(self, parent, entity_class_item, db_mngr, *db_maps):
+        super().__init__(parent, db_mngr)
+        self.entity_class_item = entity_class_item
+        self.db_maps = db_maps
+        self._tab_widget = QTabWidget(self)
+        self._subclass_name = self.entity_class_item.name
+        self._combobox_superclass_subclass = {}
+        for db_map in self.db_maps:
+            combobox = QComboBox(self)
+            superclass_subclass = db_map.get_item("superclass_subclass", subclass_name=self._subclass_name)
+            self._combobox_superclass_subclass[db_map] = (combobox, superclass_subclass)
+            entity_classes = self._entity_class_name_list_from_db_maps(db_map)
+            combobox.addItems(["(None)"] + [x for x in entity_classes if x != self._subclass_name])
+            if superclass_subclass:
+                combobox.setCurrentText(superclass_subclass["superclass_name"])
+            else:
+                combobox.setCurrentIndex(0)
+            self._tab_widget.addTab(combobox, self.db_mngr.name_registry.display_name(db_map.sa_url))
+        self.connect_signals()
+        self.setWindowTitle(f"Select {self._subclass_name}'s superclass")
+
+    def _populate_layout(self):
+        tab_layout = QVBoxLayout()
+        tab_layout.addWidget(self._tab_widget)
+        tab_layout.addStretch(1)
+        self.layout().addLayout(tab_layout, 0, 0)
+        super()._populate_layout()
+
+    @Slot()
+    def accept(self):
+        db_map_data_to_add = {}
+        db_map_data_to_upd = {}
+        db_map_typed_ids_to_rm = {}
+        for db_map, (combobox, superclass_subclass) in self._combobox_superclass_subclass.items():
+            if combobox.currentIndex() == 0:
+                if superclass_subclass:
+                    db_map_typed_ids_to_rm[db_map] = {"superclass_subclass": {superclass_subclass["id"]}}
+                continue
+            superclass_name = combobox.currentText()
+            if not superclass_subclass:
+                db_map_data_to_add[db_map] = [
+                    {"subclass_name": self._subclass_name, "superclass_name": superclass_name}
+                ]
+            elif superclass_name != superclass_subclass["superclass_name"]:
+                db_map_data_to_upd[db_map] = [{"id": superclass_subclass["id"], "superclass_name": superclass_name}]
+        if not db_map_data_to_add and not db_map_data_to_upd and not db_map_typed_ids_to_rm:
+            self.parent().msg_error.emit("Nothing changed")
+            return
+        identifier = self.db_mngr.get_command_identifier()
+        self.db_mngr.add_items("superclass_subclass", db_map_data_to_add, identifier=identifier)
+        self.db_mngr.update_items("superclass_subclass", db_map_data_to_upd, identifier=identifier)
+        self.db_mngr.remove_items(db_map_typed_ids_to_rm, identifier=identifier)
+        super().accept()
