@@ -1,0 +1,210 @@
+{% extends 'corptax/base.html' %}
+
+{% load i18n %}
+{% load humanize %}
+{% block details %}
+<div class="card text-center">
+    <div class="card-header">
+      <ul class="nav nav-tabs card-header-tabs">
+        <li class="nav-item">
+          <a class="nav-link" href="/corptax/">Tax Bill Preview</a>
+        </li>
+        {% block tax_month_list_nav %}
+            {% for x in tax_month_list|slice:":1" %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/corptax/tax/{{x.tax_date|date:'m'}}/{{x.tax_date|date:'Y'}}">Tax Bill</a>
+                </li>
+            {% endfor %}
+        {% endblock %}
+        <li class="nav-item">
+            <a class="nav-link" href="/corptax/data-export/{{request.user.profile.main_character.corporation_id}}/member-ledger.csv">Member Ledger CSV export</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/corptax/finance">Razor Finance</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" aria-current="true" href="/corptax/corpstats">Corporation statistic</a>
+        </li>
+      </ul>
+    </div>
+    <div class="card card-primary">
+        <div class="card-header">
+            <div class="card-title"><h3>Corporation Stats</h3></div>
+        </div>
+
+        <div class="card-body">
+            <p class="card-title">Information about each corp in Razor and EDGE</br>
+            List the total corporation member, how many are in auth and audit</br>
+            also shows tax settings, shows if we get corporation wallets entry for tax calculation</br>
+            and if the CEO is in auth</p>
+        </div>
+    </div>
+</div>
+<div class="card card-primary">
+    <div class="card-header">
+        <div class="card-title">Razor Alliance</div>
+    </div>
+</div>
+<div class="table-responsive">
+    <table class="table">
+        <tr>
+            <th>Corp</th>
+            <th>Total Members</th>
+            <th>Member in Auth</th>
+            <th>Member in Audit</th>
+            <th>Corp Tax settings</th>
+            <th>Ceo in Auth</th>
+            <th>Journal entrys</th>
+        </tr>
+        {% block corp_stats_razor %}
+            {% for x in corp_stats_razor %}    
+            <tr>
+                <td>
+                    <a href="{{x.dotlan_url}}" target="_blank">{{x.corp_name}}</a>
+                </td>
+                {% if x.total_member < 5 %}
+                    <td class="bg-info">
+                        {{x.total_member}}
+                    </td>
+                {% else %}
+                    <td>
+                        {{x.total_member}}
+                    </td>
+                {% endif %}
+                {% if x.auth_member == 0 %}
+                    <td class="bg-danger">
+                        {{x.auth_member}}
+                    </td>
+                {% else %}
+                    <td>
+                        {{x.auth_member}}
+                    </td>
+                {% endif %}
+                <td>
+                    {{x.audit_member}}
+                </td>
+                {% if x.corp_tax == 0 %} 
+                    <td class="bg-danger">
+                        {{x.corp_tax}}
+                    </td>
+                {% elif x.corp_tax < 10 %}
+                    <td class="bg-info">
+                        {{x.corp_tax}}
+                    </td>
+                {% else %}
+                    <td>
+                        {{x.corp_tax}}
+                    </td>
+                {% endif %}
+                {% if x.auth_ceo == 1 %}
+                    <td class="bg-danger">
+                        No
+                    </td>
+                    {% else %}
+                    <td class="bg-success">
+                        Yes
+                    </td>
+                {% endif %}
+                {% if x.corp_journal == 1 %}
+                    <td class="bg-danger">
+                        NO
+                    </td>
+                    {% else %}
+                    <td class="bg-success">
+                        YES
+                    </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        {% endblock %}
+    </table>
+</div>
+<div class="card card-primary">
+    <div class="card-header">
+        <div class="card-title">EDGE Alliance</div>
+    </div>
+</div>
+<div class="table-responsive">
+    <table class="table">
+        <tr>
+            <th>Corp</th>
+            <th>Total Members</th>
+            <th>Member in Auth</th>
+            <th>Member in Audit</th>
+            <th>Corp Tax settings</th>
+            <th>Ceo in Auth</th>
+            <th>Journal entrys</th>
+        </tr>
+        {% block corp_stats_edge %}
+            {% for x in corp_stats_edge %}    
+            <tr>
+                <td>
+                    <a href="{{x.dotlan_url}}" target="_blank">{{x.corp_name}}</a>
+                </td>
+                {% if x.total_member < 5 %}
+                    <td class="bg-info">
+                        {{x.total_member}}
+                    </td>
+                {% else %}
+                    <td>
+                        {{x.total_member}}
+                    </td>
+                {% endif %}
+                {% if x.auth_member == 0 %}
+                    <td class="bg-danger">
+                        {{x.auth_member}}
+                    </td>
+                {% else %}
+                    <td>
+                        {{x.auth_member}}
+                    </td>
+                {% endif %}
+                <td>
+                    {{x.audit_member}}
+                </td>
+                {% if x.corp_tax == 0 %} 
+                    <td class="bg-danger">
+                        {{x.corp_tax}}
+                    </td>
+                {% elif x.corp_tax < 10 %}
+                    <td class="bg-info">
+                        {{x.corp_tax}}
+                    </td>
+                {% else %}
+                    <td>
+                        {{x.corp_tax}}
+                    </td>
+                {% endif %}
+                {% if x.auth_ceo == 1 %}
+                    <td class="bg-danger">
+                        No
+                    </td>
+                    {% else %}
+                    <td class="bg-success">
+                        Yes
+                    </td>
+                {% endif %}
+                {% if x.corp_journal == 1 %}
+                    <td class="bg-danger">
+                        NO
+                    </td>
+                    {% else %}
+                    <td class="bg-success">
+                        YES
+                    </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        {% endblock %}
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_javascript %}
+{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block extra_script %}
+{% endblock %}
