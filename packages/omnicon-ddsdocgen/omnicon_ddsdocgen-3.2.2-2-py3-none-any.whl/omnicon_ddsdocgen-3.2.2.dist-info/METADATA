@@ -1,0 +1,235 @@
+Metadata-Version: 2.4
+Name: omnicon_ddsdocgen
+Version: 3.2.2
+Summary: DDS Document Generator
+Home-page: https://www.OmniconSystems.com
+Author-email: Omnicon Distributed Systems LTD <info@OmniconSystems.com>
+Classifier: License :: Other/Proprietary License
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Topic :: Communications
+Classifier: Topic :: Documentation
+Requires-Python: <4.0
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: build==0.9.0
+Requires-Dist: colorama==0.4.6
+Requires-Dist: docx2pdf==0.1.8
+Requires-Dist: importlib-metadata==5.0.0
+Requires-Dist: importlib-resources==5.10.0
+Requires-Dist: lxml==5.3.0
+Requires-Dist: Omnicon-GenericDDSEngine-Py==4.6.3.post1
+Requires-Dist: pep517==0.13.0
+Requires-Dist: pyparsing==3.0.9
+Requires-Dist: python-docx==0.8.11
+Requires-Dist: tomli==2.0.1
+Requires-Dist: tqdm==4.64.1
+Requires-Dist: typing_extensions==4.12.2
+Requires-Dist: zipp==3.19.1
+Requires-Dist: beautifulsoup4==4.12.3
+Requires-Dist: cssutils==2.7.1
+Requires-Dist: pywin32==306; platform_system == "Windows"
+Dynamic: license-file
+
+# Omnicon's DDS Document Generator - API Documentation
+
+## Overview
+
+Omnicon's DDS Document Generator (DocGen) facilitates the generation of two distinct types of documents from standard DDS type files:
+
+* Interface documentation (ICD): A human-readable document that describes a given DDS data model.
+* Comparison document: A document detailing the differences between two versions of DDS data models.
+
+Users can leverage the DocGen through Python APIs or through dedicated GUI applications (refer to https://www.omniconsystems.com/).
+
+## Software Requirements
+* Microsoft Word: This API utilizes Microsoft Word functionalities. Please ensure you have Microsoft Word 
+installed on your system. If not, you can purchase and download it from the Official Microsoft Office website.
+
+
+## API Installation
+```commandline
+pip install omnicon_ddsdocgen
+```
+* An Omnnicon license is required to utilize the API. Please Contact Info@OmniconSystems.com.
+
+
+# API Usage Example
+## ICD API Usage Example
+The example below showcases how to generate both PDF , Docx & Html ICDs from a directory named "TypeFiles" populated with DDS .xml files and a topic mapping file "TopicNamesToTypesDefMap.xml". Both are located under the "DocGen" folder.
+
+```python
+import os
+from pathlib import Path
+from omnicon_ddsdocgen import DDSDocGen
+
+try:
+    doc_gen = DDSDocGen()
+
+    doc_gen.generate_document(
+        dds_types_files=[os.path.join(Path(os.getcwd()), "DocGen", "TypeFiles")],
+        dds_topics_types_mapping=os.path.join(Path(os.getcwd()), "DocGen", "TopicNamesToTypesDefMap.xml"),
+        version="v1.0",
+        title="Demo ICD",
+        order_alphabetically=True,
+        output_file_name="DemoICD",
+        output_folder="",
+        output_formats=['pdf', 'docx', 'html'])
+
+except Exception as err:
+    print(err)
+    exit()
+```
+TypeFiles contains DDS XML files such as ShapeType.xml (based on http://www.omg.org/spec/DDS-XML):
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<types xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <enum name="ShapeFillKind">
+    <enumerator name="SOLID_FILL"/>
+    <enumerator name="TRANSPARENT_FILL"/>
+    <enumerator name="HORIZONTAL_HATCH_FILL"/>
+    <enumerator name="VERTICAL_HATCH_FILL"/>
+  </enum>
+  <struct name= "ShapeType">
+    <member name="color" stringMaxLength="128" type="string" key="true"/>
+    <member name="x" type="int32"/>
+    <member name="y" type="int32"/>
+    <member name="shapesize" type="int32"/>
+  </struct>
+  <struct name= "ShapeTypeExtended" baseType="ShapeType">
+    <member name="fillKind" type="nonBasic"  nonBasicTypeName= "ShapeFillKind"/>
+    <member name="angle" type="float32"/>
+  </struct>
+</types>
+```
+
+TopicNamesToTypesDefMap.xml (based on http://www.omg.org/spec/DDS-XML)
+```xml
+<dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <domain_library name="Domain_Lib">
+    <domain name="Domain">
+      <!--Types Definition-->
+      <register_type name="ShapeTypeExtended" type_ref="ShapeTypeExtended" />
+
+      <!--Topics Definition-->
+      <topic name="Square" register_type_ref="ShapeTypeExtended"/>
+    </domain>
+  </domain_library>
+</dds>
+```
+## Comparison API Usage Example
+The example provided here demonstrates generating a comparison report in PDF ,Docx & Html formats from the DDS file "ShapeType.xml" and the topic mapping "TopicNamesToTypesDefMap.xml".
+
+```python
+import os
+from pathlib import Path
+from omnicon_ddsdocgen import DDSDocGen
+
+try:
+    doc_gen = DDSDocGen()
+
+    doc_gen.generate_comparison_document(
+        origin_dds_types_files=[os.path.join(Path(os.getcwd()), "DocCompare", "v1", "TypeFiles")],
+        new_dds_types_files=[os.path.join(Path(os.getcwd()), "DocCompare", "v2", "TypeFiles")],
+        origin_dds_topics_types_mapping=os.path.join(Path(os.getcwd()), "DocCompare", "v1", "TopicNamesToTypesDefMap.xml"),
+        new_dds_topics_types_mapping=os.path.join(Path(os.getcwd()), "DocCompare", "v2", "TopicNamesToTypesDefMap.xml"),
+        output_file_name="ComparisonDemo",
+        title="Comparison Demo",
+        origin_version="v1",
+        new_version="v2",
+        order_alphabetically=True,
+        output_folder="",
+        output_formats=['pdf', 'docx', 'html'],
+        ignore_id=False,
+        comparison_method="name",
+        document_type="summary")
+
+except Exception as err:
+    print(err)
+    exit()
+```
+## API Documentation
+### Constructor API
+
+| Argument                   | Type     | Description															                                                                             | Optional |               Default value                |
+|:---------------------------|:---------|:-------------------------------------------------------------------------------------------------------|:--------:|:------------------------------------------:|
+| Logging verbosity          | string   | Specifies the log verbosity level of choice (DEBUG, INFO, WARNING, ERROR or FATAL)                     |    *     |                   "INFO"                   |
+| license_file_path          | string   | Specifies the path (relative/absolute) where the license file is.                                      |    *     |        (Current working directory)         |
+| progress_callback_function | function | A 'pointer' to the function that updates the progress bar.  [(see below)](#Progress Callback Function) |    *     | (A default function will print to console) |
+| license_file_path          | string   | Specifies the path (relative or absolute) to the folder containing the license file   |    *     |       The current working directory        |
+
+#### Progress Callback Function
+The progress bar callback function provides the user continues updates on the document generation progress.
+DocGen has a default progress callback function; However, the user can provide a custom callback function of his own 
+for the DocGen to call. 
+The DocGen will invoke the provided function with the following information:
+1. total_steps - total number of steps for the current generation process. 
+2. current_step - current step the generation process is currently at.
+3. info - additional optional textual information regarding the current step (e.g. "saving docx")
+
+```python
+ProgressBarCallbackExample(total_steps: int, current_step: int, info: str)    
+```
+
+
+### ICD Generation API Arguments
+| Argument                  | Type      | Description															                                                                                                                                                 | Optional |         Default value         |
+|:--------------------------|:----------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------:|:-----------------------------:|
+| dds_types_files           | list[str] | A list of file or folders names, in an order specified by the user according to files dependencies.                                                                        |          |                               |
+| dds_xml_topic_definition	 | string    | An XML file that contains a DDS topic to type mapping. Sending an empty string ("") will switch ICD from topic-based to type-based document                                |    *     | (creates type based document) |
+| output_file_name		        | string    | The user's file name of choice                                                                                                                                             |    *     |             "ICD"             |
+| title			                  | string    | The title/heading  of the document. This string will be added to the first page of the document.                                                                           |    *     |             "ICD"             |
+| version            			    | string    | The document's version number - This string will be added to the top page of the ICD.                                                                                      |    *     |             "1.0"             |
+| order_alphabetically      | bool      | Select the order of generated document topics/types: alphabetically or according to the loaded files order                                                                 |    *     |     True (alphabetically)     |
+| output_folder             | string    | The user's output folder of choice	                                                                                                                                        |    *     |   current working directory   |
+| output_formats				        | list[str] | A list of desired output formats as strings (list must contain at least one option). Available options: 'docx', 'pdf' and 'html'.                                          |          | 
+| Average_str_length        | int       | The average length of strings, based on the user's knowledge of the data model's characteristics. This parameter is used for calculating the average size of a messages.   |    *     |               1               |
+| average_sequence_length   | int       | The average length of sequences, based on the user's knowledge of the data model's characteristics. This parameter is used for calculating the average size of a messages. |    *     |               1               |  
+| parse_ROS2_Constants   | bool      | Whenever ROS2 constants are used in the data model, this parameter can be enabled to initiate an appropriate parsing mechanism.                                            |    *     |             False             |  
+
+
+### Type Comparison API Arguments
+
+| Argument                         | Type      | Description															                                                                                                                                                                      | Optional |         Default value         |
+|:---------------------------------|:----------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------:|:-----------------------------:|
+| origin_dds_types_files           | list[str] | A list of file or folders names OF THE ORIGIN VERSION, in an order specified by the user according to files dependencies.                                                                       |          |                               |
+| new_dds_types_files              | list[str] | A list of file or folders names OF THE REVISED VERSION, in an order specified by the user according to files dependencies.                                                                      |          |                               |
+| origin_dds_topics_types_mapping	 | string    | An XML file OF THE ORIGIN VERSION that contains a DDS topic to type mapping. Sending an empty string ("") will switch ICD from topic-based to type-based document                               |    *     | (creates type based document) |
+| new_dds_topics_types_mapping 	   | string    | An XML file OF THE REVISED VERSION that contains a DDS topic to type mapping. Sending an empty string ("") will switch ICD from topic-based to type-based document                              |    *     | (creates type based document) |
+| output_file_name		               | string    | The user's file name of choice                                                                                                                                                                  |    *     |         "Comparison"          |
+| title			                         | string    | The title/heading  of the document. This string will be added to the first page of the document.                                                                                                |    *     |         "Comparison"          |
+| origin_version            		     | string    | The version number OF THE ORIGIN VERSION - This string will be added to the top page of the ICD.                                                                                                |    *     |             "v1"              |
+| new_version            			       | string    | The version number OF THE REVISED VERSION - This string will be added to the top page of the ICD.                                                                                               |    *     |             "v2"              |
+| order_alphabetically             | bool      | Select the order of generated document topics/types: alphabetically or according to the loaded files order                                                                                      |    *     |     True (alphabetically)     |
+| output_folder                    | string    | The user's output folder of choice	                                                                                                                                                             |    *     |   current working directory   |
+| output_formats			                | list[str] | A list of desired output formats as strings (list must contain at least one option). Available options: 'docx', 'pdf' and 'html'.                                                               |          |                               |
+| parse_ROS2_Constants             | bool      | Whenever ROS2 constants are used in the data model, this parameter can be enabled to initiate an appropriate parsing mechanism.                                                                 |    *     |             False             |  
+| ignore_id		                | bool      | True - Ignore the DDS 'id' field when performing comparison. False - Compare the DDS 'id' field as well                                                                                         |    *     |             False             |
+| comparison_method                | str       | Allows choosing the comparison key: "name" - compare by field name. "id" - compare by DDS "id" field. NOTE: When choosing the "id" option, the parameter "ignore_id" above will be disregarded. |    *     |            "name"             |
+| document_type                    | str       | Allows choosing the report type: "complete" - create a report where all chapters contain all the fields in them. "summary" creates a report where only the changed fields are displayed         |    *     |          "complete"           |
+
+
+## API Return values
+**Both APIs return a tuple: (bool, list[str]).**
+* The boolean indicates whether a document was created (True) or not (False).
+* The list of strings holds information regarding the creation of the file(s), such as errors detected in a certain topic/type.
+    
+The message format is as follows: 
+
+```code
+[severity level] [time] - [file format] - [message]
+```
+* Severity level: could be one of the following: 'Fatal', 'Error', 'Warning', 'Info' or 'Debug'.
+* Time: a time stamp, in the following format: yyyy-mm-dd hh:mm:ss.
+* File format: Either a PDF ,DOCX or HTML.
+* Message: The information regarding the creation of the specified file
+
+ **Example**: 
+```code
+[ERROR] 2023-03-02 09:17:51.428162 - PDF - Failed to parse topic myTopic . Error : Could not find 'MyType' in provided files!
+[INFO] 2023-03-02 09:17:57.693217 - PDF - File saved successfully into 'D:\my\folder\TestingICD.pdf'
+[ERROR] 2023-03-02 09:17:57.862493 - DOCX - Failed to parse topic myTopic . Error : Could not find 'MyType' in provided files!
+[INFO] 2023-03-02 09:18:01.674094 - DOCX - File saved successfully into 'D:\my\folder\TestingICD.docx'
+```    
+
