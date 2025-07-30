@@ -1,0 +1,186 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "molactivity"
+version = "3.0"
+description = "Molecular activity prediction using transformer neural networks with 5 operational modes"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Dr. Jiang at BTBU", email = "yale2011@163.com"}
+]
+maintainers = [
+    {name = "Dr. Jiang at BTBU", email = "yale2011@163.com"}
+]
+keywords = [
+    "molecular-activity", "machine-learning", "transformer", "neural-networks", 
+    "natural-products", "drug-discovery", "cheminformatics", "bioinformatics",
+    "SMILES", "molecular-modeling", "deep-learning", "pharmaceutical",
+    "chemical-analysis", "molecular-descriptors", "QSAR", "drug-development"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education", 
+    "Intended Audience :: Healthcare Industry",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Environment :: Console",
+    "Natural Language :: English",
+]
+requires-python = ">=3.8"
+dependencies = []
+
+[project.optional-dependencies]
+# Mode B: Fast Mode (B series) 
+fast = [
+    "numpy>=1.21.0",
+]
+
+# Mode C: Rocket Mode (C series)
+rocket = [
+    "torch>=1.9.0",
+    "numpy>=1.21.0",
+]
+
+# Mode D: Image Mode (D series)
+image = [
+    "torch>=1.9.0",
+    "torchvision>=0.10.0",
+    "numpy>=1.21.0",
+    "pillow>=8.0.0",
+]
+
+# Mode E: Tools (E series)
+tools = [
+    "numpy>=1.21.0",
+    "matplotlib>=3.3.0",
+    "pandas>=1.3.0",
+    "rdkit-pypi>=2022.09.1",
+]
+
+# Advanced chemistry features
+chem = [
+    "rdkit-pypi>=2022.09.1",
+    "pandas>=1.3.0",
+    "numpy>=1.21.0",
+]
+
+# All features
+all = [
+    "torch>=1.9.0",
+    "torchvision>=0.10.0",
+    "numpy>=1.21.0",
+    "matplotlib>=3.3.0",
+    "pandas>=1.3.0",
+    "pillow>=8.0.0",
+    "rdkit-pypi>=2022.09.1",
+    "scipy>=1.7.0",
+]
+
+# Development dependencies
+dev = [
+    "pytest>=6.0.0",
+    "pytest-cov>=2.10.0",
+    "black>=21.0.0",
+    "flake8>=3.8.0",
+    "sphinx>=4.0.0",
+    "sphinx-rtd-theme>=0.5.0",
+    "build>=0.7.0",
+    "twine>=3.4.0",
+]
+
+[project.scripts]
+molactivity-train-standard = "molactivity.A28_train:training"
+molactivity-predict-standard = "molactivity.A21_predict:main"
+molactivity-train-fast = "molactivity.B17_train:training"
+molactivity-predict-fast = "molactivity.B10_predict:main"
+molactivity-train-rocket = "molactivity.C2_train:training"
+molactivity-train-image = "molactivity.D5_train:main"
+molactivity-predict-image = "molactivity.D4_predict:main"
+molactivity-structure-analysis = "molactivity.E1_structure_analysis:main"
+molactivity-smiles-to-images = "molactivity.E2_smiles_to_images:main"
+molactivity-molecular-mass = "molactivity.E3_molecular_mass:main"
+
+[project.urls]
+Homepage = "https://github.com/NATSCREEN/molactivity"
+Source = "https://github.com/NATSCREEN/molactivity"
+"Bug Tracker" = "https://github.com/NATSCREEN/molactivity/issues"
+Documentation = "https://github.com/NATSCREEN/molactivity/blob/main/README.md"
+Changelog = "https://github.com/NATSCREEN/molactivity/releases"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["molactivity*"]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+molactivity = [
+    "*.dict", "*.md", "*.txt", "*.json", "*.safetensors",
+    "D8_pretrained_parameters/*"
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+[tool.coverage.run]
+source = ["molactivity"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "setup.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+] 
