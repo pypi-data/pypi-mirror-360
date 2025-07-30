@@ -1,0 +1,53 @@
+[project]
+name = "pyglog-annek"
+version = "0.5.2"
+description = "Graylog CLI"
+authors = [
+    {name = "Mike Mackenna",email = "mmackenna@unitedfiregroup.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+
+requires-python = ">=3.13"
+dependencies = [
+    "typer (>=0.16.0,<0.17.0)",
+    "python-dotenv-vault (>=0.6.4,<0.7.0)",
+    "pytz (>=2025.2,<2026.0)",
+    "requests (>=2.32.4,<3.0.0)",
+    "pydantic (>=2.11.7,<3.0.0)"
+]
+
+[tool.poetry.scripts]
+pyglog = "pyglog_annek.main:app"
+
+
+[tool.poetry.group.Dev.dependencies]
+black = "^25.1.0"
+mkdocs = "^1.6.1"
+mkdocs-typer = "^0.0.3"
+pytest = "^8.0.0"
+pytest-cov = "^6.0.0"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "--cov=pyglog_annek",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-fail-under=80"
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests"
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
