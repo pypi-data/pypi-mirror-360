@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/empathi"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["models/*", "src/empathi/train.py", "src/empathi/dataset.py", "notebooks/*"]
+
+[project]
+name = "empathi"
+version = "1.0.5"
+authors = [
+  { name="Alexandre Boulay", email="alexandre.boulay.6@ulaval.ca" },
+  {name="Alexandre Boulay"}, {name="Clovis Galiez"}, {name="Elsa Rousseau"}
+]
+description = "An embedding-based phage protein annotation tool by hierarchical assignment"
+readme = "README.md"
+requires-python = ">=3.11.5"
+dependencies = [
+    "joblib==1.2.0",
+    "numpy==1.26.4",
+    "pandas==2.2.1",
+    "scikit_learn==1.5.0",
+    "scipy==1.13.1",
+    "torch==2.3.0",
+    "sentencepiece==0.2.0",
+    "transformers==4.43.1"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+]
+keywords = ["phages", "bacteriophages", "bioinformatics", "protein functions"]
+
+[project.scripts]
+empathi = "empathi.empathi:main"
+
+[project.urls]
+Homepage = "https://huggingface.co/AlexandreBoulay/EmPATHi"
