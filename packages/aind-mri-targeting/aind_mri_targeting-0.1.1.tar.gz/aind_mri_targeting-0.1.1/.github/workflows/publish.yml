@@ -1,0 +1,70 @@
+name: "Build • Release • Publish"
+on:
+  push:
+    tags:
+      - 'v[0-9]*'          # semver tags
+
+env:
+  PYTHON_VERSION: "3.13"
+
+jobs:
+  build-release-publish:
+    runs-on: ubuntu-latest
+    name: "Build, Release, and Publish"
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+
+      - name: "Install dependencies"
+        run: uv sync --frozen
+
+      - name: "Build package"
+        run: uv build
+
+      - name: "Get version for release"
+        id: get_version
+        run: |
+          set -e
+          # Get the latest tag created by commitizen
+          VERSION=$(git describe --tags --abbrev=0)
+          echo "Using version from git tag: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: "Verify build artifacts"
+        run: |
+          ls -la dist/
+          echo "Built packages:"
+          find dist/ -name "*.whl" -o -name "*.tar.gz" | head -10
+      - name: "Create GitHub Release"
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: "Release ${{ steps.get_version.outputs.version }}"
+          generate_release_notes: true
+          files: |
+            dist/*.tar.gz
+            dist/*.whl
+
+      - name: "Publish to PyPI"
+        run: uv publish --token ${{ secrets.AIND_PYPI_TOKEN }}
+
+      - name: "Release summary"
+        run: |
+          echo "✅ Successfully released ${{ steps.get_version.outputs.version }}"
+          echo "📦 Published to PyPI"
+          echo "🏷️ GitHub release created"
