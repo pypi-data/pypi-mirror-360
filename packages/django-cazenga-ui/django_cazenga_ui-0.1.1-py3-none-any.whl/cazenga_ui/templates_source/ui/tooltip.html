@@ -1,0 +1,76 @@
+<!--
+Componente: Tooltip
+Uso: include "components/tooltip.html" with text="Texto do tooltip" content="Conteúdo que terá tooltip"
+
+Parâmetros:
+- text: Texto do tooltip (obrigatório)
+- content: Conteúdo HTML que terá o tooltip (obrigatório)
+- placement: top, bottom, left, right (padrão: top)
+- delay: Delay em ms para mostrar o tooltip (padrão: 0)
+- class: Classes CSS adicionais para o tooltip (opcional)
+-->
+{% with placement=placement|default:"top" delay=delay|default:0 %}
+<div 
+    x-data="{ 
+        show: false,
+        timeout: null,
+        showTooltip() {
+            clearTimeout(this.timeout);
+            this.timeout = setTimeout(() => { this.show = true }, {{ delay }});
+        },
+        hideTooltip() {
+            clearTimeout(this.timeout);
+            this.show = false;
+        }
+    }" 
+    class="relative inline-block"
+    @mouseenter="showTooltip()"
+    @mouseleave="hideTooltip()"
+    @focusin="showTooltip()"
+    @focusout="hideTooltip()"
+>
+    <!-- Trigger content -->
+    <div class="inline-block">
+        {{ content|safe }}
+    </div>
+    
+    <!-- Tooltip -->
+    <div
+        x-show="show"
+        x-transition:enter="transition ease-out duration-100"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-75"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        role="tooltip"
+        class="absolute z-50 w-fit rounded-md bg-primary text-primary-foreground 
+            px-3 py-1.5 text-xs text-balance pointer-events-none
+            {% if placement == 'bottom' %}
+                top-full left-1/2 -translate-x-1/2 mt-2
+            {% elif placement == 'left' %}
+                right-full top-1/2 -translate-y-1/2 mr-2
+            {% elif placement == 'right' %}
+                left-full top-1/2 -translate-y-1/2 ml-2
+            {% else %}
+                bottom-full left-1/2 -translate-x-1/2 mb-2
+            {% endif %}
+            {{ class|default:'' }}"
+    >
+        {{ text }}
+        
+        <!-- Arrow -->
+        <div class="absolute size-2.5 bg-primary rotate-45 rounded-[2px]
+            {% if placement == 'bottom' %}
+                -top-1 left-1/2 -translate-x-1/2
+            {% elif placement == 'left' %}
+                -right-1 top-1/2 -translate-y-1/2
+            {% elif placement == 'right' %}
+                -left-1 top-1/2 -translate-y-1/2
+            {% else %}
+                -bottom-1 left-1/2 -translate-x-1/2
+            {% endif %}">
+        </div>
+    </div>
+</div>
+{% endwith %}

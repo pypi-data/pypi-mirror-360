@@ -1,0 +1,270 @@
+<!--
+Componente: Dropdown Menu
+Uso: include "components/dropdown-menu.html" with items=menu_items trigger_text="Menu"
+
+Parâmetros:
+- items: Lista de itens do menu (obrigatório)
+- trigger_text: Texto do botão trigger (opcional)
+- trigger_icon: Ícone do botão trigger (opcional)
+- trigger_variant: Variante do botão trigger (padrão: ghost)
+- align: left, right, center (padrão: right)
+- side: top, bottom, left, right (padrão: bottom)
+- class: Classes CSS adicionais (opcional)
+- x_data: Dados Alpine.js adicionais (opcional)
+
+Estrutura de items:
+[
+    {"type": "item", "label": "Perfil", "icon": "<svg>...</svg>", "href": "/perfil"},
+    {"type": "separator"},
+    {"type": "label", "text": "Configurações"},
+    {"type": "checkbox", "label": "Notificações", "checked": true, "name": "notifications"},
+    {"type": "radio", "label": "Tema Claro", "name": "theme", "value": "light"},
+    {"type": "submenu", "label": "Mais opções", "items": [...]},
+    {"type": "item", "label": "Sair", "variant": "destructive", "onclick": "logout()"}
+]
+-->
+{% with align=align|default:"right" side=side|default:"bottom" trigger_variant=trigger_variant|default:"ghost" %}
+<div 
+    x-data="{
+        open: false,
+        selectedRadio: {},
+        selectedCheckbox: {},
+        
+        toggleItem(name, value) {
+            if (name) {
+                this.selectedCheckbox[name] = !this.selectedCheckbox[name];
+            }
+        },
+        
+        selectRadio(name, value) {
+            if (name) {
+                this.selectedRadio[name] = value;
+            }
+        },
+        
+        closeMenu() {
+            this.open = false;
+        }
+        
+        {{ x_data|default:'' }}
+    }"
+    @click.away="open = false"
+    @keydown.escape="open = false"
+    class="relative inline-block text-left {{ class|default:'' }}"
+>
+    <!-- Trigger Button -->
+    <button
+        @click="open = !open"
+        type="button"
+        class="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50
+            {% if trigger_variant == 'default' %}bg-primary text-primary-foreground hover:bg-primary/90
+            {% elif trigger_variant == 'destructive' %}bg-destructive text-destructive-foreground hover:bg-destructive/90
+            {% elif trigger_variant == 'outline' %}border border-input bg-background hover:bg-accent hover:text-accent-foreground
+            {% elif trigger_variant == 'secondary' %}bg-secondary text-secondary-foreground hover:bg-secondary/80
+            {% elif trigger_variant == 'ghost' %}hover:bg-accent hover:text-accent-foreground
+            {% elif trigger_variant == 'link' %}text-primary underline-offset-4 hover:underline
+            {% else %}hover:bg-accent hover:text-accent-foreground{% endif %}"
+        :aria-expanded="open"
+        aria-haspopup="true"
+    >
+        {% if trigger_icon %}
+            {{ trigger_icon|safe }}
+        {% endif %}
+        
+        {% if trigger_text %}
+            {{ trigger_text }}
+        {% endif %}
+        
+        <!-- Chevron Down Icon -->
+        <svg x-show="!open" class="size-4 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+        </svg>
+        
+        <!-- Chevron Up Icon -->
+        <svg x-show="open" class="size-4 transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+        </svg>
+    </button>
+
+    <!-- Dropdown Menu -->
+    <div
+        x-show="open"
+        x-transition:enter="transition ease-out duration-100"
+        x-transition:enter-start="transform opacity-0 scale-95"
+        x-transition:enter-end="transform opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-75"
+        x-transition:leave-start="transform opacity-100 scale-100"
+        x-transition:leave-end="transform opacity-0 scale-95"
+        class="absolute z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md
+            {% if align == 'left' %}left-0
+            {% elif align == 'center' %}left-1/2 -translate-x-1/2
+            {% else %}right-0{% endif %}
+            {% if side == 'top' %}bottom-full mb-1
+            {% elif side == 'left' %}right-full mr-1 top-0
+            {% elif side == 'right' %}left-full ml-1 top-0
+            {% else %}top-full mt-1{% endif %}"
+        role="menu"
+        aria-orientation="vertical"
+        style="display: none;"
+    >
+        {% for item in items %}
+            {% if item.type == "separator" %}
+                <!-- Separator -->
+                <div class="bg-border -mx-1 my-1 h-px" role="separator"></div>
+                
+            {% elif item.type == "label" %}
+                <!-- Label -->
+                <div class="px-2 py-1.5 text-sm font-medium {{ item.class|default:'' }}">
+                    {{ item.text }}
+                </div>
+                
+            {% elif item.type == "checkbox" %}
+                <!-- Checkbox Item -->
+                <div
+                    @click="toggleItem('{{ item.name }}', '{{ item.value|default:'' }}')"
+                    class="relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground
+                        {% if item.disabled %}pointer-events-none opacity-50{% endif %}
+                        {{ item.class|default:'' }}"
+                    role="menuitemcheckbox"
+                    :aria-checked="selectedCheckbox['{{ item.name }}'] || {{ item.checked|yesno:'true,false' }}"
+                >
+                    <!-- Check Icon -->
+                    <span class="absolute left-2 flex size-3.5 items-center justify-center">
+                        <svg x-show="selectedCheckbox['{{ item.name }}'] || {{ item.checked|yesno:'true,false' }}" class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                    </span>
+                    
+                    {% if item.icon %}
+                        {{ item.icon|safe }}
+                    {% endif %}
+                    
+                    {{ item.label }}
+                    
+                    {% if item.shortcut %}
+                        <span class="ml-auto text-xs tracking-widest text-muted-foreground">{{ item.shortcut }}</span>
+                    {% endif %}
+                </div>
+                
+            {% elif item.type == "radio" %}
+                <!-- Radio Item -->
+                <div
+                    @click="selectRadio('{{ item.name }}', '{{ item.value }}')"
+                    class="relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground
+                        {% if item.disabled %}pointer-events-none opacity-50{% endif %}
+                        {{ item.class|default:'' }}"
+                    role="menuitemradio"
+                    :aria-checked="selectedRadio['{{ item.name }}'] === '{{ item.value }}' || {{ item.checked|yesno:'true,false' }}"
+                >
+                    <!-- Radio Dot -->
+                    <span class="absolute left-2 flex size-3.5 items-center justify-center">
+                        <svg x-show="selectedRadio['{{ item.name }}'] === '{{ item.value }}' || {{ item.checked|yesno:'true,false' }}" class="size-2 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="12" r="12"/>
+                        </svg>
+                    </span>
+                    
+                    {% if item.icon %}
+                        {{ item.icon|safe }}
+                    {% endif %}
+                    
+                    {{ item.label }}
+                    
+                    {% if item.shortcut %}
+                        <span class="ml-auto text-xs tracking-widest text-muted-foreground">{{ item.shortcut }}</span>
+                    {% endif %}
+                </div>
+                
+            {% elif item.type == "submenu" %}
+                <!-- Submenu Item -->
+                <div 
+                    x-data="{ subOpen: false }"
+                    @mouseenter="subOpen = true"
+                    @mouseleave="subOpen = false"
+                    class="relative"
+                >
+                    <div class="flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground {{ item.class|default:'' }}">
+                        {% if item.icon %}
+                            {{ item.icon|safe }}
+                        {% endif %}
+                        
+                        {{ item.label }}
+                        
+                        <!-- Chevron Right -->
+                        <svg class="ml-auto size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </div>
+                    
+                    <!-- Submenu Content -->
+                    <div
+                        x-show="subOpen"
+                        x-transition:enter="transition ease-out duration-100"
+                        x-transition:enter-start="transform opacity-0 scale-95"
+                        x-transition:enter-end="transform opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-75"
+                        x-transition:leave-start="transform opacity-100 scale-100"
+                        x-transition:leave-end="transform opacity-0 scale-95"
+                        class="absolute left-full top-0 z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg"
+                        style="display: none;"
+                    >
+                        {% for subitem in item.items %}
+                            {% if subitem.type == "separator" %}
+                                <div class="bg-border -mx-1 my-1 h-px" role="separator"></div>
+                            {% else %}
+                                <div
+                                    {% if subitem.href %}
+                                        onclick="window.location.href='{{ subitem.href }}'"
+                                    {% elif subitem.onclick %}
+                                        @click="{{ subitem.onclick }}; closeMenu()"
+                                    {% endif %}
+                                    class="relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground
+                                        {% if subitem.variant == 'destructive' %}text-destructive hover:bg-destructive/10 focus:bg-destructive/10 hover:text-destructive focus:text-destructive{% endif %}
+                                        {% if subitem.disabled %}pointer-events-none opacity-50{% endif %}
+                                        {{ subitem.class|default:'' }}"
+                                    role="menuitem"
+                                >
+                                    {% if subitem.icon %}
+                                        {{ subitem.icon|safe }}
+                                    {% endif %}
+                                    
+                                    {{ subitem.label }}
+                                    
+                                    {% if subitem.shortcut %}
+                                        <span class="ml-auto text-xs tracking-widest text-muted-foreground">{{ subitem.shortcut }}</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+            {% else %}
+                <!-- Regular Item -->
+                <div
+                    {% if item.href %}
+                        onclick="window.location.href='{{ item.href }}'"
+                    {% elif item.onclick %}
+                        @click="{{ item.onclick }}; closeMenu()"
+                    {% endif %}
+                    class="relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground
+                        {% if item.variant == 'destructive' %}text-destructive hover:bg-destructive/10 focus:bg-destructive/10 hover:text-destructive focus:text-destructive{% endif %}
+                        {% if item.disabled %}pointer-events-none opacity-50{% endif %}
+                        {% if item.inset %}pl-8{% endif %}
+                        {{ item.class|default:'' }}"
+                    role="menuitem"
+                >
+                    {% if item.icon %}
+                        {{ item.icon|safe }}
+                    {% endif %}
+                    
+                    {{ item.label }}
+                    
+                    {% if item.shortcut %}
+                        <span class="ml-auto text-xs tracking-widest text-muted-foreground">{{ item.shortcut }}</span>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endwith %}
