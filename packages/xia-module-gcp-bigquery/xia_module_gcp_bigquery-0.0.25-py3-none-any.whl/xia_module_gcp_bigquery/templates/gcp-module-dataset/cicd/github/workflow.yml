@@ -1,0 +1,42 @@
+name: Deploy - GCP - Repository
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+    - id: checkout-code
+      name: Checkout code
+      uses: actions/checkout@v4
+
+    - id: prepare-modules
+      name: Prepare modules
+      run: |
+        pip install xia-framework xia-module
+        python -m xia_framework.application plan -e ${{ vars.env_name }}
+
+    - id: auth-gcp-oidc
+      name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        project_id: ${{ vars.PROJECT_ID }}
+        workload_identity_provider: ${{ vars.SECRET_WIP_NAME }}
+        service_account: ${{ vars.PROVIDER_SA_EMAIL }}
+
+    - id: terraform-apply
+      name: Apply Terraform
+      uses: x-i-a/action-gcs-terraform-apply@main
+      with:
+        tf_bucket_name: ${{ vars.tf_bucket_name }}
+        cosmos_name: ${{ vars.cosmos_name }}
+        realm_name: ${{ vars.realm_name }}
+        foundation_name: ${{ vars.foundation_name }}
+        app_name: ${{ vars.app_name }}
+        env_name: ${{ vars.env_name }}
