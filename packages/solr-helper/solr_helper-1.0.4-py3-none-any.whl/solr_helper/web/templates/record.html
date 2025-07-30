@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Details</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body { font-family: sans-serif; margin: 2em; background-color: #fdfdfd; }
+        .container { max-width: 900px; margin: 0 auto; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 1em; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
+        th { background-color: #f2f2f2; }
+        thead th {
+            position: -webkit-sticky; /* Für Safari */
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .no-value { color: #999; font-style: italic; }
+        .sub-table { width: 100%; margin: 0; border: none; }
+        .sub-table th, .sub-table td { border: 1px solid #eee; padding: 4px; }
+        .sub-table th { background-color: #fafafa; }
+        #json-container { margin-top: 1em; }
+        pre { background-color: #282c34; padding: 1em; border-radius: 5px; }
+        .controls { margin-bottom: 1em; }
+        tbody tr:nth-child(even) { background-color: #f9f9f9; }
+
+        /* HTMX Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888;
+            width: 60%; border-radius: 5px;
+        }
+        /* Zeigt das Modal an, wenn es Inhalt hat */
+        .modal:not(:empty) {
+            display: block;
+        }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        textarea { width: 95%; min-height: 150px; }
+        .edit-btn { cursor: pointer; color: blue; text-decoration: underline; background: none; border: none; padding: 0; font-size: inherit; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Details für Record: {{ doc.get(unique_key_field, '-') }}</h1>
+        <div class="controls">
+            <button id="toggle-json">Rohes JSON anzeigen/verbergen</button>
+        </div>
+
+        <div id="json-container" style="display: none;">
+            <h2>Rohes JSON</h2>
+            <pre><code class="json">{{ doc | tojson(indent=4) }}</code></pre>
+        </div>
+
+        {% if error %}
+            <p style="color: red;">{{ error }}</p>
+        {% else %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feldname</th>
+                        <th>Datentyp</th>
+                        <th>Multivalued</th>
+                        <th>Stored</th>
+                        <th>Wert</th>
+                        <th>Aktion</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for field in schema_fields %}
+                        {% include '_record_row.html' %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+        <a href="/">Neue Suche</a>
+    </div>
+
+    <!-- HTMX Modal Container -->
+    <div id="modal-container" class="modal"></div>
+
+    <script>
+        // Script for JSON viewer
+        document.getElementById('toggle-json').addEventListener('click', function() {
+            var container = document.getElementById('json-container');
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                hljs.highlightAll();
+            } else {
+                container.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
