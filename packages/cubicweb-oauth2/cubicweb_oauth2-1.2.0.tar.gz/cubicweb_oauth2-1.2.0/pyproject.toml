@@ -1,0 +1,56 @@
+[project]
+name = "cubicweb-oauth2"
+version = "1.2.0"
+description = "Oauth2/OpenID authentication for CubicWeb"
+readme = {file = "README.rst", content-type = "text/x-rst"}
+license = {text = "GNU Lesser General Public License v2 or later (LGPLv2+)"}
+requires-python = ">=3.11"
+authors = [
+    {name="Logilab", email="contact@logilab.fr"},
+]
+classifiers = [
+    "Environment :: Web Environment",
+    "Framework :: CubicWeb",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: JavaScript",
+]
+dependencies = [
+    "cubicweb >= 4.5.0, < 6.0.0",
+    "authlib >= 1.5.2, < 2.0.0",
+    "requests >= 2.32.3, < 3.0.0",
+]
+
+[project.entry-points."cubicweb.cubes"]
+oauth2 = "cubicweb_oauth2"
+
+[project.urls]
+Issues = "https://forge.extranet.logilab.fr/cubicweb/cubes/oauth2/-/issues"
+Repository = "https://forge.extranet.logilab.fr/cubicweb/cubes/oauth2"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cubicweb_oauth2*"]
+namespaces = false
+
+[tool.ruff]
+extend-exclude = ["cubicweb_oauth2/migration/"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "UP",   # pyupgrade
+    # "B",    # flake8-bugbear
+    # "SIM",  # flake8-simplify
+    "I",    # isort
+]
+ignore = ["E501"]
