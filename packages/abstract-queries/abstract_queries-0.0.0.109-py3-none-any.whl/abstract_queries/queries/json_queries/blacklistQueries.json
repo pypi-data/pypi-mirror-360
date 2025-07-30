@@ -1,0 +1,18 @@
+{"query_create_blacklist_table":"""
+                CREATE TABLE
+                IF NOT EXISTS blacklisted_tokens (
+                  token           TEXT PRIMARY KEY,
+                  blacklisted_on  TIMESTAMPTZ DEFAULT NOW()
+                );
+            """,
+ 
+ "query_select_blacklist_token":"""SELECT 1
+                 FROM blacklisted_tokens
+                WHERE token = %s;
+            """,
+ "query_insert_blacklist_token":"""INSERT
+                 INTO blacklisted_tokens (token)
+               VALUES (%s)
+               ON CONFLICT DO NOTHING;
+            """
+ }
