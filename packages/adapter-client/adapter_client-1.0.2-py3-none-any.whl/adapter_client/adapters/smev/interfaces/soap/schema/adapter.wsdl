@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+                  xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy"
+                  xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+                  xmlns:wsoma="http://schemas.xmlsoap.org/ws/2004/09/policy/optimizedmimeserialization"
+                  xmlns:wsi="http://ws-i.org/schemas/conformanceClaim/"
+                  xmlns:tns="urn://x-artefacts-smev-gov-ru/services/service-adapter"
+                  xmlns:types="urn://x-artefacts-smev-gov-ru/services/service-adapter/types"
+                  xmlns:fault="urn://x-artefacts-smev-gov-ru/services/service-adapter/types/faults"
+                  targetNamespace="urn://x-artefacts-smev-gov-ru/services/service-adapter">
+    <wsdl:types>
+        <xs:schema>
+            <xs:import namespace="urn://x-artefacts-smev-gov-ru/services/service-adapter/types"
+                       schemaLocation="smev-service-adapter-types.xsd"/>
+            <xs:import namespace="urn://x-artefacts-smev-gov-ru/services/service-adapter/types/faults"
+                       schemaLocation="smev-service-adapter-faults.xsd"/>
+        </xs:schema>
+    </wsdl:types>
+    <wsdl:message name="SendSyncRequestMsg">
+        <wsdl:part name="parameters" element="types:SyncRequest"/>
+    </wsdl:message>
+    <wsdl:message name="SendSyncResponseMsg">
+        <wsdl:part name="parameters" element="types:SyncResponse"/>
+    </wsdl:message>
+    <wsdl:message name="AsyncSendRequestMsg">
+        <wsdl:part name="parameters" element="types:ClientMessage"/>
+    </wsdl:message>
+    <wsdl:message name="AsyncSendResponseMsg">
+        <wsdl:part name="parameters" element="types:MessageResult"/>
+    </wsdl:message>
+    <wsdl:message name="AsyncGetRequestMsg">
+        <wsdl:part name="parameters" element="types:MessageQuery"/>
+    </wsdl:message>
+    <wsdl:message name="FindRequestMsg">
+        <wsdl:part name="parameters" element="types:FindMessageQuery"/>
+    </wsdl:message>
+    <wsdl:message name="AsyncGetResponseMsg">
+        <wsdl:part name="parameters" element="types:QueryResult"/>
+    </wsdl:message>
+    <wsdl:message name="MessageList">
+        <wsdl:part name="parameters" element="types:QueryResultList"/>
+    </wsdl:message>
+    <wsdl:message name="SystemFault">
+        <wsdl:part name="parameters" element="fault:SystemFault"/>
+    </wsdl:message>
+    <wsdl:message name="ValidationFault">
+        <wsdl:part name="parameters" element="fault:ValidationFault"/>
+    </wsdl:message>
+    <wsdl:message name="SyncFault">
+        <wsdl:part name="parameters" element="fault:SyncFault"/>
+    </wsdl:message>
+    <wsdl:portType name="SMEVServiceAdapterPortType">
+        <wsdl:operation name="Send">
+            <wsdl:documentation>
+                Отправить сообщение (запрос либо ответ на запрос).
+            </wsdl:documentation>
+            <wsdl:input message="tns:AsyncSendRequestMsg"/>
+            <wsdl:output message="tns:AsyncSendResponseMsg"/>
+            <wsdl:fault name="SystemFault" message="tns:SystemFault"/>
+            <wsdl:fault name="ValidationFault" message="tns:ValidationFault"/>
+        </wsdl:operation>
+        <wsdl:operation name="Get">
+            <wsdl:documentation>
+                Отправить запрос на получение сообщения.
+            </wsdl:documentation>
+            <wsdl:input message="tns:AsyncGetRequestMsg"/>
+            <wsdl:output message="tns:AsyncGetResponseMsg"/>
+            <wsdl:fault name="SystemFault" message="tns:SystemFault"/>
+            <wsdl:fault name="ValidationFault" message="tns:ValidationFault"/>
+        </wsdl:operation>
+        <wsdl:operation name="Find">
+            <wsdl:documentation>
+                Отправить запрос на поиск сообщений.
+            </wsdl:documentation>
+            <wsdl:input message="tns:FindRequestMsg"/>
+            <wsdl:output message="tns:MessageList"/>
+            <wsdl:fault name="SystemFault" message="tns:SystemFault"/>
+            <wsdl:fault name="ValidationFault" message="tns:ValidationFault"/>
+        </wsdl:operation>
+        <!--<wsdl:operation name="SendSyncRequest">
+            <wsdl:documentation>
+                Отправить синхронный запрос.
+            </wsdl:documentation>
+            <wsdl:input message="tns:SendSyncRequestMsg"/>
+            <wsdl:output message="tns:SendSyncResponseMsg"/>
+            <wsdl:fault name="SystemFault" message="tns:SystemFault"/>
+            <wsdl:fault name="ValidationFault" message="tns:ValidationFault"/>
+            <wsdl:fault name="SyncFault" message="tns:SyncFault"/>
+        </wsdl:operation>-->
+    </wsdl:portType>
+    <wsdl:binding name="SMEVServiceAdapterSoapBinding" type="tns:SMEVServiceAdapterPortType">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+        <wsp:PolicyReference URI="#MTOM_Policy"/>
+        <wsdl:operation name="Send">
+            <soap:operation soapAction="urn:Send"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+            <wsdl:fault name="SystemFault">
+                <soap:fault name="SystemFault" use="literal"/>
+            </wsdl:fault>
+            <wsdl:fault name="ValidationFault">
+                <soap:fault name="ValidationFault" use="literal"/>
+            </wsdl:fault>
+        </wsdl:operation>
+        <wsdl:operation name="Get">
+            <soap:operation soapAction="urn:Get"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+            <wsdl:fault name="SystemFault">
+                <soap:fault name="SystemFault" use="literal"/>
+            </wsdl:fault>
+            <wsdl:fault name="ValidationFault">
+                <soap:fault name="ValidationFault" use="literal"/>
+            </wsdl:fault>
+        </wsdl:operation>
+        <wsdl:operation name="Find">
+            <soap:operation soapAction="urn:Find"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+            <wsdl:fault name="SystemFault">
+                <soap:fault name="SystemFault" use="literal"/>
+            </wsdl:fault>
+            <wsdl:fault name="ValidationFault">
+                <soap:fault name="ValidationFault" use="literal"/>
+            </wsdl:fault>
+        </wsdl:operation>
+        <!--<wsdl:operation name="SendSyncRequest">
+            <soap:operation soapAction="urn:SendSync"/>
+            <wsdl:input>
+                <soap:body use="literal"/>
+            </wsdl:input>
+            <wsdl:output>
+                <soap:body use="literal"/>
+            </wsdl:output>
+            <wsdl:fault name="SystemFault">
+                <soap:fault name="SystemFault" use="literal"/>
+            </wsdl:fault>
+            <wsdl:fault name="ValidationFault">
+                <soap:fault name="ValidationFault" use="literal"/>
+            </wsdl:fault>
+            <wsdl:fault name="SyncFault">
+                <soap:fault name="SyncFault" use="literal"/>
+            </wsdl:fault>
+        </wsdl:operation>-->
+    </wsdl:binding>
+    <wsdl:service name="SMEVServiceAdapterService">
+        <wsdl:port name="SMEVServiceAdapterEndpoint" binding="tns:SMEVServiceAdapterSoapBinding">
+            <soap:address location="http://localhost:8080/transport_1_0_1/"/>
+            <wsdl:documentation>
+                <wsi:Claim conformsTo="http://ws-i.org/profiles/basic/1.1"/>
+            </wsdl:documentation>
+        </wsdl:port>
+    </wsdl:service>
+    <jaxws:bindings xmlns:jaxws="http://java.sun.com/xml/ns/jaxws">
+        <jaxws:package name="ru.voskhod.smev.adapter.autogenerated.service"/>
+    </jaxws:bindings>
+    <wsp:Policy wsu:Id="MTOM_Policy">
+        <wsoma:OptimizedMimeSerialization wsp:Optional="true"/>
+    </wsp:Policy>
+</wsdl:definitions>
