@@ -1,0 +1,158 @@
+Metadata-Version: 2.4
+Name: hkstock-mcp-tools
+Version: 0.1.1
+Summary: MCP tools for Hong Kong stock data and financial reports
+Author-email: Financial Terminal <your-email@example.com>
+License: MIT
+Project-URL: Homepage, https://github.com/your-username/hkstock-mcp-tools
+Project-URL: Repository, https://github.com/your-username/hkstock-mcp-tools
+Project-URL: Documentation, https://hkstock-mcp-tools.readthedocs.io
+Project-URL: Issues, https://github.com/your-username/hkstock-mcp-tools/issues
+Project-URL: Changelog, https://github.com/your-username/hkstock-mcp-tools/blob/main/CHANGELOG.md
+Keywords: mcp,hong-kong,stock,financial,akshare,yfinance
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Office/Business :: Financial
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: mcp>=1.0.0
+Requires-Dist: akshare>=1.12.0
+Requires-Dist: yfinance>=0.2.0
+Requires-Dist: pandas>=1.5.0
+Requires-Dist: numpy>=1.20.0
+Requires-Dist: duckdb>=0.8.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: fastapi>=0.100.0
+Requires-Dist: uvicorn>=0.23.0
+Requires-Dist: python-dateutil>=2.8.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: isort>=5.12.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Requires-Dist: pre-commit>=3.0.0; extra == "dev"
+Provides-Extra: docs
+Requires-Dist: sphinx>=5.0.0; extra == "docs"
+Requires-Dist: sphinx-rtd-theme>=1.2.0; extra == "docs"
+Requires-Dist: myst-parser>=0.18.0; extra == "docs"
+Dynamic: license-file
+
+# HKStock MCP Tools
+
+港股数据MCP工具包，提供港股财务数据和基本面数据的获取和管理功能。
+
+## 功能特性
+
+### 📊 财务报表数据
+- **三大财务报表**: 资产负债表、利润表、现金流量表
+- **数据来源**: akshare
+- **数据缓存**: DuckDB本地缓存，提高查询效率
+- **数据过期机制**: 自动管理数据时效性
+- **智能匹配**: 支持财务指标的精确匹配和模糊匹配
+
+### 🏢 企业基本面数据
+- **公司信息**: 使用yfinance获取企业基本信息
+- **分红拆股**: 历史分红和拆股记录
+- **估值指标**: PE、PB、ROE等财务指标
+- **价格数据**: 实时价格、成交量、52周高低点
+
+### 🔧 技术特性
+- **MCP协议**: 标准的Model Context Protocol接口
+- **数据持久化**: DuckDB高性能本地数据库
+- **数据过期管理**: 自动标记和清理过期数据
+- **股票代码验证**: 支持港股、A股、美股代码格式
+- **异步处理**: 高效的异步数据获取
+
+## 安装
+
+直接使用 `uvx` 运行，无需传统安装。
+
+## 快速开始
+
+### MCP 客户端配置
+
+在 Claude Desktop 或其他 MCP 客户端中，可以这样配置：
+
+```json
+{
+  "mcpServers": {
+    "hkstock-mcp": {
+      "command": "uvx",
+      "args": ["hkstock-mcp-tools"]
+    }
+  }
+}
+```
+
+## MCP工具说明
+
+### 财务报表工具
+
+#### 1. get_hk_balance_sheet
+获取港股资产负债表数据
+
+**参数**:
+- `stock`: 股票代码（如"0700"、"00700"）
+- `indicator`: 报告期类型（"年度"、"半年度"、"季度"），默认"年度"
+- `n_periods`: 获取期数，默认1
+
+#### 2. get_hk_income_statement
+获取港股利润表数据
+
+**参数**: 同资产负债表
+
+#### 3. get_hk_cash_flow
+获取港股现金流量表数据
+
+**参数**: 同资产负债表
+
+#### 4. get_hk_financial_reports
+一次性获取港股三大财务报表（资产负债表、利润表、现金流量表）
+
+**参数**:
+- `stock`: 港股代码，必须按要求填写，不带后缀的5位数字字符串，如"00700"
+- `indicator`: 报告期类型，可选值："年度"、"中报"、"季报"，默认为"年度"
+- `n_periods`: 获取的期数，默认为1
+
+**返回数据包含**：
+- `balance_sheet`: 资产负债表数据
+- `income_statement`: 利润表数据
+- `cash_flow`: 现金流量表数据
+
+#### 5. get_financial_item
+获取指定财务项目的历史数据
+
+**参数**:
+- `stock`: 股票代码
+- `item_names`: 项目名称，多个用逗号分隔（如"净资产,营业收入"）
+- `report_type`: 报表类型（"资产负债表"、"利润表"、"现金流量表"）
+- `n_periods`: 获取期数，默认5
+- `indicator`: 报告期类型，默认"年度"
+
+
+### 企业基本面工具
+
+#### 1. get_company_info
+获取公司基本信息
+
+**参数**:
+- `stock`: 股票代码（支持港股、A股、美股）
+- `force_refresh`: 是否强制刷新，默认False
+
+#### 2. get_dividend_actions
+获取分红拆股历史数据
+
+**参数**:
+- `stock`: 股票代码
+- `force_refresh`: 是否强制刷新，默认False
