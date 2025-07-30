@@ -1,0 +1,79 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "python-xiso-repacker"
+dynamic = ["version"]
+description = 'Basic file replacer for xisos'
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+keywords = ["xemu", "xbox", "xiso"]
+authors = [
+  { name = "Erik Abair", email = "erik.abair@bearbrains.work" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "platformdirs~=4.3.6",
+  "requests~=2.32.3",
+]
+
+[project.urls]
+Documentation = "https://github.com/abaire/python-xiso-repacker#readme"
+Issues = "https://github.com/abaire/python-xiso-repacker/issues"
+Source = "https://github.com/abaire/python-xiso-repacker"
+
+[project.scripts]
+python-xiso-repacker = "python_xiso_repacker:run"
+
+[tool.hatch.version]
+path = "src/python_xiso_repacker/__about__.py"
+
+[tool.hatch.envs.types]
+type = "virtual"
+path = ".venv-mypy"
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/python_xiso_repacker tests}"
+
+[tool.coverage.run]
+source_pkgs = ["python_xiso_repacker", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/python_xiso_repacker/__about__.py",
+]
+
+[tool.coverage.paths]
+python_xiso_repacker = ["src/python_xiso_repacker", "*/python-xiso-repacker/src/python_xiso_repacker"]
+tests = ["tests", "*/python-xiso-repacker/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+
+[tool.hatch.envs.default]
+type = "virtual"
+path = "venv"
+
+[tool.hatch.envs.hatch-test]
+type = "virtual"
+path = "venv"
+extra-dependencies = [
+  "pytest",
+]
