@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ManagerDB"
+version = "0.0.1"
+description = "Database Manager"
+authors = [{ name = "GameRoMan", email = "gameromandev@gmail.com" }]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["database", "manager", "tool", "sqlite"]
+classifiers = [
+	"Programming Language :: Python :: 3",
+	"Programming Language :: Python :: 3.10",
+	"Programming Language :: Python :: 3.11",
+	"Programming Language :: Python :: 3.12",
+	"Programming Language :: Python :: 3.13",
+	"License :: OSI Approved :: MIT License",
+]
+dependencies = []
+
+[project.urls]
+
+
+[tool.hatch.build.targets.wheel]
+packages = ["managerdb"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312", "py313"]
+skip-magic-trailing-comma = true
+
+[tool.taskipy.tasks]
+build = "python -c \"import shutil; shutil.rmtree('dist', ignore_errors=True)\" && hatch build"
+publish = "twine upload -r lichess-api dist/*"
+release = "task build && task publish"
