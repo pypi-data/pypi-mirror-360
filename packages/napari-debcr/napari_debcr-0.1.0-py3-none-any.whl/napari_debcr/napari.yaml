@@ -1,0 +1,35 @@
+name: napari-debcr
+display_name: DeBCR
+# use 'hidden' to remove plugin from napari hub search results
+visibility: public
+# see https://napari.org/stable/plugins/technical_references/manifest.html#fields for valid categories
+categories: ["Annotation", "Segmentation", "Acquisition"]
+contributions:
+  commands:
+    - id: napari-debcr.read_npz
+      python_name: napari_debcr._reader:get_reader
+      title: Read multi-array ".npz" files with DeBCR plugin
+    - id: napari-debcr.write_npz
+      python_name: napari_debcr._writer:npz_file_writer
+      title: Write data to a single-array ".npz" file with DeBCR plugin
+#    - id: napari-debcr.make_sample_data
+#      python_name: napari_debcr._sample_data:make_sample_data
+#      title: Load sample data from DeBCR plugin
+    - id: napari-debcr.make_plugin
+      python_name: napari_debcr._plugin:DeBCRPlugin
+      title: Make DeBCR plugin QWidget
+  readers:
+    - command: napari-debcr.read_npz
+      accepts_directories: false
+      filename_patterns: ['*.npz']
+  writers:
+    - command: napari-debcr.write_npz
+      layer_types: ['image*']
+      filename_extensions: ['.npz']
+#  sample_data:
+#    - command: napari-debcr.make_sample_data
+#      display_name: DeBCR Sample Data
+#      key: unique_id.1
+  widgets:
+    - command: napari-debcr.make_plugin
+      display_name: DeBCR
