@@ -1,0 +1,6 @@
+from _typeshed import Incomplete
+
+ALL_EXTENSIONS: str
+DEFAULT_AZURE_OPENAI_API_VERSION: str
+DOCUMENT_MIME_TYPES: Incomplete
+MESSAGE_TUPLE_LENGTH: int
