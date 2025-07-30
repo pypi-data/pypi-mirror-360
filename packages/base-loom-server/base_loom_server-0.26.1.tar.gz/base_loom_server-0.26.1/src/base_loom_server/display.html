@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html dir="{_direction}" lang="{_language_code}">
+
+<head>
+    <style>
+        {display_css}
+    </style>
+    <title>Loom server</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+    <div class="flex-row" id="mode">
+        <div>
+            <button class="tab_button" id="mode_weaving">{Weaving}</button>
+            <button class="tab_button" id="mode_threading">{Threading}</button>
+            <button class="tab_button" id="mode_settings">{Settings}</button>
+            <a href="{help_url}" id="help_link_div" target="_blank">?</a>
+        </div>
+    </div>
+
+    <div class="flex-column settings-flex" id="setting_loom_name_form">
+        <div class="flex-row" id="setting_language_div">
+            <label for="setting_language">{Language}</label>
+            <select name="setting_language" id="setting_language">
+            </select>
+        </div>
+        <form class="settings-flex">
+            <div class="flex-row">
+                <label for="setting_loom_name_input">{Loom name}</label>
+                <input type="text" id="setting_loom_name_input">
+                <button type="submit" id="setting_loom_name_submit">{Save}</button>
+                <button type="button" id="setting_loom_name_reset">{Reset}</button>
+            </div>
+        </form>
+        <div class="flex-row" id="setting_direction_control_div">
+            <label for="setting_direction_control">{Direction control}</label>
+            <select name="setting_direction_control" id="setting_direction_control">
+                <option value="2">{Loom}</option>
+                <option value="3">{Software}</option>
+            </select>
+        </div>
+        <div class="flex-row">
+            <label for="setting_end1_on_right">{Warp end 1}</label>
+            <select name="setting_end1_on_right" id="setting_end1_on_right">
+                <option value="1">{On the right}</option>
+                <option value="0">{On the left}</option>
+            </select>
+        </div>
+        <div class="flex-row">
+            <label>{Thread}</label>
+            <select name="setting_thread_right_to_left" id="setting_thread_right_to_left">
+                <option value="1">{Right to left}</option>
+                <option value="0">{Left to right}</option>
+            </select>
+            <select name="setting_thread_back_to_front" id="setting_thread_back_to_front">
+                <option value="1">{Back to front}</option>
+                <option value="0">{Front to back}</option>
+            </select>
+        </div>
+        <div class="flex-row">
+            <label for="setting_thread_group_size">{Default threading group size}</label>
+            <select name="setting_thread_group_size" id="setting_thread_group_size">
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+                <option>7</option>
+                <option>8</option>
+                <option>9</option>
+                <option>10</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="flex-row not-settings-flex">
+        <label for="pattern_menu">{Pattern}</label>
+        <select name="pattern_menu" id="pattern_menu">
+            <option label="placeholder_option"></option>
+            <hr>
+            <option>{Clear Recents}</option>
+        </select>
+        <form class="upload-form">
+            <input type="file" id="upload_file_input" multiple accept=".dtx,.wif,.wpo" style="display:none;">
+            <button type="button" id="upload_file_button">{Upload}</button>
+        </form>
+    </div>
+
+    <div class="canvas-grid weaving-grid">
+        <div id="pattern_canvas_container">
+            <div>
+                <canvas id="pattern_canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="canvas-grid threading-grid" style="display: none;">
+        <div id="threading_canvas_container">
+            <div>
+                <canvas id="threading_canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-row weaving-flex">
+        <label for="weave_direction">{Direction}</label>
+        <button type="button" class="toggle_button" id="weave_direction">?</button>        
+    </div>
+
+    <div class="flex-row threading-flex">
+        <label for="thread_direction">{Direction}</label>
+        <button type="button" class="toggle_button" id="thread_direction">?</button>
+        <div>
+            <label id="group_size_label">{Group size}</label>
+            <select name="thread_group_size" id="thread_group_size">
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+                <option>7</option>
+                <option>8</option>
+                <option>9</option>
+                <option>10</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="flex-row threading-flex" id="end_number_div" style="display: none;">
+        <label id="end_label">{Ends}</label>
+        <label id="total_end_number0"></label>
+        <label> - </label>
+        <label id="total_end_number1"></label>
+        <label id="end_number0"></label>
+        <label> - </label>
+        <label id="end_number1"></label>
+        <label>{of}</label>
+        <label id="ends_per_repeat">?</label>
+        <label>{repeat}</label>
+        <label id="end_repeat_number"></label>
+    </div>
+
+    <div class="flex-row weaving-flex" id="pick_number_div">
+        <label>{Pick}</label>
+        <label id="total_pick_number"></label>
+        <label id="pick_number"></label>
+        <label>{of}</label>
+        <label id="picks_per_repeat">?</label>
+        <label>{repeat}</label>
+        <label id="pick_repeat_number"></label>
+        <canvas id="pick_color"></canvas>
+    </div>
+
+    <form class="threading-flex" id="jump_to_end_form" style="display: none;">
+        <div class="flex-row">
+            <label for="jump_total_end_number0">{Jump to end}</label>
+            <input type="text" size="5" id="jump_total_end_number0">
+            <button type="submit" id="jump_to_end_submit">{Jump}</button>
+            <button type="button" id="jump_to_end_reset">{Reset}</button>
+        </div>
+    </form>
+
+    <form class="weaving-flex" id="jump_to_pick_form">
+        <div class="flex-row">
+            <label for="jump_total_pick_number">{Jump to pick}</label>
+            <input type="text" size="5" id="jump_total_pick_number">
+            <button type="submit" id="jump_to_pick_submit">{Jump}</button>
+            <button type="button" id="jump_to_pick_reset">{Reset}</button>
+        </div>
+    </form>
+
+    <div class="flex-row threading-flex" id="separate_threading_repeats_grid" style="display: none;">
+        <label for="separate_threading_repeats">{Separate repeats?}</label>
+        <input type="checkbox" id="separate_threading_repeats" value="1">
+    </div>
+
+    <div class="flex-row weaving-flex" id="separate_weaving_repeats_grid">
+        <label for="separate_weaving_repeats">{Separate repeats?}</label>
+        <input type="checkbox" id="separate_weaving_repeats">
+    </div>
+
+   <div class="flex-row not-settings-flex">
+        <label>{Shafts}</label>
+        <div class="canvas-grid" id="shafts_canvas_container">
+            <canvas id="shafts_canvas"></canvas>
+        </div>
+    </div>
+
+    <div class="flex-row">
+        <label id="loom_info"></label>
+        <label id="status">disconnected</label>
+    </div>
+
+    <div class="flex-row">
+        <label id="command_problem"></label>
+    </div>
+
+    <div style="display:none;" id="debug_div">
+        <hr>
+        <div class="flex-row">{Debug (mock loom)} <button id="debug_hide">{Hide}</button></div>
+        
+        <div class="flex-row">
+            <label>{Command mock loom}</label>
+            <button id="debug_next_pick">{Next Pick}</button>
+            <button id="debug_change_direction">{Change Direction}</button>
+            <button id="debug_close_connection">{Close Connection}</button>
+        </div>
+
+        <div class="flex-row">
+            <label>{Sent command}:</label>
+            <label id='sent_command'></label>
+        </div>
+
+        <div class="flex-row">
+            <label>{Read message}: </label>
+            <label id='read_message'></label>
+        </div>
+    </div>
+    <script>
+        {display_js}
+    </script>
+
+</body>
+
+</html>
