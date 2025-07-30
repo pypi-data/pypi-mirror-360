@@ -1,0 +1,123 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nrel.routee.powertrain"
+dynamic = ["version"]
+description = "RouteE-Powertrain is a tool for predicting energy usage over a set of road links."
+readme = "README.md"
+authors = [{ name = "National Renewable Energy Laboratory" }]
+license = { text = "BSD 3-Clause License Copyright (c) 2023, Alliance for Sustainable Energy, LLC" }
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "pandas>=2.2,<3.0",
+    "numpy>=1.26,<2.0",
+    "onnx>=1.17,<2.0",
+    "onnxruntime>=1.18.1,<2.0",
+]
+requires-python = ">=3.9,<3.13"
+
+[project.optional-dependencies]
+scikit = ["scikit-learn==1.6.1", "skl2onnx>=1.19.1,<1.20"]
+ngboost = ["ngboost==0.5.2", "scikit-learn==1.6.1"]
+plot = ["matplotlib"]
+dev = [
+    "nrel.routee.powertrain[scikit]",
+    "nrel.routee.powertrain[plot]",
+    "nrel.routee.powertrain[ngboost]",
+    "tqdm",
+    "pytest",
+    "mypy",
+    "maturin",
+    "ruff",
+    "hatch",
+    "shapely",
+    "boxsdk",
+    "jupyter-book",
+    "sphinx-book-theme",
+    "types-PyYAML",
+    "types-protobuf",
+    "types-python-dateutil",
+    "types-redis",
+    "types-requests",
+    "pandas-stubs",
+]
+
+[project.urls]
+Homepage = "https://github.com/NREL/routee-powertrain"
+
+[tool.hatch.version]
+path = "nrel/routee/powertrain/__about__.py"
+
+[tool.hatch.build.targets.sdist]
+exclude = ["scripts/", "tests/", "docs/"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["nrel"]
+
+[tool.mypy]
+ignore_missing_imports = true
+namespace_packages = true
+explicit_package_bases = true
+exclude = ["docs/", "build/", "dist/"]
+
+[tool.ruff]
+include = ["nrel/**/*.py", "tests/*.py"]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.9
+target-version = "py39"
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = ["E4", "E7", "E9", "F"]
+ignore = []
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
