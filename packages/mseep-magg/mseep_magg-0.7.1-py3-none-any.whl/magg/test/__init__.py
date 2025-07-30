@@ -1,0 +1,1 @@
+"""Magg test package."""
