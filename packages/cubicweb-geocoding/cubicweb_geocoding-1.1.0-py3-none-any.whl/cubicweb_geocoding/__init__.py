@@ -1,0 +1,1 @@
+"""cubicweb-geocoding application package"""
