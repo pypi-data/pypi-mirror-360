@@ -1,0 +1,16 @@
+from .base_samplers import Sampler as Sampler
+from _typeshed import Incomplete
+from typing import Any
+
+logger: Incomplete
+
+class SamplerRegistryError(Exception): ...
+class SamplerNotFoundError(SamplerRegistryError): ...
+
+class SamplerRegistry:
+    @classmethod
+    def register(cls, name: str): ...
+    @classmethod
+    def create(cls, name: str, **kwargs: Any) -> Sampler: ...
+    @classmethod
+    def available_samplers(cls) -> list: ...

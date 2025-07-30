@@ -1,0 +1,9 @@
+from .base_blenders import BaseBlender as BaseBlender
+from .registry import BlenderRegistry as BlenderRegistry
+from scipy.ndimage import gaussian_filter as gaussian_filter
+
+def multivariate_gaussian_2d(x, mean, cov): ...
+def get_distribution(fov_deg, H, W, mu: int = 0, sig: int = 1): ...
+
+class GaussianBlender(BaseBlender):
+    def blend(self, images, masks, **kwargs): ...
