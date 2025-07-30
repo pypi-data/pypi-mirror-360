@@ -1,0 +1,98 @@
+name: Generate and deploy docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
+
+permissions:
+  contents: read
+
+env:  
+  VAPOURSYNTH_VERSION: 71  
+  PYTHON_VERSION: "3.13"  
+
+jobs:
+  docs-build:
+    runs-on: ubuntu-24.04
+    env:
+      PROD: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: qoomon/actions--context@v3
+        id: context
+      - name: Determine branch name
+        id: branch-names
+        run: echo "current_branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Set up VapourSynth
+        uses: ./.github/actions/setup-vapoursynth
+        with:
+          vapoursynth-version: ${{ env.VAPOURSYNTH_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          uv sync --group doc
+
+      - name: Restore build cache
+        uses: actions/cache/restore@v4
+        with:
+          key: mkdocs-material-${{ hashfiles('.cache/**') }}
+          path: .cache
+          restore-keys: |
+            mkdocs-material-
+
+      - name: Build
+        run: uv run mkdocs build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Save build cache
+        uses: actions/cache/save@v4
+        with:
+          key: mkdocs-material-${{ hashfiles('.cache/**') }}
+          path: .cache
+
+      - name: Post webhook for failure
+        if: failure()
+        uses: tsickert/discord-webhook@v6.0.0
+        with:
+          webhook-url: ${{ secrets.WEBHOOK_URL }}
+          embed-url: ${{ steps.context.outputs.job_log_url }}
+          embed-title: "[${{ github.event.repository.name }}] ${{ steps.context.outputs.job }} failed on ${{ steps.branch-names.outputs.current_branch }}"
+          username: "GitHub - ${{ github.repository }}"
+          avatar-url: https://github.githubassets.com/favicons/favicon.png
+
+  docs-deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [docs-build]
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      id-token: write
+      pages: write
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
