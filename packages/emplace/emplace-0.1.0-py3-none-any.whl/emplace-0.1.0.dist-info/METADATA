@@ -1,0 +1,48 @@
+Metadata-Version: 2.3
+Name: emplace
+Version: 0.1.0
+Summary: Modern and easy way to handle placeholders.
+License: MIT
+Author: EeeMoon
+Requires-Python: >=3.10,<4.0
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Project-URL: Homepage, https://github.com/eeemoon/emplace
+Description-Content-Type: text/markdown
+
+[![python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org/downloads)
+[![codecov](https://codecov.io/gh/eeemoon/emplace/graph/badge.svg?token=4CGDOZ7ADZ)](https://codecov.io/gh/eeemoon/emplace)
+
+# emplace
+Modern and easy way to handle placeholders.
+
+This package allows you to define text placeholders and process them dynamically. It's like `str.format()`, but gives you much more flexibility.
+
+## Features
+- **Reg**ular **Ex**pressions to find placeholders.
+- Custom delimiters (`%var%`, `{var}`, `${var}` etc.).
+- Modern API using asyncio and decorators.
+- Nested placeholders (`{greet_{name}}`).
+- Type safety using annotations.
+- No additional dependencies.
+
+## Usage
+```python
+from emplace import Formatter, placeholder
+
+class MyFormatter(Formatter):
+    @placeholder(r"upper_(?P<text>.*)")
+    def upper_ph(self, text: str) -> str:
+        return text.upper()
+    
+formatter = MyFormatter()
+result = await formatter.format("Hello, {upper_world}!")
+print(result) # Hello, WORLD!
+```
+
+## Examples
+You can check out more examples [here](examples).
