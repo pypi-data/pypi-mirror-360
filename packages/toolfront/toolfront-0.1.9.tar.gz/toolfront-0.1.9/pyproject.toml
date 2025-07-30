@@ -1,0 +1,182 @@
+[project]
+name = "toolfront"
+version = "0.1.9"
+description = "A lightweight MCP server for databases."
+readme = "README.md"
+authors = [
+    {name = "Esteban Safranchik", email = "esteban@kruskal.ai"},
+    {name = "Gavin Chan", email = "gavin@kruskal.ai"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "aiohttp>=3.11.18",
+    "click>=8.1.8",
+    "db-dtypes>=1.4.3",
+    "greenlet>=3.2.2",
+    "httpx>=0.28.1",
+    "jellyfish>=1.2.0",
+    "mcp[cli]>=1.9.0",
+    "numpy>=1.24.0",
+    "pandas>=2.2.3",
+    "pyarrow<19.0.0",
+    "pydantic>=2.11.4",
+    "pytest>=8.3.5",
+    "python-decouple>=3.8",
+    "scikit-learn>=1.6.1",
+    "sqlalchemy-utils>=0.41.2",
+    "rank-bm25>=0.2.2",
+    "diskcache>=5.6.3",
+    "openapi-spec-validator>=0.7.2",
+    "jsonref>=1.1.0",
+    "platformdirs>=4.3.8",
+]
+
+[project.scripts]
+toolfront = "toolfront.main:main"
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["toolfront*"]
+
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+dev = [
+    "pre-commit>=3.0.0",
+    "ruff>=0.1.0",
+]
+bigquery = [
+    "google-cloud-bigquery>=3.32.0",
+    "google-cloud-bigquery-storage>=2.32.0",
+    "sqlalchemy-bigquery>=1.14.1",
+]
+databricks = [
+    "databricks-sql-connector>=2.7.0",
+]
+duckdb = [
+    "duckdb>=1.2.2",
+    "duckdb-engine>=0.17.0",
+]
+mysql = [
+    "aiomysql>=0.2.0",
+]
+postgresql = [
+    "asyncpg>=0.30.0",
+    "psycopg2-binary>=2.9.9",
+]
+postgres = [
+    "asyncpg>=0.30.0",
+    "psycopg2-binary>=2.9.9",
+]
+snowflake = [
+    "snowflake-sqlalchemy>=1.7.3",
+]
+sqlite = [
+    "aiosqlite>=0.21.0",
+]
+sqlserver = [
+    "pyodbc>=5.0.0",
+]
+mssql = [
+    "pyodbc>=5.0.0",
+]
+all = [
+    "toolfront[bigquery]",
+    "toolfront[databricks]",
+    "toolfront[duckdb]",
+    "toolfront[mysql]",
+    "toolfront[postgresql]",
+    "toolfront[snowflake]",
+    "toolfront[sqlite]",
+    "toolfront[sqlserver]",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.2.0",
+    "pytest-asyncio>=0.26.0",
+    "ruff>=0.11.13",
+]
+
+[tool.ruff]
+# Same as Black.
+line-length = 120
+indent-width = 4
+
+# Assume Python 3.11+
+target-version = "py311"
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+select = [
+    "E4",  # Import errors
+    "E7",  # Statement errors  
+    "E9",  # Runtime errors
+    "F",   # Pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "A",   # flake8-builtins
+    "C4",  # flake8-comprehensions
+    "T20", # flake8-print
+    "SIM", # flake8-simplify
+    "PTH", # flake8-use-pathlib
+]
+
+ignore = [
+    "T201", # Allow print statements
+    "N806", # Allow non-lowercase variable names in functions (for pandas)
+    "A003", # Allow builtin attribute shadowing (common with 'type', 'id', etc.)
+    "N805", # Allow non-self first arg in class methods (for Pydantic validators)
+    "N818", # Allow exception names without Error suffix
+    "B008", # Allow function calls in argument defaults (common in FastAPI/Pydantic)
+    "B904", # Allow exception raises without explicit chaining (for now)
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "asyncio: mark test as an async test",
+]
