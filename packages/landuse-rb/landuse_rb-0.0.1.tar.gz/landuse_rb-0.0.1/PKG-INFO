@@ -1,0 +1,46 @@
+Metadata-Version: 2.4
+Name: landuse_rb
+Version: 0.0.1
+Summary: A library for land use classification and spatial analysis
+Home-page: https://github.com/romanroff/landuse-lib
+Author: Roman Bashirov
+Author-email: Roman Bashirov <bashiroff.roman@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/romanroff/landuse-lib
+Project-URL: Repository, https://github.com/romanroff/landuse-lib
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pandas
+Requires-Dist: geopandas
+Requires-Dist: scikit-learn
+Requires-Dist: xgboost
+Requires-Dist: lightgbm
+Requires-Dist: catboost
+Requires-Dist: matplotlib
+Requires-Dist: imbalanced-learn
+Requires-Dist: libpysal
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+## Основная идея алгоритма
+
+Пакет `landuse-rb` реализует пространственный классификатор типов землепользования:
+
+1. **Входные данные** — `GeoDataFrame`, содержащий полигоны кварталов и метки `land_use_code`.
+2. **Обучение** — модель обучается на пространственно-обогащённых признаках, включая:
+
+   * агрегацию соседних объектов в буфере (по расстоянию),
+   * признаки ближайших `k` соседей.
+3. **Предсказание** — на тестовой выборке выполняется прогноз классов и вероятностей.
+4. **Сохранение результатов**:
+
+   * обучающая выборка (`train_data.geojson`),
+   * тестовая выборка с предсказаниями (`test_predictions.geojson`),
+   * ошибки классификации (`mistakes.geojson`).
+
+Пример работы алгоритма — на изображении ниже:
+
+![Пример классификации](pictures/example.png)
