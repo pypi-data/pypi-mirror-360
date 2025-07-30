@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=80", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mockstack"
+description = "An API mocking workhorse"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+keywords = ["mocking", "integration-testing", "testing", "microservices", "api"]
+authors = [{ name = "Adam Ever-Hadani", email = "mockstack.contact@gmail.com" }]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "colorama>=0.4.6",
+    "fastapi[standard]>=0.115.12",
+    "httpx>=0.28.1",
+    "jinja2>=3.1.6",
+    "opentelemetry-distro[otlp]>=0.53b1",
+    "opentelemetry-instrumentation-fastapi>=0.53b1",
+    "pydantic>=2.11.3",
+    "pydantic-settings>=2.9.1",
+    "pyyaml>=6.0.2",
+    "rich>=14.0.0",
+    "typer>=0.15.2",
+    "uvicorn>=0.34.2",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/promptromp/mockstack"
+Issues = "https://github.com/promptromp/mockstack/issues"
+
+[project.scripts]
+mockstack = "mockstack.main:run"
+
+[project.optional-dependencies]
+llm = [
+    "ollama>=0.4.8",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15.0",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.26.0",
+    "pytest-cov>=6.1.1",
+    "pytest-mock>=3.12.0",
+    "types-pyyaml>=6.0.12.20250402",
+]
+
+[tool.setuptools_scm]
+# can be empty if no extra settings are needed, presence enables setuptools-scm
+
+[tool.mypy]
+namespace_packages = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff.lint]
