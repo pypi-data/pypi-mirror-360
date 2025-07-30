@@ -1,0 +1,37 @@
+set(FORT_MYRMIDON_VERSION @PROJECT_VERSION@)
+
+set(FORT_MYRMIDON_USE_CXX17_FS_LIBRARY @USE_CXX17_FS_LIBRARY@)
+if(FORT_MYRMIDON_USE_CXX17_FS_LIBRARY)
+	set(FORT_MYRMIDON_FS_LIBRARY "-lstdc++fs")
+else(FORT_MYRMIDON_USE_CXX17_FS_LIBRARY)
+	find_package(Boost 1.60.0 REQUIRED COMPONENTS filesystem)
+	set(FORT_MYRMIDON_FS_INCLUDE_DIRS ${Boost_filesystem_INCLUDE_DIRS})
+	set(FORT_MYRMIDON_FS_LIBRARY Boost::filesystem)
+endif(FORT_MYRMIDON_USE_CXX17_FS_LIBRARY)
+
+find_package(FortHermesCpp 0.3.0 REQUIRED)
+find_package(FortTags 1.2.0 REQUIRED)
+find_package(Protobuf 3.3.0 REQUIRED)
+find_package(Eigen3 3.3.4 REQUIRED NO_MODULE)
+
+@PACKAGE_INIT@
+
+set_and_check(FORT_MYRMIDON_INCLUDE_DIR "@PACKAGE_INCLUDE_PATH@")
+set(FORT_MYRMIDON_INCLUDE_DIRS ${FORT_MYRMIDON_INCLUDE_DIR}
+                               ${EIGEN3_INCLUDE_DIRS}
+                               ${FORT_HERMES_CPP_INCLUDE_DIRS}
+                               ${FORT_TAGS_INCLUDE_DIRS}
+                               )
+set_and_check(FORT_MYRMIDON_LIBRARY "@PACKAGE_LIB_INSTALL_DIR@/@CMAKE_SHARED_LIBRARY_PREFIX@fort-myrmidon@CMAKE_SHARED_LIBRARY_SUFFIX@")
+
+set_and_check(FORT_MYRMIDON_UTESTDATA_LIBRARY "@PACKAGE_LIB_INSTALL_DIR@/@CMAKE_SHARED_LIBRARY_PREFIX@fort-myrmidon-utestdata@CMAKE_SHARED_LIBRARY_SUFFIX@")
+
+set(FORT_MYRMIDON_LIBRARIES ${FORT_MYRMIDON_LIBRARY}
+                            ${FORT_HERMES_CPP_LIBRARIES}
+                            ${FORT_TAGS_LIBRARIES}
+                            ${FORT_MYRMIDON_FS_LIBRARY})
+
+set(FORT_MYRMIDON_UTESTDATA_LIBRARIES ${FORT_MYRMIDON_UTESTDATA_LIBRARY}
+                                      ${FORT_MYRMIDON_LIBRARIES})
+
+check_required_components(FortMyrmidon)

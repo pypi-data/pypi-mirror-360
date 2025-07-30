@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -e
+
+yum install -y wget
+wget https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.zip
+unzip eigen-3.4.0.zip
+
+pushd eigen-3.4.0
+cmake -B build -S .
+cmake --build build
+cmake --install build
+popd
+
+wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.1/protobuf-cpp-3.20.1.zip
+unzip protobuf-cpp-3.20.1.zip
+
+pushd protobuf-3.20.1
+./configure
+make -j 12 all
+set +e
+make inall
+set -e
+popd
