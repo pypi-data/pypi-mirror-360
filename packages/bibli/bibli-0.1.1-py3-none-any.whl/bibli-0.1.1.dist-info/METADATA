@@ -1,0 +1,406 @@
+Metadata-Version: 2.4
+Name: bibli
+Version: 0.1.1
+Summary: A command-line interface Bible application for programmers
+Author: guzus
+License: MIT
+Keywords: bible,cli,religion,scripture,terminal
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Topic :: Religion
+Classifier: Topic :: Utilities
+Requires-Python: >=3.10
+Requires-Dist: aiofiles>=23.0
+Requires-Dist: alembic>=1.13
+Requires-Dist: click>=8.1
+Requires-Dist: fastapi>=0.100
+Requires-Dist: httpx>=0.25
+Requires-Dist: mcp>=1.10.1
+Requires-Dist: pydantic>=2.0
+Requires-Dist: pyperclip>=1.8
+Requires-Dist: python-dotenv>=1.0
+Requires-Dist: rich>=13.0
+Requires-Dist: sqlalchemy>=2.0
+Requires-Dist: textual>=0.40
+Requires-Dist: toml>=0.10
+Requires-Dist: uvicorn>=0.23
+Provides-Extra: dev
+Requires-Dist: black>=23.0; extra == 'dev'
+Requires-Dist: build>=1.0; extra == 'dev'
+Requires-Dist: mkdocs-material>=9.0; extra == 'dev'
+Requires-Dist: mkdocs>=1.5; extra == 'dev'
+Requires-Dist: pytest-cov>=4.1; extra == 'dev'
+Requires-Dist: pytest>=7.4; extra == 'dev'
+Requires-Dist: twine>=4.0; extra == 'dev'
+Description-Content-Type: text/markdown
+
+# Bible CLI
+
+A powerful command-line interface for Bible reading and study, designed specifically for programmers and terminal enthusiasts.
+
+## Features
+
+- 🔍 **Fast Search** - Full-text search with regex support and context
+- 📖 **Multiple Translations** - Support for various Bible translations
+- 🎨 **Rich Terminal UI** - Beautiful ASCII art and interactive TUI
+- 🔖 **Bookmarks** - Save and organize your favorite verses
+- 📊 **Reading History** - Track your Bible reading progress
+- 🔧 **MCP Integration** - Model Context Protocol server for AI tools
+- ⚙️ **Customizable** - Extensive configuration options
+- 🎯 **Developer-Friendly** - Designed with programmers in mind
+- 📈 **Database Statistics** - View Bible database information and statistics
+
+## Installation
+
+### From PyPI (when published)
+
+```bash
+pip install bibli
+# or
+pipx install bibli
+```
+
+### From Source with UV (Recommended)
+
+```bash
+git clone https://github.com/guzus/bible-cli
+cd bible-cli
+uv sync
+```
+
+### From Source with pip
+
+```bash
+git clone https://github.com/guzus/bible-cli
+cd bible-cli
+pip install -e .
+```
+
+## Quick Start
+
+```bash
+# Read a specific verse
+uv run bible read john 3:16
+
+# Read a range of verses
+uv run bible read genesis 1:1-5
+
+# Read an entire chapter
+uv run bible read psalms 23
+
+# Search for verses
+uv run bible search "love your enemies"
+
+# View database information
+uv run bible info
+
+# Interactive mode
+uv run bible
+
+# Get help
+uv run bible --help
+```
+
+## Commands
+
+### Information Commands
+
+- `bible info` - Display Bible database information and statistics with ASCII art
+
+### Reading Commands
+
+- `bible read <book> <chapter>:<verse>` - Read specific verse(s)
+- `bible goto <reference>` - Jump directly to a reference
+- `bible random` - Display a random verse
+- `bible daily` - Show verse of the day
+- `bible nav <book> <reference>` - Navigate Bible interactively
+
+### Search Commands
+
+- `bible search <query>` - Search for words or phrases
+  - `--exact` - Exact phrase matching
+  - `--case-sensitive` - Case-sensitive search
+  - `--book <name>` - Limit search to specific book
+  - `--testament <old|new>` - Limit to testament
+  - `--context <n>` - Show n verses of context
+  - `--limit <n>` - Maximum number of results
+
+### Bookmark Commands
+
+- `bible bookmarks` - List saved bookmarks
+- `bible bookmark add <reference>` - Add bookmark
+  - `--name <name>` - Bookmark name
+  - `--notes <notes>` - Bookmark notes
+- `bible history` - Show reading history
+
+### Interactive Mode
+
+Launch the Terminal User Interface:
+
+```bash
+uv run bible interactive
+# or just
+uv run bible
+```
+
+#### Keyboard Shortcuts
+
+- `j/k` or `↓/↑` - Navigate verses
+- `h/l` or `←/→` - Previous/Next chapter
+- `Space/b` - Page down/up
+- `g` - Go to verse
+- `/` - Search mode
+- `r` - Random verse
+- `m` - Bookmark current verse
+- `?` - Help
+- `q` - Quit
+
+#### Interactive Reader Navigation
+
+When using `--interactive` flag with read commands:
+
+- `n` or `Enter` - Next verse
+- `p` - Previous verse
+- `N` - Next chapter
+- `P` - Previous chapter
+- `g` - Go to specific verse
+- `b` - Bookmark current verse
+- `q` - Quit
+
+## MCP Server
+
+The Bible CLI includes a **Model Context Protocol (MCP) server** that allows AI applications like Claude to access Bible functionality directly.
+
+### Starting the MCP Server
+
+```bash
+uv run bibli mcp-server
+```
+
+The server runs using stdio transport and can be connected to by MCP clients.
+
+### MCP Capabilities
+
+#### 🔧 Tools (AI can call these functions)
+
+- **`search_verses`** - Search for Bible verses containing specific text
+- **`get_verse`** - Get a specific Bible verse by reference (e.g., "John 3:16")
+- **`get_chapter`** - Get all verses from a Bible chapter
+- **`get_random_verse`** - Get a random Bible verse
+- **`get_cross_references`** - Find related verses for cross-referencing
+
+#### 📚 Resources (Contextual data for AI)
+
+- **`bible://books`** - List of all Bible books with metadata
+- **`bible://book/{book_name}`** - Information about a specific book
+
+#### 💭 Prompts (Templates for Bible study)
+
+- **`bible-study`** - Generate comprehensive Bible study materials
+- **`verse-explanation`** - Provide detailed verse explanations and context
+- **`devotional`** - Create devotional reflections based on passages
+- **`sermon-outline`** - Generate sermon outlines from Bible texts
+
+### Connecting to Claude Desktop
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "bible-cli": {
+      "command": "uvx",
+      "args": ["bibli", "mcp-server"],
+      "env": {}
+    }
+  }
+}
+```
+
+### Testing the MCP Server
+
+```bash
+# Run the test script
+uv run test_mcp.py
+```
+
+### Example Usage with MCP
+
+Once connected to an AI application:
+
+1. **Search verses**: "Find verses about love"
+2. **Get explanations**: "Explain John 3:16 in detail"
+3. **Bible study**: "Create a Bible study for Psalm 23"
+4. **Cross-references**: "What verses relate to Romans 8:28?"
+
+## Configuration
+
+Configuration file: `~/.config/bible-cli/config.toml`
+
+```toml
+[general]
+default_translation = "BBE"
+theme = "dark"
+page_size = 10
+show_verse_numbers = true
+
+[ascii_art]
+enabled = true
+style = "simple"
+
+[mcp]
+enabled = false
+endpoint = "http://localhost:8000"
+
+[keybindings]
+next_verse = ["j", "down"]
+prev_verse = ["k", "up"]
+search = ["/"]
+```
+
+## Data Sources
+
+The application automatically downloads Bible data from:
+
+- Basic Bible English (BBE) translation from [Open Bibles](https://github.com/seven1m/open-bibles)
+
+Additional translations can be imported from:
+
+- JSON Bible files
+- USFX XML format
+- Custom API endpoints
+
+## Development
+
+### Setup Development Environment
+
+```bash
+git clone https://github.com/guzus/bible-cli
+cd bible-cli
+uv sync --extra dev
+```
+
+### Run Tests
+
+```bash
+uv run pytest
+uv run pytest --cov=bibli
+```
+
+### Code Quality
+
+```bash
+uv run black bibli/
+```
+
+### Project Structure
+
+```
+bible-cli/
+├── bibli/
+│   ├── __init__.py          # Package initialization
+│   ├── __main__.py          # Main entry point
+│   ├── cli.py               # Click command definitions
+│   ├── tui.py               # Textual TUI app
+│   ├── models.py            # SQLAlchemy models
+│   ├── search.py            # Search implementation
+│   ├── mcp_server.py        # FastAPI MCP server
+│   ├── config.py            # Configuration handling
+│   ├── ascii_art.py         # ASCII art constants
+│   ├── data_import.py       # Data import functionality
+│   └── utils.py             # Helper functions
+├── tests/                   # Test files
+├── pyproject.toml          # Project configuration
+└── README.md               # This file
+```
+
+## Examples
+
+### Basic Usage
+
+```bash
+# Read John 3:16
+uv run bible read john 3:16
+
+# Read Genesis 1:1-10
+uv run bible read genesis 1:1-10
+
+# Search for verses about love
+uv run bible search love --testament new
+
+# Search with context
+uv run bible search "faith without works" --context 2
+
+# View database statistics
+uv run bible info
+```
+
+### Advanced Search
+
+```bash
+# Exact phrase search
+uv run bible search "in the beginning" --exact
+
+# Case-sensitive search
+uv run bible search "God" --case-sensitive
+
+# Limit to specific book
+uv run bible search faith --book james
+
+# Limit results
+uv run bible search love --limit 5
+```
+
+### Interactive Reading
+
+```bash
+# Read with interactive navigation
+uv run bible read john 3:16 --interactive
+
+# Navigate interactively from a specific verse
+uv run bible nav john 3:16
+
+# Read with context
+uv run bible read john 3:16 --context 3
+```
+
+### Bookmarks and History
+
+```bash
+# Add bookmark
+uv run bible bookmark add "john 3:16" --name "God's Love"
+
+# List bookmarks
+uv run bible bookmarks
+
+# View reading history
+uv run bible history --limit 10
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Run tests and linting
+6. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Bible data from [Open Bibles](https://github.com/seven1m/open-bibles)
+- Built with [Click](https://click.palletsprojects.com/), [Textual](https://textual.textualize.io/), and [Rich](https://rich.readthedocs.io/)
+- Uses [UV](https://github.com/astral-sh/uv) for fast dependency management
+- Inspired by the need for developer-friendly Bible study tools
+
+## Support
+
+- 🐛 [Report bugs](https://github.com/guzus/bible-cli/issues)
+- 💡 [Request features](https://github.com/guzus/bible-cli/discussions)
+- 📚 [Documentation](https://guzus.github.io/bible-cli/)
+- 💬 [Community](https://github.com/guzus/bible-cli/discussions)
