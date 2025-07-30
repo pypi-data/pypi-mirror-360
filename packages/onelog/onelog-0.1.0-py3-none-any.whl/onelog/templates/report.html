@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: white;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            width: 100%;
+            margin: 0;
+            background: transparent;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2D3748 0%, #4A5568 100%);
+            color: white;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+        
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 15px;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        
+        .chart-container {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 3px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 220px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-card {
+            background: #f1f5f9;
+            padding: 6px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1px;
+        }
+        
+        .stat-label {
+            font-size: 0.65rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .image-galleries {
+            margin-top: 25px;
+        }
+        
+        .galleries-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 15px;
+            margin-top: 12px;
+        }
+        
+        .gallery-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .gallery-section:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .gallery-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e2e8f0;
+            text-align: center;
+        }
+        
+        .gallery-grid {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            min-height: 160px;
+        }
+        
+        .gallery-nav {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #e2e8f0;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: #64748b;
+            transition: all 0.2s ease;
+            z-index: 10;
+            user-select: none;
+        }
+        
+        .gallery-nav:hover {
+            background: white;
+            color: #1e293b;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transform: scale(1.1);
+        }
+        
+        .gallery-nav:active {
+            transform: scale(0.95);
+        }
+        
+        .gallery-nav.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        
+        .gallery-nav.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .gallery-main-image {
+            flex: 1;
+            max-width: 260px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .image-card {
+            background: white;
+            border-radius: 8px;
+            padding: 6px;
+            border: 1px solid #e2e8f0;
+            display: none;
+        }
+        
+        .image-card.active {
+            display: block;
+        }
+        
+        .image-container {
+            position: relative;
+            width: 100%;
+            height: 140px;
+            overflow: hidden;
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+        
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+        
+        .image-container img:hover {
+            transform: none;
+        }
+        
+        .image-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .gallery-counter {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 0.7rem;
+            color: #64748b;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+        
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: #bbb;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 30px;
+            color: #64748b;
+        }
+        
+        .no-data h2 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+        
+        .hyperparameters-section {
+            margin-top: 25px;
+        }
+        
+        .hyperparameters-table {
+            width: 100%;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+            margin-top: 12px;
+        }
+        
+        .hyperparameters-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e2e8f0;
+            text-align: center;
+        }
+        
+        .hyperparameters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+        
+        .hyperparameter-item {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .hyperparameter-name {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.85rem;
+        }
+        
+        .hyperparameter-value {
+            color: #64748b;
+            font-size: 0.85rem;
+            font-family: 'Courier New', monospace;
+            background: #f1f5f9;
+            padding: 3px 6px;
+            border-radius: 4px;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                padding: 12px;
+            }
+            
+            .header {
+                padding: 12px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .content {
+                padding: 12px;
+            }
+            
+            .galleries-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .gallery-section {
+                padding: 12px;
+            }
+            
+            .gallery-main-image {
+                max-width: 230px;
+            }
+            
+            .image-container {
+                height: 120px;
+            }
+            
+            .gallery-nav {
+                width: 26px;
+                height: 26px;
+                font-size: 13px;
+            }
+            
+            .hyperparameters-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .hyperparameter-item {
+                padding: 8px;
+            }
+            
+            .hyperparameter-value {
+                max-width: 120px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .galleries-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .gallery-section {
+                padding: 10px;
+            }
+            
+            .gallery-main-image {
+                max-width: 180px;
+            }
+            
+            .image-container {
+                height: 100px;
+            }
+            
+            .gallery-nav {
+                width: 22px;
+                height: 22px;
+                font-size: 11px;
+            }
+            
+            .hyperparameters-grid {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+            
+            .hyperparameter-item {
+                padding: 8px;
+            }
+            
+            .hyperparameter-value {
+                max-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ title }}</h1>
+        </div>
+        
+        <div class="content">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-metrics">{{ chart_configs|length }}</div>
+                    <div class="stat-label">Total Metrics</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="total-data-points">{{ total_data_points }}</div>
+                    <div class="stat-label">Data Points</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="total-images">{{ total_images }}</div>
+                    <div class="stat-label">Total Images</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="generated-time">{{ generated_time }}</div>
+                    <div class="stat-label">Generated</div>
+                </div>
+            </div>
+            
+            {% if hyperparameters %}
+            <div class="hyperparameters-section">
+                <div class="hyperparameters-table">
+                    <h2 class="hyperparameters-title">Hyperparameters</h2>
+                    <div class="hyperparameters-grid">
+                        {% for name, value in hyperparameters.items() %}
+                        <div class="hyperparameter-item">
+                            <span class="hyperparameter-name">{{ name }}</span>
+                            <span class="hyperparameter-value" title="{{ value }}">{{ value }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if chart_configs %}
+            <div class="charts-grid" id="charts-container">
+                <!-- Charts will be inserted here -->
+            </div>
+            {% endif %}
+            
+            {% if image_galleries %}
+            <div class="image-galleries">
+                <div class="galleries-grid">
+                    {% for gallery in image_galleries %}
+                    <div class="gallery-section">
+                        <h2 class="gallery-title">{{ gallery.name }}</h2>
+                        <div class="gallery-grid" id="gallery-{{ loop.index }}">
+                            <div class="gallery-nav" onclick="navigateGallery({{ loop.index }}, -1)" id="prev-{{ loop.index }}">
+                                ‹
+                            </div>
+                            <div class="gallery-main-image">
+                                {% for image in gallery.images %}
+                                <div class="image-card {% if loop.first %}active{% endif %}" data-index="{{ loop.index0 }}">
+                                    <div class="image-container">
+                                        <img src="data:image/png;base64,{{ image.base64 }}" alt="{{ image.alt }}" onclick="openModal(this.src, '{{ image.alt }}')">
+                                    </div>
+                                    <div class="image-label">Image {{ loop.index }} of {{ gallery.count }}</div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="gallery-nav" onclick="navigateGallery({{ loop.index }}, 1)" id="next-{{ loop.index }}">
+                                ›
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if not chart_configs and not image_galleries and not hyperparameters %}
+            <div class="no-data">
+                <h2>No Data Available</h2>
+                <p>No metrics, images, or hyperparameters have been logged yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Modal for image preview -->
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <script>
+        const chartConfigs = {{ chart_configs|tojson }};
+        
+        {% if chart_configs %}
+        const chartsContainer = document.getElementById('charts-container');
+        
+        chartConfigs.forEach(config => {
+            // Create chart container
+            const chartDiv = document.createElement('div');
+            chartDiv.className = 'chart-container';
+            
+            const chartWrapper = document.createElement('div');
+            chartWrapper.className = 'chart-wrapper';
+            
+            const canvas = document.createElement('canvas');
+            canvas.id = config.id;
+            
+            chartWrapper.appendChild(canvas);
+            chartDiv.appendChild(chartWrapper);
+            chartsContainer.appendChild(chartDiv);
+            
+            // Create chart
+            new Chart(canvas, {
+                type: config.type,
+                data: config.data,
+                options: config.options
+            });
+        });
+        {% endif %}
+        
+        // Modal functions
+        function openModal(src, alt) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.style.display = 'block';
+            modalImg.src = src;
+            modalImg.alt = alt;
+        }
+        
+        function closeModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+        
+        // Gallery navigation function
+        function navigateGallery(galleryId, direction) {
+            const gallery = document.getElementById(`gallery-${galleryId}`);
+            const images = gallery.querySelectorAll('.image-card');
+            const currentActive = gallery.querySelector('.image-card.active');
+            const currentIndex = parseInt(currentActive.dataset.index);
+            const totalImages = images.length;
+            
+            let newIndex = currentIndex + direction;
+            
+            // Handle wrap-around
+            if (newIndex < 0) {
+                newIndex = totalImages - 1;
+            } else if (newIndex >= totalImages) {
+                newIndex = 0;
+            }
+            
+            // Update active image
+            currentActive.classList.remove('active');
+            images[newIndex].classList.add('active');
+            
+            // Update counter
+            const counter = document.getElementById(`counter-${galleryId}`);
+            counter.textContent = `Image ${newIndex + 1} of ${totalImages}`;
+            
+            // Update navigation button states
+            const prevBtn = document.getElementById(`prev-${galleryId}`);
+            const nextBtn = document.getElementById(`next-${galleryId}`);
+            
+            // Enable/disable buttons based on position (optional - you can remove this if you want wrap-around)
+            // prevBtn.classList.toggle('disabled', newIndex === 0);
+            // nextBtn.classList.toggle('disabled', newIndex === totalImages - 1);
+        }
+        
+        // Close modal when clicking outside the image
+        document.getElementById('imageModal').onclick = function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        }
+        
+        // Keyboard navigation for galleries
+        document.addEventListener('keydown', function(e) {
+            const activeGallery = document.querySelector('.gallery-grid:has(.image-card.active)');
+            if (!activeGallery) return;
+            
+            const galleryId = activeGallery.id.replace('gallery-', '');
+            
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                navigateGallery(parseInt(galleryId), -1);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                navigateGallery(parseInt(galleryId), 1);
+            }
+        });
+    </script>
+</body>
+</html> 
