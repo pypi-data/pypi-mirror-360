@@ -1,0 +1,107 @@
+- project:
+    templates:
+      - check-requirements
+      - lib-forward-testing-python3
+      - openstack-python3-jobs
+      - publish-openstack-docs-pti
+      - release-notes-jobs-python3
+    check:
+      jobs:
+        - os-brick-code-coverage:
+            voting: false
+        - os-brick-src-devstack-plugin-ceph-v
+        - os-brick-src-devstack-plugin-ceph-nv
+        - os-brick-src-tempest-lvm-lio-barbican
+        - os-brick-src-tempest-nfs:
+            voting: false
+        - os-brick-mypy:
+            voting: false
+    gate:
+      jobs:
+        - os-brick-src-tempest-lvm-lio-barbican
+    experimental:
+      jobs:
+        - openstack-tox-pylint
+
+- job:
+    name: os-brick-code-coverage
+    parent: openstack-tox-cover
+    timeout: 2400
+    irrelevant-files: &non-code-files
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^releasenotes/.*$
+      - ^tools/.*$
+
+- job:
+    name: os-brick-src-devstack-plugin-ceph
+    abstract: true
+    description: |
+      Tempest job which tests os-brick from source.
+      Former names for this job were:
+        * legacy-tempest-dsvm-full-ceph-plugin-src-os-brick
+    parent: cinder-plugin-ceph-tempest
+    required-projects:
+      - opendev.org/openstack/os-brick
+    irrelevant-files: &doc-files
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^releasenotes/.*$
+
+- job:
+    name: os-brick-src-devstack-plugin-ceph-v
+    final: true
+    description: |
+      Runs tempest tests on os-brick source against ceph.
+      This voting job runs on changes that could affect rbd.
+    parent: os-brick-src-devstack-plugin-ceph
+    files:
+      - ^os_brick/initiator/connector.py$
+      - ^os_brick/initiator/connectors/rbd.py$
+      - ^os_brick/initiator/linuxrbd.py$
+      - ^os_brick/utils.py$
+
+- job:
+    name: os-brick-src-devstack-plugin-ceph-nv
+    final: true
+    voting: false
+    description: |
+      Runs tempest tests on os-brick source against ceph.
+      This non-voting job runs changes that don't specifically
+      impact ceph-related os-brick code.
+    parent: os-brick-src-devstack-plugin-ceph
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^releasenotes/.*$
+      - ^os_brick/initiator/connector.py$
+      - ^os_brick/initiator/connectors/rbd.py$
+      - ^os_brick/initiator/linuxrbd.py$
+      - ^os_brick/utils.py$
+
+- job:
+    name: os-brick-src-tempest-lvm-lio-barbican
+    parent: cinder-tempest-plugin-lvm-lio-barbican
+    description: |
+      Specialized cinder-tempest-lvm-lio-barbican
+      which runs against os-brick from sources.
+      Former names for this job were:
+        * legacy-tempest-dsvm-full-lio-src-os-brick
+    required-projects:
+      - opendev.org/openstack/os-brick
+    irrelevant-files: *doc-files
+
+- job:
+    name: os-brick-src-tempest-nfs
+    parent: devstack-plugin-nfs-tempest-full
+    required-projects:
+      - opendev.org/openstack/os-brick
+    irrelevant-files: *doc-files
+
+- job:
+    name: os-brick-mypy
+    parent: openstack-tox
+    vars:
+      tox_envlist: mypy
+    irrelevant-files: *non-code-files
