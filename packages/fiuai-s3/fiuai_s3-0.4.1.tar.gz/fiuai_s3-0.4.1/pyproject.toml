@@ -1,0 +1,83 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fiuai-s3"
+version = "0.4.1"
+description = "一个支持阿里云OSS和MinIO的对象存储抽象包"
+readme = "README.md"
+authors = [
+    {name = "liming", email = "lmlala@aliyun.com"}
+]
+license = {file = "LICENSE"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+]
+requires-python = ">=3.7"
+dependencies = [
+    "pydantic>=1.8.0",
+    "oss2>=2.15.0",
+    "minio>=7.1.0",
+    "hatch>=1.7.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/fiuai-sz/fiuai-s3"
+Repository = "https://github.com/fiuai-sz/fiuai-s3.git"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fiuai_s3"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/fiuai_s3",
+    "LICENSE",
+    "README.md",
+]
+
+[tool.hatch.envs.default]
+dependencies = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=23.0",
+    "isort>=5.0",
+    "mypy>=1.0",
+]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest {args:tests}"
+test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=fiuai_s3 {args:tests}"
+lint = [
+    "black --check .",
+    "isort --check .",
+    "mypy .",
+]
+fmt = [
+    "black .",
+    "isort .",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py37"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+
+[tool.mypy]
+python_version = "3.7"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true
