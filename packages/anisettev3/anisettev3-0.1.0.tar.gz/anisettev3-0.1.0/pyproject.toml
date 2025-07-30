@@ -1,0 +1,60 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "anisettev3"
+dynamic = ["version"]
+description = 'Provides both sync and async anisette-v3-server clients written in Python.'
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "ny", email = "me@nythepegas.us" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "httpx==0.28.1",
+  "websockets<=16",
+]
+
+[project.urls]
+Documentation = "https://github.com/nythepegasus/anisettev3#readme"
+Issues = "https://github.com/nythepegasus/anisettev3/issues"
+Source = "https://github.com/nythepegasus/anisettev3"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive anisettev3"
+
+[tool.coverage.run]
+source_pkgs = ["anisettev3"]
+branch = true
+parallel = true
+
+[tool.coverage.paths]
+anisettev3 = ["anisettev3"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
