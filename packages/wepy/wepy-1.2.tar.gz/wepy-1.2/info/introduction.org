@@ -1,0 +1,66 @@
+* Introduction & Features
+
+There is an academic paper describing various aspects of the design and
+usage of ~wepy~:
+
+- [[https://doi.org/10.1021/acsomega.0c03892][Wepy: A Flexible Software Framework for Simulating Rare Events with Weighted Ensemble Resampling]]
+
+** Weighted Ensemble (WE)
+
+The weighted ensemble algorithm (WE) is a strategy for simulating rare
+or long-timescale events in stochastic systems
+([[http://www.ncbi.nlm.nih.gov/pmc/articles/PMC1224912/][Huber, 1996]]).
+It creates several parallel simulations called walkers with individual
+weights corresponding to their likelihood. Throughout the simulation,
+walkers that exhibit behaviors or reach states that are of particular
+relevance or significance to the objectives of the simulation are
+cloned. To compensate for cloning, and to manage the computational
+expense of the simulation, some of the remaining walkers are merged.
+Cloning and merging are together referred to as "resampling". It has
+been [[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2830257/][previously
+shown]] that WE resampling is "statistically exact", in that it does not
+change the expectation values of the weights at any point in space.
+
+** Features of Wepy
+- State of the art WE resamplers: WExplore
+  ([[http://www.ncbi.nlm.nih.gov/pmc/articles/PMC4404516/][Dickson,
+  2014]]) and REVO
+  ([[https://pubs.aip.org/aip/jcp/article/150/24/244112/198013/REVO-Resampling-of-ensembles-by-variation][Donyapour,
+  2019]])
+- Fast GPU-enabled molecular dynamics via OpenMM
+  ([[https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3539733/][Eastman,
+  2013]])
+- Purpose built HDF5 storage format for WE data with extensive API:
+  ~WepyHDF5~
+- Analysis routines for:
+  - free energy profiles
+  - rate calculations
+  - computing trajectory observables
+  - extracting linear trajectories from clone-merge trees
+  - aggregating multiple runs
+- Expert friendly: Fully-featured framework for building and customizing
+  simulations for exactly what you need.
+- Leverage the entire python ecosystem.
+- No /ad hoc/ configuration files, everything is python.
+
+
+Once you have wepy @@rst::any:`installed <installation>`@@ you can check out the
+@@rst::any:`quickstart <quick_start/index>`@@ to get a rough idea of how it works.
+
+Then you can head on to the @@rst::any:`tutorials <tutorials/index>`@@ or execute the
+[[https://github.com/ADicksonLab/wepy/tree/master/info/examples][examples]].
+
+** Contributed wepy libraries and other useful resources
+
+Here is a list of packages that are not in the main Wepy repository but
+may be of interest to users of Wepy.
+
+They are:
+
+- [[https://github.com/ADicksonLab/geomm][geomm]] :: purely functional
+  library for common numerical routines in computational biology and
+  chemistry, with no dependency on specific file or topology formats.
+
+- [[https://github.com/ADicksonLab/CSNAnalysis][CSNAnalysis]] :: small
+  library for aiding in the analysis of conformation state networks
+  (CSNs) which can be generated from Wepy data.
