@@ -1,0 +1,526 @@
+Metadata-Version: 2.4
+Name: yby6-parse-video-mcp
+Version: 0.1.4
+Summary: A video parsing toolkit.
+Author-email: yangbuyiya <yangbuyiya@duck.com>
+License-Expression: MIT
+Project-URL: Homepage, https://yby6.com
+Project-URL: Repository, https://github.com/yangbuyiya/parse-video-py
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: fastapi
+Requires-Dist: pydantic>=2.11.7
+Requires-Dist: python-dotenv>=1.1.0
+Requires-Dist: httpx>=0.28.1
+Requires-Dist: starlette==0.37.2
+Requires-Dist: rich>=13.9.4
+Requires-Dist: fastmcp==2.10.2
+Dynamic: license-file
+
+# 视频解析服务
+
+Python短视频去水印，支持20个平台的视频解析和4个平台的图集解析，提供API和MCP服务。
+
+## 通过PyPI安装
+
+你可以直接通过PyPI安装本项目：
+
+```bash
+pip install yby6-parse-video
+```
+
+安装完成后，可以直接通过命令行启动MCP服务：
+
+```bash
+# 默认使用HTTP传输方式
+parse-video
+
+# 使用SSE传输方式
+parse-video --transport sse
+
+# 使用STDIO传输方式
+parse-video --transport stdio
+
+# 自定义端口和路径
+parse-video --port 9000 --path /api/mcp
+```
+
+如果你已经安装了uvx工具，也可以使用uvx启动：
+
+```bash
+uvx parse-video
+```
+
+## 支持平台
+
+### 图集
+| 平台 | 状态 |
+|----|----|
+| 抖音 | ✔  |
+| 快手 | ✔  |
+| 小红书 | ✔  |
+| 皮皮虾 | ✔  |
+
+### 图集 LivePhoto
+| 平台 | 状态 |
+|----|----|
+| 小红书 | ✔  |
+
+### 视频
+| 平台       | 状态 |
+|----------|----|
+| 小红书      | ✔  |
+| 皮皮虾      | ✔  |
+| 抖音短视频    | ✔  |
+| 火山短视频    | ✔  |
+| 皮皮搞笑     | ✔  |
+| 快手短视频    | ✔  |
+| 微视短视频    | ✔  |
+| 西瓜视频     | ✔  |
+| 最右       | ✔  |
+| 梨视频      | ✔  |
+| 度小视(原全民) | ✔  |
+| 逗拍       | ✔  |
+| 微博       | ✔  |
+| 绿洲       | ✔  |
+| 全民K歌     | ✔  |
+| 6间房      | ✔  |
+| 美拍       | ✔  |
+| 新片场      | ✔  |
+| 好看视频     | ✔  |
+| 虎牙       | ✔  |
+| AcFun    | ✔  |
+
+## 安装
+
+### 创建并激活 python 虚拟环境
+```shell
+# 进入项目根目录
+cd parse-video-py
+
+# 创建虚拟环境
+# 注意python 版本需要 >= 3.10
+python -m venv venv
+
+# macos & linux 激活虚拟环境
+source venv/bin/activate
+
+# windows 激活虚拟环境
+venv\Scripts\activate
+```
+
+### 安装依赖库
+```shell
+pip install -r requirements.txt
+```
+
+## 运行服务
+
+本项目提供多种运行方式：
+
+### 1. 传统API服务
+
+```bash
+python main.py
+```
+
+访问: http://127.0.0.1:8000/
+
+### 2. MCP服务器 (单独运行)
+
+提供了三种传输方式：
+
+#### STDIO传输 (默认)
+```bash
+python mcp_server.py
+```
+
+#### SSE传输
+```bash
+python mcp_server.py --transport sse
+```
+
+#### Streamable HTTP传输 (推荐)
+```bash
+python mcp_server.py --transport http
+```
+
+### 3. 组合服务 (API + MCP)
+
+同时提供API和MCP服务:
+
+```bash
+python combined_server.py
+```
+
+这将启动以下服务:
+- Web UI: http://localhost:8000/
+- API端点: http://localhost:8000/video/share/url/parse 等
+- SSE端点: http://localhost:8000/sse/
+- Streamable HTTP端点: http://localhost:8000/mcp
+
+可以通过命令行参数禁用特定传输:
+```bash
+# 禁用SSE传输
+python combined_server.py --disable-sse
+
+# 禁用Streamable HTTP传输
+python combined_server.py --disable-http
+```
+
+## 使用API
+
+### 解析分享链接
+```bash
+curl 'http://127.0.0.1:8000/video/share/url/parse?url=视频分享链接'
+```
+
+### 根据ID解析
+```bash
+curl 'http://127.0.0.1:8000/video/id/parse?source=douyin&video_id=视频ID'
+```
+
+## 使用MCP客户端
+
+### 示例客户端
+项目提供了示例客户端代码:
+
+```bash
+python client_example.py
+```
+
+### 自定义MCP客户端
+
+#### SSE连接
+```python
+from fastmcp import Client
+from fastmcp.client.transports import SSETransport
+import asyncio
+
+# 使用SSE传输
+transport = SSETransport(url="http://localhost:8000/sse/")
+client = Client(transport)
+
+async def main():
+    async with client:
+        # 解析视频链接
+        result = await client.call_tool(
+            "share_url_parse_tool", 
+            {"url": "https://v.douyin.com/your-share-code/"}
+        )
+        print(f"解析结果: {result}")
+
+asyncio.run(main())
+```
+
+#### Streamable HTTP连接
+```python
+from fastmcp import Client
+import asyncio
+
+# 使用Streamable HTTP传输
+client = Client("http://localhost:8000/mcp")
+
+async def main():
+    async with client:
+        # 解析视频链接
+        result = await client.call_tool(
+            "share_url_parse_tool", 
+            {"url": "https://v.douyin.com/your-share-code/"}
+        )
+        print(f"解析结果: {result}")
+
+asyncio.run(main())
+```
+
+### MCP配置文件
+
+可以使用项目提供的`mcp_config.json`配置文件:
+
+```python
+from fastmcp import Client
+import asyncio
+import json
+
+# 加载MCP配置
+with open("mcp_config.json", "r") as f:
+    config = json.load(f)
+
+# 创建客户端
+client = Client(config)
+
+async def main():
+    async with client:
+        # 使用HTTP传输的服务器
+        result = await client.call_tool(
+            "video-parser_share_url_parse_tool", 
+            {"url": "https://v.douyin.com/your-share-code/"}
+        )
+        print(f"HTTP解析结果: {result}")
+
+asyncio.run(main())
+```
+
+## MCP功能
+
+### 工具 (Tools)
+
+1. **share_url_parse_tool** - 解析视频分享链接
+   - 参数: `url` - 视频分享链接
+   - 返回: 包含视频信息的JSON对象
+
+2. **video_id_parse_tool** - 根据视频ID解析
+   - 参数: `source` - 视频平台来源
+   - 参数: `video_id` - 视频唯一标识符
+   - 返回: 包含视频信息的JSON对象
+
+### 资源 (Resources)
+
+1. **video-platforms://list** - 获取支持的视频平台列表
+
+### 提示模板 (Prompts)
+
+1. **video_parser_guide** - 生成视频解析使用指南
+   - 可选参数: `platform` - 特定平台名称
+
+## 返回格式
+```json
+{
+  "author": {
+    "uid": "uid",
+    "name": "name",
+    "avatar": "https://xxx"
+  },
+  "title": "记录美好生活#峡谷天花板",
+  "video_url": "https://xxx",
+  "music_url": "https://yyy",
+  "cover_url": "https://zzz"
+}
+```
+
+| 字段名 | 说明 |
+| ---- | ---- |
+| author.uid | 视频作者id |
+| author.name | 视频作者名称 |
+| author.avatar | 视频作者头像 |
+| title | 视频标题 |
+| video_url | 视频无水印链接 |
+| music_url | 视频音乐链接 |
+| cover_url | 视频封面 |
+| images | 图集图片列表 |
+| images.[index].url | 图集图片地址 |
+| images.[index].live_photo_url | 图集图片 livephoto 视频地址 |
+> 字段除了视频地址, 其他字段可能为空
+
+## 其他语言版本
+- [Golang版本](https://github.com/wujunwei928/parse-video)
+
+## Docker部署
+
+本项目提供了完整的Docker部署支持，包括Dockerfile、docker-compose.yml和部署脚本。
+
+### 使用Docker Compose部署
+
+```bash
+# 构建并启动所有服务
+docker-compose up -d
+
+# 仅启动HTTP服务
+docker-compose up -d mcp-http
+
+# 仅启动SSE服务
+docker-compose up -d mcp-sse
+
+# 仅启动组合服务
+docker-compose up -d combined-server
+
+# 停止所有服务
+docker-compose down
+```
+
+### 使用部署脚本
+
+#### Linux/macOS
+```bash
+# 显示帮助信息
+./script/deploy.sh --help
+
+# 构建所有服务的Docker镜像
+./script/deploy.sh -b --all
+
+# 运行HTTP服务
+./script/deploy.sh -r --http
+
+# 停止SSE服务
+./script/deploy.sh -s --sse
+
+# 清理所有资源
+./script/deploy.sh -c --all
+```
+
+#### Windows
+```bat
+# 显示帮助信息
+script\deploy.bat --help
+
+# 构建所有服务的Docker镜像
+script\deploy.bat -b --all
+
+# 运行HTTP服务
+script\deploy.bat -r --http
+
+# 停止SSE服务
+script\deploy.bat -s --sse
+
+# 清理所有资源
+script\deploy.bat -c --all
+```
+
+### 直接使用Docker命令
+
+#### 构建镜像
+```bash
+# 构建基础镜像
+docker build -t video-parser-mcp:http -f Dockerfile .
+
+# 构建组合服务镜像
+docker build -t video-parser-mcp:combined -f Dockerfile.combined .
+```
+
+#### 运行容器
+```bash
+# 运行HTTP服务
+docker run -d --name video-parser-mcp-http \
+  -p 8000:8000 \
+  -e TRANSPORT=http \
+  -e HOST=0.0.0.0 \
+  -e PORT=8000 \
+  video-parser-mcp:http
+
+# 运行SSE服务
+docker run -d --name video-parser-mcp-sse \
+  -p 8001:8001 \
+  -e TRANSPORT=sse \
+  -e HOST=0.0.0.0 \
+  -e PORT=8001 \
+  video-parser-mcp:http
+
+# 运行组合服务
+docker run -d --name video-parser-mcp-combined \
+  -p 8002:8002 \
+  video-parser-mcp:combined \
+  python combined_server.py --host 0.0.0.0 --port 8002
+```
+
+## 访问服务
+
+### FastAPI服务
+- API文档: http://localhost:8000/docs
+- Web界面: http://localhost:8000/
+
+### MCP服务
+- HTTP传输: http://localhost:8000/mcp
+- SSE传输: http://localhost:8001/sse/
+- 组合服务: http://localhost:8002/
+
+## 许可证
+
+MIT
+
+## MCP认证功能
+
+MCP服务器支持Bearer Token认证，可以保护您的API不被未授权访问。
+
+### 生成令牌
+
+项目提供了两种方式生成令牌：
+
+#### 1. 使用generate_token.py脚本
+
+```bash
+python generate_token.py
+```
+
+这将生成RSA密钥对和Bearer Token，并保存到以下文件：
+- `keys/public_key.pem` - 公钥
+- `keys/private_key.pem` - 私钥
+- `token.txt` - 生成的令牌
+
+#### 2. 通过HTTP端点获取
+
+当服务器运行时，可以通过以下端点获取令牌：
+
+```bash
+curl http://localhost:8000/auth/token
+```
+
+### 验证令牌
+
+您可以使用`verify_token.py`脚本验证令牌的有效性：
+
+```bash
+python verify_token.py
+```
+
+这将检查令牌的签名、过期时间和其他声明，并显示令牌的详细信息。
+
+您也可以指定自定义的令牌文件和公钥文件路径：
+
+```bash
+python verify_token.py custom_token.txt custom_keys/public_key.pem
+```
+
+### 使用令牌访问MCP服务
+
+#### 在客户端代码中使用令牌
+
+```python
+from fastmcp import Client
+from fastmcp.client.transports import StreamableHttpTransport
+from fastmcp.client.auth import BearerTokenAuth
+import asyncio
+
+# 读取令牌
+with open("token.txt", "r") as f:
+    token = f.read().strip()
+
+# 创建认证对象
+auth = BearerTokenAuth(token)
+
+# 使用Streamable HTTP传输和认证
+transport = StreamableHttpTransport(url="http://localhost:8000/mcp", auth=auth)
+client = Client(transport)
+
+async def main():
+    async with client:
+        # 解析视频链接
+        result = await client.call_tool(
+            "share_url_parse_tool", 
+            {"url": "https://v.douyin.com/your-share-code/"}
+        )
+        print(f"解析结果: {result}")
+
+asyncio.run(main())
+```
+
+#### 测试令牌认证
+
+项目提供了测试脚本，用于验证令牌认证功能：
+
+```bash
+python test_token_auth.py
+```
+
+### 自定义认证配置
+
+在`mcp_server.py`中，可以自定义认证配置：
+
+```python
+auth = BearerAuthProvider(
+    public_key=public_key,  # 从文件加载的公钥
+    issuer="https://your-domain.com",  # 令牌发行者
+    audience="your-app-name",  # 令牌受众
+    # 其他可选参数...
+)
+```
