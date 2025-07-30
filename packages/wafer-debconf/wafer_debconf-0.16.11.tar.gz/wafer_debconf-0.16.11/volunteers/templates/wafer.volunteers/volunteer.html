@@ -1,0 +1,101 @@
+{% extends 'wafer/base.html' %}
+{% load i18n %}
+{% load tz %}
+
+{% block content %}
+<h1>{{ profile.display_name }}</h1>
+
+{% if not profile.contact_number %}
+  <div class="alert alert-warning">
+    {% trans "You haven't added your contact number" %}.
+  </div>
+{% endif %}
+
+<h2>{% trans "Preferred categories" %}</h2>
+{% if object.preferred_categories.all %}
+  <ul>
+    {% for category in object.preferred_categories.all %}
+      <li>{{ category }}</li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>{% trans "No preferred categories" %}.</p>
+{% endif %}
+
+<h2>{% trans "Preferred task type" %}</h2>
+{% if object.preferred_task_types.all %}
+  <ul>
+    {% for task_type in object.preferred_task_types.all %}
+      <li>{{ task_type.name }}</li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>{% trans "No preferred task types" %}.</p>
+{% endif %}
+
+<a href="{% url 'wafer_volunteer_update' object.user.username %}" class="btn btn-secondary">
+  {% trans "Update preferences" %}
+</a>
+
+<h2>Time zone</h2>
+<p>
+  Preferred time zone: {{ object.timezone }} ({% timezone object.timezone %}{% now 'O' %}{% endtimezone %}).
+  All times below are local to this zone.
+</p>
+
+<h2>{%trans "My tasks" %}</h2>
+<div>
+  <a href="{% url 'wafer_tasks' %}" class="btn btn-secondary">
+    {% trans "Available tasks" %}
+  </a>
+</div>
+<div class="mt-4">
+  {% if object.annotated_tasks.all %}
+    <table>
+      <thead>
+        <tr>
+          <th>{% trans 'When' %}</th>
+          <th>{% trans 'Title' %}</th>
+          <th>{% trans 'Volunteers' %}</th>
+          <th>{% trans 'Category' %}</th>
+          <th>{% trans 'Event' %}</th>
+        </tr>
+
+        {% for task in object.annotated_tasks.all %}
+          <tr>
+            <td>
+              {% timezone object.timezone %}
+                {% blocktrans with date=task.start|date start_time=task.start|time end_time=task.end|time %}
+                  {{date}} from {{start_time}} to {{end_time}}
+                {% endblocktrans %}
+              {% endtimezone %}
+            </td>
+            <td>
+              <a href="{% url 'wafer_task' task.pk %}">{{ task.name_ }}</a>
+            </td>
+            <td>{{ task.nbr_volunteers }}/{{ task.max_volunteers }}</td>
+            <td>
+              {% if task.category_ %}
+                {{ task.category_ }}
+              {% else %}
+                {% trans 'N/A' %}
+              {% endif %}
+            </td>
+            <td>
+              {% if task.schedule_item %}
+                <a href="{{ task.schedule_item.get_url }}">
+                  {{ task.schedule_item.get_title }}
+                </a>
+              {% else %}
+                {% trans 'N/A' %}
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </thead>
+    </table>
+  {% else %}
+    <p>{% trans "You haven't volunteered to any task" %}.</p>
+  {% endif %}
+</div>
+{% endblock %}

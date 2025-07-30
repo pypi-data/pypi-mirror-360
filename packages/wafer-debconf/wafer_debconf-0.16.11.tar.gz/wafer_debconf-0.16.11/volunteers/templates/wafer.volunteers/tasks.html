@@ -1,0 +1,47 @@
+{% extends 'wafer/base.html' %}
+{% load i18n %}
+{% load tz %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-md-3">
+      <h4>Current filter</h4>
+      <form action="{% url "wafer_tasks" %}" method="get">
+        {% crispy filter_form %}
+      </form>
+      {% if user.is_authenticated %}
+        <h4>Data for {{ user.userprofile.display_name }}</h4>
+        <p>
+          <a href="{% url 'wafer_volunteer' user.username %}" class="btn btn-info">Show my tasks</a>
+          <a href="{% url 'wafer_volunteer_update' user.username %}" class="btn btn-info">Update my preferences</a>
+        </p>
+      {% endif %}
+      {% if perms.volunteers.add_task %}
+        <h4>Video Admin</h4>
+        <p>
+          <a href="{% url 'wafer_volunteer_video_mass_schedule' %}"
+             class="btn btn-warning">
+            Video Task Scheduling
+          </a>
+          <a href="{% url 'wafer_volunteer_video_shirt' %}"
+             class="btn btn-warning">
+            Volunteer Video Shirts
+          </a>
+        </p>
+      {% endif %}
+    </div>
+    <div class="col-md-9">
+      <h2>Tasks</h2>
+      {% if tasks %}
+        {% timezone user.volunteer.timezone %}
+          {% regroup tasks by start|date as task_list %}
+          {% include "wafer.volunteers/includes/task_list.html" with task_list=task_list accordion_id='all' %}
+        {% endtimezone %}
+      {% else %}
+        <p>{% trans "No tasks returned" %}</p>
+      {% endif %}
+    </div>
+  </div>
+  </div>
+{% endblock %}

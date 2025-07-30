@@ -1,0 +1,173 @@
+{% extends "wafer/base.html" %}
+{% load static %}
+{% load debconf %}
+{% load i18n %}
+{% block title %}{{ object.name }} - {{ WAFER_CONFERENCE_NAME }}{% endblock %}
+{% block content %}
+<section class="wafer">
+  <h1>{{ object.name }}</h1>
+  <div class="now-or-next" style="display: none">
+    <strong class="now">Now playing:</strong>
+    <strong class="next">Next:</strong>
+    <span class="talk-title"></span>
+    <a class="talk-details" target="_blank" href="#">(details)</a>
+  </div>
+  {% if object.video %}
+    <div id="video">
+        <div class="row">
+            <div class="video-container col-md-8">
+                <video
+                  id="live-stream"
+                  class="video-js vjs-default-skin vjs-big-play-centered vjs-16-9"
+                  controls
+                >
+                  <source src="{% hls_stream_url venue %}"
+                    type="application/x-mpegURL" label="Full">
+                </video>
+
+                <div class="now-or-next" style="display: none">
+                  <p>
+                  <strong>Abstract:</strong>
+                  <span class="talk-abstract"></span>
+                  </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+              <div class="now-or-next" style="display: none">
+                <h4>Shared notes</h4>
+                <p>
+                For questions and collaborative note taking:
+                <a class="shared-notes" href="#" target="_blank"></a>
+                </p>
+              </div>
+              <div class="chat">
+                <h4>Chat</h4>
+                <p>
+                {% irc_channels object as channels %}
+                Join
+                {% for channel in channels %}
+                  {% if forloop.counter > 1 %}and{% endif %}
+                  {{channel}}
+                {% endfor %}
+                on OFTC with your IRC client, or
+                <a href="https://webchat.oftc.net/?nick={{ nick }}&channels={% for channel in channels %}{% if forloop.counter > 1 %},{% endif %}{{ channel }}{% endfor %}&prompt=1&uio=OT10cnVlJjExPTAmMTM9ZmFsc2Uf9" target="_blank" class="btn btn-primary" id="start-webchat">Join using the webchat</a>
+                </p>
+              </div>
+            </div>
+        </div>
+    </div>
+  {% else %}
+    {# venue with no video #}
+    {{object.notes}}
+  {% endif %}
+  {% if object.video %}
+    <h2>Other ways to watch the video</h2>
+    <div>
+      The streams are available over HLS (used by the player above) and RTMP, in 4 qualities.
+    </div>
+    <ul>
+      <li>
+        <strong>HLS:</strong> vlc, mpv, and mobile web browsers understand HLS streaming, use the URL:
+        <a href="{% hls_stream_url venue %}" class="direct-link">{% hls_stream_url venue %}</a>
+      </li>
+      <li>
+        <strong>RTMP:</strong> lower latency than HLS, but without automatic bandwidth management.
+        Use one of the following URLs:
+        <ul>
+          <li>Source quality (1280x720): <a href="{% rtmp_stream_url object "src" %}" class="direct-link">{% rtmp_stream_url object "src" %}</a></li>
+          <li>High quality (900x506): <a href="{% rtmp_stream_url object "high" %}" class="direct-link">{% rtmp_stream_url object "high" %}</a></li>
+          <li>Medium quality (720x404): <a href="{% rtmp_stream_url object "mid" %}" class="direct-link">{% rtmp_stream_url object "mid" %}</a></li>
+          <li>Low quality (480x270): <a href="{% rtmp_stream_url object "low" %}" class="direct-link">{% rtmp_stream_url object "low" %}</a></li>
+        </ul>
+      </li>
+    </ul>
+  {% endif %}
+</section>
+{% endblock %}
+{% block extra_head %}
+<link href="{% static 'vendor/video.js/dist/video-js.css' %}" rel="stylesheet" />
+{% endblock %}
+{% block extra_foot %}
+<script src="{% static 'vendor/video.js/dist/video.js' %}"></script>
+<script src="{% static 'vendor/video.js/dist/lang/en.js' %}"></script>
+<script src="{% static 'vendor/videojs-contrib-quality-levels/dist/videojs-contrib-quality-levels.js' %}"></script>
+<script src="{% static 'vendor/videojs-hls-quality-selector/dist/videojs-hls-quality-selector.js' %}"></script>
+<script type="text/javascript">
+  'use strict';
+
+  function load_talk(id) {
+    jQuery.getJSON("/talks/api/talks/" + id + "/", function(data) {
+      // get etherpad link
+      jQuery.each(data.urls, function(_, url) {
+        if (url.description == "etherpad") {
+          $("a.shared-notes").attr("href", url.url);
+          $("a.shared-notes").html(url.url);
+        }
+      });
+
+      // Show talk info
+      $(".talk-title").html(data.title);
+      $(".talk-abstract").html(data.abstract);
+      $(".talk-details").attr("href", "/talks/" + data.talk_id + "/");
+    });
+  }
+
+  function load_now_or_next() {
+    jQuery.getJSON("/now_or_next/{{ object.id }}/", function(data) {
+      if (data.talk) {
+        load_talk(data.talk);
+        $(".now-or-next").show();
+        if (data.next) {
+          $(".next").show();
+          $(".now").hide();
+        } else {
+          if (data.now) {
+            $(".next").hide();
+            $(".now").show();
+          }
+        }
+      }
+      if (data.reload_seconds) {
+        setTimeout(load_now_or_next, 1000 * data.reload_seconds);
+      }
+    });
+  }
+
+  function find_closest_video_mirror(callback) {
+    var source_elts = $('#live-stream source');
+    var link_elts = $('.direct-link');
+    var nojs_elts = $('#redir-nojs');
+
+    $.ajax({
+      url: 'https://onsite.live.debconf.org/local-server',
+    }).done(function(country_code) {
+      function localize(url) {
+        return url.replace(/onsite\.live\.debconf\.org/, country_code + '.live.debconf.org');
+      }
+      source_elts.each(function() {
+        this.setAttribute('src', localize(this.getAttribute('src')));
+      });
+      link_elts.each(function() {
+        this.innerHTML = localize(this.innerHTML);
+        if (this.getAttribute('href')) {
+          this.setAttribute('href', localize(this.getAttribute('href')));
+        };
+      });
+      nojs_elts.hide();
+      callback();
+    });
+  }
+
+  function init_video() {
+    var p = videojs('live-stream');
+    p.qualityLevels();
+    p.hlsQualitySelector({displayCurrentQuality: true});
+    p.reloadSourceOnError();
+  };
+
+  $(function() {
+    find_closest_video_mirror(init_video);
+    load_now_or_next();
+  });
+</script>
+{% endblock %}

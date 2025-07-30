@@ -1,0 +1,30 @@
+{% extends "wafer/base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+{% block content %}
+<h1>Mass Schedule Video Tasks</h1>
+<p>
+  Video tasks for tasks starting after {{ view.lead_time }} in the future.<br>
+  To override this cut-off, pass <tt>?lead_time=&lt;DURATION&gt;</tt>, e.g.
+  <tt>?lead_time=12:00:00</tt>.
+</p>
+<p>
+  Checked tasks already exist.
+</p>
+<p>
+  Times are in {{ TIME_ZONE }}.
+</p>
+{% crispy form %}
+{% endblock %}
+{% block extra_foot %}
+  <script type="text/javascript">
+    'use strict';
+    $(function() {
+      $('#button-id-select_all').on('click', function(ev) {
+        $('input.checkboxinput').each(function() {
+          this.checked = true;
+        });
+      });
+    });
+  </script>
+{% endblock %}

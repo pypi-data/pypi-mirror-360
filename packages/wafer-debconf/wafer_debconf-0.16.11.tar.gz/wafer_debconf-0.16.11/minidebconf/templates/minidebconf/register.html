@@ -1,0 +1,53 @@
+{% extends "wafer/base.html" %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block content %}
+{% with profile=object.user.userprofile %}
+  {% if profile.is_registered %}
+    <h1>{% trans 'Update registration' context 'conference' %}</h1>
+  {% else %}
+    <h1>{% trans 'Register' context 'conference' %}</h1>
+  {% endif %}
+{% endwith %}
+{% crispy form %}
+{% endblock %}
+
+{% block extra_head %}
+<style type="text/css">
+#bursary_fields {
+  display: none;
+}
+</style>
+<noscript>
+  <style type="text/css">
+  #bursary_fields {
+    display: block;
+  }
+  </style>
+</noscript>
+{% endblock %}
+
+{% block extra_foot %}
+<script type="text/javascript">
+  function $fields(f) {
+    var sel = $.map(f, function(fn) { return "#div_id_" + fn} )
+    return $(sel.join(", "))
+  }
+
+  function toggle_contrib_fields() {
+    var $involvement = $("#id_involvement")
+    if ($involvement.val() >= 2) {
+      $("#bursary_fields").show()
+    } else {
+      $("#bursary_fields").hide()
+    }
+  }
+
+  $(function() {
+    $("#id_involvement").change(toggle_contrib_fields)
+    toggle_contrib_fields()
+  })
+
+</script>
+{% endblock %}

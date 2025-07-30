@@ -1,0 +1,192 @@
+{% extends "wafer/base.html" %}
+{% load i18n %}
+{% load debconf %}
+{% load static %}
+{% block title %}{% trans "Schedule" %} - {{ WAFER_CONFERENCE_NAME }}{% endblock %}
+{% block content %}
+  <section class="wafer wafer-schedule">
+    <div class="form-row timezone float-right d-print-none">
+      <div class="form-group">
+        <a id="fullscreen" class="btn btn-secondary fullscreen-hidden" href="#fullscreen" title='Full screen'><i class="fa fa-expand"/></i></a>
+        <a id="fullscreen-off" class="btn btn-secondary fullscreen-off-hidden" style="display: none" href="#" title='Exit full screen'><i class="fa fa-compress"/></i></a>
+      </div>
+
+      {% if user.is_authenticated and user.is_staff %}
+        <div class="form-group">
+          <a class="btn btn-secondary"
+             href="{% url 'admin:schedule_editor' %}">
+            {% trans "Edit schedule" %}
+          </a>
+        </div>
+      {% endif %}
+
+      <div class="form-group">
+        <label for="timezone">Time Zone:</label>
+      </div>
+      <div class="form-group">
+        <select name="timezone" id="timezone" class="form-control form-control-sm">
+          <option value="{{TIME_ZONE}}">DebConf Time</option>
+        </select>
+      </div>
+
+    </div>
+
+    <h1>
+      <span class="fullscreen-off-hidden" style="display: none">{{ WAFER_CONFERENCE_NAME }} - </span>
+      {% trans "Schedule" %}
+    </h1>
+
+
+    <div class="wafer_schedule">
+      {% if not schedule_pages %}
+        {# Schedule is incomplete / invalid, so show nothing #}
+        {% blocktrans trimmed %}
+          <p>The final schedule has not been published yet.</p>
+        {% endblocktrans %}
+      {% else %}
+        {% if next_block or prev_block %}
+          <div class="clearfix d-print-none" style="margin-bottom: 1rem">
+            {% url 'wafer_full_schedule' as schedule_url %}
+            {% if prev_block %}
+              <a href="{{ schedule_url }}?block={{ prev_block.id }}"
+                 class="float-left btn btn-secondary">{% trans "Previous" %} &mdash; {{ prev_block.start_time|date:"l (d b)" }}</a>
+            {% endif %}
+            {% if next_block %}
+              <a href="{{ schedule_url }}?block={{ next_block.id }}"
+                 style="margin-right: 0px;"
+                 class="float-right btn btn-secondary">{% trans "Next" %} &mdash; {{ next_block.start_time|date:"l (d b)" }}</a>
+            {% endif %}
+          </div>
+        {% endif %}
+        {% for page in schedule_pages %}
+          <table cellspacing=1 cellpadding=0>
+            {# We assume that the admin has created a valid timetable #}
+            <tr>
+              <td colspan="{{ page.venues|length|add:1 }}" class="title">
+                <a href="?block={{ page.block.id }}">
+                  {{ page.block.start_time|date:"l (d b)" }}
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <th class="scheduleslot-header">
+                <span class="local_time" style="display: none">Your&nbsp;Time</span>
+                <hr class="local_time"/>
+                <span class="local_time" style="display: none">DebConf&nbsp;Time</span>
+                <span class="dc_time">{% trans "Time" %}</span>
+              </th>
+              {% for venue in page.venues %}
+                <th
+                  {% if venue.pk == highlight_venue_pk %}
+                    class="schedule-highlight-venue"
+                  {% endif %}
+                >
+                <a href="{{ venue.get_absolute_url }}">{{ venue.name }}</a></th>
+              {% endfor %}
+            </tr>
+            {% for row in page.rows %}
+              <tr>
+                <td class="scheduleslot"
+                    data-start="{{ row.slot.get_start_time.isoformat }}"
+                    data-end="{{ row.slot.end_time.isoformat }}">
+                  {{ row.slot.get_start_time|time:"H:i" }}&nbsp;-&nbsp;{{ row.slot.end_time|time:"H:i" }}
+                </td>
+                {% for item in row.get_sorted_items %}
+                  {% if item.item == "unavailable" %}
+                    {# Venue isn't available, so we add an empty table element with the 'unavailable' class #}
+                    <td colspan="{{ item.colspan }}" rowspan="{{ item.rowspan }}" class="unavailable"></td>
+                  {% else %}
+                    {# Add item details #}
+                    <td {% if item.item.talk %}title="Track: {{item.item.talk.track.name}}"{% endif %} colspan="{{ item.colspan }}" rowspan="{{ item.rowspan }}"
+                        {% if item.item.talk %}style="background: {% debconf_track_color item.item.talk.track %};"{% endif %}
+                        class="{{ item.item.get_css_classes|join:' ' }}{% if item.item.venue.pk == highlight_venue_pk %} schedule-highlight-venue{% endif %}">
+                      {% include "wafer.schedule/schedule_item.html" with item=item.item %}
+                    </td>
+                  {% endif %}
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </table>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}
+{% block extra_foot %}
+  <script type="text/javascript">
+    var dc_tz = '{{TIME_ZONE}}';
+
+    function displayInTimezone(tz) {
+      if (tz == dc_tz) {
+        $('.local_time').hide();
+        $('.dc_time').show();
+      } else {
+        $('.local_time').show();
+        $('.dc_time').hide();
+      }
+      sessionStorage.setItem('local_timezone', tz);
+      $('.scheduleslot').each(function() {
+        var start_dc = moment.tz(this.dataset.start, dc_tz);
+        var end_dc = moment.tz(this.dataset.end, dc_tz);
+        var start_local = start_dc.clone().tz(tz);
+        var end_local = end_dc.clone().tz(tz);
+        if (this.innerHTML.search('\\w') !== -1) {
+          if (tz == dc_tz) {
+            this.innerHTML = start_dc.format('HH:mm') + ' - '
+                             + end_dc.format('HH:mm');
+          } else {
+            this.innerHTML = '<span class="sr-only zone">Your Time:</span>'
+              + '<span class="local_time" title="Your time (' + tz + ')">'
+              + start_local.format('HH:mm') + ' - ' + end_local.format('HH:mm')
+              + '</span>'
+              + '<hr/>'
+              + '<span class="sr-only zone">DebConf Time:</span> '
+              + '<span class="dc_time" title="DebConf Time (' + dc_tz + ')">'
+              + start_dc.format('HH:mm') + ' - ' + end_dc.format('HH:mm')
+              + '</span>';
+          }
+        }
+      });
+    }
+
+    var local_tz = sessionStorage.getItem('local_timezone');
+    if (local_tz == null) {
+      local_tz = moment.tz.guess();
+    }
+    displayInTimezone(local_tz);
+
+    var selector = $('#timezone');
+    moment.tz.names().forEach(function(tz) {
+      selected = '';
+      if (local_tz == tz && dc_tz != tz) {
+        selected = 'selected';
+      }
+      selector.append(
+        '<option value="' + tz + '" ' + selected + '>' + tz + '</option>');
+    });
+
+    selector.on('change', function(ev) {
+      displayInTimezone(ev.target.value);
+    });
+
+    $('#fullscreen').on('click', function(ev) {
+      $('nav').hide();
+      $('#main').removeClass("container");
+      $('.fullscreen-off-hidden').show();
+      $('.fullscreen-hidden').hide();
+    });
+
+    $('#fullscreen-off').on('click', function(ev) {
+      $('nav').show();
+      $('#main').addClass("container");
+      $('.fullscreen-off-hidden').hide();
+      $('.fullscreen-hidden').show();
+    });
+
+    $(function() {
+      if (document.location.hash == "#fullscreen") {
+        $('#fullscreen').click();
+      }
+    });
+  </script>
+{% endblock %}

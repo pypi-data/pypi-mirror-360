@@ -1,0 +1,34 @@
+{% extends "wafer/base.html" %}
+{% load static %}
+{% load compress %}
+
+{% block wafer_css %}
+  {% compress css %}
+    <link href="{% static 'css/wafer.css' %}" rel="stylesheet">
+    <link type="text/x-scss" href="{% static 'stylesheet.scss' %}" rel="stylesheet" />
+  {% endcompress %}
+{% endblock %}
+
+{% block extra_head %}
+<meta property="og:title" content="{{page.name}}" />
+<meta property="og:site_name" content="{{WAFER_CONFERENCE_NAME}}"/>
+<meta property="og:description" content="{{SITE_DESCRIPTION}}" />
+<meta property="og:image" content="{% static "img/logo.png" %}" />
+<meta name="description" content="{{SITE_DESCRIPTION}}">
+<meta name="author" content="{{SITE_AUTHOR}}">
+{% endblock %}
+
+{#
+DebConf websites display sponsors only on the homepage (see our override for
+wafer/index.html), and on the dedicated sponsors page.
+#}
+{% block wafer_sponsors %}{% endblock %}
+
+{% block wafer_js %}
+{% compress js %}
+  <script src="{% static 'vendor/jquery/jquery.js' %}"></script>
+  <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendor/moment/moment-with-locales.js' %}"></script>
+  <script type="text/javascript" src="{% static 'vendor/moment-timezone/moment-timezone-with-data.js' %}"></script>
+{% endcompress %}
+{% endblock %}

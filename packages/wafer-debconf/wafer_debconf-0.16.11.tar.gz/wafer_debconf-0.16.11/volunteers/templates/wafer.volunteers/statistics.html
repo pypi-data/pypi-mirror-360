@@ -1,0 +1,85 @@
+{% extends 'wafer/base.html' %}
+{% load countries %}
+
+{% block content %}
+<h1>Volunteers</h1>
+<div class="accordion" id="volunteer-statistics">
+  <div class="card">
+    <div class="card-header" id="headingTemplates">
+      <h4 class="mb-0">
+        <button class="btn btn-link" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseTemplates" aria-expanded="false"
+                aria-controls="collapseTemplates">
+          Tasks by type
+        </button>
+      </h4>
+    </div>
+    <div id="collapseTemplates" class="collapse"
+         aria-labelledby="headingTemplates" data-parent="#volunteer-statistics">
+      <div class="card-body">
+        <table class="table-sm table-hover">
+          <thead>
+            <tr>
+              <th>Task Template</th>
+              <th>Times Volunteered</th>
+              <th>Unique Volunteers</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for template, details in volunteers_by_template.items %}
+              <tr>
+                <th>{{ template }}</th>
+                <td>{{ details.volunteers }}</td>
+                <td>{{ details.unique_volunteers }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header" id="headingVolunteers">
+      <h4 class="mb-0">
+        <button class="btn btn-link" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseVolunteers" aria-expanded="false"
+                aria-controls="collapseVolunteers">
+          Volunteer High Scores
+        </button>
+      </h4>
+    </div>
+    <div id="collapseVolunteers" class="collapse"
+         aria-labelledby="headingVolunteers" data-parent="#volunteer-statistics">
+      <div class="card-body">
+        <table class="table-sm table-hover">
+          <thead>
+            <tr>
+              <th>Volunteer</th>
+              <th>Tasks Volunteered</th>
+              <th>Favourite Task (count)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for volunteer in volunteers %}
+              <tr>
+                <th>
+                  {% if user.is_authenticated %}
+                    {{ volunteer.name }}
+                  {% else %}
+                    <em title="Please login to see names">(hidden)</em>
+                  {% endif %}
+                </th>
+                <td>{{ volunteer.tasks }}</td>
+                <td>
+                  {{ volunteer.favourite_task }}
+                  (× {{ volunteer.favourite_task_count }})
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

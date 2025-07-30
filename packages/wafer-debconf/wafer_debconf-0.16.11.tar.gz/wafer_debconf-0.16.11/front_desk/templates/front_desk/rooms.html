@@ -1,0 +1,51 @@
+{% extends "wafer/base_form.html" %}
+{% block title %}{{ WAFER_CONFERENCE_NAME }} - Room Assignments{% endblock %}
+{% block content %}
+<h1>Room Assignments</h1>
+{% if rooms %}
+  <table>
+    <thead>
+      <th>Room</th>
+      {% for bed_name in bed_names %}
+        <th>{{ bed_name }}</th>
+      {% endfor %}
+    </thead>
+    {% for room, occupants in rooms %}
+      <tr>
+        <td>{{ room }}</td>
+        {% for occupant in occupants %}
+          {% if occupant %}
+            <td>
+              {{ occupant.user.userprofile.display_name }}
+              {% if occupant.check_in %}
+                <i class="fas fa-check-circle" aria-hidden="true" title="Checked-in"></i>
+              {% else %}
+                <i class="fas fa-times" aria-hidden="true" title="Not yet checked-in"></i>
+              {% endif %}
+            </td>
+          {% else %}
+            <td></td>
+          {% endif %}
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </table>
+{% else %}
+  <div class="alert alert-warning">No room assignments made, yet.</div>
+{% endif %}
+{% if unassigned %}
+  <h2>Unassigned Attendees</h2>
+  <ul>
+    {% for attendee in unassigned %}
+      <li>
+        {{ attendee.user.userprofile.display_name }}
+        {% if attendee.check_in %}
+          <i class="fas fa-check-circle" aria-hidden="true" title="Checked-in"></i>
+        {% else %}
+          <i class="fas fa-times" aria-hidden="true" title="Not yet checked-in"></i>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endblock %}

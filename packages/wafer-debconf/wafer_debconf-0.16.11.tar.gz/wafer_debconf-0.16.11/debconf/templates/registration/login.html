@@ -1,0 +1,47 @@
+{% extends 'wafer/base_form.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load static %}
+{% load wafer_crispy %}
+{% load wafer_sso %}
+{% block title %}Login - {{ WAFER_CONFERENCE_NAME }}{% endblock title %}
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-6">
+      <h2>Login via Salsa:</h2>
+      <p>
+        If you have an account on <a href="https://salsa.debian.org/">Salsa</a>, please use Debian Salsa SSO.
+      </p>
+      <div>
+        <a class="btn btn-danger" href="{% wafer_sso_url 'gitlab' %}">
+          <img id="login-salsa-logo" src="{% static 'img/salsa-debian-icon.svg' %}">
+          Login with Debian Salsa SSO
+        </a>
+      </div>
+    </div>
+    <div class="col-md-6">
+      {% url 'registration_register' as signup_url %}
+      {% url 'auth_password_reset' as pass_reset_url %}
+      <h2>Newcomers to Debian:</h2>
+      <p>
+        You don't need to have a Salsa account, you can also
+        <a href="{{ signup_url }}">sign up</a> with a username and
+        password, and use them to login.
+      </p>
+      <div>
+        <a class="btn btn-secondary" role="button" href="{{ signup_url }}">
+          Sign Up without SSO
+        </a>
+      </div>
+      <div>
+        {% wafer_form_helper 'wafer.registration.forms.LoginFormHelper' as form_helper %}
+        {% crispy form form_helper %}
+        <a class="btn btn-secondary" role="button" href="{{ pass_reset_url }}">
+          Forgot my password
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "wafer/base_form.html" %}
+{% load crispy_forms_tags %}
+{% block title %}{{ WAFER_CONFERENCE_NAME }} - Front Desk{% endblock %}
+{% block content %}
+<h1>Front Desk</h1>
+{% crispy form %}
+{% if results %}
+  <h2>Attendee{{ num_results|pluralize }}:</h2>
+  {% if num_results > results|length %}
+    <div>
+      Only showing {{ results|length }} (of {{ num_results }}).
+      Please be more specific.
+    </div>
+  {% endif %}
+  <table class="table table-striped">
+    <thead>
+      <th>Username</th>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Arrival</th>
+      <th>Confirmed</th>
+      <th>Swag</th>
+      <th>Paid</th>
+      {% if perms.front_desk.add_checkin %}
+        <th>Check In</th>
+      {% endif %}
+    </thead>
+    {% for attendee in results %}
+      <tr>
+        <td>{{ attendee.user.username }}</td>
+        <td>{{ attendee.user.userprofile.display_name }}</td>
+        <td>{{ attendee.user.email }}</td>
+        <td>{{ attendee.arrival }}</td>
+        <td class="boolean">
+          {% if attendee.confirmed %}
+            <i class="fas fa-check-circle" aria-hidden="true"></i>
+          {% else %}
+            <i class="fas fa-times" aria-hidden="true"></i>
+          {% endif %}
+        </td>
+        <td class="boolean">
+          {% if attendee.registered_before_deadline %}
+            <i class="fas fa-check-circle" aria-hidden="true"></i>
+          {% else %}
+            <i class="fas fa-times" aria-hidden="true"></i>
+          {% endif %}
+        </td>
+        <td class="boolean">
+          {% if attendee.billable %}
+            {% if attendee.paid %}
+              <i class="fas fa-check-circle" aria-hidden="true" title="Paid"></i>
+            {% else %}
+              <i class="fas fa-times" aria-hidden="true" title="Not Paid"></i>
+            {% endif %}
+          {% else %}
+            <i class="fas fa-minus" aria-hidden="true" title="Free"></i>
+          {% endif %}
+        </td>
+        {% if perms.front_desk.add_checkin %}
+          <td>
+            {% if attendee.check_in %}
+              <a href="{% url 'front_desk.check_in' username=attendee.user.username %}"
+                 class="btn btn-warning">Edit</a>
+              <a href="{% url 'front_desk.check_out' username=attendee.user.username %}"
+                 class="btn btn-danger">Check-Out</a>
+            {% else %}
+              <a href="{% url 'front_desk.check_in' username=attendee.user.username %}"
+                 class="btn btn-primary">Check-In</a>
+            {% endif %}
+          </td>
+        {% endif %}
+      </tr>
+    {% endfor %}
+  </table>
+{% endif %}
+{% if perms.front_desk.add_checkin and view.request.GET.q %}
+  <h2>Not Found?</h2>
+  <p>
+    <a class="btn btn-danger" href="{% url 'front_desk.register' %}">Register On-site</a>
+  </p>
+{% endif %}
+{% if perm.register.view_accomm %}
+  <h2>Other Tools:</h2>
+  <p>
+    <a class="btn btn-info" href="{% url 'front_desk.rooms' %}">Room Assignments</a>
+    {% if DEBCONF_REVIEW_FREE_ATTENDEES %}
+      <a class="btn btn-info" href="{% url 'bursaries_admin_review_attendance' %}">Review Attendee Applications</a>
+    {% endif %}
+  </p>
+{% endif %}
+<h2>Data exports:</h2>
+{% for export in exports %}
+  <a class="btn btn-info" href="{% url export.url %}">{{ export.name  }}</a>
+{% endfor %}
+{% endblock %}

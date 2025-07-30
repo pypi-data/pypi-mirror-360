@@ -1,0 +1,36 @@
+{% load sponsors %}
+<section class="wafer wafer-sponsors">
+  {% for package in packages.all %}
+    {% if package.order <= 4 %}
+      <h2 id="sponsors-{{ package.name | slugify }}">{{ package.name }} Sponsors</h2>
+      <div class="row">
+        {% for sponsor in package.sponsors.all %}
+          <div class="col-lg-{% if package.name == 'Platinum'%}12{% elif package.name == 'Gold' %}12{% else %}6{% endif %}">
+            <div class="sponsors-{{package.name | slugify }}">
+              <a href="{{ sponsor.url }}">
+                {% sponsor_tagged_image sponsor "main_logo" as logo_url %}
+                <img src="{{ logo_url }}" alt="{{ sponsor.name }}">
+              </a>
+            </div>
+          </div>
+        {% endfor %}
+        <div class="col-lg-12 d-none">
+          <div class="sponsors-{{package.name | slugify }} sponsor-us">
+            <div>
+              Your organisation could be here<br>
+              <a href="{% url 'wafer_page' 'sponsors/become-a-sponsor' %}">
+                Be
+                {% if package.sponsors.exists %}
+                  a
+                {% else %}
+                  the first
+                {% endif %}
+                {{ package.name }} sponsor!
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  {% endfor %}
+</section>

@@ -1,0 +1,102 @@
+{% extends "register/base.html" %}
+{% load crispy_forms_tags %}
+{% block registration_page %}
+  {% if not attendee.billable %}
+    {% if attendee.user.bursary %}
+      <p>
+        As you have a bursary request, we have nothing to invoice at this
+        time.
+      </p>
+      <div class="alert alert-info" role="alert">
+        <p>
+          It will cost Debian
+          {{ DEBCONF_BILLING_CURRENCY_SYMBOL }}&nbsp;{{ attendee.bursary_value }}
+          to provide a food and accommodation bursary for you to attend
+          {{ WAFER_CONFERENCE_NAME }}.
+          {% if attendee.user.bursary.partial_contribution %}
+            Thank you for committing to contribute
+            {{ DEBCONF_BILLING_CURRENCY_SYMBOL }}&nbsp;{{ attendee.user.bursary.partial_contribution }}
+            towards the cost of your bursary.
+          {% else %}
+            If you are able to, would you like to consider making a partial contribution to help us to provide support for more attendees?
+          {% endif %}
+        </p>
+        <p>
+          <a class="btn btn-primary" href="{% url 'register-step-6' %}#partial-contribution">
+            Adjust Bursary Contribution
+          </a>
+        </p>
+      </div>
+    {% else %}
+      <div class="alert alert-info" role="alert">
+        As there is nothing to invoice, we can skip this step.
+      </div>
+    {% endif %}
+  {% elif attendee.paid %}
+    <div class="alert alert-success" role="alert">
+      <i class="fas fa-check"></i>
+      Your registration is paid for, thank you.
+    </div>
+  {% elif will_reinvoice %}
+    <div class="alert alert-warning" role="alert">
+      As your previous invoice is now incorrect we will cancel it and issue
+      this new one.
+    </div>
+  {% elif attendee.new_invoices.exists %}
+    <div class="alert alert-warning" role="alert">
+      There is already an outstanding invoice for your attendance.<br>
+      Please pay or cancel it.
+    </div>
+    <ul>
+      {% for invoice in attendee.new_invoices.all %}
+        <li>
+          <a class="btn btn-info" href="{{ invoice.get_absolute_url }}">
+            View Invoice {{ invoice.reference_number }}
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  {% if invoice %}
+    <div class="alert alert-info" role="alert">
+      Please check the invoice below.<br>
+      On the next step, we'll issue it.
+    </div>
+    <div class="jumbotron">
+      <h2>Pro-Forma Invoice</h2>
+      <table class="register-invoice">
+        <thead>
+          <th>Description</th>
+          <th>Unit Price</th>
+          <th>Qty</th>
+          <th>Sub-Total</th>
+        </thead>
+        {% for line in invoice.lines %}
+          <tr class="line">
+            <td>{{ line.description }}</td>
+            <td>{{ DEBCONF_BILLING_CURRENCY_SYMBOL }}&nbsp;{{ line.unit_price }}</td>
+            <td>{{ line.quantity }}</td>
+            <td>{{ DEBCONF_BILLING_CURRENCY_SYMBOL }}&nbsp;{{ line.total }}</td>
+          </tr>
+        {% endfor %}
+        <tr class="total">
+          <th>Total ({{ DEBCONF_BILLING_CURRENCY }})</th>
+          <td colspan="3">
+            {{ DEBCONF_BILLING_CURRENCY_SYMBOL }}&nbsp;{{ invoice.total }}
+          </td>
+        </tr>
+        {% if DEBCONF_BILLING_CURRENCY != DEBCONF_LOCAL_CURRENCY %}
+          <tr class="total">
+            <th>Total ({{ DEBCONF_LOCAL_CURRENCY }})</th>
+            <td colspan="3">
+              {{ DEBCONF_LOCAL_CURRENCY_SYMBOL }}&nbsp;{{ invoice.total_local }}
+            </td>
+          </tr>
+        {% endif %}
+      </table>
+    </div>
+  {% endif %}
+  {% if attendee.billable %}
+    {% crispy form %}
+  {% endif %}
+{% endblock %}

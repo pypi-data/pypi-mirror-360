@@ -1,0 +1,134 @@
+{% extends "register/base.html" %}
+{% block registration_page %}
+<p>Thank you for your interest in attending {{ WAFER_CONFERENCE_NAME }}!</p>
+<p class="font-weight-bold">Please read the following instructions carefully:</p>
+<ol>
+  <noscript>
+    <li>
+      This registration form uses JavaScript.
+      Without it, you'll have to navigate the validation dragons without any
+      help.
+      And you won't be able to make credit card payments.
+    </li>
+  </noscript>
+  <li>
+    You are <strong>not</strong> registered until you complete the form and the
+    registration system says your registration is confirmed.
+    You will receive a confirmation email.
+  </li>
+  {% if not DEBCONF_ONLINE %}
+    <li>
+      All registration{% if PAID_ACCOMMODATION %}, accommodation{% endif %}
+      and catering fees must be paid either online by credit card or in person at
+      the front desk upon arrival.
+    </li>
+  {% endif %}
+  <li>
+    Please keep your registration information up to date.
+    You can make changes by going through this form again.
+    Once deadlines pass, you may not be able to modify those parts of your
+    registration.
+  </li>
+  {% if DEBCONF_COLLECT_AFFILIATION %}
+    <li>
+      Your information (Name, Nationality, and any declared Affiliation) may be
+      shared with local government sponsors, if there are any.
+      Typically government sponsors request a list to determine how many
+      international attendees visited for the conference.
+    </li>
+  {% endif %}
+  {% if not DEBCONF_ONLINE %}
+    <li>
+      Registrations will need to be confirmed by
+      {{ DEBCONF_CONFIRMATION_DEADLINE|date:"SHORT_DATE_FORMAT" }}
+      <abbr title="Anywhere on Earth: Forget about timezones, just do it by this date.">AoE</abbr>.
+      <ul>
+        <li>
+          We cannot guarantee availability of
+          {% if PAID_ACCOMMODATION %} accommodation, {% endif %}catering
+          or swag for unconfirmed registrations.
+        </li>
+        <li>
+          If you have applied for an accommodation bursary, and it has been
+          approved, you have to confirm by accepting the bursary by
+          {{ DEBCONF_CONFIRMATION_DEADLINE|date:"SHORT_DATE_FORMAT" }}
+          <abbr title="Anywhere on Earth: Forget about timezones, just do it by this date.">AoE</abbr>.
+        </li>
+        {% if not PAID_ACCOMMODATION %}
+          <li>
+            If you haven't applied for an accommodation bursary, we won't provide any
+            accommodation.
+            You will have to book and pay for this yourself, directly with a Hotel.
+            There is a
+            <a href="{% url 'wafer_page' 'about/accommodation' %}">list of nearby hotels</a>.
+          </li>
+        {% endif %}
+        <li>
+          If you have applied for a food bursary, and it was approved, you have
+          to confirm by accepting it by
+          {{ DEBCONF_CONFIRMATION_DEADLINE|date:"SHORT_DATE_FORMAT" }}
+          <abbr title="Anywhere on Earth: Forget about timezones, just do it by this date.">AoE</abbr>.
+        </li>
+        <li>
+          If you are paying for food
+          {% if PAID_ACCOMMODATION %} accommodation, {% endif %} or
+          registration you need to confirm by paying the invoice by
+          {{ DEBCONF_CONFIRMATION_DEADLINE|date:"SHORT_DATE_FORMAT" }}
+          <abbr title="Anywhere on Earth: Forget about timezones, just do it by this date.">AoE</abbr>.
+        </li>
+        <li>
+          After these deadlines you are still able to confirm (or even
+          register), as long as the maximum capacity hasn't been reached.
+          You will have to organise your own food and won't get a t-shirt.
+        </li>
+        {% if DEBCONF_REVIEW_FREE_ATTENDEES %}
+          <li>
+            Due to venue capacity restrictions we cannot confirm registrations
+            immediately.
+            You will receive confirmation by email later.
+            If your registration isn't confirmed you will not be able to attend
+            DebConf.
+          </li>
+        {% else %}
+          <li>
+            Please note that registration might need to be closed when the maximum
+            capacity has been reached.
+            If you didn't register and confirm at that point, you will not be able to
+            attend DebConf.
+          </li>
+        {% endif %}
+        <li>
+          Confirm your attendance, by following the instructions in the email you
+          will receive (keep an eye on your email, and follow the instructions).
+        </li>
+      </ul>
+    </li>
+  {% else %}
+    <li>
+      We are providing a limited number of t-shirts that we'll ship to attendees.
+      Please bear in mind that our budget is limited, and we can't guarantee
+      t-shirts for all attendees.<br>
+      In order to receive a t-shirt, you will need to:
+      <ol>
+        <li>
+          Register by {{ DEBCONF_CONFIRMATION_DEADLINE|date:"SHORT_DATE_FORMAT" }}
+          <abbr title="Anywhere on Earth: Forget about timezones, just do it by this date.">AoE</abbr>.
+        </li>
+        <li>
+          Provide a shipping address including recipient name and phone number
+          that we can share with the shipping company.
+        </li>
+      </ol>
+    {% endif %}
+  </li>
+  <li>
+    The deadline to apply for a bursary is
+    {{ DEBCONF_BURSARY_DEADLINE|date:"SHORT_DATE_FORMAT" }}
+    <abbr title="Anywhere on Earth: Forget about timezones, just do it by this date.">AoE</abbr>.
+    After this date, new bursary applications won't be considered.
+  </li>
+</ol>
+{% endblock %}
+{% block save_buttons %}
+  <input type="submit" class="btn btn-primary" value="Start Registration">
+{% endblock %}

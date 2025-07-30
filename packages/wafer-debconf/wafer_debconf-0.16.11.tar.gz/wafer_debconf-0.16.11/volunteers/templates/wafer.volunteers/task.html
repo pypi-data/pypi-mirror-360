@@ -1,0 +1,115 @@
+{% extends 'wafer/base.html' %}
+{% load debconf %}
+{% load i18n %}
+{% load tz %}
+
+{% block content %}
+<h1>{{ object.get_name }}</h1>
+
+<dl>
+  <dt>{% trans "Date and time" %}:</dt>
+  <dd>
+    {% timezone user.volunteer.timezone %}
+      {% blocktrans with date=object.start|date start_time=object.start|time end_time=object.end|time tz=object.end|time:'O' %}
+        {{date}} from {{start_time}} to {{end_time}} ({{tz}})
+      {% endblocktrans %}
+    {% endtimezone %}
+  </dd>
+  <dt>
+    {% trans "Registered volunteers" %}
+    ({{ object.nbr_volunteers }}/{{ object.get_nbr_volunteers_max }}):
+  </dt>
+  <dd>
+    {% if object.nbr_volunteers %}
+      <ul>
+        {% for volunteer in object.volunteers.all %}
+          <li>
+            {{ volunteer.user.get_full_name }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </dd>
+  {% if object.get_category %}
+    <dt>{% trans "Category" %}:</dt>
+    <dd>{{ object.get_category }}</dd>
+  {% endif %}
+  {% if object.schedule_item %}
+    <dt>{% trans "Event" %}:</dt>
+    <dd>
+      <a href="{{ object.schedule_item.get_url }}">
+        {{ object.schedule_item.get_title }}
+      </a>
+    </dd>
+  {% endif %}
+  {% if object.venue %}
+    <dt>{% trans "Venue" %}</dt>
+    <dd>
+      <a href="{{ object.venue.get_absolute_url }}">
+        {{ object.venue.name }}
+      </a>
+    </dd>
+    {% if object.venue.video %}
+      <dt>{% trans "IRC Channels" %}</dt>
+      <dd>
+        {% irc_channels object.venue as channels %}
+        {% for channel in channels %}
+          <tt>{{ channel }}</tt>{% if not forloop.last %},{% endif %}
+        {% endfor %}
+      </dd>
+    {% endif %}
+  {% endif %}
+  <dt>{% trans "Description" %}:</dt>
+  <dd>{{ object.get_description }}</dd>
+</dl>
+
+<form action="" method="post">
+  {% csrf_token %}
+  {% if already_volunteer %}
+    <button type="submit" class="btn btn-primary">
+      {% trans "Remove from volunteers" %}
+    </button>
+  {% else %}
+    {% if can_volunteer %}
+      <button type="submit" class="btn btn-primary">
+        {% trans "Volunteer" %}
+      </button>
+    {% endif %}
+  {% endif %}
+</form>
+
+<hr />
+
+{% if concurrent_tasks %}
+  <h3>{% trans "Happening at the same time" %}</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>When</th>
+        <th>Title</th>
+        <th>Where</th>
+        <th>Volunteers</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for task in concurrent_tasks %}
+        <tr>
+          {% timezone user.volunteer.timezone %}
+            <td>{{ task.start|time }} {% trans 'to' %} {{ task.end|time }}</td>
+          {% endtimezone %}
+          <td>
+            <a href="{% url 'wafer_task' task.pk %}">{{ task.get_name }}</a>
+          </td>
+          <td>{{ task.venue.name }}</td>
+          <td>
+            {% for volunteer in task.volunteers.all %}
+              {{ volunteer.user.get_full_name }}
+              {% if not forloop.last %}, {% endif %}
+            {% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+{% endblock %}

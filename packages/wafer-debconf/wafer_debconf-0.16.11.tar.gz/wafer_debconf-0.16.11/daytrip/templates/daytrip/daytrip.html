@@ -1,0 +1,124 @@
+{% extends "wafer/base.html" %}
+{% load static %}
+{% block title %}{{ WAFER_CONFERENCE_NAME }} - Day Trip{% endblock %}
+{% block content %}
+<h1>{{ WAFER_CONFERENCE_NAME }} Day Trip Registration</h1>
+{% if registered_option %}
+  <h2>Registered</h2>
+  <div>Registered for {{ registered_option.description|linebreaksbr }}</div>
+  {% if registered_option.position > registered_option.capacity %}
+    <div>
+      Waitlisted, currently in position {{ registered_option.position }} but
+      there are only {{ registered_option.capacity }} spaces.
+    </div>
+  {% elif registered_option.insurance_price %}
+    <h2>Travel Insurance</h2>
+    {% if request.user.attendee.travel_insurance %}
+      <div class="badge bg-success">Registered</div>
+      <div>
+        <a href="{% url 'day-trip-insurance' %}" class="btn btn-info">
+          Edit Travel Insurance
+        </a>
+      </div>
+    {% elif DAYTRIP_INSURANCE_OPEN %}
+      <div>
+        This day trip has an option for registering for group travel insurance.
+        The cost is {{ DEBCONF_BILLING_CURRENCY_SYMBOL }}
+        {{ registered_option.insurance_price }} per attendee.
+        <a href="/about/day-trip-travel-insurance/">Details</a>.
+      </div>
+      <a href="{% url 'day-trip-insurance' %}" class="btn btn-success">
+        Register for Travel Insurance
+      </a>
+    {% endif %}
+  {% endif %}
+  <div>
+    <h2>Payment</h2>
+    {% if request.user.attendee.paid %}
+      <div class="badge bg-success">Paid</div>
+    {% else %}
+      <div class="badge bg-warning">Not yet paid</div>
+      {% if not request.user.attendee.invoice_outdated %}
+        <ul>
+          {% for invoice in request.user.attendee.new_invoices.all %}
+            <li>
+              <a class="btn btn-info" href="{{ invoice.get_absolute_url }}">
+                View Invoice {{ invoice.reference_number }}
+              </a>
+              Please pay this online (preferred), or in cash at the front desk.
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <li>
+          <a class="btn btn-primary" href="{% url invoice_register_step %}">
+            Create Invoice
+          </a>
+        </li>
+      {% endif %}
+    {% endif %}
+  </div>
+{% elif DAYTRIP_OPEN %}
+  <p>
+    Not currently registered for a day trip, you can register for one below,
+    if there's still space.
+    Your name will be displayed to other conference attendees on this page.
+  </p>
+{% endif %}
+<h2>Options</h2>
+<div class="row">
+  {% for option in options %}
+    <div class="col-sm-4">
+      <div class="card {% if option.position %}border-success{% endif %}">
+        <div class="card-body">
+          <h5 class="card-title {% if option.position %}text-success{% endif %}">{{ option.description }}</h5>
+          <div class="card-text">
+            Cost: {{ DEBCONF_BILLING_CURRENCY_SYMBOL }} {{ option.price }}
+          </div>
+          <div class="card-text">
+            {% if option.details_pdf %}
+              <div class="float-end">
+                <a class="btn btn-info" href="{% static option.details_pdf %}">
+                  <i class="fas fa-file-pdf"></i>
+                </a>
+              </div>
+            {% endif %}
+            {{ option.long_description | linebreaksbr}}</div>
+          <div class="card-text">
+            Registered: {{ option.total_registered }} / {{ option.capacity }}
+          </div>
+          <div class="card-text">
+            Attendees:
+            <ol>
+              {% for attendee in option.attendees %}
+                {% if forloop.counter0 == option.capacity %}
+                  <hr>
+                {% endif %}
+                <li
+                  {% if forloop.counter0 >= option.capacity %}class="text-secondary"{% endif %}
+                >{{ attendee.user.userprofile.display_name }}</li>
+              {% endfor %}
+            </ol>
+          </div>
+          {% if DAYTRIP_OPEN and not option.closed %}
+            <form method=post action="{% url 'day-trip' %}">
+            {% csrf_token %}
+              <input type="hidden" name="daytrip" value="{{ option.id }}">
+              {% if option.position %}
+                <input type="hidden" name="action" value="unregister">
+                <input type="submit" class="btn btn-danger" value="Unregister">
+              {% elif option.total_registered < option.capacity %}
+                <input type="hidden" name="action" value="register">
+                <input type="submit" class="btn btn-primary" value="Register">
+              {% else %}
+                <input type="hidden" name="action" value="register">
+                <input type="submit" class="btn btn-warning" value="Register (Waitlist)">
+              {% endif %}
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

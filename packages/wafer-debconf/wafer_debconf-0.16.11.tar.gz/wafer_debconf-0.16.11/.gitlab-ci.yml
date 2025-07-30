@@ -1,0 +1,49 @@
+variables:
+  PACKAGES: |
+    ca-certificates
+    gettext
+    fonts-fork-awesome
+    libjs-bootstrap4
+    libjs-eonasdan-bootstrap-datetimepicker
+    libjs-jquery
+    libjs-moment
+    libjs-moment-timezone
+    python3
+    python3-bleach
+    python3-boto3
+    python3-botocore
+    python3-diff-match-patch
+    python3-django
+    python3-django-compressor
+    python3-django-countries
+    python3-django-crispy-forms
+    python3-django-libsass
+    python3-django-reversion
+    python3-pil
+    python3-pip
+    python3-pytest
+    python3-pytest-django
+    python3-pytest-mock
+    python3-s3transfer
+    python3-setuptools
+    python3-yaml
+
+.install: &install
+  - apt-get -q update
+  - apt-get install -qy $PACKAGES
+
+before_script: *install
+
+test:
+  image: 'debian:bookworm-backports'
+  script:
+    - python3 -m pip install --break-system-packages 'Django>=3,<4' -r requirements.txt
+    - python3 -m pytest
+    - python3 manage.py compilemessages
+
+test-django4:
+  image: 'debian:bookworm-backports'
+  script:
+    - python3 -m pip install --break-system-packages 'Django>=4,<5' -r requirements.txt
+    - python3 -m pytest
+    - python3 manage.py compilemessages

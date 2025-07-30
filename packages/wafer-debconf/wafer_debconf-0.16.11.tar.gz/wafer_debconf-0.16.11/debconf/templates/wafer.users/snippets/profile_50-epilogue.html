@@ -1,0 +1,217 @@
+{% load i18n %}
+{% load debconf %}
+{% block content %}
+{% with profile=object.userprofile %}
+{% if USING_DAYTRIP and can_edit and profile.is_registered %}
+  <section>
+    <h2>Day Trip:</h2>
+    {% if object.attendee.daytrip_option %}
+      <div>
+        Registered for the day-trip.
+        {% if not object.attendee.paid %}
+          <span class="badge bg-warning">Not yet paid.</span>
+        {% endif %}
+      </div>
+      <a class="btn btn-primary" href="{% url 'day-trip' %}">Day Trip Registration</a>
+    {% elif object.attendee.daytrip_option_selection %}
+      <div>Wait-listed for the day-trip.</div>
+      <a class="btn btn-primary" href="{% url 'day-trip' %}">Day Trip Registration</a>
+    {% else %}
+      <a class="btn btn-primary" href="{% url 'day-trip' %}">Register for Day Trips</a>
+    {% endif %}
+  </section>
+{% endif %}
+{% if can_edit and object.bursary and object.bursary.request_any %}
+  <section>
+    {% with bursary=object.bursary %}
+      <h2>{% trans 'My bursary requests:' %}</h2>
+      <div class="card-group">
+        {% if DEBCONF_ONLINE %}
+          <div class="card">
+            <div class="card-header">
+              <h3>{% trans 'Expenses' %}</h3>
+            </div>
+            <div class="card-body">
+              {% if bursary.request_expenses %}
+                <p>{{ bursary.get_expenses_status_display }}</p>
+              {% else %}
+                <div>{% trans 'Not Requested' %}</div>
+              {% endif %}
+            </div>
+          </div>
+        {% else %}
+          <div class="card">
+            <div class="card-header">
+              <h3>{% trans 'Food' %}</h3>
+            </div>
+            <div class="card-body">
+              {% if bursary.request_food %}
+                <p>{{ bursary.get_food_status_display }}</p>
+                {% if bursary.can_update and bursary.food_status == 'pending' %}
+                  <p class="alert alert-success">
+                    {% blocktrans with date=bursary.food_accept_before|date %}
+                      Your bursary has been granted.
+                      You need to confirm it before {{ date }}.
+                    {% endblocktrans %}
+                  </p>
+                {% endif %}
+              {% else %}
+                <div>{% trans 'Not Requested' %}</div>
+              {% endif %}
+              {% if bursary.partial_contribution %}
+                <div>
+                  You have committed to make a partial contribution of
+                  {% debconf_setting "BILLING_CURRENCY_SYMBOL" %}&nbsp;{{ bursary.partial_contribution }}
+                  towards the cost of your food and accommodation.
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3>{% trans 'Accommodation' %}</h3>
+            </div>
+            <div class="card-body">
+              {% if bursary.request_accommodation %}
+                <p>{{ bursary.get_accommodation_status_display }}</p>
+                {% if bursary.can_update and bursary.accommodation_status == 'pending' %}
+                  <p class="alert alert-success">
+                    {% blocktrans with date=bursary.accommodation_accept_before|date %}
+                      Your bursary has been granted.
+                      You need to confirm it before {{ date }}.
+                    {% endblocktrans %}
+                  </p>
+                {% endif %}
+              {% else %}
+                <div>{% trans 'Not Requested' %}</div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3>{% trans 'Travel' %}</h3>
+            </div>
+            <div class="card-body">
+              {% if bursary.request_travel %}
+                <p>{{ bursary.get_travel_status_display }}</p>
+                <table>
+                  <tr>
+                    <th>{% trans 'Requested' %}</th>
+                    <td>{{ bursary.travel_bursary }} {% debconf_setting "BURSARY_CURRENCY" %}</td>
+                  </tr>
+                  <tr>
+                    <th>{% trans 'Reimbursed' %}</th>
+                    <td>{{ bursary.reimbursed_amount }} {% debconf_setting "BURSARY_CURRENCY" %}</td>
+                  </tr>
+                </table>
+                {% if bursary.can_update and bursary.travel_status == 'pending' %}
+                  <p class="alert alert-success">
+                    {% blocktrans with date=bursary.travel_accept_before|date %}
+                      Your bursary has been granted.
+                      You need to confirm it before {{ date }}.
+                    {% endblocktrans %}
+                  </p>
+                {% endif %}
+              {% else %}
+                <div>{% trans 'Not Requested' %}</div>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if bursary.can_update %}
+        {% if bursary.must_accept %}
+          <p><a href="{% url 'bursary_update' %}" class="btn-lg btn btn-primary btn-success">{% trans 'Accept my bursary' %}</a></p>
+        {% else %}
+          <p><a href="{% url 'bursary_update' %}" class="btn-lg btn btn-primary">{% trans 'Update my bursary request' %}</a></p>
+        {% endif %}
+      {% endif %}
+    {% endwith %}
+  </section>
+{% endif %}
+{% if can_edit and object.invoices.exists %}
+  <section>
+    {% with invoices=object.invoices.all %}
+      <h2 id="my-invoices">{% trans 'My invoices:' %}</h2>
+      <div class="card-group">
+        {% for invoice in invoices %}
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">#{{ invoice.reference_number }}</h3>
+            </div>
+            <div class="card-body">
+              <div>
+                {% debconf_setting "BILLING_CURRENCY" as billing_currency %}
+                {% debconf_setting "LOCAL_CURRENCY" as local_currency %}
+                Total: {{ invoice.total }} {{ billing_currency }}
+                {% if local_currency != billing_currency %}
+                  or {{ invoice.total_local }} {{ local_currency }}
+                {% endif %}
+              </div>
+              <div>Status: {{ invoice.get_status_display }}</div>
+              <div><a class='btn btn-outline-primary' href="{% url "invoices:display" reference_number=invoice.reference_number %}">Display</a></div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endwith %}
+  </section>
+{% endif %}
+{% with accomm=object.attendee.accomm %}
+  {% if can_edit and accomm %}
+    <section>
+      <h2 id="my-accomm">{% trans 'My accommodation' %}</h2>
+      <div class="card-group">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              Nights
+            </h3>
+          </div>
+          <div class="card-body">
+            <ul>
+              {% for night in accomm.nights.all %}
+                <li>Night of {{ night }}</li>
+              {% endfor %}
+            </ul>
+            <div class="small">The night of is the night after the date specified.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              Room {{ accomm.room }}
+            </h3>
+          </div>
+          <div class="card-body">
+            {% if accomm.room %}
+              <div>Roommates:</div>
+              <ul>
+                {% for mate in accomm.get_roommates %}
+                  <li>
+                    {{ mate.user.userprofile.display_name }}
+                    {% if ":" in accomm.room %}
+                      ({{ mate.accomm.room }})
+                    {% endif %}
+                    {% for stay in mate.accomm.get_checkin_checkouts %}
+                      {% cycle "from" "to" %}
+                      {{ stay|date:"SHORT_DATE_FORMAT" }}
+                    {% endfor %}
+                    {% resetcycle %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              Your room hasn't been assigned yet.
+              Check back, a few days before {{ WAFER_CONFERENCE_NAME }}.
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+  {% endif %}
+{% endwith %}
+{% endwith %}
+{% endblock %}

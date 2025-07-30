@@ -1,0 +1,34 @@
+<table class="table table-striped table-bordered">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Reference</th>
+      <th>Description</th>
+      <th>Unit price</th>
+      <th>Qty</th>
+      <th>Total ({{ DEBCONF_BILLING_CURRENCY }})</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for line in lines %}
+      <tr>
+        <th>{{ forloop.counter }}</th>
+        <td>{{ line.reference }}</td>
+        <td>{{ line.description }}</td>
+        <td class="text-right">{{ line.unit_price }}</td>
+        <td>{{ line.quantity }}</td>
+        <td class="text-right">{{ line.total }}</td>
+      </tr>
+    {% endfor %}
+    <tr class="table-active">
+      <th colspan="5" class="text-right">Total ({{ DEBCONF_BILLING_CURRENCY }})</th>
+      <td class="text-right">{{ total }}</td>
+    </tr>
+    {% if DEBCONF_BILLING_CURRENCY != DEBCONF_LOCAL_CURRENCY %}
+      <tr class="table-active">
+        <th colspan="5" class="text-right">Total ({{ DEBCONF_LOCAL_CURRENCY }}) approx.</th>
+        <td class="text-right">{{ total_local }}</td>
+      </tr>
+    {% endif %}
+  </tbody>
+</table>
