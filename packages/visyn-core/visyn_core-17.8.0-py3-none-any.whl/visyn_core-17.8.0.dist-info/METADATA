@@ -1,0 +1,153 @@
+Metadata-Version: 2.4
+Name: visyn_core
+Version: 17.8.0
+Summary: Core repository for datavisyn applications.
+Home-page: https://www.datavisyn.io
+Author: datavisyn GmbH
+Author-email: contact@datavisyn.io
+License: BSD-3-Clause
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.10
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: alembic==1.13.2
+Requires-Dist: cachetools==5.3.3
+Requires-Dist: celery<6.0.0,>=5.0.0
+Requires-Dist: celery-types~=0.22.0
+Requires-Dist: fastapi==0.115.6
+Requires-Dist: json-cfg==0.4.2
+Requires-Dist: openpyxl==3.1.5
+Requires-Dist: opentelemetry-api==1.29.0
+Requires-Dist: opentelemetry-exporter-otlp==1.29.0
+Requires-Dist: opentelemetry-exporter-prometheus==0.50b0
+Requires-Dist: opentelemetry-instrumentation-fastapi==0.50b0
+Requires-Dist: opentelemetry-instrumentation-httpx==0.50b0
+Requires-Dist: opentelemetry-instrumentation-logging==0.50b0
+Requires-Dist: opentelemetry-instrumentation-requests==0.50b0
+Requires-Dist: opentelemetry-instrumentation-sqlalchemy==0.50b0
+Requires-Dist: opentelemetry-instrumentation-system-metrics==0.50b0
+Requires-Dist: opentelemetry-sdk==1.29.0
+Requires-Dist: psycopg==3.2.1
+Requires-Dist: psycopg2==2.9.9
+Requires-Dist: pydantic==1.10.17
+Requires-Dist: pyjwt[crypto]==2.9.0
+Requires-Dist: pytest-postgresql==6.1.1
+Requires-Dist: python-dateutil==2.9.0.post0
+Requires-Dist: requests==2.32.3
+Requires-Dist: redis!=4.5.5,<6.0.0,>=4.5.2
+Requires-Dist: sentry-sdk~=2.22.0
+Requires-Dist: SQLAlchemy<=1.4.54,>=1.4.40
+Requires-Dist: sqlalchemy2-stubs==0.0.2a38
+Requires-Dist: starlette-context==0.3.6
+Requires-Dist: fastapi-cli[standard]>=0.0.5
+Requires-Dist: httpx>=0.23.0
+Requires-Dist: jinja2>=2.11.2
+Requires-Dist: python-multipart>=0.0.7
+Requires-Dist: itsdangerous>=1.1.0
+Requires-Dist: pyyaml>=5.3.1
+Requires-Dist: ujson!=4.0.2,!=4.1.0,!=4.2.0,!=4.3.0,!=5.0.0,!=5.1.0,>=4.0.1
+Requires-Dist: orjson>=3.2.1
+Requires-Dist: uvicorn[standard]>=0.30.6
+Provides-Extra: rdkit
+Requires-Dist: rdkit==2023.9.6; extra == "rdkit"
+Provides-Extra: all
+Requires-Dist: rdkit==2023.9.6; extra == "all"
+Provides-Extra: develop
+Requires-Dist: black~=24.10.0; extra == "develop"
+Requires-Dist: pyright==1.1.391; extra == "develop"
+Requires-Dist: pytest-runner~=6.0.1; extra == "develop"
+Requires-Dist: pytest~=8.3.4; extra == "develop"
+Requires-Dist: ruff==0.9.1; extra == "develop"
+Requires-Dist: rdkit==2023.9.6; extra == "develop"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: license-file
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# visyn_core
+
+[![NPM version](https://badge.fury.io/js/visyn_core.svg)](https://npmjs.org/package/visyn_core)
+[![build](https://github.com/datavisyn/visyn_core/actions/workflows/build.yml/badge.svg?branch=develop)](https://github.com/datavisyn/visyn_core/actions/workflows/build.yml)
+
+## Features
+
+- [Telemetry](./docs/TELEMETRY.md): OpenTelemetry integration for the three pillar of observability: metrics, logs, and traces
+
+## Installation
+
+```bash
+git clone -b develop https://github.com/datavisyn/visyn_core.git  # or any other branch you want to develop in
+cd visyn_core
+
+# Frontend
+yarn install
+
+# Backend
+python3 -m venv .venv  # create a new virtual environment
+source .venv/bin/activate  # active it
+make develop  # install all dependencies
+```
+
+## Local development
+
+```bash
+# Frontend
+yarn start
+
+# Backend
+python visyn_core
+```
+
+## Testing
+
+```bash
+# Frontend
+yarn run test
+
+# Backend
+make test
+```
+
+### Playwright and Chromatic
+
+To run all tests and create snapshots, execute Playwright first. With this command all snapshots are already taken and captured in an archive. Make sure to commit all your changes before taking any snapshots.
+Before executing this command, make sure backend and frontend are running smoothly.
+
+```bash
+yarn pw:run
+```
+
+To upload these snapshots to Chromatic’s cloud and review them, execute:
+
+```bash
+yarn chromatic --playwright -t=<TOKEN>
+```
+
+Chromatic creates for every test a story in storybook, although these are not responsive. When clicking on the link in the terminal, all changes can be reviewed and storybook can be opened.
+
+Playwright documentation: [https://playwright.dev/docs/intro](https://playwright.dev/docs/intro)
+
+Chromatic with Playwright: [https://www.chromatic.com/docs/playwright/](https://www.chromatic.com/docs/playwright/)
+
+## Building
+
+```
+yarn run build
+```
+
+---
+
+<a href="https://www.datavisyn.io"><img src="https://www.datavisyn.io/wp-content/uploads/2021/11/datavisyn_RGB_A.svg" align="left" width="200px" hspace="10" vspace="6"></a>
