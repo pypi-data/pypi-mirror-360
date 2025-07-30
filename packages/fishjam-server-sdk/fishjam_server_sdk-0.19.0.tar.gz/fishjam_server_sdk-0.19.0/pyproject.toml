@@ -1,0 +1,81 @@
+[tool.poetry]
+name = "fishjam-server-sdk"
+version = "0.19.0"
+description = "Python server SDK for the Fishjam"
+authors = ["Fishjam Team"]
+homepage = "https://github.com/fishjam-cloud/python-server-sdk"
+documentation = "https://fishjam-cloud.github.io/python-server-sdk/fishjam"
+license = "Apache-2.0"
+readme = "README.md"
+packages = [{ include = "fishjam" }]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+websockets = "^11.0.3"
+urllib3 = ">=1.25.3,<2"
+aenum = "^3.1.15"
+python-dateutil = "^2.8.2"
+betterproto = "2.0.0b6"
+httpx = ">=0.20.0,<0.26.0"
+attrs = ">=21.3.0"
+flask-cors = "^6.0.1"
+
+[tool.poetry.group.dev.dependencies]
+betterproto = { version = "= 2.0.0b6", extras = ["compiler"] }
+pdoc = "^15.0.0"
+mkdocs = "^1.5.3"
+mike = "^2.0.0"
+openapi-python-client = "^0.16.0"
+ruff = "^0.1.7"
+flask = "^3.0.3"
+pyright = "^1.1.383"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.2"
+pytest-asyncio = "^0.21.1"
+requests = "^2.31.0"
+flask = "^3.0.3"
+
+[build-system]
+requires = ["poetry-core>=1.6.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+ci_test = "poetry_scripts:run_tests"
+local_test = "poetry_scripts:run_local_test"
+format = "poetry_scripts:run_formatter"
+format_check = "poetry_scripts:run_format_check"
+lint = "poetry_scripts:run_linter"
+fix_lint = "poetry_scripts:run_linter_fix"
+generate_docs = "poetry_scripts:generate_docs"
+update_client = "poetry_scripts:update_client"
+room_manager = "poetry_scripts:start_room_manager"
+
+[tool.ruff]
+select = ["F", "I"]
+
+[tool.ruff.lint]
+select = ["F", "I", "E"]
+ignore = []
+
+[tool.ruff.extend-per-file-ignores]
+"fishjam/_openapi_client/**" = ["E501"]
+
+[tool.pytest.ini_options]
+markers = [
+  "file_component_sources: Tests requiring files uploaded for File Component",
+]
+
+[tool.pyright]
+exclude = [
+  "**/.venv",
+  "**/__pycache__",
+  ".pytest_cache",
+  ".ruff_cache",
+  "lib",
+  "fishjam/_openapi_client",
+  "tests",
+]
+typeCheckingMode = "basic"
+venv = ".venv"
+venvPath = "."
