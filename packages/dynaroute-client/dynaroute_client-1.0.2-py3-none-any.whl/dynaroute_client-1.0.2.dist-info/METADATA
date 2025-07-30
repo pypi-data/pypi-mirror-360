@@ -1,0 +1,83 @@
+Metadata-Version: 2.4
+Name: dynaroute-client
+Version: 1.0.2
+Summary: A client for interacting with the DynaRoute API.
+Home-page: https://github.com/Vizuara-LLM/dynaroute-py
+Author: Vizuara
+Author-email: Vizuara <teamvizuara@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/Vizuara-LLM/dynaroute-py
+Project-URL: Issues, https://github.com/Vizuara-LLM/dynaroute-py/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: requests>=2.25.0
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# DynaRoute API Client
+
+This package provides a convenient Python client for interacting with the DynaRoute API, allowing you to easily integrate its chat completion features into your applications.
+
+## Installation
+
+Install the package directly from the source or using pip:
+
+```bash
+pip install .
+```
+
+## Usage
+
+To get started, initialize the `DynaRouteClient` with your API key. The API endpoint is always set to `https://api.dynaroute.vizuara.com` by default.
+
+### Basic Chat Completion
+
+Here’s how to make a simple, non-streaming chat completion request:
+
+```python
+from dynaroute import DynaRouteClient, APIError
+
+try:
+    client = DynaRouteClient(api_key="YOUR_API_KEY")
+    
+    messages = [
+        {"role": "user", "content": "What is the capital of France?"}
+    ]
+    
+    response = client.chat(messages)
+    print(response['choices'][0]['message']['content'])
+    
+except APIError as e:
+    print(f"An API error occurred: {e}")
+```
+
+### Streaming Chat Completion
+
+For real-time responses, you can stream the output from the API:
+
+```python
+from dynaroute import DynaRouteClient, APIError
+
+try:
+    client = DynaRouteClient(api_key="YOUR_API_KEY")
+    
+    messages = [
+        {"role": "user", "content": "Tell me a short story."}
+    ]
+    
+    stream = client.chat(messages, stream=True)
+    
+    for chunk in stream:
+        content = chunk.get('choices', [{}])[0].get('delta', {}).get('content', '')
+        if content:
+            print(content, end='', flush=True)
+            
+except APIError as e:
+    print(f"An API error occurred: {e}")
+```
