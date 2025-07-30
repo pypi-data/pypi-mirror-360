@@ -1,0 +1,5 @@
+from fund_insight_engine import get_mapping_fund_names_mongodb, get_fund_codes_main, get_mapping_fund_inception_dates_mongodb
+
+MAPPING_FUND_NAMES = get_mapping_fund_names_mongodb()
+FUND_CODES_MAIN = get_fund_codes_main()
+MAPPING_INCEPTION_DATES = get_mapping_fund_inception_dates_mongodb()
