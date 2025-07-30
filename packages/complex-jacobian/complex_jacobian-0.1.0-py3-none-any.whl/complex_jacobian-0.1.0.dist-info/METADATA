@@ -1,0 +1,80 @@
+Metadata-Version: 2.4
+Name: complex_jacobian
+Version: 0.1.0
+Summary: Complex Jacobian computation via real-valued autograd in PyTorch
+Author-email: Javad Komijani <jkomijani@gmail.com>
+License: MIT License
+        
+        Copyright (c) 2025 Javad Komijani
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/jkomijani/complex_jacobian
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: torch
+Dynamic: license-file
+
+# complex_jacobian
+
+**Jacobian calculation of complex-valued matrix functions using PyTorch.**
+
+This package implements automatic differentiation (AD) for complex-valued
+functions using PyTorch, with a focus on computing Jacobians of functions
+mapping complex matrices to complex matrices. It is particularly useful
+in domains like quantum computing and manifold optimization, where complex
+gradients must be handled with care.
+
+
+## Features
+
+- ✅ Compute complex-valued Jacobians ∂f/∂z and ∂f/∂𝑧̄ (Wirtinger derivatives)
+  using real-valued PyTorch autograd.
+- ✅ Specialized support for **unitary matrix input** — ideal for applications
+  in quantum physics and geometric optimization.
+
+## Installation
+
+```bash
+pip install complex_jacobian
+```
+
+## Motivation
+
+PyTorch's autograd system is designed for real-valued functions. However,
+many applications in science and engineering require differentiation
+of complex-valued functions, particularly over complex matrices or unitary
+groups. This package bridges that gap by:
+
+- Representing complex tensors as real + imaginary parts.
+- Computing real-valued Jacobians using PyTorch.
+- Reconstructing complex derivatives, including Wirtinger derivatives ∂f/∂z
+  and ∂f/∂𝑧̄.
+
+## Core Functions
+
+- `complex_jacobian(func, z)`:
+  Computes the Jacobian of a complex-valued function func evaluated at complex
+  input z, and returns Wirtinger derivatives:
+  - ∂f/∂z (holomorphic part)
+  - ∂f/∂𝑧̄ (antiholomorphic part)
+
+- `unitary_input_jacobian(func, z)`:
+  Computes the Jacobian of func(z) under the constraint that z is unitary.
