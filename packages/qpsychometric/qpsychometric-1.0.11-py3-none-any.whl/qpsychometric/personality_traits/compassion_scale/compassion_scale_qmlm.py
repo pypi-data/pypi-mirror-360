@@ -1,0 +1,1 @@
+compassion_scale_qmlm_list = []
