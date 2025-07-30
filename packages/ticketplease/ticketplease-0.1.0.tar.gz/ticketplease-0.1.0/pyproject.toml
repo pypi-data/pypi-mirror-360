@@ -1,0 +1,140 @@
+[tool.poetry]
+name = "ticketplease"
+version = "0.1.0"
+description = "CLI assistant for generating standardized task descriptions using AI"
+authors = ["Kus Cámara <kus.camara@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/kcmr/ticket-please"
+repository = "https://github.com/kcmr/ticket-please"
+keywords = ["cli", "ai", "jira", "github", "task-generation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+]
+packages = [
+    { include = "cli", from = "src" },
+    { include = "ai", from = "src" },
+    { include = "config", from = "src" },
+    { include = "ticketplease", from = "src" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+typer = ">=0.12.0"
+rich = "^13.0.0"
+questionary = "^2.0.0"
+litellm = "^1.0.0"
+pyperclip = "^1.8.0"
+toml = "^0.10.0"
+keyring = "^24.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"
+pytest-cov = "^4.0.0"
+ruff = "^0.1.0"
+pre-commit = "^3.0.0"
+types-pyperclip = "^1.9.0.20250218"
+types-toml = "^0.10.8.20240310"
+
+[tool.poetry.scripts]
+tk = "cli.main:app"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:tool.poetry.version"]
+version_variables = [
+    "src/ticketplease/__init__.py:__version__",
+    "src/cli/__init__.py:__version__"
+]
+dist_path = "dist/"
+upload_to_vcs_release = true
+upload_to_pypi = false
+remove_dist = false
+commit_message = "chore(release): {version} [skip ci]"
+tag_format = "v{version}"
+major_on_zero = false
+changelog_file = "CHANGELOG.md"
+changelog_components = "semantic_release.changelog.changelog_headers,semantic_release.changelog.compare_url"
+
+[tool.semantic_release.branches.main]
+match = "main"
+prerelease = false
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["build", "chore", "ci", "docs", "feat", "fix", "perf", "style", "refactor", "test"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+
+[tool.semantic_release.remote.token]
+env = "GITHUB_TOKEN"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["cli", "ai", "config", "ticketplease"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+filterwarnings = [
+    "ignore::pydantic.warnings.PydanticDeprecatedSince20",
+]
+
+[tool.coverage.run]
+source = ["src/cli", "src/ai", "src/config", "src/ticketplease"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
