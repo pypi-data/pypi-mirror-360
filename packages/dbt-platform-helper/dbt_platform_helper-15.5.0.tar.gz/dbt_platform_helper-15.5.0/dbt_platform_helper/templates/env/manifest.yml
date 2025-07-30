@@ -1,0 +1,33 @@
+# {% extra_header %}
+# {% version_info %}
+# The manifest for the "{{ name }}" environment.
+# Read the full specification for the "Environment" type at:
+#  https://aws.github.io/copilot-cli/docs/manifest/environment/
+
+# Your environment name will be used in naming your resources like VPC, cluster, etc.
+name: {{ name }}
+type: Environment
+
+network:
+  vpc:
+    id: {{ vpc_id }}
+    subnets:
+      public:
+{%- for id in pub_subnet_ids %}
+        - id: {{ id }}
+{%- endfor %}
+      private:
+{%- for id in priv_subnet_ids %}
+        - id: {{ id }}
+{%- endfor %}
+
+# Configure the load balancers in your environment, once created.
+http:
+  public:
+    certificates:
+      - {{ certificate_arn }}
+#   private:
+
+# Configure observability for your environment resources.
+observability:
+  container_insights: true
