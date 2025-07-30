@@ -1,0 +1,191 @@
+Metadata-Version: 2.4
+Name: unisonai
+Version: 0.3
+Summary: UnisonAI Multi-Agent Framework provides a flexible, light-weight experience and extensible environment for creating and coordinating multiple AI agents.
+Author: E5Anant (Anant Sharma)
+Author-email: e5anant2011@gmail.com
+Keywords: agents,unisonai,unisonAI,multi-agent,clan,python,light-weight,agent-framework,framework,ai,ai tools,ai agents,llms,open-source,a2a,agent to agent
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: Unix
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: Microsoft :: Windows
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: cohere
+Requires-Dist: groq
+Requires-Dist: rich
+Requires-Dist: python-dotenv
+Requires-Dist: google-generativeai
+Requires-Dist: requests
+Requires-Dist: colorama
+Requires-Dist: googlesearch-python
+Requires-Dist: anthropic
+Requires-Dist: openai>=1.13.3
+Requires-Dist: mistralai
+Requires-Dist: pydantic>=2.4.2
+Requires-Dist: nest_asyncio
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: keywords
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: summary
+
+
+# ![UnisonAI Banner](https://github.com/UnisonAIInc/UnisonAI/blob/main/assets/UnisonAI_Banner.jpg)
+
+# UnisonAI
+
+[![GitHub stars](https://img.shields.io/github/stars/UnisonAIInc/UnisonAI?style=social)](https://github.com/UnisonAIInc/UnisonAI/stargazers)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Python](https://img.shields.io/badge/Python-3.10%20--%203.12-blue)](https://pypi.org/project/unisonai/)
+[![LLM Support](https://img.shields.io/badge/LLM%20Support-OpenAI%2C%20Anthropic%2C%20Gemini-orange)](https://pypi.org/project/unisonai/)
+[![Architecture](https://img.shields.io/badge/Architecture-Single%20Agent%20%2F%20Clan%20A2A-purple)](https://pypi.org/project/unisonai/)
+
+---
+
+UnisonAI is a flexible Python framework to build and manage multiple AI agents—either solo or in clans. Each agent is powered by the LLM of your choice, with agent-to-agent (A2A) communication capabilities.
+
+## ✨ Key Features
+
+* 🔗 **Multi-LLM Support:** OpenAI, Grok, Gemini, Cohere, Anthropic, and more
+* 🧩 **Modular & Extensible:** Add your own tools, logic, and models
+* 🤖 **Single or Multi-Agent:** Solo agents or collaborative Clan agents
+* ⛨️ **Error Handling:** Built-in retries and format repairs
+* 📃 **Clear Docs & Examples:** Easy to start and extend
+* ⚡ **Production Ready:** Ideal for real-world automation & chatbots
+
+---
+
+## 🚀 Installation
+
+```bash
+pip install unisonai
+```
+
+> Requires Python >=3.10 and <3.13
+
+---
+
+## 🧠 Core Concepts
+
+**Single\_Agent**
+Run focused tasks with isolated agents using any LLM and tools.
+
+**Agent (for Clans)**
+A specialized agent that communicates and collaborates with others.
+
+**Clan**
+A group of agents working together with a manager and a shared goal.
+
+**Tool System**
+Add your own pluggable tools with parameters and logic.
+
+---
+
+## 🔧 Usage Example (Single Agent)
+
+```python
+from unisonai import Single_Agent
+from unisonai.llms import Gemini
+from unisonai.tools.websearch import WebSearchTool
+from unisonai import config
+
+config.set_api_key("gemini", "your-api-key")
+
+agent = Single_Agent(
+  llm=Gemini(model="gemini-2.0-flash"),
+  identity="Web Explorer",
+  description="Agent to fetch stock prices",
+  tools=[WebSearchTool],
+  history_folder="history",
+  output_file="output.txt"
+)
+
+agent.unleash(task="Get the current price of Apple stocks")
+```
+
+---
+
+## 🗺 Usage Example (Clan Agent)
+
+```python
+from unisonai import Agent, Clan
+from unisonai.llms import Gemini
+from unisonai.tools.websearch import WebSearchTool
+from unisonai import config
+
+config.set_api_key("gemini", "your-api-key")
+
+planner = Agent(...)  # Define your clan leader agent
+
+web_agent = Agent(...)
+time_agent = Agent(...)
+
+clan = Clan(
+  clan_name="Travel Experts",
+  manager=planner,
+  members=[web_agent, time_agent],
+  shared_instruction="Plan a 7-day budget trip in India",
+  goal="Create an itinerary under 10,000 INR",
+  history_folder="trip_history",
+  output_file="trip_plan.txt"
+)
+
+clan.unleash()
+```
+
+---
+
+## 🔑 API Key Setup
+
+```python
+from unisonai import config
+config.set_api_key("gemini", "your-gemini-key")
+config.set_api_key("openai", "your-openai-key")
+```
+
+You can also use environment variables:
+
+```bash
+export GEMINI_API_KEY="your-key"
+```
+
+---
+
+## ❓ FAQ
+
+**What is UnisonAI?**
+A multi-agent AI framework using your favorite LLMs.
+
+**Why Clans?**
+Break tasks into parts and assign agents to solve each collaboratively.
+
+**Can I use custom models/tools?**
+Yes! Just extend the `BaseLLM` or `BaseTool` classes.
+
+**Where are logs stored?**
+In the folder you define using `history_folder`.
+
+**What can I build?**
+Chatbots, planners, assistants, automation systems, and more.
+
+---
+
+## 👥 Contributors & License
+
+* **Lead Developer:** [@E5Anant](https://github.com/E5Anant)
+* **Contributors:** [@AnonymousCoderArtist](https://github.com/AnonymousCoderArtist), [@OEvortex](https://github.com/OEvortex)
+
+**License:** [Apache 2.0](https://github.com/UnisonAIInc/UnisonAI/blob/main/LICENSE)
+
+GitHub: [https://github.com/UnisonAIInc/UnisonAI](https://github.com/UnisonAIInc/UnisonAI)
+
+---
+
+**UnisonAI — Orchestrate the Future of Multi-Agent AI**
