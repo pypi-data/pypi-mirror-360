@@ -1,0 +1,83 @@
+[project]
+name = "axmp-openapi-helper"
+version = "0.2.1"
+description = "This is a openapi helper library for the ZMP AI Platform"
+authors = [
+    {name = "Kilsoo Kang",email = "kilsoo75@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11, <4.0"
+dependencies = [
+    "python-dotenv (>=1.0.1,<2.0.0)",
+    "colorlog (>=6.9.0,<7.0.0)",
+    "pydantic (>=2.10.6)",
+    "httpx (>=0.28.1,<0.29.0)"
+]
+
+
+[project.urls]
+homepage = "https://github.com/cloudz-mp"
+repository = "https://github.com/cloudz-mp/axmp-openapi-helper"
+documentation = "https://github.com/cloudz-mp/axmp-openapi-helper"
+"Bug Tracker" = "https://github.com/cloudz-mp/axmp-openapi-helper/issues"
+
+
+[project.scripts]
+[project.gui-scripts]
+
+
+[tool.poetry]
+package-mode = true
+packages = [{include = "axmp_openapi_helper", from = "src"}]
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+pytest-cov = "^6.0.0"
+pytest-watch = "^4.2.0"
+pytest-asyncio = "^0.25.3"
+certifi = "^2025.1.31"
+ruff = "^0.11.0"
+
+
+[tool.poetry.group.quality.dependencies]
+pre-commit = "^4.1.0"
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.pytest-watcher]
+now = true
+delay = 0.1
+runner_args = ["--ff", "-x", "-v", "--tb", "short"]
+patterns = ["*.py"]
+
+[tool.ruff]
+lint.select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # isort
+    "D",    # pydocstyle
+    "D401", # First line should be in imperative mood
+    "T201",
+    "UP",
+]
+lint.ignore = [
+    "UP006",
+    "UP007",
+    # We actually do want to import from typing_extensions
+    "UP035",
+    # Relax the convention by _not_ requiring documentation for every function parameter.
+    "D417",
+    "E501",
+    "T201",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D", "UP"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

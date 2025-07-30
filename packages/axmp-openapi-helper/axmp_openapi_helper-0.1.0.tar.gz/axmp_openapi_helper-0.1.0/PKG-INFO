@@ -1,0 +1,299 @@
+Metadata-Version: 2.4
+Name: axmp-openapi-helper
+Version: 0.1.0
+Summary: This is a openapi helper library for the ZMP AI Platform
+Project-URL: homepage, https://github.com/cloudz-mp
+Project-URL: repository, https://github.com/cloudz-mp/axmp-openapi-helper
+Project-URL: documentation, https://github.com/cloudz-mp/axmp-openapi-helper
+Project-URL: Bug Tracker, https://github.com/cloudz-mp/axmp-openapi-helper/issues
+Author-email: Kilsoo Kang <kilsoo75@gmail.com>
+License-File: LICENSE
+Requires-Python: <4.0,>=3.12
+Requires-Dist: colorlog>=6.9.0
+Requires-Dist: httpx>=0.28.1
+Requires-Dist: pydantic>=2.11.7
+Requires-Dist: python-dotenv>=1.1.1
+Description-Content-Type: text/markdown
+
+# axmp-openapi-helper
+
+![Platform Badge](https://img.shields.io/badge/platform-zmp-red)
+![Component Badge](https://img.shields.io/badge/component-openapi_helper-red)
+![CI Badge](https://img.shields.io/badge/ci-github_action-green)
+![License Badge](https://img.shields.io/badge/license-MIT-green)
+![PyPI - Version](https://img.shields.io/pypi/v/axmp-openapi-helper)
+![PyPI - Implementation](https://img.shields.io/pypi/implementation/axmp-openapi-helper)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/axmp-openapi-helper)
+![PyPI - Wheel](https://img.shields.io/pypi/wheel/axmp-openapi-helper)
+![PyPI - Download](https://img.shields.io/pypi/dm/axmp-openapi-helper)
+
+## Introduction
+
+This is a openapi helper library for the ZMP AI Platform
+
+## Key Features
+
+- Support the OpenAPI Specification(>=3.0.0)
+- Generate the Arguments Schema for the LLM
+
+## Installation
+
+Install using pip:
+
+```bash
+pip install axmp-openapi-helper
+```
+
+Install using poetry:
+```bash
+poetry add axmp-openapi-helper
+```
+
+## Usage
+
+Basic example:
+
+```python
+import logging
+import logging.config
+
+from axmp_openapi_helper import (
+    MixedAPISpecConfig,
+    ZmpAPIWrapper,
+)
+
+logging.config.fileConfig("logging.conf", disable_existing_loggers=False)
+logging.getLogger("axmp_openapi_helper.openapi.zmpapi_models").setLevel(logging.INFO)
+logging.getLogger("axmp_openapi_helper.toolkits.toolkit").setLevel(logging.INFO)
+logger = logging.getLogger("appLogger")
+logger.setLevel(logging.DEBUG)
+
+if __name__ == "__main__":
+    mixed_api_spec_config = MixedAPISpecConfig.from_mixed_spec_file(
+        file_path="runner/openapi/zmp_mixed_api_spec.json"
+    )
+
+    zmp_api_wrapper = ZmpAPIWrapper(
+        "https://api.test.company.com",
+        mixed_api_spec_config=mixed_api_spec_config,
+        auth_type=AuthenticationType.CUSTOM,
+        custom_auth_header_key="X-Access-Key",
+        custom_auth_header_value="xxxxx",
+    )
+
+    operations = zmp_api_wrapper.get_operations()
+    for operation in operations:
+        print("-" * 100)
+        print(operation.args_schema)
+        for field_name, field_info in operation.args_schema.model_fields.items():
+            print(
+                f"\t{field_name}: {field_info.annotation}, {field_info.default}, {field_info.description}"
+            )
+
+    response = zmp_api_wrapper.run(
+        "GET",
+        "/api/alert/v1/alerts",
+        query_params=None
+    )
+    print(response)
+```
+
+Mixed API Spec Config Sample
+
+```json
+{
+    "backends": [
+        {
+            "backend": "zcp-alert-backend",
+            "config": {
+                "file_path": "runner/openapi/zcp/zcp_alert_backend_openapi_spec.json",
+                "prefix": "/api/alert/v1",
+                "apis": [
+                    {
+                        "path":"/api/alert/v1/alerts",
+                        "methods": ["get"]
+                    },
+                    {
+                        "path":"/api/alert/v1/alerts",
+                        "methods": ["post"]
+                    },
+                    {
+                        "path":"/api/alert/v1/alerts/{alert_id}",
+                        "methods": ["get"]
+                    },
+                    {
+                        "path":"/api/alert/v1/alerts/webhook",
+                        "methods": ["post"]
+                    },
+                    {
+                        "path":"/api/alert/v1/alerts/{alert_id}/{action}",
+                        "methods": ["patch"]
+                    },
+                    {
+                        "path":"/api/alert/v1/alerts/bulk/{action}",
+                        "methods": [
+                            {
+                                "method": "patch",
+                                "description": "Bulk action on alerts"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "backend": "zcp-mcm-backend",
+            "config": {
+                "file_path": "runner/openapi/zcp/zcp_mcm_backend_openapi_spec.json",
+                "prefix": "/api/mcm/resource/v1beta1",
+                "apis": [
+                    {
+                        "path":"/api/mcm/resource/v1beta1/workload/pods",
+                        "methods": [
+                            {
+                                "method": "get",
+                                "description": "Get pods using the query parameters"
+                            }
+                        ]
+                    },
+                    {
+                        "path":"/api/mcm/resource/v1beta1/workload/pods/{name}",
+                        "methods": [
+                            {
+                                "method": "get",
+                                "description": "Get pod details by name and cluster and namespace parameters"
+                            }
+                        ]
+                    },
+                    {
+                        "path":"/api/mcm/resource/v1beta1/workload/pods/events",
+                        "methods": [
+                            {
+                                "method": "get",
+                                "description": "Get pod events by id which is consists of cluster, namespace and pod name. seperated by $. e.g.)id=cluster1$namespace1$pod1"
+                            }
+                        ]
+                    },
+                    {
+                        "path":"/api/mcm/resource/v1beta1/workload/pods/metrics",
+                        "methods": [
+                            {
+                                "method": "get",
+                                "description": "Get pod metrics by id which is consists of cluster, namespace and pod name. seperated by $. e.g.)id=cluster1$namespace1$pod1"
+                            }
+                        ]
+                    },
+                    {
+                        "path":"/api/mcm/resource/v1beta1/accesscontrol/clusterrolebindings",
+                        "methods": ["get", "delete"]
+                    },
+                    {
+                        "path":"/api/mcm/resource/v1beta1/clusters",
+                        "methods": [
+                            {
+                                "method":   "get",
+                                "description": "Get clusters using the query parameters"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "backend": "zcp-monitoring-backend",
+            "config": {
+                "file_path": "runner/openapi/zcp/zcp_monitoring_backend_openapi_spec.json",
+                "prefix": "/api/monitoring/v1beta1",
+                "apis": [
+                    {
+                        "path":"/api/monitoring/v1beta1/realms/{realm}/rules/{namespace}",
+                        "methods": [
+                            {
+                                "method": "get",
+                                "description": "Get rule groups by realm and namespace"
+                            }
+                        ]
+                    },
+                    {
+                        "path":"/api/monitoring/v1beta1/realms/{realm}/events",
+                        "methods": [
+                            {
+                                "method": "get",
+                                "description": "Get events by realm"
+                            }
+                        ]
+                    },
+                    {
+                        "path":"/api/monitoring/v1beta1/realms/{realm}/metrics/clusters",
+                        "methods": [
+                            {
+                                "method": "get",
+                                "description": "Get metrics of clusters by realm"
+                            }
+                        ]
+                    },
+                    {
+                        "path":"/api/monitoring/v1beta1/realms/{realm}/metrics/nodes",
+                        "methods": [
+                            {
+                                "method": "get",
+                                "description": "Get metrics of nodes by realm"
+                            }
+                        ]
+                    },
+                    {
+                        "path":"/api/monitoring/v1beta1/realms/{realm}/metrics/pods",
+                        "methods": [
+                            {
+                                "method": "get",
+                                "tool_name": "get_metrics_of_pods_by_realm",
+                                "description": "Get metrics of pods by realm"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}
+```
+
+For more detailed usage instructions, please refer to our [documentation](link).
+
+## Development Setup
+
+1. Clone the repository
+```bash
+git clone https://github.com/yourusername/axmp-openapi-helper.git
+cd axmp-openapi-helper
+```
+
+2. Create and activate virtual environment
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Windows: venv\Scripts\activate
+```
+
+3. Install development dependencies
+```bash
+poetry install
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+- Issue Tracker: https://github.com/cloudz-mp/axmp-openapi-helper/issues
+- Email: kilsoo75@gmail.com
+
+
