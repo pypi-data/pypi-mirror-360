@@ -1,0 +1,145 @@
+# MCP OCR Server
+
+A Model Context Protocol (MCP) server that provides OCR (Optical Character Recognition) capabilities for images and videos using GLM-4.1V-Thinking-Flash.
+
+## Features
+
+- **Image OCR**: Extract text from images using GLM-4.1V-Thinking-Flash
+- **Video OCR**: Extract text from video frames (planned feature)
+- **Custom Prompts**: Support for custom OCR prompts
+- **MCP Integration**: Full MCP protocol support for seamless integration
+
+## Requirements
+
+- Python 3.10+
+- GLM-4.1V-Thinking-Flash API key from ZhipuAI
+
+## Quick Start with uvx
+
+The fastest way to get started is using `uvx`:
+
+```bash
+# Install and run directly
+uvx mcp-server-ocr
+
+# Or install for development
+uvx --python 3.10 --with-editable . mcp-server-ocr
+```
+
+## Installation
+
+### Using uv (recommended)
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd ocr
+
+# Install dependencies
+uv sync
+
+# Run the server
+uv run mcp-server-ocr
+```
+
+### Using pip
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd ocr
+
+# Install dependencies
+pip install -e .
+
+# Run the server
+mcp-server-ocr
+```
+
+## Configuration
+
+Set your GLM-4.1V-Thinking-Flash API key as an environment variable:
+
+```bash
+export ZHIPU_API_KEY="your-api-key-here"
+```
+
+## Usage
+
+### Available Tools
+
+1. **ocr_image**: Perform OCR on image files
+   - `image_path`: Path to the image file
+   - `prompt`: Custom prompt for OCR processing (optional)
+
+2. **ocr_video**: Perform OCR on video frames (coming soon)
+   - `video_path`: Path to the video file
+   - `prompt`: Custom prompt for video OCR processing (optional)
+   - `frame_interval`: Extract frames every N seconds (optional)
+
+### Available Prompts
+
+1. **ocr_image**: Extract text from an image
+2. **ocr_video**: Extract text from video frames
+
+## Build and Publish
+
+### Build the package
+
+```bash
+# Using uv
+uv build
+
+# Using pip
+python -m build
+```
+
+### Publish to PyPI
+
+```bash
+# Using uv
+uv publish
+
+# Using twine
+twine upload dist/*
+```
+
+## Development
+
+### Setup development environment
+
+```bash
+# Clone and setup
+git checkout -b feature/your-feature
+uv sync --dev
+
+# Run linting and type checking
+uv run ruff check .
+uv run pyright .
+```
+
+### Testing
+
+```bash
+# Run tests (when available)
+uv run pytest
+
+# Test the server manually
+uv run python -m mcp_server_ocr
+```
+
+## API Documentation
+
+- [GLM-4.1V-Thinking-Flash API Documentation](https://bigmodel.cn/dev/api/visual-reasoning-model/GLM-4.1V-Thinking)
+- [GLM-4.1V-Thinking Usage Guide](https://bigmodel.cn/dev/howuse/visual-reasoning-model/glm-4.1v-thinking)
+
+## MCP Protocol
+
+This server implements the Model Context Protocol (MCP) specification:
+
+- [Python MCP SDK](https://github.com/modelcontextprotocol/python-sdk)
+- [TypeScript MCP SDK](https://github.com/modelcontextprotocol/typescript-sdk)
+
+## License
+
+MIT License
