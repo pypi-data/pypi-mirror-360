@@ -1,0 +1,248 @@
+[tool.poetry]
+name = "peak-sdk"
+version = "1.18.0"
+packages = [{ include = "peak" }]
+description = "Python SDK for interacting with the Peak platform"
+authors = ["Peak <support@peak.ai>"]
+license = "Apache License 2.0"
+readme = "pypi-home.md"
+homepage = "https://docs.peak.ai/sdk/latest/"
+documentation = "https://docs.peak.ai/sdk/latest/"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Natural Language :: English",
+  "Topic :: Software Development :: Libraries :: Application Frameworks",
+  "Typing :: Typed"
+]
+
+[tool.poetry.dependencies]
+python = ">=3.8.1,<3.13"
+requests = "^2.32"
+requests-toolbelt = "^1.0"
+pathspec = "*"
+typer = "^0.12.4"
+jinja2 = "^3.1"
+pyyaml = "^6.0"
+certifi = ">=2024.2.2"
+shellingham = "<1.5.4"
+urllib3 = "<2"
+structlog = "^24.2.0"
+orjson = "^3.10"
+valkey = "^6.0.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.3"
+pytest-icdiff = "^0.6"
+pytest-mock = "^3.12"
+pytest-sugar = "^0.9"
+Pygments = "^2.17"
+types-Pygments = "^2.17"
+types-colorama = "^0.4"
+types-setuptools = "^69.1"
+types-urllib3 = "^1.26"
+types-requests = "^2.31"
+types-pyyaml = "^6.0"
+types-cffi = "^1.16"
+types-decorator = "^5.1"
+types-jsonschema = "^4.21"
+types-paramiko = "^3.4"
+types-psutil = "^5.9"
+types-python-dateutil = "^2.9"
+types-pywin32 = "^306.0"
+types-six = "^1.16"
+types-typed-ast = "^1.5"
+xdoctest = { extras = ["colors"], version = "^1.1" }
+coverage = { extras = ["toml"], version = "^7.4" }
+
+[tool.poetry.group.dev.dependencies]
+black = { extras = ["jupyter"], version = ">=24.2.0" }
+furo = ">=2024.1.29"
+mypy = ">=1.10.0"
+pre-commit = ">=3.5.0"
+pre-commit-hooks = ">=4.5.0"
+ochrona = ">=2.0.2"
+darglint = ">=1.8.1"
+sphinx = ">=7.1.2"
+sphinx-autobuild = ">=2021.3.14"
+sphinx-tabs = ">=3.4.7"
+myst-parser = { version = ">=2.0.0" }
+markdown-it-py = ">=2.2.0"
+shellcheck-py = ">=0.9.0.6"
+nox = ">=2024.3.2"
+nox-poetry = ">=1.0.3"
+blacken-docs = ">=1.16.0"
+click = "8.1.7"
+jupyter = ">=1.0.0"
+notebook = ">=7.1.2"
+nbstripout = ">=0.7.1"
+nbqa = ">=1.8.4"
+jupyter_client = ">=8.6.1"
+ruff = ">=0.3.2,<=0.4.0"
+tryceratops = ">=2.3.2"
+nbsphinx = ">=0.9.3"
+nbsphinx_link = ">=1.3.0"
+pandoc = "=2.3"
+graphviz = ">=0.20.1"
+detect-secrets = "^1.4.0"
+sphinx-copybutton = "^0.5.2"
+sphinx-multiversion = "^0.2.4"
+sphinx-rtd-theme = "^3.0.1"
+
+[tool.coverage.paths]
+source = ["peak", "*/site-packages"]
+tests = ["tests", "*/tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["peak", "tests"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 100
+
+[tool.black]
+line-length = 120
+
+[tool.ruff]
+src = ["peak", "tests"]
+line-length = 120
+respect-gitignore = true
+lint.select = ["ALL"]
+lint.ignore = [
+  "UP006",
+  "UP035",
+  "UP007",
+  "UP037",
+  "E501",
+  "D401",
+  "ANN101",
+  "ANN401",
+  "PLR0913",
+  "TCH",
+  "N818",
+  "D301"
+]
+lint.unfixable = [
+  "T10",
+  "T20",
+  "B",
+  "SIM",
+  "RUF",
+  "C90",
+  "C4",
+  "N",
+  "ANN",
+  "PIE",
+  "PLE",
+  "PLC",
+  "PLR",
+  "PLW",
+  "UP"
+]
+lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore all errors in the tests directory.
+"tests/*" = ["S", "INP001", "ANN001", "PTH123", "PTH103", "ERA001"]
+".github/workflows/files_cache_key.py" = ["S", "INP001"]
+"noxfile.py" = ["S", "INP001"]
+"docs/conf.py" = ["S", "INP001", "A001"]
+"docs/examples/*" = ["ERA001"]
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+
+[tool.ruff.lint.pydocstyle]
+# Accepts: "google", "numpy", or "pep257".
+convention = "google"
+
+[tool.ruff.lint.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 10
+
+[tool.nbqa.addopts]
+ruff = ["--ignore=D,T,TRY,E402"]
+
+[tool.mypy]
+strict = true
+warn_unreachable = true
+pretty = true
+follow_imports = "normal"
+exclude = ['./stubs']
+# Know exactly what you're doing
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unused_configs = true
+show_absolute_path = true
+# Ensure Full Coverage
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_decorators = true
+check_untyped_defs = true
+# Restrict dynamic typing
+disallow_any_decorated = false
+disallow_any_generics = true
+disallow_subclassing_any = true
+warn_return_any = true
+# Explicit is better than implicit
+strict_equality = true
+strict_optional = true
+no_implicit_optional = true
+
+# It's hard to make tests compliant using unittest.mock
+[[tool.mypy.overrides]]
+module = 'tests'
+disallow_untyped_defs = false
+disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+module = 'pathspec'
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = 'nox'
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = 'nox_poetry'
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = 'requests_toolbelt'
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = 'noxfile'
+ignore_missing_imports = true
+follow_imports = 'skip'
+disallow_untyped_decorators = false
+
+[tool.pyright]
+include = ['peak']
+exclude = ["**/.venv", "**/__pycache__", "**/stubs"]
+stubPath = "./stubs"
+useLibraryCodeForTypes = true
+
+[tool.poetry.scripts]
+peak = { callable = "peak.cli.cli:typer_app" }
+
+[tool.pytest.ini_options]
+minversion = 7.0
+addopts = ['--strict-markers', '--strict-config', '-l', '--color=yes']
+xfail_strict = true
+markers = ["slow: marks tests as slow (deselect with '-m \"not slow\"')"]
+console_output_style = 'progress-even-when-capture-no'
+
+[build-system]
+requires = ["poetry-core ~= 1.4.0"]
+build-backend = "poetry.core.masonry.api"

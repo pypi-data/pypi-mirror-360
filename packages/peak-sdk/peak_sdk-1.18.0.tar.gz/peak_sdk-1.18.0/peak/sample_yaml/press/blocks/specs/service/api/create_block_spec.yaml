@@ -1,0 +1,133 @@
+body:
+  version: 1
+  kind: service
+  metadata:
+    name: api-service-block
+    title: API Service Block
+    summary: API Service Block
+    description: Creating a new service block spec of type api.
+    descriptionContentType: text/markdown
+    imageUrl: https://my-block-pics.com/image-0.jpg
+    tags:
+      - name: CLI
+  release:
+    version: 1.0.0
+    notes: This is the original release
+  config:
+    serviceType: api
+    image:
+      dockerfile: Dockerfile
+      context: "."
+      version: 0.0.1
+    parameters:
+      env:
+        param1: value1
+        param2: value2
+      secrets:
+        - secret1
+        - secret2
+    resources:
+      instanceTypeId: "@param:instance_type_id"
+    healthCheckURL: "@param:health_check_url"
+    entrypoint: |
+      python
+      app.py
+    minInstances: 1
+parameters:
+  build:
+    - name: health_check_url
+      type: string
+      required: true
+      title: Health Check URL
+      description: Enter the health check URL
+      defaultValue: /health
+      hideValue: false
+    - name: instance_type_id
+      type: number
+      required: true
+      title: Instance Type ID
+      description: Select an instance type
+      options:
+        - title: Pico (0.125CPU, 0.125GB RAM)
+          value: 20
+        - title: Nano (0.25CPU, 0.5GB RAM)
+          value: 21
+        - title: Micro (0.5CPU, 1GB RAM)
+          value: 22
+      defaultValue: 20
+  run:
+    - name: agg_type
+      type: string
+      required: false
+      title: Agg Type
+      description: Select an aggregation function (e.g., AVG, SUM, COUNT)
+      defaultValue: AVG
+      hideValue: true
+    - name: email_notifications
+      type: boolean
+      required: false
+      title: Email Notifications
+      description: Enable email notifications
+      defaultValue: false
+    - name: num_iterations
+      type: number
+      required: false
+      title: Number of Iterations
+      description: Select the number of iterations
+      options:
+        - title: Low
+          value: 10
+        - title: Medium
+          value: 50
+        - title: High
+          value: 100
+      defaultValue: 10
+    - name: file_names
+      type: string_array
+      required: true
+      title: File Names
+      description: Specify input and output file names
+      defaultValue:
+        - input.csv
+        - output.csv
+    - name: max_retries
+      type: number
+      required: false
+      title: Maximum Retries
+      description: Set maximum number of retry attempts
+      defaultValue: 3
+    - description: "specify the method to aggregate the data"
+      hideValue: true
+      required: true
+      title: "Aggregation Method"
+      name: "aggregation_method"
+      type: "string"
+      conditions:
+        - conditionType: "AND"
+          conditions:
+            - dependsOn: "max_retries"
+              operator: "equals"
+              value: 3
+            - dependsOn: "agg_type"
+              operator: "equals"
+              value: "AVG"
+    - description: "Specify the filtering criteria for data processing"
+      hideValue: true
+      required: true
+      title: "Filter Condition"
+      name: "filter_condition"
+      type: "string"
+      conditions:
+        - dependsOn: "max_retries"
+          operator: "equals"
+          value: 3
+artifact:
+  path: "."
+  ignore_files:
+    - ".gitignore"
+    - ".dockerignore"
+featured: true
+scope: shared
+tenants:
+  - tenant1
+  - tenant2

@@ -1,0 +1,61 @@
+# app_deployment.yaml
+
+body:
+  metadata:
+    name: app-deployment
+    title: App Deployment
+    summary: App Deployment
+    description: Creating a new app deployment
+    descriptionContentType: text/markdown
+    imageUrl: https://my-block-pics.com/image-0.jpg
+    tags:
+      - name: CLI
+  appParameters:
+    build:
+      watcher_user: "abc@123.com"
+      use_cache: true
+      runtime_exceeded: 10
+    run:
+      agg_type: "SUM"
+      num_iterations: 50
+      email_notifications: true
+      file_names:
+        - input.csv
+        - output.csv
+  parameters:
+    block-1:
+      build:
+        watcher_user: "abc@123.com"
+        use_cache: true
+        runtime_exceeded: 10
+      run:
+        agg_type: "SUM"
+        num_iterations: 50
+        email_notifications: true
+        file_names:
+          - input.csv
+          - output.csv
+    block-2:
+      build:
+        watcher_user: "xyz@456.com"
+        use_cache: false
+        runtime_exceeded: 50
+      run:
+        agg_type: "MAX"
+        num_iterations: 10
+        email_notifications: false
+        file_names:
+          - input.csv
+          - output.csv
+  revision:
+    notes: This is the initial revision
+  spec:
+    id: 0bddb4c6-40c5-45c3-b477-fceb2c051609
+    release:
+      version: 1.0.0
+    # Block inclusion/exclusion configuration
+    includes:
+      - id: block-1
+        releaseVersion: "1.0.0" # including a block
+    excludes:
+      - id: block-3 # Excluding block-3 from deployment
