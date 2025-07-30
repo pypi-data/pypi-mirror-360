@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+    <meta name="author" content="wander"/>
+    <meta name="copyright" content="wander"/>
+    <meta name="description" content="文本处理工具集"/>
+
+    <title>pywander_text 一个便捷的文本处理工具集</title>
+
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!--    <link href="/theme/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">-->
+    <link href="css/main.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#8B5CF6',
+                        neutral: '#1F2937',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .transition-height {
+                transition: max-height 0.5s ease;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+        }
+    </style>
+</head>
+
+
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- 顶部导航 -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-language text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-neutral">繁體簡體轉換工具</h1>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- 转换类型选择 -->
+            <div class="bg-gray-50 p-4 flex border-b border-gray-200">
+                <button id="trad-to-simp" class="flex-1 py-2 px-4 rounded-lg bg-primary text-white font-medium">
+                    <i class="fa fa-exchange mr-2"></i>繁體 → 簡體
+                </button>
+                <button id="simp-to-trad" class="flex-1 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors">
+                    <i class="fa fa-exchange mr-2"></i>簡體 → 繁體
+                </button>
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="p-6 space-y-6">
+                <div class="space-y-2">
+                    <label for="input-text" class="block text-sm font-medium text-gray-700">输入文字</label>
+                    <div class="relative">
+                        <textarea
+                            id="input-text"
+                            class="w-full h-40 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none"
+                            placeholder="請輸入繁體中文..."
+                        ></textarea>
+                        <div class="absolute bottom-3 right-3 text-xs text-gray-500">
+                            <span id="char-count">0</span> 字符
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 按钮区域 -->
+                <div class="flex justify-center space-x-4">
+                    <button id="clear-btn" class="py-2 px-6 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex items-center">
+                        <i class="fa fa-eraser mr-2"></i>清空
+                    </button>
+                    <button id="convert-btn" class="py-2 px-6 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                        <i class="fa fa-refresh mr-2"></i>开始转换
+                    </button>
+                </div>
+
+                <!-- 结果区域 -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">转换结果</label>
+                    <div class="relative">
+                        <div id="result-container" class="w-full min-h-[10rem] p-4 border border-gray-300 rounded-lg bg-gray-50 overflow-auto">
+                            <p class="text-gray-400 italic">转换结果将显示在这里...</p>
+                        </div>
+                        <button id="copy-btn" class="absolute bottom-3 right-3 py-1.5 px-3 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+                            <i class="fa fa-copy mr-1"></i>复制
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 转换信息 -->
+            <div class="bg-gray-50 p-4 border-t border-gray-200 text-sm text-gray-600">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span id="convert-status" class="text-gray-500">準備就緒</span>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-1">
+                            <i class="fa fa-clock-o text-gray-400"></i>
+                            <span id="convert-time">0.00s</span>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <i class="fa fa-history text-gray-400"></i>
+                            <span id="convert-count">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能说明 -->
+        <div class="mt-8 bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-lg font-semibold text-neutral mb-4 flex items-center">
+                <i class="fa fa-info-circle text-primary mr-2"></i>关于简繁转换
+            </h2>
+            <div class="space-y-3 text-gray-700">
+                <p>本工具使用先进的简繁字体映射算法，能够准确地将繁体中文转换为简体中文，或从简体转换为繁体。</p>
+                <p>支持常见的简体中文(GB2312)和繁体中文(Big5)字符集，包含超过2万多个字符的映射关系。</p>
+                <p>适用于文本翻译、文档转换、网站本地化等多种场景。</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-neutral text-white py-6">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-language text-primary"></i>
+                        <span class="font-medium">繁體簡體轉換工具</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-1">准确、快速的简繁字体转换服务</p>
+                </div>
+
+            </div>
+            <div class="mt-6 pt-6 border-t border-gray-700 text-center text-gray-400 text-sm">
+                <p>© 2025 繁體簡體轉換工具. 保留所有權利.</p>
+            </div>
+        </div>
+    </footer>
+
+
+<script src="js/bootstrap.bundle.min.js"></script>
+<script src="js/main.js"></script>
+<!--<script src="/theme/moment/js/moment.min.js"></script>-->
+<!--<script src="/theme/lodash/js/lodash.min.js"></script>-->
+</body>
+</html>
