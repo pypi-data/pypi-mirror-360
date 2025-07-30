@@ -1,0 +1,29 @@
+{"query_select_upload_items":"""
+        SELECT id, filename, filepath, uploader_id, shareable,
+               download_count, download_limit, share_password, created_at
+        FROM uploads
+    """,
+ 
+ "query_insert_upload_items":"""
+        INSERT INTO uploads (
+            filename, filepath, uploader_id, shareable, download_count, download_limit, share_password, created_at
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+        RETURNING id
+    """,
+"query_select_upload_from_id":"""
+                                SELECT * 
+                                FROM uploads 
+                                WHERE id = %s
+                            """,
+ 
+ "query_update_upload_share_link":"""UPDATE uploads
+                  SET shareable      = %s,
+                      share_password = %s,
+                      download_limit = %s
+                WHERE id = %s""",
+ 
+ "query_select_upload_from_filepath":
+                """SELECT * 
+                   FROM uploads 
+                   WHERE filepath = %s"""
+ }
