@@ -1,0 +1,91 @@
+function GetOciTopLevelCommand_redis() {
+    return 'redis'
+}
+
+function GetOciSubcommands_redis() {
+    $ociSubcommands = @{
+        'redis' = 'oci-cache-user redis-cluster redis-identity'
+        'redis oci-cache-user' = 'attached-oci-cache-cluster create-oci-cache-user-details oci-cache-user oci-cache-user-summary'
+        'redis oci-cache-user attached-oci-cache-cluster' = 'list-attached-redis-clusters'
+        'redis oci-cache-user create-oci-cache-user-details' = 'create-oci-cache-user create-oci-cache-user-iam-authentication-mode create-oci-cache-user-password-authentication-mode'
+        'redis oci-cache-user oci-cache-user' = 'change-compartment delete get update update-oci-cache-user-iam-authentication-mode update-oci-cache-user-password-authentication-mode'
+        'redis oci-cache-user oci-cache-user-summary' = 'list-oci-cache-users'
+        'redis redis-cluster' = 'attached-oci-cache-user node-summary redis-cluster redis-cluster-summary work-request work-request-error work-request-log-entry'
+        'redis redis-cluster attached-oci-cache-user' = 'list'
+        'redis redis-cluster node-summary' = 'list-redis-cluster-nodes'
+        'redis redis-cluster redis-cluster' = 'attach change-compartment create delete detach get update'
+        'redis redis-cluster redis-cluster-summary' = 'list-redis-clusters'
+        'redis redis-cluster work-request' = 'cancel get list'
+        'redis redis-cluster work-request-error' = 'list'
+        'redis redis-cluster work-request-log-entry' = 'list-work-request-logs'
+        'redis redis-identity' = 'create-identity-token-details'
+        'redis redis-identity create-identity-token-details' = 'create-identity-token'
+    }
+    return $ociSubcommands
+}
+
+function GetOciCommandsToLongParams_redis() {
+    $ociCommandsToLongParams = @{
+        'redis oci-cache-user attached-oci-cache-cluster list-attached-redis-clusters' = 'all compartment-id display-name from-json help limit oci-cache-user-id page page-size sort-by sort-order'
+        'redis oci-cache-user create-oci-cache-user-details create-oci-cache-user' = 'acl-string authentication-mode compartment-id defined-tags description freeform-tags from-json help max-wait-seconds name status wait-for-state wait-interval-seconds'
+        'redis oci-cache-user create-oci-cache-user-details create-oci-cache-user-iam-authentication-mode' = 'acl-string compartment-id defined-tags description freeform-tags from-json help max-wait-seconds name status wait-for-state wait-interval-seconds'
+        'redis oci-cache-user create-oci-cache-user-details create-oci-cache-user-password-authentication-mode' = 'acl-string authentication-mode-hashed-passwords compartment-id defined-tags description freeform-tags from-json help max-wait-seconds name status wait-for-state wait-interval-seconds'
+        'redis oci-cache-user oci-cache-user change-compartment' = 'compartment-id from-json help if-match max-wait-seconds oci-cache-user-id wait-for-state wait-interval-seconds'
+        'redis oci-cache-user oci-cache-user delete' = 'force from-json help if-match max-wait-seconds oci-cache-user-id wait-for-state wait-interval-seconds'
+        'redis oci-cache-user oci-cache-user get' = 'from-json help oci-cache-user-id'
+        'redis oci-cache-user oci-cache-user update' = 'acl-string authentication-mode defined-tags description force freeform-tags from-json help if-match max-wait-seconds oci-cache-user-id status wait-for-state wait-interval-seconds'
+        'redis oci-cache-user oci-cache-user update-oci-cache-user-iam-authentication-mode' = 'acl-string defined-tags description force freeform-tags from-json help if-match max-wait-seconds oci-cache-user-id status wait-for-state wait-interval-seconds'
+        'redis oci-cache-user oci-cache-user update-oci-cache-user-password-authentication-mode' = 'acl-string authentication-mode-hashed-passwords defined-tags description force freeform-tags from-json help if-match max-wait-seconds oci-cache-user-id status wait-for-state wait-interval-seconds'
+        'redis oci-cache-user oci-cache-user-summary list-oci-cache-users' = 'all compartment-id from-json help lifecycle-state limit name page page-size sort-by sort-order'
+        'redis redis-cluster attached-oci-cache-user list' = 'all compartment-id display-name from-json help limit page page-size redis-cluster-id sort-by sort-order'
+        'redis redis-cluster node-summary list-redis-cluster-nodes' = 'all display-name from-json help limit page page-size redis-cluster-id sort-by sort-order'
+        'redis redis-cluster redis-cluster attach' = 'from-json help if-match max-wait-seconds oci-cache-users redis-cluster-id wait-for-state wait-interval-seconds'
+        'redis redis-cluster redis-cluster change-compartment' = 'compartment-id from-json help if-match max-wait-seconds redis-cluster-id wait-for-state wait-interval-seconds'
+        'redis redis-cluster redis-cluster create' = 'cluster-mode compartment-id defined-tags display-name freeform-tags from-json help max-wait-seconds node-count node-memory-in-gbs nsg-ids shard-count software-version subnet-id wait-for-state wait-interval-seconds'
+        'redis redis-cluster redis-cluster delete' = 'force from-json help if-match max-wait-seconds redis-cluster-id wait-for-state wait-interval-seconds'
+        'redis redis-cluster redis-cluster detach' = 'from-json help if-match max-wait-seconds oci-cache-users redis-cluster-id wait-for-state wait-interval-seconds'
+        'redis redis-cluster redis-cluster get' = 'from-json help redis-cluster-id'
+        'redis redis-cluster redis-cluster update' = 'defined-tags display-name force freeform-tags from-json help if-match max-wait-seconds node-count node-memory-in-gbs nsg-ids redis-cluster-id shard-count software-version wait-for-state wait-interval-seconds'
+        'redis redis-cluster redis-cluster-summary list-redis-clusters' = 'all compartment-id display-name from-json help id lifecycle-state limit page page-size sort-by sort-order'
+        'redis redis-cluster work-request cancel' = 'force from-json help if-match work-request-id'
+        'redis redis-cluster work-request get' = 'from-json help work-request-id'
+        'redis redis-cluster work-request list' = 'all compartment-id from-json help limit page page-size resource-id sort-by sort-order status work-request-id'
+        'redis redis-cluster work-request-error list' = 'all from-json help limit page page-size sort-by sort-order work-request-id'
+        'redis redis-cluster work-request-log-entry list-work-request-logs' = 'all from-json help limit page page-size sort-by sort-order work-request-id'
+        'redis redis-identity create-identity-token-details create-identity-token' = 'defined-tags freeform-tags from-json help if-match public-key redis-cluster-id redis-user'
+    }
+    return $ociCommandsToLongParams
+}
+
+function GetOciCommandsToShortParams_redis() {
+    $ociCommandsToShortParams = @{
+        'redis oci-cache-user attached-oci-cache-cluster list-attached-redis-clusters' = '? c h'
+        'redis oci-cache-user create-oci-cache-user-details create-oci-cache-user' = '? c h'
+        'redis oci-cache-user create-oci-cache-user-details create-oci-cache-user-iam-authentication-mode' = '? c h'
+        'redis oci-cache-user create-oci-cache-user-details create-oci-cache-user-password-authentication-mode' = '? c h'
+        'redis oci-cache-user oci-cache-user change-compartment' = '? c h'
+        'redis oci-cache-user oci-cache-user delete' = '? h'
+        'redis oci-cache-user oci-cache-user get' = '? h'
+        'redis oci-cache-user oci-cache-user update' = '? h'
+        'redis oci-cache-user oci-cache-user update-oci-cache-user-iam-authentication-mode' = '? h'
+        'redis oci-cache-user oci-cache-user update-oci-cache-user-password-authentication-mode' = '? h'
+        'redis oci-cache-user oci-cache-user-summary list-oci-cache-users' = '? c h'
+        'redis redis-cluster attached-oci-cache-user list' = '? c h'
+        'redis redis-cluster node-summary list-redis-cluster-nodes' = '? h'
+        'redis redis-cluster redis-cluster attach' = '? h'
+        'redis redis-cluster redis-cluster change-compartment' = '? c h'
+        'redis redis-cluster redis-cluster create' = '? c h'
+        'redis redis-cluster redis-cluster delete' = '? h'
+        'redis redis-cluster redis-cluster detach' = '? h'
+        'redis redis-cluster redis-cluster get' = '? h'
+        'redis redis-cluster redis-cluster update' = '? h'
+        'redis redis-cluster redis-cluster-summary list-redis-clusters' = '? c h'
+        'redis redis-cluster work-request cancel' = '? h'
+        'redis redis-cluster work-request get' = '? h'
+        'redis redis-cluster work-request list' = '? c h'
+        'redis redis-cluster work-request-error list' = '? h'
+        'redis redis-cluster work-request-log-entry list-work-request-logs' = '? h'
+        'redis redis-identity create-identity-token-details create-identity-token' = '? h'
+    }
+    return $ociCommandsToShortParams
+}
