@@ -1,0 +1,575 @@
+{% extends "layouts/base.html" %}
+
+{% block main_content %}
+<div class="space-y-8">
+    <!-- Enhanced Welcome section -->
+    <div class="card">
+        <div class="card-header">
+            <div class="flex items-center space-x-4">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                    <i class="fas fa-robot text-white text-2xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h1 class="text-3xl font-bold" style="color: var(--text-primary);">
+                        {% if user %}
+                            {{ t('dashboard.welcome_back', name=user.first_name) }}
+                        {% else %}
+                            {{ t('dashboard.welcome') }}
+                        {% endif %}
+                    </h1>
+                    <p class="text-lg mt-2" style="color: var(--text-secondary);">
+                        {{ t('dashboard.subtitle') }}
+                    </p>
+                </div>
+                <div class="hidden lg:block">
+                    <div class="flex items-center space-x-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-600">{{ prompts|length }}</div>
+                            <div class="text-sm text-tertiary">{{ t('dashboard.total_prompts') }}</div>
+                        </div>
+                        <div class="w-px h-12 bg-gray-200"></div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-green-600">✓</div>
+                            <div class="text-sm text-tertiary">{{ t('dashboard.ready_to_go') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Quick actions -->
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
+        <!-- Create New Prompt -->
+        <a href="/prompts/new" class="group block">
+            <div class="card h-full border-2 border-transparent transition-all duration-200 hover:border-green-200 hover:shadow-lg">
+                <div class="card-body text-center flex flex-col h-full">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center">
+                        <i class="fas fa-plus-circle text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2" style="color: var(--text-primary);">{{ t('prompts.new') }}</h3>
+                    <p class="text-sm flex-grow" style="color: var(--text-secondary);">{{ t('dashboard.create_desc') }}</p>
+                    <div class="mt-4 flex justify-center">
+                        <span class="btn btn-success btn-sm text-white">
+                            <i class="fas fa-arrow-right mr-2"></i>{{ t('dashboard.get_started') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </a>
+
+        <!-- Browse Prompts -->
+        <a href="/prompts" class="group block">
+            <div class="card h-full border-2 border-transparent transition-all duration-200 hover:border-blue-200 hover:shadow-lg">
+                <div class="card-body text-center flex flex-col h-full">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center">
+                        <i class="fas fa-file-text text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2" style="color: var(--text-primary);">{{ t('nav.prompts') }}</h3>
+                    <p class="text-sm flex-grow" style="color: var(--text-secondary);">{{ t('dashboard.prompts_desc', count=prompts|length) }}</p>
+                    <div class="mt-4 flex justify-center">
+                        <span class="btn btn-primary btn-sm text-white">
+                            <i class="fas fa-arrow-right mr-2"></i>{{ t('dashboard.explore') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </a>
+
+        <!-- Rules Library -->
+        <a href="/rules" class="group block">
+            <div class="card h-full border-2 border-transparent transition-all duration-200 hover:border-indigo-200 hover:shadow-lg">
+                <div class="card-body text-center flex flex-col h-full">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-indigo-400 to-indigo-600 flex items-center justify-center">
+                        <i class="fas fa-book text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2" style="color: var(--text-primary);">{{ t('nav.rules') }}</h3>
+                    <p class="text-sm flex-grow" style="color: var(--text-secondary);">{{ t('dashboard.rules_desc') }}</p>
+                    <div class="mt-4 flex justify-center">
+                        <span class="btn btn-sm text-white" style="background: linear-gradient(to right, rgb(99 102 241), rgb(79 70 229));">
+                            <i class="fas fa-arrow-right mr-2"></i>{{ t('dashboard.browse') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </a>
+
+        <!-- Templates -->
+        <a href="/templates" class="group block">
+            <div class="card h-full border-2 border-transparent transition-all duration-200 hover:border-purple-200 hover:shadow-lg">
+                <div class="card-body text-center flex flex-col h-full">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-purple-400 to-purple-600 flex items-center justify-center">
+                        <i class="fas fa-layer-group text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2" style="color: var(--text-primary);">{{ t('nav.templates') }}</h3>
+                    <p class="text-sm flex-grow" style="color: var(--text-secondary);">{{ t('dashboard.templates_desc') }}</p>
+                    <div class="mt-4 flex justify-center">
+                        <span class="btn btn-sm text-white" style="background: linear-gradient(to right, rgb(147 51 234), rgb(126 34 206));">
+                            <i class="fas fa-arrow-right mr-2"></i>{{ t('dashboard.browse') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </a>
+
+        <!-- Prompt Builder -->
+        <a href="/prompts/builder" class="group block">
+            <div class="card h-full border-2 border-transparent transition-all duration-200 hover:border-orange-200 hover:shadow-lg">
+                <div class="card-body text-center flex flex-col h-full">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-orange-400 to-orange-600 flex items-center justify-center">
+                        <i class="fas fa-hammer text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2" style="color: var(--text-primary);">{{ t('nav.builder') }}</h3>
+                    <p class="text-sm flex-grow" style="color: var(--text-secondary);">{{ t('dashboard.builder_desc') }}</p>
+                    <div class="mt-4 flex justify-center">
+                        <span class="btn btn-sm text-white" style="background: linear-gradient(to right, rgb(251 146 60), rgb(249 115 22));">
+                            <i class="fas fa-arrow-right mr-2"></i>{{ t('dashboard.build') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </a>
+
+        <!-- Settings -->
+        <a href="/settings" class="group block">
+            <div class="card h-full border-2 border-transparent transition-all duration-200 hover:border-gray-200 hover:shadow-lg">
+                <div class="card-body text-center flex flex-col h-full">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r from-gray-400 to-gray-600 flex items-center justify-center">
+                        <i class="fas fa-cog text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2" style="color: var(--text-primary);">{{ t('nav.settings') }}</h3>
+                    <p class="text-sm flex-grow" style="color: var(--text-secondary);">{{ t('dashboard.settings_desc') }}</p>
+                    <div class="mt-4 flex justify-center">
+                        <span class="btn btn-sm text-white" style="background: linear-gradient(to right, rgb(156 163 175), rgb(107 114 128));">
+                            <i class="fas fa-arrow-right mr-2"></i>{{ t('dashboard.configure') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- What's New - Release Announcements -->
+    <div class="card" id="whats-new-section">
+        <div class="card-header">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg leading-6 font-medium text-primary">
+                    <i class="fas fa-bullhorn mr-2 text-tertiary"></i>
+                    {{ t('dashboard.whats_new') }}
+                </h3>
+                <div class="flex items-center space-x-2">
+                    <span id="unread-count-badge" class="hidden px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">0</span>
+                    <button id="dismiss-all-releases" class="text-sm text-gray-500 hover:text-gray-700" title="Dismiss all">
+                        <i class="fas fa-check-double"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="releases-loading" class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
+                <p class="text-gray-600">{{ t('dashboard.loading_updates') }}</p>
+            </div>
+            
+            <div id="releases-container" class="space-y-4 hidden">
+                <!-- Releases will be loaded here -->
+            </div>
+            
+            <div id="no-releases" class="text-center py-8 hidden">
+                <i class="fas fa-info-circle text-4xl text-gray-300 mb-4"></i>
+                <h4 class="text-lg font-medium text-gray-800 mb-2">{{ t('dashboard.all_caught_up') }}</h4>
+                <p class="text-gray-600">{{ t('dashboard.no_new_releases') }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent prompts -->
+    <div class="card">
+        <div class="card-header">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg leading-6 font-medium text-primary">
+                    <i class="fas fa-clock mr-2 text-tertiary"></i>
+                    {{ t('dashboard.recent_prompts') }}
+                </h3>
+                <a href="/prompts" class="text-sm font-medium text-primary-600 hover:text-primary-500">
+                    {{ t('dashboard.view_all') }} <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if prompts %}
+                <div class="space-y-4">
+                    {% for prompt in prompts %}
+                        <div class="flex items-center justify-between p-4 border border-light rounded-lg hover:bg-secondary transition-colors duration-200">
+                            <div class="flex-1">
+                                <div class="flex items-center">
+                                    <h4 class="text-sm font-medium text-primary">
+                                        {{ prompt.name }}
+                                    </h4>
+                                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        {{ prompt.category }}
+                                    </span>
+                                    {% if prompt.visibility == 'public' %}
+                                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-globe mr-1"></i>{{ t('prompts.visibility_public') }}
+                                    </span>
+                                    {% else %}
+                                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        <i class="fas fa-lock mr-1"></i>{{ t('prompts.visibility_private') }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <p class="mt-1 text-sm text-slate-500 truncate">
+                                    {{ prompt.description or prompt.content[:100] + '...' if prompt.content|length > 100 else prompt.content }}
+                                </p>
+                                <div class="mt-2 flex items-center text-xs text-slate-400">
+                                    <i class="fas fa-calendar mr-1"></i>
+                                    {{ t('prompts.recently_created') }}
+                                    {% if prompt.tags %}
+                                    <span class="ml-2">
+                                        <i class="fas fa-tags mr-1"></i>
+                                        {{ prompt.tags.split(',')[0] }}{% if prompt.tags.split(',')|length > 1 %} +{{ prompt.tags.split(',')|length - 1 }}{% endif %}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <a href="/prompts/{{ prompt.id }}/edit" 
+                                   class="text-slate-400 hover:text-primary-600 transition-colors duration-200">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="/prompts/{{ prompt.id }}/execute" 
+                                   class="text-slate-400 hover:text-green-600 transition-colors duration-200">
+                                    <i class="fas fa-play"></i>
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-file-text text-4xl text-gray-300 mb-4"></i>
+                    <h3 class="text-lg font-medium text-slate-800 mb-2">{{ t('dashboard.no_prompts') }}</h3>
+                    <p class="text-slate-500 mb-6">{{ t('dashboard.no_prompts_desc') }}</p>
+                    <a href="/prompts/new" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>
+                        {{ t('prompts.create_first') }}
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Getting started tips -->
+    <div class="bg-gradient-to-r from-primary-50 to-blue-50 shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-slate-800 mb-4">
+                <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                {{ t('dashboard.tips_title') }}
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <div class="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
+                            <span class="text-primary-600 font-medium text-sm">1</span>
+                        </div>
+                    </div>
+                    <div class="ml-3">
+                        <h4 class="text-sm font-medium text-slate-800">{{ t('dashboard.tip1_title') }}</h4>
+                        <p class="text-sm text-slate-600">{{ t('dashboard.tip1_desc') }}</p>
+                    </div>
+                </div>
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <div class="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
+                            <span class="text-primary-600 font-medium text-sm">2</span>
+                        </div>
+                    </div>
+                    <div class="ml-3">
+                        <h4 class="text-sm font-medium text-slate-800">{{ t('dashboard.tip2_title') }}</h4>
+                        <p class="text-sm text-slate-600">{{ t('dashboard.tip2_desc') }}</p>
+                    </div>
+                </div>
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <div class="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
+                            <span class="text-primary-600 font-medium text-sm">3</span>
+                        </div>
+                    </div>
+                    <div class="ml-3">
+                        <h4 class="text-sm font-medium text-slate-800">{{ t('dashboard.tip3_title') }}</h4>
+                        <p class="text-sm text-slate-600">{{ t('dashboard.tip3_desc') }}</p>
+                    </div>
+                </div>
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <div class="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
+                            <span class="text-primary-600 font-medium text-sm">4</span>
+                        </div>
+                    </div>
+                    <div class="ml-3">
+                        <h4 class="text-sm font-medium text-slate-800">{{ t('dashboard.tip4_title') }}</h4>
+                        <p class="text-sm text-slate-600">{{ t('dashboard.tip4_desc') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Release Announcements JavaScript -->
+<script>
+// Release announcement functionality
+document.addEventListener('DOMContentLoaded', function() {
+    loadReleaseAnnouncements();
+    setupReleaseEventListeners();
+});
+
+function setupReleaseEventListeners() {
+    const dismissAllBtn = document.getElementById('dismiss-all-releases');
+    if (dismissAllBtn) {
+        dismissAllBtn.addEventListener('click', dismissAllReleases);
+    }
+}
+
+async function loadReleaseAnnouncements() {
+    const loadingEl = document.getElementById('releases-loading');
+    const containerEl = document.getElementById('releases-container');
+    const noReleasesEl = document.getElementById('no-releases');
+    const unreadBadgeEl = document.getElementById('unread-count-badge');
+    
+    try {
+        // Load releases and unread count in parallel
+        const [releasesResponse, unreadResponse] = await Promise.all([
+            fetch('/api/releases/?limit=5', {
+                headers: getAuthHeaders()
+            }),
+            fetch('/api/releases/unread-count', {
+                headers: getAuthHeaders()
+            })
+        ]);
+        
+        if (releasesResponse.ok) {
+            const releases = await releasesResponse.json();
+            
+            loadingEl.classList.add('hidden');
+            
+            if (releases.length === 0) {
+                // Hide the entire what's new section if no releases
+                document.getElementById('whats-new-section').style.display = 'none';
+            } else {
+                containerEl.classList.remove('hidden');
+                renderReleases(releases);
+            }
+            
+            // Update unread count
+            if (unreadResponse.ok) {
+                const unreadData = await unreadResponse.json();
+                const unreadCount = unreadData.unread_count;
+                
+                if (unreadCount > 0) {
+                    unreadBadgeEl.textContent = unreadCount;
+                    unreadBadgeEl.classList.remove('hidden');
+                } else {
+                    unreadBadgeEl.classList.add('hidden');
+                }
+            }
+        } else {
+            // Handle API not available or authentication issues
+            loadingEl.classList.add('hidden');
+            // Hide the entire what's new section if API is not available
+            document.getElementById('whats-new-section').style.display = 'none';
+            console.warn('Release API not available:', releasesResponse.status);
+        }
+    } catch (error) {
+        console.warn('Could not load release announcements:', error);
+        loadingEl.classList.add('hidden');
+        // Hide the entire what's new section if there's an error
+        document.getElementById('whats-new-section').style.display = 'none';
+    }
+}
+
+function renderReleases(releases) {
+    const container = document.getElementById('releases-container');
+    container.innerHTML = '';
+    
+    releases.forEach(release => {
+        const releaseEl = createReleaseElement(release);
+        container.appendChild(releaseEl);
+    });
+}
+
+function createReleaseElement(release) {
+    const div = document.createElement('div');
+    div.className = 'border border-light rounded-lg p-4 hover:bg-secondary transition-colors duration-200';
+    div.dataset.releaseId = release.id;
+    
+    const releaseDate = new Date(release.release_date).toLocaleDateString();
+    const isRecent = new Date() - new Date(release.release_date) < 7 * 24 * 60 * 60 * 1000; // 7 days
+    
+    let badges = '';
+    if (release.is_major) {
+        badges += '<span class="ml-2 px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Major</span>';
+    }
+    if (release.is_featured) {
+        badges += '<span class="ml-2 px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Featured</span>';
+    }
+    if (isRecent) {
+        badges += '<span class="ml-2 px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">New</span>';
+    }
+    
+    div.innerHTML = `
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <div class="flex items-center">
+                    <h4 class="text-lg font-semibold text-primary">
+                        <i class="fas fa-tag mr-2 text-blue-600"></i>
+                        ${release.title}
+                    </h4>
+                    ${badges}
+                </div>
+                <div class="flex items-center mt-1 text-sm text-gray-600">
+                    <span class="font-medium">Version ${release.version}</span>
+                    <span class="mx-2">•</span>
+                    <span>${releaseDate}</span>
+                </div>
+                <p class="mt-2 text-sm text-gray-700 line-clamp-3">
+                    ${release.description || 'New release is now available.'}
+                </p>
+                <div class="flex items-center mt-3 space-x-4">
+                    ${release.changelog_url ? `
+                        <a href="${release.changelog_url}" target="_blank" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                            <i class="fas fa-external-link-alt mr-1"></i>
+                            View Changelog
+                        </a>
+                    ` : ''}
+                    ${release.download_url ? `
+                        <a href="${release.download_url}" target="_blank" class="text-sm text-green-600 hover:text-green-800 flex items-center">
+                            <i class="fas fa-download mr-1"></i>
+                            Download
+                        </a>
+                    ` : ''}
+                    <button onclick="dismissRelease('${release.id}')" class="text-sm text-gray-500 hover:text-gray-700 flex items-center">
+                        <i class="fas fa-times mr-1"></i>
+                        Dismiss
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return div;
+}
+
+async function dismissRelease(releaseId) {
+    try {
+        const response = await fetch('/api/releases/mark-viewed', {
+            method: 'POST',
+            headers: {
+                ...getAuthHeaders(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                release_id: releaseId,
+                is_dismissed: true
+            })
+        });
+        
+        if (response.ok) {
+            // Remove the release element from the UI
+            const releaseEl = document.querySelector(`[data-release-id="${releaseId}"]`);
+            if (releaseEl) {
+                releaseEl.style.transition = 'opacity 0.3s ease-out';
+                releaseEl.style.opacity = '0';
+                setTimeout(() => {
+                    releaseEl.remove();
+                    
+                    // Check if no releases left
+                    const container = document.getElementById('releases-container');
+                    if (container.children.length === 0) {
+                        // Hide the entire what's new section if no releases left
+                        document.getElementById('whats-new-section').style.display = 'none';
+                    }
+                }, 300);
+            }
+            
+            // Update unread count
+            updateUnreadCount();
+        }
+    } catch (error) {
+        console.error('Error dismissing release:', error);
+    }
+}
+
+async function dismissAllReleases() {
+    const releaseElements = document.querySelectorAll('[data-release-id]');
+    const releaseIds = Array.from(releaseElements).map(el => el.dataset.releaseId);
+    
+    if (releaseIds.length === 0) return;
+    
+    if (confirm('Mark all releases as read?')) {
+        try {
+            // Dismiss all releases
+            const promises = releaseIds.map(releaseId => 
+                fetch('/api/releases/mark-viewed', {
+                    method: 'POST',
+                    headers: {
+                        ...getAuthHeaders(),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        release_id: releaseId,
+                        is_dismissed: true
+                    })
+                })
+            );
+            
+            await Promise.all(promises);
+            
+            // Update UI - hide the entire what's new section
+            document.getElementById('whats-new-section').style.display = 'none';
+            
+        } catch (error) {
+            console.error('Error dismissing all releases:', error);
+        }
+    }
+}
+
+async function updateUnreadCount() {
+    try {
+        const response = await fetch('/api/releases/unread-count', {
+            headers: getAuthHeaders()
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const unreadBadge = document.getElementById('unread-count-badge');
+            
+            if (data.unread_count > 0) {
+                unreadBadge.textContent = data.unread_count;
+                unreadBadge.classList.remove('hidden');
+            } else {
+                unreadBadge.classList.add('hidden');
+            }
+        }
+    } catch (error) {
+        console.error('Error updating unread count:', error);
+    }
+}
+
+function getAuthHeaders() {
+    // Try to get API token from session or other storage
+    const token = localStorage.getItem('api_token') || sessionStorage.getItem('api_token');
+    
+    if (token) {
+        return {
+            'Authorization': `Bearer ${token}`
+        };
+    }
+    
+    // For now, return empty headers if no token
+    // The API will handle authentication appropriately
+    return {};
+}
+</script>
+{% endblock %}

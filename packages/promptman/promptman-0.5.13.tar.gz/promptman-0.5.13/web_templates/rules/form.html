@@ -1,0 +1,459 @@
+{% extends "layouts/base.html" %}
+
+{% block main_content %}
+<!-- Enhanced Page Header -->
+{% set breadcrumbs = [
+    {"name": t('nav.rules'), "url": "/rules", "icon": "fas fa-book"},
+    {"name": t('rules.create') if action == 'create' else t('rules.edit'), "icon": "fas fa-" + ('plus' if action == 'create' else 'edit')}
+] %}
+{% set header_title = t('rules.create_new') if action == 'create' else t('rules.edit') %}
+{% set header_subtitle = t('rules.create_desc') if action == 'create' else t('rules.edit_desc') %}
+{% set header_icon = "fas fa-" + ('plus' if action == 'create' else 'edit') %}
+{% include "components/page_header.html" %}
+
+<div class="max-w-4xl mx-auto">
+    <div class="space-y-6">
+
+        <!-- Form -->
+        <div class="bg-white shadow rounded-lg">
+            <form method="POST" action="{{ '/rules/new' if action == 'create' else '/rules/' + (rule_id|string if rule_id else '0') + '/edit' }}" class="space-y-6">
+                <div class="px-4 py-5 sm:p-6">
+                    {% if error %}
+                        <div class="mb-6 rounded-md bg-red-50 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-circle text-red-400"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-red-800">{{ t('status.error') }}</h3>
+                                    <div class="mt-2 text-sm text-red-700">
+                                        <p>{{ error }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Basic Information -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">
+                                {{ t('rules.name') }} <span class="text-red-500">*</span>
+                            </label>
+                            <div class="mt-1">
+                                <input type="text" name="name" id="name" required
+                                       value="{{ name or '' }}"
+                                       class="form-input"
+                                       placeholder="{{ t('rules.name_placeholder') }}">
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500">
+                                {{ t('rules.name_help') }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label for="title" class="block text-sm font-medium text-gray-700">
+                                {{ t('rules.title') }} <span class="text-red-500">*</span>
+                            </label>
+                            <div class="mt-1">
+                                <input type="text" name="title" id="title" required
+                                       value="{{ title or '' }}"
+                                       class="form-input"
+                                       placeholder="{{ t('rules.title_placeholder') }}">
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500">
+                                {{ t('rules.title_help') }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label for="category" class="block text-sm font-medium text-gray-700">
+                                {{ t('rules.category') }} <span class="text-red-500">*</span>
+                            </label>
+                            <div class="mt-1">
+                                <select name="category" id="category" required class="form-select">
+                                    <option value="">{{ t('rules.category_select') }}</option>
+                                    {% for cat in categories %}
+                                        <option value="{{ cat }}" {% if cat == category %}selected{% endif %}>
+                                            {{ cat }}
+                                        </option>
+                                    {% endfor %}
+                                    <option value="custom">{{ t('rules.category_add') }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="tags" class="block text-sm font-medium text-gray-700">
+                                {{ t('rules.tags') }}
+                            </label>
+                            <div class="mt-1">
+                                <!-- Enhanced Tag Input Component -->
+                                <div class="tag-input-container">
+                                    <!-- Tag Display Area -->
+                                    <div id="tag-display" class="tag-display min-h-[40px] border border-gray-300 rounded-md px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-purple-500">
+                                        <!-- Tags will be populated here -->
+                                    </div>
+                                    
+                                    <!-- Tag Input -->
+                                    <div class="relative mt-2">
+                                        <input type="text" id="tag-input" 
+                                               class="form-input w-full" 
+                                               placeholder="{{ t('rules.tag_input_placeholder') }}"
+                                               autocomplete="off">
+                                        <!-- Tag Suggestions Dropdown -->
+                                        <div id="tag-suggestions" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 max-h-48 overflow-auto hidden">
+                                            <!-- Suggestions will be populated here -->
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Hidden input for form submission -->
+                                    <input type="hidden" name="tags" id="tags" value="{{ tags or '' }}">
+                                </div>
+                                
+                                <!-- Popular Tags -->
+                                <div class="mt-2">
+                                    <div class="flex flex-wrap gap-2" id="popular-tags">
+                                        <!-- Popular tags will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500">
+                                {{ t('rules.tags_help') }}
+                            </p>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label for="description" class="block text-sm font-medium text-gray-700">
+                                {{ t('rules.description') }}
+                            </label>
+                            <div class="mt-1">
+                                <textarea name="description" id="description" rows="2"
+                                          class="form-textarea"
+                                          placeholder="{{ t('rules.description_placeholder') }}">{{ description or '' }}</textarea>
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500">
+                                {{ t('rules.description_help') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Rule Content -->
+                    <div class="mt-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="content" class="block text-sm font-medium text-gray-700">
+                                {{ t('rules.content') }} <span class="text-red-500">*</span>
+                            </label>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" 
+                                        class="text-sm text-primary-600 hover:text-primary-500"
+                                        onclick="insertRuleTemplate()">
+                                    <i class="fas fa-magic mr-1"></i>{{ t('rules.insert_template') }}
+                                </button>
+                                <button type="button" 
+                                        class="text-sm text-primary-600 hover:text-primary-500"
+                                        onclick="showMarkdownHelper()">
+                                    <i class="fab fa-markdown mr-1"></i>{{ t('rules.markdown') }}
+                                </button>
+                                <button type="button" 
+                                        class="text-sm text-green-600 hover:text-green-500"
+                                        onclick="formatRule()">
+                                    <i class="fas fa-align-left mr-1"></i>{{ t('rules.format') }}
+                                </button>
+                                <span id="char-count" class="text-sm text-gray-500">0 {{ t('rules.characters') }}</span>
+                                <span id="line-count" class="text-sm text-gray-500 ml-2">0 {{ t('rules.lines') }}</span>
+                            </div>
+                        </div>
+                        <div class="mt-1">
+                            <textarea name="content" id="content" rows="16" required
+                                      class="form-textarea font-mono text-sm"
+                                      placeholder="{{ t('rules.content_placeholder') }}">{{ content or '' }}</textarea>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between">
+                            <p class="text-sm text-gray-500">
+                                {{ t('rules.markdown_help') }}
+                            </p>
+                            <div class="flex items-center space-x-4">
+                                <button type="button" 
+                                        class="text-sm text-primary-600 hover:text-primary-500"
+                                        onclick="previewRule()">
+                                    <i class="fas fa-eye mr-1"></i>{{ t('common.preview') }}
+                                </button>
+                                <button type="button" 
+                                        class="text-sm text-purple-600 hover:text-purple-500"
+                                        onclick="validateRule()">
+                                    <i class="fas fa-check-circle mr-1"></i>{{ t('rules.validate') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="px-4 py-3 bg-gray-50 text-right sm:px-6 rounded-b-lg">
+                    <div class="flex justify-between">
+                        <div>
+                            {% if action == 'edit' %}
+                                <button type="button" 
+                                        class="btn-danger"
+                                        onclick="confirmDelete({{ rule_id }}, '{{ name }}')">
+                                    <i class="fas fa-trash mr-2"></i>
+                                    {{ t('common.delete') }}
+                                </button>
+                            {% endif %}
+                        </div>
+                        <div class="space-x-3">
+                            <a href="/rules" class="btn-secondary">
+                                {{ t('common.cancel') }}
+                            </a>
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-save mr-2"></i>
+                                {{ t('rules.save') if action == 'create' else t('rules.update') }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Help Section -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle text-blue-400"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">{{ t('rules.help_title') }}</h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <p>{{ t('rules.help_desc') }}</p>
+                        <ul class="list-disc list-inside mt-2 space-y-1">
+                            <li>{{ t('rules.help_markdown') }}</li>
+                            <li>{{ t('rules.help_structure') }}</li>
+                            <li>{{ t('rules.help_categories') }}</li>
+                            <li>{{ t('rules.help_tags') }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="preview-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closePreview()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                        <i class="fas fa-eye mr-2 text-blue-500"></i>
+                        {{ t('rules.preview') }}
+                    </h3>
+                    <button onclick="closePreview()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <div class="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                        <div id="preview-content" class="prose prose-sm max-w-none"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button onclick="closePreview()" class="btn-secondary">{{ t('common.close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Markdown Helper Modal -->
+<div id="markdown-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeMarkdownHelper()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        <i class="fab fa-markdown mr-2 text-blue-500"></i>
+                        {{ t('rules.markdown_guide') }}
+                    </h3>
+                    <button onclick="closeMarkdownHelper()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="prose prose-sm max-w-none">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <h4 class="font-medium text-gray-900">{{ t('rules.basic_syntax') }}</h4>
+                            <pre class="bg-gray-100 p-2 rounded text-xs overflow-x-auto">**Bold text**
+*Italic text*
+`Code inline`
+# Heading 1
+## Heading 2
+### Heading 3</pre>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900">{{ t('rules.lists_and_links') }}</h4>
+                            <pre class="bg-gray-100 p-2 rounded text-xs overflow-x-auto">- Bullet point
+1. Numbered list
+[Link text](URL)
+> Quote text</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button onclick="closeMarkdownHelper()" class="btn-secondary">{{ t('common.close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Character and line counting
+document.getElementById('content').addEventListener('input', function() {
+    const content = this.value;
+    const charCount = content.length;
+    const lineCount = content.split('\n').length;
+    
+    document.getElementById('char-count').textContent = `${charCount} ${document.querySelector('[data-t="rules.characters"]')?.textContent || 'characters'}`;
+    document.getElementById('line-count').textContent = `${lineCount} ${document.querySelector('[data-t="rules.lines"]')?.textContent || 'lines'}`;
+});
+
+// Trigger initial count
+document.getElementById('content').dispatchEvent(new Event('input'));
+
+function insertRuleTemplate() {
+    const templates = [
+        "# Rule Title\n\n## Purpose\nDescribe what this rule aims to achieve.\n\n## Guidelines\n- Specific directive\n- Another directive\n- Additional guidance\n\n## Examples\n```\nExample usage or output\n```",
+        "## Constraints\n- Do not exceed X words\n- Always include Y\n- Never use Z\n\n## Format Requirements\n- Use bullet points\n- Include section headers\n- Maintain consistent tone",
+        "## Quality Standards\n- Ensure accuracy\n- Verify completeness\n- Check for clarity\n- Validate formatting"
+    ];
+    
+    const template = templates[Math.floor(Math.random() * templates.length)];
+    document.getElementById('content').value = template;
+    document.getElementById('content').dispatchEvent(new Event('input'));
+}
+
+function showMarkdownHelper() {
+    document.getElementById('markdown-modal').classList.remove('hidden');
+}
+
+function closeMarkdownHelper() {
+    document.getElementById('markdown-modal').classList.add('hidden');
+}
+
+function formatRule() {
+    const content = document.getElementById('content').value;
+    // Basic formatting - ensure proper spacing between sections
+    const formatted = content
+        .replace(/([.!?])\s*\n\s*([A-Z])/g, '$1\n\n$2')
+        .replace(/^(#{1,6})\s*(.+)$/gm, '$1 $2')
+        .replace(/^\s*[-*+]\s+/gm, '- ')
+        .replace(/^\s*(\d+)\.\s+/gm, '$1. ');
+    
+    document.getElementById('content').value = formatted;
+    document.getElementById('content').dispatchEvent(new Event('input'));
+    showToast('Rule content formatted', 'success');
+}
+
+function previewRule() {
+    const content = document.getElementById('content').value;
+    // Simple markdown-to-HTML conversion for preview
+    let html = content
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`(.+?)`/g, '<code>$1</code>')
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+        .replace(/^\> (.+)$/gm, '<blockquote>$1</blockquote>')
+        .replace(/\n/g, '<br>');
+    
+    document.getElementById('preview-content').innerHTML = html;
+    document.getElementById('preview-modal').classList.remove('hidden');
+}
+
+function closePreview() {
+    document.getElementById('preview-modal').classList.add('hidden');
+}
+
+function validateRule() {
+    const content = document.getElementById('content').value;
+    const issues = [];
+    
+    if (content.length < 50) {
+        issues.push('Rule content seems too short');
+    }
+    
+    if (!content.includes('#') && !content.includes('##')) {
+        issues.push('Consider adding section headers for better organization');
+    }
+    
+    if (issues.length === 0) {
+        showToast('Rule validation passed', 'success');
+    } else {
+        showToast(`Validation issues: ${issues.join(', ')}`, 'warning');
+    }
+}
+
+// Tag input functionality
+let selectedTags = [];
+const tagsInput = document.getElementById('tags');
+if (tagsInput.value) {
+    selectedTags = tagsInput.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+}
+
+function updateTagDisplay() {
+    const tagDisplay = document.getElementById('tag-display');
+    tagDisplay.innerHTML = '';
+    
+    selectedTags.forEach(tag => {
+        const tagElement = document.createElement('span');
+        tagElement.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mr-2 mb-2';
+        tagElement.innerHTML = `
+            ${tag}
+            <button type="button" class="ml-1 text-purple-600 hover:text-purple-800" onclick="removeTag('${tag}')">
+                <i class="fas fa-times text-xs"></i>
+            </button>
+        `;
+        tagDisplay.appendChild(tagElement);
+    });
+    
+    // Update hidden input
+    document.getElementById('tags').value = selectedTags.join(', ');
+}
+
+function addTag(tag) {
+    if (tag && !selectedTags.includes(tag)) {
+        selectedTags.push(tag);
+        updateTagDisplay();
+    }
+}
+
+function removeTag(tag) {
+    selectedTags = selectedTags.filter(t => t !== tag);
+    updateTagDisplay();
+}
+
+// Initialize tag display
+updateTagDisplay();
+
+// Tag input event handlers
+document.getElementById('tag-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const tag = this.value.trim();
+        if (tag) {
+            addTag(tag);
+            this.value = '';
+        }
+    }
+});
+</script>
+{% endblock %}

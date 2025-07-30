@@ -1,0 +1,384 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}{{ t('dashboard.admin_title') }}{% endblock %}
+
+{% block main_content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ t('dashboard.admin_title') }}</h1>
+        <p class="text-gray-600">{{ t('dashboard.admin_subtitle') }}</p>
+    </div>
+
+    <!-- Admin Navigation -->
+    <div class="mb-6">
+        <nav class="flex space-x-4">
+            <button onclick="showAdminSection('overview')" 
+                    class="admin-nav-btn active px-4 py-2 rounded-lg bg-blue-500 text-white">
+                {{ t('admin.overview') }}
+            </button>
+            <button onclick="showAdminSection('users')" 
+                    class="admin-nav-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">
+                {{ t('admin.users') }}
+            </button>
+            <button onclick="showAdminSection('tenants')" 
+                    class="admin-nav-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">
+                {{ t('admin.tenants') }}
+            </button>
+            <button onclick="showAdminSection('system')" 
+                    class="admin-nav-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">
+                {{ t('admin.system') }}
+            </button>
+        </nav>
+    </div>
+
+    <!-- Overview Section -->
+    <div id="admin-overview" class="admin-section">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">{{ t('stats.total_users') }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_users or 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-blue-100 rounded-full">
+                        <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">{{ t('stats.active_tenants') }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.active_tenants or 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-green-100 rounded-full">
+                        <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">{{ t('stats.total_prompts') }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_prompts or 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-purple-100 rounded-full">
+                        <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2v1a1 1 0 102 0V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 2a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-sm border">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">{{ t('stats.api_tokens') }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.api_tokens or 0 }}</p>
+                    </div>
+                    <div class="p-3 bg-yellow-100 rounded-full">
+                        <svg class="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('dashboard.recent_activity') }}</h3>
+            <div class="space-y-3">
+                {% for activity in recent_activity %}
+                <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div class="p-2 bg-blue-100 rounded-full">
+                        <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-900">{{ activity.description }}</p>
+                        <p class="text-xs text-gray-500">{{ activity.timestamp }}</p>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-4">{{ t('dashboard.no_activity') }}</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Section -->
+    <div id="admin-users" class="admin-section hidden">
+        <div class="bg-white rounded-lg shadow-sm border">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ t('admin.user_management') }}</h3>
+                    <button onclick="showCreateUserModal()" 
+                            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                        {{ t('admin.add_user') }}
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('table.user') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('table.role') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('table.tenant') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('table.last_login') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('table.status') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('table.actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for user in users %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="h-10 w-10 flex-shrink-0">
+                                            <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                                <span class="text-sm font-medium text-gray-700">
+                                                    {{ user.first_name[0] if user.first_name else user.email[0] }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">
+                                                {{ user.first_name }} {{ user.last_name }}
+                                            </div>
+                                            <div class="text-sm text-gray-500">{{ user.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        {% if user.role == 'admin' %}bg-purple-100 text-purple-800
+                                        {% elif user.role == 'user' %}bg-green-100 text-green-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ user.role.title() }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ user.tenant_name or 'N/A' }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Never' }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        {% if user.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                        {{ 'Active' if user.is_active else 'Inactive' }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button onclick="editUser('{{ user.id }}')" 
+                                            class="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
+                                    {% if not user.is_active %}
+                                    <button onclick="activateUser('{{ user.id }}')" 
+                                            class="text-green-600 hover:text-green-900 mr-4">Activate</button>
+                                    {% else %}
+                                    <button onclick="deactivateUser('{{ user.id }}')" 
+                                            class="text-red-600 hover:text-red-900">Deactivate</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="px-6 py-4 text-center text-gray-500">{{ t('admin.no_users') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tenants Section -->
+    <div id="admin-tenants" class="admin-section hidden">
+        <div class="bg-white rounded-lg shadow-sm border">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ t('admin.tenant_management') }}</h3>
+                    <button onclick="showCreateTenantModal()" 
+                            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                        {{ t('admin.add_tenant') }}
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for tenant in tenants %}
+                    <div class="bg-gray-50 rounded-lg p-6 border">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-lg font-semibold text-gray-900">{{ tenant.name }}</h4>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if tenant.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ 'Active' if tenant.is_active else 'Inactive' }}
+                            </span>
+                        </div>
+                        <div class="space-y-2 text-sm text-gray-600">
+                            <p><strong>{{ t('table.subdomain') }}:</strong> {{ tenant.subdomain }}</p>
+                            <p><strong>{{ t('table.users') }}:</strong> {{ tenant.user_count or 0 }} / {{ tenant.max_users }}</p>
+                            <p><strong>{{ t('table.created') }}:</strong> {{ tenant.created_at.strftime('%Y-%m-%d') if tenant.created_at else 'N/A' }}</p>
+                        </div>
+                        <div class="mt-4 flex space-x-2">
+                            <button onclick="editTenant('{{ tenant.id }}')" 
+                                    class="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600">
+                                Edit
+                            </button>
+                            {% if tenant.is_active %}
+                            <button onclick="deactivateTenant('{{ tenant.id }}')" 
+                                    class="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600">
+                                Deactivate
+                            </button>
+                            {% else %}
+                            <button onclick="activateTenant('{{ tenant.id }}')" 
+                                    class="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600">
+                                Activate
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="col-span-full text-center text-gray-500 py-8">
+                        {{ t('admin.no_tenants') }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Section -->
+    <div id="admin-system" class="admin-section hidden">
+        <div class="space-y-6">
+            <!-- System Info -->
+            <div class="bg-white rounded-lg shadow-sm border p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('admin.system_info') }}</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-600"><strong>{{ t('system.version') }}:</strong> {{ system_info.version or '1.0.0' }}</p>
+                        <p class="text-sm text-gray-600"><strong>{{ t('system.database') }}:</strong> {{ system_info.database_type or 'SQLite' }}</p>
+                        <p class="text-sm text-gray-600"><strong>{{ t('system.multitenant') }}:</strong> {{ t('system.enabled') if system_info.multitenant_mode else t('system.disabled') }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600"><strong>{{ t('system.api') }}:</strong> {{ t('system.enabled') if system_info.api_enabled else t('system.disabled') }}</p>
+                        <p class="text-sm text-gray-600"><strong>{{ t('system.uptime') }}:</strong> {{ system_info.uptime or 'N/A' }}</p>
+                        <p class="text-sm text-gray-600"><strong>{{ t('system.environment') }}:</strong> {{ system_info.environment or 'Production' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Actions -->
+            <div class="bg-white rounded-lg shadow-sm border p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ t('admin.system_actions') }}</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                            <h4 class="font-medium text-gray-900">{{ t('system.backup') }}</h4>
+                            <p class="text-sm text-gray-600">{{ t('system.backup_desc') }}</p>
+                        </div>
+                        <button onclick="backupDatabase()" 
+                                class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                            Backup
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                            <h4 class="font-medium text-gray-900">{{ t('system.clear_cache') }}</h4>
+                            <p class="text-sm text-gray-600">{{ t('system.clear_cache_desc') }}</p>
+                        </div>
+                        <button onclick="clearCache()" 
+                                class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">
+                            Clear Cache
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin JavaScript -->
+<script>
+function showAdminSection(section) {
+    // Hide all sections
+    document.querySelectorAll('.admin-section').forEach(el => el.classList.add('hidden'));
+    
+    // Update navigation buttons
+    document.querySelectorAll('.admin-nav-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-blue-500', 'text-white');
+        btn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+    });
+    
+    // Show selected section
+    document.getElementById(`admin-${section}`).classList.remove('hidden');
+    
+    // Update active button
+    event.target.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+    event.target.classList.add('active', 'bg-blue-500', 'text-white');
+}
+
+function showCreateUserModal() {
+    // TODO: Implement user creation modal
+    alert('User creation modal would open here');
+}
+
+function showCreateTenantModal() {
+    // TODO: Implement tenant creation modal  
+    alert('Tenant creation modal would open here');
+}
+
+function editUser(userId) {
+    // TODO: Implement user editing
+    alert(`Edit user ${userId}`);
+}
+
+function activateUser(userId) {
+    // TODO: Implement user activation
+    alert(`Activate user ${userId}`);
+}
+
+function deactivateUser(userId) {
+    // TODO: Implement user deactivation
+    alert(`Deactivate user ${userId}`);
+}
+
+function editTenant(tenantId) {
+    // TODO: Implement tenant editing
+    alert(`Edit tenant ${tenantId}`);
+}
+
+function activateTenant(tenantId) {
+    // TODO: Implement tenant activation
+    alert(`Activate tenant ${tenantId}`);
+}
+
+function deactivateTenant(tenantId) {
+    // TODO: Implement tenant deactivation
+    alert(`Deactivate tenant ${tenantId}`);
+}
+
+function backupDatabase() {
+    // TODO: Implement database backup
+    alert('Database backup would start here');
+}
+
+function clearCache() {
+    // TODO: Implement cache clearing
+    alert('Cache clearing would start here');
+}
+</script>
+{% endblock %}

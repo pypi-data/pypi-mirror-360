@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ page_title }} - AI Prompt Manager{% endblock %}</title>
+    
+    <!-- Enhanced Theme System -->
+    <link rel="stylesheet" href="/static/css/theme.css">
+    
+    <!-- Tailwind CSS (for additional utilities) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- Alpine.js for additional interactivity -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="min-h-screen">
+        <!-- Navigation (shown in both single-user and multi-tenant modes) -->
+        <nav class="nav">
+                <div class="container">
+                    <div class="flex items-center justify-between" style="min-height: 4rem;">
+                        <div class="flex items-center space-x-8">
+                            <a href="/" class="flex items-center hover:opacity-80 transition-opacity duration-200" title="Go to Dashboard">
+                                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mr-3">
+                                    <i class="fas fa-robot text-white text-lg"></i>
+                                </div>
+                                <h1 class="text-xl font-bold text-white">
+                                    Instruere
+                                </h1>
+                            </a>
+                            <!-- Desktop Navigation -->
+                            <div class="hidden lg:flex space-x-1">
+                                <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">
+                                    <i class="fas fa-home mr-2"></i>
+                                    {{ t('nav.home') }}
+                                </a>
+                                <a href="/prompts" class="nav-link {% if '/prompts' in request.url.path and '/builder' not in request.url.path %}active{% endif %}">
+                                    <i class="fas fa-file-text mr-2"></i>
+                                    {{ t('nav.prompts') }}
+                                </a>
+                                <a href="/rules" class="nav-link {% if '/rules' in request.url.path and '/builder' not in request.url.path %}active{% endif %}">
+                                    <i class="fas fa-book mr-2"></i>
+                                    {{ t('nav.rules') }}
+                                </a>
+                                <a href="/prompts/builder" class="nav-link {% if '/prompts/builder' in request.url.path %}active{% endif %}">
+                                    <i class="fas fa-hammer mr-2"></i>
+                                    {{ t('nav.builder') }}
+                                </a>
+                                <a href="/rules/builder" class="nav-link {% if '/rules/builder' in request.url.path %}active{% endif %}">
+                                    <i class="fas fa-puzzle-piece mr-2"></i>
+                                    {{ t('nav.rules_builder') }}
+                                </a>
+                                <a href="/templates" class="nav-link {% if '/templates' in request.url.path %}active{% endif %}">
+                                    <i class="fas fa-layer-group mr-2"></i>
+                                    {{ t('nav.library') }}
+                                </a>
+                                <a href="/ai-services" class="nav-link {% if '/ai-services' in request.url.path %}active{% endif %}">
+                                    <i class="fas fa-robot mr-2"></i>
+                                    {{ t('nav.services') }}
+                                </a>
+                                <a href="/settings" class="nav-link {% if '/settings' in request.url.path %}active{% endif %}">
+                                    <i class="fas fa-cog mr-2"></i>
+                                    {{ t('nav.settings') }}
+                                </a>
+                                {% if user and user.role == 'admin' %}
+                                <a href="/admin" class="nav-link {% if '/admin' in request.url.path %}active{% endif %}">
+                                    <i class="fas fa-shield-alt mr-2"></i>
+                                    {{ t('nav.admin') }}
+                                </a>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Mobile Menu Button -->
+                            <div class="lg:hidden">
+                                <button type="button" class="btn btn-secondary" id="mobile-menu-button" onclick="toggleMobileMenu()" title="Toggle navigation menu" aria-label="Toggle navigation menu">
+                                    <i class="fas fa-bars"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <!-- Theme Toggle -->
+                            <button type="button" 
+                                    onclick="toggleTheme()" 
+                                    class="theme-toggle"
+                                    id="theme-toggle"
+                                    title="Toggle theme"
+                                    aria-label="Toggle light/dark theme">
+                                <i class="theme-icon fas fa-sun" id="theme-icon"></i>
+                            </button>
+                            
+                            <!-- Language selector -->
+                            <div class="relative">
+                                <button type="button" onclick="toggleLanguageMenu()" 
+                                        class="btn btn-secondary" 
+                                        id="language-menu-button">
+                                    <i class="fas fa-globe mr-2"></i>
+                                    <span class="hidden lg:inline">
+                                        {% if available_languages and current_language and current_language in available_languages %}
+                                            {% set lang_info = available_languages[current_language] %}
+                                            {% if lang_info is mapping and lang_info.get('native_name') %}
+                                                {{ lang_info.native_name }}
+                                            {% else %}
+                                                {{ current_language|upper }}
+                                            {% endif %}
+                                        {% else %}
+                                            English
+                                        {% endif %}
+                                    </span>
+                                    <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                                </button>
+                                <div id="language-menu" class="absolute right-0 z-50 mt-2 w-64 origin-top-right rounded-xl shadow-xl hidden"
+                                     style="background-color: var(--surface-primary); border: 1px solid var(--border-light);">
+                                    <div class="p-2">
+                                        {% if available_languages %}
+                                            {% for code, lang_info in available_languages.items() %}
+                                            <form method="POST" action="/language" class="block w-full">
+                                                <input type="hidden" name="language" value="{{ code }}">
+                                                <button type="submit" class="flex items-center w-full text-left px-3 py-2 text-sm rounded-lg transition-colors duration-200 {% if current_language == code %}bg-blue-50 text-blue-600 font-semibold{% else %}hover:bg-gray-50{% endif %}"
+                                                        style="color: {% if current_language == code %}var(--primary-600){% else %}var(--text-primary){% endif %};">
+                                                    <i class="fas fa-flag mr-3 text-sm"></i>
+                                                    <div>
+                                                        <div class="font-medium">
+                                                            {% if lang_info is mapping and lang_info.get('native_name') %}
+                                                                {{ lang_info.native_name }}
+                                                            {% else %}
+                                                                {{ code.upper() }}
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="text-xs opacity-75">
+                                                            {% if lang_info is mapping and lang_info.get('name') %}
+                                                                {{ lang_info.name }}
+                                                            {% else %}
+                                                                {{ code }}
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                    {% if current_language == code %}
+                                                    <i class="fas fa-check ml-auto text-sm"></i>
+                                                    {% endif %}
+                                                </button>
+                                            </form>
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="px-3 py-2 text-sm text-gray-500">
+                                                No languages available
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- User menu (only show in multi-tenant mode) -->
+                            {% if user %}
+                            <div class="relative">
+                                <button type="button" onclick="toggleUserMenu()"
+                                        class="flex items-center space-x-3 p-2 rounded-xl transition-colors duration-200 hover:bg-gray-50" 
+                                        id="user-menu-button">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                                        {{ user.first_name[0].upper() if user.first_name else 'U' }}
+                                    </div>
+                                    <div class="hidden lg:block text-left">
+                                        <div class="text-sm font-semibold" style="color: var(--text-primary);">{{ user.first_name }} {{ user.last_name }}</div>
+                                        <div class="text-xs" style="color: var(--text-secondary);">{{ user.role.title() }}</div>
+                                    </div>
+                                    <i class="fas fa-chevron-down text-xs" style="color: var(--text-secondary);"></i>
+                                </button>
+                                <div id="user-menu" class="absolute right-0 z-50 mt-2 w-64 origin-top-right rounded-xl shadow-xl hidden"
+                                     style="background-color: var(--surface-primary); border: 1px solid var(--border-light);">
+                                    <div class="p-4 border-b" style="border-color: var(--border-light);">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
+                                                {{ user.first_name[0].upper() if user.first_name else 'U' }}
+                                            </div>
+                                            <div>
+                                                <div class="font-semibold" style="color: var(--text-primary);">{{ user.first_name }} {{ user.last_name }}</div>
+                                                <div class="text-sm" style="color: var(--text-secondary);">{{ user.email }}</div>
+                                                <div class="text-xs px-2 py-1 rounded-md bg-blue-100 text-blue-700 inline-block mt-1">{{ user.role.title() }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="p-2">
+                                        <a href="/profile" class="flex items-center px-3 py-2 text-sm rounded-lg transition-colors duration-200 hover:bg-gray-50" style="color: var(--text-primary);">
+                                            <i class="fas fa-user-circle mr-3 text-lg"></i>Profile Settings
+                                        </a>
+                                        <a href="/api-tokens" class="flex items-center px-3 py-2 text-sm rounded-lg transition-colors duration-200 hover:bg-gray-50" style="color: var(--text-primary);">
+                                            <i class="fas fa-key mr-3 text-lg"></i>API Tokens
+                                        </a>
+                                        <div class="border-t my-2" style="border-color: var(--border-light);"></div>
+                                        <a href="/logout" class="flex items-center px-3 py-2 text-sm rounded-lg transition-colors duration-200 hover:bg-red-50 text-red-600">
+                                            <i class="fas fa-sign-out-alt mr-3 text-lg"></i>Sign Out
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <!-- Single-user mode indicator -->
+                            <div class="flex items-center space-x-3 p-2 rounded-xl" style="background-color: var(--surface-tertiary);">
+                                <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-gray-400 to-gray-600 flex items-center justify-center text-white">
+                                    <i class="fas fa-user text-lg"></i>
+                                </div>
+                                <div class="hidden lg:block">
+                                    <div class="text-sm font-semibold" style="color: var(--text-primary);">Single User</div>
+                                    <div class="text-xs" style="color: var(--text-secondary);">Local Mode</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+        <!-- Mobile Navigation Menu -->
+        <div id="mobile-menu" class="lg:hidden hidden">
+            <div class="nav border-t" style="border-color: var(--border-light);">
+                <div class="container py-4">
+                    <div class="space-y-2">
+                        <a href="/" class="mobile-nav-link {% if request.url.path == '/' %}active{% endif %}">
+                            <i class="fas fa-home mr-3"></i>
+                            {{ t('nav.home') }}
+                        </a>
+                        <a href="/prompts" class="mobile-nav-link {% if '/prompts' in request.url.path and '/builder' not in request.url.path %}active{% endif %}">
+                            <i class="fas fa-file-text mr-3"></i>
+                            {{ t('nav.prompts') }}
+                        </a>
+                        <a href="/rules" class="mobile-nav-link {% if '/rules' in request.url.path and '/builder' not in request.url.path %}active{% endif %}">
+                            <i class="fas fa-book mr-3"></i>
+                            {{ t('nav.rules') }}
+                        </a>
+                        <a href="/prompts/builder" class="mobile-nav-link {% if '/prompts/builder' in request.url.path %}active{% endif %}">
+                            <i class="fas fa-hammer mr-3"></i>
+                            {{ t('nav.builder') }}
+                        </a>
+                        <a href="/rules/builder" class="mobile-nav-link {% if '/rules/builder' in request.url.path %}active{% endif %}">
+                            <i class="fas fa-puzzle-piece mr-3"></i>
+                            {{ t('nav.rules_builder') }}
+                        </a>
+                        <a href="/templates" class="mobile-nav-link {% if '/templates' in request.url.path %}active{% endif %}">
+                            <i class="fas fa-layer-group mr-3"></i>
+                            {{ t('nav.library') }}
+                        </a>
+                        <a href="/ai-services" class="mobile-nav-link {% if '/ai-services' in request.url.path %}active{% endif %}">
+                            <i class="fas fa-robot mr-3"></i>
+                            {{ t('nav.services') }}
+                        </a>
+                        <a href="/settings" class="mobile-nav-link {% if '/settings' in request.url.path %}active{% endif %}">
+                            <i class="fas fa-cog mr-3"></i>
+                            {{ t('nav.settings') }}
+                        </a>
+                        {% if user and user.role == 'admin' %}
+                        <a href="/admin" class="mobile-nav-link {% if '/admin' in request.url.path %}active{% endif %}">
+                            <i class="fas fa-shield-alt mr-3"></i>
+                            {{ t('nav.admin') }}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Breadcrumb Area (under app title) -->
+        {% if breadcrumbs %}
+        <div class="bg-slate-50 border-b border-slate-200 py-3">
+            <div class="container">
+                <nav class="breadcrumb">
+                    {% for breadcrumb in breadcrumbs %}
+                        <div class="breadcrumb-item">
+                            {% if breadcrumb.url and not loop.last %}
+                                <a href="{{ breadcrumb.url }}" class="breadcrumb-link">
+                                    {% if breadcrumb.icon %}<i class="{{ breadcrumb.icon }} mr-1"></i>{% endif %}
+                                    {{ breadcrumb.name }}
+                                </a>
+                            {% else %}
+                                <span class="breadcrumb-current">
+                                    {% if breadcrumb.icon %}<i class="{{ breadcrumb.icon }} mr-1"></i>{% endif %}
+                                    {{ breadcrumb.name }}
+                                </span>
+                            {% endif %}
+                            {% if not loop.last %}
+                                <i class="fas fa-chevron-right breadcrumb-separator ml-2"></i>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </nav>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Main content -->
+        <main style="background-color: var(--surface-secondary); min-height: calc(100vh - 4rem);">
+            {% block content %}
+                {% if user or single_user_mode %}
+                    <div class="container py-8">
+                        {% block main_content %}{% endblock %}
+                    </div>
+                {% else %}
+                    {% block auth_content %}{% endblock %}
+                {% endif %}
+            {% endblock %}
+        </main>
+    </div>
+
+    <!-- Enhanced Toast notifications -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Enhanced JavaScript -->
+    <script>
+        // Enhanced Toast notification function
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            // Create toast with enhanced styling
+            toast.className = `toast toast-${type} transform transition-all duration-300 translate-x-full opacity-0`;
+            
+            const icons = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-exclamation-circle',
+                warning: 'fas fa-exclamation-triangle',
+                info: 'fas fa-info-circle'
+            };
+            
+            toast.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <i class="${icons[type] || icons.info} text-lg"></i>
+                    <span class="flex-1">${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            class="ml-3 hover:opacity-75 transition-opacity duration-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+            }, 100);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const button = document.getElementById('mobile-menu-button');
+            const icon = button.querySelector('i');
+            
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-times');
+                menu.style.animation = 'slideInDown 0.3s ease-out';
+            } else {
+                menu.style.animation = 'slideOutUp 0.3s ease-in';
+                setTimeout(() => {
+                    menu.classList.add('hidden');
+                    icon.classList.remove('fa-times');
+                    icon.classList.add('fa-bars');
+                }, 250);
+            }
+        }
+
+        // Language menu toggle
+        function toggleLanguageMenu() {
+            const menu = document.getElementById('language-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // User menu toggle
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Header dropdown toggle
+        function toggleHeaderDropdown(button) {
+            const dropdown = button.nextElementSibling;
+            dropdown.classList.toggle('hidden');
+        }
+
+        // Close menus when clicking outside
+        document.addEventListener('click', function(event) {
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileButton = document.getElementById('mobile-menu-button');
+            const languageMenu = document.getElementById('language-menu');
+            const languageButton = document.getElementById('language-menu-button');
+            const userMenu = document.getElementById('user-menu');
+            const userButton = document.getElementById('user-menu-button');
+            
+            // Close mobile menu
+            if (mobileMenu && mobileButton && !mobileMenu.contains(event.target) && !mobileButton.contains(event.target) && !mobileMenu.classList.contains('hidden')) {
+                toggleMobileMenu();
+            }
+            
+            // Close language menu
+            if (languageMenu && languageButton && !languageMenu.contains(event.target) && !languageButton.contains(event.target) && !languageMenu.classList.contains('hidden')) {
+                languageMenu.classList.add('hidden');
+            }
+            
+            // Close user menu
+            if (userMenu && userButton && !userMenu.contains(event.target) && !userButton.contains(event.target) && !userMenu.classList.contains('hidden')) {
+                userMenu.classList.add('hidden');
+            }
+            
+            // Close header dropdowns
+            const headerDropdowns = document.querySelectorAll('.header-dropdown');
+            headerDropdowns.forEach(dropdown => {
+                const button = dropdown.previousElementSibling;
+                if (button && !dropdown.contains(event.target) && !button.contains(event.target) && !dropdown.classList.contains('hidden')) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+        });
+
+        // HTMX event listeners
+        document.addEventListener('htmx:responseError', function(evt) {
+            showToast('An error occurred. Please try again.', 'error');
+        });
+
+        document.addEventListener('htmx:beforeRequest', function(evt) {
+            // Add loading state
+            const target = evt.target;
+            if (target.classList.contains('btn-primary')) {
+                target.disabled = true;
+                const originalText = target.innerHTML;
+                target.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+                target.setAttribute('data-original-text', originalText);
+            }
+        });
+
+        document.addEventListener('htmx:afterRequest', function(evt) {
+            // Remove loading state
+            const target = evt.target;
+            if (target.hasAttribute('data-original-text')) {
+                target.disabled = false;
+                target.innerHTML = target.getAttribute('data-original-text');
+                target.removeAttribute('data-original-text');
+            }
+        });
+
+        // Enhanced Theme Toggle Functionality
+        function getSystemTheme() {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            console.log('System theme detected:', isDark ? 'dark' : 'light');
+            return isDark ? 'dark' : 'light';
+        }
+
+        function getStoredTheme() {
+            return localStorage.getItem('theme') || 'system';
+        }
+
+        function setStoredTheme(theme) {
+            localStorage.setItem('theme', theme);
+        }
+
+        function getEffectiveTheme() {
+            const stored = getStoredTheme();
+            return stored === 'system' ? getSystemTheme() : stored;
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('theme-icon');
+            const button = document.getElementById('theme-toggle');
+            
+            if (!icon || !button) return;
+            
+            // Update icon based on current effective theme
+            const effectiveTheme = theme === 'system' ? getSystemTheme() : theme;
+            
+            if (effectiveTheme === 'dark') {
+                icon.className = 'theme-icon fas fa-moon';
+                button.title = 'Switch to light theme';
+                button.setAttribute('aria-label', 'Switch to light theme');
+            } else {
+                icon.className = 'theme-icon fas fa-sun';
+                button.title = 'Switch to dark theme';
+                button.setAttribute('aria-label', 'Switch to dark theme');
+            }
+        }
+
+        function applyTheme(theme) {
+            const root = document.documentElement;
+            const effectiveTheme = theme === 'system' ? getSystemTheme() : theme;
+            
+            console.log('Applying theme:', theme, '-> effective:', effectiveTheme);
+            
+            // Clear any existing theme attributes first
+            root.removeAttribute('data-theme');
+            
+            // Apply new theme attribute after a small delay to ensure change is detected
+            requestAnimationFrame(() => {
+                if (effectiveTheme === 'dark') {
+                    root.setAttribute('data-theme', 'dark');
+                    console.log('Applied dark theme attribute');
+                } else {
+                    console.log('Applied light theme (no attribute)');
+                }
+                
+                // Update icon after theme is applied
+                updateThemeIcon(theme);
+            });
+            
+            // Store preference immediately
+            setStoredTheme(theme);
+        }
+
+        function toggleTheme() {
+            const currentStored = getStoredTheme();
+            let nextTheme;
+            
+            console.log('Current stored theme:', currentStored);
+            
+            // Cycle through: light -> dark -> system -> light
+            switch (currentStored) {
+                case 'light':
+                    nextTheme = 'dark';
+                    break;
+                case 'dark':
+                    nextTheme = 'system';
+                    break;
+                case 'system':
+                default:
+                    nextTheme = 'light';
+                    break;
+            }
+            
+            console.log('Switching to theme:', nextTheme);
+            applyTheme(nextTheme);
+            
+            // Show toast notification
+            const themeNames = {
+                'light': 'Light theme',
+                'dark': 'Dark theme', 
+                'system': 'System theme'
+            };
+            showToast(`Switched to ${themeNames[nextTheme]}`, 'info');
+        }
+
+        // Initialize theme on page load
+        function initializeTheme() {
+            const storedTheme = getStoredTheme();
+            applyTheme(storedTheme);
+            
+            // Listen for system theme changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+                // Only auto-update if user has system preference
+                if (getStoredTheme() === 'system') {
+                    applyTheme('system');
+                }
+            });
+        }
+
+        // Initialize theme as early as possible to prevent flash
+        document.addEventListener('DOMContentLoaded', initializeTheme);
+        
+        // Also initialize immediately for faster loading
+        initializeTheme();
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

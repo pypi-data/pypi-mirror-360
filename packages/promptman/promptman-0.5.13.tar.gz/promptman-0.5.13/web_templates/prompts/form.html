@@ -1,0 +1,1366 @@
+{% extends "layouts/base.html" %}
+
+{% block main_content %}
+<!-- Enhanced Page Header -->
+{% set breadcrumbs = [
+    {"name": i18n.t('nav.prompts'), "url": "/prompts", "icon": "fas fa-file-text"},
+    {"name": i18n.t('prompt.create') if action == 'create' else i18n.t('prompt.edit'), "icon": "fas fa-" + ('plus' if action == 'create' else 'edit')}
+] %}
+{% set header_title = i18n.t('prompt.create_new') if action == 'create' else i18n.t('prompt.edit') %}
+{% set header_subtitle = i18n.t('prompt.create_desc') if action == 'create' else i18n.t('prompt.edit_desc') %}
+{% set header_icon = "fas fa-" + ('plus' if action == 'create' else 'edit') %}
+{% include "components/page_header.html" %}
+
+<div class="max-w-4xl mx-auto">
+    <div class="space-y-6">
+
+        <!-- Form -->
+        <div class="bg-white shadow rounded-lg">
+            <form method="POST" action="{{ '/prompts/new' if action == 'create' else '/prompts/' + (prompt_id|string if prompt_id else '0') + '/edit' }}" class="space-y-6">
+                <div class="px-4 py-5 sm:p-6">
+                    {% if error %}
+                        <div class="mb-6 rounded-md bg-red-50 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-circle text-red-400"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-red-800">{{ i18n.t('status.error') }}</h3>
+                                    <div class="mt-2 text-sm text-red-700">
+                                        <p>{{ error }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Basic Information -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label for="name" class="block text-sm font-medium text-gray-700">
+                                {{ i18n.t('prompt.name') }} <span class="text-red-500">*</span>
+                            </label>
+                            <div class="mt-1">
+                                <input type="text" name="name" id="name" required
+                                       value="{{ name or '' }}"
+                                       class="form-input"
+                                       placeholder="{{ i18n.t('prompt.name_placeholder') }}">
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500">
+                                {{ i18n.t('prompt.name_help') }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label for="category" class="block text-sm font-medium text-gray-700">
+                                {{ i18n.t('prompt.category') }} <span class="text-red-500">*</span>
+                            </label>
+                            <div class="mt-1">
+                                <select name="category" id="category" required class="form-select">
+                                    <option value="">{{ i18n.t('prompt.category_select') }}</option>
+                                    {% for cat in categories %}
+                                        <option value="{{ cat }}" {% if cat == category %}selected{% endif %}>
+                                            {{ cat }}
+                                        </option>
+                                    {% endfor %}
+                                    <option value="custom">{{ i18n.t('prompt.category_add') }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="tags" class="block text-sm font-medium text-gray-700">
+                                {{ i18n.t('prompt.tags') }}
+                            </label>
+                            <div class="mt-1">
+                                <!-- Enhanced Tag Input Component -->
+                                <div class="tag-input-container">
+                                    <!-- Tag Display Area -->
+                                    <div id="tag-display" class="tag-display min-h-[40px] border border-gray-300 rounded-md px-3 py-2 bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+                                        <!-- Tags will be populated here -->
+                                    </div>
+                                    
+                                    <!-- Tag Input -->
+                                    <div class="relative mt-2">
+                                        <input type="text" id="tag-input" 
+                                               class="form-input w-full" 
+                                               placeholder="{{ i18n.t('prompt.tag_input_placeholder') }}"
+                                               autocomplete="off">
+                                        <!-- Tag Suggestions Dropdown -->
+                                        <div id="tag-suggestions" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 max-h-48 overflow-auto hidden">
+                                            <!-- Suggestions will be populated here -->
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Hidden input for form submission -->
+                                    <input type="hidden" name="tags" id="tags" value="{{ tags or '' }}">
+                                </div>
+                                
+                                <!-- Popular Tags -->
+                                <div class="mt-3">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-medium text-gray-700">{{ i18n.t('prompt.popular_tags') }}:</span>
+                                        <button type="button" id="clear-tags" class="text-xs text-red-600 hover:text-red-800">{{ i18n.t('prompt.clear_tags') }}</button>
+                                    </div>
+                                    <div id="popular-tags" class="mt-2 flex flex-wrap gap-2">
+                                        <!-- Popular tags will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500">
+                                {{ i18n.t('prompt.tags_help') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Visibility Control (Multi-tenant only) -->
+                    {% if is_multi_tenant_mode %}
+                    <div>
+                        <label for="visibility" class="block text-sm font-medium text-gray-700">
+                            {{ i18n.t('prompt.visibility') }}
+                        </label>
+                        <div class="mt-1">
+                            <select name="visibility" id="visibility" class="form-select">
+                                <option value="private" {% if visibility == 'private' or not visibility %}selected{% endif %}>
+                                    <i class="fas fa-lock mr-2"></i>{{ i18n.t('prompt.visibility_private') }}
+                                </option>
+                                <option value="public" {% if visibility == 'public' %}selected{% endif %}>
+                                    <i class="fas fa-globe mr-2"></i>{{ i18n.t('prompt.visibility_public') }}
+                                </option>
+                            </select>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-500">
+                            {{ i18n.t('prompt.visibility_help') }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Description -->
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700">
+                            {{ i18n.t('prompt.description') }}
+                        </label>
+                        <div class="mt-1">
+                            <textarea name="description" id="description" rows="3" 
+                                      class="form-textarea"
+                                      placeholder="{{ i18n.t('prompt.description_placeholder') }}">{{ description or '' }}</textarea>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-500">
+                            {{ i18n.t('prompt.description_help') }}
+                        </p>
+                    </div>
+
+                    <!-- Prompt Content -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label for="content" class="block text-sm font-medium text-gray-700">
+                                {{ i18n.t('prompt.content') }} <span class="text-red-500">*</span>
+                            </label>
+                            <div class="flex items-center space-x-2">
+                                <!-- Speech Dictation Controls -->
+                                <div class="flex items-center space-x-1 border-r border-gray-300 pr-2 mr-2">
+                                    <button type="button" 
+                                            id="speech-btn"
+                                            class="text-sm text-red-600 hover:text-red-500 transition-colors duration-200"
+                                            onclick="toggleSpeechRecognition()"
+                                            title="{{ i18n.t('speech.start_dictation') }}">
+                                        <i id="speech-icon" class="fas fa-microphone mr-1"></i>
+                                        <span id="speech-text">{{ i18n.t('speech.dictate') }}</span>
+                                    </button>
+                                    <button type="button" 
+                                            id="enhance-btn"
+                                            class="text-sm text-blue-600 hover:text-blue-500 transition-colors duration-200 hidden"
+                                            onclick="enhanceDictatedText()"
+                                            title="{{ i18n.t('speech.enhance_text') }}">
+                                        <i class="fas fa-magic mr-1"></i>{{ i18n.t('speech.enhance') }}
+                                    </button>
+                                    <button type="button" 
+                                            id="translate-speech-btn"
+                                            class="text-sm text-green-600 hover:text-green-500 transition-colors duration-200 hidden"
+                                            onclick="translateDictatedText()"
+                                            title="{{ i18n.t('speech.translate_to_english') }}">
+                                        <i class="fas fa-language mr-1"></i>{{ i18n.t('speech.translate') }}
+                                    </button>
+                                </div>
+                                <button type="button" 
+                                        class="text-sm text-primary-600 hover:text-primary-500"
+                                        onclick="insertTemplate()">
+                                    <i class="fas fa-magic mr-1"></i>{{ i18n.t('prompt.insert_template') }}
+                                </button>
+                                <button type="button" 
+                                        class="text-sm text-primary-600 hover:text-primary-500"
+                                        onclick="showVariableHelper()">
+                                    <i class="fas fa-question-circle mr-1"></i>{{ i18n.t('prompt.variables') }}
+                                </button>
+                                <button type="button" 
+                                        class="text-sm text-green-600 hover:text-green-500"
+                                        onclick="translatePrompt()">
+                                    <i class="fas fa-language mr-1"></i>{{ i18n.t('action.translate') }}
+                                </button>
+                                <button type="button" 
+                                        class="text-sm text-purple-600 hover:text-purple-500"
+                                        onclick="optimizePrompt()">
+                                    <i class="fas fa-star mr-1"></i>{{ i18n.t('action.optimize') }}
+                                </button>
+                                <span id="char-count" class="text-sm text-gray-500">0 {{ i18n.t('prompt.characters') }}</span>
+                                <span id="token-count" class="text-sm text-gray-500 ml-2">0 {{ i18n.t('prompt.tokens') }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Speech Recognition Status -->
+                        <div id="speech-status" class="hidden mb-3">
+                            <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <i id="speech-status-icon" class="fas fa-microphone text-blue-400"></i>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <p id="speech-status-text" class="text-sm font-medium text-blue-800">
+                                            {{ i18n.t('speech.listening') }}
+                                        </p>
+                                        <div class="mt-2 flex items-center space-x-2">
+                                            <div class="flex items-center space-x-1">
+                                                <span class="text-xs text-blue-600">{{ i18n.t('speech.language') }}:</span>
+                                                <select id="speech-language" class="text-xs border-blue-300 rounded px-2 py-1" onchange="updateSpeechLanguage()">
+                                                    <option value="en-US">English (US)</option>
+                                                    <option value="en-GB">English (UK)</option>
+                                                    <option value="es-ES">Español</option>
+                                                    <option value="fr-FR">Français</option>
+                                                    <option value="de-DE">Deutsch</option>
+                                                    <option value="it-IT">Italiano</option>
+                                                    <option value="pt-PT">Português</option>
+                                                    <option value="ru-RU">Русский</option>
+                                                    <option value="ja-JP">日本語</option>
+                                                    <option value="zh-CN">中文</option>
+                                                    <option value="ar-SA">العربية</option>
+                                                    <option value="hi-IN">हिन्दी</option>
+                                                </select>
+                                            </div>
+                                            <span id="speech-confidence" class="text-xs text-blue-600"></span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4 flex-shrink-0">
+                                        <button type="button" 
+                                                onclick="stopSpeechRecognition()"
+                                                class="text-sm text-blue-600 hover:text-blue-500">
+                                            <i class="fas fa-stop mr-1"></i>{{ i18n.t('speech.stop') }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-1">
+                            <textarea name="content" id="content" rows="12" required
+                                      class="form-textarea font-mono"
+                                      placeholder="{{ i18n.t('prompt.content_placeholder') }}">{{ content or '' }}</textarea>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between">
+                            <p class="text-sm text-gray-500">
+                                {{ i18n.t('prompt.variables_help') }}
+                            </p>
+                            <div class="flex items-center space-x-4">
+                                <button type="button" 
+                                        class="text-sm text-primary-600 hover:text-primary-500"
+                                        onclick="previewPrompt()">
+                                    <i class="fas fa-eye mr-1"></i>{{ i18n.t('action.preview') }}
+                                </button>
+                                <button type="button" 
+                                        class="text-sm text-primary-600 hover:text-primary-500"
+                                        onclick="testPrompt()">
+                                    <i class="fas fa-play mr-1"></i>{{ i18n.t('action.test') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" class="btn-primary sm:ml-3">
+                        <i class="fas fa-save mr-2"></i>
+                        {{ i18n.t('prompt.create') if action == 'create' else i18n.t('prompt.update') }}
+                    </button>
+                    <a href="/prompts" class="btn-secondary mt-3 sm:mt-0">
+                        <i class="fas fa-times mr-2"></i>
+                        {{ i18n.t('action.cancel') }}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Category Modal -->
+<div id="category-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeCategoryModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">{{ i18n.t('prompt.category_add') }}</h3>
+                <div>
+                    <label for="new-category" class="block text-sm font-medium text-gray-700">{{ i18n.t('prompt.category_name') }}</label>
+                    <div class="mt-1">
+                        <input type="text" id="new-category" class="form-input" placeholder="{{ i18n.t('prompt.category_name_placeholder') }}">
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button onclick="addCustomCategory()" class="btn-primary sm:ml-3">{{ i18n.t('prompt.category_add') }}</button>
+                <button onclick="closeCategoryModal()" class="btn-secondary mt-3 sm:mt-0">{{ i18n.t('action.cancel') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Variable Helper Modal -->
+<div id="variable-helper-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeVariableHelper()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    <i class="fas fa-magic mr-2 text-primary-500"></i>
+                    {{ i18n.t('prompt.variable_guide') }}
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-medium text-gray-900">{{ i18n.t('prompt.basic_variables') }}</h4>
+                        <p class="text-sm text-gray-600">{{ i18n.t('prompt.basic_variables_desc') }}</p>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-gray-900">{{ i18n.t('prompt.common_variables') }}</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <button onclick="insertVariable('topic')" class="text-left p-2 bg-gray-50 rounded hover:bg-gray-100">
+                                <code>{topic}</code> - Subject matter
+                            </button>
+                            <button onclick="insertVariable('tone')" class="text-left p-2 bg-gray-50 rounded hover:bg-gray-100">
+                                <code>{tone}</code> - Writing style
+                            </button>
+                            <button onclick="insertVariable('audience')" class="text-left p-2 bg-gray-50 rounded hover:bg-gray-100">
+                                <code>{audience}</code> - Target audience
+                            </button>
+                            <button onclick="insertVariable('length')" class="text-left p-2 bg-gray-50 rounded hover:bg-gray-100">
+                                <code>{length}</code> - Content length
+                            </button>
+                            <button onclick="insertVariable('format')" class="text-left p-2 bg-gray-50 rounded hover:bg-gray-100">
+                                <code>{format}</code> - Output format
+                            </button>
+                            <button onclick="insertVariable('context')" class="text-left p-2 bg-gray-50 rounded hover:bg-gray-100">
+                                <code>{context}</code> - Background info
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button onclick="closeVariableHelper()" class="btn-secondary">{{ i18n.t('action.close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Character counter
+document.getElementById('content').addEventListener('input', function() {
+    const count = this.value.length;
+    document.getElementById('char-count').textContent = count + ' characters';
+});
+
+// Category handling
+document.getElementById('category').addEventListener('change', function() {
+    if (this.value === 'custom') {
+        document.getElementById('category-modal').classList.remove('hidden');
+        this.value = '';
+    }
+});
+
+function closeCategoryModal() {
+    document.getElementById('category-modal').classList.add('hidden');
+}
+
+function addCustomCategory() {
+    const newCategory = document.getElementById('new-category').value.trim();
+    if (newCategory) {
+        const select = document.getElementById('category');
+        const option = document.createElement('option');
+        option.value = newCategory;
+        option.textContent = newCategory;
+        option.selected = true;
+        select.insertBefore(option, select.lastElementChild);
+        closeCategoryModal();
+        document.getElementById('new-category').value = '';
+    }
+}
+
+function showVariableHelper() {
+    document.getElementById('variable-helper-modal').classList.remove('hidden');
+}
+
+function closeVariableHelper() {
+    document.getElementById('variable-helper-modal').classList.add('hidden');
+}
+
+function insertVariable(varName) {
+    const textarea = document.getElementById('content');
+    const cursorPos = textarea.selectionStart;
+    const textBefore = textarea.value.substring(0, cursorPos);
+    const textAfter = textarea.value.substring(cursorPos);
+    const variable = `{${varName}}`;
+    
+    textarea.value = textBefore + variable + textAfter;
+    textarea.selectionStart = textarea.selectionEnd = cursorPos + variable.length;
+    textarea.focus();
+    
+    // Update character count
+    const count = textarea.value.length;
+    document.getElementById('char-count').textContent = count + ' characters';
+}
+
+function insertTemplate() {
+    // This would open a template selector - for now, show a simple example
+    const templates = {
+        'Email': 'Write a {tone} email to {recipient} about {topic}.\n\nKey points to cover:\n- {point_1}\n- {point_2}\n- {point_3}\n\nKeep it {length} and maintain a {tone} tone throughout.',
+        'Blog Post': 'Write a {length} blog post about {topic} for {audience}.\n\nStructure:\n1. Engaging introduction\n2. {main_points}\n3. Conclusion with call-to-action\n\nTone: {tone}\nSEO Keywords: {keywords}',
+        'Social Media': 'Create a {platform} post about {topic}.\n\nRequirements:\n- {tone} tone\n- Include {hashtags}\n- Call-to-action: {cta}\n- Target audience: {audience}',
+        'Code Review': 'Review the following {language} code:\n\n{code}\n\nProvide feedback on:\n- Code quality and best practices\n- Potential bugs or issues\n- Performance optimizations\n- Readability improvements'
+    };
+    
+    const templateName = prompt('Select template:\n' + Object.keys(templates).join('\n'));
+    if (templateName && templates[templateName]) {
+        document.getElementById('content').value = templates[templateName];
+        const count = templates[templateName].length;
+        document.getElementById('char-count').textContent = count + ' characters';
+    }
+}
+
+function previewPrompt() {
+    const content = document.getElementById('content').value;
+    if (!content) {
+        showToast('Please enter prompt content first', 'warning');
+        return;
+    }
+    
+    // Simple preview - in a real app, this might render variables differently
+    alert('Prompt Preview:\n\n' + content);
+}
+
+function testPrompt() {
+    const content = document.getElementById('content').value;
+    if (!content) {
+        showToast('Please enter prompt content first', 'warning');
+        return;
+    }
+    
+    // This would integrate with your AI testing functionality
+    showToast('Test functionality coming soon!', 'info');
+}
+
+// Initialize character count and token estimation
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.getElementById('content');
+    updateCounts();
+    
+    // Update counts on input
+    textarea.addEventListener('input', updateCounts);
+});
+
+function updateCounts() {
+    const textarea = document.getElementById('content');
+    const text = textarea.value;
+    const charCount = text.length;
+    
+    document.getElementById('char-count').textContent = charCount + ' characters';
+    
+    // Estimate tokens (rough approximation: 1 token ≈ 4 characters)
+    const tokenEstimate = Math.ceil(charCount / 4);
+    document.getElementById('token-count').textContent = tokenEstimate + ' tokens (est.)';
+    
+    // Calculate tokens more accurately via API if text is substantial
+    if (charCount > 100) {
+        calculateTokens(text);
+    }
+}
+
+function calculateTokens(text) {
+    fetch('/calculate-tokens', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            'text': text,
+            'model': 'gpt-4'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('token-count').textContent = 
+                data.token_count + ' tokens ($' + data.estimated_cost.toFixed(4) + ')';
+        }
+    })
+    .catch(error => {
+        console.log('Token calculation error:', error);
+    });
+}
+
+function translatePrompt() {
+    const textarea = document.getElementById('content');
+    const text = textarea.value;
+    
+    if (!text.trim()) {
+        showToast('Please enter some text to translate', 'warning');
+        return;
+    }
+    
+    // Show loading state
+    const originalText = textarea.value;
+    textarea.value = 'Translating...';
+    textarea.disabled = true;
+    
+    fetch('/translate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            'text': text,
+            'target_lang': 'en'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        textarea.disabled = false;
+        if (data.success) {
+            textarea.value = data.translated_text;
+            showToast('Prompt translated to English', 'success');
+            updateCounts();
+        } else {
+            textarea.value = originalText;
+            showToast('Translation failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        textarea.disabled = false;
+        textarea.value = originalText;
+        showToast('Translation service unavailable', 'error');
+    });
+}
+
+function optimizePrompt() {
+    const textarea = document.getElementById('content');
+    const text = textarea.value;
+    
+    if (!text.trim()) {
+        showToast('Please enter some text to optimize', 'warning');
+        return;
+    }
+    
+    // Show loading state
+    const originalText = textarea.value;
+    textarea.value = 'Optimizing prompt...';
+    textarea.disabled = true;
+    
+    fetch('/optimize', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            'prompt': text
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        textarea.disabled = false;
+        if (data.success) {
+            // Show optimization results in a modal
+            showOptimizationResults(originalText, data);
+        } else {
+            textarea.value = originalText;
+            showToast('Optimization failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        textarea.disabled = false;
+        textarea.value = originalText;
+        showToast('Optimization service unavailable', 'error');
+    });
+}
+
+function showOptimizationResults(originalText, data) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 z-50 overflow-y-auto';
+    modal.innerHTML = `
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="this.parentElement.parentElement.remove()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">
+                            <i class="fas fa-star mr-2 text-purple-500"></i>
+                            Prompt Optimization Results
+                        </h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-900 mb-2">Original Prompt</h4>
+                            <div class="bg-gray-50 rounded-lg p-3 text-sm max-h-40 overflow-y-auto">
+                                <pre class="whitespace-pre-wrap">${originalText}</pre>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-900 mb-2">Optimized Prompt</h4>
+                            <div class="bg-green-50 rounded-lg p-3 text-sm max-h-40 overflow-y-auto">
+                                <pre class="whitespace-pre-wrap">${data.optimized_prompt}</pre>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">
+                            Optimization Score: <span class="text-green-600">${Math.round(data.optimization_score * 100)}%</span>
+                        </h4>
+                        <p class="text-sm text-gray-600">${data.reasoning}</p>
+                    </div>
+                    
+                    ${data.suggestions && data.suggestions.length > 0 ? `
+                    <div class="mb-4">
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">Suggestions</h4>
+                        <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+                            ${data.suggestions.map(s => `<li>${s}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button onclick="applyOptimization('${data.optimized_prompt.replace(/'/g, "\\'")}'); this.closest('.fixed').remove();" 
+                            class="btn-primary sm:ml-3">
+                        <i class="fas fa-check mr-2"></i>
+                        Apply Optimization
+                    </button>
+                    <button onclick="this.closest('.fixed').remove()" class="btn-secondary mt-3 sm:mt-0">
+                        Keep Original
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function applyOptimization(optimizedText) {
+    const textarea = document.getElementById('content');
+    textarea.value = optimizedText;
+    updateCounts();
+    showToast('Optimization applied successfully', 'success');
+}
+
+// Enhanced Tag Management System
+class TagManager {
+    constructor() {
+        this.tags = new Set();
+        this.allTags = [];
+        this.popularTags = [];
+        this.suggestionsCache = new Map();
+        
+        this.initializeElements();
+        this.loadExistingTags();
+        this.loadPopularTags();
+        this.setupEventListeners();
+    }
+    
+    initializeElements() {
+        this.tagDisplay = document.getElementById('tag-display');
+        this.tagInput = document.getElementById('tag-input');
+        this.tagSuggestions = document.getElementById('tag-suggestions');
+        this.hiddenInput = document.getElementById('tags');
+        this.popularTagsContainer = document.getElementById('popular-tags');
+        this.clearButton = document.getElementById('clear-tags');
+    }
+    
+    loadExistingTags() {
+        const existingTags = this.hiddenInput.value;
+        if (existingTags) {
+            const tagList = existingTags.split(',').map(tag => tag.trim()).filter(tag => tag);
+            tagList.forEach(tag => this.addTag(tag, false));
+        }
+    }
+    
+    async loadPopularTags() {
+        try {
+            const response = await fetch('/api/ai-models/tags/popular?entity_type=prompts&limit=8');
+            if (response.ok) {
+                const data = await response.json();
+                this.popularTags = data.popular_tags || [];
+                this.renderPopularTags();
+            }
+        } catch (error) {
+            console.error('Failed to load popular tags:', error);
+        }
+    }
+    
+    renderPopularTags() {
+        this.popularTagsContainer.innerHTML = '';
+        this.popularTags.forEach(tagData => {
+            const tagElement = document.createElement('button');
+            tagElement.type = 'button';
+            tagElement.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-blue-100 hover:text-blue-800 transition-colors cursor-pointer';
+            tagElement.innerHTML = `
+                ${tagData.tag}
+                <span class="ml-1 text-xs text-gray-500">${tagData.count}</span>
+            `;
+            tagElement.onclick = () => this.addTag(tagData.tag);
+            this.popularTagsContainer.appendChild(tagElement);
+        });
+    }
+    
+    setupEventListeners() {
+        // Tag input events
+        this.tagInput.addEventListener('input', () => this.handleInput());
+        this.tagInput.addEventListener('keydown', (e) => this.handleKeydown(e));
+        this.tagInput.addEventListener('blur', () => setTimeout(() => this.hideSuggestions(), 150));
+        
+        // Clear button
+        this.clearButton.addEventListener('click', () => this.clearAllTags());
+        
+        // Click outside to hide suggestions (handled by blur event above)
+    }
+    
+    async handleInput() {
+        const value = this.tagInput.value.trim();
+        
+        if (value.length >= 1) {
+            await this.showSuggestions(value);
+        } else {
+            this.hideSuggestions();
+        }
+    }
+    
+    handleKeydown(e) {
+        const value = this.tagInput.value.trim();
+        
+        switch (e.key) {
+            case 'Enter':
+            case ',':
+            case 'Tab':
+                e.preventDefault();
+                if (value) {
+                    this.addTag(value);
+                    this.tagInput.value = '';
+                    this.hideSuggestions();
+                }
+                break;
+            case 'Backspace':
+                if (!value && this.tags.size > 0) {
+                    // Remove last tag if input is empty
+                    const lastTag = Array.from(this.tags).pop();
+                    this.removeTag(lastTag);
+                }
+                break;
+            case 'ArrowDown':
+                e.preventDefault();
+                this.navigateSuggestions('down');
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                this.navigateSuggestions('up');
+                break;
+            case 'Escape':
+                this.hideSuggestions();
+                break;
+        }
+    }
+    
+    async showSuggestions(query) {
+        if (this.suggestionsCache.has(query)) {
+            this.renderSuggestions(this.suggestionsCache.get(query));
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/ai-models/tags/suggest', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    partial_tag: query,
+                    limit: 5
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const suggestions = data.suggestions || [];
+                // Filter out already selected tags
+                const filteredSuggestions = suggestions.filter(tag => !this.tags.has(tag));
+                
+                this.suggestionsCache.set(query, filteredSuggestions);
+                this.renderSuggestions(filteredSuggestions);
+            }
+        } catch (error) {
+            console.error('Failed to fetch tag suggestions:', error);
+        }
+    }
+    
+    renderSuggestions(suggestions) {
+        this.tagSuggestions.innerHTML = '';
+        
+        if (suggestions.length === 0) {
+            this.hideSuggestions();
+            return;
+        }
+        
+        suggestions.forEach((suggestion, index) => {
+            const suggestionElement = document.createElement('div');
+            suggestionElement.className = 'px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm';
+            suggestionElement.textContent = suggestion;
+            suggestionElement.addEventListener('click', () => {
+                this.addTag(suggestion);
+                this.tagInput.value = '';
+                this.hideSuggestions();
+            });
+            
+            if (index === 0) {
+                suggestionElement.classList.add('bg-gray-50');
+            }
+            
+            this.tagSuggestions.appendChild(suggestionElement);
+        });
+        
+        this.tagSuggestions.classList.remove('hidden');
+    }
+    
+    hideSuggestions() {
+        this.tagSuggestions.classList.add('hidden');
+    }
+    
+    navigateSuggestions(direction) {
+        const suggestions = this.tagSuggestions.querySelectorAll('div');
+        if (suggestions.length === 0) return;
+        
+        const current = this.tagSuggestions.querySelector('.bg-gray-50');
+        let newIndex = 0;
+        
+        if (current) {
+            const currentIndex = Array.from(suggestions).indexOf(current);
+            current.classList.remove('bg-gray-50');
+            
+            if (direction === 'down') {
+                newIndex = (currentIndex + 1) % suggestions.length;
+            } else {
+                newIndex = (currentIndex - 1 + suggestions.length) % suggestions.length;
+            }
+        }
+        
+        suggestions[newIndex].classList.add('bg-gray-50');
+    }
+    
+    addTag(tagText, updateInput = true) {
+        const tag = tagText.trim();
+        if (!tag || this.tags.has(tag)) return;
+        
+        this.tags.add(tag);
+        this.renderTags();
+        
+        if (updateInput) {
+            this.updateHiddenInput();
+        }
+        
+        // Clear the input
+        this.tagInput.value = '';
+        this.hideSuggestions();
+    }
+    
+    removeTag(tag) {
+        this.tags.delete(tag);
+        this.renderTags();
+        this.updateHiddenInput();
+    }
+    
+    clearAllTags() {
+        this.tags.clear();
+        this.renderTags();
+        this.updateHiddenInput();
+    }
+    
+    renderTags() {
+        this.tagDisplay.innerHTML = '';
+        
+        if (this.tags.size === 0) {
+            const placeholder = document.createElement('span');
+            placeholder.className = 'text-gray-400 text-sm';
+            placeholder.textContent = '{{ i18n.t("prompt.no_tags") }}';
+            this.tagDisplay.appendChild(placeholder);
+            return;
+        }
+        
+        const tagContainer = document.createElement('div');
+        tagContainer.className = 'flex flex-wrap gap-2';
+        
+        this.tags.forEach(tag => {
+            const tagElement = document.createElement('span');
+            tagElement.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800';
+            tagElement.innerHTML = `
+                ${tag}
+                <button type="button" class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-blue-200 focus:outline-none focus:bg-blue-200" onclick="tagManager.removeTag('${tag}')">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            `;
+            tagContainer.appendChild(tagElement);
+        });
+        
+        this.tagDisplay.appendChild(tagContainer);
+    }
+    
+    updateHiddenInput() {
+        this.hiddenInput.value = Array.from(this.tags).join(', ');
+    }
+}
+
+// Initialize tag manager when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    window.tagManager = new TagManager();
+});
+
+// Add CSS for tag components
+const tagStyles = `
+<style>
+.tag-display {
+    min-height: 2.5rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.tag-display:hover {
+    border-color: #d1d5db;
+}
+
+.tag-display.focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+#tag-suggestions {
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.tag-suggestion-item {
+    transition: background-color 0.1s ease-in-out;
+}
+
+@keyframes tagSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.tag-display .inline-flex {
+    animation: tagSlideIn 0.2s ease-out;
+}
+</style>
+`;
+
+// Inject styles
+document.head.insertAdjacentHTML('beforeend', tagStyles);
+
+// ==================== SPEECH RECOGNITION FUNCTIONALITY ====================
+
+// Global speech recognition variables
+let recognition = null;
+let isRecording = false;
+let isPaused = false;
+let speechLanguage = 'en-US';
+let transcriptBuffer = '';
+let lastSpeechTimestamp = 0;
+
+// Initialize speech recognition
+function initializeSpeechRecognition() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        console.warn('Speech recognition not supported');
+        document.getElementById('speech-btn').style.display = 'none';
+        return false;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = speechLanguage;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = function() {
+        console.log('Speech recognition started');
+        updateSpeechUI('listening');
+    };
+
+    recognition.onresult = function(event) {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            const confidence = event.results[i][0].confidence;
+            
+            if (event.results[i].isFinal) {
+                finalTranscript += transcript + ' ';
+                lastSpeechTimestamp = Date.now();
+            } else {
+                interimTranscript += transcript;
+            }
+            
+            // Update confidence display
+            if (confidence !== undefined) {
+                document.getElementById('speech-confidence').textContent = 
+                    `Confidence: ${Math.round(confidence * 100)}%`;
+            }
+        }
+
+        if (finalTranscript) {
+            appendToPromptContent(finalTranscript);
+            transcriptBuffer += finalTranscript;
+            
+            // Show enhancement and translation buttons after getting some text
+            document.getElementById('enhance-btn').classList.remove('hidden');
+            document.getElementById('translate-speech-btn').classList.remove('hidden');
+        }
+
+        // Show interim results in status
+        if (interimTranscript) {
+            document.getElementById('speech-status-text').innerHTML = 
+                `<strong>Listening:</strong> ${interimTranscript}`;
+        } else if (finalTranscript) {
+            document.getElementById('speech-status-text').innerHTML = 
+                `<strong>Added:</strong> ${finalTranscript.trim()}`;
+        }
+    };
+
+    recognition.onerror = function(event) {
+        console.error('Speech recognition error:', event.error);
+        let errorMessage = 'Speech recognition error';
+        
+        switch(event.error) {
+            case 'no-speech':
+                errorMessage = 'No speech detected. Try speaking louder.';
+                break;
+            case 'audio-capture':
+                errorMessage = 'Microphone not accessible. Check permissions.';
+                break;
+            case 'not-allowed':
+                errorMessage = 'Microphone access denied. Please allow microphone access.';
+                break;
+            case 'network':
+                errorMessage = 'Network error. Check your internet connection.';
+                break;
+            case 'language-not-supported':
+                errorMessage = 'Selected language not supported.';
+                break;
+        }
+        
+        showToast(errorMessage, 'error');
+        resetSpeechRecognition();
+    };
+
+    recognition.onend = function() {
+        console.log('Speech recognition ended');
+        if (isRecording && !isPaused) {
+            // Restart if we were recording and not intentionally stopped
+            setTimeout(() => {
+                if (isRecording && !isPaused) {
+                    recognition.start();
+                }
+            }, 100);
+        } else {
+            resetSpeechRecognition();
+        }
+    };
+
+    return true;
+}
+
+// Toggle speech recognition
+function toggleSpeechRecognition() {
+    if (!recognition && !initializeSpeechRecognition()) {
+        showToast('Speech recognition not supported in this browser', 'error');
+        return;
+    }
+
+    if (!isRecording) {
+        startSpeechRecognition();
+    } else if (isPaused) {
+        resumeSpeechRecognition();
+    } else {
+        pauseSpeechRecognition();
+    }
+}
+
+// Start speech recognition
+function startSpeechRecognition() {
+    try {
+        recognition.start();
+        isRecording = true;
+        isPaused = false;
+        transcriptBuffer = '';
+        updateSpeechUI('listening');
+        showToast('Started voice dictation', 'success');
+    } catch (error) {
+        console.error('Error starting speech recognition:', error);
+        showToast('Failed to start voice dictation', 'error');
+    }
+}
+
+// Pause speech recognition
+function pauseSpeechRecognition() {
+    recognition.stop();
+    isPaused = true;
+    updateSpeechUI('paused');
+    showToast('Voice dictation paused', 'info');
+}
+
+// Resume speech recognition
+function resumeSpeechRecognition() {
+    try {
+        recognition.start();
+        isPaused = false;
+        updateSpeechUI('listening');
+        showToast('Voice dictation resumed', 'success');
+    } catch (error) {
+        console.error('Error resuming speech recognition:', error);
+        showToast('Failed to resume voice dictation', 'error');
+    }
+}
+
+// Stop speech recognition
+function stopSpeechRecognition() {
+    if (recognition) {
+        recognition.stop();
+    }
+    resetSpeechRecognition();
+    showToast('Voice dictation stopped', 'info');
+}
+
+// Reset speech recognition state
+function resetSpeechRecognition() {
+    isRecording = false;
+    isPaused = false;
+    updateSpeechUI('stopped');
+}
+
+// Update speech recognition UI
+function updateSpeechUI(state) {
+    const speechBtn = document.getElementById('speech-btn');
+    const speechIcon = document.getElementById('speech-icon');
+    const speechText = document.getElementById('speech-text');
+    const speechStatus = document.getElementById('speech-status');
+    const statusIcon = document.getElementById('speech-status-icon');
+    const statusText = document.getElementById('speech-status-text');
+
+    switch (state) {
+        case 'listening':
+            speechBtn.className = 'text-sm text-red-600 hover:text-red-500 transition-colors duration-200';
+            speechIcon.className = 'fas fa-microphone-slash mr-1 animate-pulse';
+            speechText.textContent = t('speech.pause') || 'Pause';
+            speechBtn.title = t('speech.pause_dictation') || 'Pause dictation';
+            speechStatus.classList.remove('hidden');
+            statusIcon.className = 'fas fa-microphone text-red-400 animate-pulse';
+            statusText.innerHTML = '<strong>' + (t('speech.listening') || 'Listening') + '</strong> - ' + (t('speech.speak_now') || 'Speak now...');
+            break;
+        case 'paused':
+            speechBtn.className = 'text-sm text-orange-600 hover:text-orange-500 transition-colors duration-200';
+            speechIcon.className = 'fas fa-play mr-1';
+            speechText.textContent = t('speech.resume') || 'Resume';
+            speechBtn.title = t('speech.resume_dictation') || 'Resume dictation';
+            statusIcon.className = 'fas fa-pause text-orange-400';
+            statusText.innerHTML = '<strong>' + (t('speech.paused') || 'Paused') + '</strong> - ' + (t('speech.click_resume') || 'Click to resume');
+            break;
+        case 'stopped':
+        default:
+            speechBtn.className = 'text-sm text-red-600 hover:text-red-500 transition-colors duration-200';
+            speechIcon.className = 'fas fa-microphone mr-1';
+            speechText.textContent = t('speech.dictate') || 'Dictate';
+            speechBtn.title = t('speech.start_dictation') || 'Start dictation';
+            speechStatus.classList.add('hidden');
+            document.getElementById('enhance-btn').classList.add('hidden');
+            document.getElementById('translate-speech-btn').classList.add('hidden');
+            break;
+    }
+}
+
+// Update speech language
+function updateSpeechLanguage() {
+    const select = document.getElementById('speech-language');
+    speechLanguage = select.value;
+    
+    if (recognition) {
+        recognition.lang = speechLanguage;
+    }
+    
+    showToast(`Speech language changed to ${select.options[select.selectedIndex].text}`, 'info');
+}
+
+// Append text to prompt content
+function appendToPromptContent(text) {
+    const textarea = document.getElementById('content');
+    const currentContent = textarea.value;
+    const newContent = currentContent + (currentContent ? ' ' : '') + text.trim();
+    
+    textarea.value = newContent;
+    updateCounts();
+    
+    // Auto-scroll to bottom of textarea
+    textarea.scrollTop = textarea.scrollHeight;
+}
+
+// Enhance dictated text using AI
+async function enhanceDictatedText() {
+    const textarea = document.getElementById('content');
+    const text = textarea.value.trim();
+    
+    if (!text) {
+        showToast('No text to enhance', 'warning');
+        return;
+    }
+
+    const enhanceBtn = document.getElementById('enhance-btn');
+    const originalText = enhanceBtn.innerHTML;
+    enhanceBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Enhancing...';
+    enhanceBtn.disabled = true;
+
+    try {
+        const response = await fetch('/enhance-text', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                'text': text,
+                'type': 'dictation'
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            textarea.value = data.enhanced_text;
+            updateCounts();
+            showToast('Text enhanced successfully', 'success');
+        } else {
+            showToast('Enhancement failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Enhancement error:', error);
+        showToast('Enhancement service unavailable', 'error');
+    } finally {
+        enhanceBtn.innerHTML = originalText;
+        enhanceBtn.disabled = false;
+    }
+}
+
+// Translate dictated text to English
+async function translateDictatedText() {
+    const textarea = document.getElementById('content');
+    const text = textarea.value.trim();
+    
+    if (!text) {
+        showToast('No text to translate', 'warning');
+        return;
+    }
+
+    const translateBtn = document.getElementById('translate-speech-btn');
+    const originalText = translateBtn.innerHTML;
+    translateBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Translating...';
+    translateBtn.disabled = true;
+
+    try {
+        const response = await fetch('/translate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                'text': text,
+                'target_lang': 'en',
+                'source_lang': speechLanguage.split('-')[0] // Extract language code
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            textarea.value = data.translated_text;
+            updateCounts();
+            showToast('Text translated to English', 'success');
+        } else {
+            showToast('Translation failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Translation error:', error);
+        showToast('Translation service unavailable', 'error');
+    } finally {
+        translateBtn.innerHTML = originalText;
+        translateBtn.disabled = false;
+    }
+}
+
+// Helper function for translations (fallback if i18n not available)
+function t(key) {
+    // This would normally use the application's translation system
+    const translations = {
+        'speech.dictate': 'Dictate',
+        'speech.pause': 'Pause',
+        'speech.resume': 'Resume',
+        'speech.stop': 'Stop',
+        'speech.enhance': 'Enhance',
+        'speech.translate': 'Translate',
+        'speech.listening': 'Listening',
+        'speech.paused': 'Paused',
+        'speech.speak_now': 'Speak now...',
+        'speech.click_resume': 'Click to resume',
+        'speech.start_dictation': 'Start voice dictation',
+        'speech.pause_dictation': 'Pause dictation',
+        'speech.resume_dictation': 'Resume dictation',
+        'speech.language': 'Language'
+    };
+    
+    return translations[key] || key;
+}
+
+// Initialize speech recognition when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default language based on browser locale
+    const browserLang = navigator.language || navigator.userLanguage;
+    const langSelect = document.getElementById('speech-language');
+    
+    // Try to match browser language
+    for (let option of langSelect.options) {
+        if (option.value.startsWith(browserLang.split('-')[0])) {
+            option.selected = true;
+            speechLanguage = option.value;
+            break;
+        }
+    }
+    
+    // Check if speech recognition is supported
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        document.getElementById('speech-btn').style.opacity = '0.5';
+        document.getElementById('speech-btn').title = 'Speech recognition not supported in this browser';
+    }
+});
+
+</script>
+{% endblock %}

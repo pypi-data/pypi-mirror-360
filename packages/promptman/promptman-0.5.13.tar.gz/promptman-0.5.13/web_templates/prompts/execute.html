@@ -1,0 +1,230 @@
+{% extends "layouts/base.html" %}
+
+{% block main_content %}
+<!-- Enhanced Page Header -->
+{% set breadcrumbs = [
+    {"name": i18n.t('nav.prompts'), "url": "/prompts", "icon": "fas fa-file-text"},
+    {"name": "Execute Prompt", "icon": "fas fa-play"}
+] %}
+{% set header_title = "Execute: " + prompt.name %}
+{% set header_subtitle = i18n.t('prompt.execution_success') %}
+{% set header_icon = "fas fa-play" %}
+{% include "components/page_header.html" %}
+
+<div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Prompt Information -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">{{ prompt.name }}</h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                        {{ prompt.description or 'No description provided' }}
+                    </p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        {{ prompt.category }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="px-4 py-5 sm:p-6">
+            <div class="bg-gray-50 rounded-lg p-4">
+                <h4 class="text-sm font-medium text-gray-900 mb-2">Prompt Content</h4>
+                <pre class="text-sm text-gray-700 whitespace-pre-wrap">{{ prompt.content }}</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Variable Input Form -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                <i class="fas fa-edit mr-2 text-gray-400"></i>
+                Variables & Parameters
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">
+                Fill in the variables for your prompt
+            </p>
+        </div>
+        <div class="px-4 py-5 sm:p-6">
+            <form id="execute-form">
+                <div class="space-y-4" id="variables-container">
+                    <!-- Variables will be populated by JavaScript -->
+                </div>
+                
+                <!-- AI Provider Selection -->
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="ai-provider" class="block text-sm font-medium text-gray-700">
+                                AI Provider
+                            </label>
+                            <div class="mt-1">
+                                <select id="ai-provider" class="form-select">
+                                    <option value="openai">OpenAI GPT-4</option>
+                                    <option value="claude">Anthropic Claude</option>
+                                    <option value="gemini">Google Gemini</option>
+                                    <option value="mock">Mock Response (Testing)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="temperature" class="block text-sm font-medium text-gray-700">
+                                Temperature
+                            </label>
+                            <div class="mt-1">
+                                <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7" 
+                                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                <div class="text-xs text-gray-500 mt-1">
+                                    <span class="float-left">Conservative</span>
+                                    <span class="float-right">Creative</span>
+                                    <span id="temp-value" class="block text-center">0.7</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="max-tokens" class="block text-sm font-medium text-gray-700">
+                                Max Tokens
+                            </label>
+                            <div class="mt-1">
+                                <input type="number" id="max-tokens" value="150" min="1" max="4000" 
+                                       class="form-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <button type="button" onclick="executePrompt()" class="btn-primary">
+                            <i class="fas fa-play mr-2"></i>
+                            Execute Prompt
+                        </button>
+                        <button type="button" onclick="previewPrompt()" class="btn-secondary">
+                            <i class="fas fa-eye mr-2"></i>
+                            Preview
+                        </button>
+                    </div>
+                    <div class="text-sm text-gray-500">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Estimated cost: $0.00
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results-container" class="bg-white shadow rounded-lg hidden">
+        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                <i class="fas fa-robot mr-2 text-green-500"></i>
+                AI Response
+            </h3>
+        </div>
+        <div class="px-4 py-5 sm:p-6">
+            <div id="response-content" class="bg-gray-50 rounded-lg p-4">
+                <!-- Response will be populated here -->
+            </div>
+            <div class="mt-4 flex items-center justify-between text-sm text-gray-500">
+                <div>
+                    <span id="execution-time">Response time: --</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="token-count">Tokens used: --</span>
+                    <span id="cost-estimate">Cost: $--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-container" class="bg-white shadow rounded-lg hidden">
+        <div class="px-4 py-5 sm:p-6 text-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <h3 class="text-lg font-medium text-gray-900">Executing Prompt...</h3>
+            <p class="text-gray-500">This may take a few seconds</p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Extract variables from prompt content
+const promptContent = `{{ prompt.content|replace('`', '\\`')|replace('\n', '\\n') }}`;
+const variableRegex = /\{([^}]+)\}/g;
+const variables = [];
+let match;
+
+while ((match = variableRegex.exec(promptContent)) !== null) {
+    if (!variables.includes(match[1])) {
+        variables.push(match[1]);
+    }
+}
+
+// Populate variable inputs
+const container = document.getElementById('variables-container');
+if (variables.length === 0) {
+    container.innerHTML = '<p class="text-sm text-gray-500">No variables found in this prompt.</p>';
+} else {
+    variables.forEach(variable => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+            <label for="var-${variable}" class="block text-sm font-medium text-gray-700">
+                ${variable.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </label>
+            <div class="mt-1">
+                <input type="text" id="var-${variable}" name="${variable}" 
+                       class="form-input" placeholder="Enter ${variable}">
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// Temperature slider
+document.getElementById('temperature').addEventListener('input', function() {
+    document.getElementById('temp-value').textContent = this.value;
+});
+
+function previewPrompt() {
+    let preview = promptContent;
+    variables.forEach(variable => {
+        const value = document.getElementById(`var-${variable}`).value || `{${variable}}`;
+        preview = preview.replace(new RegExp(`\\{${variable}\\}`, 'g'), value);
+    });
+    
+    alert('Prompt Preview:\n\n' + preview);
+}
+
+function executePrompt() {
+    // Show loading
+    document.getElementById('loading-container').classList.remove('hidden');
+    document.getElementById('results-container').classList.add('hidden');
+    
+    // Get form values
+    const formData = {};
+    variables.forEach(variable => {
+        formData[variable] = document.getElementById(`var-${variable}`).value;
+    });
+    
+    // Mock execution (replace with actual API call)
+    setTimeout(() => {
+        const mockResponse = "This is a mock AI response. In a real implementation, this would be the actual AI provider response based on your prompt and variables.";
+        
+        document.getElementById('loading-container').classList.add('hidden');
+        document.getElementById('results-container').classList.remove('hidden');
+        document.getElementById('response-content').innerHTML = `<pre class="whitespace-pre-wrap text-sm text-gray-700">${mockResponse}</pre>`;
+        document.getElementById('execution-time').textContent = 'Response time: 1.2s';
+        document.getElementById('token-count').textContent = 'Tokens used: 45';
+        document.getElementById('cost-estimate').textContent = 'Cost: $0.001';
+        
+        showToast('Prompt executed successfully!', 'success');
+    }, 2000);
+}
+</script>
+{% endblock %}

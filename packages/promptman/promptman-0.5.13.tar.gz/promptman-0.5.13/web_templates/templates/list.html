@@ -1,0 +1,284 @@
+{% extends "layouts/base.html" %}
+
+{% block main_content %}
+<!-- Enhanced Page Header -->
+{% set breadcrumbs = [
+    {"name": t('nav.home'), "url": "/", "icon": "fas fa-home"},
+    {"name": t('template.list'), "icon": "fas fa-layer-group"}
+] %}
+{% set header_title = t('template.list') %}
+{% set header_subtitle = t('template.list_desc') %}
+{% set header_icon = "fas fa-layer-group" %}
+{% set header_actions = [
+    {
+        "type": "button",
+        "text": t('template.new'),
+        "url": "/templates/new",
+        "icon": "fas fa-plus",
+        "style": "primary"
+    }
+] %}
+{% include "components/page_header.html" %}
+
+<div class="space-y-6">
+
+    <!-- Templates List -->
+    {% if templates %}
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-4 py-5 sm:px-6">
+            <h3 class="text-lg leading-6 font-medium text-slate-800">
+                <i class="fas fa-layer-group mr-2 text-slate-400"></i>
+                {{ t('template.custom') }}
+            </h3>
+            <p class="mt-1 text-sm text-slate-500">
+                {{ t('template.custom_desc') }}
+            </p>
+        </div>
+        <div class="border-t border-gray-200">
+            <ul class="divide-y divide-gray-200">
+                {% for template in templates %}
+                <li class="px-4 py-4 hover:bg-gray-50">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                                        {% if template.category == 'Business' %}
+                                            <i class="fas fa-briefcase text-primary-600"></i>
+                                        {% elif template.category == 'Technical' %}
+                                            <i class="fas fa-code text-primary-600"></i>
+                                        {% elif template.category == 'Creative' %}
+                                            <i class="fas fa-paint-brush text-primary-600"></i>
+                                        {% elif template.category == 'Analytical' %}
+                                            <i class="fas fa-chart-bar text-primary-600"></i>
+                                        {% else %}
+                                            <i class="fas fa-layer-group text-primary-600"></i>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="flex items-center">
+                                        <p class="text-sm font-medium text-slate-800 truncate">
+                                            {{ template.name }}
+                                        </p>
+                                        <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            {{ t('template.category.' + template.category.lower()) or template.category }}
+                                        </span>
+                                    </div>
+                                    {% if template.description %}
+                                    <p class="text-sm text-slate-500 truncate">
+                                        {{ template.description }}
+                                    </p>
+                                    {% endif %}
+                                    {% if template.variables %}
+                                    <div class="mt-1 flex items-center space-x-1">
+                                        <i class="fas fa-code text-gray-400 text-xs"></i>
+                                        <span class="text-xs text-gray-500">
+                                            {{ template.variables.split(',') | length }} {{ t('template.variables').lower() }}
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="useTemplate('{{ template.name }}', '{{ template.content }}')" 
+                                    class="text-primary-600 hover:text-primary-900 text-sm font-medium">
+                                {{ t('template.use') }}
+                            </button>
+                            <a href="/templates/{{ template.id }}/edit" 
+                               class="text-gray-600 hover:text-gray-900 text-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% if not template.is_builtin %}
+                            <button onclick="deleteTemplate({{ template.id }}, '{{ template.name }}')" 
+                                    class="text-red-600 hover:text-red-900 text-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h3 class="text-lg leading-6 font-medium text-slate-800">
+                <i class="fas fa-layer-group mr-2 text-slate-400"></i>
+                {{ t('template.custom') }}
+            </h3>
+            <p class="mt-1 text-sm text-slate-500">
+                {{ t('template.custom_desc') }}
+            </p>
+        </div>
+        <div class="px-4 py-5 sm:p-6">
+            <div class="text-center py-12">
+                <i class="fas fa-layer-group text-4xl text-gray-300 mb-4"></i>
+                <h3 class="text-lg font-medium text-slate-800 mb-2">{{ t('template.empty') }}</h3>
+                <p class="text-slate-500 mb-6">{{ t('template.empty_desc') }}</p>
+                <a href="/templates/new" class="btn-primary">
+                    <i class="fas fa-plus mr-2"></i>
+                    {{ t('template.create') }}
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Built-in Templates Section -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Business Templates -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-briefcase text-2xl text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-medium text-slate-800">{{ t('template.category.business') }}</h3>
+                        <p class="text-sm text-slate-500">{{ t('template.category.business_desc') }}</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span class="text-sm font-medium">Email Writing</span>
+                            <button onclick="useBuiltinTemplate('email')" class="text-primary-600 hover:text-primary-500 text-sm">{{ t('template.use') }}</button>
+                        </div>
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span class="text-sm font-medium">Meeting Summary</span>
+                            <button onclick="useBuiltinTemplate('meeting')" class="text-primary-600 hover:text-primary-500 text-sm">{{ t('template.use') }}</button>
+                        </div>
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span class="text-sm font-medium">Proposal Writing</span>
+                            <button onclick="useBuiltinTemplate('proposal')" class="text-primary-600 hover:text-primary-500 text-sm">{{ t('template.use') }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Templates -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-code text-2xl text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-medium text-slate-800">{{ t('template.category.technical') }}</h3>
+                        <p class="text-sm text-slate-500">{{ t('template.category.technical_desc') }}</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span class="text-sm font-medium">Code Review</span>
+                            <button onclick="useBuiltinTemplate('code-review')" class="text-primary-600 hover:text-primary-500 text-sm">{{ t('template.use') }}</button>
+                        </div>
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span class="text-sm font-medium">API Documentation</span>
+                            <button onclick="useBuiltinTemplate('api-docs')" class="text-primary-600 hover:text-primary-500 text-sm">{{ t('template.use') }}</button>
+                        </div>
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span class="text-sm font-medium">Bug Report</span>
+                            <button onclick="useBuiltinTemplate('bug-report')" class="text-primary-600 hover:text-primary-500 text-sm">{{ t('template.use') }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Creative Templates -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-paint-brush text-2xl text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-medium text-slate-800">{{ t('template.category.creative') }}</h3>
+                        <p class="text-sm text-slate-500">{{ t('template.category.creative_desc') }}</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span class="text-sm font-medium">Blog Post</span>
+                            <button onclick="useBuiltinTemplate('blog-post')" class="text-primary-600 hover:text-primary-500 text-sm">{{ t('template.use') }}</button>
+                        </div>
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span class="text-sm font-medium">Social Media</span>
+                            <button onclick="useBuiltinTemplate('social-media')" class="text-primary-600 hover:text-primary-500 text-sm">{{ t('template.use') }}</button>
+                        </div>
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span class="text-sm font-medium">Story Writing</span>
+                            <button onclick="useBuiltinTemplate('story')" class="text-primary-600 hover:text-primary-500 text-sm">{{ t('template.use') }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Use a custom template
+function useTemplate(name, content) {
+    // Store template data in localStorage
+    localStorage.setItem('selected_template', JSON.stringify({
+        name: name,
+        content: content
+    }));
+    
+    // Redirect to prompt creation page
+    window.location.href = '/prompts/new?from_template=true';
+}
+
+// Use a built-in template
+function useBuiltinTemplate(templateType) {
+    // Store template type in localStorage
+    localStorage.setItem('selected_builtin_template', templateType);
+    
+    // Redirect to prompt creation page
+    window.location.href = '/prompts/new?from_builtin_template=true';
+}
+
+// Delete a template
+function deleteTemplate(templateId, templateName) {
+    if (confirm("{{ t('msg.confirm_delete') }}: " + templateName + "?")) {
+        fetch(`/templates/${templateId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (response.ok) {
+                // Reload the page to show updated list
+                window.location.reload();
+            } else {
+                alert("{{ t('status.error') }}: Failed to delete template");
+            }
+        })
+        .catch(error => {
+            alert("{{ t('status.error') }}: " + error.message);
+        });
+    }
+}
+</script>
+
+<style>
+.btn-primary {
+    @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
+}
+
+.btn-secondary {
+    @apply inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
+}
+</style>
+{% endblock %}
