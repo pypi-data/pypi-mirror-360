@@ -1,0 +1,43 @@
+<!--
+Componente: Checkbox
+Uso: include "components/checkbox.html" with name="terms" label="Aceito os termos"
+
+Parâmetros:
+- name: Nome do campo (obrigatório para formulários)
+- id: ID do elemento (padrão: mesmo que name)
+- label: Texto do label (opcional)
+- checked: true/false (padrão: false)
+- disabled: true/false (padrão: false)
+- required: true/false (padrão: false)
+- value: Valor do checkbox (padrão: "on")
+- x_model: Modelo Alpine.js para two-way binding (opcional)
+- class: Classes CSS adicionais (opcional)
+-->
+{% with checkbox_id=id|default:name|default:"checkbox" checked=checked|default:False disabled=disabled|default:False required=required|default:False value=value|default:"on" %}
+<div class="flex items-center space-x-2 {{ class|default:'' }}">
+    <input
+        type="checkbox"
+        {% if name %}name="{{ name }}"{% endif %}
+        {% if checkbox_id %}id="{{ checkbox_id }}"{% endif %}
+        value="{{ value }}"
+        {% if checked %}checked{% endif %}
+        {% if disabled %}disabled{% endif %}
+        {% if required %}required{% endif %}
+        {% if x_model %}x-model="{{ x_model }}"{% endif %}
+        class="peer h-4 w-4 shrink-0 rounded-sm border border-primary shadow 
+            focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring 
+            disabled:cursor-not-allowed disabled:opacity-50 
+            data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground
+            checked:bg-primary checked:text-primary-foreground"
+    />
+    
+    {% if label %}
+        <label 
+            {% if checkbox_id %}for="{{ checkbox_id }}"{% endif %}
+            class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+            {{ label }}
+        </label>
+    {% endif %}
+</div>
+{% endwith %}

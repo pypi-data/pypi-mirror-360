@@ -1,0 +1,111 @@
+{% load static tailwind_tags %}
+{% load icon_tags %}
+<!DOCTYPE html>
+<html lang="pt-BR" :class="{ 'dark': darkMode }">
+	<head>
+		<title>{% block title %}Meu Projeto{% endblock %}</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		{% tailwind_css %}
+		
+		{% load static %}
+		
+		<!-- SPA Inteligente (opcional - remova se não precisar) -->
+		<script src="{% static 'js/spa-intelligent.js' %}"></script>
+		
+		<!-- Alpine.js -->
+		<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+		
+		{% block extra_head %}{% endblock %}
+	</head>
+
+	<body class="bg-background text-foreground transition-colors duration-300" 
+		  x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' || false }"
+		  x-init="$watch('darkMode', val => localStorage.setItem('darkMode', val))"
+		  x-cloak>
+		
+		<!-- Barra de progresso SPA (opcional) -->
+		<div id="spa-progress-bar"></div>
+		
+		<!-- Container principal -->
+		<div class="min-h-screen flex flex-col">
+			<!-- Header -->
+			<header class="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+				<div class="container mx-auto px-4 py-4">
+					<div class="flex items-center justify-between">
+						<div class="flex items-center space-x-6">
+							<h1 class="text-xl font-bold text-primary">
+								{% block header_title %}Meu Projeto{% endblock %}
+							</h1>
+							
+							<!-- Navegação personalizada -->
+							<nav class="hidden md:flex space-x-4">
+								{% block navigation %}
+								<a href="/" data-spa-link class="text-sm font-medium hover:text-primary transition-colors">Início</a>
+								<!-- Adicione seus links aqui -->
+								{% endblock %}
+							</nav>
+						</div>
+						
+						<div class="flex items-center space-x-4">
+							<!-- Loading indicator SPA -->
+							<div x-show="$store.spaIntelligent && $store.spaIntelligent.isLoading" class="flex items-center">
+								<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+								<span class="ml-2 text-sm text-muted-foreground">Carregando...</span>
+							</div>
+							
+							<!-- Dark mode toggle -->
+							<button @click="darkMode = !darkMode" 
+									class="inline-flex items-center justify-center rounded-radius-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10"
+									title="Alternar tema">
+								<span x-show="!darkMode">{% icon 'moon' class='w-4 h-4' %}</span>
+								<span x-show="darkMode">{% icon 'sun' class='w-4 h-4' %}</span>
+							</button>
+							
+							<!-- Área para botões personalizados -->
+							{% block header_actions %}{% endblock %}
+						</div>
+					</div>
+				</div>
+			</header>
+
+			<!-- Conteúdo principal -->
+			<main class="flex-1" id="spa-main-content">
+				{% block page_content %}
+				<div class="container mx-auto px-4 py-8">
+					<div class="text-center py-16">
+						<h1 class="text-4xl font-bold mb-4">Bem-vindo!</h1>
+						<p class="text-xl text-muted-foreground mb-8">
+							Seu projeto está pronto para começar
+						</p>
+						
+						<div class="flex flex-col sm:flex-row gap-4 justify-center">
+							<button class="inline-flex items-center justify-center rounded-radius-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8">
+								{% icon 'rocket' class='w-4 h-4 mr-2' %}
+								Começar
+							</button>
+						</div>
+					</div>
+				</div>
+				{% endblock %}
+			</main>
+
+			<!-- Conteúdo customizável -->
+			{% block content %}{% endblock %}
+
+			<!-- Footer -->
+			<footer class="border-t border-border bg-muted/50 mt-auto">
+				<div class="container mx-auto px-4 py-6">
+					<div class="text-center text-sm text-muted-foreground">
+						{% block footer %}
+						<p>© {% now "Y" %} {% block footer_title %}Meu Projeto{% endblock %}. Powered by Django Cazenga UI.</p>
+						{% endblock %}
+					</div>
+				</div>
+			</footer>
+		</div>
+		
+		{% block extra_js %}{% endblock %}
+	</body>
+</html> 
