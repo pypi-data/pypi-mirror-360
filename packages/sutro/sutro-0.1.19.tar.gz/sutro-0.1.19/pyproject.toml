@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.env]
+requires = ["pip"]
+type = "virtual"
+installer = "uv"
+
+[project]
+name = "sutro"
+version = "0.1.19"
+description = "Sutro Python SDK"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+dependencies = [
+    "numpy==2.1.1",
+    "requests==2.32.3",
+    "pandas==2.2.3",
+    "polars==1.8.2",
+    "click==8.1.7",
+    "colorama==0.4.4",
+    "yaspin==3.1.0",
+    "tqdm==4.67.1",
+    "pydantic==2.11.4",
+]
+
+[project.scripts]
+sutro = "sutro.cli:cli"
+
+[project.urls]
+"Homepage" = "https://sutro.sh"
+"Documentation" = "https://docs.sutro.sh"
+
+[tool.hatch.build.targets.wheel]
+packages = ["sutro"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "sutro",
+    "README.md",
+    "LICENSE",
+]
+exclude = [
+    "demo_data",
+    "demo.py",
+    ".gitignore",
+    ".DS_Store",
+    "env",
+]
