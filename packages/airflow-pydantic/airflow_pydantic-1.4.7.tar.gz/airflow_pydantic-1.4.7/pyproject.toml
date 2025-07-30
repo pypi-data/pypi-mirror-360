@@ -1,0 +1,147 @@
+[build-system]
+requires = ["hatchling"]
+build-backend="hatchling.build"
+
+[project]
+name = "airflow-pydantic"
+authors = [{name = "the airflow-pydantic authors", email = "t.paine154@gmail.com"}]
+description = "Pydantic models for Apache Airflow"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+version = "1.4.7"
+requires-python = ">=3.9"
+keywords = []
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [
+    "pkn>=0.1.3",
+    "pydantic>=2",
+]
+
+[project.optional-dependencies]
+develop = [
+    "ccflow",
+    "build",
+    "bump-my-version",
+    "check-manifest",
+    "hatchling",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "twine",
+    "uv",
+    "wheel",
+]
+airflow = [
+    "apache-airflow>=2.8,<3.1",
+    "apache-airflow-providers-ssh",
+    "apache-airflow-providers-standard",
+]
+laminar = [
+    # Laminar
+    "airflow-balancer",
+    "airflow-config",
+    "airflow-common-operators",
+    "airflow-ha",
+    "airflow-supervisor>=1.9",
+    "supervisor-pydantic",
+    # Airflow
+    "apache-airflow>=2.8,<3.1",
+    "apache-airflow-providers-ssh",
+    "apache-airflow-providers-standard",
+]
+
+[project.scripts]
+
+[project.urls]
+Repository = "https://github.com/airflow-laminar/airflow-pydantic"
+Homepage = "https://github.com/airflow-laminar/airflow-pydantic"
+
+[tool.bumpversion]
+current_version = "1.4.7"
+commit = true
+tag = true
+
+[[tool.bumpversion.files]]
+filename = "airflow_pydantic/__init__.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[tool.check-manifest]
+ignore = [
+    ".copier-answers.yaml",
+    "Makefile",
+    "docs/**/*",
+]
+
+[tool.coverage.run]
+branch = true
+omit = [
+    "airflow_pydantic/tests/integration/",
+]
+[tool.coverage.report]
+exclude_also = [
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "@(abc\\.)?abstractmethod",
+]
+ignore_errors = true
+fail_under = 65
+
+[tool.hatch.build]
+artifacts = []
+
+[tool.hatch.build.sources]
+src = "/"
+
+[tool.hatch.build.targets.sdist]
+packages = ["airflow_pydantic"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["airflow_pydantic"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+
+[tool.pytest.ini_options]
+addopts = ["-vvv", "--junitxml=junit.xml"]
+testpaths = "airflow_pydantic/tests"
+
+[tool.ruff]
+line-length = 150
+
+[tool.ruff.lint]
+extend-select = ["I", "AIR301"]
+preview = true
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+default-section = "third-party"
+known-first-party = ["airflow_pydantic"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
+"airflow_pydantic/tests/core/rendered/*" = ["AIR301"]
+
+[tool.yardang]
+title = "airflow-pydantic"
+root = "README.md"
+pages = ["docs/src/API.md"]
+use-autoapi = false
