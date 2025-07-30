@@ -1,0 +1,57 @@
+{% load i18n static %}
+
+<div id="{{ widget.attrs.id }}_map" style="height:400px;"></div>
+<div class="form-row">
+	<div class="col-12">
+		<div class="input-group">
+			{% if not widget.attrs.readonly %}
+				<div id="{{ widget.attrs.id }}_gpsbutton" class="input-group-prepend">
+					<div class="input-group-text bg-light">
+						<img src="{% static 'octicons/location.svg' %}" class="octicon" />
+					</div>
+				</div>
+			{% endif %}
+
+			<input id="{{ widget.attrs.id }}_0" name="{{ widget.name }}_0" type="text" class="form-control" {% if widget.value %}value="{{ widget.value.0 }}"{% endif %} readonly />
+			<input id="{{ widget.attrs.id }}_1" name="{{ widget.name }}_1" type="hidden" class="form-control" {% if widget.value %}value="{{ widget.value.1 }}"{% endif %} />
+			
+			{% if not widget.attrs.readonly %}
+				<div id="{{ widget.attrs.id }}_delete" class="input-group-append">
+					<div class="input-group-text bg-danger">
+						<img src="{% static 'octicons/x.svg' %}" class="octicon" />
+					</div>
+				</div>
+			{% endif %}
+		</div>
+		<input id="{{ widget.attrs.id }}" type="hidden" name="{{ widget.attrs.name }}" />
+	</div>
+</div>
+<script>
+
+	(function () {
+
+		{% if widget.attrs.readonly %}
+			var readonly = true;
+		{% else %}
+			var readonly = false;
+		{% endif %}
+
+		{% if widget.value %}
+			var value = {{ widget.value.1|safe }};
+			var initial_latitude = value.geometry.coordinates[1];
+			var initial_longitude = value.geometry.coordinates[0];
+			
+		{% else %}
+			var value = null;
+			var initial_latitude = 49;
+			var initial_longitude = 11;
+			var initial_accuracy = 0;
+		{% endif %}
+
+		// fill the form on successful position
+
+		var mapmanager = new MapManager('{{ widget.attrs.id }}', initial_latitude, initial_longitude, readonly, value);
+
+	})();
+
+</script>
