@@ -1,0 +1,14 @@
+from enum import Enum
+
+
+class PayLaterStatus(str, Enum):
+    CANCELED = "CANCELED"
+    CUSTOMER_CREATION_IN_PROGRESS = "CUSTOMER_CREATION_IN_PROGRESS"
+    EXPIRED = "EXPIRED"
+    LOAN_APPLICATION_FINISHED = "LOAN_APPLICATION_FINISHED"
+    LOAN_APPLICATION_IN_PROGRESS = "LOAN_APPLICATION_IN_PROGRESS"
+    LOAN_DISBURSED = "LOAN_DISBURSED"
+    NEW = "NEW"
+
+    def __str__(self) -> str:
+        return str(self.value)
