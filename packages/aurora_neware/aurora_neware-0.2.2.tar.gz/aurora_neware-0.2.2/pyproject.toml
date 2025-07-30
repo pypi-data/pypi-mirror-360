@@ -1,0 +1,70 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "aurora_neware"
+dynamic = ["version"]
+readme = "README.md"
+description = "Python API for Neware Battery Testing System"
+license = {file = "LICENSE"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "defusedxml",
+    "typer",
+]
+
+[project.optional-dependencies]
+dev = [
+    "bumpver==2024.1130",
+    "pre-commit~=4.0",
+    "pytest~=8.0",
+]
+
+[project.scripts]
+neware = "aurora_neware.cli.main:app"
+
+[tool.ruff]
+line-length = 120  # Set the maximum line length
+lint.select = ["ALL"]
+lint.ignore = [
+    "N806",
+    "T201",
+    "FA102",
+    "PD901",
+    "FBT001",
+    "FBT002",
+    "PLR2004",
+    "TD002",
+    "TD003",
+    "D203",
+    "D213",
+    "COM812",
+]
+fix = true
+
+[tool.mypy]
+disable_error_code = ["import-untyped"]
+
+[tool.bumpver]
+current_version = "v0.2.2"
+version_pattern = "vMAJOR.MINOR.PATCH[PYTAGNUM]"
+commit_message = "Bump version {old_version} -> {new_version}."
+tag_message = "Release {new_version}."
+tag_scope = "default"
+pre_commit_hook = ""
+post_commit_hook = ""
+commit = true
+tag = true
+push = true
+
+[tool.bumpver.file_patterns]
+"aurora_neware/version.py" = [
+    '__version__ = "{pep440_version}"',
+]
