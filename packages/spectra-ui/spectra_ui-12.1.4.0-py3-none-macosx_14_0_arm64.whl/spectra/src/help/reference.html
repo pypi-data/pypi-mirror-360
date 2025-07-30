@@ -1,0 +1,4414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Reference Manual for SPECTRA 12.1.0</title>
+<link rel="stylesheet" type="text/css" href="reference.css">
+<script>MathJax = {chtml: {matchFontHeight: false}, tex: { inlineMath: [['$', '$']] }};</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+<div style="display: flex;">
+<div class="sidemenu">
+<div><a href="#Copyright Notice">Copyright Notice</a></div><details><summary>Introduction</summary><ul><li><a href="#Overview">Overview</a></li><li><a href="#Getting Started">Getting Started</a></li></ul></details><details><summary>Operation of the GUI</summary><ul><li><a href="#Main Parameters">Main Parameters</a></li><li><a href="#Pre-Processing">Pre-Processing</a></li><li><a href="#Post-Processing">Post-Processing</a></li><li><a href="#Parameter Set">Parameter Set</a></li><li><a href="#Menu Commands">Menu Commands</a></li><li><a href="#Setup Dialogs">Setup Dialogs</a></li><li><a href="#Edit the Plot">Edit the Plot</a></li></ul></details><details><summary>Parameter List</summary><ul><li><a href="#Accelerator">Accelerator</a></li><li><a href="#Light Source">Light Source</a></li><li><a href="#Configurations">Configurations</a></li></ul></details><details><summary>Calculation Setup</summary><ul><li><a href="#General Method">General Method</a></li><li><a href="#Calculation Type">Calculation Type</a></li><li><a href="#Output Items">Output Items</a></li><li><a href="#Calculation Status/Processes">Calculation Status/Processes</a></li><li><a href="#Scanning a Parameter">Scanning a Parameter</a></li><li><a href="#Parallel Computing Support">Parallel Computing Support</a></li></ul></details><details><summary>Advanced Functions</summary><ul><li><a href="#Surface Power Density">Surface Power Density</a></li><li><a href="#Volume Power Density">Volume Power Density</a></li><li><a href="#Characterization at the Source Point">Characterization at the Source Point</a></li><li><a href="#Coherent Mode Decomposition">Coherent Mode Decomposition</a></li><li><a href="#Wavefront Propagation">Wavefront Propagation</a></li></ul></details><details><summary>File Format</summary><ul><li><a href="#JSON Format">JSON Format</a></li><li><a href="#Input Format">Input Format</a></li><li><a href="#Output Format">Output Format</a></li></ul></details><div><a href="#Standalone Mode">Standalone Mode</a></div><div><a href="#Python User Interface">Python User Interface</a></div><div><a href="#References">References</a></div><div><a href="#Acknowledgements">Acknowledgements</a></div></div>
+<div class="main"><h1 id="Copyright Notice">Copyright Notice</h1>
+
+<p><em>Copyright 1998-2024 Takashi Tanaka</em></p>
+
+<p>This software is free for use, however, the author retains the copyright to this software. It may be distributed in its entirety only and may not be included in any other product or be distributed as part of any commercial software.</p>
+
+<p>This software is distributed with <em>NO WARRANTY OF ANY KIND</em>. Use at your own risk. The author is not responsible for any damage done by using this software and no compensation is made for it.</p>
+
+<p>This software has been developed, improved and maintained as voluntary work of the author. Even if problems and bugs are found, the author is not responsible for improvement of them or version up of the software.</p>
+
+<p><em>If you are submitting articles to scientific journals with the results obtained by using this software, please cite the relevant references.</em> For details, refer to <a href="#Introduction">Introduction</a>.</p>
+<h1 id="Introduction">Introduction</h1>
+
+<p>This document describes the instruction to use the free software SPECTRA, a synchrotron radiation (SR) calculation code, and is located in "[SPECTRA Home]/help", where "[SPECTRA Home]" is the directory where SPECTRA has been installed. Brief explanations on the software and numerical implementation of SR calculation are given here, together with a simple instruction of how to get started. Note that <a href="https://www.mathjax.org/">"MathJax"</a> javascript library is needed to correctly display the mathematical formulas, which is available online. If you need to read this document offline, "MathJax" should be installed in "[SPECTRA Home]/help" directory.</p>
+<h2 id="Overview">Overview</h2>
+
+<p>SPECTRA is a computer program to numerically evaluate the characteristics of radiation emitted from various synchrotron radiation (SR) sources, such as bending magnets and insertion devices (IDs, i.e., wigglers and undulators). In addition, SR sources with arbitrary magnetic fields are available by importing the magnetic field data prepared by the user. This makes it possible to estimate the real performance of the SR source by using the magnetic field distribution actually measured by field measurement instruments such as Hall probes.</p>
+
+<p>To compute the characteristics of radiation and evaluate the performances of SR sources, a large number of parameters are required to specify the electron beam, light source, observation conditions, and options for numerical operations. SPECTRA is equipped with a fully graphical user interface (GUI) which facilitates configurations of them. In addition, a post-processor is included to verify the computation results graphically. Since version 11.0, the GUI is written based on the web technologies, i.e., HTML, CSS and Javascript, with the assistance of "node.js" and "tauri" to build a standalone application. For visualization of calculation results and imported data, "Plotly" library is used. Thanks to portability of these libraries, SPECTRA will run on most of the platforms such as Microsoft Windows, Macintosh OS X and Linux. SPECTRA does not require any other commercial software or libraries.</p>
+
+<p>The numerical part of SPECTRA ("solver") is written in C++11 with the standard template library (STL). For bending magnets, wigglers and undulators, numerical implementation is based on the well-known expressions on SR, and the so-called far-field approximation is available for fast computation. For more accurate evaluation, expressions on SR in the near-field region are used for numerical computation. In this case, characteristics of SR emitted from both the ideal- and arbitrary-field devices can be calculated. For details of numerical implementation, refer to <a href="#spectrajsr">[1]</a> and <a href="#spectrasri">[2]</a>. The users who are publishing their results obtained with SPECTRA are kindly requested to cite <a href="#spectra11jsr">[3]</a>.</p>
+
+<p>Before ver. 7.2, the magnetic field was assumed to be constant in the transverse (x-y) plane. In other words, only the dipole components were taken into account. This considerably simplifies the numerical algorithm not only in the trajectory calculation but also in the spatial integration to take into account the finite electron beam emittance. In ver. 8.0, an arbitrary magnetic field has been supported to enable the evaluation of the effects due to quadrupole magnets between undulator segments and the undulator natural focusing, which would be significant for low-energy electrons. In ver. 9.0, an arbitrary electron bunch profile has been supported. The user can specify the longitudinal bunch profile, or import the macroparticle coordinates in the 6D phase space, which is usually created by the start-to-end simulation for accelerators.</p>
+
+<p>In ver. 10.0, a new function to compute the photon flux density in the 4D phase space (x,x',y,y') has been implemented<a href="#refwigner">[4]</a>, which enables the rigorous estimation of the brilliance (brightness) of typical SR sources and the photon distribution at the source point to be utilized in other computer codes for ray-tracing simulations. Based on the phase-space density computed with this function, a numerical scheme to decompose the partially-coherent radiation into a number of coherent modes (coherent mode decomposition: CMD)<a href="#refcmd">[5]</a> has been later implemented in version 10.1, which is explained in more detail <a href="#Coherent Mode Decomposition">here</a>. The users who are publishing their results obtained using these numerical schemes are kindly requested to cite the relevant references. Also implemented in ver. 10.1 is a function to compute the surface power density, which is convenient to compute the heat load on the inner wall of a vacuum chamber located near the SR source and exposed to SR with a shallow incident angle.</p>
+
+<p>In ver. 11.0, the solver has been widely revised to be consistent with the C++11 standard and to facilitate the maintenance and bug fix. A new function has been also implemented to compute the volume power density; this is to evaluate the heat load of SR incident on an object, which gradually decays while it transmits the object. The output data will probably be used later for heat analysis of high heat-load components in the SR beamline based on the finite element method. In addition to the above revisions, two important upgrades have been made in ver. 11. First, the format of the input parameter file has been changed from the original one (and thus not readable in other applications) to JSON (JavaScript Object Notation) format. Because the output data is also given by a JSON file, it is now easy to communicate with other 3rd-party applications. Second, the framework (GUI library) has been switched to those based on web technologies (HTML, CSS, and JavaScript). This enhances the portability between different platforms (operating systems).</p>
+
+<p>In ver. 12.0, the python support, which was experimentally implemented in ver 11.0, has been extensively enhanced. Python package as a user interface to communicate with the SPECTRA GUI has been developed and is available from the Python Package Index repository (by a normal pip command). Note that this function is based on "Selenium" framework that is usually used to automatically operate the web browser. For details about how it works, refer to <a href="#Python User Interface">Python User Interface</a></p>
+
+<p>Following the enhancement of the python support deseribed abvove, an imporant decision has been made in ver. 12.0 regarding the support for Linux platforms; because of the too diverse versions of relevant (not only GUI but also core) libraries, it is almost impossible to prepare the conventional desktop application to support all the potential distributions. Thus, only one package compiled on Ubuntu 20.04, which can be installed through dpkg/apt, is prepared as of May 2024. The users of other Linux distributions are kindly recommended to try the python version.</p>
+<h2 id="Getting Started">Getting Started</h2>
+<ol><li>Open a parameter file by running [File]-[Open a Parameter File] command, or run [File]-[Create a New Parameter File] command to start with a new parameter set.</li><li>Select the calculation type from submenus in [Select Calculation].</li><li>Edit the parameters if necessary and specify the directory and data name to save the calculation results.</li><li>Run [Run]-[Start Calculation] command to start a calculation with current parameters.</li><li>A "Progressbar" appears to inform the calculation status.</li><li>To verify the calculation results after completion of the calculation, click "Post-Processing" tab, select the name of the output file and item(s) to check for visualization. Refer to <a href="#Post-Processing">Post-Processing</a> for details.</li></ol><h1 id="Operation of the GUI">Operation of the GUI</h1>
+
+<p>SPECTRA GUI is composed of three tabbed panels entitled as "Main Parameters", "Pre-Processing", and "Post-Processing", which are explained in what follows.</p>
+<h2 id="Main Parameters">Main Parameters</h2>
+
+<p>The "Main Parameters" tabbed panel is composed of a number of subpanels entitled as "Accelerator", "Light Source", "Configurations", "Output File", and "Calculation Status/Processes". Note that the "Accelerator", "Light Source""Output File" subpanels are always displayed, while the others are shown when necessary.</p>
+<figure id="main.png"><img src="main.png" style="width: 860px;"><figcaption>Example of the "Main Parameters" tabbed panel.</figcaption></figure><h3 id="Accelerator Subpanel">Accelerator Subpanel</h3>
+
+<p>Display and edit the parameters and numerical conditions related to the electron beam. For details, refer to <a href="#Accelerator">Accelerator Parameter List</a>.</p>
+<h3 id="Light Source Subpanel">Light Source Subpanel</h3>
+
+<p>Display and edit the parameters and numerical conditions related to the light source. For details, refer to <a href="#Light Source">Light Source Parameter List</a>.</p>
+<h3 id="Configurations Subpanel">Configurations Subpanel</h3>
+
+<p>Display and edit the parameters and numerical conditions related to the observation of radiation. For details, refer to <a href="#Configurations">Configurations Parameter List</a>.</p>
+<h3 id="Output File Subpanel">Output File Subpanel</h3>
+
+<p>Specify the path, name and format of the output file.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Format</td>
+<td>Select the format of the output file from three options: "JSON" for the JSON format, "ASCII" for the ASCII (simple text with the suffix ".txt") format, and "Both" for the both options. Note that the ASCII format is identical to that in the older (&amp;lE 10.2) versions, however, it cannot be used later for <a href="#Post-Processing">Post-Processing</a> (visualization of the data).</td>
+</tr>
+<tr>
+<td>Folder</td>
+<td rowspan="3">Input the path of the output file in [Folder], a prefix text in [Prefix], and a serial number in [Serial Number]. Then the output file name is given as [Folder]/[Prefix]-[Serial Number].[Format], like "/Users/data/test-1.json", where "/Users/data", "test", 1, and "json" refer to [Folder], [Prefix], [Serial Number] and [Format]. Note that the serial number can be -1 (negative), in which case it is not attached to the data name.</td>
+</tr>
+<tr>
+<td>Prefix</td>
+</tr>
+<tr>
+<td>Serial Number</td>
+</tr>
+<tr>
+<td>Comment</td>
+<td>Input any comment in [Comment] if necessary, which is saved in the output file and can be referred later on.</td>
+</tr>
+</tbody></table>
+
+
+<p>Note that a spread sheet "Output Data" is shown in this subpanel, if "Fixed Point Calculation" is selected as the calculation type. Click "Start Calculation" to start a calculation using current parameters and options, then the results are displayed when it is completed.</p>
+<h3 id="Calculation Status/Processes Subpanel">Calculation Status/Processes Subpanel</h3>
+
+<p>Display the status of a calculation in progress, or the list of <a href="#Calculation Status/Processes">Calculation Status/Processes</a>. Click "Cancel" to stop the calculation currently running, "Cancel All" to terminate all the calculations, and "Remove" to remove the selected process.</p>
+<h2 id="Pre-Processing">Pre-Processing</h2>
+
+<p>The "Pre-Processing" tabbed panel assists the pre-processing, or the arrangement of numerical conditions not displayed in the "Main Parameters" panel.</p>
+<h3 id="Data Import">Data Import</h3>
+
+<p>Import a data set prepared by the user, which is necessary for several types of calculations. The types of data sets available in SPECTRA are summarized below.</p>
+<table><caption>Data types that can be imported in the Pre-Processing subpanel</caption><tbody>
+
+<tr>
+<td class=" title">Name in Pre-Processing Subpanel</td>
+<td class=" title">Details</td>
+<td class=" title">Dimension</td>
+<td class=" title">Independent Variable(s)</td>
+<td class=" title">Items</td>
+</tr>
+<tr>
+<td>Current Profile</td>
+<td>undefined</td>
+<td>1</td>
+<td>time </td>
+<td>I </td>
+</tr>
+<tr>
+<td>E-t Profile</td>
+<td>undefined</td>
+<td>2</td>
+<td>time , DE/E</td>
+<td>j </td>
+</tr>
+<tr>
+<td>Field Profile</td>
+<td>undefined</td>
+<td>1</td>
+<td>z </td>
+<td>Bx , By </td>
+</tr>
+<tr>
+<td>Field Profile (1 Period)</td>
+<td>undefined</td>
+<td>1</td>
+<td>z </td>
+<td>Bx , By </td>
+</tr>
+<tr>
+<td>Gap vs. Field</td>
+<td>undefined</td>
+<td>1</td>
+<td>Gap </td>
+<td>Bx , By </td>
+</tr>
+<tr>
+<td>Custom Filter</td>
+<td>undefined</td>
+<td>1</td>
+<td>Energy </td>
+<td>Transmission</td>
+</tr>
+<tr>
+<td>Depth-Position Data</td>
+<td>undefined</td>
+<td>0</td>
+<td></td>
+<td>Depth </td>
+</tr>
+<tr>
+<td>Seed Spectrum</td>
+<td>undefined</td>
+<td>1</td>
+<td>Wavelength </td>
+<td>Intensity, Phase </td>
+</tr>
+</tbody></table>
+
+
+<p>Meanings of the items and variables are as follows.</p>
+<ul><li>time: arrival time, or longitudinal position along the electron bunch</li><li>DE/E: normalized energy deviation (dimensionless)</li><li>I: beam current (A)</li><li>j: beam current density (A/100%)</li><li>z: longitudinal coordinate along the beam axis</li><li>Bx,By: horizontal and vertical magnetic fields</li><li>Gap: gap of the ID</li><li>Depth: depth positions where the Volume Power Density is calculated</li></ul>
+<p>The unit of j may need to be explained; it is given as the current per unit energy band; in a mathematical form, \[I(t)=\int j\left(t, \frac{DE}{E}\right) d\frac{DE}{E}\]</p>
+
+<p>The format of the ASCII file for the 1D data is as follows (magnetic field distribution as an example)</p>
+
+<p><div class="direct"><pre><code>z	Bx	By
+-8.959978e-01	5.174e-05	7.035e-06
+-8.949972e-01	5.423e-05	7.062e-06
+-8.939967e-01	5.646e-05	7.244e-06
+		(omitted)
+ 8.979989e-01	4.801e-05	6.639e-06
+ 8.989994e-01	4.582e-05	6.327e-06
+ 9.000000e-01	4.409e-05	6.456e-06
+</code></pre></div></p>
+
+<p>The 1st line (title) is optional. In the above format, the interval of the independent variable (z) does not have to be necessarily constant, which is not the case for the 2D data; the format should as follows</p>
+
+<p><div class="direct"><pre><code>time	DE/E	j
+-1.0e-3	-0.01	0.001
+-0.9e-3	-0.01	0.002
+-0.8e-3	-0.01	0.003
+    (omitted)
+0.8e-3	-0.01	0.003
+0.9e-3	-0.01	0.002
+1.0e-3	-0.01	0.001
+-1.0e-3	-0.008	0.001
+-0.9e-3	-0.008	0.002
+-0.8e-3	-0.008	0.003
+    (omitted)
+0.8e-3	-0.008	0.003
+0.9e-3	-0.008	0.002
+1.0e-3	-0.008	0.001
+    (omitted)
+-1.0e-3	0.01	0.001
+-0.9e-3	0.01	0.002
+-0.8e-3	0.01	0.003
+    (omitted)
+0.8e-3	0.01	0.003
+0.9e-3	0.01	0.002
+1.0e-3	0.01	0.001
+</code></pre></div></p>
+
+<p>For reference, such a data format is created in the C/C++ language as follows.</p>
+
+<p><div class="direct"><pre><code>for(n = 0; n &lt; N; n++){
+  for(m = 0; m &lt; M; m++){
+    cout &lt;&lt; t[m] &lt;&lt; " " &lt;&lt; de[n] &lt;&lt; " " &lt;&lt;  j[m][n] &lt;&lt; endl;
+  }
+}</code></pre></div></p>
+
+<p>Note that the order of the "for loop" is arbitrary; the 1st and 2nd lines can be swapped in the above example.</p>
+
+<p>After preparing the ASCII file, click "Import" button and specify the file name in the dialog box to import it. The unit of each item should be chosen before importing, in the <a href="#Units for Data Import">Units for Data Import</a> dialog box that pops up by running [Edit]-[Units for Data Import] command or clicking "Edit Units" button. Note that the unit of the imported data cannot be changed, so you need to import the data again with the correct unit in case a wrong unit has been chosen. Also note that the units of several items (I, j, DE/E) are fixed, and cannot be selected when importing.</p>
+<h3 id="Visualization">Visualization</h3>
+
+<p>After importing, the data sets can be visualized to verify if the configurations (unit and format of the data file) are correct. An example is shown below.</p>
+<figure id="preproc.png"><img src="preproc.png" style="width: 876px;"><figcaption>Example of the "Pre-Processing" tabbed panel. The relation between the gap and magnetic field amplitude of an undulator is plotted in this example.</figcaption></figure>
+<p>Besides the imported data sets as described above, there exist a number of items that can be visualized, which are listed in the top left of this subpanel. Just click one of them for visualization. Note that several of them are available only under specific conditions, which are summarized below.</p>
+<table><caption>List of items available for visualization</caption><tbody>
+
+<tr>
+<td class=" title" colspan="2">Name in Pre-Processing Subpanel</td>
+<td class=" title">Details</td>
+<td class=" title">Availability</td>
+</tr>
+<tr>
+<td>Accelerator</td>
+<td>betatron Functions</td>
+<td>betatron functions within the light source</td>
+<td></td>
+</tr>
+<tr>
+<td rowspan="5">Light Source</td>
+<td>Field Distribution</td>
+<td>Magnetic field distribution along the longitudinal axis</td>
+<td></td>
+</tr>
+<tr>
+<td>1st Integral</td>
+<td>1st integrals, corresponding to the velocity of an electron</td>
+<td></td>
+</tr>
+<tr>
+<td>2nd Integral</td>
+<td>2nd integrals, corresponding to the electron trajectory</td>
+<td></td>
+</tr>
+<tr>
+<td>Phase Error</td>
+<td>Phase error <a href="#refperr">[6]</a> evaluated as a function the magnet pole number. Note that the number of end poles (used for the orbit adjustment and should be eliminated for the phase error evaluation) is automatically determined; to be specific, those with the peak field less than 95% of the average are ignored.</td>
+<td rowspan="2">"User Defined" sources and/or "Add Phase Error" option</td>
+</tr>
+<tr>
+<td>Harmonic Intensity</td>
+<td>Reduction of photon intensity at each harmonic due to magnetic errors evaluated by analytical methods. Refer to <a href="#Analytical Method to Evaluate the Harmonic Intensity">below</a> for details.</td>
+</tr>
+<tr>
+<td rowspan="2">Filter/Absorber</td>
+<td>Transmission Rate</td>
+<td>Transmission rate of the filter</td>
+<td>"Filtering" options excluding "None"</td>
+</tr>
+<tr>
+<td>Absorption Rate</td>
+<td>Absorption rate of the absorber</td>
+<td>"Volume Power Density" calculations</td>
+</tr>
+</tbody></table>
+
+<h4 id="Analytical Method to Evaluate the Harmonic Intensity">Analytical Method to Evaluate the Harmonic Intensity</h4>
+
+<p>It is well known that the effects due to magnetic errors in undulators can be evaluated using an analytical formula \[I_r/I_0=\exp(-k^2\sigma_{\phi}^2),\] where $I_0$ means the photon intensity available with an ideal condition, $I_r$ means that in a real condition with magnetic errors, $k$ is the harmonic number, and $\sigma_{\phi}$ is the RMS phase error.</p>
+
+<p>Although the above formula is valid for radiation emitted by a single electron observed on axis (with an infinitely narrow angular acceptance), it overestimates the effects due to magnetic errors in a more realistic condition that the electron beam emittance and energy spread are finite, and/or the the angular acceptance in the beamline is not narrow; these factors effectively work to recover the normalized intensity $I_r/I_0$. To estimate $I_r/I_0$ with these recovery factors, an alternative method <a href="#refunivperr">[9]</a> can be used, whose results are shown together with those using the conventional method.</p>
+<h3 id="Analyze Particle Data">Analyze Particle Data</h3>
+
+<p>"Analyze Particle Data" pre-processing operation is available when "Particle Distribution" is selected as "Bunch Profile", as shown below. Note that the user needs to specify in advance the data file containing the macroparticle positions in the 6D phase space, which is usually generated by another simulation code. Refer to <a href="#Particle Distribution">Particle Distribution</a> for details.</p>
+<figure id="ppparticle.png"><img src="ppparticle.png" style="width: 887px;"><figcaption>Example of the undefined tab panel, under the process of "Analyze Particle Data"</figcaption></figure>
+<p>Once "Bunch Profile" is specified, SPECTRA automatically loads the file to analyze the particle data. For convenience, part of the data file is shown in "File Contents" Select the unit and column index for each coordinate variable of the 6D (x,x',y,y',t,E) phase space and input relevant parameters. In the above example, each macroparticle has the charge of 3.5fC with "x" coordinate (horizontal position) located in the 1st column and the unit of m. Note that"Slices in 1&sigma;<sub>s</sub>" specifies the number of bins in the  RMS bunch length, to be used for data analysis. Then, additional configurations appear in the GUI to specify how to visualize the results of analysis. In the above example, the current profile is plotted. Upon revision of the configurations above, SIMPLEX automatically analyzes the data with the new configuration and visualizes the result.</p>
+
+<p>Besides the slice parameters shown in the above example, macroparticle distributions can be directly plotted. For example, distribution in the (E-t) phase space is plotted in the figure below.</p>
+<figure id="ppparticle2.png"><img src="ppparticle2.png" style="width: 888px;"><figcaption>Example of "Analyze Particle Data" pre-processing operation: particle distribution in the (E-t) phase space is plotted.</figcaption></figure>
+<p>The result of analysis can be exported and saved as an ASCII file; "Export Selected" exports the data currently plotted, while "Export Slice Data" exports the whole slice data (slice paramters vs. s). The exported data file  can be used later as the custom data file for slice parameters or current profile.</p>
+<h2 id="Post-Processing">Post-Processing</h2>
+
+<p>The "Post-Processing" tabbed panel assists the user to visualize the calculation results. The output file is automatically loaded upon completion of a calculation, or alternatively, the existing output files can be imported. To do so, click "Import" button and specify the path of the output file.</p>
+<figure id="postproc.png"><img src="postproc.png" style="width: 876px;"><figcaption>Example of the Post-Processing tabbed panel, showing the energy spectrum of the flux density.</figcaption></figure>
+<p>For visualization, select more than one item from "Items to Plot". The dimension of the plot depends on the calculation type of the loaded file. In a 1D plot, a desired area can be zoomed in by dragging. Other options are available to operate the plot, by clicking one of the small icons located in the right top of the plot. For details, refer to the documents about "Plotly" library to be found online.</p>
+
+<p>Besides the above options, the plot can be configured in a dialog panel that appears by clicking a small icon (pencil) located in the top right of the plot. Options available are as follows; switch the scale (linear or log), change the 2D plot type (contour, color-scale surface or shaded surface), or change the method of scaling in each frame for multidimensional plot (see below).</p>
+<h3 id="Comparative Plot">Comparative Plot</h3>
+
+<p>If more than one output file with the same calculation type is loaded, "Comparative Plot" is available, and possible data names are shown. Click the desired ones to compare the results. Note that 1D data sets are shown in the same plot, however, 2D data sets are plotted separatory and thus more than one plots are shown. How to arrange the plots can be specified by "Plot Windows/Row" parameter. If there are 6 plots in total and this parameter is set to 3, they are arranged in 3 columns times 2 rows.</p>
+<h3 id="Multiple Plot">Multiple Plot</h3>
+
+<p>This option is available for more than two data sets having different calculation types and thus "Comparative Plot" is not available. It tries to create a number of plots and display in the plot area. How to arrange the plots can be specified by "Subplots/Row" parameter. If there are 6 plots in total and this parameter is set to 3, they are arranged in 3 columns times 2 rows.</p>
+<h3 id="Plotting 3/4-Dimensional Data">Plotting 3/4-Dimensional Data</h3>
+
+<p>There exist a number of calculation types to generate 3D or 4D output data in SPECTRA (including the <a href="#Scanning a Parameter">Scanning a Parameter</a> option), which cannot be plotted in a straightforward manner. In SPECTRA, the 3D/4D data are "sliced" into a number of data sets and plotted as a 1D or 2D graph. As an example, let us consider the visualization of a Wigner function calculated in the 4D phase space (X,X',Y,Y'). SPECTRA offers several combinations for plotting and slicing variables. If a pair (X,X') is chosen as the plotting variable, then the data is sliced at each (Y,Y') position, and 2D plot (Brilliance vs X,X') is created. Note that the coordinates of the slicing variables can be arbitrary chosen within the possible range, by dragging the sliders indicating their positions.</p>
+
+<p>The post-processed output data can be saved as another JSON file in two methods explained below.</p>
+<h3 id="Export as ASCII">Export as ASCII</h3>
+
+<p>The visualization result, or the data set(s) currently plotted, are exported as an ASCII file.</p>
+<h3 id="Save">Save</h3>
+
+<p>The plot configurations together with the output data are saved in a JSON file. The file can be later imported by the post-processor to reproduce the plot.</p>
+<h2 id="Parameter Set">Parameter Set</h2>
+
+<p>In SPECTRA, parameters and numerical conditions displayed in the "Accelerator", "Light Source" and "Configurations" subpanels are separately saved in JSON objects, each of which is referred to as a Parameter Set. For example, "Accelerator Parameter Set" means a JSON object that stores the parameters displayed in the "Accelerator" subpanel. In addition, "Beamline Parameter Set" is available to bundle the three Parameter Sets, which represent a "beamline" in a specific SR facility. Each Parameter Set can be switched from one to another by selecting from the submenus in "Parameter Set" main menu. To configure (rename, duplicate, or delete) the parameter sets, run Edit menu command. Then a modal dialog box pops up to show the current contents of all the parameter set as shown below.</p>
+<figure id="editprmset.png"><img src="editprmset.png" style="width: 502px;"><figcaption>Example of the dialog to edit the parameter sets.</figcaption></figure>
+<p>Select the target item for configuration; in the above example, "Beamline bl03" is the target parameter set. Click one of the buttons for operation; for example, to rename or duplicate the parameter set currently in selection, enter a new name in the text entry box in the left bottom and click [Rename] or [Duplicate] button. To delete the parameter set, click [Delete] button; note that at least one parameter set should be left.</p>
+<h2 id="Menu Commands">Menu Commands</h2>
+<h3 id="File">File</h3>
+<table><caption>Contents of "File" main menu. Note that some of them are disabled in the python interactive mode.</caption><tbody>
+
+<tr>
+<td colspan="2" class="title">Menu</td>
+<td class="title">Details</td>
+</tr>
+<tr>
+<td colspan="2">Create a New Parameter File</td>
+<td>Start SPECTRA with a default parameter set.</td>
+</tr>
+<tr>
+<td colspan="2">Open a Parameter File</td>
+<td>Open a SPECTRA parameter file. Even though a parameter file for older (≦ 10.2) versions is accepted as well, it cannot be saved in the older format.</td>
+</tr>
+<tr>
+<td colspan="2">Append Parameter Sets</td>
+<td>Append the parameter sets in another parameter file to the current ones.</td>
+</tr>
+<tr>
+<td colspan="2">Load Output File</td>
+<td>Load the output file of a former calculation.</td>
+</tr>
+<tr>
+<td rowspan="4"></td>
+<td>Open Post-Processed Result</td>
+<td>For post-processing (visualization)</td>
+</tr>
+<tr>
+<td>Wigner Function for CMD</td>
+<td>To perform CMD with the Wigner function</td>
+</tr>
+<tr>
+<td>Wigner Function for Wavefront Propagation</td>
+<td>To perform Wavefront Propagation with the Wigner function</td>
+</tr>
+<tr>
+<td>CMD Result for Modal Profile</td>
+<td>For modal analysis with the CMD result</td>
+</tr>
+<tr>
+<td>Bunch Factor for Coherent Radiation</td>
+<td>Reuse the bunch factors for other coherent radiation calculations</td>
+</tr>
+<tr>
+<td colspan="2">Save</td>
+<td>Save all the parameters and options in the current file.</td>
+</tr>
+<tr>
+<td colspan="2">Save As</td>
+<td>Save all the parameters and options in a new file.</td>
+</tr>
+<tr>
+<td colspan="2">Exit</td>
+<td>Quit SPECTRA and Exit</td>
+</tr>
+</tbody></table>
+
+<h3 id="Select Calculation">Select Calculation</h3>
+
+<p>Select the type of calculation. Refer to <a href="#Calculation Type">Calculation Type</a> for details.</p>
+<h3 id="Run">Run</h3>
+<table><caption>Contents of "Run" main menu</caption><tbody>
+
+<tr>
+<td class="title">Menu</td>
+<td class="title">Details</td>
+</tr>
+<tr>
+<td>Create a New Process</td>
+<td>Create Calculation Status/Processes with the current parameters and options.</td>
+</tr>
+<tr>
+<td>Export Calculation Settings</td>
+<td>Export the current parameters and options to a file, which can be used as an input file to directly call the solver.</td>
+</tr>
+<tr>
+<td>Start Calculation</td>
+<td>Start a new calculation, or launch the Calculation Status/Processes.</td>
+</tr>
+</tbody></table>
+
+<h3 id="Parameter Set">Parameter Set</h3>
+
+<p>Select and edit the "Parameter Set", Refer to <a href="#Parameter Set">Parameter Set</a> for details.</p>
+<h3 id="Edit">Edit</h3>
+
+<p>Open one of the <a href="#Setup Dialogs">Setup Dialogs</a> to set up various configurations, not included in the Parameter Sets.</p>
+<h3 id="Help">Help</h3>
+
+<p>Open the reference manual or show the information about SPECTRA.</p>
+<h2 id="Setup Dialogs">Setup Dialogs</h2>
+
+<p>Open a dialog to edit miscellaneous parameters besides those displayed in the main panel. Details of each dialog are explained below.</p>
+<table><caption>Setup Dialogs opened by running a submenu of "Edit" menu</caption><tbody>
+
+<tr>
+<td class="title">Submenu</td>
+<td class="title">Details</td>
+</tr>
+<tr>
+<td>Filter/Absorber Material</td>
+<td>
+<p>Open a dialog to edit the material available for the filters and absorbers.</p>
+<figure id="editmaterial.png"><img src="editmaterial.png" style="width: 659px;"><figcaption>Dialog to edit the material for the filters and absorbers.</figcaption></figure>
+<p>In SPECTRA, a number of built-in materials are available (gray-painted ones), which cannot be edited.</p>
+
+<p>To add a new material, input its name and density in an empty column, together with the atomic number (Z) and mass ratio (Ratio) of each element constituting the material. The total amount of the mass ratio should be 1. The numbers of columns (materials) and rows (elements) are automatically increased when necessary.</p>
+</td>
+</tr>
+<tr>
+<td>Units for Data Import</td>
+<td id="Units for Data Import">
+<p>Open a dialog to select the unit of items in the <a href="#Data Import">Data Import</a>.</p>
+<figure id="unitconf.png"><img src="unitconf.png" style="width: 502px;"><figcaption>Dialog to select the unit of items in the data file to be imported.</figcaption></figure>
+<p>Note that the selection should be made before importing the data. After importing, change of the unit in this dialog has no effect.</p>
+</td>
+</tr>
+<tr>
+<td>Numerical Accuracy</td>
+<td id="Numerical Accuracy">
+<p>Open a dialog to customize the target numerical accuracy. Note that this menu is not available if "Default" is selected for <a href="#Accuracy">Accuracy</a> option.</p>
+
+<p>There are a number of parameters to specify the numerical accuracy, according to the numerical method and target item. Refer to the table below.</p>
+<table><caption>Configurations to specify the target numerical accuracy.</caption><tbody>
+
+<tr>
+<td colspan="2" class="title">Item</td>
+<td class="title">Details/Example</td>
+</tr>
+<tr>
+<td colspan="2">Integration/Discretization Step</td>
+<td>Step size for integration or discretization of a function. Larger numbers mean  finer steps.</td>
+</tr>
+<tr>
+<td rowspan="4"></td>
+<td>Longitudinal Step</td>
+<td>Along the longitudinal axis. For example, steps to comupte the electron trajectory in the SR source.</td>
+</tr>
+<tr>
+<td>Transverse Grid</td>
+<td>Over the transverse (spatial and/or angular) coordinate. For example, convolution with the spatial distribution function of the electron beam.</td>
+</tr>
+<tr>
+<td>Electron Energy Step</td>
+<td>Photon energy steps. For example, spectrum of SR emitted by a single electron, which is obtained by FFT.</td>
+</tr>
+<tr>
+<td>Photon Energy Step</td>
+<td>Electron energy steps in  convolution with the energy distribution function of the electron beam.</td>
+</tr>
+<tr>
+<td colspan="2">Integration Range</td>
+<td>Integration range for integration or discretization of a function. Larger numbers mean broader ranges.</td>
+</tr>
+<tr>
+<td rowspan="4"></td>
+<td>Longitudinal Range</td>
+<td>Downstream and upstream ends of the longitudinal coordinate.</td>
+</tr>
+<tr>
+<td>Transverse Range</td>
+<td>Transverse range for integration and convolution.</td>
+</tr>
+<tr>
+<td>Photon Energy Range</td>
+<td>Photon energy range to be taken into account.</td>
+</tr>
+<tr>
+<td>Electron Energy Range</td>
+<td>Ehoton energy range to be taken into account</td>
+</tr>
+<tr>
+<td rowspan="6">Others</td>
+<td>Harmonic Convergence</td>
+<td>An integer to judge the convergence of harmonics (maximum harmonic number to be taken into account). Larger numbers mean higher harmonics</td>
+</tr>
+<tr>
+<td>Energy Consistency</td>
+<td>Adjust the energy loss of the electron beam to be consistent with the FEL gain.  Available when <a href="#FEL Mode">FEL Mode</a> option is enabled.</td>
+</tr>
+<tr>
+<td>Monte Carlo Integral Tolerance</td>
+<td>A real number to judge the convergence of integration for Monte-Carlo method.</td>
+</tr>
+<tr>
+<td>Coherent Radiation Integral Tolerance</td>
+<td>A real number to judge the convergence of integration for coherent raddiation calculation.</td>
+</tr>
+<tr>
+<td>Limit Macroparticles</td>
+<td>If checked, limit the number of macroparicles for Monte-Carlo method.</td>
+</tr>
+<tr>
+<td>Maximum Macroparticles</td>
+<td>Maximum number of macroparticles (see above).</td>
+</tr>
+</tbody></table>
+
+</td>
+</tr>
+<tr>
+<td>Parallel Computing</td>
+<td id="Parallel Computing">
+<p>Open a dialog to configure the parallel computing. Select a desired scheme in "Parallel Computing" to enable the parallel computing  and input a number of processes (MPI) or threads (Multithread) to launch in "Number of MPI Processes" or "Number of Threads". Note that MPI (message passing interface) environment should be installed for parallel computing using MPI, and the path to "mpiexec" should be set.</p>
+</td>
+</tr>
+</tbody></table>
+
+<h2 id="Edit the Plot">Edit the Plot</h2>
+
+<p>Besides standard Plotly.js configurations, a number of options to edit the graphical plot in the post- and pre-processors are available. To do so, click the small icon located in the top-right side of the plot. Then a dialog box pops up to let the user edit the plot in the following configurations.</p>
+<table><caption>Options for the graphical plot</caption><tbody>
+
+<tr>
+<td class="title">Item</td>
+<td class="title">Details</td>
+<td class="title">Available Options</td>
+</tr>
+<tr>
+<td rowspan="2">Normalize</td>
+<td rowspan="2">Select how to normalize the animation plot</td>
+<td>For Each: y-/z-axis scale is normalized by the maximum value for each slide</td>
+</tr>
+<tr>
+<td>By Maximum: y-/z-axis scale is normalized by the maximum value over the whole slides</td>
+</tr>
+<tr>
+<td>X-axis Scale</td>
+<td>Select the scale for x axis</td>
+<td>Linear, Logarithmic</td>
+</tr>
+<tr>
+<td>Y-axis Scale</td>
+<td>Select the scale for y axis</td>
+<td>Linear, Logarithmic</td>
+</tr>
+<tr>
+<td>Plot Type</td>
+<td>Select the type of the 1D plot</td>
+<td>Line, Line &amp; Symbol, Symbol</td>
+</tr>
+<tr>
+<td>Symbol Size</td>
+<td>Size of the symbol</td>
+<td>Input a number</td>
+</tr>
+<tr>
+<td>Line Width</td>
+<td>Width of the line</td>
+<td>Input a number</td>
+</tr>
+<tr>
+<td rowspan="3">2D Plot Type</td>
+<td rowspan="3">Select the type of the 2D plot</td>
+<td>Contour: contour plot with a specific color map</td>
+</tr>
+<tr>
+<td>Surface (Color Map): surface plot painted with a specific color map</td>
+</tr>
+<tr>
+<td>Surface (Shaded): shaded surface plot illuminated by a specific light source</td>
+</tr>
+<tr>
+<td>Color</td>
+<td>Select the color of the light source to create a shaded surface plot</td>
+<td>Select from the color picker dialog.</td>
+</tr>
+<tr>
+<td>Color Map</td>
+<td>Select the color map. Several built-in options are available but cannot be customized</td>
+<td>Default, Rainbow, Blackbody, Earth, Greys</td>
+</tr>
+<tr>
+<td>Wireframe</td>
+<td>If checked, grid lines are shown on the surface plot</td>
+<td></td>
+</tr>
+</tbody></table>
+
+<h1 id="Parameter List">Parameter List</h1>
+
+<p>All the parameters available in the subpanels of the "Main Parameters" panel are summarized below, for each subpanel.</p>
+<h2 id="Accelerator">Accelerator</h2>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td colspan="2" class=" subtitle">Main Parameters and Conditions</td>
+</tr>
+<tr>
+<td>Type</td>
+<td>Type of the accelerator. In SPECTRA, the accelerators are categorized into two types: "Storage Ring" and "Linear Accelerator". The difference between them is how to specify the average beam current. In the former, it is directly specified by the user. In the latter, the pulse repetition rate and bunch charge should be given to evaluate the average current.</td>
+</tr>
+<tr>
+<td>Energy (GeV)</td>
+<td>Total energy of the electron beam.</td>
+</tr>
+<tr>
+<td>Current (mA)</td>
+<td rowspan="2">Average beam current of the accelerator. The former is determined by the user, while the latter is evaluated from "Pulses/sec" and "Bunch Charge".</td>
+</tr>
+<tr>
+<td>Avg. Current (mA)</td>
+</tr>
+<tr>
+<td>Circumference (m)</td>
+<td>Circumference of the storage ring.</td>
+</tr>
+<tr>
+<td>Bunches</td>
+<td>Number of electron bunches stored in the storage ring.</td>
+</tr>
+<tr>
+<td>Pulses/sec</td>
+<td>Number of electron bunches/second in the linear accelerator.</td>
+</tr>
+<tr>
+<td>&sigma;<sub>z</sub> (mm)</td>
+<td rowspan="2">Bunch length and charge of the electron beam.</td>
+</tr>
+<tr>
+<td>Bunch Charge (nC)</td>
+</tr>
+<tr>
+<td>Nat. Emittance (m.rad)</td>
+<td>Natural emittance of the electron beam.</td>
+</tr>
+<tr>
+<td>Coupling Constant</td>
+<td rowspan="2">Coupling constant and energy spread of the electron beam.</td>
+</tr>
+<tr>
+<td>Energy Spread</td>
+</tr>
+<tr>
+<td>&beta;<sub>x,y</sub> (m)</td>
+<td rowspan="2">Twiss parameters at the center of the light source</td>
+</tr>
+<tr>
+<td>&alpha;<sub>x,y</sub></td>
+</tr>
+<tr>
+<td>&eta;<sub>x,y</sub> (m)</td>
+<td rowspan="2">Dispersion functions and their derivatives.</td>
+</tr>
+<tr>
+<td>&eta;'<sub>x,y</sub></td>
+</tr>
+<tr>
+<td>Peak Current (A)</td>
+<td>Peak current of the electron beam evaluated from relevant parameters.</td>
+</tr>
+<tr>
+<td>&epsilon;<sub>x,y</sub> (m.rad)</td>
+<td>Horizontal and vertical emittances evaluated from &epsilon; and Coupling Constant.</td>
+</tr>
+<tr>
+<td>&sigma;<sub>x,y</sub> (mm)</td>
+<td rowspan="2">Beam size and angular divergence at at the center of the light source.</td>
+</tr>
+<tr>
+<td>&sigma;'<sub>x,y</sub> (mrad)</td>
+</tr>
+<tr>
+<td>&gamma;<sup>-1</sup> (mrad)</td>
+<td>Inverse of the Lorentz factor.</td>
+</tr>
+<tr>
+<td colspan="2" class=" subtitle">Injection Condition</td>
+</tr>
+<tr>
+<td>Injection Condition</td>
+<td class=" cont">
+<p>Specify the injection condition, or the position and angle of the electron beam at the entrance of the light source.</p>
+<ul><li>"Automatic": an appropriate condition for the current light source is selected. This is usually recommended in most cases.</li><li>"Align at Entrance", "Align at Center", "Align at Exit": the electron beam axis is adjusted to coincide with that of the light source. The longitudinal position for adjustment can be selected from the entrance, center, and exit of the light source.</li><li>"Custom": directly input the injection condition.</li></ul></td>
+</tr>
+<tr>
+<td>x,y (mm)</td>
+<td rowspan="2">Horizontal/vertical positions/angles at the entrance. Available when "Injection Condition" is Custom</td>
+</tr>
+<tr>
+<td>x',y' (mrad)</td>
+</tr>
+<tr>
+<td colspan="2" class=" subtitle">Others</td>
+</tr>
+<tr>
+<td>Bunch Profile</td>
+<td class=" cont">
+<p>Specify the distribution functions of the electron beam in the spatial and temporal domains.</p>
+<ul><li>"Gaussian": Gaussian functions in the both domains.</li><li>"Current Profile": import the current profile.</li><li>"E-t Profile": import the electron density in the (E-t) phase space.</li><li>"Particle Distribution": load the particle coordinates in the 6D phase space.</li></ul></td>
+</tr>
+<tr>
+<td>Current Profile</td>
+<td>Dictionary data to represent the current profile of the electron bunch.</td>
+</tr>
+<tr>
+<td>E-t Profile</td>
+<td>Dictionary data to represent the electron distribution in the E-t phase space.</td>
+</tr>
+<tr>
+<td>Particle Distribution</td>
+<td>File name to specify the particle coordinates in the 6D phase space (x,x',y,y',t,DE/E) used for "Particle Distribution" option. An example of the data format is shown below.<div class="direct"><pre><code>       x        x'      y        y'        t     DE/E
+ 6.20E-4 -6.08E-5 4.83E-4 -7.72E-5 -7.68E-15 -0.00133
+-2.88E-4 -1.83E-5 7.21E-4 -4.09E-5 -5.49E-15 -9.08E-4
+                ...
+ 9.22E-4 -1.09E-5 0.00160 -1.47E-4  5.33E-16  3.48E-4</code></pre></div>In this example, the 1st column defines the horizontal position (x) of the particle, and so on. The column index and unit of each coordinate should be specified by the user. For details, refer to <a href="#Analyze Particle Data">Analyze Particle Data</a>.</td>
+</tr>
+<tr>
+<td>Zero Emittance</td>
+<td rowspan="2">Calculation is done without the effects due to the finite emittance and/or energy spread of the electron beam.</td>
+</tr>
+<tr>
+<td>Zero Energy Spread</td>
+</tr>
+<tr>
+<td>Single Electron</td>
+<td>SR emitted by a single electron is supposed.</td>
+</tr>
+<tr>
+<td>Additional R<sub>56</sub> (m)</td>
+<td>Strength of the virtual dispersive section located in front of the light source. Effective for computation of coherent radiation, if "E-t Profile" is chosen for the electron bunch profile.</td>
+</tr>
+</tbody></table>
+
+<h2 id="Light Source">Light Source</h2>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td colspan="2" class=" subtitle">Main Parameters</td>
+</tr>
+<tr>
+<td>Gap (mm)</td>
+<td>Gap of the ID.</td>
+</tr>
+<tr>
+<td>B<sub>x,y</sub> (T)</td>
+<td rowspan="2">Field amplitude (IDs) or uniform field (BMs).</td>
+</tr>
+<tr>
+<td>B (T)</td>
+</tr>
+<tr>
+<td>Main Field (T)</td>
+<td rowspan="2">Peak fields of the main and sub poles of Wavelength Shifters.</td>
+</tr>
+<tr>
+<td>Sub Field (T)</td>
+</tr>
+<tr>
+<td>&lambda;<sub>u</sub> (mm)</td>
+<td>Magnetic Period Length of the ID</td>
+</tr>
+<tr>
+<td>Device Length (m)</td>
+<td>Total length of the ID</td>
+</tr>
+<tr>
+<td>Reg. Magnet Length (m)</td>
+<td>Length of the ID for the regular period.</td>
+</tr>
+<tr>
+<td># of Reg. Periods</td>
+<td>Number of regular periods.</td>
+</tr>
+<tr>
+<td>K<sub>0x,0y</sub></td>
+<td>Available for APPLE undulators. Maximum K values (deflection parameters) when the phase is adjusted to generate horizontal and vertical polarizations.</td>
+</tr>
+<tr>
+<td>Phase Shift (mm)</td>
+<td>Longitudinal shift of each magnetic array for the APPLE undulators, defined as the displacement from the position for the horizontally-polarized mode. To be specific, K values are given as $K_x=K_{x0}\sin(2\pi\Delta z/\lambda_u)$ and $K_y=K_{y0}\cos(2\pi\Delta z/\lambda_u)$, where $\Delta z$ is the phase shift. In other words, it is defined as half the relative distance between two diagonal pairs of magnetic arrays.</td>
+</tr>
+<tr>
+<td>K<sub>x,y</sub></td>
+<td rowspan="2">K values of the ID.</td>
+</tr>
+<tr>
+<td>K value</td>
+</tr>
+<tr>
+<td>K<sub>&perp;</sub></td>
+<td>Composite K value defined as $\sqrt{K_x^2+K_y^2}$.</td>
+</tr>
+<tr>
+<td>&epsilon;<sub>1st</sub> (eV)</td>
+<td rowspan="2">Fundamental photon energy and wavelength of undulator radiation.</td>
+</tr>
+<tr>
+<td>&lambda;<sub>1st</sub> (nm)</td>
+</tr>
+<tr>
+<td>Harmonic Component</td>
+<td class=" cont">
+<p>Arrange the harmonic components for Multi-Harmonic Undulators.</p>
+<ul><li>K<sub>x</sub> Ratio ($=R_n$) and Phase ($=P_n$, in degrees) refer to the fraction and phase of the horizontal field of the n-th harmonic component, where n is the number indicated in the 1st row.</li><li>The K value corresponding to the n-th harmonic is defined as \[K_{xn}=K_x\frac{R_n}{\sqrt{R_1^2+R_2^2+\cdots+R_N^2}},\] where $K_x$ is the (total) K value and $N$ is the maximum harmonic number.</li><li>The field distribution is defined as \[B_{x}(z)=\sum_{n=1}^{N}B_{xn}\sin\left[2\pi\left(\frac{nz}{\lambda_u}+\frac{P_n}{360}\right)\right],\] where $B_{xn}$ is the peak field corresponding to the K value of the n-th harmonic.</li><li>Similar definitions of $K_{yn}$ and $B_{y}(z)$.</li></ul></td>
+</tr>
+<tr>
+<td>&rho; (m)</td>
+<td>Radius of the BM.</td>
+</tr>
+<tr>
+<td>BM Length (m)</td>
+<td rowspan="3">Specify the geometric configuration of BMs. "Origin for CSR" defines the longitudinal coordinate where the electron bunch length or the temporal profile is defined to calculate coherent radiation.<figure id="BMsetup.png"><img src="BMsetup.png" style="width: 604px;"><figcaption>Schematic drawing of the bending magnet configuration.</figcaption></figure></td>
+</tr>
+<tr>
+<td>BM Fringe Length (m)</td>
+</tr>
+<tr>
+<td>Origin for CSR (m)</td>
+</tr>
+<tr>
+<td>Main Length (m)</td>
+<td rowspan="2">Lengths of the main and sub poles of the Wavelength Shifter.</td>
+</tr>
+<tr>
+<td>Sub Length (m)</td>
+</tr>
+<tr>
+<td>BM Interval (m)</td>
+<td>Distance between two BMs.</td>
+</tr>
+<tr>
+<td>Field Mapping Data</td>
+<td>File name containing the 3D magnetic field data. Refer to <a href="#Magnetic data format for custom sources">Magnetic data format for custom sources</a> for details.</td>
+</tr>
+<tr>
+<td>&sigma;<sub>r,r'</sub> (mm,mrad)</td>
+<td rowspan="3">Natural source size and angular divergence of radiation.</td>
+</tr>
+<tr>
+<td>&sigma;<sub>rx,rx'</sub> (mm,mrad)</td>
+</tr>
+<tr>
+<td>&sigma;<sub>ry,ry'</sub> (mm,mrad)</td>
+</tr>
+<tr>
+<td>&Sigma;<sub>x,x'</sub> (mm,mrad)</td>
+<td rowspan="2">Effective source size and angular divergence of the photon beam, convoluted with those of the electron beam.</td>
+</tr>
+<tr>
+<td>&Sigma;<sub>y,y'</sub> (mm,mrad)</td>
+</tr>
+<tr>
+<td>Flux Density</td>
+<td rowspan="3">Approximate values of the on-axis flux density, available flux, and brilliance at &epsilon;<sub>1st</sub>.</td>
+</tr>
+<tr>
+<td>Flux<sub>1st</sub></td>
+</tr>
+<tr>
+<td>Brilliance<sub>1st</sub></td>
+</tr>
+<tr>
+<td>Peak Brilliance</td>
+<td>Peak brilliance at &epsilon;<sub>1st</sub> evaluated with the peak current of the electron beam.</td>
+</tr>
+<tr>
+<td>Bose Degeneracy</td>
+<td>Bose degeneracy evaluated for the Peak Brilliance.</td>
+</tr>
+<tr>
+<td>&epsilon;<sub>c</sub> (eV)</td>
+<td rowspan="2">Critical photon energy and wavelength.</td>
+</tr>
+<tr>
+<td>&lambda;<sub>c</sub> (nm)</td>
+</tr>
+<tr>
+<td>Total Power (kW)</td>
+<td>Total radiation power.</td>
+</tr>
+<tr>
+<td>Total Power/Rev. (kW)</td>
+<td rowspan="2">Total power/revolution and linear power density of the BM.</td>
+</tr>
+<tr>
+<td>Lin. Pow. Density (kW/mrad)</td>
+</tr>
+<tr>
+<td colspan="2" class=" subtitle">Options</td>
+</tr>
+<tr>
+<td id="Gap-Field Relation">Gap-Field Relation</td>
+<td class=" cont">
+<p>Specify the relation between the gap and peak field of the ID.</p>
+<ul><li>"None": no relation is given. The Gap parameter is not available.</li><li>"Automatic": evaluate according to an analytical formula of Halbach array defined as \[B(g)=1.8G B_r\mbox{exp}(-\pi g/\lambda_u),\] where $B_r$ is the remanent field of the magnet and $G$ is a geometrical (reduction) factor coming from the physical boundary conditions such as the finite dimension of magnet blocks.</li><li>"Import Table": evaluate by interpolating the imported data.</li></ul></td>
+</tr>
+<tr>
+<td>APPLE Configuration</td>
+<td>Enable/disable the APPLE configuration for Elliptic Undulators.</td>
+</tr>
+<tr>
+<td>Field Structure</td>
+<td class=" cont">
+<p>Specify the field-distribution symmetry of the ID. </p>
+<ul><li>"Antisymmetric": anti-symmetric with respect to the center (sine-like).</li><li>"Symmetric": symmetric with respect to the center (cosine-like).</li></ul></td>
+</tr>
+<tr>
+<td>B<sub>r</sub> (T)</td>
+<td>Remanent field of the permanent magnet.</td>
+</tr>
+<tr>
+<td>Geometrical Factor (x,y)</td>
+<td>Geometrical factor to reduce the peak magnetic field (x,y).</td>
+</tr>
+<tr>
+<td>End Correction Magnet</td>
+<td>Put additional magnets at the both ends, for orbit compensation.</td>
+</tr>
+<tr>
+<td>Natural Focusing</td>
+<td class=" cont">
+<p>Apply the natural focusing of IDs.</p>
+<ul><li>"None": no focusing considered.</li><li>"Bx": horizontal field (and focusing).</li><li>"By": vertical field (and focusing).</li><li>"Both": focus in the both directions.</li></ul></td>
+</tr>
+<tr>
+<td>Tandem Arrangement</td>
+<td>Calculate radiation from two BMs located at the both ends of the straight section.</td>
+</tr>
+<tr>
+<td colspan="2" class=" subtitle">Parameters for the Field-Error Condition</td>
+</tr>
+<tr>
+<td>Field Offset &amp; Taper</td>
+<td>Specify if the magnetic field contains an error component.</td>
+</tr>
+<tr>
+<td>Offset x,y (T)</td>
+<td>Magnetic field offset, such as that coming from the ambient field.</td>
+</tr>
+<tr>
+<td>Lin. Taper x,y (/m)</td>
+<td rowspan="2">Linear (a<sub>1</sub>) and quadratic (a<sub>2</sub>) taper coefficients. The magnetic field amplitude is given as \[B(z)=B_0(1+a_1z+a_2z^2),\] where $B_0$ is the field amplitude corresponding to the K value.</td>
+</tr>
+<tr>
+<td>Quad. Taper x,y (/m<sup>2</sup>)</td>
+</tr>
+<tr>
+<td colspan="2" class=" subtitle">Parameters to Specify the Phase Error</td>
+</tr>
+<tr>
+<td>Add Phase Error</td>
+<td>If ticked, the RMS phase error and relevant parameters can be specified.</td>
+</tr>
+<tr>
+<td>Random Number Seed</td>
+<td>Seed for the random number generator to model the field error.</td>
+</tr>
+<tr>
+<td>&sigma;<sub>B</sub> (%)</td>
+<td>RMS of the peak field variation.</td>
+</tr>
+<tr>
+<td>&sigma;<sub>&phi;</sub> (deg.)</td>
+<td>RMS of the phase error <a href="#refperr">[6]</a>.</td>
+</tr>
+<tr>
+<td>&sigma;<sub>x,y</sub> (mm);</td>
+<td>RMS of the trajectory error.</td>
+</tr>
+<tr>
+<td colspan="2" class=" subtitle">Parameters for the Segmented Undulator Option</td>
+</tr>
+<tr>
+<td id="Segmentation">Segmentation</td>
+<td class=" cont">
+<p>Arrange the segmented undulator configuration. For details of how these segmentation schemes work to improve the characteristics of radiation, refer to <a href="#refsegment">[7]</a> and <a href="#refsegx">[8]</a>.<figure id="segscheme.png"><img src="segscheme.png" style="width: 666px;"><figcaption>Schematic drawing of the segmented undulator configurations: (a) all segments are identical, and (b) even-number segments are of different type.</figcaption></figure>To adjust the optical phase ($\Delta\phi$) in each drift section, SPECTRA assumes that a phase shifter, or a 1.5-period undulator with the same periodic length, is installed at the center of the drift section, whose amplitude is tuned to generate the specified phase. Five options are available as explained below.</p>
+<ul><li>"None": no segmentation.</li><li>"Identical": all segments have the same specification (a).</li><li>"2nd: Swap Bx,y": horizontal and vertical fields are swapped in even segments (b).</li><li>"2nd: Flip Bx": polarity of the horizontal field is swapped in even segments (b).</li><li>"2nd: Flip By": polarity of the vertical field is swapped in even segments (b).</li></ul></td>
+</tr>
+<tr>
+<td>Number of Segments</td>
+<td rowspan="2">Number of undulator segments (M) if "Identical" is selected for "Segmentation", or number of segment pair (M') for other options.</td>
+</tr>
+<tr>
+<td>Half Number of Segments</td>
+</tr>
+<tr>
+<td>Segment Interval (m)</td>
+<td>Distance between the center positions of adjacent undulator segments.</td>
+</tr>
+<tr>
+<td>Number of Phase Slip@&lambda;<sub>1</sub></td>
+<td>Slippage in the drift section given in the unit of &lambda;<sub>1st</sub>.</td>
+</tr>
+<tr>
+<td>&Delta;&phi; (&pi;)</td>
+<td>Additional phase in the unit of &pi;.</td>
+</tr>
+<tr>
+<td>&Delta;&phi;<sub>1,2</sub> (&pi;)</td>
+<td>Additional phase in the unit of &pi;: subscripts 1 and 2 refer to the odd and even drift sections</td>
+</tr>
+<tr>
+<td>Matching Distance (m)</td>
+<td>Distance between virtual focusing magnets in the matching section to arrange the periodic lattice function.</td>
+</tr>
+<tr>
+<td>Periodic &beta; Function</td>
+<td>The betatron function is periodic with the period of segment interval.</td>
+</tr>
+</tbody></table>
+
+<h3 id="Light Source Type">Light Source Type</h3>
+
+<p>Details of the type of the light sources available in SPECTRA are summarized below.</p>
+<table><caption>List of light sources available in SPECTRA</caption><tbody>
+
+<tr>
+<td class=" title">Name</td>
+<td class=" title">Details</td>
+<td class=" title">Field Profile</td>
+</tr>
+<tr>
+<td>Linear Undulator</td>
+<td>Conventional linear undulator for horizontal polarization</td>
+<td rowspan="6">Sinusoidal</td>
+</tr>
+<tr>
+<td>Vertical Undulator</td>
+<td>Undulator for vertical polarization to generate a horizontal field</td>
+</tr>
+<tr>
+<td>Helical Undulator</td>
+<td>Undulator for circular polarization to generate a (completely) helical field</td>
+</tr>
+<tr>
+<td>Elliptic Undulator</td>
+<td>General form of an undulator to generate a helical-like field (horizontal and vertical field amplitudes may be different)</td>
+</tr>
+<tr>
+<td>Figure-8 Undulator</td>
+<td>Undulator having figure-8 shaped electron orbit, for horizontal polarization and low on-axis heat load</td>
+</tr>
+<tr>
+<td>Vertical Figure-8 Undulator</td>
+<td>Same as the figure-8 undulator, but for vertical polarization</td>
+</tr>
+<tr>
+<td>Multi-Harmonic Undulator</td>
+<td>"Semi-Customized" undulator, in which the magnetic field distribution is composed of a number of harmonic components. The strength and phase of each harmonic should be defined by the user.</td>
+<td>Custom</td>
+</tr>
+<tr>
+<td>Bending Magnet</td>
+<td>Conventional bending magnet</td>
+<td>Uniform</td>
+</tr>
+<tr>
+<td>Wiggler</td>
+<td>Conventional multi-pole wiggler</td>
+<td rowspan="2">Sinusoidal</td>
+</tr>
+<tr>
+<td>EMPW</td>
+<td>Elliptic multi-pole wiggler for elliptic polarization in the high energy region</td>
+</tr>
+<tr>
+<td>Wavelength Shifter</td>
+<td>Wavelength shifter composed of 3 magnet poles; the main (central) pole has the strongest field, while the other two have lower fields so that the field integrals are zero. Note that the magnetic field is not uniform along the longitudinal (z) axis but changes in a sinusoidal manner</td>
+<td>Semi Sinusoidal</td>
+</tr>
+<tr>
+<td>Field Mapping</td>
+<td>Specify the 3-D magnetic vector in the (x,y,z) space to calculate the electron orbit. Refer to <a href="#Magnetic data format for custom sources">Magnetic data format for custom sources</a> for details.</td>
+<td rowspan="3">Custom</td>
+</tr>
+<tr>
+<td>Periodic: User Defined</td>
+<td rowspan="2">Similar to "Field Mapping", but specify the 2D magnetic vector along z. Refer to <a href="#Magnetic data format for custom sources">Magnetic data format for custom sources</a> for details.</td>
+</tr>
+<tr>
+<td>User Defined</td>
+</tr>
+</tbody></table>
+
+<h3 id="Magnetic data format for custom sources">Magnetic data format for custom sources</h3>
+
+<p>When one of the custom light sources ("User Defined", "Periodic: User Defined", and "Field Mapping") is chosen, the user should prepare a data file to import the magnetic data. The format of the data file depends on the ligt source and is summarized below.</p>
+<table><caption>Format of a data file to import the magnetic field distribution.</caption><tbody>
+
+<tr>
+<td class="title">Source Type</td>
+<td class="title">Format</td>
+</tr>
+<tr>
+<td>User Defined</td>
+<td rowspan="2"><div class="direct"><pre><code>z	Bx	By
+-8.959978e-01	5.174e-05	7.035e-06
+-8.949972e-01	5.423e-05	7.062e-06
+-8.939967e-01	5.646e-05	7.244e-06
+		(omitted)
+ 8.979989e-01	4.801e-05	6.639e-06
+ 8.989994e-01	4.582e-05	6.327e-06
+ 9.000000e-01	4.409e-05	6.456e-06
+</code></pre></div> The 1st line (title) is optional and the interval of the z coordinate does not have to be constant. For "Periodic: User Defined" sources, the magnetic field is defined as a periodic function with the periodicity defined by the imported data. Note that the data should be imported and embedded in the parameter file. Refer to <a href="#Pre-Processing">Pre-Processing</a> for details.</td>
+</tr>
+<tr>
+<td>Periodic: User Defined</td>
+</tr>
+<tr>
+<td>Field Mapping</td>
+<td><div class="direct"><pre><code>0.2	0.3	0.5	11	13	421
+1.23456e-1	2.3456e-1	3.4557e-1
+2.23456e-1	3.3456e-1	6.4557e-1
+	...
+4.23456e-1	5.3456e-1	8.4557e-1
+2.23456e-1	3.3456e-1	6.4557e-1</code></pre></div>The 6 numbers in the first line indicate the grid interval in mm and number of grid points along the x, y, and z axes. In the above case, the magnetic field components are given at 11x13x421 grid points with the x, y, and z intervals of 0.2 mm, 0.3 mm, and 0.5 mm, respectively. From the 2nd line, the magnetic field components ($B_x$, $B_y$, $B_z$) at each grid point are given. The grid point should be moved first along the z direction, next y direction, and finally x direction. Note that the user should specify the file name instead of directly importing the data, unlike other two sources of "User Defined" and "Periodic: User Defined".</td>
+</tr>
+</tbody></table>
+
+<h2 id="Configurations">Configurations</h2>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td colspan="2" class=" subtitle">Main Parameters</td>
+</tr>
+<tr>
+<td>Position x,y (mm)</td>
+<td rowspan="2">Transverse position/angle at the observation point.</td>
+</tr>
+<tr>
+<td>Angle &theta;<sub>x,y</sub> (mrad)</td>
+</tr>
+<tr>
+<td>Energy Range (eV)</td>
+<td rowspan="2">Energy range and pitch for Energy Dependence calculations.</td>
+</tr>
+<tr>
+<td>Energy Pitch (eV)</td>
+</tr>
+<tr>
+<td>Energy Pitch for Integration (eV)</td>
+<td>Energy pitch for integration in Volume Power Density calculations. Needs to be defined by the user for User Defined light sources.</td>
+</tr>
+<tr>
+<td>Points (Energy)</td>
+<td>Number of energy points for Energy Dependence calculations.</td>
+</tr>
+<tr>
+<td>Detuning</td>
+<td>Photon energy defined as a detuned value, i.e., $\varepsilon/(n\varepsilon_1)-1$, where $n$ is the target harmonic number.</td>
+</tr>
+<tr>
+<td>Target Energy (eV)</td>
+<td>Photon energy to be fixed.</td>
+</tr>
+<tr>
+<td>Normalized Energy</td>
+<td>Same as the above, but normalized by &epsilon;<sub>1st</sub>.</td>
+</tr>
+<tr>
+<td>Auto Config. for Energy Range</td>
+<td>Enable automatic configuration to define the energy range and pitch.</td>
+</tr>
+<tr>
+<td>Auto Config. for Transverse Range</td>
+<td>Enable automatic configuration to define the spatial/angular range and grid intervals.</td>
+</tr>
+<tr>
+<td>x Range (mm)</td>
+<td rowspan="7">Range of the Observation positions/angles for "Spatial Dependence" calculations: (a) [Along Axis] and [Mesh: x-y] and (b) [Mesh: r-&phi;].<figure id="spatialgrid.png"><img src="spatialgrid.png" style="width: 666px;"><figcaption>Meanings of the observation position for "Spatial Dependence": (a) [Planar Surface: x-z/y-z] and (b) [Cylindrical Surface].</figcaption></figure></td>
+</tr>
+<tr>
+<td>&theta;<sub>x</sub> Range (mrad)</td>
+</tr>
+<tr>
+<td>y Range (mm)</td>
+</tr>
+<tr>
+<td>&theta;<sub>y</sub> Range (mrad)</td>
+</tr>
+<tr>
+<td>r Range (mm)</td>
+</tr>
+<tr>
+<td>&theta; Range (mrad)</td>
+</tr>
+<tr>
+<td>&phi; Range (deg.)</td>
+</tr>
+<tr>
+<td>Points (x)</td>
+<td rowspan="5">Number of observation point in the relevant range.</td>
+</tr>
+<tr>
+<td>Points (y)</td>
+</tr>
+<tr>
+<td>Points (r)</td>
+</tr>
+<tr>
+<td>Points (&theta;)</td>
+</tr>
+<tr>
+<td>Points (&phi;)</td>
+</tr>
+<tr>
+<td>Distance from the Source (m)</td>
+<td>Distance from the center of the light source to the observation point.</td>
+</tr>
+<tr>
+<td>Slit Pos.: x,y (mm)</td>
+<td rowspan="6">Specify the configuration of the slit positions and aperture.<figure id="slittype.png"><img src="slittype.png" style="width: 666px;"><figcaption>Schematic drawing of the slit conditions.</figcaption></figure></td>
+</tr>
+<tr>
+<td>Slit Pos.: &theta;<sub>x,y</sub> (mrad)</td>
+</tr>
+<tr>
+<td>&Delta;/&Sigma;<sub>s</sub>: x,y</td>
+</tr>
+<tr>
+<td>&Delta;x,&Delta;y (mm)</td>
+</tr>
+<tr>
+<td>Slit r<sub>1,2</sub> (mm)</td>
+</tr>
+<tr>
+<td>Slit &theta;<sub>1,2</sub> (mrad)</td>
+</tr>
+<tr>
+<td>Depth Range (mm)</td>
+<td rowspan="2">Depth range and number of points for Volume Power Density calculations.</td>
+</tr>
+<tr>
+<td>Points (Depth)</td>
+</tr>
+<tr>
+<td>&Delta;&theta;<sub>x,y</sub> (mrad)</td>
+<td rowspan="4">Angular acceptance to confine the photon beam and resultant illuminated area of the object, and angles to define the condition of glancing incidence for Volume Power Density calculations.<figure id="volpdens.png"><img src="volpdens.png" style="width: 680px;"><figcaption>Definitions of parameters to define the condition of the target object and coordinate to define the calculation positions in Volume Power Density calculations</figcaption></figure>Azimuth of Incidence define the direction along which the object is inclined: if it is vertically tilted as in the case of a crystal monochromator, this parameter should be 90 degree, as shown in the above figure.</td>
+</tr>
+<tr>
+<td>Illuminated x,y (mm)</td>
+</tr>
+<tr>
+<td>Glancing Angle (deg.)</td>
+</tr>
+<tr>
+<td>Azimuth of Incidence (deg.)</td>
+</tr>
+<tr>
+<td>x Range (mm)</td>
+<td rowspan="6">Position of the object and range of observation for Spatial Power Density calculations. Note that SPECTRA distinguishes the inner and outer sides of the surface. To be specific, the above figure shows the case when the inner size indicated by a red line is facing the beam axis, and thus receives the radiation power. If, in contrast, the object with the same normal vector is located at a negative position of x, the inner surface is facing outsize and it does not receive any radiation<figure id="surfacepd.png"><img src="surfacepd.png" style="width: 666px;"><figcaption>Observation conditions of the surface power density.</figcaption></figure></td>
+</tr>
+<tr>
+<td>y Range (mm)</td>
+</tr>
+<tr>
+<td>z range (m)</td>
+</tr>
+<tr>
+<td>Surface Pos. x (mm)</td>
+</tr>
+<tr>
+<td>Surface Pos. y (mm)</td>
+</tr>
+<tr>
+<td>Surface Radius (mm)</td>
+</tr>
+<tr>
+<td>Points (x)</td>
+<td rowspan="3">Number of observation points in the relevant range</td>
+</tr>
+<tr>
+<td>Points (y)</td>
+</tr>
+<tr>
+<td>Points (z)</td>
+</tr>
+<tr>
+<td>&Theta; (deg.)</td>
+<td rowspan="2">Normal vectors to specify the inner surface of the object irradiated by SR. In "Fixed Point Calculation" calculations, the normal vector to the object surface is specified more flexibly by two angles as schematically illustrated below. For example, &Theta; = &Phi; = 0 means that the surface of the object is parallel to the y-z plane, with its inner side facing the beam axis. Angles of the normal vector to define the inner surface illuminated by radiation for Spatial Power Density calculations.<figure id="surfacepd_point.png"><img src="surfacepd_point.png" style="width: 666px;"><figcaption>Observation conditions of the surface power density available in Fixed Point Calculation calculation.</figcaption></figure></td>
+</tr>
+<tr>
+<td>&Phi; (deg.)</td>
+</tr>
+<tr>
+<td>&Sigma;<sub>x,y</sub>@&epsilon;<sub>1st</sub> (mm)</td>
+<td rowspan="2">Photon beam size and divergence at the observation position, defined at &epsilon;<sub>1st</sub>. Note this is a rough estimation and does not take into account the energy spread of the electron beam.</td>
+</tr>
+<tr>
+<td>&Sigma;<sub>x',y'</sub>@&epsilon;<sub>1st</sub> (mrad)</td>
+</tr>
+<tr>
+<td>&Sigma;<sub>px,py</sub> (mm)</td>
+<td rowspan="2">Spatial spread and divergence of the radiation power at the observation position</td>
+</tr>
+<tr>
+<td>&Sigma;<sub>px',py'</sub> (mrad)</td>
+</tr>
+<tr>
+<td>K Range</td>
+<td rowspan="3">Range of the K values and number of points.</td>
+</tr>
+<tr>
+<td>K<sub>&perp;</sub> Range</td>
+</tr>
+<tr>
+<td>Points (K)</td>
+</tr>
+<tr>
+<td>&epsilon;<sub>1st</sub> Range (eV)</td>
+<td>Range of the fundamental energy determined by the above K-value range.</td>
+</tr>
+<tr>
+<td>Power Upper Limit (kW)</td>
+<td>Upper limit of the partial power to define the width and height of the rectangular slit for K Dependence calculations.</td>
+</tr>
+<tr>
+<td>Harmonic Range</td>
+<td rowspan="2">Harmonic range or target harmonic number for K-value dependence calculations.</td>
+</tr>
+<tr>
+<td>Target Harmonic</td>
+</tr>
+<tr>
+<td>Temporal Range (fs)</td>
+<td rowspan="2">Temporal range and number of points for Time Dependence calculations.</td>
+</tr>
+<tr>
+<td>Points (Temporal)</td>
+</tr>
+<tr>
+<td>Maximum Harmonic</td>
+<td>Maximum harmonic number to be considered.</td>
+</tr>
+<tr>
+<td>Slice X (mm)</td>
+<td rowspan="4">Transverse positions and angles at the source point where the Wigner function is calculated. These parameters should be distinguished from those indicated by lower letters, which mean the transverse positions at a certain longitudinal position downstream of the light source.</td>
+</tr>
+<tr>
+<td>Slice Y (mm)</td>
+</tr>
+<tr>
+<td>Slice X' (mrad)</td>
+</tr>
+<tr>
+<td>Slice Y' (mrad)</td>
+</tr>
+<tr>
+<td>X Range (mm)</td>
+<td rowspan="8">Calculation range/number of points of the transverse positions/angles at the source point. Should be distinguished from those indicated by lower letters (see above).</td>
+</tr>
+<tr>
+<td>Points (X)</td>
+</tr>
+<tr>
+<td>X' Range (mrad)</td>
+</tr>
+<tr>
+<td>Points (X')</td>
+</tr>
+<tr>
+<td>Y Range (mm)</td>
+</tr>
+<tr>
+<td>Points (Y)</td>
+</tr>
+<tr>
+<td>Y' Range (mrad)</td>
+</tr>
+<tr>
+<td>Points (Y')</td>
+</tr>
+<tr>
+<td>&gamma;&Delta;&theta;<sub>x,y</sub></td>
+<td rowspan="2">Angular acceptance normalized by &gamma;<sup>-1</sup> to calculate the Wigner function.</td>
+</tr>
+<tr>
+<td>X' Acceptance (mrad)</td>
+</tr>
+<tr>
+<td>Optical Element</td>
+<td>Optical element to be inserted.</td>
+</tr>
+<tr>
+<td>Position (m)</td>
+<td>Position of the optical element.</td>
+</tr>
+<tr>
+<td>Aperture x (mm)</td>
+<td rowspan="2">Aperture size of the slit.</td>
+</tr>
+<tr>
+<td>Aperture y (mm)</td>
+</tr>
+<tr>
+<td>Slit Distance x  (mm)</td>
+<td rowspan="2">Distance of the double slit.</td>
+</tr>
+<tr>
+<td>Slit Distance y  (mm)</td>
+</tr>
+<tr>
+<td>Soft Edge Fringe Size (mm)</td>
+<td>Length of the soft-edge region.</td>
+</tr>
+<tr>
+<td>Limit of Diffraction Effect</td>
+<td>Target tolerance to define the threashold of the angular range when a slit is inserted.</td>
+</tr>
+<tr>
+<td>Larger Angular Range</td>
+<td>An integer to define the angular range to evaluate the CSD.</td>
+</tr>
+<tr>
+<td>Larger Angular Range</td>
+<td>An integer to define the angular range to evaluate the CSD.</td>
+</tr>
+<tr>
+<td>Larger Angular Range</td>
+<td>An integer to define the angular range to evaluate the CSD.</td>
+</tr>
+<tr>
+<td>Focal Length x (m)</td>
+<td rowspan="2">Focal length of the thin lens.</td>
+</tr>
+<tr>
+<td>Focal Length y (m)</td>
+</tr>
+<tr>
+<td>Angular Profile</td>
+<td>Export the angular profile</td>
+</tr>
+<tr>
+<td>Wigner Function</td>
+<td>Export the Wigner function after the optical element.</td>
+</tr>
+<tr>
+<td>Cross Spectral Density</td>
+<td>Export the CSD.</td>
+</tr>
+<tr>
+<td>Degree of Coherence</td>
+<td>Export the spatial degree of coherence.</td>
+</tr>
+<tr>
+<td colspan="2" class=" subtitle">Options</td>
+</tr>
+<tr>
+<td>Filtering</td>
+<td class=" cont">
+<p>Specify the type of filtering.</p>
+<ul><li>"None": no filter is assumed.</li><li>"Generic Filter": slab or layer that attenuates the photon beam, made of any material.</li><li>"BPF: Gaussian": Gaussian bandpath filter.</li><li>"BPF: Boxcar": boxcar-type bandpath filter.</li><li>"Custom": evaluate the transmission rate by interpolating the imported data.</li></ul></td>
+</tr>
+<tr>
+<td>Energy Step</td>
+<td class=" cont" rowspan="2">
+<p>Specify how to change the energy/depth position in the calculation range.</p>
+<ul><li>"Linear": linear variation (constant interval).</li><li>"Logarithmic": logarithmic variation (constant ratio).</li></ul></td>
+</tr>
+<tr>
+<td>Depth Step</td>
+</tr>
+<tr>
+<td>Slit Aperture Size</td>
+<td class=" cont">
+<p>Specify how to represent the width and height of the rectangular slit.</p>
+<ul><li>"Fixed": fixed aperture</li><li>"Normalized": normalized by &Sigma;<sub>x,y</sub>@&epsilon;<sub>1st</sub> (mm),, and is varied for K Dependence calculations</li></ul></td>
+</tr>
+<tr>
+<td>Define Obs. Point in</td>
+<td class=" cont">
+<p>Specify how to represent the transverse observation points.</p>
+<ul><li>"Position": in position.</li><li>"Angle": in angle.</li></ul></td>
+</tr>
+<tr>
+<td>Normalize Photon Energy</td>
+<td>Specify the photon energy as a normalized value.</td>
+</tr>
+<tr>
+<td>Set Upper Limit on Power</td>
+<td>Put an upper limit on the allowable partial power.</td>
+</tr>
+<tr>
+<td>Optimize &Delta;X' for Computation</td>
+<td>Horizontal angular acceptance is virtually closed to reduce the computation time, without changing the calculation results.</td>
+</tr>
+<tr>
+<td>Level of Smoothing Along X</td>
+<td>Apply smoothing for the Wigner function of BMs and wigglers; larger values results in more smooth profiles.</td>
+</tr>
+<tr>
+<td>Observation in the Fourier Plane</td>
+<td>Calculation is done at the "Fourier Plane" as schematically illustrated below, to evaluate the angular profile at the source point (center of the light source)<figure id="fourieplane.png"><img src="fourieplane.png" style="width: 666px;"><figcaption>Virtual observation in the Fourier plane.</figcaption></figure></td>
+</tr>
+<tr>
+<td>Wiggler Approximation</td>
+<td>Apply the wiggler approximation, in which radiation incoherently summed up (as photons).</td>
+</tr>
+<tr>
+<td>Spectral Smoothing</td>
+<td>Apply the spectral smoothing; this is useful to reduce the computation time by smoothing the spectral fine structure potentially found in undulator radiation.</td>
+</tr>
+<tr>
+<td>Smoothing Window (%)</td>
+<td>Smoothing window in %; this means that the photon flux at 1000 eV is given as the average from 995 to 1005 eV.</td>
+</tr>
+<tr>
+<td id="Accuracy">Accuracy</td>
+<td>Specify the numerical accuracy. In most cases, "Default" is recommended, in which case SPECTRA automatically arranges all the relevant parameters. If "Custom" is selected, the user should configure each parameter. Refer to <a href="#Numerical Accuracy">Numerical Accuracy</a> for details.</td>
+</tr>
+<tr>
+<td colspan="2" class=" subtitle">Parameters to Specify the BPF</td>
+</tr>
+<tr>
+<td>Central Energy (eV)</td>
+<td>Central photon energy of the bandpath filter (BPF).</td>
+</tr>
+<tr>
+<td>Width (eV)</td>
+<td>Full width of the boxcar-type BPF.</td>
+</tr>
+<tr>
+<td>Width (&sigma;, eV)</td>
+<td>1&sigma; of the Gaussian BPF.</td>
+</tr>
+<tr>
+<td>Max. Trans. Rate</td>
+<td>Maximum transmission rate of the BPF.</td>
+</tr>
+<tr>
+<td colspan="2" id="CMD Parameters" class=" subtitle">Parameters for the CMD (coherent mode decomposition)</td>
+</tr>
+<tr>
+<td>Perform CMD?</td>
+<td>Perform "Coherent Mode Decomposition" after calculating the Wigner function.</td>
+</tr>
+<tr>
+<td>Export Field Profile</td>
+<td class=" cont">
+<p>Calculate and export the modal profiles based on the CMD results</p>
+<ul><li>"None": do not export.</li><li>"JSON": export in the JSON format.</li><li>"BINARY": export in the <a href="#Binary Format for the Modal Profile">binary format</a>.</li><li>"Both": export in the both formats.</li></ul></td>
+</tr>
+<tr>
+<td>Export Intensity Profile</td>
+<td>Calculate and export the modal intensity profiles based on the CMD results</td>
+</tr>
+<tr>
+<td>Compare Wigner Function</td>
+<td>Reconstruct the Wigner function using the CMD result to check its validity.</td>
+</tr>
+<tr>
+<td>Compare Intensity Profile</td>
+<td>Reconstruct the flux density profile using the CMD result to check its validity.</td>
+</tr>
+<tr>
+<td>Apply GS Model</td>
+<td>Use Gaussian-Schell (GS) model to simplify the CMD and reduce computation time.</td>
+</tr>
+<tr>
+<td>GS Model X/Y</td>
+<td class=" cont">
+<p>Use Gaussian-Schell (GS) model for CMD. Select the axis to apply.</p>
+<ul><li>"None": do not use GS model.</li><li>"X": GS model for horizontal axis.</li><li>"Y": GS model for vertical axis.</li><li>"Both": GS model for both axes.</li></ul></td>
+</tr>
+<tr>
+<td>HG Order Limit (X,Y)</td>
+<td rowspan="3">Upper limit of the order of the Hermite-Gaussian functions to be used in the CMD.</td>
+</tr>
+<tr>
+<td>HG Order Limit (X)</td>
+</tr>
+<tr>
+<td>HG Order Limit (Y)</td>
+</tr>
+<tr>
+<td>Max. HG Order (X,Y)</td>
+<td rowspan="3">Maximum orders of the coherent mode.</td>
+</tr>
+<tr>
+<td>Max. HG Order (X)</td>
+</tr>
+<tr>
+<td>Max. HG Order (Y)</td>
+</tr>
+<tr>
+<td>Maximum CMD Order</td>
+<td>Maximum number of the coherent modes for post-processing (exporting the modal profile, reconstructing the Wigner functions).</td>
+</tr>
+<tr>
+<td>Flux Cutoff</td>
+<td>Cutoff flux (normalized) to be used to determine the maximum HG order of of each coherent mode.</td>
+</tr>
+<tr>
+<td>Amplitude Cutoff</td>
+<td>Cutoff amplitude (normalized) of individual modes, below which Hermite-Gaussian functions are neglected.</td>
+</tr>
+<tr>
+<td>Range: X,Y (mm)</td>
+<td rowspan="3">Range of the spatial grid to export the modal profile.</td>
+</tr>
+<tr>
+<td>Range: X (mm)</td>
+</tr>
+<tr>
+<td>Range: Y (mm)</td>
+</tr>
+<tr>
+<td>Step: X,Y (mm)</td>
+<td rowspan="3">Intervals of the spatial grid points to export the modal profile.</td>
+</tr>
+<tr>
+<td>Step: X (mm)</td>
+</tr>
+<tr>
+<td>Step: Y (mm)</td>
+</tr>
+<tr>
+<td colspan="2" class=" subtitle">Parameters for the FEL mode</td>
+</tr>
+<tr>
+<td id="FEL Mode">FEL Mode</td>
+<td class=" cont">
+<p>Coherent radiation in an FEL (free electron laser) mode is calculated. If this option is enabled, interaction (energy exchange) between electrons and radiation is taken into account in solving the equation of electron motion in the 6D phase space."Reuse Bunch Factor": reuse the bunch factor evaluated in the former calculations. This option is available by opening a former calculation result of coherent radiation,  with the FEL mode option enabled.</p>
+<ul></ul></td>
+</tr>
+<tr>
+<td>Pulse Energy (mJ)</td>
+<td>Seed pulse energy.</td>
+</tr>
+<tr>
+<td>Wavelength (nm)</td>
+<td>Seed wavelength.</td>
+</tr>
+<tr>
+<td>Pulse Length (FWHM, fs)</td>
+<td>Seed pulse length.</td>
+</tr>
+<tr>
+<td>TL. Pulse Length (FWHM, fs)</td>
+<td>Transform-limited pulse length of the chirped seed pulse.</td>
+</tr>
+<tr>
+<td>Source Size (FWHM, mm)</td>
+<td>Seed source size.</td>
+</tr>
+<tr>
+<td>Waist Position (m)</td>
+<td>Longitudinal position where the seed pulse forms a beam waist.</td>
+</tr>
+<tr>
+<td>Timing (fs)</td>
+<td>Relative time of the seed pulse with respect to the electron beam.</td>
+</tr>
+<tr>
+<td>GDD (fs<sup>2</sup>)</td>
+<td rowspan="2">Group delay dispersion and third order dispersion of the chirped seed pulse.</td>
+</tr>
+<tr>
+<td>TOD (fs<sup>3</sup>)</td>
+</tr>
+<tr>
+<td>Pulse Energy: 1,2 (mJ)</td>
+<td>Pulse energies of the 1st and 2nd seed pulses. Available when "Seeded with Double Pulse" is chosen. Note that there are a number of parameters having the same suffix (1,2), which denotes that they are for the 1st and 2nd seed pulses.</td>
+</tr>
+<tr>
+<td>Step: Initial, Interval (m)</td>
+<td rowspan="2">Define the longitudinal step to solve the FEL equation. Refer to the schematic drawing for details.<figure id="felsteps.png"><img src="felsteps.png" style="width: 685px;"><figcaption>Definitions of parameters to define the longitudinal steps to solve the FEL equation.</figcaption></figure>The light source is divided into a number of steps (indicated by yellow arrows), and each step is further divided into a number of substeps (blue arrows). The bunch factor of the electron beam is assumed to be constant within a step and is updated at the end, which is then used to calculate the coherent radiation in the next step. The radiation waveform is assumed to be constant within a substep besides the slippage effect and is updated at the end, which is then used to evaluate the interaction with electrons in the next substep. A number of data sets used in each step is saved in the output file, if <a href="#Export Intermediate Data">Export Intermediate Data</a> option is enabled.</td>
+</tr>
+<tr>
+<td>Substeps for Radiation</td>
+</tr>
+<tr>
+<td>Photon Energy ROI (eV)</td>
+<td>Photon energy range of interest to solve the FEL equation.</td>
+</tr>
+<tr>
+<td>Number of Particles</td>
+<td>Number of macro-particles to represent the electron beam.</td>
+</tr>
+<tr>
+<td>e- Energy Interval</td>
+<td>Interval of the electron energy deviation to export the electron density in the (E-t) phase space.</td>
+</tr>
+<tr>
+<td>R<sub>56</sub> (m)</td>
+<td>Strength of the virtual dispersive section. Need to be specified if <a href="#Bunch with Dispersion">Bunch with Dispersion</a> option is enabled.</td>
+</tr>
+<tr>
+<td id="Export Intermediate Data">Export Intermediate Data</td>
+<td>Export the intermediate data evaluated during the process of solving the FEL equation.</td>
+</tr>
+<tr>
+<td id="Bunch with Dispersion">Bunch with Dispersion</td>
+<td>Export the bunch profile after the electron beam passes through a virtual dispersive section located downstream of the source, as in the high-gain harmonic generation (HGHG) FELs.</td>
+</tr>
+<tr>
+<td>E-t Data</td>
+<td>Export the electron density in the (E-t) phase space.</td>
+</tr>
+<tr>
+<td colspan="2" id="Wavefront Propagation Parameters" class=" subtitle">Parameters for the wavefront propagation</td>
+</tr>
+<tr>
+<td>Transverse Grid</td>
+<td class=" cont">
+<p>Specify the transverse grid at each longitudinal step.</p>
+<ul><li>"Automatic": automatically determined.</li><li>"Normalized": specify the grid intervals normalized by the RMS beam size at each longitudinal step.</li><li>"Fixed":  specify the grid intervals directly.</li></ul></td>
+</tr>
+<tr>
+<td>Finer Spatial Grid</td>
+<td>Specify a finer grid interval if "Automatic"is selected for "Transverse Grid". Default is 0 and a larger number means a finer interval.</td>
+</tr>
+<tr>
+<td>Optical Element</td>
+<td class=" cont">
+<p>Specify an optical element inserted in the beamline.</p>
+<ul><li>"None": no optical elements.</li><li>"Single Slit": insert a single slit.</li><li>"Double Slit": insert a double slit.</li><li>"Ideal Thin Lens": insert an ideal thin lens.</li></ul></td>
+</tr>
+<tr>
+<td>Position (m)</td>
+<td>Longitudinal position to insert an optical element.</td>
+</tr>
+<tr>
+<td>Aperture x (mm)</td>
+<td>Horizontal aperture size.</td>
+</tr>
+<tr>
+<td>Slit Distance x  (mm)</td>
+<td>Distance between the double slit in the horizontal direction.</td>
+</tr>
+<tr>
+<td>Aperture y (mm)</td>
+<td>Vertical aperture size.</td>
+</tr>
+<tr>
+<td>Slit Distance y  (mm)</td>
+<td>Distance between the double slit in the vertical direction.</td>
+</tr>
+<tr>
+<td>Soft Edge Fringe Size (mm)</td>
+<td>Range of the "Soft Edge"of the slit. At the edge of the slit, the photon intensity is supposed to gradually drop, as opposed to a hard-edged condition. Longer soft-edge ranges reduce the diffraction effects. In addition, the memory requirement is relaxed as well.</td>
+</tr>
+<tr>
+<td>Limit of Diffraction Effect</td>
+<td>Specify the threshold to cut off the diffraction effects and determine the angular range to compute the Wigner function after passing through a slit.</td>
+</tr>
+<tr>
+<td>Required Memory (MB) ~</td>
+<td>Approximate memory size needed during the computation. The parameters should be arranged so that this value is not too large.</td>
+</tr>
+<tr>
+<td>Focal Length x (m)</td>
+<td>Focal length of an ideal lens in the horizontal direction.</td>
+</tr>
+<tr>
+<td>Focal Length y (m)</td>
+<td>Focal length of an ideal lens in the vertical direction.</td>
+</tr>
+<tr>
+<td>Larger Angular Range</td>
+<td>Specify the angular range to evaluate the Wigner function after an optical element. If set to 0, the angular range is determined to be consistent with the relevant parameters; a larger number means a large angular range.</td>
+</tr>
+<tr>
+<td>Wigner Function</td>
+<td>Export the Wigner function after an optical element.</td>
+</tr>
+<tr>
+<td>Angular Profile</td>
+<td>Export the angular profile after an optical element.</td>
+</tr>
+<tr>
+<td>Cross Spectral Density</td>
+<td>Export the cross spectral density.</td>
+</tr>
+<tr>
+<td>Degree of Coherence</td>
+<td>Export the degree of spatial coherence.</td>
+</tr>
+</tbody></table>
+
+<h3 id="Binary Format for the Modal Profile">Binary Format for the Modal Profile</h3>
+
+<p>The binary format to export the modal profile is defined below.</p>
+<ul><li>Integer (4 byte) $\times\:3$: $N_m$, $N_X$, $N_Y$</li><li>Double (8 byte) $\times\:2$: $\Delta X$, $\Delta Y$</li><li>Double (8 byte) $\times\:N_XN_Y$: 0-th Mode Profile Real Part</li><li>Double (8 byte) $\times\:N_XN_Y$: 0-th Mode Profile Imaginary Part</li><li>...</li><li>Double (8 byte)$\times N_XN_Y$: ($N_m$-1)-th Mode Profile Imaginary Part</li></ul>
+<p>where $N_m$ is the number of coherent modes, $\Delta X$ and $N_{X}$ are the interval and number of positions along the horizontal (X) axis, and similar expressions for the vertical (Y) axis. The order index j in each array representing the real/imaginary part of the complex amplitude is given as \[j=j_x+j_yN_X\] where $j_x$ and $j_y$ refer to the order indices corresponding to the X and Y positions. To be specific, the X index changes first.</p>
+<h1 id="Calculation Setup">Calculation Setup</h1>
+
+<p>Details of how to setup and start the calculations are presented here, together with explanations of the type of calculations and output items available in SPECTRA.</p>
+<h2 id="General Method">General Method</h2>
+<h3 id="Open a Parameter File">Open a Parameter File</h3>
+
+<p>Upon being started, SPECTRA tries to load parameters from the parameter file that was opened last time. If successful, the parameters are shown in the "Main Parameters" panel. If SPECTRA is run for the first time after installation, default parameters will be shown. To open a new SPECTRA parameter file, run [File]-[Open a Parameter File] command. In the initial setting, the parameter files are found in the directory "[SPECTRA Home]/prm" with a default suffix "json", where "[SPECTRA Home]" is the directory in which SPECTRA has been installed.</p>
+<h3 id="Select a Calculation Type">Select a Calculation Type</h3>
+
+<p>Before starting any calculation, "Calculation Type" should be selected by running one of the submenus in [Select Calculation]. Refer to <a href="#Calculation Type">Calculation Type</a> for details of each calculation type.</p>
+<h3 id="Arrange the Output File">Arrange the Output File</h3>
+
+<p>Arrange the output file to save the calculation results in the <a href="#Output File Subpanel">Output File</a> subpanel.</p>
+<h3 id="Start Calculation">Start Calculation</h3>
+
+<p>Run [Run]-[Start Calculation] command to start a single calculation. Then "Calculation Status/Processes" subpanel is displayed in the "Main Parameters" panel to indicate the progress of calculation. To cancel the calculation, click "Cancel" button. Note that the serial number is automatically incremented once the calculation is started, unless it is not negative (-1). This is to avoid the overlap of the output file name in performing successive calculations. When the calculation is completed, the "Calculation Status/Processes" subpanel vanishes and the result is imported in the "Post-Processing" panel for visualization.</p>
+<h3 id="Verify the Result">Verify the Result</h3>
+
+<p>Upon completion of a calculation, the output file is automatically loaded and one of the items is plotted in the "Post-Processing" subpanel to quickly view the results. Refer to <a href="#Post-Processing">Post-Processing</a> for details about how to operate the post-processor.</p>
+<h2 id="Calculation Type">Calculation Type</h2>
+
+<p>To start any calculation in SPECTRA, the "Calculation Type" should be specified first. This is shown as the submenus of [Select Calculation] main menu in the GUI. The meanings and details of the submenus are summarized in the table below. After selection, the calculation type is shown in the top of the "Configurations" subpanel, which is represented by a string given by concatenating a number of submenu items. Note that a "double colon (::)" is inserted between items for clarity.</p>
+<table><caption>Classification and Description of Menu Items</caption><tbody>
+
+<tr>
+<td class=" title" width="150px">Category</td>
+<td class=" title" width="150px">GUI Menu Items</td>
+<td class=" title">Details</td>
+</tr>
+<tr>
+<td rowspan="6">Numerical Scheme</td>
+<td>Far Field &amp; Ideal Condition</td>
+<td>Assumes that $|\boldsymbol{R}|$ is much larger than $|\boldsymbol{r}|$, where $\boldsymbol{R}$ and $\boldsymbol{r}$ represent the vectors directing from the origin to the observer and moving electron, respectively. This implies that the observation angle, i.e., an angle formed by $\boldsymbol{R}$ and $\boldsymbol{r}$, is kept constant while the electron passes through the SR source. In addition, the field distribution of the SR source is assumed to be ideal: perfectly periodic in undulators and wigglers, and constant in bending magnets. This significantly simplifies the expressions on SR and thus enables a fast computation. For most applications, such as evaluation of the photon flux passing through a slit and heat load on optical elements, this method is recommended and is in fact reliable enough.</td>
+</tr>
+<tr>
+<td>Near Field</td>
+<td>No approximation is made in this method besides an assumption that the electron is relativistic. In other words, the observation angle is a function of the electron position, i.e., it varies while the electron travels along the SR source axis. If the distance between the SR source and observer is shorter and or comparable to the length of the SR source itself, the near-field effect would not be negligible. Especially, the off-axis spectrum will be considerably different from that observed at the point infinitely far from the SR source. In addition, this method should be chosen if the SR source is not ideal. One important case is to compute the characteristics expected in a real device based on a magnetic field distribution actually measured.</td>
+</tr>
+<tr>
+<td>Coherent Radiation</td>
+<td>Same as "Near Field", except that the radiation is temporally coherent. In other words, radiation emitted by each electron in the electron beam is summed up coherently. This is in contrast to the two methods described above, where radiation is summed up incoherently. The intensity of coherent radiation is significantly enhanced if the bunch length of the electron beam is shorter than the wavelength of radiation, or it has a local density modulation with the typical length shorter than the wavelength.</td>
+</tr>
+<tr>
+<td>Characterization at the Source Point</td>
+<td>Evaluates the photon distribution exactly at the source point, or the center of the SR source. This means that the distance from the source to the observer is zero, i.e., $\boldsymbol{R}=\boldsymbol{0}$. Computing the SR properties under such a condition is not possible in a straightforward manner, but requires another numerical operation to propagate the radiation from the observation point back to the source point. SPECTRA is equipped with a number of numerical methods to enable this function.</td>
+</tr>
+<tr>
+<td>Fixed Point Calculation</td>
+<td>Calculation is performed for a single fixed condition (photon energy, observation point, etc.) and the results are displayed in the GUI.</td>
+</tr>
+<tr>
+<td>Coherent Mode Decomposition</td>
+<td>Using the photon distribution at the source point (Wigner functions), partially-coherent radiation can be decomposed into a number of coherent modes, which is useful to describe the propagation of SR in the framework of wave optics.</td>
+</tr>
+<tr>
+<td rowspan="5">Method</td>
+<td>Energy Dependence</td>
+<td>Target items are calculated as a function of the photon energy.</td>
+</tr>
+<tr>
+<td>Spatial Dependence</td>
+<td>Target items are calculated as a function of the observation point.</td>
+</tr>
+<tr>
+<td>K Dependence</td>
+<td>Target items are calculated as a function of the undulator K value (deflection parameter).</td>
+</tr>
+<tr>
+<td>Time Dependence</td>
+<td>Target items are calculated as a function of time.</td>
+</tr>
+<tr>
+<td>Wigner Function</td>
+<td>Photon density in the 2D/4D phase space is evaluated by means of the Wigner function method.</td>
+</tr>
+<tr>
+<td rowspan="16">Main Target Item</td>
+<td>Angular Flux Density</td>
+<td>Photon flux per unit solid angle.</td>
+</tr>
+<tr>
+<td>Spatial Flux Density</td>
+<td>Photon flux per unit area.</td>
+</tr>
+<tr>
+<td>Partial Flux</td>
+<td>Photon flux of radiation passing through a finite aperture.</td>
+</tr>
+<tr>
+<td>Total Flux</td>
+<td>Photon flux of radiation integrated over the whole solid angle.</td>
+</tr>
+<tr>
+<td>Angular Power Density</td>
+<td>Radiation power per unit solid angle.</td>
+</tr>
+<tr>
+<td>Spatial Power Density</td>
+<td>Radiation power per unit area.</td>
+</tr>
+<tr>
+<td>Partial Power</td>
+<td>Radiation Power passing through a finite aperture</td>
+</tr>
+<tr>
+<td>Resolved Power Density</td>
+<td>Radiation power decomposed into polarization and harmonic components</td>
+</tr>
+<tr>
+<td>Surface Power Density</td>
+<td>Radiation power density under a glancing-incidence condition</td>
+</tr>
+<tr>
+<td>Volume Power Density</td>
+<td>Radiation power per unit volume absorbed by a target object (absorber)</td>
+</tr>
+<tr>
+<td>Electric Field</td>
+<td>Temporal profile of electric field of radiation.</td>
+</tr>
+<tr>
+<td>Complex Amplitude</td>
+<td>Spatial profile of complex amplitude of radiation.</td>
+</tr>
+<tr>
+<td>Spatial Profile</td>
+<td>Transverse profile of the spatial flux density calculated at the source point.</td>
+</tr>
+<tr>
+<td>Phase-Space Distribution</td>
+<td>Distribution of the photon density in the in the 2D/4D phase space.</td>
+</tr>
+<tr>
+<td>CMD with the Wigner Function</td>
+<td>Perform CMD using the existing Wigner function data</td>
+</tr>
+<tr>
+<td>Modal Profile</td>
+<td>Perform post-processing using the CMD results</td>
+</tr>
+<tr>
+<td rowspan="17">Condition</td>
+<td>Rectangular Slit</td>
+<td>Radiation passes through a rectangular aperture.</td>
+</tr>
+<tr>
+<td>Circular Slit</td>
+<td>Radiation passes through a circular aperture.</td>
+</tr>
+<tr>
+<td>Along Axis</td>
+<td>Moves the observation point along the x- and y-axes.</td>
+</tr>
+<tr>
+<td>Mesh: x-y</td>
+<td>Moves the observation point over the rectangular grid.</td>
+</tr>
+<tr>
+<td>Mesh: r-&phi;</td>
+<td>Moves the observation point over the grid in the 2D polar coordinate.</td>
+</tr>
+<tr>
+<td>Simplified Calculation</td>
+<td>Assumes that the radiation is a Gaussian beam, and roughly estimates its characteristics, such as the brilliance, on-axis flux density, source size and angular divergence without actually doing the convolution.</td>
+</tr>
+<tr>
+<td>Flux at a Fixed Energy</td>
+<td>Calculates the characteristics of UR at a fixed photon energy. To be specific, the monochromator is unchanged, while the K value is tuned.</td>
+</tr>
+<tr>
+<td>Peak Flux Curve</td>
+<td>Calculates the characteristics of UR at peak harmonic energies. To be specific, the monochromator is scanned synchronously with the K value.</td>
+</tr>
+<tr>
+<td>Power</td>
+<td>Calculate the radiation power as a function of the K value.</td>
+</tr>
+<tr>
+<td>Planar Surface: x-z</td>
+<td>Calculation is done on the x-z surface located vertically off the beam axis.</td>
+</tr>
+<tr>
+<td>Planar Surface: y-z</td>
+<td>Calculation is done on the y-z surface located horizontally off the beam axis.</td>
+</tr>
+<tr>
+<td>Cylindrical Surface</td>
+<td>Calculation is done on the inner surface of a pipe coaxially located with the beam axis.</td>
+</tr>
+<tr>
+<td>X-X' (Sliced)</td>
+<td>4D Wigner function calculated on (X,X') phase space at given (Y,Y').</td>
+</tr>
+<tr>
+<td>X-X' (Projected)</td>
+<td>2D (projected) Wigner function calculated on (X,X') phase space.</td>
+</tr>
+<tr>
+<td>Y-Y' (Sliced)</td>
+<td>4D Wigner function calculated on (Y,Y') phase space at given (X,X').</td>
+</tr>
+<tr>
+<td>Y-Y' (Projected)</td>
+<td>2D (projected) Wigner function calculated on (Y,Y') phase space.</td>
+</tr>
+<tr>
+<td>X-X'-Y-Y'</td>
+<td>4D Wigner function calculated on (X,X',Y,Y').</td>
+</tr>
+<tr>
+<td rowspan="6">Sub-Condition</td>
+<td>Target Harmonics</td>
+<td>Calculation is performed for individual harmonics.</td>
+</tr>
+<tr>
+<td>All Harmonics</td>
+<td>Optimizes the harmonic number to maximize the target item (brilliance or flux).</td>
+</tr>
+<tr>
+<td>Sliced</td>
+<td>4D (X,X',Y,Y') Wigner function at a single point.</td>
+</tr>
+<tr>
+<td>Projected on X-X'</td>
+<td>2D Wigner function projected on (X,X').</td>
+</tr>
+<tr>
+<td>Projected on Y-Y'</td>
+<td>2D Wigner function projected on (Y,Y').</td>
+</tr>
+<tr>
+<td>Related Characteristics</td>
+<td>Degree of Coherence and X-Y Separability evaluated from Wigner function.</td>
+</tr>
+</tbody></table>
+
+<h2 id="Output Items">Output Items</h2>
+
+<p>The output items specific to respective calculation types are summarized below.</p>
+<table><tbody>
+
+<tr>
+<td class=" title">Parameter/Option</td>
+<td class=" title">Detail</td>
+</tr>
+<tr>
+<td>Flux Density</td>
+<td>Spatial (far field conditions) or angular (others) flux density</td>
+</tr>
+<tr>
+<td>Flux</td>
+<td>Partial photon flux passing through a finite angular acceptance, or total flux integrated over the whole solid angle</td>
+</tr>
+<tr>
+<td>GA. Brilliance</td>
+<td rowspan="2">Photon density in the 4D phase space (or its maximum). "GA." stands for "Gaussian Approximation", meaning that it is evaluated by assuming that the photon beam is a Gaussian one.</td>
+</tr>
+<tr>
+<td>Brilliance</td>
+</tr>
+<tr>
+<td>Prj. Brilliance</td>
+<td>Brilliance projected on the (X,X') or (Y,Y') phase space.</td>
+</tr>
+<tr>
+<td>PL(s1/s0)</td>
+<td rowspan="3">Stokes parameters: PL, PC, PL45 correspond to the horizontal, left-hand and 45-deg.-inclined linear polarizations.</td>
+</tr>
+<tr>
+<td>PC(s3/s0)</td>
+</tr>
+<tr>
+<td>PL45(s2/s0)</td>
+</tr>
+<tr>
+<td>Harmonic Energy</td>
+<td rowspan="2">Photon energy of a target harmonic. "Harmonic" is defined as n&epsilon;<sub>1st</sub>, where n is the harmonic number, while "Peak" specifies the photon energy at which the photon intensity (flux density of flux) becomes the maximum; in general this is slightly lower than the former one.</td>
+</tr>
+<tr>
+<td>Peak Energy</td>
+</tr>
+<tr>
+<td>Power Density</td>
+<td>Spatial (far field conditions) or angular (others) power density</td>
+</tr>
+<tr>
+<td>Partial Power</td>
+<td rowspan="2">Partial power passing through a finite angular acceptance, or total power integrated over the whole solid angle</td>
+</tr>
+<tr>
+<td>Total Power</td>
+</tr>
+<tr>
+<td>Harmonic Power (x)</td>
+<td rowspan="2">Angular power density corresponding to a specific harmonic and polarization state</td>
+</tr>
+<tr>
+<td>Harmonic Power (y)</td>
+</tr>
+<tr>
+<td>Volume Power Density</td>
+<td>Refer to <a href="#Volume Power Density">Volume Power Density</a></td>
+</tr>
+<tr>
+<td>Natural Size</td>
+<td rowspan="2">Source size and angular divergence of radiation emitted by a single electron</td>
+</tr>
+<tr>
+<td>Natural Divergence</td>
+</tr>
+<tr>
+<td>Horizontal Size</td>
+<td rowspan="2">Source size of a photon beam emitted by an electron beam with finite emittance and energy spread</td>
+</tr>
+<tr>
+<td>Vertical Size</td>
+</tr>
+<tr>
+<td>Horizontal Divergence</td>
+<td rowspan="2">Angular divergence of a photon beam</td>
+</tr>
+<tr>
+<td>Vertical Divergence</td>
+</tr>
+<tr>
+<td>Coherent Flux</td>
+<td>Photon flux contained in a coherent volume of radiation that is fully coherent in space</td>
+</tr>
+<tr>
+<td>Coherent Power</td>
+<td>Power contained in a bandwidth corresponding to 1 μm coherence length</td>
+</tr>
+<tr>
+<td>Horizontal Coherent Fraction</td>
+<td rowspan="2">Quality of a photon beam in terms of coherence, defined as $\Sigma_x\Sigma_{x'}/(\lambda/4\pi)$ for the horizontal direction and a similar expression for the vertical direction, where $\Sigma_{x}$ and $\Sigma_{x'}$ are the source size and angular divergence of the photon beam.</td>
+</tr>
+<tr>
+<td>Vertical Coherent Fraction</td>
+</tr>
+<tr>
+<td>Harmonic Number</td>
+<td>Harmonic number to generate the maximum photon intensity at a given photon energy</td>
+</tr>
+<tr>
+<td>Observer Time</td>
+<td>Time in the laboratory frame (for observer)</td>
+</tr>
+<tr>
+<td>Horizontal Electric Field</td>
+<td rowspan="2">Electric field of radiation</td>
+</tr>
+<tr>
+<td>Vertical Electric Field</td>
+</tr>
+<tr>
+<td>Horizontal Real Field</td>
+<td rowspan="4">Complex amplitude of radiation evaluated at a given photon energy</td>
+</tr>
+<tr>
+<td>Horizontal Imaginary Field</td>
+</tr>
+<tr>
+<td>Vertical Real Field</td>
+</tr>
+<tr>
+<td>Vertical Imaginary Field</td>
+</tr>
+<tr>
+<td>Separability</td>
+<td>Refer to <a href="#Separability">Separability</a></td>
+</tr>
+<tr>
+<td>Deg. Coherence (X)</td>
+<td rowspan="3">Refer to <a href="#Degree of Spatial Coherence">Degree of Spatial Coherence</a></td>
+</tr>
+<tr>
+<td>Deg. Coherence (Y)</td>
+</tr>
+<tr>
+<td>Deg. Coherence (Total)</td>
+</tr>
+</tbody></table>
+
+<h2 id="Calculation Status/Processes">Calculation Status/Processes</h2>
+
+<p>To configure a number of calculations with different conditions, run [Run]-[Create Process] command every time you finish specifying all the parameters. Then the "Calculation Status/Processes" subpanel appears in the "Main Parameters" panel to show the calculation list currently saved in a temporary memory. Repeat it until all the calculations are specified. Click "Remove" button to delete the selected process, or "Cancel All" to clear out all the processes. Run [Run]-[Start Calculation] command to start the calculation processes, then a progressbar is displayed to show the status of each process.</p>
+<h2 id="Scanning a Parameter">Scanning a Parameter</h2>
+
+<p>Besides the method described above, it is possible to configure a lot of Calculation Status/Processes at once by scanning a specific parameter. To do so, right click the target parameter in one of the subpanels after selecting the Calculation Type, and click [Scan This Parameter] in the context menu. Then specify the configurations for scanning in the dialog box as shown below. Note that the context menu does not pop up for parameters that cannot be used for scanning.</p>
+<figure id="scanconfig.png"><img src="scanconfig.png" style="width: 301px;"><figcaption>Configuration for scanning a parameter.</figcaption></figure>
+<p>Input the initial &amp; final values, and number of points for scanning. For several parameters to be specified by an integer, scanning interval instead of the number of points should be given. Note that the "Bundle the output data" option is to bundle all the output data into a single output file, which can be retrieved later in the "Post-Processing" panel. The availability of this option depend on the selected Calculation Type.</p>
+
+<p>If the target parameter forms a pair, such as &beta;<sub>x, y</sub> (horizontal and  betatron functions), the user is requested to select the dimension for scanning: [Scan Parameter 1D/2D]. For the 2D scanning, configurations for the both parameters are needed.</p>
+
+<p>After configuration, click "OK" button to create a "Calculation Status/Processes". Then the specified parameters are saved in a temporary memory and the scanning process is saved in the calculation list. Run [Run]-[Start Calculation] command to start the calculation.</p>
+<h3 id="Notes on Scanning &amp;epsilon;<sub>1st</sub>">Notes on Scanning &epsilon;<sub>1st</sub></h3>
+
+<p>When scanning the fundamental energy of undulators having both (horizontal and vertical) K values (K<sub>x</sub> and K<sub>y</sub>), such as elliptic undulators, the ratio of the two (K<sub>x</sub>/K<sub>y</sub>) depends on "Gap-Field Relation" option as summarized below.</p>
+<table><caption>Relation between K<sub>x</sub> and K<sub>y</sub> in &epsilon;<sub>1st</sub> scan.</caption><tbody>
+
+<tr>
+<td class="title">Gap-Field Relation</td>
+<td class="title">Details</td>
+</tr>
+<tr>
+<td>None</td>
+<td>K<sub>x</sub>/K<sub>y</sub> is the same as that currently displayed in the GUI, and is kept constant for different values of &epsilon;<sub>1st</sub>.</td>
+</tr>
+<tr>
+<td>Automatic</td>
+<td>K<sub>x</sub>/K<sub>y</sub> is determined by "Geometrical Factor (x,y)".</td>
+</tr>
+<tr>
+<td>Import Table</td>
+<td>K<sub>x</sub>/K<sub>y</sub> is determined by "Gap vs. Field" data imported in <a href="#Pre-Processing">Pre-Processing</a> subpanel.</td>
+</tr>
+</tbody></table>
+
+<h2 id="Parallel Computing Support">Parallel Computing Support</h2>
+
+<p>SPECTRA supports parallel computing in two different methods: MPI (Message Passing Interface) and Multithread. To enable this option, refer to <a href="#Parallel Computing">Parallel Computing</a> setup dialog. Note that MPI is not available in the web-application version.</p>
+<h1 id="Advanced Functions">Advanced Functions</h1>
+
+<p>Besides the fundamental properties of SR such as the flux and radiation power, which can be calculated in a rather straightforward manner, SPECTRA offers a method to evaluate a number of special characteristics of SR: Surface Power Density, Volume Power Density, Characterization at the Source Point, Coherent Mode Decomposition. In what follows, details of them are explained.</p>
+<h2 id="Surface Power Density">Surface Power Density</h2>
+
+<p>The surface power density is defined as the radiation power per unit surface area of the target object, which should be distinguished from the (normal) power density defined as the power per unit area of the transverse (x,y) plane. If the normal vector of the surface of the target object is parallel to z, there is no difference between the two. This is not the case when the normal vector is perpendicular to z; the surface power density in this configuration is much lower than the normal power density as easily understood.</p>
+
+<p>Computation of the surface power density is usually much more complicated than that of the normal power density. This comes from the fact that the incident angle of SR largely depends on the longitudinal position where it is emitted, if the surface of the target object has a small glancing angle. This is not the case for computing the normal power density, where the incident angle is always nearly 90 degrees.</p>
+<h2 id="Volume Power Density">Volume Power Density</h2>
+
+<p>The volume power density is defined as the radiation power absorbed per unit volume in an object illuminated by radiation. In a mathematical form it is given by \[\frac{d^3P(x,y,D)}{dxdydD}=C\int \frac{d^2F(x,y,\omega)}{dxdy}[1-\mbox{e}^{-\mu(\omega)D}]\mu_{en}(\omega)d\omega,\] where $\mu$ &amp; $\mu_{en}$ are the linear attenuation &amp; energy absorption coefficients at the photon energy $\hbar\omega$, $D$ is the distance from the surface of the object ("Depth"), and $C$ is a unit conversion factor. Note that glancing-incidence conditions can be specified as explained in the <a href="#volpdens.png">relevant parameters</a>.</p>
+<h2 id="Characterization at the Source Point">Characterization at the Source Point</h2>
+
+<p>In contrast to other calculations in which the observation point is assumed to be located downstream of the light source, characteristics exactly at the source point (center of the light source, z=0) are evaluated in this calculation. This is possible by propagating the emitted radiation backward to the source point using wave optics. Two options are available as follows.</p>
+<h3 id="Wigner Function">Wigner Function</h3>
+
+<p>The photon flux density in the phase space spanned by the spatial $(x,y)=\boldsymbol{r}$ and angular $(x',y')=\boldsymbol{r}'$ coordinates, which is referred to as the phase-space density and denoted by $d(x,y,x',y')$, is an important physical quantity to characterize SR as a light source. Its maximum value, which is known as brilliance or brightness, gives the information of how many coherent photons are available. Its distribution in the phase space is necessary to carry out the ray-trace simulation based on the geometrical optics.</p>
+
+<p>It is worth noting that the angular profile of SR in the far-field region is obtained by integrating $d(x,y,x',y')$ over $(x,y)$, while the spatial profile in the near-field region is obtained by integrating over $(x',y')$. Also note that these spatial and angular profiles can be computed directly from an analytical formulas based on classical electrodynamics. It should be noted, however, that there is no analytical method to calculate $d(x,y,x',y')$ directly from the first principle. The Wigner function $W(x,y,x',y')$ is introduced in SR formulation to solve this problem and makes it possible to compute $d(x,y,x',y')$ from the complex amplitude of radiation.</p>
+
+<p>SPECTRA is equipped with several functions to compute the phase-space density not only for the single electron, but also for more practical conditions, i.e., the electron beam with finite emittance and energy spread. The resultant phase-space density can be computed as a function of various variables: photon energy, K value, and phase-space coordinates. For details of numerical implementation of the Wigner function, refer to <a href="#refwigner">[4]</a>.</p>
+<h4 id="Energy Dependence">Energy Dependence</h4>
+
+<p>The phase-space density is calculated as a function of the photon energy with other conditions being fixed. In the case of undulator radiation, the target harmonic number should be specified as well.</p>
+<h4 id="K Dependence">K Dependence</h4>
+
+<p>The phase-space density of undulator radiation at a specific harmonic is calculated as a function of the undulator K value. Note that the photon energy should be given as a detuning parameter with respect to the exact harmonic energy. If the calculation is done on-axis (x=y=x'=y'=0), the resultant data are comparable to the brilliance roughly estimated by a Gaussian approximation, but are based on a more rigorous method using the Wigner function.</p>
+<h4 id="Phase-Space Distribution">Phase-Space Distribution</h4>
+
+<p>The distribution of the phase-space density is calculated as a function of the phase-space coordinate variables: x, y, x', and y'. Five types of calculation conditions are available as follows.</p>
+<ol><li>X-X' (Sliced): $W(x,y_{fix},x',y_{fix}')$</li><li>X-X' (Projected): $W_x(x,x')$</li><li>Y-Y' (Sliced): $W(x_{fix},y,x_{fix}',y')$</li><li>Y-Y' (Projected): $W_y(y,y')$</li><li>X-X-Y-Y' : $W(x,y,x',y')$</li></ol>
+<p>where $W_x$ is defined as \[W_x=\int\!\!\!\!\int W(x,x',y,y')dydy',\] and a similar expression for $W_y$.</p>
+<h4 id="Related Characteristics">Related Characteristics</h4>
+
+<p>When the 4D phase-space density is calculated, two important properties related to the Wigner function method are available: separability and total degree of spatial coherence. The details of them are explained as follows.</p>
+<table><caption>Properties calculated by a mathematical operation of the 4D Wigner Function</caption><tbody>
+
+<tr>
+<td class="title">Property</td>
+<td class="title">Details</td>
+</tr>
+<tr>
+<td>Separability</td>
+<td id="Separability">In most cases, especially when the electron beam emittance is not too small compared to the optical emittance at the target wavelength, the phase-space density and thus the Wigner function can be separated into two functions $W_x$ and $W_y$. Namely, the Wigner function $W$ can be substituted for by $W_d = W_xW_y/F$, where $F$ is the total photon flux, and the numerical cost for evaluation of the phase-space density is significantly reduced. To evaluate the consistency between the two functions $W$ and $W_d$ and to examine if the above discussions are valid under a specific condition, the separability $\kappa$ has been introduced, which is defined as \[\kappa=1-\sqrt{\frac{\langle(W_d-W)\rangle^2}{\langle W^2\rangle}},\] where $\langle f\rangle$ denotes the average of the function $f$ over the range of interest.</td>
+</tr>
+<tr>
+<td>Degree of Spatial Coherence</td>
+<td id="Degree of Spatial Coherence">The degree of spatial coherence $\zeta$ in SPECTRA is defined as \[\zeta=\left(\frac{\lambda}{F}\right)^2\int\!\!\!\!\int W^2(\boldsymbol{r},\boldsymbol{r}')d\boldsymbol{r}\boldsymbol{r}',\] which is actually a spatial average of the degree of spatial coherence $\mu^2(\boldsymbol{r}_1,\boldsymbol{r}_2)$ usually calculated at two different points $\boldsymbol{r}_1$ and $\boldsymbol{r}_2$. This is to avoid the complexity of expressing the function by two coordinate variables. Using the two functions $W_x$ and $W_y$, the degree of spatial coherence in the horizontal or vertical direction can be defined in a similar manner.</td>
+</tr>
+</tbody></table>
+
+
+<p>Note that the above properties, $\kappa$, $\zeta$, $\zeta_x$, and $\zeta_y$ are evaluated by a simple summation of quadratic forms of Wigner functions given at a number of grid points specified by the user, and the accuracy of integration is not checked. The user is required to input the range and number of mesh that are sufficiently wide and large to obtain a reliable result. One solution is to first check the profile of the projected Wigner functions in the 2D phase space, then input these parameters.</p>
+<h3 id="Spatial Profile">Spatial Profile</h3>
+
+<p>Spatial profile of the photon density, i.e., the spatial flux density is computed at the source point. This may be useful when discussing the profile of the photon beam after focusing optical components in the SR beamline. To be more specific, the spatial profile computed with this scheme reproduces the photon beam profile at the focal point of the unit magnification optical system.</p>
+<h2 id="Coherent Mode Decomposition">Coherent Mode Decomposition</h2>
+
+<p>Coherent Mode Decomposition is a mathematical method to decompose the partially coherent radiation into a number of coherent modes. Because the propagation of each mode can be described by wave optics, designing the optical elements can be much more reliable than that with the conventional ray-tracing that is based on geometrical optics.</p>
+<h3 id="Mathematical Form">Mathematical Form</h3>
+
+<p>In the numerical CMD implemented in SPECTRA, the Wigner function $W$ is supposed to be approximated by $W'$ composed of several coherent modes, namely, \[W'=f\sum_{p=0}^{M}\mathscr{W}(\Psi_p,\Psi_p),\] with $\mathscr{W}$ meaning an operator to calculate the Wigner function of the $p$-th order coherent mode, whose complex amplitude is represented by a function $\Psi_p$, and $M$ is the maximum order of the coherent modes. The function $\Psi_p$ is assumed top have a form \[\Psi_p=\sum_{q=0}^{N_p}a_{h,j}\phi_h(\hat{x})\phi_j(\hat{y}),\] with \[\phi_m(\zeta)=\frac{2^{1/4}}{\sqrt{2^m m!}}\mbox{e}^{-\pi\zeta^2}H_m(\sqrt{2\pi}\zeta),\] denoting the m-th order Hermite-Gaussian (HG) function, where $\hat{\boldsymbol{r}=(\hat{x},\hat{y})=(x/\sqrt{\pi}w_x,y/\sqrt{\pi}w_y)}$ is the normalized transverse coordinate, $a_{h,j}$ is the amplitude of the HG function of $\phi_h(\hat{x})\phi_j(\hat{y})$, $H_m$ is the Hermite polynomial of the order $m$, and $N_p$ denotes the maximum order of the HG modes in the p-th coherent mode. Note that the indices $h$ and $j$ are given as a function of the integer $q$ and order $p$. The coefficient $f$ and the dimension of $a_{h,j}$ are chosen arbitrarily as long as the above formulas are satisfied. In SPECTRA, they are determined so that $a_{h,j}$ is dimensionless, and \[\sum_{p=0}^{\infty}\int|\Psi_p|^2d\hat{\boldsymbol{r}}=1\] is satisfied. The purpose of the numerical CMD is to compute the coefficient $a_{h,j}$ so that the resultant Wigner function $W'$ well reproduces the original function $W$. For details of the CMD method in SPECTRA, refer to <a href="#refcmd">[5]</a>.</p>
+<h3 id="How to Do?">How to Do?</h3>
+
+<p>To perform the CMD in SPECTRA, follow the steps explained below.</p>
+<ul><li>Preparation of the Wigner Function: Before starting the CMD, the user should compute the Wigner function in the phase space. In addition to the 4D Wigner function $W(x,y,x',y')$, the projected ones ($W_x$ and $W_y$), are also available, in which case 1D modal functions are given in the target direction (horizontal or vertical). The range and number of points to calculate the Wigner function should be reasonably wide and large. Note that the JSON format should be chosen as the format of the <a href="#Output File Subpanel">output file</a>.</li><li>Load the Wigner Function: Open the JSON output file for the Winger function data generated in the above step, by running [File]-[Load Output File]-[Wigner Function for CMD] command. If the Wigner function data is successfully loaded, [CMD with the Wigner Function] menu is enabled under the [Select Calculation]-[Coherent Mode Decomposition] menu. Run it to show configurations for the CMD.</li><li>Arrange the Parameters: In the Configurations subpanel, edit the parameters and options related to the CMD; refer to <a href="#CMD Parameters">CMD Parameters</a> for details. After configuration, run [Run]-[Start Calculation] command to start the CMD process.</li><li>Verify the Result: The results of the CMD, such as the modal amplitude $a_{h,j}$, maximum orders of the HG functions, and numerical errors in the CMD process, are save in the output file, which can be directly verified by opening the output file in any text editor.</li><li>Visualization: other data sets specified in the options before starting the CMD, such as the modal profiles and reconstructed Wigner functions, are saved as well, which can be visualized in the "Post-Processing" panel.</li></ul><h2 id="Wavefront Propagation">Wavefront Propagation</h2>
+
+<p>Wavefront Propagation is a function to describe the propagation of synchrotron radiation using the Wigner function. In contrast to the conventional wavefront propagation based on the multi-electron or CMD scheme, it has a potential to complete the computation with a much shorter time. The basic concept has been proposed in 1980's and is found in <a href="#refwigprop">[10]</a>. Besides simple porpagation in the drift space, two typical optical elements are available: single/double slit and ideal lens. Although the availability is currently limited, efforts are under way to extend the capability of this scheme to a wider variety of components.</p>
+<h3 id="How to Do?">How to Do?</h3>
+
+<p>To perform the wavefront propagation, follow the steps explained below.</p>
+<ul><li>Prepare and Load the Wigner Function: before starting, the Wigner function data should be generated and loaded. Refer to file:///T:/SourceCode11/spectra/12.1/prj/src/spectra.html#How%20to%20Do? for details.</li><li>Arrange the Parameters: In the Configurations subpanel, edit the parameters and options related to the wavefront propagation; refer to <a href="#Wavefront Propagation Parameters">Wavefront Propagation Parameters</a> for details. After configuration, run [Run]-[Start Calculation] command to start the wavefront propagation process.</li><li>Verify the Result: The results of the CMD, such as the modal amplitude $a_{h,j}$, maximum orders of the HG functions, and numerical errors in the CMD process, are save in the output file, which can be directly verified by opening the output file in any text editor.</li><li>Visualization: other data sets specified in the options before starting the CMD, such as the modal profiles and reconstructed Wigner functions, are save as well, which can be visualized in the "Post-Processing" panel.</li></ul><h1 id="File Format">File Format</h1>
+
+<p>Besides the operation based on the GUI, SPECTRA (more precisely, the solver) can be utilized to communicate with external codes for the so-called start-to-end simulations. This actually requires the knowledge of the format of the input and output files, which is explained in the followings.</p>
+<h2 id="JSON Format">JSON Format</h2>
+
+<p>To deal with the many parameters and options, SPECTRA utilizes the JSON (JavaScript Object Notation) format, which is described by a number of "objects". The object contains a number of "pairs" formed by a "key" and "value", separated by a colon ":", and should be enclosed by a curly bracket {}. The value can be one of the followings: number, array, string and (another) object. An example of the SPECTRA input file is as follows.</p>
+
+<p><div class="direct"><pre><code>{
+  "Accelerator": {
+    "Energy (GeV)": 8,
+    "Current (mA)": 100,
+    ....
+    "Options": {
+      "Zero Emittance": false,
+      "Zero Energy Spread": false
+    }
+  },
+  "Light Source": {
+    "B (T)": 0.33467954834861074,
+    "&lambda;<sub>u</sub> (mm)": 32,
+    ....
+  },
+  "Configurations": {
+    "Distance from the Source (m)": 30,
+    ....
+  },
+  "Output File": {
+    "Comment": "",
+    ....
+  }
+}</code></pre></div></p>
+
+<p>In this example, four JSON objects are found, whose keys are "Accelerator", "Light Source", "Configurations", and "Output File". The value of each object is also an object, which actually specifies the parameters and options, such as "Energy (GeV)": 8, denoting the energy of the electron beam to be 8 GeV.</p>
+
+<p>For details of the JSON format, please refer to any document available online or found in the text.</p>
+<h2 id="Input Format">Input Format</h2>
+
+<p>The input file to be loaded by the solver should have 4 JSON objects: "Accelerator", "Light Source", "Configurations", and"Output File". Details of each object are summarized below, where "GUI Notation" is the parameter name displayed in the "Main Parameters" GUI panel, "Key" is the name of the key to be used in the input file, "Format" is the format of the value, and "Default" is the default value. Note that the key name can be either of the "Full" or "Simplified" expression.</p>
+<h3 id="Accelerator Object">Accelerator Object</h3>
+<table><tbody>
+
+<tr>
+<td class=" title" rowspan="2">GUI Notation</td>
+<td class=" title" colspan="2">Key</td>
+<td class=" title" rowspan="2">Format</td>
+<td class=" title" rowspan="2">Default</td>
+</tr>
+<tr>
+<td class=" title">Full</td>
+<td class=" title">Simplified</td>
+</tr>
+<tr>
+<td>Type</td>
+<td class=" prm">Type</td>
+<td class=" prm">type</td>
+<td>Select from:<br>"Storage Ring"<br>"Linear Accelerator"</td>
+<td>Storage Ring</td>
+</tr>
+<tr>
+<td>Energy (GeV)</td>
+<td class=" prm">Energy (GeV)</td>
+<td class=" prm">eGeV</td>
+<td>number</td>
+<td>8</td>
+</tr>
+<tr>
+<td>Current (mA)</td>
+<td class=" prm">Current (mA)</td>
+<td class=" prm">imA</td>
+<td>number</td>
+<td>100</td>
+</tr>
+<tr>
+<td>Bunches</td>
+<td class=" prm">Bunches</td>
+<td class=" prm">bunches</td>
+<td>integer</td>
+<td>203</td>
+</tr>
+<tr>
+<td>Pulses/sec</td>
+<td class=" prm">Pulses/sec</td>
+<td class=" prm">pulsepps</td>
+<td>integer</td>
+<td>60</td>
+</tr>
+<tr>
+<td>&sigma;<sub>z</sub> (mm)</td>
+<td class=" prm">&amp;sigma;&lt;sub&gt;z&lt;/sub&gt; (mm)</td>
+<td class=" prm">bunchlength</td>
+<td>number</td>
+<td>3.9</td>
+</tr>
+<tr>
+<td>Bunch Charge (nC)</td>
+<td class=" prm">Bunch Charge (nC)</td>
+<td class=" prm">bunchcharge</td>
+<td>number</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td>Nat. Emittance (m.rad)</td>
+<td class=" prm">Nat. Emittance (m.rad)</td>
+<td class=" prm">emitt</td>
+<td>number</td>
+<td>2.4e-9</td>
+</tr>
+<tr>
+<td>Coupling Constant</td>
+<td class=" prm">Coupling Constant</td>
+<td class=" prm">coupl</td>
+<td>number</td>
+<td>0.002</td>
+</tr>
+<tr>
+<td>Energy Spread</td>
+<td class=" prm">Energy Spread</td>
+<td class=" prm">espread</td>
+<td>number</td>
+<td>0.0011</td>
+</tr>
+<tr>
+<td>&beta;<sub>x,y</sub> (m)</td>
+<td class=" prm">&amp;beta;&lt;sub&gt;x,y&lt;/sub&gt; (m)</td>
+<td class=" prm">beta</td>
+<td>array</td>
+<td>[31.2, 5]</td>
+</tr>
+<tr>
+<td>&alpha;<sub>x,y</sub></td>
+<td class=" prm">&amp;alpha;&lt;sub&gt;x,y&lt;/sub&gt;</td>
+<td class=" prm">alpha</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>&eta;<sub>x,y</sub> (m)</td>
+<td class=" prm">&amp;eta;&lt;sub&gt;x,y&lt;/sub&gt; (m)</td>
+<td class=" prm">eta</td>
+<td>array</td>
+<td>[0.146, 0]</td>
+</tr>
+<tr>
+<td>&eta;'<sub>x,y</sub></td>
+<td class=" prm">&amp;eta;'&lt;sub&gt;x,y&lt;/sub&gt;</td>
+<td class=" prm">etap</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>Bunch Profile</td>
+<td class=" prm">Bunch Profile</td>
+<td class=" prm">bunchtype</td>
+<td>Select from:<br>"Gaussian"<br>"[object Object]"</td>
+<td>Gaussian</td>
+</tr>
+<tr>
+<td>Particle Distribution</td>
+<td class=" prm">Particle Distribution</td>
+<td class=" prm">bunchdata</td>
+<td>file name</td>
+<td></td>
+</tr>
+<tr>
+<td>Current Profile</td>
+<td class=" prm">Current Profile</td>
+<td class=" prm">currdata</td>
+<td>object</td>
+<td></td>
+</tr>
+<tr>
+<td>E-t Profile</td>
+<td class=" prm">E-t Profile</td>
+<td class=" prm">Etdata</td>
+<td>object</td>
+<td></td>
+</tr>
+<tr>
+<td>Injection Condition</td>
+<td class=" prm">Injection Condition</td>
+<td class=" prm">injectionebm</td>
+<td>Select from:<br>"Automatic"<br>"Align at Entrance"<br>"Align at Center"<br>"Align at Exit"<br>"Custom"</td>
+<td>Automatic</td>
+</tr>
+<tr>
+<td>x,y (mm)</td>
+<td class=" prm">x,y (mm)</td>
+<td class=" prm">xy</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>x',y' (mrad)</td>
+<td class=" prm">x',y' (mrad)</td>
+<td class=" prm">xyp</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>Zero Emittance</td>
+<td class=" prm">Zero Emittance</td>
+<td class=" prm">zeroemitt</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Zero Energy Spread</td>
+<td class=" prm">Zero Energy Spread</td>
+<td class=" prm">zerosprd</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Single Electron</td>
+<td class=" prm">Single Electron</td>
+<td class=" prm">singlee</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Additional R<sub>56</sub> (m)</td>
+<td class=" prm">Additional R&lt;sub&gt;56&lt;/sub&gt; (m)</td>
+<td class=" prm">R56add</td>
+<td>number</td>
+<td>0</td>
+</tr>
+</tbody></table>
+
+<h3 id="Light Source Object">Light Source Object</h3>
+<table><tbody>
+
+<tr>
+<td class=" title" rowspan="2">GUI Notation</td>
+<td class=" title" colspan="2">Key</td>
+<td class=" title" rowspan="2">Format</td>
+<td class=" title" rowspan="2">Default</td>
+</tr>
+<tr>
+<td class=" title">Full</td>
+<td class=" title">Simplified</td>
+</tr>
+<tr>
+<td>Type</td>
+<td class=" prm">Type</td>
+<td class=" prm">type</td>
+<td>Select from:<br>"Linear Undulator"<br>"Vertical Undulator"<br>"Helical Undulator"<br>"Elliptic Undulator"<br>"Figure-8 Undulator"<br>"Vertical Figure-8 Undulator"<br>"Multi-Harmonic Undulator"<br>"Bending Magnet"<br>"Wiggler"<br>"EMPW"<br>"Wavelength Shifter"<br>"Field Mapping"<br>"Periodic: User Defined"<br>"User Defined"</td>
+<td>Linear Undulator</td>
+</tr>
+<tr>
+<td>Field Profile</td>
+<td class=" prm">Field Profile</td>
+<td class=" prm">fvsz</td>
+<td>object</td>
+<td></td>
+</tr>
+<tr>
+<td>Field Profile (1 Period)</td>
+<td class=" prm">Field Profile (1 Period)</td>
+<td class=" prm">fvsz1per</td>
+<td>object</td>
+<td></td>
+</tr>
+<tr>
+<td>Gap (mm)</td>
+<td class=" prm">Gap (mm)</td>
+<td class=" prm">gap</td>
+<td>number</td>
+<td>8</td>
+</tr>
+<tr>
+<td>B<sub>x,y</sub> (T)</td>
+<td class=" prm">B&lt;sub&gt;x,y&lt;/sub&gt; (T)</td>
+<td class=" prm">bxy</td>
+<td>array</td>
+<td>[0.5, 0.5]</td>
+</tr>
+<tr>
+<td>B (T)</td>
+<td class=" prm">B (T)</td>
+<td class=" prm">b</td>
+<td>number</td>
+<td>0.679498</td>
+</tr>
+<tr>
+<td>Main Field (T)</td>
+<td class=" prm">Main Field (T)</td>
+<td class=" prm">bmain</td>
+<td>number</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Sub Field (T)</td>
+<td class=" prm">Sub Field (T)</td>
+<td class=" prm">subpoleb</td>
+<td>number</td>
+<td>1</td>
+</tr>
+<tr>
+<td>&lambda;<sub>u</sub> (mm)</td>
+<td class=" prm">&amp;lambda;&lt;sub&gt;u&lt;/sub&gt; (mm)</td>
+<td class=" prm">lu</td>
+<td>number</td>
+<td>32</td>
+</tr>
+<tr>
+<td>Device Length (m)</td>
+<td class=" prm">Device Length (m)</td>
+<td class=" prm">devlength</td>
+<td>number</td>
+<td>4.564</td>
+</tr>
+<tr>
+<td># of Reg. Periods</td>
+<td class=" prm"># of Reg. Periods</td>
+<td class=" prm">periods</td>
+<td>number</td>
+<td>10</td>
+</tr>
+<tr>
+<td>K<sub>0x,0y</sub></td>
+<td class=" prm">K&lt;sub&gt;0x,0y&lt;/sub&gt;</td>
+<td class=" prm">Kxy0</td>
+<td>array</td>
+<td>[0.6, 1]</td>
+</tr>
+<tr>
+<td>Phase Shift (mm)</td>
+<td class=" prm">Phase Shift (mm)</td>
+<td class=" prm">phase</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>K<sub>x,y</sub></td>
+<td class=" prm">K&lt;sub&gt;x,y&lt;/sub&gt;</td>
+<td class=" prm">Kxy</td>
+<td>array</td>
+<td>[1, 1]</td>
+</tr>
+<tr>
+<td>K value</td>
+<td class=" prm">K value</td>
+<td class=" prm">K</td>
+<td>number</td>
+<td>1</td>
+</tr>
+<tr>
+<td>&epsilon;<sub>1st</sub> (eV)</td>
+<td class=" prm">&amp;epsilon;&lt;sub&gt;1st&lt;/sub&gt; (eV)</td>
+<td class=" prm">e1st</td>
+<td>number</td>
+<td>12000</td>
+</tr>
+<tr>
+<td>&lambda;<sub>1st</sub> (nm)</td>
+<td class=" prm">&amp;lambda;&lt;sub&gt;1st&lt;/sub&gt; (nm)</td>
+<td class=" prm">lambda1</td>
+<td>number</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Harmonic Component</td>
+<td class=" prm">Harmonic Component</td>
+<td class=" prm">multiharm</td>
+<td>array</td>
+<td>[]</td>
+</tr>
+<tr>
+<td>&rho; (m)</td>
+<td class=" prm">&amp;rho; (m)</td>
+<td class=" prm">radius</td>
+<td>number</td>
+<td>39.2718</td>
+</tr>
+<tr>
+<td>BM Length (m)</td>
+<td class=" prm">BM Length (m)</td>
+<td class=" prm">bendlength</td>
+<td>number</td>
+<td>2.8</td>
+</tr>
+<tr>
+<td>BM Fringe Length (m)</td>
+<td class=" prm">BM Fringe Length (m)</td>
+<td class=" prm">fringelen</td>
+<td>number</td>
+<td>0.05</td>
+</tr>
+<tr>
+<td>Main Length (m)</td>
+<td class=" prm">Main Length (m)</td>
+<td class=" prm">mplength</td>
+<td>number</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td>Sub Length (m)</td>
+<td class=" prm">Sub Length (m)</td>
+<td class=" prm">subpolel</td>
+<td>number</td>
+<td>0.05</td>
+</tr>
+<tr>
+<td>BM Interval (m)</td>
+<td class=" prm">BM Interval (m)</td>
+<td class=" prm">bminterv</td>
+<td>number</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Origin for CSR (m)</td>
+<td class=" prm">Origin for CSR (m)</td>
+<td class=" prm">csrorg</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Field Mapping Data</td>
+<td class=" prm">Field Mapping Data</td>
+<td class=" prm">fmap</td>
+<td>file name</td>
+<td></td>
+</tr>
+<tr>
+<td>Gap-Field Relation</td>
+<td class=" prm">Gap-Field Relation</td>
+<td class=" prm">gaplink</td>
+<td>Select from:<br>"None"<br>"Automatic"<br>"Import Table"</td>
+<td>None</td>
+</tr>
+<tr>
+<td>B<sub>r</sub> (T)</td>
+<td class=" prm">B&lt;sub&gt;r&lt;/sub&gt; (T)</td>
+<td class=" prm">br</td>
+<td>number</td>
+<td>1.2</td>
+</tr>
+<tr>
+<td>Geometrical Factor (x,y)</td>
+<td class=" prm">Geometrical Factor (x,y)</td>
+<td class=" prm">geofactor</td>
+<td>array</td>
+<td>[0.6, 0.9]</td>
+</tr>
+<tr>
+<td>Gap vs. Field</td>
+<td class=" prm">Gap vs. Field</td>
+<td class=" prm">gaptbl</td>
+<td>object</td>
+<td></td>
+</tr>
+<tr>
+<td>APPLE Configuration</td>
+<td class=" prm">APPLE Configuration</td>
+<td class=" prm">apple</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Field Structure</td>
+<td class=" prm">Field Structure</td>
+<td class=" prm">field_str</td>
+<td>Select from:<br>"Antisymmetric"<br>"Symmetric"</td>
+<td>Antisymmetric</td>
+</tr>
+<tr>
+<td>End Correction Magnet</td>
+<td class=" prm">End Correction Magnet</td>
+<td class=" prm">endmag</td>
+<td>boolean</td>
+<td>true</td>
+</tr>
+<tr>
+<td>Natural Focusing</td>
+<td class=" prm">Natural Focusing</td>
+<td class=" prm">natfocus</td>
+<td>Select from:<br>"None"<br>"Bx"<br>"By"<br>"Both"</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Field Offset &amp; Taper</td>
+<td class=" prm">Field Offset &amp; Taper</td>
+<td class=" prm">fielderr</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Offset x,y (T)</td>
+<td class=" prm">Offset x,y (T)</td>
+<td class=" prm">boffset</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>Lin. Taper x,y (/m)</td>
+<td class=" prm">Lin. Taper x,y (/m)</td>
+<td class=" prm">ltaper</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>Quad. Taper x,y (/m<sup>2</sup>)</td>
+<td class=" prm">Quad. Taper x,y (/m&lt;sup&gt;2&lt;/sup&gt;)</td>
+<td class=" prm">qtaper</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>Add Phase Error</td>
+<td class=" prm">Add Phase Error</td>
+<td class=" prm">phaseerr</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Random Number Seed</td>
+<td class=" prm">Random Number Seed</td>
+<td class=" prm">seed</td>
+<td>integer</td>
+<td>1</td>
+</tr>
+<tr>
+<td>&sigma;<sub>B</sub> (%)</td>
+<td class=" prm">&amp;sigma;&lt;sub&gt;B&lt;/sub&gt; (%)</td>
+<td class=" prm">fsigma</td>
+<td>number</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>&sigma;<sub>&phi;</sub> (deg.)</td>
+<td class=" prm">&amp;sigma;&lt;sub&gt;&amp;phi;&lt;/sub&gt; (deg.)</td>
+<td class=" prm">psigma</td>
+<td>number</td>
+<td>5</td>
+</tr>
+<tr>
+<td>&sigma;<sub>x,y</sub> (mm);</td>
+<td class=" prm">&amp;sigma;&lt;sub&gt;x,y&lt;/sub&gt; (mm);</td>
+<td class=" prm">xysigma</td>
+<td>array</td>
+<td>[0.001, 0.001]</td>
+</tr>
+<tr>
+<td>Tandem Arrangement</td>
+<td class=" prm">Tandem Arrangement</td>
+<td class=" prm">bmtandem</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Segmentation</td>
+<td class=" prm">Segmentation</td>
+<td class=" prm">segment_type</td>
+<td>Select from:<br>"None"<br>"Identical"<br>"2nd: Swap Bx,y"<br>"2nd: Flip Bx"<br>"2nd: Flip By"</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Number of Segments</td>
+<td class=" prm">Number of Segments</td>
+<td class=" prm">segments</td>
+<td>integer</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Half Number of Segments</td>
+<td class=" prm">Half Number of Segments</td>
+<td class=" prm">hsegments</td>
+<td>integer</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Segment Interval (m)</td>
+<td class=" prm">Segment Interval (m)</td>
+<td class=" prm">interval</td>
+<td>number</td>
+<td>5</td>
+</tr>
+<tr>
+<td>&Delta;&phi; (&pi;)</td>
+<td class=" prm">&amp;Delta;&amp;phi; (&amp;pi;)</td>
+<td class=" prm">phi0</td>
+<td>number</td>
+<td>1</td>
+</tr>
+<tr>
+<td>&Delta;&phi;<sub>1,2</sub> (&pi;)</td>
+<td class=" prm">&amp;Delta;&amp;phi;&lt;sub&gt;1,2&lt;/sub&gt; (&amp;pi;)</td>
+<td class=" prm">phi12</td>
+<td>array</td>
+<td>[0.5, 1.5]</td>
+</tr>
+<tr>
+<td>Matching Distance (m)</td>
+<td class=" prm">Matching Distance (m)</td>
+<td class=" prm">mdist</td>
+<td>number</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Periodic &beta; Function</td>
+<td class=" prm">Periodic &amp;beta; Function</td>
+<td class=" prm">perlattice</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+</tbody></table>
+
+<h3 id="Configurations Object">Configurations Object</h3>
+<table><tbody>
+
+<tr>
+<td class=" title" rowspan="2">GUI Notation</td>
+<td class=" title" colspan="2">Key</td>
+<td class=" title" rowspan="2">Format</td>
+<td class=" title" rowspan="2">Default</td>
+</tr>
+<tr>
+<td class=" title">Full</td>
+<td class=" title">Simplified</td>
+</tr>
+<tr>
+<td>Type</td>
+<td class=" prm">Type</td>
+<td class=" prm">type</td>
+<td>string</td>
+<td>Far Field &amp; Ideal Condition::Energy Dependence::Angular Flux Density</td>
+</tr>
+<tr>
+<td>Distance from the Source (m)</td>
+<td class=" prm">Distance from the Source (m)</td>
+<td class=" prm">slit_dist</td>
+<td>number</td>
+<td>30</td>
+</tr>
+<tr>
+<td>Auto Config. for Energy Range</td>
+<td class=" prm">Auto Config. for Energy Range</td>
+<td class=" prm">autoe</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Harmonic Range</td>
+<td class=" prm">Harmonic Range</td>
+<td class=" prm">hrange</td>
+<td>array</td>
+<td>[1, 5]</td>
+</tr>
+<tr>
+<td>Target Harmonic</td>
+<td class=" prm">Target Harmonic</td>
+<td class=" prm">hfix</td>
+<td>integer</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Maximum Harmonic</td>
+<td class=" prm">Maximum Harmonic</td>
+<td class=" prm">hmax</td>
+<td>integer</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Detuning</td>
+<td class=" prm">Detuning</td>
+<td class=" prm">detune</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Energy Range (eV)</td>
+<td class=" prm">Energy Range (eV)</td>
+<td class=" prm">erange</td>
+<td>array</td>
+<td>[5000, 50000]</td>
+</tr>
+<tr>
+<td>Energy Pitch (eV)</td>
+<td class=" prm">Energy Pitch (eV)</td>
+<td class=" prm">de</td>
+<td>number</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Energy Pitch for Integration (eV)</td>
+<td class=" prm">Energy Pitch for Integration (eV)</td>
+<td class=" prm">epitch</td>
+<td>number</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Points (Energy)</td>
+<td class=" prm">Points (Energy)</td>
+<td class=" prm">emesh</td>
+<td>integer</td>
+<td>101</td>
+</tr>
+<tr>
+<td>Normalized Energy</td>
+<td class=" prm">Normalized Energy</td>
+<td class=" prm">nefix</td>
+<td>number</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Target Energy (eV)</td>
+<td class=" prm">Target Energy (eV)</td>
+<td class=" prm">efix</td>
+<td>number</td>
+<td>12661</td>
+</tr>
+<tr>
+<td>Position x,y (mm)</td>
+<td class=" prm">Position x,y (mm)</td>
+<td class=" prm">xyfix</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>Angle &theta;<sub>x,y</sub> (mrad)</td>
+<td class=" prm">Angle &amp;theta;&lt;sub&gt;x,y&lt;/sub&gt; (mrad)</td>
+<td class=" prm">qxyfix</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>Surface Pos. x (mm)</td>
+<td class=" prm">Surface Pos. x (mm)</td>
+<td class=" prm">spdxfix</td>
+<td>number</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Surface Pos. y (mm)</td>
+<td class=" prm">Surface Pos. y (mm)</td>
+<td class=" prm">spdyfix</td>
+<td>number</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Surface Radius (mm)</td>
+<td class=" prm">Surface Radius (mm)</td>
+<td class=" prm">spdrfix</td>
+<td>number</td>
+<td>3</td>
+</tr>
+<tr>
+<td>&Theta; (deg.)</td>
+<td class=" prm">&amp;Theta; (deg.)</td>
+<td class=" prm">Qnorm</td>
+<td>number</td>
+<td>90</td>
+</tr>
+<tr>
+<td>&Phi; (deg.)</td>
+<td class=" prm">&amp;Phi; (deg.)</td>
+<td class=" prm">Phinorm</td>
+<td>number</td>
+<td>90</td>
+</tr>
+<tr>
+<td>Glancing Angle (deg.)</td>
+<td class=" prm">Glancing Angle (deg.)</td>
+<td class=" prm">Qgl</td>
+<td>number</td>
+<td>90</td>
+</tr>
+<tr>
+<td>Azimuth of Incidence (deg.)</td>
+<td class=" prm">Azimuth of Incidence (deg.)</td>
+<td class=" prm">Phiinc</td>
+<td>number</td>
+<td>90</td>
+</tr>
+<tr>
+<td>Slit Pos.: x,y (mm)</td>
+<td class=" prm">Slit Pos.: x,y (mm)</td>
+<td class=" prm">slitpos</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>Slit Pos.: &theta;<sub>x,y</sub> (mrad)</td>
+<td class=" prm">Slit Pos.: &amp;theta;&lt;sub&gt;x,y&lt;/sub&gt; (mrad)</td>
+<td class=" prm">qslitpos</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>&Delta;/&Sigma;<sub>s</sub>: x,y</td>
+<td class=" prm">&amp;Delta;/&amp;Sigma;&lt;sub&gt;s&lt;/sub&gt;: x,y</td>
+<td class=" prm">nslitapt</td>
+<td>array</td>
+<td>[4, 4]</td>
+</tr>
+<tr>
+<td>&Delta;x,&Delta;y (mm)</td>
+<td class=" prm">&amp;Delta;x,&amp;Delta;y (mm)</td>
+<td class=" prm">slitapt</td>
+<td>array</td>
+<td>[2, 1]</td>
+</tr>
+<tr>
+<td>&Delta;&theta;<sub>x,y</sub> (mrad)</td>
+<td class=" prm">&amp;Delta;&amp;theta;&lt;sub&gt;x,y&lt;/sub&gt; (mrad)</td>
+<td class=" prm">qslitapt</td>
+<td>array</td>
+<td>[0.06, 0.03]</td>
+</tr>
+<tr>
+<td>Slit r<sub>1,2</sub> (mm)</td>
+<td class=" prm">Slit r&lt;sub&gt;1,2&lt;/sub&gt; (mm)</td>
+<td class=" prm">slitr</td>
+<td>array</td>
+<td>[0, 1]</td>
+</tr>
+<tr>
+<td>Slit &theta;<sub>1,2</sub> (mrad)</td>
+<td class=" prm">Slit &amp;theta;&lt;sub&gt;1,2&lt;/sub&gt; (mrad)</td>
+<td class=" prm">slitq</td>
+<td>array</td>
+<td>[0, 0.03]</td>
+</tr>
+<tr>
+<td>Power Upper Limit (kW)</td>
+<td class=" prm">Power Upper Limit (kW)</td>
+<td class=" prm">pplimit</td>
+<td>number</td>
+<td>0.3</td>
+</tr>
+<tr>
+<td>z range (m)</td>
+<td class=" prm">z range (m)</td>
+<td class=" prm">zrange</td>
+<td>array</td>
+<td>[5, 6]</td>
+</tr>
+<tr>
+<td>Points (z)</td>
+<td class=" prm">Points (z)</td>
+<td class=" prm">zmesh</td>
+<td>integer</td>
+<td>21</td>
+</tr>
+<tr>
+<td>Auto Config. for Transverse Range</td>
+<td class=" prm">Auto Config. for Transverse Range</td>
+<td class=" prm">autot</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Transverse Grid</td>
+<td class=" prm">Transverse Grid</td>
+<td class=" prm">gridspec</td>
+<td>Select from:<br>"Automatic"<br>"Normalized"<br>"Fixed"</td>
+<td>Automatic</td>
+</tr>
+<tr>
+<td>Finer Spatial Grid</td>
+<td class=" prm">Finer Spatial Grid</td>
+<td class=" prm">grlevel</td>
+<td>integer</td>
+<td>0</td>
+</tr>
+<tr>
+<td>x Range (mm)</td>
+<td class=" prm">x Range (mm)</td>
+<td class=" prm">xrange</td>
+<td>array</td>
+<td>[-1, 1]</td>
+</tr>
+<tr>
+<td>&theta;<sub>x</sub> Range (mrad)</td>
+<td class=" prm">&amp;theta;&lt;sub&gt;x&lt;/sub&gt; Range (mrad)</td>
+<td class=" prm">qxrange</td>
+<td>array</td>
+<td>[-0.03, 0.03]</td>
+</tr>
+<tr>
+<td>x Range/&Sigma;</td>
+<td class=" prm">x Range/&amp;Sigma;</td>
+<td class=" prm">wnxrange</td>
+<td>array</td>
+<td>[-4, 4]</td>
+</tr>
+<tr>
+<td>Points (x)</td>
+<td class=" prm">Points (x)</td>
+<td class=" prm">xmesh</td>
+<td>integer</td>
+<td>41</td>
+</tr>
+<tr>
+<td>&delta;x Range (mm)</td>
+<td class=" prm">&amp;delta;x Range (mm)</td>
+<td class=" prm">wdxrange</td>
+<td>array</td>
+<td>[-0.1, 0.1]</td>
+</tr>
+<tr>
+<td>&delta;x Range/&Sigma;</td>
+<td class=" prm">&amp;delta;x Range/&amp;Sigma;</td>
+<td class=" prm">wndxrange</td>
+<td>array</td>
+<td>[-0.1, 0.1]</td>
+</tr>
+<tr>
+<td>Points (&delta;x)</td>
+<td class=" prm">Points (&amp;delta;x)</td>
+<td class=" prm">wdxmesh</td>
+<td>number</td>
+<td>51</td>
+</tr>
+<tr>
+<td>y Range (mm)</td>
+<td class=" prm">y Range (mm)</td>
+<td class=" prm">yrange</td>
+<td>array</td>
+<td>[-0.5, 0.5]</td>
+</tr>
+<tr>
+<td>&theta;<sub>y</sub> Range (mrad)</td>
+<td class=" prm">&amp;theta;&lt;sub&gt;y&lt;/sub&gt; Range (mrad)</td>
+<td class=" prm">qyrange</td>
+<td>array</td>
+<td>[-0.02, 0.02]</td>
+</tr>
+<tr>
+<td>y Range/&Sigma;</td>
+<td class=" prm">y Range/&amp;Sigma;</td>
+<td class=" prm">wnyrange</td>
+<td>array</td>
+<td>[-4, 4]</td>
+</tr>
+<tr>
+<td>Points (y)</td>
+<td class=" prm">Points (y)</td>
+<td class=" prm">ymesh</td>
+<td>integer</td>
+<td>41</td>
+</tr>
+<tr>
+<td>&delta;y Range (mm)</td>
+<td class=" prm">&amp;delta;y Range (mm)</td>
+<td class=" prm">wdyrange</td>
+<td>array</td>
+<td>[-0.1, 0.1]</td>
+</tr>
+<tr>
+<td>&delta;y Range/&Sigma;</td>
+<td class=" prm">&amp;delta;y Range/&amp;Sigma;</td>
+<td class=" prm">wndyrange</td>
+<td>array</td>
+<td>[-0.1, 0.1]</td>
+</tr>
+<tr>
+<td>Points (&delta;y)</td>
+<td class=" prm">Points (&amp;delta;y)</td>
+<td class=" prm">wdymesh</td>
+<td>number</td>
+<td>51</td>
+</tr>
+<tr>
+<td>r Range (mm)</td>
+<td class=" prm">r Range (mm)</td>
+<td class=" prm">rrange</td>
+<td>array</td>
+<td>[0, 1]</td>
+</tr>
+<tr>
+<td>&theta; Range (mrad)</td>
+<td class=" prm">&amp;theta; Range (mrad)</td>
+<td class=" prm">qrange</td>
+<td>array</td>
+<td>[0, 0.03]</td>
+</tr>
+<tr>
+<td>Points (r)</td>
+<td class=" prm">Points (r)</td>
+<td class=" prm">rphimesh</td>
+<td>integer</td>
+<td>41</td>
+</tr>
+<tr>
+<td>Points (&theta;)</td>
+<td class=" prm">Points (&amp;theta;)</td>
+<td class=" prm">qphimesh</td>
+<td>integer</td>
+<td>41</td>
+</tr>
+<tr>
+<td>&phi; Range (deg.)</td>
+<td class=" prm">&amp;phi; Range (deg.)</td>
+<td class=" prm">phirange</td>
+<td>array</td>
+<td>[0, 90]</td>
+</tr>
+<tr>
+<td>Points (&phi;)</td>
+<td class=" prm">Points (&amp;phi;)</td>
+<td class=" prm">phimesh</td>
+<td>integer</td>
+<td>41</td>
+</tr>
+<tr>
+<td>Depth Range (mm)</td>
+<td class=" prm">Depth Range (mm)</td>
+<td class=" prm">drange</td>
+<td>array</td>
+<td>[0, 1]</td>
+</tr>
+<tr>
+<td>Points (Depth)</td>
+<td class=" prm">Points (Depth)</td>
+<td class=" prm">dmesh</td>
+<td>integer</td>
+<td>41</td>
+</tr>
+<tr>
+<td>Optical Element</td>
+<td class=" prm">Optical Element</td>
+<td class=" prm">optics</td>
+<td>Select from:<br>"None"<br>"Single Slit"<br>"Double Slit"<br>"Ideal Thin Lens"</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Position (m)</td>
+<td class=" prm">Position (m)</td>
+<td class=" prm">optpos</td>
+<td>number</td>
+<td>25</td>
+</tr>
+<tr>
+<td>Aperture x (mm)</td>
+<td class=" prm">Aperture x (mm)</td>
+<td class=" prm">aptx</td>
+<td>number</td>
+<td>0.2</td>
+</tr>
+<tr>
+<td>Slit Distance x  (mm)</td>
+<td class=" prm">Slit Distance x  (mm)</td>
+<td class=" prm">aptdistx</td>
+<td>number</td>
+<td>0.4</td>
+</tr>
+<tr>
+<td>Aperture y (mm)</td>
+<td class=" prm">Aperture y (mm)</td>
+<td class=" prm">apty</td>
+<td>number</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td>Slit Distance y  (mm)</td>
+<td class=" prm">Slit Distance y  (mm)</td>
+<td class=" prm">aptdisty</td>
+<td>number</td>
+<td>0.2</td>
+</tr>
+<tr>
+<td>Soft Edge Fringe Size (mm)</td>
+<td class=" prm">Soft Edge Fringe Size (mm)</td>
+<td class=" prm">softedge</td>
+<td>number</td>
+<td>0.001</td>
+</tr>
+<tr>
+<td>Limit of Diffraction Effect</td>
+<td class=" prm">Limit of Diffraction Effect</td>
+<td class=" prm">diflim</td>
+<td>number</td>
+<td>0.02</td>
+</tr>
+<tr>
+<td>Larger Angular Range</td>
+<td class=" prm">Larger Angular Range</td>
+<td class=" prm">anglelevel</td>
+<td>integer</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Focal Length x (m)</td>
+<td class=" prm">Focal Length x (m)</td>
+<td class=" prm">foclenx</td>
+<td>number</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Focal Length y (m)</td>
+<td class=" prm">Focal Length y (m)</td>
+<td class=" prm">focleny</td>
+<td>number</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Angular Profile</td>
+<td class=" prm">Angular Profile</td>
+<td class=" prm">aprofile</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Wigner Function</td>
+<td class=" prm">Wigner Function</td>
+<td class=" prm">wigner</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Cross Spectral Density</td>
+<td class=" prm">Cross Spectral Density</td>
+<td class=" prm">csd</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Degree of Coherence</td>
+<td class=" prm">Degree of Coherence</td>
+<td class=" prm">degcoh</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>K Range</td>
+<td class=" prm">K Range</td>
+<td class=" prm">krange</td>
+<td>array</td>
+<td>[0, 2.3]</td>
+</tr>
+<tr>
+<td>K<sub>&perp;</sub> Range</td>
+<td class=" prm">K&lt;sub&gt;&amp;perp;&lt;/sub&gt; Range</td>
+<td class=" prm">ckrange</td>
+<td>array</td>
+<td>[0, 5]</td>
+</tr>
+<tr>
+<td>Points (K)</td>
+<td class=" prm">Points (K)</td>
+<td class=" prm">kmesh</td>
+<td>integer</td>
+<td>51</td>
+</tr>
+<tr>
+<td>Temporal Range (fs)</td>
+<td class=" prm">Temporal Range (fs)</td>
+<td class=" prm">trange</td>
+<td>array</td>
+<td>[-0.05, 0.05]</td>
+</tr>
+<tr>
+<td>Points (Temporal)</td>
+<td class=" prm">Points (Temporal)</td>
+<td class=" prm">tmesh</td>
+<td>integer</td>
+<td>10001</td>
+</tr>
+<tr>
+<td>&gamma;&Delta;&theta;<sub>x,y</sub></td>
+<td class=" prm">&amp;gamma;&amp;Delta;&amp;theta;&lt;sub&gt;x,y&lt;/sub&gt;</td>
+<td class=" prm">gtacc</td>
+<td>array</td>
+<td>[1, 1]</td>
+</tr>
+<tr>
+<td>X' Acceptance (mrad)</td>
+<td class=" prm">X' Acceptance (mrad)</td>
+<td class=" prm">horizacc</td>
+<td>number</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td>Slice X (mm)</td>
+<td class=" prm">Slice X (mm)</td>
+<td class=" prm">Xfix</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Slice Y (mm)</td>
+<td class=" prm">Slice Y (mm)</td>
+<td class=" prm">Yfix</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Slice X' (mrad)</td>
+<td class=" prm">Slice X' (mrad)</td>
+<td class=" prm">Xpfix</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Slice Y' (mrad)</td>
+<td class=" prm">Slice Y' (mrad)</td>
+<td class=" prm">Ypfix</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>X Range (mm)</td>
+<td class=" prm">X Range (mm)</td>
+<td class=" prm">Xrange</td>
+<td>array</td>
+<td>[-1, 1]</td>
+</tr>
+<tr>
+<td>Points (X)</td>
+<td class=" prm">Points (X)</td>
+<td class=" prm">Xmesh</td>
+<td>integer</td>
+<td>51</td>
+</tr>
+<tr>
+<td>X' Range (mrad)</td>
+<td class=" prm">X' Range (mrad)</td>
+<td class=" prm">Xprange</td>
+<td>array</td>
+<td>[-0.05, 0.05]</td>
+</tr>
+<tr>
+<td>Points (X')</td>
+<td class=" prm">Points (X')</td>
+<td class=" prm">Xpmesh</td>
+<td>integer</td>
+<td>41</td>
+</tr>
+<tr>
+<td>Y Range (mm)</td>
+<td class=" prm">Y Range (mm)</td>
+<td class=" prm">Yrange</td>
+<td>array</td>
+<td>[-0.04, 0.04]</td>
+</tr>
+<tr>
+<td>Points (Y)</td>
+<td class=" prm">Points (Y)</td>
+<td class=" prm">Ymesh</td>
+<td>integer</td>
+<td>51</td>
+</tr>
+<tr>
+<td>Y' Range (mrad)</td>
+<td class=" prm">Y' Range (mrad)</td>
+<td class=" prm">Yprange</td>
+<td>array</td>
+<td>[-0.02, 0.02]</td>
+</tr>
+<tr>
+<td>Points (Y')</td>
+<td class=" prm">Points (Y')</td>
+<td class=" prm">Ypmesh</td>
+<td>integer</td>
+<td>41</td>
+</tr>
+<tr>
+<td>Filtering</td>
+<td class=" prm">Filtering</td>
+<td class=" prm">filter</td>
+<td>Select from:<br>"None"<br>"Generic Filter"<br>"BPF: Gaussian"<br>"BPF: Boxcar"<br>"Custom"</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Filters</td>
+<td class=" prm">Filters</td>
+<td class=" prm">fmateri</td>
+<td>array</td>
+<td>[]</td>
+</tr>
+<tr>
+<td>Custom Filter</td>
+<td class=" prm">Custom Filter</td>
+<td class=" prm">fcustom</td>
+<td>object</td>
+<td></td>
+</tr>
+<tr>
+<td>Central Energy (eV)</td>
+<td class=" prm">Central Energy (eV)</td>
+<td class=" prm">bpfcenter</td>
+<td>number</td>
+<td>10000</td>
+</tr>
+<tr>
+<td>Width (eV)</td>
+<td class=" prm">Width (eV)</td>
+<td class=" prm">bpfwidth</td>
+<td>number</td>
+<td>100</td>
+</tr>
+<tr>
+<td>Width (&sigma;, eV)</td>
+<td class=" prm">Width (&amp;sigma;, eV)</td>
+<td class=" prm">bpfsigma</td>
+<td>number</td>
+<td>100</td>
+</tr>
+<tr>
+<td>Max. Trans. Rate</td>
+<td class=" prm">Max. Trans. Rate</td>
+<td class=" prm">bpfmaxeff</td>
+<td>number</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Absorbers</td>
+<td class=" prm">Absorbers</td>
+<td class=" prm">amateri</td>
+<td>array</td>
+<td>[]</td>
+</tr>
+<tr>
+<td>Depth Step</td>
+<td class=" prm">Depth Step</td>
+<td class=" prm">dstep</td>
+<td>Select from:<br>"Linear"<br>"Logarithmic"<br>"Export at Arbitrary Positions"</td>
+<td>Linear</td>
+</tr>
+<tr>
+<td>Depth-Position Data</td>
+<td class=" prm">Depth-Position Data</td>
+<td class=" prm">depthdata</td>
+<td>object</td>
+<td></td>
+</tr>
+<tr>
+<td>Define Obs. Point in</td>
+<td class=" prm">Define Obs. Point in</td>
+<td class=" prm">defobs</td>
+<td>Select from:<br>"Position"<br>"Angle"</td>
+<td>Position</td>
+</tr>
+<tr>
+<td>Normalize Photon Energy</td>
+<td class=" prm">Normalize Photon Energy</td>
+<td class=" prm">normenergy</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Energy Step</td>
+<td class=" prm">Energy Step</td>
+<td class=" prm">estep</td>
+<td>Select from:<br>"Linear"<br>"Logarithmic"</td>
+<td>Linear</td>
+</tr>
+<tr>
+<td>Slit Aperture Size</td>
+<td class=" prm">Slit Aperture Size</td>
+<td class=" prm">aperture</td>
+<td>Select from:<br>"Fixed"<br>"Normalized"</td>
+<td>Fixed</td>
+</tr>
+<tr>
+<td>Set Upper Limit on Power</td>
+<td class=" prm">Set Upper Limit on Power</td>
+<td class=" prm">powlimit</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Optimize &Delta;X' for Computation</td>
+<td class=" prm">Optimize &amp;Delta;X' for Computation</td>
+<td class=" prm">optDx</td>
+<td>boolean</td>
+<td>true</td>
+</tr>
+<tr>
+<td>Level of Smoothing Along X</td>
+<td class=" prm">Level of Smoothing Along X</td>
+<td class=" prm">xsmooth</td>
+<td>number</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Observation in the Fourier Plane</td>
+<td class=" prm">Observation in the Fourier Plane</td>
+<td class=" prm">fouriep</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Wiggler Approximation</td>
+<td class=" prm">Wiggler Approximation</td>
+<td class=" prm">wiggapprox</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Spectral Smoothing</td>
+<td class=" prm">Spectral Smoothing</td>
+<td class=" prm">esmooth</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Smoothing Window (%)</td>
+<td class=" prm">Smoothing Window (%)</td>
+<td class=" prm">smoothwin</td>
+<td>integer</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Accuracy Level</td>
+<td class=" prm">Accuracy Level</td>
+<td class=" prm">acclevel</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Accuracy</td>
+<td class=" prm">Accuracy</td>
+<td class=" prm">accuracy</td>
+<td>Select from:<br>"Default"<br>"Custom"</td>
+<td>Default</td>
+</tr>
+<tr>
+<td>Perform CMD?</td>
+<td class=" prm">Perform CMD?</td>
+<td class=" prm">CMD</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Apply GS Model</td>
+<td class=" prm">Apply GS Model</td>
+<td class=" prm">GSModel</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>GS Model X/Y</td>
+<td class=" prm">GS Model X/Y</td>
+<td class=" prm">GSModelXY</td>
+<td>Select from:<br>"None"<br>"X"<br>"Y"<br>"Both"</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Export Field Profile</td>
+<td class=" prm">Export Field Profile</td>
+<td class=" prm">CMDfld</td>
+<td>Select from:<br>"None"<br>"JSON"<br>"BINARY"<br>"Both"</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Export Intensity Profile</td>
+<td class=" prm">Export Intensity Profile</td>
+<td class=" prm">CMDint</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Range: X,Y (mm)</td>
+<td class=" prm">Range: X,Y (mm)</td>
+<td class=" prm">fieldrangexy</td>
+<td>array</td>
+<td>[1, 0.2]</td>
+</tr>
+<tr>
+<td>Range: X (mm)</td>
+<td class=" prm">Range: X (mm)</td>
+<td class=" prm">fieldrangex</td>
+<td>number</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Range: Y (mm)</td>
+<td class=" prm">Range: Y (mm)</td>
+<td class=" prm">fieldrangey</td>
+<td>number</td>
+<td>0.2</td>
+</tr>
+<tr>
+<td>Step: X,Y (mm)</td>
+<td class=" prm">Step: X,Y (mm)</td>
+<td class=" prm">fieldgridxy</td>
+<td>array</td>
+<td>[0.005, 0.002]</td>
+</tr>
+<tr>
+<td>Step: X (mm)</td>
+<td class=" prm">Step: X (mm)</td>
+<td class=" prm">fieldgridx</td>
+<td>number</td>
+<td>0.005</td>
+</tr>
+<tr>
+<td>Step: Y (mm)</td>
+<td class=" prm">Step: Y (mm)</td>
+<td class=" prm">fieldgridy</td>
+<td>number</td>
+<td>0.002</td>
+</tr>
+<tr>
+<td>HG Order Limit (X,Y)</td>
+<td class=" prm">HG Order Limit (X,Y)</td>
+<td class=" prm">HGorderxy</td>
+<td>array</td>
+<td>[50, 50]</td>
+</tr>
+<tr>
+<td>HG Order Limit (X)</td>
+<td class=" prm">HG Order Limit (X)</td>
+<td class=" prm">HGorderx</td>
+<td>number</td>
+<td>50</td>
+</tr>
+<tr>
+<td>HG Order Limit (Y)</td>
+<td class=" prm">HG Order Limit (Y)</td>
+<td class=" prm">HGordery</td>
+<td>number</td>
+<td>50</td>
+</tr>
+<tr>
+<td>Max. HG Order (X,Y)</td>
+<td class=" prm">Max. HG Order (X,Y)</td>
+<td class=" prm">maxHGorderxy</td>
+<td>array</td>
+<td>[50, 50]</td>
+</tr>
+<tr>
+<td>Max. HG Order (X)</td>
+<td class=" prm">Max. HG Order (X)</td>
+<td class=" prm">maxHGorderx</td>
+<td>number</td>
+<td>50</td>
+</tr>
+<tr>
+<td>Max. HG Order (Y)</td>
+<td class=" prm">Max. HG Order (Y)</td>
+<td class=" prm">maxHGordery</td>
+<td>number</td>
+<td>50</td>
+</tr>
+<tr>
+<td>Maximum CMD Order</td>
+<td class=" prm">Maximum CMD Order</td>
+<td class=" prm">maxmode</td>
+<td>number</td>
+<td>100</td>
+</tr>
+<tr>
+<td>Flux Cutoff</td>
+<td class=" prm">Flux Cutoff</td>
+<td class=" prm">fcutoff</td>
+<td>number</td>
+<td>0.001</td>
+</tr>
+<tr>
+<td>Amplitude Cutoff</td>
+<td class=" prm">Amplitude Cutoff</td>
+<td class=" prm">cutoff</td>
+<td>number</td>
+<td>0.0001</td>
+</tr>
+<tr>
+<td>Compare Wigner Function</td>
+<td class=" prm">Compare Wigner Function</td>
+<td class=" prm">CMDcmp</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>Compare Intensity Profile</td>
+<td class=" prm">Compare Intensity Profile</td>
+<td class=" prm">CMDcmpint</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>FEL Mode</td>
+<td class=" prm">FEL Mode</td>
+<td class=" prm">fel</td>
+<td>Select from:<br>"None"<br>"Prebunched FEL"<br>"Seeded FEL"<br>"Seeded with Chirped Pulse"<br>"Seeded with Double Pulse"<br>"Seeded width Custom Pulse"<br>"Reuse Bunch Factor"</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Seed Spectrum</td>
+<td class=" prm">Seed Spectrum</td>
+<td class=" prm">seedspec</td>
+<td>object</td>
+<td></td>
+</tr>
+<tr>
+<td>Pulse Energy (mJ)</td>
+<td class=" prm">Pulse Energy (mJ)</td>
+<td class=" prm">pulseE</td>
+<td>number</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td>Wavelength (nm)</td>
+<td class=" prm">Wavelength (nm)</td>
+<td class=" prm">wavelen</td>
+<td>number</td>
+<td>267</td>
+</tr>
+<tr>
+<td>Pulse Length (FWHM, fs)</td>
+<td class=" prm">Pulse Length (FWHM, fs)</td>
+<td class=" prm">pulselen</td>
+<td>number</td>
+<td>40</td>
+</tr>
+<tr>
+<td>TL. Pulse Length (FWHM, fs)</td>
+<td class=" prm">TL. Pulse Length (FWHM, fs)</td>
+<td class=" prm">tlpulselen</td>
+<td>number</td>
+<td>40</td>
+</tr>
+<tr>
+<td>Source Size (FWHM, mm)</td>
+<td class=" prm">Source Size (FWHM, mm)</td>
+<td class=" prm">srcsize</td>
+<td>number</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Waist Position (m)</td>
+<td class=" prm">Waist Position (m)</td>
+<td class=" prm">waistpos</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Timing (fs)</td>
+<td class=" prm">Timing (fs)</td>
+<td class=" prm">timing</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>GDD (fs<sup>2</sup>)</td>
+<td class=" prm">GDD (fs&lt;sup&gt;2&lt;/sup&gt;)</td>
+<td class=" prm">gdd</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>TOD (fs<sup>3</sup>)</td>
+<td class=" prm">TOD (fs&lt;sup&gt;3&lt;/sup&gt;)</td>
+<td class=" prm">tod</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Pulse Energy: 1,2 (mJ)</td>
+<td class=" prm">Pulse Energy: 1,2 (mJ)</td>
+<td class=" prm">pulseE_d</td>
+<td>array</td>
+<td>[0.1, 0.1]</td>
+</tr>
+<tr>
+<td>Wavelength: 1,2 (nm)</td>
+<td class=" prm">Wavelength: 1,2 (nm)</td>
+<td class=" prm">wavelen_d</td>
+<td>array</td>
+<td>[267, 280]</td>
+</tr>
+<tr>
+<td>TL. Pulse Length: 1,2 (FWHM, fs)</td>
+<td class=" prm">TL. Pulse Length: 1,2 (FWHM, fs)</td>
+<td class=" prm">tlpulselen_d</td>
+<td>array</td>
+<td>[40, 40]</td>
+</tr>
+<tr>
+<td>Source Size: 1,2 (FWHM, mm)</td>
+<td class=" prm">Source Size: 1,2 (FWHM, mm)</td>
+<td class=" prm">srcsize_d</td>
+<td>array</td>
+<td>[1, 1]</td>
+</tr>
+<tr>
+<td>Waist Position: 1,2 (m)</td>
+<td class=" prm">Waist Position: 1,2 (m)</td>
+<td class=" prm">waistpos_d</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>Timing: 1,2 (fs)</td>
+<td class=" prm">Timing: 1,2 (fs)</td>
+<td class=" prm">timing_d</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>GDD: 1,2 (fs<sup>2</sup>)</td>
+<td class=" prm">GDD: 1,2 (fs&lt;sup&gt;2&lt;/sup&gt;)</td>
+<td class=" prm">gdd_d</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>TOD: 1,2 (fs<sup>3</sup>)</td>
+<td class=" prm">TOD: 1,2 (fs&lt;sup&gt;3&lt;/sup&gt;)</td>
+<td class=" prm">tod_d</td>
+<td>array</td>
+<td>[0, 0]</td>
+</tr>
+<tr>
+<td>Step: Initial, Interval (m)</td>
+<td class=" prm">Step: Initial, Interval (m)</td>
+<td class=" prm">svstep</td>
+<td>array</td>
+<td>[-1, 0.1]</td>
+</tr>
+<tr>
+<td>Substeps for Radiation</td>
+<td class=" prm">Substeps for Radiation</td>
+<td class=" prm">radstep</td>
+<td>number</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Photon Energy ROI (eV)</td>
+<td class=" prm">Photon Energy ROI (eV)</td>
+<td class=" prm">eproi</td>
+<td>array</td>
+<td>[1, 120]</td>
+</tr>
+<tr>
+<td>Number of Particles</td>
+<td class=" prm">Number of Particles</td>
+<td class=" prm">particles</td>
+<td>number</td>
+<td>1000000</td>
+</tr>
+<tr>
+<td>e- Energy Interval</td>
+<td class=" prm">e- Energy Interval</td>
+<td class=" prm">edevstep</td>
+<td>number</td>
+<td>0.0001</td>
+</tr>
+<tr>
+<td>R<sub>56</sub> (m)</td>
+<td class=" prm">R&lt;sub&gt;56&lt;/sub&gt; (m)</td>
+<td class=" prm">R56</td>
+<td>number</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Export Intermediate Data</td>
+<td class=" prm">Export Intermediate Data</td>
+<td class=" prm">exportInt</td>
+<td>boolean</td>
+<td>true</td>
+</tr>
+<tr>
+<td>Bunch with Dispersion</td>
+<td class=" prm">Bunch with Dispersion</td>
+<td class=" prm">R56Bunch</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+<tr>
+<td>E-t Data</td>
+<td class=" prm">E-t Data</td>
+<td class=" prm">exportEt</td>
+<td>boolean</td>
+<td>false</td>
+</tr>
+</tbody></table>
+
+<h3 id="Output File Object">Output File Object</h3>
+<table><tbody>
+
+<tr>
+<td class=" title" rowspan="2">GUI Notation</td>
+<td class=" title" colspan="2">Key</td>
+<td class=" title" rowspan="2">Format</td>
+<td class=" title" rowspan="2">Default</td>
+</tr>
+<tr>
+<td class=" title">Full</td>
+<td class=" title">Simplified</td>
+</tr>
+<tr>
+<td>Format</td>
+<td class=" prm">Format</td>
+<td class=" prm">format</td>
+<td>Select from:<br>"JSON"<br>"ASCII"<br>"Both"</td>
+<td>JSON</td>
+</tr>
+<tr>
+<td>Folder</td>
+<td class=" prm">Folder</td>
+<td class=" prm">folder</td>
+<td>directory name</td>
+<td></td>
+</tr>
+<tr>
+<td>Prefix</td>
+<td class=" prm">Prefix</td>
+<td class=" prm">prefix</td>
+<td>string</td>
+<td>Untitled</td>
+</tr>
+<tr>
+<td>Comment</td>
+<td class=" prm">Comment</td>
+<td class=" prm">comment</td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td>Serial Number</td>
+<td class=" prm">Serial Number</td>
+<td class=" prm">serial</td>
+<td>integer</td>
+<td>-1</td>
+</tr>
+</tbody></table>
+
+<h2 id="Output Format">Output Format</h2>
+
+<p>If "JSON" or "Both" is chosen as the "Format" option in the <a href="#Output File Subpanel">Output File</a> subpanel, a JSON format output file is generated after the calculation completes. Besides the visualization in the "Post-Processing" panel, it can be used for further processing with other external codes. To facilitate it, the structure of the output file is explained below. Note that the order index (for example of an array, column, etc.) in the followings is defined as starting from "0", but not from "1".</p>
+<h3 id="&quot;Input&quot; Object">"Input" Object</h3>
+
+<p>All the parameters and options are stored in this object with the same format as the <a href="#Input Format">Input Format</a>. If the output file is opened in the GUI (as an input parameter file), these parameters are displayed and can be used again.</p>
+<h3 id="&quot;Output&quot; Object">"Output" Object</h3>
+
+<p>The calculation results are stored in this object.</p>
+<table><caption>Format of the "Output" object</caption><tbody>
+
+<tr>
+<td class="title">Key</td>
+<td class="title">Details</td>
+<td class="title">Format</td>
+</tr>
+<tr>
+<td>dimension</td>
+<td>Dimension of the calculation data, or the number of independent variables.</td>
+<td>number</td>
+</tr>
+<tr>
+<td>titles</td>
+<td>Titles of individual arrays included in the "data" object.</td>
+<td>array (1D)</td>
+</tr>
+<tr>
+<td>units</td>
+<td>Units of individual arrays included in the "data" object.</td>
+<td>array (1D)</td>
+</tr>
+<tr>
+<td>details</td>
+<td>Additional information of the 3D-array data, which is generated in several calculation types. For example, those with "Target Harmonics" (flux specific to a specific harmonic) result in a number of data, each of which is 2D and corresponds to the harmonic number.</td>
+<td>array (1D)</td>
+</tr>
+<tr>
+<td>data</td>
+<td>Main body of the calculation result data.</td>
+<td>array (2D or 3D)</td>
+</tr>
+</tbody></table>
+
+
+<p>The format of the "data" object (2D array) is as follows.</p>
+<ul><li>0th ~ (n-1)-th array: independent variables, where n is the dimension. The length of each array corresponds to the number of calculation points. For example, it is defined by "Points (Energy)" parameter for "Energy Dependence" calculations.</li><li>n-th ~ (n+m-1)-th array: calculated items, where m is the number of items. The length of each array corresponds to the product of the lengths of the independent variable arrays.</li></ul>
+<p>As an example, let us consider an "Output" object as follows</p>
+
+<p><div class="direct"><pre><code>"Output": {
+    "dimension": 1,
+    "titles": ["Energy","Flux Density","GA. Brilliance","PL(s1/s0)","PC(s3/s0)","PL45(s2/s0)"],
+    "units": ["eV","ph/s/mr^2/0.1%B.W.","ph/s/mm^2/mr^2/0.1%B.W.","","",""],
+    "data": [
+      [5000,5005,...,49995,50000],
+      [4.02638e+14,3.98914e+14,...,6.66718e+16,6.81642e+16],
+      [3.2776e+16,3.24789e+16,...,6.64598e+18,6.79476e+18],
+      [0.999949,0.999947,...,0.999703,0.999713],
+      [0,0,...,0,0],
+      [-8.67036e-18,-8.97758e-18,...,-1.72714e-17,-1.6893e-17]
+    ]
+  }</code></pre></div></p>
+
+<p>The data is composed of 1 independent variable (Energy) and 5 items (Flux Density etc.). The 0th array ([5000,...]) corresponds to the photon energy, and the 1st ([4.02638e+14,...]) to the flux density, etc.</p>
+
+<p>In case the dimension is larger than 1 and thus more than one independent variables exist, the order index j of the item array is given as \[j=j_0+j_1N_0+j_2N_0N_1+\cdots,\] where $j_i$ and $N_i$ refer to the order index and number of data points of the $i$-th variable.</p>
+
+<p>In some case, 3D data array composed of a number of 2D arrays with the same format as above is stored; each of 2D array is characterized by the "details" object. An example is shown below.</p>
+
+<p><div class="direct"><pre><code>  "Output": {
+    "dimension": 1,
+    "titles": ["Harmonic Energy","Peak Energy","K Value","Gap","Flux Density",...],
+    "units": ["eV","eV","","","ph/s/mr^2/0.1%B.W.",...],
+    "details": ["Harmonic: 1","Harmonic: 3","Harmonic: 5"],
+    "data": [
+      [
+        [18977.5,18707.1,...,4702.57,4336.24],
+        [18927.2,18657.6,...,4692.37,4326.97],
+        [0.040015,0.174748,...,2.46527,2.6],
+        [50,35.2675,...,8.58047,8.01609],
+        [7.24659e+15,1.3423e+17,...,1.90452e+18,1.82972e+18],
+        [6.91663e+17,1.27995e+19,...,1.5325e+20,1.44896e+20],
+        [0.999995,0.999995,...,0.999998,0.999998],
+        [0,0,...,0,0],
+        [-6.23832e-19,-6.15261e-19,...,-8.10339e-19,-7.90166e-19]
+      ],
+      [
+        [56932.5,56121.2,54374,...,14107.7,13008.7],
+        [47488.9,56019.4,54276.1,...,15312,14087.7,12990.4],
+        [0.040015,0.174748,...,2.46527,2.6],
+        [50,35.2675,...,8.58047,8.01609],
+        [3.235e+10,5.91631e+13,...,1.21888e+18,1.20334e+18],
+        .....
+      ],
+      [
+        [94887.4,93535.3,...,23512.9,21681.2],
+        [85444.8,84227.3,...,23487.4,21658],
+        [0.040015,0.174748,...,2.46527,2.6],
+        [50,35.2675,...,8.58047,8.01609],
+        [7.1207e+11,1.37382e+13,...,7.22944e+19,7.31154e+19],
+        .....
+      ]
+    ]
+  }</code></pre></div></p>
+
+<p>The "details" object in this example specify the harmonic number, i.e., 1st, 3rd and 5th harmonics, and the maximum flux density near the harmonic energy, and other related characteristics are calculated as a function of the K value, for the three different harmonic numbers. The "data" object is then composed of three 2D arrays and thus forms a 3D array.</p>
+<h3 id="Objects Related to CMD">Objects Related to CMD</h3>
+
+<p>The results of <a href="#Coherent Mode Decomposition">Coherent Mode Decomposition</a>, such as the modal amplitude and profiles, are saved separately from the "data" object described above. The details of them are explained below.</p>
+<h4 id="&quot;Coherent Mode Decomposition&quot; Object">"Coherent Mode Decomposition" Object</h4>
+<table><caption>Keys and details of the "CMD Result" object</caption><tbody>
+
+<tr>
+<td class="title">Key</td>
+<td class="title">Details</td>
+<td class="title">Symbol</td>
+<td class="title">Unit</td>
+</tr>
+<tr>
+<td>maxorder</td>
+<td>Maximum order of the Hermite-Gaussian (HG) functions to form the coherent mode</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>wavelength</td>
+<td>Wavelength of the Wigner function used for CMD </td>
+<td>$\lambda$</td>
+<td>m</td>
+</tr>
+<tr>
+<td>photon flux</td>
+<td>Total photon flux evaluated from the Wigner function</td>
+<td>$F$</td>
+<td>photons/sec/0.1%b.w.</td>
+</tr>
+<tr>
+<td>size</td>
+<td>Parameters to define the arguments of HG functions</td>
+<td>$\sigma$ or $\sigma_{x,y}$ (1D or 2D)</td>
+<td>m</td>
+</tr>
+<tr>
+<td>order</td>
+<td>Indices to define the orders of HG functions for a specific coherent mode</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>numerical validity</td>
+<td>
+<p>Validity of the CMD</p>
+
+<p></p>
+<ul><li>Matrix Error: numerical error in Cholesky expansion</li><li>Flux Consistency: total amount of the normalized photon flux contained in each coherent mode</li><li>Wigner Function Consistency: consistency between the original and reconstructed Wigner functions</li></ul>
+<p></p>
+</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>coefficient</td>
+<td>Coefficient to retrieve the Wigner function from the modal amplitude</td>
+<td>$W_0$</td>
+<td>photons/sec/mm<sup>2</sup>/mrad<sup>2</sup>/0.1%b.w.</td>
+</tr>
+<tr>
+<td>anm.re</td>
+<td>Matrix to represent the complex amplitude of HG functions for each coherent mode, real part</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>anm.im</td>
+<td>Imaginary part of the above matrix</td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+
+<h5 id="How to retrieve the flux and Wigner function from the modal amplitue?">How to retrieve the flux and Wigner function from the modal amplitue?</h5>
+
+<p>The flux density ($I_n$) and Wigner function ($W_n$) of the $n$-th mode can be retrieved form the complex amplitude $a_n$ determined by the CMD according to the following formulas, using the symbols summarized in the above table.</p>
+
+<p>For 1D case (CMD with 2D Wigner function):\[I_n(x)=|a_n(x)|^2\frac{F}{2\sqrt{\pi}\sigma}\times 10^{-3},\] \[W_n(x,\theta_x')=\frac{W_0}{2\sqrt{\pi}\sigma}\int a_n\left(x-\frac{x'}{2}\right)a_n^*\left(x+\frac{x'}{2}\right)\mbox{e}^{ik\theta_x x'}dx',\]</p>
+
+<p>For 2D case (CMD with 4D Wigner function):\[I_n(\boldsymbol{r})=|a_n(\boldsymbol{r})|^2\frac{F}{4\pi\sigma_x\sigma_y}\times 10^{-6},\] \[W_n(\boldsymbol{r},\boldsymbol{\theta})=\frac{W_0}{4\pi\sigma_x\sigma_y}\int a_n\left(\boldsymbol{r}-\frac{\boldsymbol{r}'}{2}\right)a_n^*\left(\boldsymbol{r}+\frac{\boldsymbol{r}'}{2}\right)\mbox{e}^{ik\boldsymbol{\theta}\boldsymbol{r}'}d\boldsymbol{r}',\]</p>
+
+<p>where $k=2\pi/\lambda$ is the wavenumber of radiation.</p>
+<h4 id="Other Objects">Other Objects</h4>
+
+<p>A number of data sets evaluated by post-processing the CMD results described above are saved as follows. Note that the format of each object is the same as that of the "data" object.</p>
+<table><caption>Objects available by post-processing the CMD results</caption><tbody>
+
+<tr>
+<td class="title">Object Name</td>
+<td class="title">Details</td>
+</tr>
+<tr>
+<td>Modal Flux</td>
+<td>Information about how much flux is contained in each coherent mode.</td>
+</tr>
+<tr>
+<td>Modal Profile/Modal Intensity</td>
+<td>Spatial profile of the complex field amplitude/intensity calculated for each coherent mode. Note that the calculation range and number of points are specified in <a href="#CMD Parameters">CMD Parameters</a>.</td>
+</tr>
+<tr>
+<td>Flux Density Profile</td>
+<td>Flux density profile reconstructed from the modal and Wigner functions by projection to the real space (X,Y)</td>
+</tr>
+<tr>
+<td>Wigner Func. (X,X')</td>
+<td>Wigner function reconstructed from the modal profile, to be compared with the original one to check how the CMD was successful. To facilitate the comparison, both functions are projected on the (X,X') phase space.</td>
+</tr>
+<tr>
+<td>Wigner Func. (Y,Y')</td>
+<td>Same as the above, but for the (Y,Y') phase space.</td>
+</tr>
+</tbody></table>
+
+<h3 id="Objects Related to FEL Mode">Objects Related to FEL Mode</h3>
+
+<p>When <a href="#FEL Mode">FEL Mode</a> and <a href="#Export Intermediate Data">Export Intermediate Data</a> options are enabled, numerical data generated while solving the FEL equation, such as variation of the electron beam temporal profile and growth of the FEL radiation pulse, are recorded as summarized below.</p>
+<table><caption>Objects available when <a href="#FEL Mode">FEL Mode</a> option is enabled.</caption><tbody>
+
+<tr>
+<td class="title">Object Name</td>
+<td class="title">Details</td>
+</tr>
+<tr>
+<td>Current Profile</td>
+<td>Current profile of the electron beam.</td>
+</tr>
+<tr>
+<td>E-t Profile</td>
+<td>Electron density in the E-t (energy-time) phase space.</td>
+</tr>
+<tr>
+<td>Current Profile with Dispersion</td>
+<td>Current profile of the electron beam after passing through a virtual dispersive section. Available if <a href="#Bunch with Dispersion">Bunch with Dispersion</a> option is enabled.</td>
+</tr>
+<tr>
+<td>E-t Profile with Dispersion</td>
+<td>Electron density in the (E-t) phase space after the virtual dispersive section. Available if <a href="#Bunch with Dispersion">Bunch with Dispersion</a> option is enabled.</td>
+</tr>
+<tr>
+<td>Bunch Factor</td>
+<td>Bunch factor of the electron beam.</td>
+</tr>
+<tr>
+<td>Pulse Energy</td>
+<td>Total energy of the radiation pulse.</td>
+</tr>
+<tr>
+<td>On-Axis Field</td>
+<td>Waveform of the on-axis electric field of radiation in the far-field zone.</td>
+</tr>
+<tr>
+<td>Inst. Power</td>
+<td>Temporal profile of the instantaneous radiation power.</td>
+</tr>
+<tr>
+<td>Spectrum</td>
+<td>Spectrum of the radiation pulse.</td>
+</tr>
+</tbody></table>
+
+<h1 id="Standalone Mode">Standalone Mode</h1>
+
+<p>Besides the desktop application as described above, the solver of SPECTRA can be run in a standalone mode. Note that in the followings, [spectra_home] refers to the directory where SPECTRA has been installed.</p>
+
+<p>When [Run]-[Start Calculation] command is executed, the SPECTRA GUI creates an input parameter file ("*.json") and invokes the solver ("spectra_solver" or "spectra_solver_nompi" depending on whether the parallel computing option is enabled or not) located in the same directory as the main GUI program, with the input file as an argument. This means that SPECTRA (solver) can be run without the GUI, if the input file is prepared by an alternative method, and a batch process will be possible. To do so, prepare the input file according to the descriptions in <a href="#Input Format">Input Format</a> and run the solver as follows</p>
+
+<p><div class="direct"><pre><code>[spectra_home]/spectra_solver_nompi -f [input file]</code></pre></div></p>
+
+<p>without parallel computing, or</p>
+
+<p><div class="direct"><pre><code>mpiexec -n 4 [spectra_home]/spectra_solver_nompi -f [input file]</code></pre></div></p>
+
+<p>with parallel computing (4 processes in this example).</p>
+
+<p>It should be noted that the names of the parameters and options ("key" of the object) should be totally correct, including the units and inserted space characters. In addition, the number of parameters and options actually needed for a specific calculation depend on its condition. To avoid potential errors and complexity in preparing the input file, it is recommended to create a "master input file" specific to the desired calculation type, by running [Run]-[Export as ASCII] command. Then, just modify the values of desired parameters to prepare the input file.</p>
+
+<p>Note that this usage has not been officially supported before ver. 11.0, simply because the input file format was original and difficult to read.</p>
+<h1 id="Python User Interface">Python User Interface</h1>
+
+<p>To support the expanding users of python language, SPECTRA has started official support for python, since ver. 12.0. To make use of this function, python version 3.8 or later is needed, and the user is requested to install a python package <span class="software">spectra-ui</span> (SPECTRA User Interface). Refer to <a href="https://spectrax.org/spectra/app/12.1/python/docs/">the instructions</a> for details of <span class="software">spectra-ui</span>.</p>
+<h1 id="References">References</h1>
+<ol class="paren"><li id="spectrajsr">T. Tanaka and H. Kitamura, "SPECTRA - a synchrotron radiation calculation code," J. Synchrotron Radiation 8, 1221 (2001)</li><li id="spectrasri">T. Tanaka and H. Kitamura, "Recent Progress of the Synchrotron Radiation Calculation Code SPECTRA", Proc. 9th Int. Conf. Synchrotron Rad. Instrum. (SRI2006), 355</li><li id="spectra11jsr">T. Tanaka, "Major upgrade of the synchrotron radiation calculation code SPECTRA," J. Synchrotron Radiation 28, 1267 (2021)</li><li id="refwigner">T. Tanaka, "Numerical methods for characterization of synchrotron radiation based on the Wigner function method," Phys. Rev. ST-AB 17, 060702 (2014)</li><li id="refcmd">T. Tanaka, "Coherent mode decomposition using mixed Wigner functions of Hermite-Gaussian beams," Optics Letters 42, 1576 (2017)</li><li id="refperr">R. Walker, "Interference effects in undulator and wiggler radiation sources", Nucl. Instrum. Methods Phys. Res., Sect. A 335, 328 (1993)</li><li id="refsegment">T. Tanaka and H. Kitamura, "Simple scheme for harmonic suppression by undulator segmentation," Journal of Synchrotron Radiation 9, 266 (2002)</li><li id="refsegx">T. Tanaka and H. Kitamura, "Production of linear polarization by segmentation of helical undulator," Nucl. Instrum. Meth. A490, 583 (2002)</li><li id="refunivperr">T. Tanaka, "Universal representation of undulator phase errors," Phys. Rev. AB 21, 110704 (2018)</li><li id="refwigprop">K. J. Kim, "Characteristics of Synchrotron Radiation," in Physics of Particle Accelerators, AIP Conf. Proc. 184 (Am. Inst. Phys., New York, 1989), p. 565.</li></ol><h1 id="Acknowledgements">Acknowledgements</h1>
+
+<p>This software includes the work that is distributed in the Apache License 2.0, and relies on a number of libraries &amp; database as summarized below, which are gratefully appreciated.</p>
+<ul><li>Node.js: Javascript runtime environment to run Javascript code without a web browser (https://nodejs.org/en/).</li><li>tauri: application toolkit to build software for all major desktop operating systems using web technologies. (https://tauri.app/)</li><li>Plotly.js: Javascript graphing library to facilitate data visualization (https://nodejs.org/en/)</li><li>Boost C++: Set of libraries for the C++ language (https://www.boost.org/)</li><li>EIGEN: C++ template library for linear algebra (https://eigen.tuxfamily.org/index.php?title=Main_Page)</li><li>mathjax: Javascript library to display mathematical formulas in HTML documents (https://www.mathjax.org/)</li><li>picojson: JSON parser for C++ language (https://github.com/kazuho/picojson)</li><li>mucal.c: Source code to calculate the x-ray absorption coefficients (http://www.csrri.iit.edu/mucal.html)</li><li>NIST database: Database for the mass energy-absorption coefficients (https://www.nist.gov/pml/x-ray-mass-attenuation-coefficients)</li><li>General Purpose FFT Package (https://www.kurims.kyoto-u.ac.jp/~ooura/fft.html)</li></ul></div>
+</body>
