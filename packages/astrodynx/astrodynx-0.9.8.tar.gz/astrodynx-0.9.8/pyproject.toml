@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "astrodynx"
+dynamic = ["version"]
+description = "A modern astrodynamics library powered by JAX."
+authors = [
+    { name = "Peng SHU", email = "pennbay@outlook.com" }
+]
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+dependencies = [
+    "jax >= 0.6.0",
+]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+keywords = ["astrodynamics", "celestial mechanics"]
+
+[project.urls]
+"Homepage" = "https://github.com/adxorg/astrodynx"
+"Bug Tracker" = "https://github.com/adxorg/astrodynx/issues"
+"Documentation" = "https://astrodynx.readthedocs.io"
+
+[project.optional-dependencies]
+dev = [
+    "commitizen",
+    "pytest",
+    "pytest-cov",
+    "pre-commit"
+]
+docs = [
+    "sphinx",
+    "sphinx-book-theme",
+    "myst-parser",
+    "nbsphinx",
+    "sphinx-autodoc-typehints",
+    "sphinx-copybutton",
+    "sphinx-math-dollar",
+    "ipython",
+    "matplotlib",
+    "jupyter",
+]
+
+[tool.setuptools_scm]
+write_to = "src/astrodynx/_version.py"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["astrodynx*"]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "scm"
+tag_format = "v$version"
+
+[tool.pytest.ini_options]
+doctest_optionflags = "ELLIPSIS"
+testpaths = ["src/astrodynx","tests"]
+addopts = "--cov=src/astrodynx --cov-report=term-missing --doctest-modules"
+
+[tool.coverage.run]
+omit = [
+    "src/astrodynx/_version.py"
+]
