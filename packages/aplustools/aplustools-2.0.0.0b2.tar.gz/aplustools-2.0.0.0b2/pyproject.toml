@@ -1,0 +1,123 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [
+  "aplustools",
+  "aplustools.data",
+  "aplustools.io",
+#  "aplustools.utils",
+  "aplustools.web",
+  "aplustools.package",
+  "aplustools.tests",
+  "aplustools.tests.test_data",
+  "aplustools.tests.test_io",
+  "aplustools.tests.test_package",
+  "aplustools.tests.test_security",
+  "aplustools.tests.test_web",
+  "aplustools.security",
+#  "aplustools.security.protocols",
+  "aplustools.security.dicts",
+  "aplustools.security.crypto",
+  "aplustools.security.crypto._crypto",
+  "aplustools.security.crypto._pycrypto",
+  "aplustools.security.crypto._fallbacks",
+  "aplustools.security.crypto.algos",
+  "aplustools.security.crypto.algos._asym",
+  "aplustools.security.crypto.algos._hash_algorithm",
+  "aplustools.security.crypto.algos._sym",
+]
+include-package-data = true
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+"aplustools.security.dicts" = [
+  "def-dict.txt",
+  "google-10000-dict.txt",
+  "scowl-50-dict.txt",
+  "scowl-60-dict.txt",
+  "scowl-70-dict.txt",
+  "scowl-80-dict.txt",
+  "scowl-95-dict.txt",
+  "12-dicts/2of4brif.txt",
+  "12-dicts/2of5core.txt",
+  "12-dicts/2of12.txt",
+  "12-dicts/2of12inf.txt",
+  "12-dicts/3esl.txt",
+  "12-dicts/3of6all.txt",
+  "12-dicts/3of6game.txt",
+  "12-dicts/5d+2a.txt",
+  "12-dicts/6of12.txt",
+  "12-dicts/6phrase.txt"
+]
+
+[project]
+name = "aplustools"
+version = "2.0.0.0b2"
+dependencies = ["packaging", "pywin32>=306; os_name == 'nt'", "cachetools>=5.5.0", "typing_extensions"]
+requires-python = ">= 3.10"
+authors = [
+  {name = "Cariel Becker", email = "cariel.becker@gmx.de"},
+]
+maintainers = [
+  {name = "Cariel Becker", email = "cariel.becker@gmx.de"},
+]
+description = "A collection of helpful tools"
+readme = {file = "README.md", content-type = "text/markdown"}
+license = "LGPL-2.1-or-later"
+keywords = ["general", "tools", "app tools", "production", "apt"]
+classifiers = [
+	"Development Status :: 5 - Production/Stable",
+	"Programming Language :: Python",
+	"Natural Language :: English"
+]
+
+[project.optional-dependencies]
+data = ["Pillow>=10.3.0", "opencv-python>=4.9.0.80", "pillow_heif==0.15.0",
+        "numpy==1.26.4", "brotli>=1.1.0", "zstandard>=0.22.0",
+        "py7zr>=0.21.0", "requests>=2.32.0", "BeautifulSoup4>=4.12.2", "cachetools>=5.5.0"]
+io = ["windows-toasts>=1.1.1; os_name == 'nt'", "psutil>=6.0.0", "pywin32>=306", "PySide6>=6.7.0"]
+package = [ "numpy>=1.26.4", "scipy>=1.13.0", "scikit-learn>=1.5.2"]
+security = ["cryptography>=42.0.5", "quantcrypt>=0.4.2; python_version == '3.12'", "zxcvbn>=4.4.28", "bcrypt>=4.1.2"]
+web = ["requests>=2.32.0", "BeautifulSoup4>=4.12.2", "aiohttp>=3.9.5"]
+dev = ["pytest"]
+all = [
+  "Pillow>=10.4.0",
+  "aiohttp>=3.9.4",
+  "opencv-python>=4.9.0.80",
+  "pillow_heif>=0.15.0",
+  "numpy>=1.26.4",
+  "brotli>=1.1.0",
+  "zstandard>=0.22.0",
+  "py7zr>=0.21.0",
+  "requests>=2.32.0",
+  "BeautifulSoup4>=4.12.2",
+  "windows-toasts>=1.1.1; os_name == 'nt'",
+  "scipy>=1.13.0",
+  "scikit-learn>=1.4.1.post1; os_name == 'nt'",
+  "scikit-learn; os_name != 'nt'",
+  "cryptography>=42.0.5",
+  "quantcrypt>=0.4.2; python_version == '3.12'",
+  "pytest",
+  "zxcvbn>=4.4.28",
+  "bcrypt>=4.1.2",
+  "psutil>=6.0.0",
+  "pywin32>=306",
+  "cachetools>=5.5.0",
+  "PySide6>=6.7.0"
+]
+
+[project.urls]
+Home = "https://pypi.org/project/aplustools/"
+Repository = "https://github.com/adalfarus/aplustools"
+Documentation = "https://github.com/adalfarus/aplustools/wiki"
+"Issue tracker" = "https://github.com/adalfarus/aplustools/issues"
+
+#[tool.pytest.ini_options]
+## This is equivalent to setup_requires and tests_require
+## Add your pytest configuration here
+#addopts = "your pytest options"
+
+[project.scripts]
+aps = "aplustools._cli:_cli"
