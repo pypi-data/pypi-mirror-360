@@ -1,0 +1,992 @@
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <title>
+        ISRO HelpBot - Your AI Assistant for Indian Space Research
+    </title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter&amp;family=Poppins:wght@600&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Custom pulse glow for satellite icon */
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                text-shadow:
+                    0 0 6px #60a5fa,
+                    0 0 12px #3b82f6,
+                    0 0 18px #2563eb;
+            }
+
+            50% {
+                text-shadow:
+                    0 0 12px #93c5fd,
+                    0 0 24px #3b82f6,
+                    0 0 36px #1e40af;
+            }
+        }
+
+        .pulse-glow {
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        /* Scrollbar for chat box */
+        #chat-box::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #chat-box::-webkit-scrollbar-thumb {
+            background-color: rgba(96, 165, 250, 0.6);
+            border-radius: 4px;
+        }
+
+        #chat-box::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        /* Floating space images animations */
+        .floating-star {
+            animation: floatStar 10s linear infinite;
+            opacity: 0.7;
+        }
+
+        .floating-planet {
+            animation: floatPlanet 15s ease-in-out infinite;
+            opacity: 0.8;
+        }
+
+        .floating-comet {
+            animation: floatComet 12s linear infinite;
+            opacity: 0.75;
+        }
+
+        @keyframes floatStar {
+            0% {
+                transform: translateY(0) translateX(0) scale(1);
+                opacity: 0.7;
+            }
+
+            50% {
+                transform: translateY(-10px) translateX(5px) scale(1.1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(0) translateX(0) scale(1);
+                opacity: 0.7;
+            }
+        }
+
+        @keyframes floatPlanet {
+            0% {
+                transform: translateY(0) translateX(0) scale(1);
+            }
+
+            50% {
+                transform: translateY(15px) translateX(-10px) scale(1.05);
+            }
+
+            100% {
+                transform: translateY(0) translateX(0) scale(1);
+            }
+        }
+
+        @keyframes floatComet {
+            0% {
+                transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+            }
+
+            50% {
+                transform: translateX(-20px) translateY(10px) rotate(15deg) scale(1.1);
+            }
+
+            100% {
+                transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gradient-to-b from-black via-gray-900 to-black text-gray-200 selection:bg-blue-600 selection:text-white relative overflow-x-hidden">
+    <!-- Hero Section -->
+    <section id="hero" aria-label="Hero section with project title and call to action"
+        class="relative flex flex-col items-center justify-center text-center min-h-screen px-6 md:px-12 bg-black overflow-hidden">
+
+        <!-- Responsive background -->
+        <picture class="absolute inset-0 -z-10">
+            <!-- ≤ 768 px -->
+            <source media="(max-width: 768px)" srcset="https://storage.googleapis.com/a1aa/image/hero-space-small.jpg">
+            <!-- ≤ 1280 px -->
+            <source media="(max-width: 1280px)"
+                srcset="https://storage.googleapis.com/a1aa/image/hero-space-medium.jpg">
+            <!-- desktop default -->
+            <img src="https://storage.googleapis.com/a1aa/image/006046ee-57c1-4e3d-5f62-7e90338eb420.jpg"
+                alt="Dark space background showing galaxy with Earth orbit and stars"
+                class="w-full h-full object-cover object-[50%_30%]" <!-- crop a bit higher for skyline focus -->
+            loading="eager">
+        </picture>
+
+        <!-- 🔆 Gigantic Glowing Star (desktop) / Large (mobile) -->
+        <img src="https://storage.googleapis.com/a1aa/image/6fcf4f98-1514-4a03-98bb-92734b65ff53.jpg" alt="Glowing star"
+            class="absolute top-10 left-10 w-40 h-40 md:w-60 md:h-60 floating-star" />
+
+        <!-- ✨ Huge Star -->
+        <img src="https://storage.googleapis.com/a1aa/image/6fcf4f98-1514-4a03-98bb-92734b65ff53.jpg" alt="Glowing star"
+            class="absolute top-24 right-8 w-28 h-28 md:w-48 md:h-48 floating-star" />
+
+        <!-- 🪐 Planet with Rings -->
+        <img src="https://storage.googleapis.com/a1aa/image/3dd72764-2a89-447c-7b89-bb615dcd8105.jpg"
+            alt="Blue planet with rings"
+            class="absolute bottom-12 left-6 w-56 h-56 md:w-[20rem] md:h-[20rem] floating-planet" />
+
+        <!-- ☄ Comet Tail -->
+        <img src="https://storage.googleapis.com/a1aa/image/d096dee4-4c49-45d5-047c-bc6bb34a7176.jpg" alt="Large comet"
+            class="absolute top-1/2 right-4 w-40 h-20 md:w-[18rem] md:h-[9rem] floating-comet" />
+
+        <!-- 💫 Star (Bottom Right) -->
+        <img src="https://storage.googleapis.com/a1aa/image/6fcf4f98-1514-4a03-98bb-92734b65ff53.jpg"
+            alt="Prominent glowing star" class="absolute bottom-32 right-8 w-16 h-16 md:w-36 md:h-36 floating-star" />
+
+        <!-- Title & CTA -->
+
+        <div class="z-[5] flex items-center justify-center space-x-4">
+            <svg aria-hidden="true" class="h-12 w-12 md:h-16 md:w-16 text-blue-500 pulse-glow" fill="none"
+                stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 3v1m0 16v1m8.485-8.485l-.707.707M4.222 4.222l-.707.707M21 12h-1M4 12H3m16.485 4.485l-.707-.707M4.222 19.778l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <h1 class="z-[5] text-4xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg">
+                🛰 ISRO HelpBot
+            </h1>
+        </div>
+
+        <p class="z-[5] text-lg md:text-2xl text-blue-300 max-w-3xl mx-auto mt-2">
+           Your AI-Powered Gateway to India's Vast Universe of Space Research, Missions, and Scientific Insight.
+
+
+        </p>
+
+        <button id="getStartedBtn" class="z-[5] mt-8 px-8 py-3 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-400 rounded-full
+                 text-white font-semibold text-lg transition shadow-lg focus:outline-none focus:ring-offset-2">
+            Get Started
+        </button>
+
+
+    </section>
+    <!-- About Section -->
+    <section aria-labelledby="about-title" class="max-w-7xl mx-auto px-6 md:px-12 py-20 scroll-mt-24" id="about">
+        <h2 class="text-4xl font-bold text-white mb-12 text-center" id="about-title" tabindex="0">
+            About ISRO HelpBot
+        </h2>
+        <div class="max-w-4xl mx-auto space-y-8 text-gray-300 text-lg md:text-xl leading-relaxed">
+            <p tabindex="0">
+                Navigating the vast and complex MOSDAC and ISRO portals can be overwhelming for users seeking specific
+                information about Indian space missions. The abundance of data and technical jargon often creates
+                barriers to quick and accurate knowledge retrieval.
+            </p>
+            <p tabindex="0">
+                ISRO HelpBot leverages cutting-edge Generative AI technology to parse documents, extract relevant
+                knowledge graphs, and respond to natural language queries in real time. This intelligent assistant
+                empowers users to effortlessly explore Indian space research with contextual and precise answers.
+            </p>
+        </div>
+        <div aria-label="Features of ISRO HelpBot"
+            class="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-10 max-w-4xl mx-auto" role="list">
+            <article aria-label="Natural Language Question Answering feature"
+                class="flex flex-col items-center bg-gray-900 bg-opacity-40 rounded-2xl p-8 shadow-lg hover:shadow-blue-600 transition-shadow cursor-default"
+                role="listitem" tabindex="0">
+                <div aria-hidden="true" class="text-blue-500 text-6xl mb-4 select-none">
+                    ✅
+                </div>
+                <h3 class="text-xl font-semibold mb-2 text-white">
+                    Natural Language QA
+                </h3>
+                <p class="text-gray-300 text-center">
+                    Ask questions in plain English and get accurate, context-aware answers about Indian space missions.
+                </p>
+            </article>
+            <article aria-label="Document Upload and Parsing feature"
+                class="flex flex-col items-center bg-gray-900 bg-opacity-40 rounded-2xl p-8 shadow-lg hover:shadow-blue-600 transition-shadow cursor-default"
+                role="listitem" tabindex="0">
+                <div aria-hidden="true" class="text-blue-500 text-6xl mb-4 select-none">
+                    📄
+                </div>
+                <h3 class="text-xl font-semibold mb-2 text-white">
+                    Document Upload &amp; Parsing
+                </h3>
+                <p class="text-gray-300 text-center">
+                    Upload PDFs, DOCX, and XLSX files to enrich the knowledge base dynamically and get answers from your
+                    documents.
+                </p>
+            </article>
+            <article aria-label="Knowledge Graph Reasoning feature"
+                class="flex flex-col items-center bg-gray-900 bg-opacity-40 rounded-2xl p-8 shadow-lg hover:shadow-blue-600 transition-shadow cursor-default"
+                role="listitem" tabindex="0">
+                <div aria-hidden="true" class="text-blue-500 text-6xl mb-4 select-none">
+                    🌐
+                </div>
+                <h3 class="text-xl font-semibold mb-2 text-white">
+                    Knowledge Graph Reasoning
+                </h3>
+                <p class="text-gray-300 text-center">
+                    Combines structured knowledge graphs with LLMs for precise, context-rich responses about ISRO’s
+                    missions and data.
+                </p>
+            </article>
+        </div>
+    </section>
+    <!-- How It Works Section -->
+    <section aria-labelledby="how-title" class="bg-gradient-to-b from-gray-900 to-black py-20 px-6 md:px-12"
+        id="how-it-works">
+        <h2 class="text-4xl font-bold text-white mb-12 text-center" id="how-title" tabindex="0">
+            How It Works
+        </h2>
+        <div class="max-w-5xl mx-auto space-y-12 relative">
+            <ol aria-label="Step by step process of ISRO HelpBot"
+                class="relative border-l border-blue-600 ml-6 space-y-10" role="list">
+                <li class="relative pl-8" tabindex="0">
+                    <span aria-hidden="true"
+                        class="absolute -left-4 top-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold ring-4 ring-black">
+                        1
+                    </span>
+                    <h3 class="text-xl font-semibold text-white mb-1">
+                        User asks question
+                    </h3>
+                    <p class="text-gray-300">
+                        Users type natural language queries about Indian space missions or ISRO data.
+                    </p>
+                </li>
+                <li class="relative pl-8" tabindex="0">
+                    <span aria-hidden="true"
+                        class="absolute -left-4 top-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold ring-4 ring-black">
+                        2
+                    </span>
+                    <h3 class="text-xl font-semibold text-white mb-1">
+                        Backend parses intent + queries LLM
+                    </h3>
+                    <p class="text-gray-300">
+                        The FastAPI backend analyzes the question, extracts intent, and sends it to the language model.
+                    </p>
+                </li>
+                <li class="relative pl-8" tabindex="0">
+                    <span aria-hidden="true"
+                        class="absolute -left-4 top-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold ring-4 ring-black">
+                        3
+                    </span>
+                    <h3 class="text-xl font-semibold text-white mb-1">
+                        Knowledge Graph facts injected
+                    </h3>
+                    <p class="text-gray-300">
+                        Relevant facts from the knowledge graph are combined with the LLM prompt for accurate context.
+                    </p>
+                </li>
+                <li class="relative pl-8" tabindex="0">
+                    <span aria-hidden="true"
+                        class="absolute -left-4 top-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold ring-4 ring-black">
+                        4
+                    </span>
+                    <h3 class="text-xl font-semibold text-white mb-1">
+                        Contextual answer returned
+                    </h3>
+                    <p class="text-gray-300">
+                        The AI generates a precise, context-aware response delivered back to the user.
+                    </p>
+                </li>
+                <li class="relative pl-8" tabindex="0">
+                    <span aria-hidden="true"
+                        class="absolute -left-4 top-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold ring-4 ring-black">
+                        5
+                    </span>
+                    <h3 class="text-xl font-semibold text-white mb-1">
+                        User can upload new documents
+                    </h3>
+                    <p class="text-gray-300">
+                        Users enrich the knowledge base by uploading PDFs, DOCX, or XLSX files directly through the
+                        chatbot.
+                    </p>
+                </li>
+            </ol>
+            <button aria-label="Learn more about RAG, Knowledge Graph, and NLP"
+                class="absolute top-0 right-0 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-400"
+                id="infoRagBtn">
+                What is RAG, KG &amp; NLP?
+            </button>
+        </div>
+        <!-- Info Modal -->
+        <div aria-describedby="infoModalDesc" aria-labelledby="infoModalTitle" aria-modal="true"
+            class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-6 z-50 hidden" id="infoModal"
+            role="dialog">
+            <div class="bg-gray-900 rounded-3xl max-w-lg w-full p-8 relative shadow-xl" tabindex="0">
+                <h3 class="text-2xl font-bold text-white mb-4" id="infoModalTitle">
+                    RAG, Knowledge Graph &amp; NLP Explained
+                </h3>
+                <p class="text-gray-300 mb-6 leading-relaxed" id="infoModalDesc">
+                    <strong>
+                        RAG (Retrieval-Augmented Generation)
+                    </strong>
+                    combines large language models with external knowledge sources to generate accurate, context-aware
+                    answers.
+                    <br />
+                    <br />
+                    <strong>
+                        Knowledge Graphs
+                    </strong>
+                    structure information as entities and relationships, enabling precise reasoning and fact injection.
+                    <br />
+                    <br />
+                    <strong>
+                        NLP (Natural Language Processing)
+                    </strong>
+                    allows the system to understand and respond to user queries in natural, conversational language.
+                </p>
+                <button aria-label="Close information modal"
+                    class="absolute top-4 right-4 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"
+                    id="closeInfoModal">
+                    <svg aria-hidden="true" class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+    <!-- Use Cases Section -->
+    <section aria-labelledby="usecases-title" class="max-w-7xl mx-auto px-6 md:px-12 py-20" id="use-cases">
+        <h2 class="text-4xl font-bold text-white mb-12 text-center" id="usecases-title" tabindex="0">
+            Use Cases
+        </h2>
+        <div aria-label="Use cases of ISRO HelpBot"
+            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 max-w-6xl mx-auto" role="list">
+            <article aria-label="Educational Access use case"
+                class="bg-gray-900 bg-opacity-40 rounded-2xl p-8 shadow-lg hover:shadow-blue-600 transition-shadow cursor-default flex flex-col items-center text-center"
+                role="listitem" tabindex="0">
+                <div aria-hidden="true" class="text-blue-500 text-6xl mb-4 select-none">
+                    🧑‍🎓
+                </div>
+                <h3 class="text-xl font-semibold mb-2 text-white">
+                    Educational Access
+                </h3>
+                <p class="text-gray-300">
+                    Students and researchers can easily access curated ISRO mission data and insights.
+                </p>
+            </article>
+            <article aria-label="Satellite Info Exploration use case"
+                class="bg-gray-900 bg-opacity-40 rounded-2xl p-8 shadow-lg hover:shadow-blue-600 transition-shadow cursor-default flex flex-col items-center text-center"
+                role="listitem" tabindex="0">
+                <div aria-hidden="true" class="text-blue-500 text-6xl mb-4 select-none">
+                    🛰
+                </div>
+                <h3 class="text-xl font-semibold mb-2 text-white">
+                    Satellite Info Exploration
+                </h3>
+                <p class="text-gray-300">
+                    Explore detailed satellite mission data and telemetry through conversational queries.
+                </p>
+            </article>
+            <article aria-label="ISRO Public Services use case"
+                class="bg-gray-900 bg-opacity-40 rounded-2xl p-8 shadow-lg hover:shadow-blue-600 transition-shadow cursor-default flex flex-col items-center text-center"
+                role="listitem" tabindex="0">
+                <div aria-hidden="true" class="text-blue-500 text-6xl mb-4 select-none">
+                    📊
+                </div>
+                <h3 class="text-xl font-semibold mb-2 text-white">
+                    ISRO Public Services
+                </h3>
+                <p class="text-gray-300">
+                    Citizens can query public services and mission updates with ease and clarity.
+                </p>
+            </article>
+            <article aria-label="Hackathon and AI Demos use case"
+                class="bg-gray-900 bg-opacity-40 rounded-2xl p-8 shadow-lg hover:shadow-blue-600 transition-shadow cursor-default flex flex-col items-center text-center"
+                role="listitem" tabindex="0">
+                <div aria-hidden="true" class="text-blue-500 text-6xl mb-4 select-none">
+                    🧪
+                </div>
+                <h3 class="text-xl font-semibold mb-2 text-white">
+                    Hackathon &amp; AI Demos
+                </h3>
+                <p class="text-gray-300">
+                    Developers and AI enthusiasts can experiment with ISRO data and generative AI capabilities.
+                </p>
+            </article>
+        </div>
+    </section>
+    <!-- Tech Stack Section -->
+    <section aria-labelledby="techstack-title" class="bg-gradient-to-b from-gray-900 to-black py-20 px-6 md:px-12"
+        id="tech-stack">
+        <h2 class="text-4xl font-bold text-white mb-12 text-center" id="techstack-title" tabindex="0">
+            Technology Stack
+        </h2>
+        <div aria-label="Technology stack used in ISRO HelpBot"
+            class="max-w-6xl mx-auto flex flex-wrap justify-center gap-10" role="list">
+            <div aria-label="FastAPI technology" class="flex flex-col items-center space-y-2 cursor-default group"
+                role="listitem" tabindex="0">
+                <img alt="FastAPI logo, a modern, fast web framework for Python"
+                    class="w-16 h-16 rounded-lg filter group-hover:drop-shadow-[0_0_10px_#3b82f6] transition-shadow"
+                    height="64" loading="lazy"
+                    src="https://storage.googleapis.com/a1aa/image/dc81897b-ef7b-4589-074e-764d4cfff526.jpg"
+                    width="64" />
+                <span class="text-blue-400 font-semibold">
+                    FastAPI
+                </span>
+            </div>
+            <div aria-label="LangChain technology" class="flex flex-col items-center space-y-2 cursor-default group"
+                role="listitem" tabindex="0">
+                <img alt="LangChain logo, a framework for building LLM applications"
+                    class="w-16 h-16 rounded-lg filter group-hover:drop-shadow-[0_0_10px_#3b82f6] transition-shadow"
+                    height="64" loading="lazy"
+                    src="https://storage.googleapis.com/a1aa/image/d6dd3f97-e042-44eb-2b22-33ffdbe5213f.jpg"
+                    width="64" />
+                <span class="text-blue-400 font-semibold">
+                    LangChain
+                </span>
+            </div>
+            <div aria-label="Python programming language"
+                class="flex flex-col items-center space-y-2 cursor-default group" role="listitem" tabindex="0">
+                <img alt="Python logo, a popular programming language"
+                    class="w-16 h-16 rounded-lg filter group-hover:drop-shadow-[0_0_10px_#3b82f6] transition-shadow"
+                    height="64" loading="lazy"
+                    src="https://storage.googleapis.com/a1aa/image/56725855-98f5-4e01-cc7b-1ce2801416a7.jpg"
+                    width="64" />
+                <span class="text-blue-400 font-semibold">
+                    Python
+                </span>
+            </div>
+            <div aria-label="Tailwind CSS framework" class="flex flex-col items-center space-y-2 cursor-default group"
+                role="listitem" tabindex="0">
+                <img alt="Tailwind CSS logo, a utility-first CSS framework"
+                    class="w-16 h-16 rounded-lg filter group-hover:drop-shadow-[0_0_10px_#3b82f6] transition-shadow"
+                    height="64" loading="lazy"
+                    src="https://storage.googleapis.com/a1aa/image/3b707328-00fe-4881-72a0-5520c3cd6b13.jpg"
+                    width="64" />
+                <span class="text-blue-400 font-semibold">
+                    Tailwind CSS
+                </span>
+            </div>
+            <div aria-label="Vanilla JavaScript" class="flex flex-col items-center space-y-2 cursor-default group"
+                role="listitem" tabindex="0">
+                <img alt="Vanilla JavaScript logo, programming language for web"
+                    class="w-16 h-16 rounded-lg filter group-hover:drop-shadow-[0_0_10px_#3b82f6] transition-shadow"
+                    height="64" loading="lazy"
+                    src="https://storage.googleapis.com/a1aa/image/f7095038-76f3-4e04-7026-33237eda2fd5.jpg"
+                    width="64" />
+                <span class="text-blue-400 font-semibold">
+                    Vanilla JS
+                </span>
+            </div>
+            <div aria-label="LLMs FLAN-T5 and GPT2" class="flex flex-col items-center space-y-2 cursor-default group"
+                role="listitem" tabindex="0">
+                <img alt="Large Language Models FLAN-T5 and GPT2 logos"
+                    class="w-16 h-16 rounded-lg filter group-hover:drop-shadow-[0_0_10px_#3b82f6] transition-shadow"
+                    height="64" loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg
+" width="64" />
+                <span class="text-blue-400 font-semibold">
+                    LLMs (GPT3.5)
+                </span>
+            </div>
+            <div aria-label="FAISS vector search library"
+                class="flex flex-col items-center space-y-2 cursor-default group" role="listitem" tabindex="0">
+                <img alt="FAISS logo, a vector similarity search library"
+                    class="w-16 h-16 rounded-lg filter group-hover:drop-shadow-[0_0_10px_#3b82f6] transition-shadow"
+                    height="64" loading="lazy"
+                    src="https://storage.googleapis.com/a1aa/image/6fc52eb9-d777-4a0e-b99c-f36f9fe6d01c.jpg"
+                    width="64" />
+                <span class="text-blue-400 font-semibold">
+                    FAISS
+                </span>
+            </div>
+            <div aria-label="Knowledge Graph technologies Neo4j and NetworkX"
+                class="flex flex-col items-center space-y-2 cursor-default group" role="listitem" tabindex="0">
+                <img alt="Knowledge Graph logos for Neo4j and NetworkX"
+                    class="w-16 h-16 rounded-lg filter group-hover:drop-shadow-[0_0_10px_#3b82f6] transition-shadow"
+                    height="64" loading="lazy"
+                    src="https://storage.googleapis.com/a1aa/image/fc545396-a500-4c5a-6446-a2e3c248a8aa.jpg"
+                    width="64" />
+                <span class="text-blue-400 font-semibold">
+                    Knowledge Graph (Neo4j / NetworkX)
+                </span>
+            </div>
+        </div>
+    </section>
+    <!-- Meet the Team Section -->
+    <section aria-labelledby="team-title" class="max-w-7xl mx-auto px-6 md:px-12 py-20" id="team">
+        <h2 class="text-4xl font-bold text-white mb-12 text-center" id="team-title" tabindex="0">
+            Meet the Team
+        </h2>
+        <div aria-label="Team members of ISRO HelpBot project"
+            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 max-w-6xl mx-auto" role="list">
+            <article aria-label="Gaurav, LLM and Knowledge Graph Integration"
+                class="bg-gray-900 bg-opacity-40 rounded-3xl p-8 shadow-lg flex flex-col items-center text-center cursor-default group"
+                role="listitem" tabindex="0">
+                <img alt="Portrait of Gaurav, MSc AI &amp; ML student specializing in LLM and Knowledge Graph Integration"
+                    class="w-36 h-36 rounded-full mb-6 object-cover shadow-md" height="150" loading="lazy"
+                    src="/static/gaurav.jpg" width="150" />
+                <h3 class="text-2xl font-semibold text-white mb-1 group-hover:text-blue-400 transition-colors">
+                    Gaurav
+                </h3>
+                <p class="text-gray-300 font-medium">
+                    LLM &amp; KG Integration
+                </p>
+            </article>
+            <article aria-label="Saksham, Frontend and Backend Lead"
+                class="bg-gray-900 bg-opacity-40 rounded-3xl p-8 shadow-lg flex flex-col items-center text-center cursor-default group"
+                role="listitem" tabindex="0">
+                <img alt="Portrait of Saksham, MSc AI &amp; ML student and Frontend + Backend Lead"
+                    class="w-36 h-36 rounded-full mb-6 object-cover shadow-md" height="150" loading="lazy"
+                    src="/static/saksham.jpg" width="150" />
+                <h3 class="text-2xl font-semibold text-white mb-1 group-hover:text-blue-400 transition-colors">
+                    Saksham
+                </h3>
+                <p class="text-gray-300 font-medium">
+                    Frontend + Backend Lead
+                </p>
+            </article>
+            <article aria-label="Jatin, Data Engineering"
+                class="bg-gray-900 bg-opacity-40 rounded-3xl p-8 shadow-lg flex flex-col items-center text-center cursor-default group"
+                role="listitem" tabindex="0">
+                <img alt="Portrait of Jatin, MSc AI &amp; ML student specializing in Data Engineering"
+                    class="w-36 h-36 rounded-full mb-6 object-cover shadow-md" height="150" loading="lazy"
+                    src="/static/jatin.jpg" width="150" />
+                <h3 class="text-2xl font-semibold text-white mb-1 group-hover:text-blue-400 transition-colors">
+                    Jatin
+                </h3>
+                <p class="text-gray-300 font-medium">
+                    Data Engineering
+                </p>
+            </article>
+            <article aria-label="Pratyay, UX and Document Flow"
+                class="bg-gray-900 bg-opacity-40 rounded-3xl p-8 shadow-lg flex flex-col items-center text-center cursor-default group"
+                role="listitem" tabindex="0">
+                <img alt="Portrait of Pratyay, MSc AI &amp; ML student specializing in UX and Document Flow"
+                    class="w-36 h-36 rounded-full mb-6 object-cover shadow-md" height="150" loading="lazy"
+                    src="/static/pratyay.jpg"
+                    width="150" />
+                <h3 class="text-2xl font-semibold text-white mb-1 group-hover:text-blue-400 transition-colors">
+                    Pratyay
+                </h3>
+                <p class="text-gray-300 font-medium">
+                    UX + Document Flow
+                </p>
+            </article>
+        </div>
+        <div class="mt-12 flex justify-center items-center space-x-6">
+            <img alt="IIIT Lucknow university logo" class="h-14 object-contain" height="60" loading="lazy"
+                src="https://storage.googleapis.com/a1aa/image/98883b4e-f379-42da-7aac-b41cfd268d2a.jpg" width="120" />
+        </div>
+    </section>
+    <!-- Evaluation Metrics Section -->
+    <section aria-labelledby="evaluation-title" class="bg-gradient-to-b from-gray-900 to-black py-20 px-6 md:px-12"
+        id="evaluation">
+        <h2 class="text-4xl font-bold text-white mb-12 text-center" id="evaluation-title" tabindex="0">
+            Evaluation Metrics
+        </h2>
+        <div aria-label="Evaluation metrics for ISRO HelpBot"
+            class="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 text-center" role="list">
+            <article aria-label="Intent Recognition Accuracy metric"
+                class="bg-gray-900 bg-opacity-40 rounded-2xl p-8 shadow-lg cursor-default" role="listitem" tabindex="0">
+                <div aria-hidden="true" class="text-green-400 text-5xl mb-4 select-none">
+                    ✅
+                </div>
+                <h3 class="text-xl font-semibold text-white mb-2">
+                    Intent Recognition Accuracy
+                </h3>
+                <p class="text-gray-300">
+                    Measures how accurately the system understands user questions.
+                </p>
+            </article>
+            <article aria-label="Entity Matching metric"
+                class="bg-gray-900 bg-opacity-40 rounded-2xl p-8 shadow-lg cursor-default" role="listitem" tabindex="0">
+                <div aria-hidden="true" class="text-yellow-400 text-5xl mb-4 select-none">
+                    📌
+                </div>
+                <h3 class="text-xl font-semibold text-white mb-2">
+                    Entity Matching
+                </h3>
+                <p class="text-gray-300">
+                    Evaluates the precision of linking user queries to knowledge graph entities.
+                </p>
+            </article>
+            <article aria-label="Response Completeness metric"
+                class="bg-gray-900 bg-opacity-40 rounded-2xl p-8 shadow-lg cursor-default" role="listitem" tabindex="0">
+                <div aria-hidden="true" class="text-blue-400 text-5xl mb-4 select-none">
+                    💬
+                </div>
+                <h3 class="text-xl font-semibold text-white mb-2">
+                    Response Completeness
+                </h3>
+                <p class="text-gray-300">
+                    Assesses how fully the AI answers user questions with relevant details.
+                </p>
+            </article>
+            <article aria-label="Consistency metric"
+                class="bg-gray-900 bg-opacity-40 rounded-2xl p-8 shadow-lg cursor-default" role="listitem" tabindex="0">
+                <div aria-hidden="true" class="text-purple-400 text-5xl mb-4 select-none">
+                    🔁
+                </div>
+                <h3 class="text-xl font-semibold text-white mb-2">
+                    Consistency
+                </h3>
+                <p class="text-gray-300">
+                    Checks multi-turn conversation logic and coherence over multiple queries.
+                </p>
+            </article>
+        </div>
+    </section>
+    <!-- Footer -->
+    <footer aria-label="Footer with credits and links"
+        class="bg-black bg-opacity-80 text-gray-400 py-6 px-6 md:px-12 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+        <div class="flex items-center space-x-4">
+            <a aria-label="GitHub repository link"
+                class="text-gray-400 hover:text-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"
+                href="https://github.com/iiit-lucknow/isro-helpbot" rel="noopener noreferrer" target="_blank">
+                <i class="fab fa-github fa-2x">
+                </i>
+            </a>
+            <span class="text-sm md:text-base select-none">
+                Built by IIIT Lucknow MSc AI &amp; ML team
+            </span>
+        </div>
+        <div class="text-sm md:text-base select-none">
+            Powered by GenAI · LangChain · FastAPI · LLM(GPT-3.5)· Tailwind
+        </div>
+    </footer>
+    <!-- Floating Chatbot Interface -->
+    <div aria-label="ISRO HelpBot chatbot interface" class="fixed bottom-6 right-6 z-50 flex flex-col items-end"
+        id="chatbot">
+        <!-- Chat bubble button -->
+        <button aria-controls="chatWindow" aria-expanded="false" aria-label="Open chat with ISRO HelpBot"
+            class="w-20 h-20 rounded-full bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-400 shadow-lg flex items-center justify-center text-white text-2xl transition-colors focus:outline-none"
+            id="chatToggleBtn">
+            <svg aria-hidden="true" class="h-7 w-7" fill="none" stroke="currentColor" viewbox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.9L3 20l1.1-3.745A7.963 7.963 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                </path>
+            </svg>
+        </button>
+        <!-- Chat window -->
+        <section aria-label="Chatbot conversation window"
+            class="mt-4 w-[90vw] h-[500px] sm:w-[90vw] md:w-[640px] md:h-[700px] bg-black/80 backdrop-blur rounded-2xl shadow-lg flex flex-col overflow-hidden hidden"
+            id="chatWindow" role="region">
+            <header class="flex items-center justify-between bg-blue-700 bg-opacity-90 px-4 py-3 rounded-t-2xl">
+                <h3 class="text-white font-semibold text-lg select-none" tabindex="0">
+                    ISRO HelpBot
+                </h3>
+                <button aria-label="Close chat window"
+                    class="text-white hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded"
+                    id="chatCloseBtn">
+                    <svg aria-hidden="true" class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                        </path>
+                    </svg>
+                </button>
+            </header>
+
+            <main aria-live="polite" aria-relevant="additions"
+                class="flex-1 overflow-y-auto px-4 py-3 space-y-4 scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-transparent"
+                id="chat-box" tabindex="0">
+                <!-- Chat messages will appear here -->
+            </main>
+            <form aria-label="Chat input form"
+                class="bg-black/70 backdrop-blur px-4 py-3 flex items-center space-x-3 rounded-b-2xl" id="chat-form">
+                <input aria-label="Type your message" aria-required="true" autocomplete="off"
+                    class="flex-1 bg-gray-900 text-gray-200 placeholder-gray-400 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                    id="userInput" name="message" placeholder="Type your question..." required="" type="text" />
+                <button aria-label="Send message"
+                    class="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
+                    type="submit">
+                    <svg aria-hidden="true" class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"
+                            stroke-width="2">
+                        </path>
+                    </svg>
+                </button>
+                <button aria-label="Clear chat history"
+                    class="ml-1 bg-red-600 hover:bg-red-700 text-white rounded-full p-2 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors"
+                    id="clearChatBtn" type="button">
+                    <svg aria-hidden="true" class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                        </path>
+                    </svg>
+                </button>
+            </form>
+            <!-- Upload Section inside chat -->
+            <section aria-label="Document upload section"
+                class="bg-gray-900 bg-opacity-50 p-4 flex flex-col items-center space-y-3" id="uploadSection">
+                <form aria-describedby="uploadDesc"
+                    class="w-full flex flex-col sm:flex-row items-center justify-center gap-4"
+                    enctype="multipart/form-data" id="upload-form">
+                    <label
+                        class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors flex items-center space-x-2"
+                        for="fileInput">
+                        <svg aria-hidden="true" class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 12l-4-4m0 0l-4 4m4-4v12"
+                                stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                            </path>
+                        </svg>
+                        <span>
+                            Upload Document
+                        </span>
+                        <input accept=".pdf,.docx,.xlsx" aria-label="Upload PDF, DOCX or XLSX document" class="hidden"
+                            id="fileInput" multiple="" name="file" type="file" />
+                    </label>
+                    <button aria-label="Submit uploaded documents"
+                        class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-full shadow-md focus:outline-none focus:ring-2 focus:ring-green-400 transition-colors"
+                        type="submit">
+                        Submit
+                    </button>
+                </form>
+                <p class="text-gray-400 text-sm select-none" id="uploadDesc">
+                    Supported formats: PDF, DOCX, XLSX. You can upload multiple files.
+                </p>
+            </section>
+            <!-- Loading / Typing indicator -->
+            <div aria-atomic="true" aria-live="polite" class="hidden px-4 py-2 text-blue-400 italic text-sm select-none"
+                id="typingIndicator">
+                Bot is typing...
+            </div>
+        </section>
+    </div>
+    <script>
+        // Smooth scroll for Get Started button
+        document.getElementById('getStartedBtn').addEventListener('click', () => {
+            const chatToggleBtn = document.getElementById('chatToggleBtn');
+            if (chatToggleBtn.getAttribute('aria-expanded') === 'false') {
+                chatToggleBtn.click();
+            }
+            const chatWindow = document.getElementById('chatWindow');
+            chatWindow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
+        // Info modal toggle
+        const infoRagBtn = document.getElementById('infoRagBtn');
+        const infoModal = document.getElementById('infoModal');
+        const closeInfoModal = document.getElementById('closeInfoModal');
+
+        infoRagBtn.addEventListener('click', () => {
+            infoModal.classList.remove('hidden');
+            infoModal.querySelector('div').focus();
+        });
+        closeInfoModal.addEventListener('click', () => {
+            infoModal.classList.add('hidden');
+            infoRagBtn.focus();
+        });
+        infoModal.addEventListener('click', (e) => {
+            if (e.target === infoModal) {
+                infoModal.classList.add('hidden');
+                infoRagBtn.focus();
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !infoModal.classList.contains('hidden')) {
+                infoModal.classList.add('hidden');
+                infoRagBtn.focus();
+            }
+        });
+
+        // Chatbot toggle
+        const chatToggleBtn = document.getElementById('chatToggleBtn');
+        const chatWindow = document.getElementById('chatWindow');
+        const chatCloseBtn = document.getElementById('chatCloseBtn');
+        const chatBox = document.getElementById('chat-box');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('userInput');
+        const clearChatBtn = document.getElementById('clearChatBtn');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const uploadForm = document.getElementById('upload-form');
+        const fileInput = document.getElementById('fileInput');
+
+        let isChatOpen = false;
+
+        function scrollChatToBottom() {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function createMessageElement(text, fromBot = false, isError = false) {
+            const msg = document.createElement('div');
+            msg.className = `max-w-[80%] break-words px-4 py-2 rounded-lg ${fromBot
+                ? 'bg-blue-700 text-white self-start'
+                : 'bg-blue-600 text-white self-end'
+                } ${isError ? 'bg-red-700 text-red-200' : ''}`;
+            msg.setAttribute('tabindex', '0');
+            msg.textContent = text;
+            return msg;
+        }
+
+        function setLoading(loading) {
+            if (loading) {
+                typingIndicator.classList.remove('hidden');
+            } else {
+                typingIndicator.classList.add('hidden');
+            }
+        }
+
+        async function sendMessage(message) {
+            if (!message.trim()) return;
+            // Append user message
+            const userMsg = createMessageElement(message, false);
+            chatBox.appendChild(userMsg);
+            scrollChatToBottom();
+
+            setLoading(true);
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message }),
+                });
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                const botMsg = createMessageElement(data.response, true);
+                chatBox.appendChild(botMsg);
+                scrollChatToBottom();
+            } catch (error) {
+                const errorMsg = createMessageElement(
+                    '❌ Something went wrong. Try again.',
+                    true,
+                    true
+                );
+                chatBox.appendChild(errorMsg);
+                scrollChatToBottom();
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        chatToggleBtn.addEventListener('click', () => {
+            isChatOpen = !isChatOpen;
+            if (isChatOpen) {
+                chatWindow.classList.remove('hidden');
+                chatToggleBtn.setAttribute('aria-expanded', 'true');
+                userInput.focus();
+            } else {
+                chatWindow.classList.add('hidden');
+                chatToggleBtn.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        chatCloseBtn.addEventListener('click', () => {
+            isChatOpen = false;
+            chatWindow.classList.add('hidden');
+            chatToggleBtn.setAttribute('aria-expanded', 'false');
+            chatToggleBtn.focus();
+        });
+
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const message = userInput.value;
+            userInput.value = '';
+            sendMessage(message);
+        });
+
+        clearChatBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/clear', { method: 'POST' });
+                if (!response.ok) throw new Error('Failed to clear chat');
+                chatBox.innerHTML = '';
+                userInput.focus();
+            } catch (error) {
+                const errorMsg = createMessageElement(
+                    '❌ Could not clear chat. Try again.',
+                    true,
+                    true
+                );
+                chatBox.appendChild(errorMsg);
+                scrollChatToBottom();
+            }
+        });
+
+        // Upload form handling
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const files = fileInput.files;
+            if (!files.length) {
+                alert('Please select at least one file to upload.');
+                return;
+            }
+            const formData = new FormData();
+            for (const file of files) {
+                formData.append('files', file);
+            }
+            try {
+                const uploadBtn = uploadForm.querySelector('button[type="submit"]');
+                uploadBtn.disabled = true;
+                uploadBtn.textContent = 'Uploading...';
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+                if (!response.ok) throw new Error('Upload failed');
+                alert('Document(s) uploaded successfully!');
+                fileInput.value = '';
+            } catch (error) {
+                alert('❌ Upload failed. Please try again.');
+            } finally {
+                const uploadBtn = uploadForm.querySelector('button[type="submit"]');
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Submit';
+            }
+        });
+
+        // Accessibility: focus trap inside modal
+        // (simple implementation)
+        infoModal.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                const focusableElements = infoModal.querySelectorAll(
+                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                );
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+                if (e.shiftKey) {
+                    if (document.activeElement === firstElement) {
+                        e.preventDefault();
+                        lastElement.focus();
+                    }
+                } else {
+                    if (document.activeElement === lastElement) {
+                        e.preventDefault();
+                        firstElement.focus();
+                    }
+                }
+            }
+        });
+
+        // Keyboard shortcut: open chat with Ctrl+Shift+H
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'h') {
+                if (!isChatOpen) {
+                    chatToggleBtn.click();
+                }
+                userInput.focus();
+            }
+        });
+    </script>
+</body>
+
+</html>
