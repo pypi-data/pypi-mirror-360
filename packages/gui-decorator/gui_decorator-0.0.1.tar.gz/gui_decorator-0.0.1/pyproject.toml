@@ -1,0 +1,57 @@
+# https://packaging.python.org/en/latest/guides/writing-pyproject-toml/
+# https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gui-decorator"
+version = "0.0.1"
+description = "Give me a GUI"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+authors = [{"name" = "Long Tan", "email" = "tanloong@foxmail.com"},]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Ruff complete options: https://docs.astral.sh/ruff/settings/#extend
+[tool.ruff]
+line-length = 148
+
+[tool.ruff.lint]
+select = [
+    "E", # pycodestyle
+    "F", # Pyflakes
+    "UP", # pyupgrade
+    "B", # flake8-bugbear
+    "SIM", # flake8-simplify
+    "I", # isort
+]
+ignore = [
+    "E501",
+    "B011",
+    "UP038", # 'isinstance(x, int | float)' causes slower code
+]
+
+[tool.ruff.lint.flake8-type-checking]
+# Add quotes around type annotations, if doing so would allow
+# an import to be moved into a type-checking block.
+quote-annotations = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.mypy]
+# https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-library-stubs-or-py-typed-marker
+ignore_missing_imports = true
+
+[tool.pyright]
+reportIncompatibleMethodOverride = false
+reportOptionalMemberAccess = false
+reportGeneralTypeIssues = false
