@@ -1,0 +1,329 @@
+{% extends "layouts/base.html" %}
+
+{% block main_content %}
+<!-- Enhanced Page Header -->
+{% set breadcrumbs = [
+    {"name": t('nav.home'), "url": "/", "icon": "fas fa-home"},
+    {"name": t('nav.rules'), "icon": "fas fa-book"}
+] %}
+{% set header_title = t('nav.rules') %}
+{% set header_subtitle = t('rules.title') %}
+{% set header_icon = "fas fa-book" %}
+{% set header_actions = [
+    {
+        "type": "button",
+        "text": t('rules.new'),
+        "url": "/rules/new",
+        "icon": "fas fa-plus",
+        "style": "primary"
+    },
+    {
+        "type": "dropdown",
+        "text": t('common.actions'),
+        "icon": "fas fa-ellipsis-v",
+        "style": "secondary",
+        "items": [
+            {"text": t('rules.builder'), "url": "/rules/builder", "icon": "fas fa-puzzle-piece"},
+            {"text": t('common.import'), "url": "/rules/import", "icon": "fas fa-upload"},
+            {"text": t('common.export'), "url": "/rules/export", "icon": "fas fa-download"},
+            {"text": t('nav.settings'), "url": "/settings", "icon": "fas fa-cog"}
+        ]
+    }
+] %}
+{% include "components/page_header.html" %}
+
+<div class="space-y-6">
+
+    <!-- Filters and Search -->
+    <div class="card">
+        <div class="card-body">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="md:col-span-2">
+                    <label for="search" class="sr-only">{{ t('rules.search') }}</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" id="search" name="search" 
+                               class="form-input pl-10" 
+                               placeholder="{{ t('rules.search_placeholder') }}"
+                               hx-get="/rules/search" 
+                               hx-trigger="keyup changed delay:300ms" 
+                               hx-target="#rules-list">
+                    </div>
+                </div>
+                <div>
+                    <select id="category-filter" name="category" class="form-select"
+                            hx-get="/rules/filter" 
+                            hx-trigger="change" 
+                            hx-target="#rules-list">
+                        <option value="">{{ t('rules.all_categories') }}</option>
+                        {% for category in categories %}
+                            <option value="{{ category }}">{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <select id="sort-filter" name="sort" class="form-select"
+                            hx-get="/rules/filter" 
+                            hx-trigger="change" 
+                            hx-target="#rules-list">
+                        <option value="created_desc">{{ t('rules.sort_newest') }}</option>
+                        <option value="created_asc">{{ t('rules.sort_oldest') }}</option>
+                        <option value="name_asc">{{ t('rules.sort_name_asc') }}</option>
+                        <option value="name_desc">{{ t('rules.sort_name_desc') }}</option>
+                        <option value="category_asc">{{ t('rules.sort_category') }}</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules List -->
+    <div id="rules-list">
+        {% if rules %}
+            <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                <ul class="divide-y divide-gray-200">
+                    {% for rule in rules %}
+                        <li class="hover:bg-gray-50 transition-colors duration-200">
+                            <div class="px-4 py-4 sm:px-6">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center flex-1">
+                                        <div class="flex-1">
+                                            <div class="flex items-center">
+                                                <h3 class="text-lg font-medium text-gray-900 truncate">
+                                                    {{ rule.name }}
+                                                </h3>
+                                                <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                    {{ rule.category }}
+                                                </span>
+                                                {% if rule.is_builtin %}
+                                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                                        <i class="fas fa-shield-alt mr-1"></i>
+                                                        {{ t('rules.builtin') }}
+                                                    </span>
+                                                {% endif %}
+                                                {% if rule.tags %}
+                                                    {% set tag_list = rule.tags.split(',') if rule.tags else [] %}
+                                                    {% for tag in tag_list[:3] %}
+                                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                                            {{ tag.strip() }}
+                                                        </span>
+                                                    {% endfor %}
+                                                    {% if tag_list|length > 3 %}
+                                                        <span class="ml-2 text-xs text-gray-500">
+                                                            +{{ tag_list|length - 3 }} more
+                                                        </span>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
+                                            <div class="mt-1">
+                                                <p class="text-sm font-medium text-gray-700">{{ rule.title }}</p>
+                                            </div>
+                                            <div class="mt-2">
+                                                <p class="text-sm text-gray-600">
+                                                    {{ rule.description or rule.content[:150] + '...' if rule.content|length > 150 else rule.content }}
+                                                </p>
+                                            </div>
+                                            <div class="mt-2 flex items-center text-xs text-gray-500">
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-calendar mr-1"></i>
+                                                    {{ t('rules.recently_created') }}
+                                                </div>
+                                                <div class="ml-4 flex items-center">
+                                                    <i class="fas fa-edit mr-1"></i>
+                                                    {{ t('rules.recently_modified') }}
+                                                </div>
+                                                <div class="ml-4 flex items-center">
+                                                    <i class="fas fa-align-left mr-1"></i>
+                                                    {{ rule.content|length if rule.content else 0 }} {{ t('rules.characters') }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2 ml-4">
+                                        <button class="text-gray-400 hover:text-blue-600 transition-colors duration-200"
+                                                title="{{ t('common.preview') }}"
+                                                onclick="showPreview({{ rule.id }}, '{{ rule.title }}', `{{ rule.content|replace('`', '\\`')|replace('\n', '\\n') }}`)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="text-gray-400 hover:text-green-600 transition-colors duration-200"
+                                                title="{{ t('rules.copy_markdown') }}"
+                                                onclick="copyToClipboard(`{{ rule.content|replace('`', '\\`')|replace('\n', '\\n') }}`)">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        {% if not rule.is_builtin %}
+                                        <a href="/rules/{{ rule.id }}/edit" 
+                                           class="text-gray-400 hover:text-yellow-600 transition-colors duration-200"
+                                           title="{{ t('common.edit') }}">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button class="text-gray-400 hover:text-red-600 transition-colors duration-200"
+                                                title="{{ t('common.delete') }}"
+                                                onclick="confirmDelete({{ rule.id }}, '{{ rule.name }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Pagination -->
+            <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 rounded-b-lg">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        {{ t('common.previous') }}
+                    </a>
+                    <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        {{ t('common.next') }}
+                    </a>
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            {{ t('rules.showing_results', count_start=1, count_end=rules|length, total=rules|length) }}
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">{{ t('common.previous') }}</span>
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                            <a href="#" class="bg-primary-50 border-primary-500 text-primary-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">1</a>
+                            <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">{{ t('common.next') }}</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="bg-white shadow rounded-lg">
+                <div class="text-center py-12">
+                    <i class="fas fa-book text-4xl text-gray-300 mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">{{ t('rules.no_rules_found') }}</h3>
+                    <p class="text-gray-500 mb-6">{{ t('rules.get_started_message') }}</p>
+                    <div class="space-x-4">
+                        <a href="/rules/new" class="btn-primary">
+                            <i class="fas fa-plus mr-2"></i>
+                            {{ t('rules.create_first') }}
+                        </a>
+                        <a href="/rules/builder" class="btn-secondary">
+                            <i class="fas fa-puzzle-piece mr-2"></i>
+                            {{ t('rules.try_builder') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="preview-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closePreview()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                        <i class="fas fa-eye mr-2 text-blue-500"></i>
+                        {{ t('rules.preview') }}
+                    </h3>
+                    <button onclick="closePreview()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <h4 id="preview-title" class="text-md font-medium text-gray-900 mb-2"></h4>
+                    <div class="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                        <pre id="preview-content" class="whitespace-pre-wrap text-sm text-gray-700 font-mono"></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button onclick="closePreview()" class="btn-secondary">{{ t('common.close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeDelete()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fas fa-exclamation-triangle text-red-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">{{ t('rules.delete_title') }}</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500">
+                                {{ t('rules.delete_confirmation') }} "<span id="delete-rule-name" class="font-medium"></span>"? {{ t('common.action_cannot_be_undone') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button id="delete-confirm-btn" class="btn-danger sm:ml-3">
+                    <i class="fas fa-trash mr-2"></i>
+                    {{ t('common.delete') }}
+                </button>
+                <button onclick="closeDelete()" class="btn-secondary mt-3 sm:mt-0">{{ t('common.cancel') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showPreview(id, title, content) {
+    document.getElementById('preview-title').textContent = title;
+    document.getElementById('preview-content').textContent = content;
+    document.getElementById('preview-modal').classList.remove('hidden');
+}
+
+function closePreview() {
+    document.getElementById('preview-modal').classList.add('hidden');
+}
+
+function confirmDelete(id, name) {
+    document.getElementById('delete-rule-name').textContent = name;
+    document.getElementById('delete-modal').classList.remove('hidden');
+    
+    // Set up delete confirmation
+    document.getElementById('delete-confirm-btn').onclick = function() {
+        // Use HTMX to delete
+        htmx.ajax('DELETE', `/rules/${id}`, {
+            target: '#rules-list',
+            swap: 'outerHTML'
+        });
+        closeDelete();
+        showToast(`Rule "${name}" deleted successfully`, 'success');
+    };
+}
+
+function closeDelete() {
+    document.getElementById('delete-modal').classList.add('hidden');
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        showToast('Rule content copied to clipboard', 'success');
+    }, function(err) {
+        showToast('Failed to copy rule content', 'error');
+    });
+}
+</script>
+{% endblock %}
