@@ -1,0 +1,64 @@
+<!-- 
+Componente: Card
+Uso: include "components/card.html" with title="Título" description="Descrição" content="Conteúdo" footer="Rodapé"
+
+Parâmetros:
+- title: Título do card (opcional)
+- description: Descrição do card (opcional)
+- action: HTML para ação no header (opcional)
+- content: Conteúdo principal do card (opcional)
+- footer: Conteúdo do rodapé (opcional)
+- class: Classes CSS adicionais para o card (opcional)
+- header_class: Classes CSS adicionais para o header (opcional)
+- content_class: Classes CSS adicionais para o content (opcional)
+- footer_class: Classes CSS adicionais para o footer (opcional)
+- show_dividers: true/false - mostrar divisores entre seções (padrão: false)
+-->
+
+{% with show_dividers=show_dividers|default:False %}
+<div class="bg-card text-card-foreground flex flex-col gap-6 rounded-radius-lg border py-6 shadow-sm {{ class|default:'' }}">
+    {% if title or description or action %}
+        <div class="@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 px-6 
+            {% if action %}grid-cols-[1fr_auto]{% endif %}
+            {% if show_dividers %}pb-6{% endif %}
+            {{ header_class|default:'' }}">
+            
+            {% if title %}
+                <div class="leading-none font-semibold">{{ title }}</div>
+            {% endif %}
+            
+            {% if description %}
+                <div class="text-muted-foreground text-sm">{{ description }}</div>
+            {% endif %}
+            
+            {% if action %}
+                <div class="col-start-2 row-span-2 row-start-1 self-start justify-self-end">
+                    {{ action|safe }}
+                </div>
+            {% endif %}
+        </div>
+        
+        {% if show_dividers and content %}
+            <div class="border-b"></div>
+        {% endif %}
+    {% endif %}
+    
+    {% if content %}
+        <div class="px-6 {{ content_class|default:'' }}">
+            {{ content|safe }}
+        </div>
+        
+        {% if show_dividers and footer %}
+            <div class="border-t"></div>
+        {% endif %}
+    {% endif %}
+    
+    {% if footer %}
+        <div class="flex items-center px-6 
+            {% if show_dividers %}pt-6{% endif %}
+            {{ footer_class|default:'' }}">
+            {{ footer|safe }}
+        </div>
+    {% endif %}
+</div>
+{% endwith %}

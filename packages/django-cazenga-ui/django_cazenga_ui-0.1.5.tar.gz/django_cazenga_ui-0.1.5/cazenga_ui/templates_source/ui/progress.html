@@ -1,0 +1,74 @@
+<!--
+Componente: Progress
+Uso: include "components/progress.html" with value=75 label="Progresso"
+
+Parâmetros:
+- value: Valor do progresso (0-100) (padrão: 0)
+- max: Valor máximo (padrão: 100)
+- label: Texto do label (opcional)
+- show_value: true/false - mostrar porcentagem (padrão: false)
+- variant: default, success, warning, danger (padrão: default)
+- size: sm, md, lg (padrão: md)
+- striped: true/false - adicionar listras (padrão: false)
+- animated: true/false - animar listras (padrão: false)
+- class: Classes CSS adicionais (opcional)
+-->
+{% with value=value|default:0 max=max|default:100 variant=variant|default:"default" size=size|default:"md" show_value=show_value|default:False striped=striped|default:False animated=animated|default:False %}
+<div class="w-full">
+    {% if label or show_value %}
+        <div class="flex justify-between mb-1">
+            {% if label %}
+                <span class="text-sm font-medium">{{ label }}</span>
+            {% endif %}
+            {% if show_value %}
+                <span class="text-sm text-muted-foreground">{{ value }}%</span>
+            {% endif %}
+        </div>
+    {% endif %}
+    
+    <div 
+        role="progressbar"
+        aria-valuenow="{{ value }}"
+        aria-valuemin="0"
+        aria-valuemax="{{ max }}"
+        class="relative overflow-hidden rounded-full
+            {% if size == 'sm' %}h-1
+            {% elif size == 'lg' %}h-4
+            {% else %}h-2{% endif %}
+            {% if variant == 'success' %}bg-green-200 dark:bg-green-900/20
+            {% elif variant == 'warning' %}bg-yellow-200 dark:bg-yellow-900/20
+            {% elif variant == 'danger' %}bg-red-200 dark:bg-red-900/20
+            {% else %}bg-primary/20{% endif %}
+            {{ class|default:'' }}"
+    >
+        <div 
+            class="h-full flex-1 transition-all duration-300 ease-in-out
+                {% if variant == 'success' %}bg-green-500
+                {% elif variant == 'warning' %}bg-yellow-500
+                {% elif variant == 'danger' %}bg-red-500
+                {% else %}bg-primary{% endif %}
+                {% if striped %}
+                    bg-gradient-to-r from-transparent via-white/20 to-transparent
+                    bg-[length:20px_100%]
+                    {% if animated %}animate-[progress-stripes_1s_linear_infinite]{% endif %}
+                {% endif %}"
+            style="--progress-width: {{ value }}%; width: var(--progress-width);"
+        >
+            {% if size == 'lg' and show_value %}
+                <span class="flex h-full items-center justify-center text-xs font-medium text-primary-foreground">
+                    {{ value }}%
+                </span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if animated and striped %}
+<style>
+    @keyframes progress-stripes {
+        0% { background-position: 0 0; }
+        100% { background-position: 20px 0; }
+    }
+</style>
+{% endif %}
+{% endwith %}
