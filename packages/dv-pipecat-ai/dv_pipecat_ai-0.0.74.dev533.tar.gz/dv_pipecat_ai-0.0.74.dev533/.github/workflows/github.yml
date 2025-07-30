@@ -1,0 +1,120 @@
+name: Build and Deploy to Kubernetes
+
+on:
+  push:
+    branches:
+      - dv-stage # Trigger only on pushes to this specific branch.
+      - dv-main
+
+env:
+  PROJECT_ID: desivocalprod01
+  REGION: asia-south1
+  REPOSITORY: ${{ github.ref == 'refs/heads/dv-main' && 'ringg-registry-prod' || 'ringg-registry-stage' }}
+  IMAGE_NAME: dv-pipecat
+  # Determine cluster and secrets based on the target branch (dv-main for prod, others for stage)
+  CLUSTER: ${{ github.ref == 'refs/heads/dv-main' && 'desivocal-prod-us-e1-cluster' || 'desivocal-staging-cluster' }}
+  CLUSTER_ZONE: ${{ github.ref == 'refs/heads/dv-main' && 'us-east1' || 'asia-south1-a' }}
+  GITHUB_SHA: ${{ github.sha }}
+  # Assuming secrets are named like PROD_SECRETS_JSON / STAGE_SECRETS_JSON etc.
+  # SECRETS_JSON should contain a JSON object like {"VAR1": "value1", "VAR2": "value2"}
+  SECRETS_JSON: ${{ github.ref == 'refs/heads/dv-main' && secrets.PROD_SECRETS_JSON || secrets.STAGE_SECRETS_JSON }}
+  # CREDS_JSON should contain the raw content of the creds.json file
+  CREDS_JSON: ${{ github.ref == 'refs/heads/dv-main' && secrets.PROD_CREDS_JSON || secrets.STAGE_CREDS_JSON }}
+  # Helm release name
+  HELM_RELEASE_NAME: dv-pipecat
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required for Workload Identity Federation
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Authenticate to GCP using Workload Identity Federation
+      id: auth
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: projects/623676891410/locations/global/workloadIdentityPools/desivocal-staging-pool/providers/github # TODO: Update for production if needed
+        service_account: gke-githubactions-svc-stage@desivocalprod01.iam.gserviceaccount.com # TODO: Update for production if needed
+
+    - name: Configure gcloud
+      run: |
+        gcloud config set project $PROJECT_ID
+        gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
+
+    - name: Build multi-arch Docker image (amd64 + arm64)
+      run: |
+        cd examples/ringg-chatbot
+        docker buildx create --use || true
+        docker buildx build \
+          --platform linux/${{ github.ref == 'refs/heads/dv-main' && 'arm64' || 'amd64' }} \
+          -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:$GITHUB_SHA \
+          -f remote-Dockerfile \
+          --push .
+
+    # - name: Build Docker image
+    #   run: |
+    #     cd examples/ringg-chatbot
+    #     docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:$GITHUB_SHA -f remote-Dockerfile .
+
+    # - name: Push Docker image to Artifact Registry
+    #   run: |
+    #     docker push $REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME:$GITHUB_SHA
+
+    - name: Install Helm
+      uses: azure/setup-helm@v4
+      with:
+        version: v3.13.3 # Specify Helm version if needed
+
+    - name: Connect to GKE
+      uses: google-github-actions/get-gke-credentials@v2
+      with:
+        cluster_name: ${{ env.CLUSTER }}
+        location: ${{ env.CLUSTER_ZONE }}
+
+    - name: Install jq (for parsing JSON secrets)
+      run: sudo apt-get update && sudo apt-get install -y jq
+
+    - name: Create/Update GCP Credentials Secret
+      run: |
+        echo "Creating/Updating Kubernetes secret for GCP credentials..."
+        # Create secret with creds.json key from CREDS_JSON content
+        echo "$CREDS_JSON" | kubectl create secret generic ${{ env.HELM_RELEASE_NAME }}-gcp-creds --from-file=creds.json=/dev/stdin --dry-run=client -o yaml | kubectl apply -f - --overwrite
+      env:
+        CREDS_JSON: ${{ env.CREDS_JSON }}
+
+    - name: Create/Update Application Secrets
+      run: |
+        echo "Creating/Updating Kubernetes secret for application environment variables..."
+        # Build the --from-literal arguments dynamically from the JSON object stored in SECRETS_JSON
+        # This creates one key in the secret for each key in the JSON, matching the file structure expected by read_secret
+        LITERAL_ARGS=$(echo "$SECRETS_JSON" | jq -r 'to_entries | .[] | "--from-literal=\(.key)=\(.value)"' | tr '\n' ' ')
+        if [ -z "$LITERAL_ARGS" ]; then
+          echo "SECRETS_JSON is empty or not valid JSON. Skipping secret creation."
+          # Handle error or create empty secret if absolutely required by envFrom (though optional should be fine)
+          # kubectl create secret generic ${{ env.HELM_RELEASE_NAME }}-app-secrets --dry-run=client -o yaml | kubectl apply -f - --overwrite
+        else
+          kubectl create secret generic ${{ env.HELM_RELEASE_NAME }}-app-secrets $LITERAL_ARGS --dry-run=client -o yaml | kubectl apply -f - --overwrite
+        fi
+      env:
+        SECRETS_JSON: ${{ env.SECRETS_JSON }}
+
+    - name: Deploy to GKE using Helm
+      run: |
+        if [ "${{ github.ref }}" == "refs/heads/dv-main" ]; then
+          VALUES_FILE="values-prod.yaml"
+          echo "Using production values: $VALUES_FILE"
+        else
+          VALUES_FILE="values-stage.yaml"
+          echo "Using staging values: $VALUES_FILE"
+        fi
+
+        helm upgrade --install ${{ env.HELM_RELEASE_NAME }} ./k8s/dv-pipecat \
+            --set image.repository=$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE_NAME \
+            --set image.tag=$GITHUB_SHA \
+            --namespace default \
+            -f ./k8s/dv-pipecat/$VALUES_FILE
