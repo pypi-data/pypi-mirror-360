@@ -1,0 +1,93 @@
+Metadata-Version: 2.4
+Name: mokei
+Version: 0.2.18
+Summary: A simple asynchronous Python web framework built on aiohttp.
+Project-URL: Homepage, https://github.com/deuxglaces/mokei
+Project-URL: Issues, https://github.com/deuxglaces/mokei/issues
+Author-email: deuxglaces <dev@deuxglaces.com>
+License-File: LICENSE
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.10
+Requires-Dist: aiohttp-asgi>=0.5.2
+Requires-Dist: aiohttp-jinja2>=1.6
+Requires-Dist: aiohttp-swagger>=1.0.16
+Requires-Dist: aiohttp>=3.9.5
+Requires-Dist: aiosignal>=1.3.1
+Requires-Dist: async-timeout>=4.0.3
+Requires-Dist: attrs>=23.1.0
+Requires-Dist: charset-normalizer>=3.3.2
+Requires-Dist: frozenlist>=1.4.0
+Requires-Dist: idna>=3.4
+Requires-Dist: jinja2>=3.1.2
+Requires-Dist: markupsafe>=2.1.3
+Requires-Dist: multidict>=6.0.4
+Requires-Dist: pydantic>=2.10.6
+Requires-Dist: pyyaml>=6.0.1
+Requires-Dist: yarl>=1.9.3
+Description-Content-Type: text/markdown
+
+# Mokei
+
+Mokei is a simple asynchronous Python web framework built on aiohttp.
+
+Aiohttp contains a great async web server, with web framework built in,
+but can be complex when compared to other web frameworks.
+
+Mokei makes setting up your routes as simple as using Flask or FastAPI.
+It also includes super easy websocket routes with support for text and binary messages,
+as well as SocketIO-style event handlers.
+
+## Quick Start
+
+    from mokei import Mokei
+    
+    app = Mokei()
+    
+    @app.get('/')
+    async def hello():
+        return 'Hello, World!'
+
+    if __name__ == '__main__':
+        app.run()
+
+## Return JSON data
+
+When the return type from the handler is a `dict`, the response is automatically converted to `application/json`
+
+    @app.get('/status')
+    async def status():
+        return {
+            'status': 'OK',
+        }
+
+## Adding Websocket support
+
+Adding a websocket route is as simple as adding a normal get route.
+
+Note that you may send websocket messages to a route or to a single websocket
+(compare websocket.send_text and data.send_text below)
+
+    app = Mokei()
+    data = app.websocketroute('/data')
+    
+    @data.onconnect
+    async def send_welcome_text(websocket):
+        await websocket.send_text('Welcome!')
+
+    @data.ontext
+    async def relay_text(websocket, text):
+        # log incoming text and relay to all other websockets
+        logger.info('Received text %s', text)
+        await data.send_text(text, exclude=websocket)
+
+SocketIO-style events are also supported. See `js/mokei.js` for a Javascript handler for Mokei WebSockets.
+
+    app = Mokei()
+    data = app.websocketroute('/data')
+    
+    @data.on('ping')
+    async def send_pong(websocket, data):
+        update_something(websocket)
+        await websocket.send_event('pong', {'timestamp': time.time()})
