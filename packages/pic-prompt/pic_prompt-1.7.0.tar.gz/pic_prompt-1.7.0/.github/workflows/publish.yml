@@ -1,0 +1,30 @@
+name: Publish Python Package to Gemfury
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+    - name: Create virtual environment
+      run: uv venv
+    - name: Install build dependencies
+      run: uv pip install hatchling twine
+    - name: Build package
+      run: uv build
+    - name: Publish package to Gemfury
+      env:
+        TWINE_USERNAME: ${{ secrets.GEMFURY_PUSH_TOKEN }}
+      run: |
+        uv run twine upload --repository-url https://push.fury.io/herds/ dist/* -p "" --verbose
+    - name: Debug on failure
+      if: failure()
+      run: |
+        ls -la dist/
+        echo "Repository URL used: https://push.fury.io/herds/"
