@@ -1,0 +1,91 @@
+{#- OZI
+# ozi/templates/tox.pyproject.toml
+# SPDX-License-Identifier: MIT-0
+-#}
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+skipsdist = True
+envlist = {% for suite in spec.python.ci.checkpoint.suites %}{{ suite }},{% endfor %}
+
+[gh]
+python =
+     {{ spec.python.support.bugfix }} = {% for suite in spec.python.ci.checkpoint.suites %}{{ suite }},{% endfor %}
+     {{ spec.python.support.security1 }} = {% for suite in spec.python.ci.checkpoint.suites %}{{ suite }},{% endfor %}
+     {{ spec.python.support.security2 }} = {% for suite in spec.python.ci.checkpoint.suites %}{{ suite }},{% endfor %}
+
+[testenv]
+allowlist_externals =
+     rm
+{%- if not project.enable_uv %}
+     pipx
+{%- endif %}
+     meson
+package = wheel
+deps =
+{%- if project.enable_uv %}
+     uv
+{%- else %}
+     pip
+{%- endif %}
+commands_pre =
+{%- if project.enable_uv %}
+     uv pip install
+{%- else %}
+     pip install
+{%- endif -%}
+{%- for requires in spec.python.build.requires.values() -%}
+{%- set r = requires -%}
+{%- if project.enable_uv -%}
+{%- set r = r|replace('OZI.build[', 'OZI.build[uv,') -%}
+{%- else -%}
+{%- set r = r|replace('OZI.build[', 'OZI.build[pip,') -%}
+{%- endif -%}
+{%- if project.enable_cython -%}
+{%- set r = r|replace('OZI.build[', 'OZI.build[cython,') -%}
+{%- endif %} {{ r }}
+{%- endfor -%}
+
+{%- if project.enable_uv %}
+     uv tool install --python={env_python} --force "{{ spec.python.build.meson }}"
+{%- else %}
+     pipx ensurepath --force
+     pipx install --python={env_python} "{{ spec.python.build.meson }}"
+{%- endif %}
+commands =
+     meson setup {env_tmp_dir} -Dozi:{env_name}=enabled -Dozi:tox-env-dir={env_dir}
+     meson compile -C {env_tmp_dir}
+     rm -rf {env_tmp_dir}{/}.gitignore
+commands_post =
+     {env_python} -m invoke --search-root={env_tmp_dir}{/}subprojects{/}ozi{/}ozi checkpoint --suite={env_name} {posargs}
+
+{%- for suite in spec.python.ci.checkpoint.suites %}
+[testenv:{{ suite }}]
+
+{%- endfor %}
+[testenv:fix]
+description = quickly fix minor source issues 
+deps = {% if project.enable_uv %}uv{% else %}pipx{% endif %}
+skip_install = true
+commands =
+{%- if project.enable_uv %}
+{%- set tool_runner = 'uv tool run' %}
+{%- else %}
+{%- set tool_runner = 'pipx run' %}
+{%- endif %}
+     {{ tool_runner }} --python {env_python} -q black -S .
+     {{ tool_runner }} --python {env_python} -q isort .
+     {{ tool_runner }} --python {env_python} -q autoflake -i -r .
+
+[testenv:scm]
+description = OZI supply chain management (setuptools_scm)
+deps = setuptools_scm[toml]>=8
+commands =
+     {env_python} -m setuptools_scm {posargs}
+
+[testenv:invoke]
+description = OZI invoke tasks entrypoint
+no_package = true
+commands_post =
+     {env_python} -m invoke --search-root={env_tmp_dir}{/}subprojects{/}ozi{/}ozi {posargs:--list}
+"""
