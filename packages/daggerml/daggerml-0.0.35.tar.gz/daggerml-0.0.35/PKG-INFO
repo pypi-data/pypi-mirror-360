@@ -1,0 +1,82 @@
+Metadata-Version: 2.4
+Name: daggerml
+Version: 0.0.35
+Summary: DaggerML
+Project-URL: Homepage, https://daggerml.com
+Project-URL: Documentation, https://daggerml.com
+Project-URL: Issues, https://github.com/daggerml/python-lib/issues
+Project-URL: Source, https://github.com/daggerml/python-lib
+Author-email: DaggerML <engineering@daggerml.com>
+License-Expression: MIT
+Classifier: Development Status :: 4 - Beta
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Requires-Python: >=3.9
+Requires-Dist: dataclasses; python_version < '3.7'
+Requires-Dist: importlib-metadata; python_version < '3.8'
+Provides-Extra: cli
+Requires-Dist: daggerml-cli>=0.0.29; extra == 'cli'
+Provides-Extra: test
+Requires-Dist: moto[all,server]; extra == 'test'
+Requires-Dist: pytest; extra == 'test'
+Requires-Dist: pytest-cov; extra == 'test'
+Description-Content-Type: text/markdown
+
+# Getting started
+
+## Installation
+
+First install [`daggerml-cli`](https://github.com/daggerml/daggerml-cli) via
+
+```bash
+pipx install daggerml-cli
+```
+
+Install [`daggerml`](https://github.com/daggerml/python-lib) in whichever [virtual environment](https://docs.python.org/3/tutorial/venv.html) you prefer.
+
+```bash
+pip install daggerml
+```
+
+## Setting up a repo
+
+Now we create a repo using the commandline.
+
+```bash
+dml config user ${EMAIL}
+dml repo create ${REPO_NAME}
+dml config repo ${REPO_NAME}
+```
+
+Now we can create dags or whatever we want using this repo.
+
+```python
+from daggerml import Dml
+
+with Dml().new("test", "this dag is a test") as dag:
+  dag.result = 42
+```
+
+Now we can list repos, dags, etc.
+
+```bash
+dml dag list
+```
+
+## Clean up
+
+```bash
+dml repo delete ${REPO_NAME}
+```
+
+## Docs
+
+For more info, check out the docs at [daggerml.com](https://daggerml.com).
