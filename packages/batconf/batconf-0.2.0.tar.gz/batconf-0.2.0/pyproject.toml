@@ -1,0 +1,91 @@
+[build-system]
+requires = ["poetry-core>=1.1.13"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "batconf"
+version = "0.2.0"
+description = "Application configuration tool from the BAT project"
+authors = ["Lundy Bernard <lundy.bernard@gmail.com>", "Lauren Moore"]
+license = "MIT"
+readme = "README.md"
+classifiers = [
+    'Development Status :: 4 - Beta',
+    'Intended Audience :: Developers',
+    'Operating System :: OS Independent',
+    'Operating System :: POSIX :: Linux',
+    'Operating System :: MacOS',
+    'Operating System :: Microsoft :: Windows',
+]
+
+[tool.poetry.urls]
+"Documentation" = "https://batconf.readthedocs.io/en/latest/"
+"Source Code" = "https://github.com/lundybernard/batconf/"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+# ref: https://python-poetry.org/docs/pyproject/#extras
+# optional extras for users:
+pyyaml = { version = '*', optional = true }
+toml = { version = '*', optional = true, python = "<=3.10" }
+
+
+[tool.poetry.extras]
+yaml = ["pyyaml", ]
+toml = ["toml", ]
+
+
+[dependency-groups]
+# optional dev dependencies:
+dev = [
+    "coverage",
+    "flake8",
+    "mypy",
+    "nbconvert",
+    "pytest",
+    "pytest-cov",
+    "types-PyYAML",
+]
+
+# optional documentation dependencies
+docs = [
+    'myst_parser',
+    'sphinx',
+    'sphinx_autodoc_typehints',
+    'sphinxext-opengraph',
+    'sphinx_design',
+    'sphinx-rtd-theme',
+    'matplotlib',  # for social preview cards
+    'diagrams',
+]
+
+
+# === Testing === #
+[tool.pytest.ini_options]
+log_level = "INFO"
+addopts = "--cov=batconf --cov-report=term --cov-report=xml"
+python_classes = '*Tests'
+python_files = ["*_test.py", "*_pytest.py"]
+
+[tool.coverage.report]
+fail_under = 100
+skip_covered = true
+show_missing = true
+skip_empty = true
+
+
+# === Formatting === #
+[tool.flake8]
+max-line-length = "79"
+max-complexity = 10
+
+[tool.ruff]
+line-length = 79
+[tool.ruff.format]
+quote-style = 'single'
+
+
+# === Type Checking === #
+[tool.mypy]
+exclude = "runcli.py"
