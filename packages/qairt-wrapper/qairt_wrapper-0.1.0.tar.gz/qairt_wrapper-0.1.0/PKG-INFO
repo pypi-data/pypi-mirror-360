@@ -1,0 +1,106 @@
+Metadata-Version: 2.4
+Name: qairt-wrapper
+Version: 0.1.0
+Summary: A Python wrapper for Qualcomm QAIRT SDK
+Author-email: Your Name <your.email@example.com>
+License: MIT
+Project-URL: Homepage, https://github.com/yourusername/qairt-wrapper
+Project-URL: Bug Tracker, https://github.com/yourusername/qairt-wrapper/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy
+Dynamic: license-file
+
+# QAIRT Wrapper
+
+一个用于高通QAIRT SDK的Python包装器。
+
+## 安装
+
+```bash
+pip install qairt-wrapper
+```
+
+## 使用方法
+
+### 环境设置
+
+使用前，您需要确保已正确设置QAIRT SDK环境。有两种方式：
+
+1. **推荐方式**: 运行SDK包中的环境设置脚本
+   ```bash
+   source /path/to/qairt/2.35.0.250530/bin/envsetup.sh
+   ```
+   这将自动设置`QNN_SDK_ROOT`和`SNPE_ROOT`环境变量。
+
+2. **手动指定SDK路径**: 如果无法设置环境变量，可以在代码中手动指定SDK路径。
+
+### 代码示例
+
+```python
+from qairt_wrapper import init_qairt, Model, Config, InterpreterBuilder, DataType, FrameworkType, AccelerateType
+
+# 初始化SDK
+try:
+    # 自动检测环境变量
+    init_qairt()
+except ImportError as e:
+    print(f"错误: {e}")
+    # 手动指定路径
+    sdk_path = input("请输入QAIRT SDK的lib/python路径: ")
+    init_qairt(sdk_path)
+
+# 创建模型实例
+model = Model.create_instance("model.dlc")
+model.set_model_properties(
+    input_shapes=[[1, 224, 224, 3]],
+    input_dtype=DataType.TYPE_FLOAT32,
+    output_shapes=[[1, 1000]],
+    output_dtype=DataType.TYPE_FLOAT32
+)
+
+# 创建配置
+config = Config.create_instance()
+config.framework_type = FrameworkType.TYPE_QNN
+config.accelerate_type = AccelerateType.TYPE_CPU
+
+# 构建解释器
+interpreter = InterpreterBuilder.build_interpretper_from_model_and_config(model, config)
+
+# 初始化解释器
+ret = interpreter.init()
+if ret != 0:
+    print("初始化解释器失败")
+    exit(1)
+
+# 加载模型
+ret = interpreter.load_model()
+if ret != 0:
+    print("加载模型失败")
+    exit(1)
+
+# 设置输入数据
+import numpy as np
+input_data = np.random.random((1, 224, 224, 3)).astype(np.float32)
+interpreter.set_input_tensor(0, input_data)
+
+# 执行推理
+interpreter.invoke()
+
+# 获取输出
+output = interpreter.get_output_tensor(0)
+print(f"输出形状: {output.shape}")
+
+# 释放资源
+interpreter.destory()
+```
+
+## 要求
+
+- 需要安装高通QAIRT SDK
+- 支持通过环境变量`QNN_SDK_ROOT`或`SNPE_ROOT`自动检测SDK路径
+- 也可以手动指定SDK路径
