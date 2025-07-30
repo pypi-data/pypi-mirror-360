@@ -1,0 +1,1 @@
+from .coreml_model import CoreMLModel
