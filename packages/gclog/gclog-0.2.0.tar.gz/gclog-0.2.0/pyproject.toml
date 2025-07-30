@@ -1,0 +1,92 @@
+[project]
+name = "gclog"
+version = "0.2.0"
+description = "Lightweight, production-ready logging package for Google Cloud Platform applications"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "marliechiller", email = "marliechiller+pypi@proton.me"}
+]
+maintainers = [
+    {name = "marliechiller", email = "marliechiller+pypi@proton.me"}
+]
+keywords = [
+    "logging",
+    "gcp",
+    "google-cloud",
+    "cloud-run",
+    "cloud-functions",
+    "app-engine",
+    "loguru",
+    "structured-logging"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Logging",
+    "Topic :: Internet :: Log Analysis",
+    "Environment :: Web Environment",
+    "Framework :: AsyncIO",
+]
+dependencies = [
+    "loguru>=0.7.3",
+    "requests>=2.32.4",
+]
+
+[project.urls]
+Homepage = "https://github.com/MarlieChiller/gcp_logger"
+Documentation = "https://github.com/MarlieChiller/gcp_logger#readme"
+Repository = "https://github.com/MarlieChiller/gcp_logger.git"
+Issues = "https://github.com/MarlieChiller/gcp_logger/issues"
+Changelog = "https://github.com/MarlieChiller/gcp_logger/releases"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-cov>=6.0.0",
+    "codecov>=2.1.13",
+    "pre-commit>=4.2.0",
+    "ruff>=0.12.2",
+    "build>=1.2.2.post1",
+    "commitizen>=3.29.0",
+    "twine>=6.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=gclog --cov-report=term-missing --cov-report=xml"
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.coverage.run]
+source = ["gclog"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$version"
+version_scheme = "semver"
+version_provider = "pep621"
+update_changelog_on_bump = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
