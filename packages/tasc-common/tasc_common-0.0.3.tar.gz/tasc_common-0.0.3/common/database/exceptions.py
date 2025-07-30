@@ -1,0 +1,3 @@
+
+class DatabaseRowUnavailable(ValueError):
+    pass
