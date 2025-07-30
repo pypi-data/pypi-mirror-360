@@ -1,0 +1,87 @@
+[project]
+name = "text2ics"
+version = "0.1.0"
+description = "Python library to convert text into a ics file with a streamlit app for interaction"
+readme = "README.md"
+authors = [
+    { name = "Jakob Stender Guldberg", email = "jakob1379@gmail.com" }
+]
+requires-python = ">=3.13.4"
+dependencies = [
+    "icalendar>=6.3.1",
+    "litellm>=1.74.0",
+    "promptic>=5.5.1",
+    "python-dotenv>=1.1.1",
+    "streamlit>=1.46.1",
+    "tenacity>=9.1.2",
+    "typer>=0.16.0",
+]
+
+[project.scripts]
+# running `text2ics` will run the `text2ics.cli:app` function
+text2ics = "text2ics.cli:app"
+
+[dependency-groups]
+dev = [
+    "poethepoet>=0.32.0",
+    "pre-commit>=4.2.0",
+    "pyright>=1.1.402",
+    "pytest>=8.3.4",
+    "pytest-datadir>=1.7.2",
+    "ruff>=0.12.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.poe.tasks]
+# run with eg `uv run poe fmt`
+fmt = "ruff format"
+lint = "ruff check --fix"
+check = "pyright"
+test = "pytest"
+# run all the above
+all = [ {ref="fmt"}, {ref="lint"}, {ref="check"}, {ref="test"} ]
+"ci:fmt" = "ruff format --check"  # fail if not formatted
+"ci:lint" = "ruff check"
+
+[tool.uv]
+# tell uv we're building a package
+# (i.e. something we can distribute for others to use)
+# uncomment this to use project.scripts
+package = true
+
+[tool.ruff]
+target-version = "py313"
+line-length = 80  # use whatever number makes you happy
+
+[tool.ruff.lint]
+# you can see the looong list of rules here:
+# https://docs.astral.sh/ruff/rules/
+# here's a couple to start with
+select = [
+    "A",    # warn about shadowing built-ins
+    "E",    # style stuff, whitespaces
+    "F",    # important pyflakes lints
+    "I",    # import sorting
+    "N",    # naming
+    "T100", # breakpoints (probably don't want these in prod!)
+]
+# if you're feeling confident you can do:
+# select = ["ALL"]
+# and then manually ignore annoying ones:
+# ignore = [...]
+
+[tool.ruff.lint.isort]
+# so it knows to group first-party stuff last
+known-first-party = ["text2ics"]
+
+[tool.pyright]
+venvPath = "."          # uv installs the venv in the current dir
+venv = ".venv"          #       in a folder called `.venv`
+strict = ["**/*.py"]    # use 'strict' checking on all files
+pythonVersion = "3.13"  # if library, specify the _lowest_ you support
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules"
