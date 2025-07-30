@@ -1,0 +1,74 @@
+[tool.poetry]
+name = "cowdao-cowpy"
+version = "1.0.0rc6"
+description = ""
+authors = [
+	"José Ribeiro <jose@bleu.studio>",
+	"8baller <8baller@station.codes>"
+]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<4.0"
+httpx = ">=0.23.0,<1.0.0"
+web3 = ">=6,<=7.2.0"
+pybars3 = "^0.9.7"
+pydantic = "^2.7.0"
+pytest-mock = "^3.14.0"
+backoff = "^2.2.1"
+aiolimiter = "^1.1.0"
+multiformats = "^0.3.1.post4"
+aiofiles = "^24.1.0"
+jsonref = "^1.1.0"
+py-cid = "^0.3.0"
+pymultihash = "^0.8.2"
+pycryptodomex = "^3.20.0"
+python-dotenv = "^1.0.1"
+eth-abi = "^5.1.0"
+pymerkle = "^6.1.0"
+eth-typing = "^5.0.0"
+eth-tester = "^0.13.0b1"
+
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.3.7"
+pyright = "^1.1.392"
+pytest = "^8.1.1"
+ipython = "^8.23.0"
+pre-commit = "^3.7.0"
+datamodel-code-generator = "^0.28.5"
+ariadne-codegen = "^0.13.0"
+pytest-httpx = "^0.30.0"
+pytest-asyncio = "^0.23.6"
+web3 = { extras = ["tester"], version = "^7.2.0" }
+pycln = "^2.4.0"
+pytest-cov = "^5.0.0"
+python-dotenv = "^1.0.1"
+tbump = "^6.11.0"
+
+[tool.poetry.scripts]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ariadne-codegen]
+remote_schema_url = "https://api.thegraph.com/subgraphs/name/cowprotocol/cow"
+queries_path = "cowdao_cowpy/subgraph/queries"
+target_package_name = "client"
+target_package_path = "cowdao_cowpy/subgraph"
+client_name = "SubgraphClient"
+client_file_name = "subgraph_client"
+
+[tool.pyright]
+# NOTE: these paths are excluded but not IGNORED. They are still included in the analysis if they are referenced by source files that are not excluded. 
+exclude = [
+    "**/node_modules",
+    "**/__pycache__",
+    "cowdao_cowpy/subgraph/client/*.py",
+    "cowdao_cowpy/order_book/generated/*.py",
+    ".venv/",
+    "**/__generated__",
+]
+reportIncompatibleVariableOverride = 'warning'
+strictParameterNoneValue = false
