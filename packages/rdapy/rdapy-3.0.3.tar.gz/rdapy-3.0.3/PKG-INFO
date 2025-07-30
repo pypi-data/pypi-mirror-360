@@ -1,0 +1,172 @@
+Metadata-Version: 2.4
+Name: rdapy
+Version: 3.0.3
+Summary: Redistricting analytics in Python
+Home-page: https://github.com/dra2020/rdapy
+Author: alecramsay
+Author-email: Alec Ramsay <alec@davesredistricting.org>
+License: MIT
+Project-URL: Homepage, https://github.com/dra2020/rdapy
+Project-URL: Bug Tracker, https://github.com/dra2020/rdapy/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: Fiona
+Requires-Dist: geographiclib
+Requires-Dist: geopandas
+Requires-Dist: libpysal
+Requires-Dist: nptyping
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: pyproj
+Requires-Dist: pytest
+Requires-Dist: scipy
+Requires-Dist: shapely
+Dynamic: author
+Dynamic: home-page
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-dist
+
+# rdapy
+
+Redistricting Analytics in Python
+
+This repository ([rdapy](https://github.com/dra2020/rdapy)) re-implements 
+the main analytics used in [Dave's Redistricting](https://davesredistricting.org/) (DRA).
+Unlike the analytics used in the app ([dra-analytics](https://github.com/dra2020/dra-analytics))
+which are implememented in TypeScript, 
+these are implemented as a Python package to make them easier to use outside of DRA.
+There is also a command-line interface for high-volume scoring.
+
+These are described in detail at [the website for this repository](https://dra2020.github.io/rdapy/).
+
+To use it in your Python, install the package.
+To use the high-volume scoring scripts, set up the command-line interface.
+
+## Installing the Package
+
+To install the package:
+
+```bash
+pip install rdapy
+```
+
+The latest version of the package is 3.0.3.
+
+Then in your code, either `import rdapy` or `from rdapy import ...`.
+
+## Installing Command-Line Interface
+
+Before installing the command-line interface (CLI),
+make sure you have the prerequisites installed.
+
+### Install Prequisites
+
+The high-volume scoring scripts require Python 3.12 or later.
+If that is not the default on your computer, 
+you can use `pyenv` to manage multiple Python versions.
+These instructions assume you're using `pyenv`.
+
+Install `pyenv` from [Homebrew](https://formulae.brew.sh/formula/pyenv):
+
+```bash
+brew install pyenv
+```
+
+Completing that setup will involve adding a few lines to your shell profile file (like `.bash_profile`).
+
+You can install Python 3.12 from [Homebrew](https://formulae.brew.sh/formula/python@3.12):
+
+```bash
+brew install python@3.12
+```
+
+### Setting Up Your Environment
+
+With the prequisites installed, clone the GitHub repository:
+
+```bash
+git clone https://github.com/dra2020/rdapy
+cd rdapy
+```
+
+Then create a virtual environment that uses Python 3.12, and 
+then reset Python outside the virtual environment to the normal setting:
+
+```bash
+pyenv shell 3.12
+python3 -m venv /path/to/venvs/rdapy
+source /path/to/venvs/rdapy/bin/activate
+deactivate
+pyenv shell --unset
+```
+
+Then activate the virtual environment again, and install the required dependencies:
+
+```bash
+source /path/to/venvs/rdapy/bin/activate
+pip install -r requirements.txt
+pip install --upgrade pip
+export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+```
+
+Finally, test that the automated tests run:
+
+```bash
+pytest
+```
+
+Then test that the command-line interface works. 
+First, unzip the sample GeoJSON and graph package:
+
+```bash
+scripts/UNZIP-GEOJSON.sh \
+--input testdata/examples/Geojson_NC.zip \
+--output /dir/for/unzipped/files
+```
+
+Replace `/dir/for/unzipped/files` with the directory where you want the unzipped files to go.
+The directory does not have to exist.
+The root directory can be `/tmp`.
+The output directory will contain four files:
+- A license file
+- A README file
+- A GeoJSON like this `NC_2020_VD_tabblock.vtd.datasets.geojson`, and
+- An adjacency graphy like this `NC_2020_graph.json`
+
+Then score some sample plans:
+
+```bash
+scripts/score/SCORE.sh \
+--state NC \
+--plan-type congress \
+--geojson /dir/for/unzipped/files/NC_2020_VD_tabblock.vtd.datasets.geojson \
+--graph /dir/for/unzipped/files/NC_2020_graph.json \
+--precomputed testdata/examples/NC_congress_precomputed.json \
+--plans testdata/plans/NC_congress_plans.tagged.jsonl \
+--scores /path/to/TEST_scores.csv \
+--by-district /path/to/TEST_by-district.jsonl
+```
+
+The `--scores` and `by-district` paths are where you want the scores CSV and 
+by-district JSONL aggregates files to be saved, respectively.
+
+## Development
+
+There is a sample `launch.json` for VS Code debugging in the `docs` directory.
+
+## Testing
+
+Run automated tests with:
+
+```bash
+pytest
+```
+
+# Questions
+
+Email questions to [feedback](mailto:feedback@davesredistricting.org?subject=Python-analytics).
