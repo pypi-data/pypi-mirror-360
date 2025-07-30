@@ -1,0 +1,21 @@
+# 模型配置
+trainer:
+  _target_: quda.ml.trainer.LightGBMTrainer
+  experiment_name: LightGBM-Incremental
+
+trainer_params:
+  num_boost_round: 500
+  early_stopping_rounds: 50
+  objective: regression
+  metric: [mae, rmse]
+  boosting_type: gbdt
+  num_leaves: 31
+  learning_rate: 0.05
+  max_depth: 4
+  min_data_in_leaf: 500
+  feature_fraction: 1
+  bagging_fraction: 1
+  bagging_freq: 5
+  device: gpu
+  tree_learner: data_parallel
+  verbose: -1
