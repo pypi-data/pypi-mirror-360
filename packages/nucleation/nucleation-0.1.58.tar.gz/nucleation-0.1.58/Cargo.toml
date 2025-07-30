@@ -1,0 +1,91 @@
+[package]
+name = "nucleation"
+version = "0.1.58"
+edition = "2021"
+description = "A high-performance Minecraft schematic parser and utility library"
+authors = ["Nano <nano@schem.at>"]
+license = "AGPL-3.0-only"
+repository = "https://github.com/Schem-at/Nucleation"
+readme = "README.md"
+keywords = ["minecraft", "schematic", "parser", "voxel"]
+categories = ["game-development", "parser-implementations", "wasm"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+ffi = []
+wasm = [
+    "wasm-bindgen",
+    "js-sys",
+    "web-sys",
+    "serde-wasm-bindgen"
+]
+python = ["pyo3/extension-module"]
+# New PHP feature
+php = ["ext-php-rs"]
+# Binding generation feature
+generate-bindings = []
+# Blockpedia integration feature (not available for WASM)
+blockpedia = []
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+quartz_nbt = "0.2.9"
+flate2 = "1.1.2"
+log = "0.4.22"
+console = { version = "0.15.8", default-features = false }
+thiserror = "1.0.63"
+rand = "0.8.5"
+getrandom = { version = "0.2", features = ["js"] }
+bytemuck = "1.23.1"
+
+# WASM-specific dependencies
+wasm-bindgen = { version = "0.2", features = ["serde-serialize"], optional = true }
+js-sys = { version = "0.3.70", optional = true }
+serde-wasm-bindgen = { version = "0.4", optional = true }
+web-sys = { version = "0.3", optional = true, features = ["console"] }
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+blockpedia = { version = "0.1.2", features = ["use-prebuilt"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing = "0.1.40"
+
+# Python dependencies
+maturin = { version = "1", optional = true, default-features = false }
+pyo3 = { version = "0.25.0", optional = true, features = ["extension-module"] }
+
+# PHP dependencies
+ext-php-rs = { version = "0.13.1", optional = true }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+criterion = "0.5.1"
+num-complex = "0.4"
+
+[[test]]
+name = "wasm_tests"
+path = "tests/bindings/wasm_tests.rs"
+
+[[test]]
+name = "python_tests"
+path = "tests/bindings/python_tests.rs"
+
+[[bench]]
+name = "schematic_bench"
+harness = false
+
+[profile.bench]
+debug = true
+
+[profile.release]
+lto = true
+opt-level = 3
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
+[package.metadata.wasm-pack.profile.dev]
+wasm-opt = false
