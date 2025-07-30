@@ -1,0 +1,107 @@
+Metadata-Version: 2.4
+Name: inkhinge
+Version: 0.1.6
+Summary: The next-generation deep learning toolkit designed specifically for spectral analysis
+Home-page: https://github.com/1412universe/inkhinge
+Author: Fenglong Li,Siyang Li,Kehan Li,Zhiqing Guo,Kailong Fan,Hao wu
+Author-email: 15340666394@163.com
+Project-URL: Bug Tracker, https://github.com/1412universe/inkhinge/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+# inkhinge
+
+`inkhinge`是一个专为光谱分析设计的下一代深度学习工具集，专注于光谱数据的处理、转换与整合，为光谱分析领域的深度学习应用提供高效的数据预处理支持。通过`pip install inkhinge`安装后，你可以便捷地处理Omnic SPA格式的光谱文件，实现批量转换与合并等功能。
+
+## 安装
+```bash
+pip install inkhinge
+```
+
+## 使用方法
+
+下面是`read_to_csv`功能的简单使用示例：
+
+### 1. 单个SPA文件转换为CSV
+```python
+from inkhinge.core import read_to_csv
+
+# 将单个SPA文件转换为CSV
+output_path = read_to_csv(
+    input_path="sample.spa",
+    output_path="output/sample.csv",
+    precision=20  # 保留20位小数精度
+)
+print(f"转换完成，输出路径：{output_path}")
+```
+
+### 2. 批量转换目录中的SPA文件
+```python
+from inkhinge.core import read_to_csv
+
+# 批量转换目录中的SPA文件（包括子目录）
+success_count = read_to_csv(
+    input_path="spectral_data/",
+    output_path="converted_csv/",
+    recursive=True,  # 递归处理子目录
+    overwrite=True,  # 覆盖已存在的文件
+    precision=15
+)
+print(f"批量转换完成，成功转换{success_count}个文件")
+```
+
+### 3. 转换并合并为单个CSV文件
+```python
+from inkhinge.core import read_to_csv
+
+# 转换所有SPA文件并按顺序合并为单个CSV
+read_to_csv(
+    input_path="spectral_data/",
+    output_path="converted_csv/",
+    merge_output="merged_spectra.csv",  # 合并后的文件路径）
+)
+print("转换与合并完成，结果已保存至merged_spectra.csv")
+```
+
+## 函数文档
+
+### `read_to_csv(input_path, output_path=None, background_path=None, overwrite=False, recursive=False, precision=20, merge_output=None)`
+读取Omnic SPA格式的光谱文件并转换为CSV格式，支持批量处理与文件合并。
+
+#### 参数:
+- `input_path` (str): 输入路径，可为单个SPA文件路径或包含SPA文件的目录路径。
+- `output_path` (str, 可选): 输出路径，可为单个CSV文件路径或保存CSV文件的目录路径。若未指定，默认与输入文件同目录并添加`_converted`后缀。
+- `background_path` (str, 可选): 背景文件（BG.spa）路径，用于对光谱数据进行背景校正（可选）。
+- `overwrite` (bool, 可选): 是否覆盖已存在的输出文件，默认为`False`（不覆盖）。
+- `recursive` (bool, 可选): 当`input_path`为目录时，是否递归处理子目录中的SPA文件，默认为`False`。
+- `precision` (int, 可选): 输出数据保留的小数位数精度，默认为20位，确保以定点小数形式表示（非科学计数法）。
+- `merge_output` (str, 可选): 合并后的CSV文件路径。若指定，将按文件名顺序合并所有转换后的CSV文件，默认为`None`（不合并）。
+
+#### 返回:
+- 若`input_path`为单个文件：返回转换后的CSV文件路径。
+- 若`input_path`为目录：返回成功转换的文件数量（当`merge_output`为`None`时）或转换后的文件路径列表（当`merge_output`指定时）。
+
+## 功能特点
+1. **精准转换**：采用高精度定点小数表示（默认20位），避免科学计数法，确保光谱数据精度无损。
+2. **批量处理**：高效处理目录中的多个SPA文件，支持递归遍历子目录。
+3. **智能合并**：按文件名顺序合并多个CSV文件，列名从0开始编号（如`Kubelka-Munk_0`、`Kubelka-Munk_1`），便于后续深度学习模型训练。
+4. **类型适配**：自动识别光谱数据类型（吸光度、透射率等），并生成对应的列名与单位。
+
+## 贡献
+
+如果你想为`inkhinge`工具集做出贡献，请遵循以下步骤：
+
+1. Fork这个仓库
+2. 创建你的特性分支 (`git checkout -b feature/SpectralFeature`)
+3. 提交你的更改 (`git commit -m 'Add spectral preprocessing feature'`)
+4. 将更改推送到你的分支 (`git push origin feature/SpectralFeature`)
+5. 打开一个Pull Request
+
+## 许可证
+
+本项目采用MIT许可证 - 详情请见[LICENSE](LICENSE)文件。
