@@ -1,0 +1,76 @@
+[project]
+name = "thealtoclef-connectorx"
+version = "0.4.4-alpha.1"
+description = "Load data from databases to dataframes, the fastest way."
+authors = [{ name = "SFU Database System Lab", email = "dsl.cs.sfu@gmail.com" }]
+requires-python = ">=3.10"
+readme = "README.md"
+license = { text = "MIT" }
+maintainers = [{ name = "Weiyuan Wu", email = "youngw@sfu.ca" }]
+keywords = ["read_sql"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Topic :: Software Development :: Build Tools",
+  "Environment :: Console",
+  "Operating System :: OS Independent",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Financial and Insurance Industry",
+  "Intended Audience :: Healthcare Industry",
+  "Topic :: Scientific/Engineering",
+  "Framework :: IPython",
+]
+dependencies = ["numpy>=2.1"]
+
+[project.optional-dependencies]
+all = [
+  "dask[dataframe]>=2021,<2022",
+  "pandas>=2",
+  "modin>=0.10",
+  "polars>=1",
+  "pyarrow>=4",
+]
+dask = ["dask[dataframe]>=2021,<2022", "pandas>=2"]
+modin = ["modin>=0.10", "pandas>=2"]
+pandas = ["pandas>=2"]
+polars = ["pyarrow>=4", "polars>=1"]
+pyarrow = ["pyarrow>=4"]
+
+[project.urls]
+Homepage = "https://github.com/sfu-db/connector-x"
+Repository = "https://github.com/sfu-db/connector-x"
+Issues = "https://github.com/sfu-db/connector-x/issues"
+Documentation = "https://sfu-db.github.io/connector-x/intro.html"
+
+[dependency-groups]
+dev = [
+  "black~=21.4b0",
+  "contexttimer>=0.3.3,<0.4",
+  "dask[dataframe]>=2021.7.0,<2022",
+  "docopt>=0.6.2,<0.7",
+  "ipython>=7.31.1,<8",
+  "maturin>=1.0,<2.0",
+  "modin[dask]>=0.10.1",
+  "polars>=0.20",
+  "pyarrow>=4",
+  "pytest~=6.2",
+  "pytest-benchmark>=3.4.1,<4",
+  "twine>=3.4.1,<4",
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+python_functions = "test_* bench_*"
+
+[build-system]
+build-backend = "maturin"
+requires = ["maturin>=1.0,<2.0"]
+
+[tool.maturin]
+include = [
+  { path = "connectorx/*.so", format = "sdist" },
+  { path = "connectorx/*.pyd", format = "sdist" },
+  { path = "connectorx/dependencies/", format = "sdist" },
+  { path = "LICENSE", format = "sdist" },
+]
+manifest-path = "connectorx-python/Cargo.toml"
