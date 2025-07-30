@@ -1,0 +1,3 @@
+Games of probability (Vietnamese: Trò chơi xác suất)
+This module provides some games of chance and things that based on probability (such as flipping a coin, shuffling cards, or even Russian Roulette — it is just a game, I do not support violence), using the `random` module. There are also data types for each type of game.
+This module is simple and not developed very well, as the person who created it (it's me!) is not a good coder.
