@@ -1,0 +1,1 @@
+from .dictionary101 import dictionaryJ
