@@ -1,0 +1,227 @@
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
+
+[project]
+name = "avalan"
+dynamic = []
+description = "Multi-backend, multi-modal framework for seamless AI agent development, orchestration, and deployment"
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { text = "MIT" }
+authors = [
+  { name = "The Avalan Team", email = "avalan@avalan.ai" },
+]
+# the upper 3.14 python version limit is because of RestrictedPython
+# @see https://github.com/zopefoundation/RestrictedPython/issues/298
+requires-python = ">=3.11.11,<3.14"
+dependencies = [
+  "packaging (==25.0)",
+  "humanize (==4.12.3)",
+  "rich (==14.0.0)",
+  "torch (==2.7.1)",
+  "transformers (==4.53.1)",
+  "pandas (==2.3.0)"
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Education",
+  "Intended Audience :: Science/Research",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.11",
+  "Operating System :: OS Independent"
+]
+version = "1.2.1"
+
+[project.urls]
+homepage = "https://avalan.ai"
+repository = "https://github.com/avalan-ai/avalan"
+documentation = "https://github.com/avalan-ai/avalan#readme"
+"Bug Tracker" = "https://github.com/avalan-ai/avalan/issues"
+
+[project.scripts]
+avalan = "avalan.cli.__main__:main"
+
+[project.optional-dependencies]
+agent = [
+  "jinja2==3.1.6",
+]
+audio = [
+  "soundfile==0.13.1",
+  "torchaudio==2.7.1",
+]
+cpu = [
+  "accelerate==1.8.1",
+]
+memory = [
+  "faiss-cpu==1.11.0",
+  "markitdown[pdf]==0.1.2",
+  "markdownify==1.1.0",
+  "psycopg[binary,pool]==3.2.9",
+  "pgvector==0.4.1",
+  "sentence-transformers==5.0.0",
+  "tree-sitter==0.24.0",
+  "tree-sitter-python==0.23.6",
+]
+quantization = [
+  "bitsandbytes==0.46.1",
+]
+server = [
+  "pydantic==2.11.7",
+  "fastapi==0.115.14",
+  "mcp==1.10.1",
+  "uvicorn==0.35.0",
+]
+test = [
+  "boto3==1.39.3",
+  "faiss-cpu==1.11.0",
+  "fastapi==0.115.14",
+  "keyring==25.6.0",
+  "markitdown[pdf]==0.1.2",
+  "markdownify==1.1.0",
+  "mlx-lm==0.25.3",
+  "mcp==1.10.1",
+  "pgvector==0.4.1",
+  "pillow==11.3.0",
+  "playwright==1.53.0",
+  "psycopg[binary,pool]==3.2.9",
+  "pydantic==2.11.7",
+  "pytest==8.4.1",
+  "pytest-cov==6.2.1",
+  "RestrictedPython==8.0",
+  "sympy==1.14.0",
+  "tiktoken==0.9.0",
+  "torchaudio==2.7.1",
+  "tree-sitter==0.24.0",
+  "tree-sitter-python==0.23.6",
+]
+tool = [
+  "playwright==1.53.0",
+  "RestrictedPython==8.0",
+  "sympy==1.14.0",
+  "youtube-transcript-api==1.0.0",
+]
+secrets = [
+  "boto3==1.39.3",
+  "keyring==25.6.0",
+]
+translation = [
+  "protobuf==6.31.0",
+  "sentencepiece==0.2.0",
+  "tiktoken==0.9.0",
+]
+vendors = [
+  "anthropic==0.57.1",
+  "google-genai==1.24.0",
+  "openai==1.93.0",
+  "pillow==11.3.0",
+  "tiktoken==0.9.0",
+]
+vision = [
+  "pillow==11.3.0",
+  "torchvision==0.22.1",
+]
+vllm = [
+  "vllm[cpu]==0.1.0",
+]
+mlx = [
+  "mlx-lm==0.25.3",
+]
+all = [
+  "accelerate==1.8.1",
+  "anthropic==0.57.1",
+  "boto3==1.39.3",
+  "bitsandbytes==0.46.1",
+  "faiss-cpu==1.11.0",
+  "fastapi==0.115.14",
+  "google-genai==1.24.0",
+  "jinja2==3.1.6",
+  "keyring==25.6.0",
+  "markitdown[pdf]==0.1.2",
+  "markdownify==1.1.0",
+  "mcp==1.10.1",
+  "mlx-lm==0.25.3",
+  "openai==1.93.0",
+  "pillow==11.3.0",
+  "protobuf==6.31.0",
+  "psycopg[binary,pool]==3.2.9",
+  "pgvector==0.4.1",
+  "playwright==1.53.0",
+  "pydantic==2.11.7",
+  "pytest==8.4.1",
+  "pytest-cov==6.2.1",
+  "RestrictedPython==8.0",
+  "sentence-transformers==5.0.0",
+  "sentencepiece==0.2.0",
+  "soundfile==0.13.1",
+  "sympy==1.14.0",
+  "tiktoken==0.9.0",
+  "torchaudio==2.7.1",
+  "torchvision==0.22.1",
+  "tree-sitter==0.24.0",
+  "tree-sitter-python==0.23.6",
+  "uvicorn==0.35.0",
+  "youtube-transcript-api==1.0.0",
+]
+
+[tool.black]
+line-length = 79
+
+[tool.ruff]
+line-length   = 79  # PEP 8
+indent-width  = 4
+src           = ["src"]
+fix           = true
+target-version = "py311" # PEP 585, 604, 634–636
+preview        = true
+
+[tool.ruff.format]
+indent-style               = "space"
+line-ending                = "auto"
+quote-style                = "double"
+docstring-code-format      = true
+skip-magic-trailing-comma  = false
+
+[tool.ruff.lint]
+select = [
+  "E",       # PEP 8 errors
+  "W",       # PEP 8 warnings
+  "F",       # Flake8 (pyflakes) errors
+  "D",       # pydocstyle (PEP 257) docstring checks
+  "UP006",   # non-PEP585 — migrate typing.List → list etc.
+  "UP007",   # non-PEP604-union — migrate Union[X, Y] → X | Y
+  "UP045",   # non-PEP604-optional — migrate Optional[X] → X | None
+]
+ignore = [
+  "D100",  # Missing docstring in public module
+  "D101",  # Missing docstring in public class
+  "D102",  # Missing docstring in public method
+  "D103",  # Missing docstring in public function
+  "D104",  # Missing docstring in public package
+  "D105",  # Missing docstring in magic method
+  "D107",  # Missing docstring in `__init__`
+  "D400",  # First line should end with a period
+]
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = false
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.isort]
+profile = "black"
+known_first_party = ["avalan"]
+src_paths = ["src"]
+
+[tool.poetry]
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.11.11"
+isort = "^6.0.1"
+black = "^25.1.0"
+
+[tool.poetry-dynamic-versioning]
+enable = false
