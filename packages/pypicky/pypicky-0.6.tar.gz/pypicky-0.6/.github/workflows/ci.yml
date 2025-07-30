@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches:
+    tags:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    with:
+      submodules: false
+      envs: |
+        - linux: codestyle
+        - macos: py310-test
+        - linux: py311-test
+        - windows: py312-test
+        - macos: py313-test
+
+  publish:
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish_pure_python.yml@v1
+    with:
+      test_extras: test
+      test_command: pytest --pyargs pypicky
+    secrets:
+      pypi_token: ${{ secrets.pypi_token }}
