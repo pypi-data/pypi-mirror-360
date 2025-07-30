@@ -1,0 +1,283 @@
+Metadata-Version: 2.4
+Name: FedModelKit
+Version: 0.5.0
+Summary: This package contains the core components and protocols for creating, managing, and registering federated learning models using MLflow. It provides utilities for defining local learners, aggregation strategies, and integrating them with MLflow for tracking and deployment.
+Author-email: ceresale <alessandro.ceresi@upm.es>
+License-File: LICENSE
+Requires-Python: >=3.13
+Requires-Dist: flwr-datasets>=0.5.0
+Requires-Dist: flwr[simulation]==1.17.0
+Requires-Dist: imblearn>=0.0
+Requires-Dist: jupyterlab>=4.4.4
+Requires-Dist: loguru>=0.7.3
+Requires-Dist: pandas>=2.3.0
+Requires-Dist: scikit-learn==1.6.1
+Requires-Dist: syft-flwr>=0.1.5
+Requires-Dist: torch==2.7.0
+Provides-Extra: edge
+Requires-Dist: torch==2.7.0; extra == 'edge'
+Description-Content-Type: text/markdown
+
+# FedModelKit
+
+## Table of Contents
+1. [Upload a Federated Learning Model to the Federated Platform](#upload-a-federated-learning-model-to-the-federated-platform)
+2. [Features provided by the package](#features-provided-by-the-package)
+3. [Directory Structure and File Descriptions](#directory-structure-and-file-descriptions)
+4. [Prerequisites](#prerequisites)
+5. [Installation](#installation)
+6. [Walkthrough: How to Implement a Federated Model](#walkthrough-how-to-implement-a-federated-model)
+    - [Step 1: Define Your Local Learner](#step-1-define-your-local-learner)
+    - [Step 2: Incapsulate local learner into a function](#step-2-incapsulate-local-learner-into-a-function)
+    - [Step 3: Define Your Aggregation Strategy](#step-3-define-your-aggregation-strategy)
+    - [Step 4: Incapsulate local learner into function](#step-4-incapsulate-local-learner-into-function)
+    - [Step 5: Create the FederatedModel to include both local learner and aggregator](#step-5-create-the-federatedmodel-to-include-both-local-learner-and-aggregator)
+    - [Step 6: Submit the model to the Platform Model Catalogue](#step-6-submit-the-model-to-the-platform-model-catalogue)
+7. [Example notebooks](#example-notebooks)
+8. [Deployment of the package](#deployment-of-the-package)
+
+---
+
+# **Upload a Federated Learning Model to the Federated Platform**
+
+<img src="images/federated_learning_model.png" alt="Federated Learning Model" width="800" height="400">
+
+This library provides utilities for creating, managing, and registering federated learning models to the Federated Platform. It encapsulates a local learner and an aggregator into a single FederatedModel object and provides a function to register the model in a Federated Platform Model Catalogue with appropriate credentials and metadata.
+
+The package uses the following libraries internally:
+- `MLflow`: For model tracking and registry. More information can be found [here](https://mlflow.org/).
+- `Flower`: For federated learning framework. More information can be found [here](https://flower.dev/).
+The user needs do work with objects originating from these libraries to upload a Federated Model.
+
+---
+
+## **Features provided by the package**
+
+- **Create a custom FederatedModel**:
+  - Create a local learner, a ML model that will be executed on edge nodes with custom training, evaluation, and parameter management methods.
+  - Define and integrate your custom aggregation strategy, with a default implementation of plain averaging (DefaultAggregator) for both parameters and metrics.
+
+- **Upload it to the Model Catalogue of the Federated Platform**:
+  - Log the FL Model and its metadata to the Federated Platform using the `submit_fl_model` method.
+
+
+---
+
+## **Directory Structure and File Descriptions**
+
+This repository contains the core components and protocols for the upload of a model to the Federated Platform. They are stored in `src/FedModelKit` directory and you can find a detailed description here [README.md](src/FedModelKit/README.md).
+
+---
+
+## Prerequisites
+
+- `mypy`: For static type checking and ensuring compatibility with the protocols.
+- `uv`: For developing purposes. You can install it by following the instructions [here](https://github.com/ultraviolet/uv).
+
+---
+
+## Installation
+
+Follow the steps below to install and set up the uploading environment:
+
+1. Create a virtual environment with python verion 3.11.* and install in it the package with the following command:
+
+    ```bash
+    pip install --index-url https://pypi.synthema.rid-intrasoft.eu/simple FedModelKit[edge]
+    ```
+    will be asked to furnish username and password that will be provided to users with access permission. (for now use the dev user to access the private PyPI server)
+
+    Here is a table listing all the packages that are installed together with the installation of the main package:
+
+    | Package         | Version installed   | Versions compatibles   |
+    |-----------------|---------------------|------------------------|
+    | flwr            | 1.9                 | ==1.9                  |
+    | mlflow-skinny   | 2.19.0              | >=2.19.0               |
+    | pandas          | 2.2.3               | >=2.2.3                |
+    | torch           | 2.5.1               | >=2.5.1                |
+
+
+
+2. Go to the directory from where you want to upload the model and run this command to initialize it (pay attention to files that might get overwritten):
+
+    ```bash
+    msi init
+    ```
+    A `src` folder will be created where the dependencies files must be stored, an `example.py` script will be created in the main directory with an example of how to upload the model and a `README.md` file with a description of how to use the package functionalities. They are provided with clear documentation on how to define your local learner and aggregation strategy, and how to log the model to the Platform Model Catalogue
+
+
+---
+
+# **Walkthrough: How to Implement a Federated Model**
+
+### **Step 1: Define Your Local Learner**
+
+<img src="images/local_learner.png" alt="Local Learner" width="800" height="400">
+
+To create a custom local learner, implement your model according to the `LLProtocol`. Your model class should have the following structure:
+
+#### **Methods**
+- **`prepare_data(data: pd.DataFrame) -> None`**:  
+  - **Purpose**: Prepares the input data for training or evaluation.
+  - **Arguments**:
+    - `data`: A pandas DataFrame containing the input data.
+  - **Returns**: None.
+
+- **`train_round() -> flwr.common.MetricsRecord`**:  
+  - **Purpose**: Performs the training process for the local learner.
+  - **Arguments**: None.
+  - **Returns**: A `flwr.common.MetricsRecord` containing metrics collected during training.
+
+- **`get_parameters() -> flwr.common.ParametersRecord`**:  
+  - **Purpose**: Retrieves the model's current parameters for aggregation.
+  - **Arguments**: None.
+  - **Returns**: A `flwr.common.ParametersRecord` representing the current model parameters.
+
+- **`set_parameters(parameters: flwr.common.ParametersRecord) -> None`**:  
+  - **Purpose**: Updates the model's parameters with the provided values.
+  - **Arguments**:
+    - `parameters`: A `flwr.common.ParametersRecord` containing the parameters to be set.
+  - **Returns**: None.
+
+- **`evaluate() -> flwr.common.MetricsRecord`**:  
+  - **Purpose**: Evaluates the model's performance on validation or test data.
+  - **Arguments**: None.
+  - **Returns**: A `flwr.common.MetricsRecord` containing metrics from the evaluation.
+
+**NB:** Any dependency needed alongside the model must be stored inside the `src/` directory and referenced from there.
+
+---
+
+### **Step 2: Incapsulate local learner into a function**
+
+A function must be created according to the `LLFactoryProtocol`. The function must contain the definition of the model class and it must return an instance of the model itself. Also the function must import all the packages necessary to the local learner with the  `Lazy Imports` strategy. Here is an example:
+```python
+# Incapsulating function
+def create_aggregator():
+    import torch # import all the packages necessary to the local learner
+
+    # Definition of the local learner as in step 1
+    class CustomLocalLearner(nn.Module):
+      '''Local learner according LLProtocol'''
+      ...
+  
+    return CustomLocalLearner()
+```
+
+
+### **Step 3: Define Your Aggregation Strategy**
+
+<img src="images/aggregator.png" alt="Aggregator" width="800" height="400">
+
+To implement a custom aggregation strategy, follow the `AggProtocol`. The strategy class should have the following structure: 
+
+
+#### **Methods**
+- **`aggregate_parameters(results: list[flwr.common.ParametersRecord], config: Optional[flwr.common.ConfigsRecord]=None) -> flwr.common.ParametersRecord`**:  
+  - **Purpose**: Aggregates a list of parameter records from multiple clients into a single set of parameters.
+  - **Arguments**:
+    - `results`: A list of `flwr.common.ParametersRecord` objects, each representing the parameters from a client.
+  - **Returns**: A `flwr.common.ParametersRecord` containing the aggregated parameters.
+
+- **`aggregate_metrics(results: list[flwr.common.MetricsRecord], config: Optional[flwr.common.ConfigsRecord]=None) -> flwr.common.MetricsRecord`**:  
+  - **Purpose**: Aggregates a list of metrics records from multiple clients into a single set of metrics.
+  - **Arguments**:
+    - `results`: A list of `flwr.common.MetricsRecord` objects, each representing the metrics from a client.
+  - **Returns**: A `flwr.common.MetricsRecord` containing the aggregated metrics.
+
+---
+
+### **Step 4: Incapsulate local learner into function**
+
+As for the local learner,a function must be created according to the `AggFactoryProtocol`. The function must contain the definition of the aggregator class and it must return an instance of the aggregator itself. Also the function must import all the packages necessary to the class with the  `Lazy Imports` strategy. Here is an example:
+```python
+# Incapsulating function
+def create_aggregator():
+    import numpy as np # import all the packages necessary to the aggregator
+
+    # Definition of the aggregator as in step 3
+    class CustomAggregator():
+      '''Aggregator according AggProtocol'''
+      ...
+  
+    return CustomAggregator()
+```
+
+### **Step 5: Create the FederatedModel to include both local learner and aggregator**
+The local learner and the aggregator must be included in the same FederatedModel class. The FedModelKit package provides the FederatedModelclass which recieves as arguments the function creating the local learner and the function creating the aggregator with their respective names. If no aggregation strategy is provided, the model will by default use a plain averaging strategy for both parameters and metrics, and if also the local learner is not provided the model will get a default local learner which is shown in `example.py`. Here is an example of how to set up the FederatedModel:
+```python
+from FedModelKit import FederatedModel
+
+# Define your local learner and aggregator
+def create_local_learner():
+    '''Create local learner according to LLProtocol'''
+    return CustomLocalLearner()
+    
+
+def create_aggregator():
+    '''Create aggregator according to AggProtocol'''
+    return CustomAggregator()
+
+# Create the FederatedModel
+federated_model = FederatedModel(create_local_learner=create_local_learner,
+                           model_name="your_model_name",
+                           create_saggregator=create_aggregator,
+                           aggregator_name="your_aggregator_name")
+```
+
+**NB:** Make sure your model and aggregation strategy are compatible with static type checking tools like MyPy. This will help catch any issues related to the implementation of the protocols.
+
+
+### **Step 6: Submit the model to the Platform Model Catalogue**
+Upload the model created with the submit_fl_model function provided by the package. To successfully upload the model the user must provide to the function the platform url to which upload the model, a valid set of username and password, the name of the experiment (if it doesn't exist already a new experiment is created with that name) and some tags related to the model the user is uploading. Here is an example:
+
+```python
+from FedModelKit import submit_fl_model
+
+# Submit the FederatedModel to the Platform
+submit_fl_model(federated_model, 
+                platform_url="platform_model_registry_url"
+                username="your_username", 
+                password="your_password",
+                experiment_name="your_experiment_name",
+                disease="your_disease", # The use case the model is used for ("AML" or "SCD")
+                trained=False) # Whether the local learner is trained or not
+```
+---
+
+# Example notebooks
+The example notebooks in the `examples` directory demonstrate how to simulate a federated learning model using the functionalities provided by this package. These notebooks serve as a guide to:
+
+- Perform simulations with an example model or customize the setup to use your own model.
+- Load the model into the Federated Platform Model Catalogue, showcasing the process of registering a federated learning model with appropriate metadata and credentials.
+
+Each notebook is designed to provide step-by-step instructions, making it easier for users to understand and implement the package's features in their own projects.
+
+---
+
+
+# Deployment of the package
+
+To deploy and make changes to the package functionalities, you need to have `uv` installed. You can install it by following the instructions [here](https://github.com/ultraviolet/uv).
+
+Once you have `uv` installed, follow these steps:
+
+1. Clone the repository to your local machine:
+
+    ```bash
+    git clone https://github.com/synthema-project/app-model_store-interface.git
+    cd FedModelKit
+    ```
+
+2. Sync the repository using `uv sync`:
+
+    ```bash
+    uv sync
+    ```
+
+This command will synchronize your local repository with the remote repository, allowing you to make changes to the package functionalities. After making your changes, you can propose them by creating a pull request on the GitHub repository.
+
+By using `uv sync`, you can ensure that your local changes are in sync with the latest version of the repository, making it easier to collaborate with other developers and contribute to the project.
+
+---
+

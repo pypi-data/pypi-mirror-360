@@ -1,0 +1,53 @@
+[build-system]
+requires = [
+    "hatchling",
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "EXPERIMENT_NAME"
+version = "1.0.0"
+description = "Description of the experiment"
+license = "Apache-2.0"
+dependencies = [    
+    "flwr[simulation]==1.17.0",
+    "flwr-datasets>=0.5.0",
+    "torch==2.7.0",
+    "imblearn",
+    "pandas",
+    "scikit-learn==1.6.1",
+    "loguru",
+    "jupyter",
+    "syft_flwr==0.1.5",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    ".",
+]
+
+[tool.flwr.app]
+publisher = "OpenMined"
+
+[tool.flwr.app.components]
+serverapp = "EXPERIMENT_NAME.server_app:app"
+clientapp = "EXPERIMENT_NAME.client_app:app"
+
+[tool.flwr.app.config]
+num-server-rounds = 3
+partition-id = 0
+num-partitions = 1
+
+[tool.flwr.federations]
+default = "local-simulation"
+
+[tool.flwr.federations.local-simulation.options]
+num-supernodes = 2
+
+[tool.syft_flwr]
+app_name = "ds@openmined.org_fl-diabetes-prediction_1751887833"
+datasites = [
+    "do1@openmined.org",
+    "do2@openmined.org",
+]
+aggregator = "ds@openmined.org"
