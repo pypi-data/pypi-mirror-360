@@ -1,0 +1,30 @@
+_include:
+  - genesis/cult-cargo-base.yml
+
+cabs:
+  taql.update:
+    name: taql.update 
+    info: "Interface to taql update command from casacore (https://manpages.ubuntu.com/manpages/impish/man1/taql.1.html)"
+    image: 
+      _use: vars.cult-cargo.images
+      name: python-astro
+      
+    command: taql update
+
+    policies:
+      positional: true
+    inputs:
+      ms:
+        dtype: MS
+        required: true
+        writable: true
+      commands:
+        dtype: List[str]
+        policies:
+          repeat: list
+
+    management:
+      wranglers:
+        'Error in TaQL command:':
+          - ERROR
+      

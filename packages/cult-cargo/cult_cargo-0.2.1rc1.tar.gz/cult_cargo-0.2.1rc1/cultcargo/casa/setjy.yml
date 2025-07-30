@@ -1,0 +1,57 @@
+_include:
+    - (cultcargo):
+        - genesis/cult-cargo-base.yml
+        - genesis/casa/casa-inputs.yml
+
+cabs:
+    casa.setjy:
+        info: "CASA 'setjy' task: sets model from a flux density scale" 
+        command: casatasks.setjy
+        _use: lib.misc.casa6.command-data
+        inputs:
+            _use: 
+                - lib.params.casa.ms-selectdata-inputs
+            _scrub: [antenna, uvrange, msselect]   # not used by this task
+            standard:
+                choices:
+                    - 'Perley-Butler 2017'
+                    - 'Perley-Butler 2013'
+                    - 'Perley-Butler 2010'
+                    - 'Skaife-Heald 2012'
+                    - 'Butler-JPL-Horizons 2010'
+                    - 'Butler-JPL-Horizons 2012'
+                    - 'Stevens-Reynolds 2016'
+                    - manual
+                    - fluxscale
+                dtype: str
+                info: Which standard to use (Default Perley-Butler 2017)
+            scalebychan:
+                dtype: bool
+                info: Scale the flux density on a per channel basis or else on a per spw basis (default true)
+            usescratch:
+                dtype: bool
+                info: Will create if necessary and use the MODEL_DATA (default true)
+            fluxdensity:
+                info: Specified flux density in Jy [I,Q,U,V]; (default -1 will lookup values)
+                dtype: Union[int, List[int], List[float]]
+            spix:
+                info: Spectral index (including higher terms) of I fluxdensity (default 0.0)
+                dtype: Union[float, List[float]]
+            polindex:
+                info: Coefficients of the frequency-dependent linear polarization index (polarization fraction) 
+                dtype: List[float]
+            model:
+                info: File location for field model
+                dtype: File
+            polangle:
+                info: Coefficients of the frequency-dependent linear polarization angle (in radians)
+                dtype: List[float]
+            rotmeas:
+                info: Rotation measure (in rad/m^2)
+                dtype: float
+            interpolation:
+                info: Method to be used to interpolate in time
+                dtype: str
+            reffreq:
+                info: Reference frequency for spix (default 1 GHz)
+                dtype: str
