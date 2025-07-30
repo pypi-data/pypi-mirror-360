@@ -1,0 +1,3 @@
+from _typeshed import Incomplete
+
+def get_path(*keys, default: Incomplete | None = None): ...
