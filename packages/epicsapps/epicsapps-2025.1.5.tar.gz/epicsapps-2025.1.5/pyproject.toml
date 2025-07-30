@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "epicsapps/version.py"
+version_scheme = "post-release"
+
+[tool.setuptools.packages.find]
+include = ["epicsapps", "epicsapps.areadetector",
+           "epicsapps.areadetector", "epicsapps.icons", "epicsapps.instruments",
+           "epicsapps.ionchamber", "epicsapps.ionchamber.iocApp",
+           "epicsapps.microscope", "epicsapps.pvlogger",
+           "epicsapps.stripchart", "epicsapps.utils"]
+
+[project]
+name = "epicsapps"
+dynamic = ["version"]
+requires-python = ">= 3.9"
+description = "A collection of applications using PyEpics"
+readme = "README.md"
+authors = [
+    {name = "Matthew Newville", email = "newville@cars.uchicago.edu"}
+]
+license-files = ["LICENSE"]
+keywords = ["epics", "experimental data acquistion"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    ]
+
+dependencies = ['pyepics',
+             'sqlalchemy',
+             'psycopg2-binary',
+             'pyyaml',
+             'numpy',
+             'matplotlib',
+             'pytz',
+             'datetime',
+             'python-dateutil',
+             'wxpython>=4.1.0',
+             'wxmplot',
+             'wxutils',
+             'lmfit',
+             'pyshortcuts>=1.9.5',
+             'xraydb',
+             'tabulate',
+             'toml',
+             'tomli',
+             'opencv-python',
+             ]
+
+[project.scripts]
+epicsapps = "epicsapps:run_epicsapps"
+epics_adviewer = "epicsapps:run_adviewer"
+epics_instruments = "epicsapps:run_instruments"
+epics_stripchart = "epicsapps:run_stripchart"
+
+[project.urls]
+Homepage = " https://github.com/pyepics/epicsapps"
+Documentation = "https://pyepics.github.io/epicsapps/"
+Tracker = "https://github.com/pyepics/epicsapps/issues"
+
+[project.optional-dependencies]
+dev = ["build", "twine"]
+doc = ["Sphinx", "sphinx-copybutton", "sphinxcontrib-video"]
+test = ["pytest", "pytest-cov", "coverage"]
+all = ["epicsapps[dev, doc, test]"]
