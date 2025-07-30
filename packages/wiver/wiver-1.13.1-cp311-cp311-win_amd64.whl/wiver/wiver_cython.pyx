@@ -1,0 +1,526 @@
+#cython: boundscheck=False
+#cython: wraparound=False
+#cython: cdivision=True
+#cython: embedsignature=True
+
+cimport cython
+cimport numpy as cnp
+cnp.import_array()
+import numpy as np
+
+from cython.parallel import prange, threadid, parallel
+cimport openmp
+from cythonarrays.numpy_types cimport *
+from cythonarrays.array_properties import _ArrayProperties
+from cythonarrays.array_shapes cimport ArrayShapes
+from cythonarrays.array_shapes import ArrayShapes
+
+from libc.math cimport exp, log
+
+
+class DestinationChoiceError(ValueError):
+    """
+    Error in destination choice model,
+    no accessible destinations found for demand
+    """
+
+class DataConsistencyError(IndexError):
+    """
+    Data is not consistent and could lead to IndexErrors when running the model
+    with these data
+    """
+
+
+cdef class _WIVER(ArrayShapes):
+    """
+    BaseClass for WIVER model
+    """
+
+    @cython.initializedcheck(False)
+    cpdef char calc_daily_trips(self, long32 g) except -1:
+        """
+        Calc the daily trips for all groups and zones
+
+        Parameters
+        ----------
+        g: long32
+            the group
+
+        Returns
+        -------
+        long32:
+            -1, if an exeption is raised, 0 otherwise
+        """
+        cdef long32 t, h
+        self.home_based_trips_gij[g] = 0
+        self.linking_trips_gij[g] = 0
+
+        mode = self._mode_g[g]
+        sector = self._sector_g[g]
+        name = f'{self.mode_name[mode]}_{self.sector_short[sector]}'
+        self.logger.info(f'calculate group {g} ({name})')
+        # loop over home zones
+        with nogil, parallel(num_threads=self.n_threads):
+            t = threadid()
+            # loop over calibration groups
+            for h in prange(self.n_zones, schedule='guided'):
+                self._calc_daily_trips(t, g, h)
+        self._symmetrisize_trip_matrix(g)
+
+
+    def adjust_linking_trips(self, g: long32):
+        """
+        Adjust the number of linking trips for the group to the target value
+        to account for rounding errors with small probabilities
+        which do not sum um to 1.0
+        """
+        target_linking_trips = (self.source_potential_gh[g].sum() *
+                                self.tour_rates_g[g] *
+                                (self.stops_per_tour_g[g] - 1))
+        if target_linking_trips:
+            calculated_linking_trips = self.linking_trips_gij[g].sum()
+            kf_linking_trips = target_linking_trips / calculated_linking_trips
+            self.logger.debug(f'Group {g}: kf linking trips: {kf_linking_trips}')
+            self.linking_trips_gij[g] *= kf_linking_trips
+
+
+    def raise_destination_choice_error(self, g: long32, h: long32):
+        """raise a DestinationChoiceError for destination trips"""
+        msg = '''No accessible destinations found for group {g} and home zone {h}'''
+        raise DestinationChoiceError(msg.format(g=g, h=h))
+
+    def raise_linking_trips_error(self, g: long32, h: long32):
+        """raise a DestinationChoiceError for linking trips"""
+        msg = '''Destinations cannot be linked for group {g} and home zone {h} because they is no accessibility between the destinations'''
+        raise DestinationChoiceError(msg.format(g=g, h=h))
+
+    @cython.initializedcheck(False)
+    cpdef calc_mean_distance(self):
+        """calculate mean distance for groups"""
+        cdef long32 g, i, j, mode, sector
+        cdef double total_distance, total_trips,
+        cdef double trips, home_based_trips, mean_distance
+        cdef double total_distance_first_trip, total_tours,
+        cdef double mean_distance_first_trip
+        cdef double mean_distance_linking_trip
+        cdef double total_linking_trips
+        cdef double linking_trips
+        cdef double total_distance_linking_trips
+
+        for g in range(self.n_groups):
+            if self._converged_g[g]:
+                continue
+            if not self._active_g[g]:
+                self._mean_distance_g[g] = self.NAN_d
+                continue
+            mode = self._mode_g[g]
+            sector = self._sector_g[g]
+            name = '{}_{}'.format(self.mode_name[mode],
+                                  self.sector_short[sector])
+            total_distance = 0
+            total_distance_first_trip = 0
+            total_distance_linking_trips = 0
+            total_trips = 0
+            total_linking_trips = 0
+            total_tours = 0
+            # loop over zones
+            for i in range(self.n_zones):
+                for j in range(self.n_zones):
+                    trips = self._trips_gij[g, i, j]
+                    home_based_trips = self._home_based_trips_gij[g, i, j]
+                    linking_trips = self._linking_trips_gij[g, i, j]
+
+                    total_distance += self._km_ij[i, j] * trips
+                    total_distance_first_trip += (self._km_ij[i, j] *
+                                                  home_based_trips)
+                    total_distance_linking_trips += (self._km_ij[i, j] *
+                                                     linking_trips)
+
+                    total_trips += trips
+                    total_tours += home_based_trips
+                    total_linking_trips += linking_trips
+
+            mean_distance = total_distance / total_trips
+            mean_distance_first_trip = total_distance_first_trip / total_tours
+            mean_distance_linking_trip = total_distance_linking_trips / total_linking_trips
+
+            self.logger.info('mean distance of group {n:15} ({g:3}): '\
+                '{d:5.2f} km, {t:7.0f} trips, {td:7.0f} vkm. '\
+                'HomeBased: {dh:5.2f} km, {th:7.0f} trips, {tdh:7.0f} vkm. '\
+                'LinkingTrips: {dl:5.2f} km, {tl:7.0f} trips, {tdl:7.0f} vkm. '.\
+                format(g=g, n=name, d=mean_distance, t=total_trips,
+                td=total_distance, dh=mean_distance_first_trip,
+                th=total_tours, tdh=total_distance_first_trip,
+                tl=total_linking_trips, tdl=total_distance_linking_trips,
+                dl=mean_distance_linking_trip))
+            self._mean_distance_g[g] = mean_distance
+            self._mean_distance_first_trips_g[g] = mean_distance_first_trip
+            self._mean_distance_linking_trips_g[g] = mean_distance_linking_trip
+
+    @cython.initializedcheck(False)
+    cpdef calc_mean_distance_mode(self):
+        """calculate mean distance for modes"""
+        cdef long32 m, i, j
+        cdef double total_distance, total_trips, trips, mean_distance
+        for m in range(self.n_modes):
+            name = self.mode_name[m]
+            total_distance = 0
+            total_trips = 0
+            # loop over zones
+            for i in range(self.n_zones):
+                for j in range(self.n_zones):
+                    trips = self._trips_mij[m, i, j]
+                    total_distance += self._km_ij[i, j] * trips
+                    total_trips += trips
+            mean_distance = total_distance / total_trips
+            self.logger.info('mean distance of mode {m} ({n}): {d:0.2f}'.\
+                format(m=m, n=name, d=mean_distance))
+            self._mean_distance_m[m] = mean_distance
+
+    @cython.initializedcheck(False)
+    cdef char _calc_daily_trips(self, long32 t, long32 g, long32 h) except -1 nogil:
+        """
+        calc the trips for group g and home zone h
+
+        Parameters
+        ----------
+        t : long32
+            the thread_no
+        g : long32
+            group no
+        h : long 32
+            home zone no
+        """
+        cdef double tours, linking_trips
+        tours = self._calc_tours(g, h)
+        if tours:
+            self._calc_destination_choice(t, g, h)
+            linking_trips = self._calc_linking_trips(g, tours)
+            if linking_trips:
+                self._calc_linking_trip_choice(t, g, h)
+            self._calc_trips(t, g, h, tours, linking_trips)
+
+    @cython.initializedcheck(False)
+    cdef double _calc_tours(self, long32 g, long32 h) except -1 nogil:
+        """
+        calc the number of linking trips starting in home zone h
+        """
+        cdef double tours
+        tours = self._source_potential_gh[g, h] * self._tour_rates_g[g]
+        return tours
+
+    @cython.initializedcheck(False)
+    cdef double _calc_linking_trips(self, long32 g, double tours) except -1 nogil:
+        """
+        calc the number of linking trips for group g
+        """
+        cdef double linking_trips
+        linking_trips = tours * (self._stops_per_tour_g[g] - 1)
+        return linking_trips
+
+    @cython.initializedcheck(False)
+    cdef double _calc_p_destination(self, long32 g, char m,
+                                    long32 h, long32 j)  except -1 nogil:
+        """
+        calc utility function for the destination choice
+        """
+        cdef double p, sp, bf, param, time
+        sp = self._sink_potential_gj[g, j]
+        bf = self._balancing_factor_gj[g, j]
+        param = self._param_dist_g[g]
+        time = self._travel_time_mij[m, h, j]
+        p = sp * bf * exp(param * time)
+        return p
+
+    @cython.initializedcheck(False)
+    cdef char _calc_destination_choice(self,
+                                      long32 t,
+                                      long32 g,
+                                      long32 h) except -1 nogil:
+        """
+        calc the Destination choice
+
+        Parameters
+        ----------
+        t : long32
+            the thread_no
+        g : long32
+            group no
+        h : long 32
+            home zone no
+
+        Returns
+        -------
+        r : char
+            error code, if -1 this should raise a DestinationChoiceError
+        """
+        cdef double p, total_weights
+        cdef long32 j
+        cdef long32 m = self._mode_g[g]
+
+        # destination choice probability
+        total_weights = 0
+        for j in range(self.n_zones):
+            p = self._calc_p_destination(g, m, h, j)
+            self._p_destination_tj[t, j] = p
+            total_weights += p
+        if not total_weights:
+            with gil:
+                self.raise_destination_choice_error(g, h)
+        for j in range(self.n_zones):
+            self._p_destination_tj[t, j] /= total_weights
+
+    @cython.initializedcheck(False)
+    cdef char _calc_linking_trip_choice(self,
+                                      long32 t,
+                                      long32 g,
+                                      long32 h) except -1 nogil:
+        """
+        calc the Distribution for the linking trips
+
+        Parameters
+        ----------
+        t : long32
+            the thread_no
+        g : long32
+            group no
+        h : long 32
+            home zone no
+
+        Returns
+        -------
+        r : char
+            error code, if -1 this should raise a DestinationChoiceError
+        """
+        cdef long32 m = self._mode_g[g]
+        cdef long32 i, j
+        cdef double p, pi, pj, total_weights, savings_factor
+
+        # reset arrays
+        total_weights = 0
+        with gil:
+            self.p_links_tij[t] = 0
+
+        # tour generation for linking trips
+        # loop over destinations
+        for i in range(self.n_zones):
+            pi = self._p_destination_tj[t, i]
+            if pi:
+                for j in range(self.n_zones):
+                    pj = self._p_destination_tj[t,j]
+                    if pj:
+                        savings_factor = self._calc_savings_factor(
+                        g, m, h, i, j)
+                        p = pi * pj * savings_factor
+                        self._p_links_tij[t, i, j] = p
+                        total_weights += p
+
+        if not total_weights:
+            with gil:
+                self.raise_linking_trips_error(g, h)
+        for i in range(self.n_zones):
+            for j in range(self.n_zones):
+                self._p_links_tij[t, i, j] /= total_weights
+
+    @cython.initializedcheck(False)
+    cdef char _calc_trips(self,
+                         long32 t,
+                         long32 g,
+                         long32 h,
+                         double tours,
+                         double linking_trips) except -1 nogil:
+
+        cdef long32 i, j
+        cdef double trips, p
+        # Fahrten Heimatzone - 1. Stop-Heimatzone
+        for i in range(self.n_zones):
+            trips = tours * self._p_destination_tj[t, i]
+            self._home_based_trips_gij[g, h, i] += trips
+
+            if linking_trips:
+                # Zwischenfahrten
+                for j in range(self.n_zones):
+                    p = self._p_links_tij[t, i, j]
+                    if p:
+                        trips = linking_trips * p
+                        self._linking_trips_gij[g, i, j] += trips
+
+    @cython.initializedcheck(False)
+    cdef double _calc_savings_factor(self, long32 g, char m,
+                                    long32 h, long32 i, long32 j) except -1 nogil:
+        """Calc the saving factor using the savings_param of the group"""
+
+        cdef double savings, savings_factor, savings_param
+        savings_param = self._savings_param_g[g]
+        # if the savings parameter is +INF, return always 1 regardless of the savings
+        if savings_param == self.INF_d:
+            return 1
+        # otherwise, calculate the savings
+        savings = self._calc_savings(g, m, h, i, j)
+        savings_factor = 1 / (savings_param - savings)
+        return savings_factor
+
+    @cython.initializedcheck(False)
+    cdef double _calc_savings(self, long32 g, char m,
+                              long32 h, long32 i, long32 j) except -1 nogil:
+        """Calc the savings"""
+        cdef double savings, t_hi ,t_jh, t_ij
+
+        t_hi = self._travel_time_mij[m, h, i]
+        t_jh = self._travel_time_mij[m, j, h]
+        t_ij = self._travel_time_mij[m, i, j]
+        if not t_hi + t_jh:
+            if not t_ij:
+                return 0
+            else:
+                return -99
+        savings = (t_hi + t_jh - t_ij) / (t_hi + t_jh)
+        return savings
+
+    @cython.initializedcheck(False)
+    cdef char _symmetrisize_trip_matrix(self, long32 g,) except -1 nogil:
+        """
+        Symmetrisize the linking trips matrix and
+        Calculate the trips back home
+        """
+        cdef long i, j
+        cdef double t1, t2, t0
+        for i in range(self.n_zones):
+            for j in range(self.n_zones):
+
+                # calculate the mean of forward and backward trips
+                t1 = self._linking_trips_gij[g, i, j]
+                t2 = self._linking_trips_gij[g, j, i]
+                t0 = (t1 + t2) / 2
+                self._linking_trips_gij[g, i, j] = t0
+                self._linking_trips_gij[g, j, i] = t0
+
+                # set the return trips
+                self._return_trips_gij[g, i, j] = \
+                    self._home_based_trips_gij[g, j, i]
+
+    # python wrapper functions around nogil-functions - for testing purposes
+    def calc_savings(self, long32 g, char m, long32 h, long32 i, long32 j) -> float:
+        """
+        calc the savings for group g with home zone h from zone i to j
+        """
+        return self._calc_savings(g, m, h, i, j)
+
+    def calc_savings_factor(self, long32 g, char m,
+                            long32 h, long32 i, long32 j) -> float:
+        """
+        calc the saving factor for group g with home zone h from zone i to j
+        """
+        return self._calc_savings_factor(g, m, h, i, j)
+
+    def calc_tours(self, long32 g, long32 h) -> float:
+        return self._calc_tours(g, h)
+
+    def calc_linking_trips(self, long32 g, double tours) -> float:
+        return self._calc_linking_trips(g, tours)
+
+    def calc_p_destination(self, long32 g, char m, long32 h, long32 j) -> float:
+        return self._calc_p_destination(g, m, h, j)
+
+    def calc_destination_choice(self, long32 t, long32 g, long32 h):
+        self._calc_destination_choice(t, g, h)
+
+    def calc_linking_trip_choice(self, long32 t, long32 g, long32 h):
+        self._calc_linking_trip_choice(t, g, h)
+
+    def calc_trips(self, long32 t, long32 g, long32 h,
+                   double tours, double linking_trips):
+        self._calc_trips(t, g, h, tours, linking_trips)
+
+    def normalise_time_series(self, cnp.ndarray time_series):
+        """normalise a time_series to ensure it adds up to 100 %"""
+        time_series /= time_series.sum(-1)[:, np.newaxis]
+
+    @cython.initializedcheck(False)
+    cpdef calc_time_series(self):
+        """Calc the time series"""
+        self.assert_data_consistency()
+        cdef long32 g
+
+        self.reset_array('trips_gsij')
+        # normalize the weights to ensure that all time slices sum up to 100 %
+        self.normalise_time_series(self.time_series_values_rs)
+
+        # loop over all groups
+        with nogil, parallel(num_threads=self.n_threads):
+            for g in prange(self.n_groups):
+                self._calc_time_serie(g)
+
+    @cython.initializedcheck(False)
+    cdef char _calc_time_serie(self, long32 g) except -1 nogil:
+        """calc time serie for group g"""
+        cdef long32 s, i, j
+        cdef long32 r_starting, r_linking, r_ending
+        cdef double trips, w_starting, w_linking, w_ending
+
+        r_starting = self._time_series_starting_trips_g[g]
+        r_linking = self._time_series_linking_trips_g[g]
+        r_ending = self._time_series_ending_trips_g[g]
+        for s in range(self.n_time_slices):
+            w_starting = self._time_series_values_rs[r_starting, s]
+            w_linking = self._time_series_values_rs[r_linking, s]
+            w_ending = self._time_series_values_rs[r_ending, s]
+            for i in range(self.n_zones):
+                for j in range(self.n_zones):
+                    trips = (
+                    self._home_based_trips_gij[g, i, j] * w_starting +
+                    self._linking_trips_gij[g, i, j] * w_linking +
+                    self._return_trips_gij[g, i, j] * w_ending)
+
+                    self._trips_gsij[g, s, i, j] = trips
+
+    @cython.initializedcheck(False)
+    cpdef aggregate_to_modes(self):
+        """Aggregate result matrices to mode-matrices"""
+        cdef long32 g, i, j, m, s
+        cdef double trips
+        # reset the result arrays
+        self.reset_array('trips_mij')
+        self.reset_array('trips_msij')
+
+        # loop over groups
+        for g in range(self.n_groups):
+            m = self._mode_g[g]
+            for i in range(self.n_zones):
+                for j in range(self.n_zones):
+                    # add to daily matrix
+                    trips = self._trips_gij[g, i, j]
+                    self._trips_mij[m, i, j] += trips
+                    # add to time-slice matrix
+                    for s in range(self.n_time_slices):
+                        trips = self._trips_gsij[g, s, i, j]
+                        self._trips_msij[m, s, i, j] += trips
+
+
+    def assert_data_consistency(self):
+        """assert the data consistency"""
+        self.assert_data_consistency_of_array('mode_g', 'n_modes')
+        self.assert_data_consistency_of_array('sector_g', 'n_sectors')
+
+    def assert_data_consistency_of_array(self, str attrname, str dim):
+        """
+        assert the consistency of array attrname
+
+        Parameters
+        ----------
+        attrname:
+            the name of the attribute to test
+        dim:
+            the name of the dimension to test
+        """
+        # modes of groups
+        lbound = 0
+        ubound = getattr(self, dim)
+        arr = getattr(self, attrname)
+        a = np.logical_or(arr < lbound, arr >= ubound)
+        if a.any():
+            msg = '''array {v} should only contain values v with 0 <= v < {d}={n},
+but contains the following invalid values at pos {pos}:
+{val}'''
+            raise DataConsistencyError(msg.format(v=attrname, d=dim, n=ubound,
+            pos=a.nonzero(), val=arr[a]))
