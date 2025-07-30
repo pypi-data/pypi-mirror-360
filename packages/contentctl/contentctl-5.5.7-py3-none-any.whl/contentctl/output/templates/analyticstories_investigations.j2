@@ -1,0 +1,21 @@
+
+### RESPONSE TASKS ###
+
+{% for investigation in objects %}
+{% if (investigation.type == 'Investigation') %}
+[savedsearch://{{ investigation.get_response_task_name(app) }}]
+type = investigation
+explanation = none
+{% if investigation.how_to_implement is defined %}
+how_to_implement = {{ investigation.how_to_implement | escapeNewlines() }}
+{% else %}
+how_to_implement = none
+{% endif %}
+known_false_positives = not defined
+earliest_time_offset = 14400
+latest_time_offset = 0
+
+{% endif %}
+{% endfor %}
+
+### END RESPONSE TASKS ###

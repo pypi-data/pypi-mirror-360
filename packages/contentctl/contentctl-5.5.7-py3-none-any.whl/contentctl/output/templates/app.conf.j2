@@ -1,0 +1,37 @@
+## Splunk app configuration file
+
+[install]
+is_configured = false
+state = enabled
+state_change_requires_restart = false
+build = {{ app.build }}
+
+[triggers]
+{% for custom_conf_file in custom_conf_files%}
+reload.{{custom_conf_file}} = simple
+{% endfor %}
+
+[launcher]
+author = {{ app.author_company }}
+version = {{ app.version }} 
+description = {{ app.description | escapeNewlines() }}
+
+[ui]
+is_visible = true
+label = {{ app.title }}
+
+[package]
+id = {{ app.appid }}
+{% if app.uid == 3449 %}
+check_for_updates = true
+{% else %}
+check_for_updates = false
+{% endif %}
+
+[id]
+version = {{ app.version }}
+name = {{ app.appid }}
+
+
+
+
