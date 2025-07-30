@@ -1,0 +1,149 @@
+Metadata-Version: 2.1
+Name: backup-reporter
+Version: 0.5.0
+Summary: Collect and show info about various backups
+Author: Dmitry Razin
+Author-email: d.razin@oom.ag
+Requires-Python: >=3.8,<4.0
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Dist: boto3 (==1.24.27)
+Requires-Dist: dateparser (==1.2.0)
+Requires-Dist: gspread (==5.0.0)
+Requires-Dist: gspread_formatting (==1.2.0)
+Requires-Dist: mergedeep (==1.3.4)
+Requires-Dist: oauth2client (>=4.1.3,<5.0.0)
+Requires-Dist: pytz (==2024.1)
+Requires-Dist: pyyaml (==5.1)
+Description-Content-Type: text/markdown
+
+# Backup Reporter
+
+This repository contains source code for backup reporter tool. That tool can
+collect backup information, upload it to S3 buckets, then collect bunch of
+backup information files, get them together into one csv file and upload it to
+google spreadsheet.
+
+Backup reporter has two working modes: reporter and collector.
+
+## Installation
+
+To install backup-reporter to some machine (either in reporter or collector
+mode), ensure you have a python 3.8+ installed on that machine. If so, simply
+run `pip3 install backup-reporter` and wait to the end of setup process. After
+installation will be completed, run `backup-reporter -h` to get further steps
+help.
+
+### Installation as user
+
+Beware that standard python packages installations which are ran by mean user,
+won't install console scripts to the PATH, so ensure to do so manually - or run
+installation as root.
+
+## Configuration
+
+### Reporter
+
+Reporter can be configured with two ways: script arguments or configuration
+file. Possible configuration options you can find by typing `backup-reporter
+-h`. To use config file just pass `--config your_config_file.yml` as script
+argument.
+All options from cli-help are same for config-file. As example following
+command:
+- `python3 main.py --bucket="{'s3_path':
+  's3://bucket_name/in_bucket_path/metadata_file_name.txt',
+  'aws_access_key_id': 'key', 'aws_secret_access_key': 'key', 'aws_region':
+  'region'}" --docker_postgres`
+
+can be written in file:
+```
+docker_postgres: true
+bucket:
+    - s3_path: s3://bucket_name/in_bucket_path/metadata_file_name.txt
+      aws_access_key_id: key
+      aws_secret_access_key: key
+      aws_region: region
+      customer: "Customer name"
+```
+
+More examples can be found at `docs/config-examples/reporter-*.conf`
+
+### Collector
+
+Collector can be configured the same way as reporter - with arguments passed to
+executable file or with config file (which, though, has to be passed as
+argument too). Example of config for collector with comments:
+
+```
+# Sheet owner is an email of user to whom ownership will be transfered
+sheet_owner: s@example.com
+
+# Credentials file is a JSON key which should be given to some service account.
+# To understand how to create service account, try to google about a bit
+google_spreadsheet_credentials_path: ~/Development/personal/backupreporter_key.json
+
+# This is a name for a target spreadsheet
+spreadsheet_name: "Backup-Reports"
+
+# Sheet name in a spreadsheet
+worksheet_name: Customers
+
+bucket:
+    - s3_path: s3://bucket/metadata/metadata.json
+      aws_access_key_id: access-key
+      aws_secret_access_key: secret-key
+      aws_region: ru-1
+      aws_endpoint_url: https://s3.ru-1.storage.selcloud.ru
+      customer: Personal
+```
+
+## Owner transfership at Google Drive
+
+### Spreadsheet Ownership Transfer
+
+Transferring ownership of a Google Spreadsheet is a two-step process:
+
+1. **Initiation**
+   The collector marks the spreadsheet with a flag indicating that ownership needs to be transferred.
+
+2. **Acceptance**
+   The intended new owner must manually accept ownership by:
+   - Opening [Google Drive](https://drive.google.com)
+   - Searching for `pendingowner:me`
+   - Locating the corresponding spreadsheet
+   - Accepting the ownership transfer
+
+> **More information:**
+> [Google Docs Help: Transfer ownership of a file](https://support.google.com/docs/answer/2494892?hl=en&co=GENIE.Platform%3DDesktop)
+
+---
+
+### Alternative: Share Spreadsheet with Service Account (No Ownership Transfer)
+
+Instead of transferring ownership, you can create the spreadsheet manually and **share it with the service account**.
+
+- **Note:** Ownership remains with you — the service account is only granted access.
+- **Required permissions:** `Editor`
+- **Service account email:** Found in the JSON credentials file referenced by the
+  `google_spreadsheet_credentials_path` configuration option.
+
+This method allows the service account to read and update the spreadsheet content,
+but not to manage sharing settings or transfer ownership.
+
+## Development
+
+Install poetry first, then simply run `poetry install` in repository root - and
+start to develop. To run, run `poetry run`. To publish new version, change
+version in `pyproject.toml` and run `poetry build && poetry publish`.
+
+## Authors
+
+Made in cooperation with:
+
+* Dmitry Razin - https://github.com/one-mINd
+* Stan Bogatkin - https://github.com/sorrowless
+
