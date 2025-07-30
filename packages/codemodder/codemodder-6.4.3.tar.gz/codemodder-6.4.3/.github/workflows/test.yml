@@ -1,0 +1,83 @@
+name: Unit Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "[0-9]+.[0-9]+.x"
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+  pull_request:
+    branches:
+      - main
+      - develop
+      - "[0-9]+.[0-9]+.x"
+  merge_group:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - name: Install build dependencies
+        run: pip install build twine
+      - name: Build package
+        run: python -m build .
+      - name: Twine Check
+        run: twine check dist/*
+  test-minimal:
+    # Test that a codemodder run doesn't require any optional dependencies.
+    name: Run codemodder list
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - name: Install Codemodder Package
+        # Only install what most users would, not optional dependencies
+        run: pip install .
+      - name: Run codemodder
+        run: codemodder --list
+  test:
+    name: Run pytest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      matrix:
+        python-version: ['3.10',  '3.11', '3.12']
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      - name: Install Codemodder Package
+        run: pip install .
+      - name: Install Dependencies
+        run: pip install ".[test]"
+      - name: Run unit tests
+        run: make test
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

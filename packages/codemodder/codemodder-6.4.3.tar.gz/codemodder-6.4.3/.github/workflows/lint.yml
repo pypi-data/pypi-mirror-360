@@ -1,0 +1,46 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  merge_group:
+
+concurrency:
+  group: (${{ github.workflow }}-${{ github.event.inputs.branch || github.event.pull_request.head.ref }})
+  cancel-in-progress: true
+
+jobs:
+  complexity:
+    name: Code Complexity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      - name: Install Dependencies
+        run: |
+          pip install ".[complexity]"
+      - name: Run Radon
+        run: make radon
+      - name: Run Xenon
+        # threshold for pipeline to fail if we go below average, module, or block complexity
+        # https://github.com/rubik/xenon
+        run: make xenon
+
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+    - uses: pre-commit/action@v3.0.1
