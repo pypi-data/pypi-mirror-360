@@ -1,0 +1,62 @@
+[tool.poetry]
+name = "tklife"
+version = "2.5.0-dev3"
+description = "Make Tk life easier"
+authors = ["Cory Laughlin <corylcomposinger@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest-cov = "^6.2.1"
+pytest = "^7.4.3"
+pytest-mock = "^3.7.0"
+black = "^23.10.1"
+mypy = "^1.6.1"
+pylint = "^3.0.2"
+isort = "^5.12.0"
+docformatter = "^1.7.5"
+pre-commit = "^3.5.0"
+
+
+[tool.poetry.group.doc.dependencies]
+sphinx = "^7.2.6"
+m2r2 = "^0.3.3.post2"
+esbonio = "^0.16.2"
+
+[tool.pytest.ini_options]
+addopts = "--cov=tklife --cov-branch --cov-report xml --cov-report html -vvv"
+markers = [
+    "integration: mark a test as an integration test."
+]
+
+[tool.mypy]
+ignore_missing_imports = true
+python_version = "3.11"
+
+[tool.coverage.report]
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError"]
+omit = ["tklife/__main__.py"]
+
+[tool.autoflake]
+remove_all_unused_imports = true
+recursive = true
+remove_unused_variables = true
+
+[tool.isort]
+profile = "black"
+
+[tool.docformatter]
+recursive = true
+blank = true
+black = true
+in-place = true
+
+[tool.black]
+target-version = ["py39", "py310", "py311", "py312"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
