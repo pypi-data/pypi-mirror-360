@@ -1,0 +1,197 @@
+[project]
+name = "mcp-metricflow"
+dynamic = []
+description = "A Model Context Protocol (MCP) server that provides MetricFlow CLI tools"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.115.12",
+    "uvicorn>=0.34.2",
+    "dbt-metricflow>=0.8.2",
+    "python-dotenv>=1.1.0",
+    "mcp>=1.3.2",
+]
+version = "1.0.0b4"
+
+[project.license]
+file = "LICENSE"
+
+[project.scripts]
+mcp-metricflow = "src.main_stdio:main"
+
+[project.optional-dependencies]
+dev = [
+    "black>=25.1.0",
+    "ruff>=0.11.0,<=0.11.10",
+    "bandit>=1.8.3",
+    "pre-commit>=4.2.0",
+    "poethepoet>=0.34.0",
+    "dbt-snowflake>=1.8.0",
+]
+test = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.25.0",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.14.0",
+    "pytest-sugar>=1.0.0",
+    "coverage[toml]>=7.6.0",
+]
+
+[build-system]
+requires = [
+    "pdm-backend>=2.3.3",
+    "setuptools-scm>=8.3.1",
+]
+build-backend = "pdm.backend"
+
+[tool.pdm]
+package = false
+
+[tool.pdm.version]
+source = "scm"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = [
+    "tests/*",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "B",
+    "C4",
+    "UP",
+    "D",
+    "N",
+    "ANN",
+    "SIM",
+    "TCH",
+    "RUF",
+    "PYI",
+    "NPY",
+    "PT",
+    "PLR",
+    "PLW",
+    "PGH",
+    "PL",
+    "FLY",
+    "ARG",
+    "TD",
+    "ERA",
+]
+ignore = [
+    "PLR0913",
+    "PLR2004",
+    "ANN204",
+    "ANN401",
+    "PLR0911",
+    "ANN002",
+    "ANN003",
+    "ARG004",
+    "ERA001",
+]
+unfixable = [
+    "B",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "mcp-metricflow",
+]
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+mypy-init-return = true
+suppress-dummy-args = true
+
+[tool.ruff.lint.flake8-type-checking]
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+asyncio_mode = "auto"
+addopts = [
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+    "--cov-fail-under=100",
+    "-v",
+]
+filterwarnings = [
+    "ignore:coroutine.*was never awaited:RuntimeWarning",
+    "ignore::RuntimeWarning:unittest.mock",
+]
+
+[tool.coverage.run]
+source = [
+    "src",
+]
+omit = [
+    "*/tests/*",
+    "*/__init__.py",
+    "*/main_*.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.bandit]
+exclude_dirs = [
+    "tests",
+]
+skips = [
+    "B101",
+    "B108",
+    "B404",
+]
+
+[tool.poe.tasks.setup]
+cmd = "uv sync --all-extras"
+help = "Install all dependencies"
+
+[tool.poe.tasks.setup-hooks]
+cmd = "pre-commit install"
+help = "Install pre-commit hooks"
+
+[tool.poe.tasks.format]
+cmd = "uv run ruff format src tests"
+help = "Format code with ruff"
+
+[tool.poe.tasks.lint]
+cmd = "uv run ruff check src tests"
+help = "Lint code with ruff"
+
+[tool.poe.tasks.test]
+cmd = "uv run pytest"
+help = "Run tests"
+
+[tool.poe.tasks.test-cov]
+cmd = "uv run pytest --cov=src --cov-report=term-missing --cov-report=html"
+help = "Run tests with coverage report"
+
+[tool.poe.tasks.test-cov-fail]
+cmd = "uv run pytest --cov=src --cov-report=term-missing --cov-report=html --cov-fail-under=100"
+help = "Run tests with coverage and fail if under 100%"
