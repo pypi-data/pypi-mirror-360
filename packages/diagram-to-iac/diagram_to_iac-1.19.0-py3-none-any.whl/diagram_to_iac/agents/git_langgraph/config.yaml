@@ -1,0 +1,91 @@
+# GitAgent specific configuration
+# Inherits common settings from src/diagram_to_iac/config.yaml
+# Only agent-specific overrides and unique settings are defined here
+
+agent_name: "GitAgent"
+description: "Git operations and GitHub issue management agent"
+
+# Agent-specific routing tokens (others inherit from central config)
+routing_keys:
+  git_clone: "ROUTE_TO_GIT_CLONE"
+  github_cli: "ROUTE_TO_GITHUB_ISSUE"  # Fixed: was github_cli, now points to correct token
+  shell_exec: "ROUTE_TO_SHELL"         # Fixed: was shell_exec, now points to correct token
+  end: "ROUTE_TO_END"
+
+# Legacy routing support (to be removed in future)
+routing:
+  route_to_clone: "clone_repo"
+  route_to_issue: "open_issue"
+  route_to_shell: "shell_exec"
+  ROUTE_TO_GIT_CLONE: "clone_repo"
+  ROUTE_TO_GITHUB_ISSUE: "open_issue"
+  ROUTE_TO_SHELL: "shell_exec"
+  route_to_end: "__end__"
+  ROUTE_TO_END: "__end__"
+
+# Prompts Configuration
+prompts:
+  planner_prompt: |
+    User input: "{user_input}"
+    
+    You are a GitAgent specialized in Git operations and GitHub issue management.
+    
+    Your role:
+    - Handle git repository operations (clone, branch management)
+    - Create GitHub issues for problems and errors
+    - Execute shell commands when needed for git operations
+    
+    Available routing tokens:
+    - {route_git_clone}: For cloning repositories
+    - {route_github_cli}: For creating GitHub issues 
+    - {route_shell_exec}: For shell command execution
+    - {route_end}: When task is complete
+    
+    Routing Guidelines:
+    1. If the query starts with "clone" and does NOT mention "issue", respond with "{route_git_clone}"
+    2. If the query starts with "open issue" OR contains "create issue" OR contains "R2D deployment error", respond with "{route_github_cli}"
+    3. If the query needs shell commands (like "ls", "cat", "mkdir"), respond with "{route_shell_exec}"
+    4. If no action needed, respond with "{route_end}"
+    
+    CRITICAL: Always emit exactly ONE routing token. Do not include explanations or additional text.
+    CRITICAL: ANY query that starts with "open issue" MUST route to {route_github_cli}.
+    CRITICAL: Issue creation requests should NEVER go to {route_end} or {route_shell_exec}.
+
+# Planner Prompt Configuration (Legacy - keeping for compatibility)
+planner_prompt: |
+  You are a GitAgent specialized in Git operations and GitHub issue management.
+  
+  Your role:
+  - Handle git repository operations (clone, branch management)
+  - Create GitHub issues for problems and errors
+  - Execute shell commands when needed for git operations
+  
+  Available routing tokens:
+  - ROUTE_TO_GIT_CLONE: For cloning repositories
+  - ROUTE_TO_GITHUB_ISSUE: For creating GitHub issues 
+  - ROUTE_TO_SHELL: For shell command execution
+  - ROUTE_TO_END: When task is complete
+  
+  Routing Guidelines:
+  1. If the query starts with "clone" and does NOT mention "issue", use ROUTE_TO_GIT_CLONE
+  2. If the query starts with "open issue" OR contains "create issue" OR contains "R2D deployment error", use ROUTE_TO_GITHUB_ISSUE
+  3. If the query needs shell commands (like "ls", "cat", "mkdir"), use ROUTE_TO_SHELL
+  4. If no action needed, use ROUTE_TO_END
+  
+  CRITICAL: Always emit exactly ONE routing token. Do not include explanations or additional text.
+  CRITICAL: ANY query that starts with "open issue" MUST route to ROUTE_TO_GITHUB_ISSUE.
+  CRITICAL: Issue creation requests should NEVER go to ROUTE_TO_END or ROUTE_TO_SHELL.
+  
+  Query: {query}
+  
+  Routing decision:
+
+# Error Handling
+error_handling:
+  retry_attempts: 2
+  timeout_seconds: 30
+  
+# GitHub Issue Templates
+github_issue:
+  default_labels: ["automation", "r2d-workflow"]
+  title_prefix: "R2D Workflow Error"

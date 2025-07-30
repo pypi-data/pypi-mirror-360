@@ -1,0 +1,302 @@
+# src/diagram_to_iac/config.yaml
+# Central application configuration for diagram-to-iac
+# This file contains common settings shared across agents and tools
+# Individual agent/tool configs can override these values
+
+# System settings
+system:
+  workspace_base: "/workspace"
+  log_level: "INFO"
+
+# Network timeouts
+network:
+  api_timeout: 10           # Used in api_utils.py for API calls
+  shell_timeout: 30         # Used in shell tools
+  terraform_timeout: 300    # Used in terraform tools
+  github_timeout: 15        # Used in GitHub API calls
+  git_timeout: 300          # Used in git operations
+
+# AI/LLM settings (common defaults)
+ai:
+  default_model: "gpt-4o-mini"
+  default_temperature: 0.1      # Most agents use 0.1
+  max_tokens: 1000              # Common across agents
+  
+  # Provider selection strategy for intelligent fallback
+  provider_selection:
+    strategy: "auto"             # Options: "auto", "prefer_cost", "prefer_performance", "manual"
+    preferred_order:             # Provider preference order when strategy is "auto"
+      - "openai"                 # Primary choice - good balance of cost/performance
+      - "anthropic"              # Secondary - good for reasoning tasks
+      - "google"                 # Tertiary - good for multimodal tasks
+      - "grok"                   # Experimental - not implemented yet
+    
+    # Strategy-specific configurations
+    cost_optimization:
+      prefer_models:
+        - "gpt-4o-mini"          # Most cost-effective
+        - "gpt-3.5-turbo"        # Good performance/cost ratio
+        - "claude-3-haiku"       # Fast and cheap
+        - "gemini-pro"           # Google's cost-effective option
+    
+    performance_optimization:
+      prefer_models:
+        - "gpt-4o"               # Best OpenAI performance
+        - "claude-3-sonnet"      # Best Anthropic reasoning
+        - "gpt-4-turbo"          # High performance OpenAI
+        - "gemini-1.5-pro"       # Best Google model
+    
+    # Fallback behavior when all providers fail
+    fallback:
+      enabled: true
+      retry_attempts: 2
+      retry_delay_seconds: 1
+      default_to_offline: false   # If true, gracefully degrade to offline mode
+
+# Common memory settings
+memory:
+  type: "persistent"
+  max_history: 100
+
+# Common error handling
+error_handling:
+  max_retries: 3
+  retry_delay_seconds: 5
+  auto_fix_enabled: true
+  create_github_issues: true
+
+# Common logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(threadName)s - %(message)s"
+
+# Route tokens (commonly used across agents)
+routing:
+  tokens:
+    # Hello agent operations
+    addition: "ROUTE_TO_ADDITION"
+    multiplication: "ROUTE_TO_MULTIPLICATION"
+    
+    # Git operations
+    git_clone: "ROUTE_TO_GIT_CLONE"
+    github_cli: "ROUTE_TO_GITHUB_CLI"
+    github_issue: "ROUTE_TO_GITHUB_ISSUE"
+    shell_exec: "ROUTE_TO_SHELL_EXEC"
+    shell: "ROUTE_TO_SHELL"
+    create_pr: "ROUTE_TO_CREATE_PR"
+    
+    # Terraform operations
+    terraform_init: "ROUTE_TO_TF_INIT"
+    terraform_plan: "ROUTE_TO_TF_PLAN"
+    terraform_apply: "ROUTE_TO_TF_APPLY"
+    
+    # Supervisor operations
+    clone: "ROUTE_TO_CLONE"
+    stack_detect: "ROUTE_TO_STACK_DETECT"
+    terraform: "ROUTE_TO_TERRAFORM"
+    issue: "ROUTE_TO_ISSUE"
+    
+    # Demonstrator operations
+    analyze: "ROUTE_TO_ANALYZE"
+    demonstrate: "ROUTE_TO_DEMONSTRATE"
+    collect_inputs: "ROUTE_TO_COLLECT_INPUTS"
+    retry: "ROUTE_TO_RETRY"
+    
+    # Policy operations
+    policy_scan: "ROUTE_TO_POLICY_SCAN"
+    policy_evaluate: "ROUTE_TO_POLICY_EVALUATE"
+    policy_block: "ROUTE_TO_POLICY_BLOCK"
+    policy_report: "ROUTE_TO_POLICY_REPORT"
+    
+    # End states
+    create_issue: "ROUTE_TO_CREATE_ISSUE"
+    open_issue: "ROUTE_TO_OPEN_ISSUE"
+    end: "ROUTE_TO_END"
+
+# Tool settings (common defaults)
+tools:
+  shell:
+    allowed_binaries:
+      - "terraform"
+      - "git"
+      - "bash"
+      - "sh"
+      - "curl"
+      - "wget"
+      - "jq"
+      - "gh"
+      - "tfsec"
+      - "ls"
+      - "find"
+      - "wc"
+    max_output_size: 8192
+    allow_relative_paths: true
+    restrict_to_workspace: true
+    
+  git:
+    default_clone_depth: 1
+    sanitize_repo_names: true
+    store_operations_in_memory: true
+    remote_name: "origin"
+    auth_failure_patterns:
+      - "Authentication failed"
+      - "Permission denied"
+      - "Could not read from remote repository"
+      - "fatal: unable to access"
+      - "403 Forbidden"
+      - "401 Unauthorized"
+      - "Please make sure you have the correct access rights"
+    repo_path_template: "{workspace}/{repo_name}"
+    default_workspace: "/workspace"
+    default_timeout: 300
+    
+  terraform:
+    allowed_binaries:
+      - "terraform"
+      - "git"
+      - "bash"
+      - "sh"
+    default_plan_file: "plan.tfplan"
+    default_auto_approve: true
+    restrict_to_workspace: true
+    store_operations_in_memory: true
+    
+  policy:
+    tfsec_enabled: true
+    block_on_severity: ["CRITICAL", "HIGH"]
+    artifact_on_severity: ["CRITICAL", "HIGH", "MEDIUM"]
+
+# Agent-specific configurations
+agents:
+  policy_agent:
+    # Policy enforcement settings
+    policy:
+      tfsec:
+        enabled: true
+        timeout_seconds: 120
+        output_format: "json"
+        block_on_severity: ["CRITICAL", "HIGH"]
+        artifact_on_severity: ["CRITICAL", "HIGH", "MEDIUM"]
+      working_directory: "/workspace"
+      artifacts:
+        output_dir: "/workspace/.policy_findings"
+        json_filename: "policy_findings_{timestamp}.json"
+        summary_filename: "policy_summary_{timestamp}.txt"
+    
+    # Agent-specific routing tokens
+    routing_keys:
+      policy_scan: "ROUTE_TO_POLICY_SCAN"
+      policy_evaluate: "ROUTE_TO_POLICY_EVALUATE"
+      policy_block: "ROUTE_TO_POLICY_BLOCK"
+      policy_report: "ROUTE_TO_POLICY_REPORT"
+      end: "ROUTE_TO_END"
+    
+    # Memory settings
+    memory:
+      max_history: 50
+  
+  policy:
+    tfsec_enabled: true
+    block_on_severity:
+      - "CRITICAL"
+      - "HIGH"
+    artifact_on_severity:
+      - "CRITICAL"
+      - "HIGH"
+      - "MEDIUM"
+
+  demonstrator:
+    # Demonstrator agent specific configuration
+    routing_keys:
+      analyze: "ROUTE_TO_ANALYZE"
+      demonstrate: "ROUTE_TO_DEMONSTRATE"
+      collect_inputs: "ROUTE_TO_COLLECT_INPUTS"
+      retry: "ROUTE_TO_RETRY"
+      create_issue: "ROUTE_TO_CREATE_ISSUE"
+      end: "ROUTE_TO_END"
+    
+    prompts:
+      planner_prompt: |
+        User request: "{user_input}"
+
+        This is a dry-run demonstration request for error: {error_type}
+        Error message: {error_message}
+
+        Analyze this request and determine the appropriate action:
+        1. If need to analyze the error for user guidance, respond with "{route_analyze}"
+        2. If need to demonstrate the issue to user, respond with "{route_demonstrate}"
+        3. If need to collect user inputs for fixing, respond with "{route_collect_inputs}"
+        4. If need to retry with new information, respond with "{route_retry}"
+        5. If need to create GitHub issue, respond with "{route_create_issue}"
+        6. If demonstration is complete, respond with "{route_end}"
+
+        Important: Focus on being helpful and educational in demonstrating the error and potential fixes.
+    
+    # Error analysis patterns
+    error_patterns:
+      terraform_auth:
+        keywords: ["missing_terraform_token", "auth", "tfe_token"]
+        fixable: true
+        required_inputs: ["TFE_TOKEN", "TF_WORKSPACE"]
+        
+      api_auth:
+        keywords: ["api key", "401", "unauthorized"]
+        fixable: true
+        required_inputs: ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GITHUB_TOKEN"]
+        
+      terraform_init:
+        keywords: ["terraform init", "backend"]
+        fixable: true
+        required_inputs: ["Backend configuration", "Access credentials"]
+        
+      network_error:
+        keywords: ["network", "connection", "timeout"]
+        fixable: true
+
+# GitHub settings
+github:
+  default_assignees: ["team-infra"]
+  
+  # Copilot assignee behavior:
+  # - When copilot_assignee is omitted (default): Uses repository owner (dynamically resolved via GitHub API)
+  # - When copilot_assignee is explicitly set: Uses that specific user (e.g., "alice", "github-actions[bot]", "team-lead")
+  # - When copilot_assignee is empty string "": Treats as "no assignee" or falls back to repository owner
+  # - Can be overridden in action.yaml or via environment variable: github.copilot_assignee
+  # copilot_assignee setting omitted - defaults to repo owner when not specified
+  
+  # GitHub credentials and repository settings (for tests and development)
+  username: "amartyamandal"                    # GitHub username used in tests and development
+  default_repo: "amartyamandal/diagram-to-iac" # Default repository for development
+
+# Secret management
+security:
+  required_secrets:
+    - "REPO_API_KEY"
+  optional_secrets:
+    - "TF_API_KEY"
+    - "OPENAI_API_KEY"
+    - "GOOGLE_API_KEY"
+    - "ANTHROPIC_API_KEY"
+    - "GROK_API_KEY"
+    - "DOCKERHUB_API_KEY"
+    - "DOCKERHUB_USERNAME"
+    - "PYPI_API_KEY"
+  secret_mappings:
+    REPO_API_KEY: "GITHUB_TOKEN"
+    TF_API_KEY: "TFE_TOKEN"
+
+# Environment variable overrides configuration
+environment_overrides:
+  allowed_overrides:
+    - "network.api_timeout"
+    - "network.shell_timeout"
+    - "network.terraform_timeout"
+    - "network.github_timeout"
+    - "network.git_timeout"
+    - "ai.default_model"
+    - "ai.default_temperature"
+    - "ai.max_tokens"
+    - "system.workspace_base"
+    - "system.log_level"
+    - "logging.level"
+    - "github.copilot_assignee"
