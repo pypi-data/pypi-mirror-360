@@ -1,0 +1,34 @@
+service: balance
+frameworkVersion: '3'
+provider:
+  name: aws
+  runtime: python3.11
+  region: us-east-1
+  environment:
+    TARGET: lambda
+    ENVIRONMENT: ${env:ENVIRONMENT}
+
+plugins:
+- serverless-python-requirements
+
+functions:
+  func_name:
+    handler: main.lambda_func_name
+    events:
+    - httpApi:
+        path: path/to/endpoint
+        method: post
+  func_name_2:
+    handler: main.lambda_func_name_2
+    events:
+      - httpApi:
+          path: path/to/endpoint_2
+          method: get
+
+custom:
+  pythonRequirements:
+    dockerizePip: true
+    slim: true
+    layer: false
+    useStaticCache: true
+    noDeploy: []
