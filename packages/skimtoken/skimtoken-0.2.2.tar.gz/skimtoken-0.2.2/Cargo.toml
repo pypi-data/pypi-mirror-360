@@ -1,0 +1,42 @@
+[package]
+name = "skimtoken"
+version = "0.2.2"
+edition = "2021"
+authors = ["masaishi <mwishiha@ucsc.edu>"]
+license = "MIT"
+description = "Fast token count estimation library"
+homepage = "https://github.com/masaishi/skimtoken"
+repository = "https://github.com/masaishi/skimtoken"
+documentation = "https://github.com/masaishi/skimtoken"
+readme = "README.md"
+
+[lib]
+name = "skimtoken"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "skimtoken"
+path = "src/main.rs"
+
+[dependencies]
+whatlang = "0.16"
+atty = "0.2"
+lazy_static = "1.4"
+regex = "1.10"
+toml = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+clap = { version = "4.5", features = ["derive"] }
+
+[dependencies.pyo3]
+version = "0.25.0"
+features = ["extension-module", "abi3-py39"]
+optional = true
+
+[features]
+default = []
+python = ["pyo3"]
+
+[profile.release]
+lto = true
+opt-level = 3
+codegen-units = 1
