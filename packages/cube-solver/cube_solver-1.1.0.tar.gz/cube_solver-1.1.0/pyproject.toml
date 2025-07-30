@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools", "numpy"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cube-solver"
+dynamic = ["version"]
+dependencies = [
+  "typer",
+  "numpy"
+]
+requires-python = ">= 3.9"
+authors = [
+  {name = "Dave Barragan", email = "itsdaveba@gmail.com"}
+]
+maintainers = [
+  {name = "Dave Barragan", email = "itsdaveba@gmail.com"}
+]
+description = "Rubik's Cube Solver"
+readme = "README.rst"
+license = "MIT"
+keywords = ["rubik", "cube", "solver"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Games/Entertainment :: Puzzle Games"
+]
+
+[project.optional-dependencies]
+dev = [
+  "flake8",  # linting
+  "pytest",  # testing
+  "coverage"  # testing
+]
+docs = [
+  "Sphinx",  # docs
+  "sphinx_rtd_theme",  # theme
+  "watchdog"  # servedocs
+]
+build = [
+  "bump2version",  # bump
+  "build",  # build
+  "twine"  # release
+]
+
+[project.urls]
+changelog = "https://github.com/itsdaveba/cube-solver/blob/main/HISTORY.rst"
+documentation = "https://cube-solver.readthedocs.io"
+issues = "https://github.com/itsdaveba/cube-solver/issues"
+source = "https://github.com/itsdaveba/cube-solver"
+
+[project.scripts]
+cube = "cube_solver.cli:app"
+
+[tool.setuptools.dynamic]
+version = {attr = "cube_solver.__version__"}
+
+[tool.coverage.run]
+omit = ["setup.py", "tests/*"]
+
+[tool.coverage.report]
+exclude_also = ["overload", "TYPE_CHECKING", "if __name__ == .__main__.:"]
