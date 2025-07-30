@@ -1,0 +1,34 @@
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "gemmi-program"
+version = "0.7.3"
+requires-python = ">=3.8"
+description="gemmi (program executable only)"
+readme = "README.md"
+authors = [{name="Marcin Wojdyr", email="wojdyr@gmail.com"}]
+urls.repository = "https://github.com/project-gemmi/gemmi_program_wheel"
+license = {text = "MPL-2.0"}  # or, at your option, LGPL-3.0
+classifiers = [
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "Topic :: Scientific/Engineering :: Chemistry",
+  "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+]
+
+[tool.scikit-build]
+wheel.py-api = "py2.py3"  # python version is irrelevant
+wheel.expand-macos-universal-tags = true  # not sure about this one
+cmake.build-type = "Release"
+#logging.level = "DEBUG"
+[tool.scikit-build.cmake.define]
+BUILD_SHARED_LIBS = "OFF"
+FETCH_ZLIB_NG = "ON"
+
+[tool.cibuildwheel]
+build-verbosity = 1
+test-command = "gemmi --version --verbose"
+skip = "*musllinux*"
+build = "cp312-*"
