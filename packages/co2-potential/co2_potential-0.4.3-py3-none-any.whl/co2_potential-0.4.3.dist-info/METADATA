@@ -1,0 +1,190 @@
+Metadata-Version: 2.4
+Name: co2_potential
+Version: 0.4.3
+Summary: A Python package interfacing with the CO2CO2 shared library.
+Author: Olaseni Sode
+Author-email: osode@calstatela.edu
+License: MIT
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: C++
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: POSIX :: Linux
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-python
+Dynamic: summary
+
+# CO₂–CO₂ Potential Energy Library
+
+High-performance C++ routines for computing CO₂ dimer potentials (1-body, 2-body, SAPT-S), exposed to Python via a ctypes wrapper (and optionally a pybind11 module).
+
+## Repository Layout
+
+```
+CO2_AUTODIFF/                    # Project root
+├── src/                         # All C++ source + Makefile
+│   ├── mbCO2CO2.cpp             # C-API exports (energies, grads, Hessians)
+│   ├── mbCO2CO2.h               # Function declarations
+│   ├── x1b.cpp/.h               # 1-body poly routines
+│   ├── x2b.cpp/.h               # 2-body poly routines
+│   ├── sapt-s.cpp/.h            # SAPT-S routines
+│   ├── poly-*.cpp/.h            # polynomial basis eval
+│   └── Makefile                 # builds `libCO2CO2.so`
+├── co2_potential/               # Python package
+│   ├── __init__.py
+│   ├── libCO2CO2.so             # copied in by setup.py
+│   └── wrapper.py               # ctypes wrapper + convenience functions
+├── setup.py                     # pip install / build‐ext hook
+├── pyproject.toml               # PEP 517 build config
+├── MANIFEST.in                  # include shared lib & .py files
+├── README.md
+└── LICENSE
+```
+
+## Installation
+
+### 1. Prerequisites
+
+- C++ compiler (GCC/Clang) supporting C++17  
+- Python 3.6+ and pip  
+- (Optional) [`ccache`](https://ccache.dev/) for faster recompiles  
+
+### 2. Install via pip
+
+From project root:
+
+```bash
+pip install .
+```
+
+This will:
+
+1. Invoke the custom `build_ext` command in `setup.py`  
+2. `cd src-autodiff && make clean && make`  
+3. Copy `libCO2CO2.so` into the `co2_potential/` package  
+4. Build & install the Python wheel
+
+### 3. Manual Build (if needed)
+
+If you want to rebuild by hand:
+
+```bash
+cd src
+make clean
+make -j$(sysctl -n hw.ncpu)
+# or add OP=-O2 in Makefile for faster debug builds
+```
+
+Then copy the resulting `libCO2CO2.so` into the Python package:
+
+```bash
+cp libCO2CO2.so ../co2_potential/
+```
+
+## Usage
+
+```python
+import numpy as np
+from co2_potential.wrapper import p1b, p2b_4, p2b_5, sapt
+
+# Example: 6-atom dimer → 18 coordinates
+xyz = np.array([
+    0.0,   0.0,  0.000,    # monomer A: C, O, O
+    0.0,   0.0, -1.162,
+    0.0,   0.0,  1.162,
+    3.75,  0.0,  0.000,    # monomer B: C, O, O
+    3.75,  0.0, -1.162,
+    3.75,  0.0,  1.162
+], dtype=np.double)
+
+E1 = p1b(xyz)        # 1-body energy
+E2_4 = p2b_4(xyz)    # 2-body 4th‐order
+E2_5 = p2b_5(xyz)    # 2-body 5th‐order
+Es = sapt(xyz)       # SAPT-S energy
+
+print(f"E1 = {E1:.6f}, E2(5) = {E2_5:.6f}, SAPT = {Es:.6f}")
+```
+
+If you built a pybind11 module under `co2_potential/python/module.cpp`, simply:
+
+```python
+import co2_potential
+# co2_potential.p1b, co2_potential.p2b_5, co2_potential.sapt, …
+```
+
+## Functionality
+
+The library provides the following Python functions via `co2_potential.wrapper`:
+
+### Dimension and Version Getters
+
+- `get_p1b_dim()`: Returns the number of coordinates for monomer (should be 9).
+- `get_p2b_dim()`: Returns the number of coordinates for dimer (should be 18).
+- `get_p2b_4_dim()`: Returns the number of coordinates for 2-body 4th-order.
+- `get_p2b_5_dim()`: Returns the number of coordinates for 2-body 5th-order.
+- `get_sapt_dim()`: Returns the number of coordinates for SAPT-S.
+- `get_version()`: Returns the version string of the underlying C++ library.
+
+### 1B (Monomer) Functions
+
+- `p1b(xyz)`: Monomer energy. `xyz` is a numpy array of shape (9,).
+- `p1b_gradient(xyz)`: Monomer gradient. Returns numpy array of shape (9,).
+- `p1b_hessian_rev(xyz)`: Monomer Hessian (reverse-mode autodiff). Returns numpy array of shape (9, 9).
+- `p1b_hessian_fwd(xyz)`: Monomer Hessian (forward-mode autodiff). Returns numpy array of shape (9, 9).
+
+### 2B (Dimer) Functions – 4th Order
+
+- `p2b_4(xyz)`: Dimer 2-body 4th-order energy. `xyz` is a numpy array of shape (18,).
+- `p2b_gradient_4(xyz)`: Dimer 2-body 4th-order gradient. Returns numpy array of shape (18,).
+- `p2b_hessian_4_rev(xyz)`: Dimer 2-body 4th-order Hessian (reverse-mode). Returns numpy array of shape (18, 18).
+- `p2b_hessian_4_fwd(xyz)`: Dimer 2-body 4th-order Hessian (forward-mode). Returns numpy array of shape (18, 18).
+
+### 2B (Dimer) Functions – 5th Order
+
+- `p2b_5(xyz)`: Dimer 2-body 5th-order energy. `xyz` is a numpy array of shape (18,).
+- `p2b_gradient_5(xyz)`: Dimer 2-body 5th-order gradient. Returns numpy array of shape (18,).
+- `p2b_hessian_5_rev(xyz)`: Dimer 2-body 5th-order Hessian (reverse-mode). Returns numpy array of shape (18, 18).
+- `p2b_hessian_5_fwd(xyz)`: Dimer 2-body 5th-order Hessian (forward-mode). Returns numpy array of shape (18, 18).
+
+### SAPT-S Dimer Functions
+
+- `sapt(xyz)`: SAPT-S dimer energy. `xyz` is a numpy array of shape (18,).
+- `sapt_gradient(xyz)`: SAPT-S dimer gradient. Returns numpy array of shape (18,).
+- `sapt_hessian_rev(xyz)`: SAPT-S dimer Hessian (reverse-mode). Returns numpy array of shape (18, 18).
+- `sapt_hessian_fwd(xyz)`: SAPT-S dimer Hessian (forward-mode). Returns numpy array of shape (18, 18).
+
+The core computations are implemented in C++ for performance and exposed to Python via a ctypes wrapper.
+
+## Benchmarking
+
+This package includes a benchmarking script, `co2_potential/benchmark.py`, which tests the accuracy and performance of the CO₂ potential functions (energies, gradients, and Hessians) against reference values.  
+The script can be run directly and supports command-line flags to test specific components:
+
+```bash
+python -m co2_potential.benchmark --all         # Test all (default)
+python -m co2_potential.benchmark --energies    # Test only energies
+python -m co2_potential.benchmark --gradients   # Test only gradients
+python -m co2_potential.benchmark --hessians    # Test only hessians
+python -m co2_potential.benchmark --p1b         # Test only p1b functions
+python -m co2_potential.benchmark --p2b_4       # Test only p2b_4 functions
+python -m co2_potential.benchmark --p2b_5       # Test only p2b_5 functions
+python -m co2_potential.benchmark --sapt        # Test only sapt functions
+```
+
+The benchmark compares computed results to hard-coded reference values (with units: energies in kcal/mol, gradients in kcal/mol/angstrom, and Hessians in kcal/mol/angstrom²) and reports pass/fail status for each test.
+
+## Contributing
+
+Contributions are welcome! If you have suggestions for improvements or new features, please open an issue or submit a pull request.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
