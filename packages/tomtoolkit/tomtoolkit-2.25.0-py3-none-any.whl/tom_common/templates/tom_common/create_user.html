@@ -1,0 +1,27 @@
+{% extends 'tom_common/base.html' %}
+{% load bootstrap4 %}
+{% block title %}Create user{% endblock %}
+{% block content %}
+{% if object %}
+<form action="{% url 'user-update' object.id %}" method="POST">
+{% else %}
+<form action="{% url 'user-create' %}" method="POST">
+{% endif %}
+{% csrf_token %}
+{% bootstrap_form form %}
+{% bootstrap_formset form.user_profile_formset %}
+  {% if object.pk != current_user.pk %}
+  <p class="text-danger">WARNING: Changing the password for user <b>{{ object.username }}</b> will clear out all of
+    their saved external service API keys and passwords (if any).</p>
+  {% endif %}
+{% buttons %}
+  <button type="submit" class="btn btn-primary">
+    {% if object %}
+    Update
+    {% else %}
+    Create User
+    {% endif %}
+  </button>
+{% endbuttons %}
+</form>
+{% endblock %}
