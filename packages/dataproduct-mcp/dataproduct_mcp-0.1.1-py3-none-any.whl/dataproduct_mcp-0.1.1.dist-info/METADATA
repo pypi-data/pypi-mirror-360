@@ -1,0 +1,145 @@
+Metadata-Version: 2.4
+Name: dataproduct_mcp
+Version: 0.1.1
+Summary: A Model Context Protocol (MCP) server for discovering data products, requesting access, and executing queries on the data platform to access business data.
+License-File: LICENSE
+Requires-Python: >=3.11
+Requires-Dist: databricks-sdk>=0.20.0
+Requires-Dist: databricks-sql-connector>=3.0.0
+Requires-Dist: httpx>=0.28.1
+Requires-Dist: mcp[cli]>=1.9.4
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: snowflake-connector-python>=3.0.0
+Provides-Extra: dev
+Requires-Dist: pytest-asyncio>=0.21.0; extra == 'dev'
+Requires-Dist: pytest>=7.0.0; extra == 'dev'
+Description-Content-Type: text/markdown
+
+# Data Product MCP
+
+A Model Context Protocol (MCP) server for discovering data products and requesting access in [Data Mesh Manager](https://datamesh-manager.com/), and executing queries on the data platform to access business data.
+
+## Concept
+
+> Idea: Enable AI agents to find and access any data product for semantic business context while enforcing data governance policies.
+
+Data Products are managed high-quality business data sets shared with other teams within an organization and specified by data contracts. 
+Data contracts describe the structure, semantics, quality, and terms of use. Data products provide the semantic context AI needs to understand not just what data exists, but what it means and how to use it correctly. 
+We use Data Mesh Manager as a data product marketplace to search for available data products and evaluate if these are relevant for the task by analyzing its metadata. 
+
+Once a data product is identified, data governance plays a crucial role in ensuring that access to data products is controlled, queries are in line with the data contract's terms of use, and its compliance with organizational global policies. If necessary, the AI agent can request access to the data product's output port, which may require manual approval from the data product owner.
+
+Finally, the LLM can generate SQL queries based on the data contracts data model descriptions and semantics. The SQL queries are executed, while security guardrails are in place to ensure that no sensitive data is misused and attack vectors (such as prompt injections) are mitigated. The results are returned to the AI agent, which can then use them to answer the original business question.
+
+![](docs/architecture.svg)
+
+
+Steps:
+1. **Discovery:** Find relevant data products for task in the data product marketplace
+2. **Governance:** Check and request access to data products
+3. **Query:** Use platform-specific MCP servers to execute SQL statements.
+
+
+## Tools
+
+1. `dataproduct_search`
+    - Search data products based on the search term. Uses multiple search approaches (list, semantic search) for comprehensive results. Only returns active data products.
+    - Optional inputs:
+      - `search_term` (string): Search term to filter data products. Searches in the id, title, and description. Multiple search terms are supported, separated by space.
+    - Returns: Structured list of data products with their ID, name and description, owner information, and source of the result.
+
+2. `dataproduct_get`
+    - Get a data product by its ID. The data product contains all its output ports and server information. The response includes access status for each output port and inlines any data contracts.
+    - Required inputs:
+      - `data_product_id` (string): The data product ID.
+    - Returns: Data product details with enhanced output ports, including access status and inlined data contracts
+
+3. `dataproduct_request_access`
+    - Request access to a specific output port of a data product. This creates an access request. Based on the data product configuration, purpose, and data governance rules, the access will be automatically granted, or it will be reviewed by the data product owner.
+    - Required inputs:
+      - `data_product_id` (string): The data product ID.
+      - `output_port_id` (string): The output port ID.
+      - `purpose` (string): The specific purpose what the user is doing with the data and and reason why they need access. If the access request need to be approved by the data owner, the purpose is used by the data owner to decide if the access is eligable from a business, technical, and governance point of view.
+    - Returns: Access request details including access_id, status, and approval information
+
+4. `dataproduct_query`
+    - Execute a SQL query on a data product's output port. This tool connects to the underlying data platform and executes the provided SQL query. You must have active access to the output port to execute queries.
+    - Required inputs:
+      - `data_product_id` (string): The data product ID.
+      - `output_port_id` (string): The output port ID.
+      - `query` (string): The SQL query to execute.
+    - Returns: Query results as structured data (limited to 100 rows)
+    
+## Configuration
+
+TBD
+
+(add DXT and MCP server configuration here)
+
+## Supported Server Types
+
+The `dataproduct_query` tool supports executing queries on data products. The MCP clients formulates SQL queries based on the data contract with its data model structure and semantics. 
+
+The following server types are currently supported out-of-the-box:
+
+ | Server Type | Status      | Notes                                                                                                                |
+ |-------------|-------------|----------------------------------------------------------------------------------------------------------------------|
+ | Snowflake   | ✅           | Requires SNOWFLAKE_USER, SNOWFLAKE_PASSWORD, SNOWFLAKE_WAREHOUSE, SNOWFLAKE_ROLE environment variables               |
+ | Databricks  | ✅           | Requires DATABRICKS_HOST, DATABRICKS_HTTP_PATH, DATABRICKS_CLIENT_ID, DATABRICKS_CLIENT_SECRET environment variables |
+ | S3          | Coming soon | Implemented through DuckDB client                                                                                    |
+ | BigQuery    | Coming soon |                                                                                                                      |
+ | Fabric      | Coming soon |                                                                                                                      |
+ 
+ > **Note:** Use additional Platform-specific MCP servers for other data platform types (e.g., BigQuery, Redshift, PostgreSQL) by adding them to your MCP client.
+
+
+## Development Setup
+
+### Install dependencies
+
+```bash
+uv sync --extra dev
+uv pip install -e .
+```
+
+### Run all tests
+```bash
+uv run pytest
+```
+
+### Use in Claude Desktop (Dev Mode)
+
+Open `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+Add this entry:
+
+```
+{
+  "mcpServers": {
+    "dataproduct": {
+      "command": "uv",
+      "args": [
+        "run", 
+        "--directory", "<path_to_folder>/dataproduct-mcp", 
+        "python", "-m", "dataproduct_mcp.server"
+        ],
+      "env": {
+        "DATAMESH_MANAGER_API_KEY": "dmm_live_..."
+      }
+    }
+  }
+}
+```
+
+### Use with MCP Inspector
+
+```
+npx @modelcontextprotocol/inspector --config example.config.json --server dataproduct
+```
+
+
+## Credits
+
+Created by [Simon Harrer](https://www.linkedin.com/in/simonharrer/), [André Deuerling](https://www.linkedin.com/in/andre-deuerling/), and [Jochen Christ](https://www.linkedin.com/in/jochenchrist/).
