@@ -1,0 +1,80 @@
+{% from 'debug/sse.html' import sse_style, sse_script,sse_html -%}
+
+
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="{{ model.favicon_url }}" rel="shortcut icon" />
+  <title>{{ model.title }}</title>
+
+  {%- for link in model.css_links %}
+  <link rel="stylesheet" href="{{link}}" />
+  {% endfor -%}
+
+  {%- for style_tag in model.style_tags %}
+  <style data-instaui-group-id="{{style_tag.group_id}}">{{style_tag.content}}</style>
+  {% endfor -%}
+
+</head>
+
+<body>
+
+  <div id="app">
+    <insta-ui :config="config" :meta="meta"></insta-ui>
+  </div>
+
+  <script type="importmap">
+  {
+  "imports":{{model.import_maps_string | safe}}
+  }
+  </script>
+
+  {%- for link in model.js_links -%}
+  <script src="{{link}}"></script>
+  {%- endfor -%}
+
+  {%- for content in model.script_tags -%}
+  <script>{{content}}</script>
+  {%- endfor -%}
+
+
+  <script type="module">
+    import { createApp } from 'vue'
+    import {install as installInsta} from 'instaui'
+    const True = true;
+    const False = false;
+    const None = undefined;
+
+    const appConfig = {{model.config_dict | safe}};
+    const meta = {mode: 'webview',version:'{{model.version | safe}}'}
+
+    window.addEventListener('pywebviewready',async () => {
+      const app = createApp({
+        {% if model.on_app_mounted %}
+        mounted() {
+          pywebview.api.on_app_mounted()
+        },
+        {% endif %}
+        setup() {
+          return {
+            config:appConfig,
+            meta,
+          }
+        }
+      })
+
+      installInsta(app, appConfig)
+      {% for info in model.vue_app_component -%}
+      app.component('{{info.name | safe}}',(await import('{{info.url | safe }}')).default)
+      {% endfor -%}
+      {% for plugin_url in model.vue_app_use -%}
+      app.use(await import('{{plugin_url | safe }}'))
+      {% endfor -%}
+      app.mount('#app')
+    })
+  </script>
+</body>
+</html>
