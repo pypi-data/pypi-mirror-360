@@ -1,0 +1,1 @@
+coverage run -m pytest --cov=dataset_sh tests; coverage report -m

@@ -1,0 +1,75 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+exclude = [
+    "/.*",
+    "/dist",
+    "/doc-site",
+    "/app-ui",
+    "/cra-app-ui",
+    "/tests",
+    "/old_tests",
+    "/utils",
+    "/example",
+]
+
+artifacts = [
+    "/src/dataset_sh/server/assets/app-ui.frontend"
+]
+
+[project]
+name = "dataset.sh"
+version = "0.0.38"
+authors = [
+    { name = "Hao Wu", email = "haowu@dataset.sh" },
+]
+description = "Dataset.sh: help you create, share, and use dataset"
+readme = "readme.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Information Analysis"
+]
+dependencies = [
+    "easytype ~= 0.0.3",
+    "head_switcher ~= 0.0.2",
+    "pydantic >= 2.9.2",
+    "requests ~= 2.0",
+    "click ~= 8.0",
+    'tqdm ~= 4.0',
+    "flask ~= 3.0",
+    "pyjwt ~= 2.0"
+]
+license = { text = "MIT License" }
+
+[project.scripts]
+"dataset.sh" = "dataset_sh.cli:cli"
+"dataset-sh-server" = "dataset_sh.server.app_cli:cli"
+
+[project.urls]
+"Homepage" = "https://dataset.sh"
+"Bug Tracker" = "https://github.com/dataset-sh/dataset-sh"
+
+[project.optional-dependencies]
+
+server = [
+    "flask ~= 3.0.1",
+    "head-switcher >= 0.0.1",
+    "pyjwt ~= 2.8.0",
+]
+
+all = ["dataset.sh[server]"]
+
+tests = [
+    'pytest ~= 8.3.3',
+    'coverage ~= 7.3.2',
+    'twine ~= 5.0.0',
+    'build ~= 1.1.1',
+    'pkginfo ~= 1.10.0'
+]
+
