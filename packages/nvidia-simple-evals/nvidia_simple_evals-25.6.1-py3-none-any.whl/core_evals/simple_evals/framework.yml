@@ -1,0 +1,609 @@
+framework:
+  name: simple_evals
+  pkg_name: simple_evals
+  full_name: simple-evals
+  description: simple-evals This repository contains a lightweight library for evaluating language models.
+  url: https://github.com/openai/simple-evals
+  source: https://gitlab-master.nvidia.com/dl/JoC/competitive_evaluation/simple-evals
+defaults:
+  command: >-
+    {% if target.api_endpoint.api_key is not none %}export API_KEY=${{target.api_endpoint.api_key}} && {% endif %}
+    simple_evals --model {{target.api_endpoint.model_id}} --eval_name {{config.params.task}}
+    --url {{target.api_endpoint.url}} --temperature {{config.params.temperature}} --top_p {{config.params.top_p}}
+    --max_tokens {{config.params.max_new_tokens}} --out_dir {{config.output_dir}} --cache_dir {{config.output_dir}}/cache
+    --num_threads {{config.params.parallelism}} --max_retries {{config.params.max_retries}} --timeout {{config.params.request_timeout}}
+    {% if config.params.extra.n_samples is defined %} --num_repeats {{config.params.extra.n_samples}}{% endif %}
+    {% if config.params.limit_samples is not none %} --first_n {{config.params.limit_samples}}{% endif %}
+    {% if config.params.extra.add_system_prompt  %} --add_system_prompt {% endif %}
+    {% if config.params.extra.downsampling_ratio is not none %} --downsampling_ratio {{config.params.extra.downsampling_ratio}}{% endif %}
+    {% if config.params.extra.args is defined %} {{ config.params.extra.args }} {% endif %}
+    {% if config.params.extra.judge.url is not none %} --judge_url {{config.params.extra.judge.url}}{% endif %}
+    {% if config.params.extra.judge.model_id is not none %} --judge_model_id {{config.params.extra.judge.model_id}}{% endif %}
+    {% if config.params.extra.judge.api_key is not none %} --judge_api_key_name {{config.params.extra.judge.api_key}}{% endif %}
+    {% if config.params.extra.judge.backend is not none %} --judge_backend {{config.params.extra.judge.backend}}{% endif %}
+    {% if config.params.extra.judge.request_timeout is not none %} --judge_request_timeout {{config.params.extra.judge.request_timeout}}{% endif %}
+    {% if config.params.extra.judge.max_retries is not none %} --judge_max_retries {{config.params.extra.judge.max_retries}}{% endif %}
+    {% if config.params.extra.judge.temperature is not none %} --judge_temperature {{config.params.extra.judge.temperature}}{% endif %}
+    {% if config.params.extra.judge.top_p is not none %} --judge_top_p {{config.params.extra.judge.top_p}}{% endif %}
+    {% if config.params.extra.judge.max_tokens is not none %} --judge_max_tokens {{config.params.extra.judge.max_tokens}}{% endif %}
+    {% if config.params.extra.judge.max_concurrent_requests is not none %} --judge_max_concurrent_requests {{config.params.extra.judge.max_concurrent_requests}}{% endif %}
+  config:
+    params:
+      limit_samples: null
+      max_new_tokens: 4096
+      temperature: 0
+      top_p: 0.00001
+      parallelism: 10
+      max_retries: 5
+      request_timeout: 60
+      extra:
+        downsampling_ratio: null
+        add_system_prompt: false
+        judge:
+          url: null
+          model_id: null
+          api_key: null
+          backend: "openai"  # "openai" for OpenAI compatible judges; "generic" for direct calls via aiohttp
+          request_timeout: 600
+          max_retries: 16
+          temperature: 0.0
+          top_p: 0.0001
+          max_tokens: 1024
+          max_concurrent_requests: null  # only used with generic backend, inherits from parallelism if null
+  target:
+    api_endpoint: {} # required to add: url, model_id, api_key
+evaluations:
+- name: AIME_2025
+  description: AIME 2025 questions, math
+  defaults:
+    config:
+      type: AIME_2025
+      supported_endpoint_types:
+      - chat
+      params:
+        task: AIME_2025
+        extra:
+          judge:
+            api_key: JUDGE_API_KEY
+- name: AIME_2024
+  description: AIME 2024 questions, math
+  defaults:
+    config:
+      type: AIME_2024
+      supported_endpoint_types:
+      - chat
+      params:
+        task: AIME_2024  
+- name: AA_AIME_2024
+  description: AA AIME 2024 questions, math
+  defaults:
+    config:
+      type: AA_AIME_2024
+      supported_endpoint_types:
+      - chat
+      params:
+        task: AA_AIME_2024
+        extra:
+          judge:
+            api_key: JUDGE_API_KEY
+- name: AA_math_test_500
+  description: AA Open Ai math test 500
+  defaults:
+    config:
+      type: AA_math_test_500
+      supported_endpoint_types:
+      - chat
+      params:
+        task: AA_math_test_500
+        extra:
+          judge:
+            api_key: JUDGE_API_KEY
+- name: math_test_500
+  description: Open Ai math test 500
+  defaults:
+    config:
+      type: math_test_500
+      supported_endpoint_types:
+      - chat
+      params:
+        task: math_test_500
+- name: mgsm
+  description: MGSM is a benchmark of grade-school math problems. The same 250 problems from GSM8K are each translated via human annotators in 10 languages.
+  defaults:
+    config:
+      type: mgsm
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mgsm
+- name: humaneval
+  description:  HumanEval evaluates the performance in Python code generation tasks. It used to measure functional correctness for synthesizing programs from docstrings. It consists of 164 original programming problems, assessing language comprehension, algorithms, and simple mathematics, with some comparable to simple software interview questions.
+  defaults:
+    config:
+      type: humaneval
+      supported_endpoint_types:
+      - chat
+      params:
+        task: humaneval
+        n_repeats: 1
+- name: humanevalplus
+  description: HumanEvalPlus is a dataset of 164 programming problems, assessing language comprehension, algorithms, and simple mathematics, with some comparable to simple software interview questions.
+  defaults:
+    config:
+      type: humanevalplus
+      supported_endpoint_types:
+      - chat
+      params:
+        task: humanevalplus
+        n_repeats: 1
+- name: mmlu_pro
+  description: MMLU-Pro dataset is a more robust and challenging massive multi-task understanding dataset tailored to more rigorously benchmark large language models' capabilities. This dataset contains 12K complex questions across various disciplines.
+  defaults:
+    config:
+      type: mmlu_pro
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_pro
+- name: mmlu_am
+  description: MMLU 0-shot CoT in Amharic (am)
+  defaults:
+    config:
+      type: mmlu_am
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_am
+- name: mmlu_ar
+  description: MMLU 0-shot CoT in Arabic (ar)
+  defaults:
+    config:
+      type: mmlu_ar
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_ar
+- name: mmlu_bn
+  description: MMLU 0-shot CoT in Bengali (bn)
+  defaults:
+    config:
+      type: mmlu_bn
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_bn
+- name: mmlu_cs
+  description: MMLU 0-shot CoT in Czech (cs)
+  defaults:
+    config:
+      type: mmlu_cs
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_cs
+- name: mmlu_de
+  description: MMLU 0-shot CoT in German (de)
+  defaults:
+    config:
+      type: mmlu_de
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_de
+- name: mmlu_el
+  description: MMLU 0-shot CoT in Greek (el)
+  defaults:
+    config:
+      type: mmlu_el
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_el
+- name: mmlu_en
+  description: MMLU 0-shot CoT in English (en)
+  defaults:
+    config:
+      type: mmlu_en
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_en
+- name: mmlu_es
+  description: MMLU 0-shot CoT in Spanish (es)
+  defaults:
+    config:
+      type: mmlu_es
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_es
+- name: mmlu_fa
+  description: MMLU 0-shot CoT in Persian (fa)
+  defaults:
+    config:
+      type: mmlu_fa
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_fa
+- name: mmlu_fil
+  description: MMLU 0-shot CoT in Filipino (fil)
+  defaults:
+    config:
+      type: mmlu_fil
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_fil
+- name: mmlu_fr
+  description: MMLU 0-shot CoT in French (fr)
+  defaults:
+    config:
+      type: mmlu_fr
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_fr
+- name: mmlu_ha
+  description: MMLU 0-shot CoT in Hausa (ha)
+  defaults:
+    config:
+      type: mmlu_ha
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_ha
+- name: mmlu_he
+  description: MMLU 0-shot CoT in Hebrew (he)
+  defaults:
+    config:
+      type: mmlu_he
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_he
+- name: mmlu_hi
+  description: MMLU 0-shot CoT in Hindi (hi)
+  defaults:
+    config:
+      type: mmlu_hi
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_hi
+- name: mmlu_id
+  description: MMLU 0-shot CoT in Indonesian (id)
+  defaults:
+    config:
+      type: mmlu_id
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_id
+- name: mmlu_ig
+  description: MMLU 0-shot CoT in Igbo (ig)
+  defaults:
+    config:
+      type: mmlu_ig
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_ig
+- name: mmlu_it
+  description: MMLU 0-shot CoT in Italian (it)
+  defaults:
+    config:
+      type: mmlu_it
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_it
+- name: mmlu_ja
+  description: MMLU 0-shot CoT in Japanese (ja)
+  defaults:
+    config:
+      type: mmlu_ja
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_ja
+- name: mmlu_ko
+  description: MMLU 0-shot CoT in Korean (ko)
+  defaults:
+    config:
+      type: mmlu_ko
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_ko
+- name: mmlu_ky
+  description: MMLU 0-shot CoT in Kyrgyz (ky)
+  defaults:
+    config:
+      type: mmlu_ky
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_ky
+- name: mmlu_lt
+  description: MMLU 0-shot CoT in Lithuanian (lt)
+  defaults:
+    config:
+      type: mmlu_lt
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_lt
+- name: mmlu_mg
+  description: MMLU 0-shot CoT in Malagasy (mg)
+  defaults:
+    config:
+      type: mmlu_mg
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_mg
+- name: mmlu_ms
+  description: MMLU 0-shot CoT in Malay (ms)
+  defaults:
+    config:
+      type: mmlu_ms
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_ms
+- name: mmlu_ne
+  description: MMLU 0-shot CoT in Nepali (ne)
+  defaults:
+    config:
+      type: mmlu_ne
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_ne
+- name: mmlu_nl
+  description: MMLU 0-shot CoT in Dutch (nl)
+  defaults:
+    config:
+      type: mmlu_nl
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_nl
+- name: mmlu_ny
+  description: MMLU 0-shot CoT in Nyanja (ny)
+  defaults:
+    config:
+      type: mmlu_ny
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_ny
+- name: mmlu_pl
+  description: MMLU 0-shot CoT in Polish (pl)
+  defaults:
+    config:
+      type: mmlu_pl
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_pl
+- name: mmlu_pt
+  description: MMLU 0-shot CoT in Portuguese (pt)
+  defaults:
+    config:
+      type: mmlu_pt
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_pt
+- name: mmlu_ro
+  description: MMLU 0-shot CoT in Romanian (ro)
+  defaults:
+    config:
+      type: mmlu_ro
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_ro
+- name: mmlu_ru
+  description: MMLU 0-shot CoT in Russian (ru)
+  defaults:
+    config:
+      type: mmlu_ru
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_ru
+- name: mmlu_si
+  description: MMLU 0-shot CoT in Sinhala (si)
+  defaults:
+    config:
+      type: mmlu_si
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_si
+- name: mmlu_sn
+  description: MMLU 0-shot CoT in Shona (sn)
+  defaults:
+    config:
+      type: mmlu_sn
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_sn
+- name: mmlu_so
+  description: MMLU 0-shot CoT in Somali (so)
+  defaults:
+    config:
+      type: mmlu_so
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_so
+- name: mmlu_sr
+  description: MMLU 0-shot CoT in Serbian (sr)
+  defaults:
+    config:
+      type: mmlu_sr
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_sr
+- name: mmlu_sv
+  description: MMLU 0-shot CoT in Swedish (sv)
+  defaults:
+    config:
+      type: mmlu_sv
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_sv
+- name: mmlu_sw
+  description: MMLU 0-shot CoT in Swahili (sw)
+  defaults:
+    config:
+      type: mmlu_sw
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_sw
+- name: mmlu_te
+  description: MMLU 0-shot CoT in Telugu (te)
+  defaults:
+    config:
+      type: mmlu_te
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_te
+- name: mmlu_tr
+  description: MMLU 0-shot CoT in Turkish (tr)
+  defaults:
+    config:
+      type: mmlu_tr
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_tr
+- name: mmlu_uk
+  description: MMLU 0-shot CoT in Ukrainian (uk)
+  defaults:
+    config:
+      type: mmlu_uk
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_uk
+- name: mmlu_vi
+  description: MMLU 0-shot CoT in Vietnamese (vi)
+  defaults:
+    config:
+      type: mmlu_vi
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_vi
+- name: mmlu_yo
+  description: MMLU 0-shot CoT in Yoruba (yo)
+  defaults:
+    config:
+      type: mmlu_yo
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu_yo
+- name: mmlu
+  description: MMLU 0-shot CoT
+  defaults:
+    config:
+      type: mmlu
+      supported_endpoint_types:
+      - chat
+      params:
+        task: mmlu
+- name: gpqa_diamond
+  description: gpqa_diamond 0-shot CoT
+  defaults:
+    config:
+      type: gpqa_diamond
+      supported_endpoint_types:
+      - chat
+      params:
+        task: gpqa_diamond
+- name: gpqa_experts
+  description: gpqa_experts 0-shot CoT
+  defaults:
+    config:
+      type: gpqa_experts
+      supported_endpoint_types:
+      - chat
+      params:
+        task: gpqa_experts
+- name: gpqa_extended
+  description: gpqa_extended 0-shot CoT
+  defaults:
+    config:
+      type: gpqa_extended
+      supported_endpoint_types:
+      - chat
+      params:
+        task: gpqa_extended
+- name: gpqa_main
+  description: gpqa_main 0-shot CoT
+  defaults:
+    config:
+      type: gpqa_main
+      supported_endpoint_types:
+      - chat
+      params:
+        task: gpqa_main
+- name: simpleqa
+  description: A factuality benchmark called SimpleQA that measures the ability for language models to answer short, fact-seeking questions.
+  defaults:
+    config:
+      type: simpleqa
+      supported_endpoint_types:
+      - chat
+      params:
+        task: simpleqa
+
+
+# NeMo alignment tasks
+- name: aime_2025_nemo
+  description: AIME 2025 questions, math, using NeMo's alignment template
+  defaults:
+    config:
+      type: aime_2025_nemo
+      supported_endpoint_types:
+      - chat
+      params:
+        task: aime_2025_nemo
+- name: aime_2024_nemo
+  description: AIME 2024 questions, math, using NeMo's alignment template
+  defaults:
+    config:
+      type: aime_2024_nemo
+      supported_endpoint_types:
+      - chat
+      params:
+        task: aime_2024_nemo
+- name: math_test_500_nemo
+  description: math_test_500 questions, math, using NeMo's alignment template
+  defaults:
+    config:
+      type: math_test_500_nemo
+      supported_endpoint_types:
+      - chat
+      params:
+        task: math_test_500_nemo
+- name: gpqa_diamond_nemo
+  description: gpqa_diamond questions, reasoning, using NeMo's alignment template
+  defaults:
+    config:
+      type: gpqa_diamond_nemo
+      supported_endpoint_types:
+      - chat
+      params:
+        task: gpqa_diamond_nemo
