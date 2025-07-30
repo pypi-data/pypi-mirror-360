@@ -1,0 +1,332 @@
+Metadata-Version: 2.4
+Name: infradsl
+Version: 0.1.0
+Summary: Rails-like infrastructure management for AWS, Google Cloud, and DigitalOcean
+Home-page: https://github.com/infradsl/infradsl
+Author: InfraDSL Team
+Author-email: InfraDSL Team <hello@infradsl.dev>
+Maintainer-email: InfraDSL Team <hello@infradsl.dev>
+License: MIT
+Project-URL: Homepage, https://infradsl.dev
+Project-URL: Documentation, https://infradsl.dev
+Project-URL: Repository, https://github.com/infradsl/infradsl
+Project-URL: Bug Reports, https://github.com/infradsl/infradsl/issues
+Project-URL: Changelog, https://github.com/infradsl/infradsl/blob/main/CHANGELOG.md
+Keywords: infrastructure,cloud,aws,gcp,digitalocean,terraform,pulumi,iac,devops,rails
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: Topic :: System :: Systems Administration
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Internet
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Operating System :: OS Independent
+Classifier: Environment :: Console
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: click>=8.0.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: requests>=2.31.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: pyyaml>=6.0.0
+Requires-Dist: jinja2>=3.0.0
+Requires-Dist: pydo>=0.11.0
+Requires-Dist: python-digitalocean>=1.17.0
+Requires-Dist: google-cloud-compute>=1.14.0
+Requires-Dist: google-cloud-storage>=2.10.0
+Requires-Dist: google-cloud-bigquery>=3.11.0
+Requires-Dist: google-cloud-functions>=1.16.0
+Requires-Dist: google-cloud-run>=0.10.0
+Requires-Dist: google-cloud-container>=2.22.0
+Requires-Dist: google-cloud-artifact-registry>=1.11.0
+Requires-Dist: google-api-python-client>=2.170.0
+Requires-Dist: google-auth>=2.23.0
+Requires-Dist: boto3>=1.34.0
+Requires-Dist: botocore>=1.34.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Provides-Extra: docs
+Requires-Dist: sphinx>=7.0.0; extra == "docs"
+Requires-Dist: sphinx-rtd-theme>=1.3.0; extra == "docs"
+Provides-Extra: all
+Requires-Dist: pytest>=7.0.0; extra == "all"
+Requires-Dist: pytest-cov>=4.0.0; extra == "all"
+Requires-Dist: black>=23.0.0; extra == "all"
+Requires-Dist: flake8>=6.0.0; extra == "all"
+Requires-Dist: mypy>=1.0.0; extra == "all"
+Requires-Dist: sphinx>=7.0.0; extra == "all"
+Requires-Dist: sphinx-rtd-theme>=1.3.0; extra == "all"
+Dynamic: author
+Dynamic: home-page
+Dynamic: requires-python
+
+# InfraDSL - The Rails of Modern Infrastructure
+
+> "If a dev can't read it and use it in 5 minutes, it's too complex."
+
+InfraDSL brings Rails' "convention over configuration" philosophy to cloud infrastructure. Deploy production-ready systems with the same simplicity as writing business logic.
+
+## 🚀 The Rails Philosophy for Infrastructure
+
+**Convention over Configuration** • **Developer-First Experience** • **Focus on What, Not How**
+
+```python
+# Deploy a complete microservices stack in 6 lines
+GoogleCloud.GKE("production").create()
+GoogleCloud.CloudRun("users").container("users", "services/users/").create()
+GoogleCloud.CloudRun("products").container("products", "services/products/").create()
+GoogleCloud.CloudRun("orders").container("orders", "services/orders/").create()
+GoogleCloud.Vm("database").service("postgres").create()
+```
+
+**Result**: Production infrastructure with auto-scaling, HTTPS, monitoring, and enterprise security.
+
+## ⚡ Quick Start (One-Line Install)
+
+### 🎯 Super Quick Install
+```bash
+curl -fsSL https://raw.githubusercontent.com/infradsl/infradsl/main/setup.sh | bash
+```
+
+**That's it!** The script will:
+- ✅ Install all dependencies (Python, Node.js, Docker)
+- ✅ Set up the Python backend (InfraDSL CLI)
+- ✅ Set up the React frontend (Web Interface)
+- ✅ Configure containerization
+- ✅ Create startup scripts
+
+### 🚀 Start the Application
+```bash
+cd ~/infradsl
+./start-dev.sh    # Development mode with hot reload
+# or
+./start-prod.sh   # Production mode with containers
+```
+
+**Access Points**:
+- 🌐 **Web Interface**: http://localhost:3000
+- 🔧 **API**: http://localhost:8000
+- 📚 **Documentation**: http://localhost:3000/docs
+
+### Manual Installation (Advanced)
+
+If you prefer manual setup:
+
+```bash
+# Clone repository
+git clone https://github.com/infradsl/infradsl.git
+cd infradsl
+
+# Backend setup
+cd infradsl
+pip install -r requirements.txt
+pip install -e .
+
+# Frontend setup  
+cd ../client
+npm install
+npm run dev
+
+# Start backend
+cd ../infradsl
+python -m infradsl.cli
+```
+
+### Authentication
+
+Create cloud provider credentials:
+
+**Google Cloud** (`config/gcp-service-account.json`):
+```json
+{
+  "type": "service_account",
+  "project_id": "your-project",
+  "private_key_id": "...",
+  "private_key": "-----BEGIN PRIVATE KEY-----\n...",
+  "client_email": "your-service@project.iam.gserviceaccount.com"
+}
+```
+
+**AWS** (`.env` file):
+```bash
+AWS_ACCESS_KEY_ID=your_access_key
+AWS_SECRET_ACCESS_KEY=your_secret_key
+AWS_DEFAULT_REGION=us-east-1
+```
+
+**DigitalOcean** (`.env` file):
+```bash
+DIGITALOCEAN_TOKEN=your_do_token
+```
+
+### First Deployment (30 seconds)
+
+```python
+from infradsl.providers.googlecloud import GoogleCloud
+
+# Deploy serverless container to production
+GoogleCloud.CloudRun("my-app").image("gcr.io/cloudrun/hello").create()
+```
+
+**Result**: Live HTTPS URL with global CDN and auto-scaling.
+
+## 🎯 Core Features
+
+### Universal Container Engine Support
+- **🐧 Podman** (preferred): Daemonless, rootless, enhanced security
+- **🐳 Docker**: Traditional container engine with full compatibility
+- **🔄 Automatic Detection**: No configuration needed - just works!
+
+### Multi-Cloud Support
+- **Google Cloud**: VMs, GKE, Cloud Run, Load Balancers, Artifact Registry
+- **DigitalOcean**: Droplets, Kubernetes, Container Registry, Load Balancers
+- **AWS & Azure**: Coming soon with same Rails simplicity
+
+### Smart Container Builds
+- **Language Detection**: Node.js, Python, Go, Java automatically detected
+- **Cross-Architecture**: ARM64 Mac → x86_64 production builds
+- **Security Hardening**: Non-root users, minimal base images, health checks
+- **Registry Integration**: Automatic push to cloud registries
+
+## 💻 Usage Examples
+
+### Google Cloud - Serverless Containers
+
+```python
+from infradsl.providers.googlecloud import GoogleCloud
+
+# Rails way: Deploy container from source code
+GoogleCloud.CloudRun("my-webapp").container("webapp", "src/", 8080).create()
+
+# Production API with custom configuration
+api = (GoogleCloud.CloudRun("production-api")
+    .container("api", "api-src/", 8080)
+    .memory("1Gi")
+    .cpu("2000m")
+    .auto_scale(min_instances=2, max_instances=50)
+    .environment({"DATABASE_URL": "postgresql://..."})
+    .create())
+```
+
+### Google Cloud - Kubernetes Clusters
+
+```python
+# Simple cluster with Rails defaults
+GoogleCloud.GKE("my-app").create()
+
+# Production cluster with customization
+cluster = (GoogleCloud.GKE("production")
+    .location("europe-north1")  # Regional HA
+    .nodes(5)
+    .machine_type("e2-standard-4")
+    .auto_scale(min_nodes=3, max_nodes=20)
+    .create())
+```
+
+### DigitalOcean - Container Applications
+
+```python
+from infradsl.providers.digitalocean import DigitalOcean
+
+# Container deployment with load balancer
+app = (DigitalOcean.Droplet("web-app")
+    .container("my-app:latest", "templates/web-app", 8080)
+    .size("s-2vcpu-2gb")
+    .region("fra1")
+    .load_balancer("web-lb")
+    .create())
+```
+
+### Multi-Provider Infrastructure
+
+```python
+# Development on DigitalOcean (cost-optimized)
+dev_cluster = DigitalOcean.Kubernetes("dev-cluster").create()
+
+# Production on Google Cloud (enterprise-grade)
+prod_cluster = GoogleCloud.GKE("production").create()
+
+# Same Rails API, different clouds
+```
+
+## 🏗️ Architecture Highlights
+
+### Rails Philosophy Implementation
+- **Convention over Configuration**: Sensible defaults for 90% of use cases
+- **5-Minute Rule**: If it takes longer than 5 minutes to understand, it's too complex
+- **Developer Joy**: Infrastructure as simple as business logic
+- **Production Ready**: Enterprise-grade security and scaling by default
+
+### Technical Excellence
+- **Type-Safe**: Pydantic models with comprehensive validation
+- **Error Handling**: Helpful error messages with actionable suggestions
+- **Cross-Platform**: Works on macOS, Linux, Windows
+- **Container Agnostic**: Docker, Podman, or any OCI-compatible engine
+
+### Developer Experience
+- **Fluent API**: Chainable methods like Rails ActiveRecord
+- **Auto-Detection**: Language, framework, and container engine detection
+- **Live Feedback**: Real-time status updates and progress indicators
+- **Rich Documentation**: Examples for every use case
+
+## 📊 Impact Metrics
+
+### Code Reduction
+- **Kubernetes YAML**: 500+ lines → 1 line (99.8% reduction)
+- **Terraform**: 100+ lines → 1 line (99% reduction)
+- **Docker Configuration**: 50+ lines → 0 lines (automatic)
+
+### Developer Productivity
+- **Time to Production**: Days → Minutes
+- **Learning Curve**: Weeks → 5 minutes
+- **Deployment Complexity**: Expert-level → Beginner-friendly
+
+### Production Quality
+- **Security**: Manual → Automatic best practices
+- **Scalability**: Fixed → Auto-scaling by default
+- **Monitoring**: Optional → Built-in enterprise-grade
+
+## 🛣️ Roadmap
+
+### Phase 2: Container Revolution ✅ COMPLETE
+- [x] Universal container engine support (Docker + Podman)
+- [x] Google Cloud Run serverless containers
+- [x] Smart Dockerfile/Containerfile generation
+- [x] Cross-architecture builds (ARM64 → x86_64)
+
+### Phase 3: Multi-Cloud Harmony (Next)
+- [ ] AWS provider (EC2, EKS, Lambda, ECR)
+- [ ] Azure provider (VMs, AKS, Container Instances)
+- [ ] Universal cloud abstractions
+
+### Phase 4: Developer Experience Polish
+- [ ] Interactive CLI mode
+- [ ] IDE extensions (VS Code, JetBrains)
+- [ ] Template marketplace
+- [ ] Cost optimization insights
+
+## 💡 Philosophy
+
+> **"Infrastructure as simple as business logic"**
+
+InfraDSL transforms infrastructure from a barrier into an enabler. We believe developers should focus on building amazing applications, not wrestling with YAML configurations and cloud complexity.
+
+### Design Principles
+1. **Rails Philosophy First**: Convention over configuration in everything
+2. **Developer Experience**: Optimize for developer joy and productivity
+3. **Production Ready**: Security, scalability, and reliability by default
+4. **Universal Compatibility**: Work with any tool, any cloud, any architecture
+
+---
+
+*Built with ❤️ for developers who want to ship, not configure infrastructure.*
