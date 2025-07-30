@@ -1,0 +1,75 @@
+[project]
+name = "new-python-project"
+version = "0.2.1"
+description = "Create a Python project from a simple template"
+license = "GPL-3.0-or-later"
+authors = [
+    {name = "Reuben Thomas", email = "rrt@sc3d.org"}
+]
+readme = "README.md"
+urls = {Homepage = "https://github.com/rrthomas/python_project"}
+requires-python = ">= 3.12"
+dependencies = [
+    "nancy ~= 11.0",
+]
+classifiers = [
+    "Environment :: Console",
+    "Programming Language :: Python :: 3",
+]
+
+[project.scripts]
+new-python-project = "new_python_project:main"
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[build-system]
+requires = [
+    "setuptools >= 62.3.0",
+]
+
+[tool.setuptools]
+packages = [
+    "new_python_project",
+]
+
+[tool.setuptools.package-data]
+new_python_project = [
+    "template/**",
+    "template/.github/**",
+    "template/.gitignore",
+    "template/tests/.gitignore"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::UserWarning"]
+xfail_strict = true
+
+[tool.pyright]
+exclude = ["new_python_project/template/**"]
+
+[tool.ruff]
+extend-exclude = ["new_python_project/template/**"]
+
+[tool.ruff.lint]
+select = ["D", "E", "F", "I", "UP"]
+ignore = ["D1", "D401", "D415", "E501"]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.tox]
+env_list = ["3.12", "3.13"]
+
+[tool.tox.env_run_base]
+deps = ["pyright", "pytest", "ruff", "types-setuptools"]
+commands = [
+    ["pyright", "new_python_project"],
+    ["ruff", "check", "new_python_project"],
+    ["pytest", "-Wdefault", {replace = "posargs", extend = true}],
+]
+extras = ["test"]
