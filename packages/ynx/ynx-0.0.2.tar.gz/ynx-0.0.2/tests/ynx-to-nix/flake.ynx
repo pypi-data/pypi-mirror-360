@@ -1,0 +1,56 @@
+description: "Flake with a custom dev shell combining nix.dev and LLVM tooling"
+
+inputs:
+  nixpkgs:
+    url: "github:NixOS/nixpkgs/nixpkgs-unstable"
+
+outputs:
+  args: [ self, nixpkgs, ... ]
+  lambda:
+    let:
+      pkgs:
+        call: import
+        args:
+          - nixpkgs
+          - system:
+              str: x86_64-linux
+    in:
+      packages.x86_64-linux:
+        default:
+          call: pkgs.llvmPackages.libcxxStdenv.mkDerivation
+          args:
+            - attrset:
+                name:
+                  str: clang-libcxx-nix-shell
+                buildInputs:
+                  - pkgs.llvmPackages.clang
+                  - pkgs.llvmPackages.clang-tools
+                  - pkgs.llvmPackages.lld
+                  - pkgs.gcc
+                  - pkgs.go
+                  - pkgs.curl
+                  - pkgs.git
+                  - pkgs.cmake
+                  - pkgs.pkg-config
+                  - pkgs.python314
+                  - pkgs.boost.dev
+                  - pkgs.lldb
+                  - pkgs.lua
+                  - pkgs.nodejs
+                  - pkgs.bear
+                  - pkgs.entr
+                  - pkgs.fzf
+                  - pkgs.gh
+                  - pkgs.zsh
+                  - pkgs.neovim
+                  - pkgs.nix.dev
+                shellHook: |
+                  echo "Entering custom nix-expr-c + LLVM shell"
+                  export TERM=xterm-256color
+                  #zsh
+                  # If you prefer the nix.dev dev-shell entrypoint:
+                  # exec ${pkgs.nix.dev}/bin/dev-shell
+      defaultPackage.x86_64-linux: self.packages.x86_64-linux.default
+      devShells.x86_64-linux:
+        default: self.packages.x86_64-linux.default
+

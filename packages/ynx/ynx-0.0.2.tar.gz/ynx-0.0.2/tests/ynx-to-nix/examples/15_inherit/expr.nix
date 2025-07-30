@@ -1,0 +1,1 @@
+inherit (pkgs) lib foo;
