@@ -1,0 +1,164 @@
+Metadata-Version: 2.4
+Name: document-extraction-module
+Version: 0.1.1
+Summary: Extraction / Parse of any PDF document within minutes
+Author-email: Optimo Capital <muraribv22@gmail.com>
+License: MIT
+Requires-Python: >=3.10
+Requires-Dist: agentic-doc
+Requires-Dist: aiohttp
+Requires-Dist: aiolimiter
+Requires-Dist: asyncio
+Requires-Dist: dspy
+Requires-Dist: fastapi
+Requires-Dist: numpy
+Requires-Dist: openai
+Requires-Dist: pandas
+Requires-Dist: pdf2image
+Requires-Dist: pillow
+Requires-Dist: pydantic
+Requires-Dist: pymupdf
+Requires-Dist: pyrfc3339
+Requires-Dist: requests
+Requires-Dist: tiktoken
+Requires-Dist: tokenizers
+Requires-Dist: tqdm
+Requires-Dist: wheel
+Description-Content-Type: text/markdown
+
+# TODO: Update README file and add docstrings for the module. Also add instructions to build the package 
+
+# 📄 Document Extraction Module
+
+A general-purpose document extraction module designed for developers. This toolkit allows you to build customizable extraction pipelines for your documents with ease using provided APIs and SDK functions.
+
+---
+
+## 🚀 Features
+
+- Define your own extraction schema class / JSON  
+- Supports single and batch PDF processing 
+- Contains parallelization - Processes multiple PDFs and pages of each of these PDFs at a time 
+- Supports all English PDFs, PDFs in indic languages, scanned PDFs, PDFs with tables and complicated patterns. 
+- Easy LLM integration via prompt schemas  
+
+
+## 🔐 API Key Setup
+
+If you are using GPT Models which support good extraction:**export LLM_PROVIDER=open-ai** and  **export OPENAI_API_KEY=<<your_key_here>>**
+Specify the models you wish to use in two keys: **export OPEN_AI_EXTRACTION_MODEL=<<your_extraction_model>>** and **export OPEN_AI_PARSE_FORMATING_MODEL=<<your_structured_output_formmating_model>>**
+If you are using landing AI for parsing then: **export VISION_AGENT_API_KEY=<<your_key_here>>**
+
+
+## 📦 Installation
+
+First, install all the required packages using pip:
+
+```bash
+pip install -r requirements.txt
+```
+
+
+## 🧠 Define Your Extraction Schema
+
+Edit `extraction_class_type.py` to define your custom schema. You'll use three core classes:
+
+- **ExtractionClass**: Fields to extract from documents  
+- **AIAgentClass**: Prompts/instructions for the AI Agent  
+- **OutputExampleClass**: (Optional) Output examples for better LLM performance
+
+Example class definitions:
+
+```python
+from pydantic import BaseModel, Field
+from typing import List
+from prompt_processing import generate_prompt_template, generate_prompt_from_schema, PromptSchema
+
+class ExtractionClass(BaseModel):
+    name: str = Field(..., description="The name of the person.")
+    age: int = Field(..., description="The age of the person.")
+    hobbies: List[str] = Field(..., description="A list of hobbies.")
+    address: dict = Field(..., description="The address of the person.")
+
+class AIAgentClass(BaseModel):
+    information: str = Field(..., description="Information for the AI agent.")
+    instruction: str = Field(..., description="Instructions for the AI agent.")
+    condition: str = Field(..., description="Conditions for the AI agent.")
+
+class OutputExampleClass(BaseModel):
+    """Optional: Provide a sample output format"""
+
+
+extraction_template = generate_prompt_template(ExtractionClass)
+ai_agent_template = generate_prompt_template(AIAgentClass)
+output_example_template = generate_prompt_template(OutputExampleClass)
+
+schema = PromptSchema(
+    ai_agent_information=ai_agent_template,
+    extract_fields=extraction_template,
+    output_example=output_example_template,
+)
+
+prompt = generate_prompt_from_schema(schema.model_dump())
+
+```
+**description** in the class variable definition will act as the prompt for each of the field we wish to extract. 
+
+
+ ## 📂 Usage
+ 
+Extracting from multiple PDFs:
+**document_paths** is an array of paths to the PDFs
+**output_paths** is whereever you would like to save the JSON files
+**parser** is True when you want to digitise the entire document, otherwise you just extract from the PDF
+**combine_pages** - Use it if you want to extract from smaller PDFs (2-3 pages) and you want to extract them together. 
+
+ ```python
+from extraction import extract_multiple_pdfs
+
+document_paths = ["./152_double.pdf", "./152.pdf"]
+output_paths = ["./152_extracted.json", "./152_double_extracted.json"]
+
+multi_pdf_extraction_result = await extract_multiple_pdfs(
+    input_paths=document_paths,
+    output_paths=output_paths,
+    parser=False,
+    combine_page=False,
+    prompt=prompt,
+    extraction_schema_class=ExtractionClass
+)
+```
+
+Extraction from single PDF:
+
+```python
+from extraction import extract_multiple_pages_async
+from file_process import base_64_conversion
+
+pdf_path = "./example.pdf"
+base64_images = base_64_conversation(input_type="PDF", file_path=pdf_path)
+
+single_pdf_extraction_result = await extract_multiple_pages_async(
+    input_type="PDF",
+    base64_images=base64_images,
+    text_inputs=[],
+    combine_pages=False,
+    prompt=prompt,
+    extraction_schema_class=ExtractionClass
+)
+```
+
+As of now **combine_pages** is disabled due to context window length related challenges.
+
+
+## 📁 Output
+
+The extracted information is saved as JSON in the `output_path`.
+The format matches exactly the fields defined in your `ExtractionClass`.
+
+
+## 💡 Tips
+
+- Keep prompts in `AIAgentClass` clear and detailed for better LLM results.
+- Test your `ExtractionClass` with a few sample documents before scaling.
+- Make use of `OutputExampleClass` to improve LLM consistency.
