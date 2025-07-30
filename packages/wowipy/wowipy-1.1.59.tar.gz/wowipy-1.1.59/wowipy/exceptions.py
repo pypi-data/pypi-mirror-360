@@ -1,0 +1,2 @@
+class WowiPyException(Exception):
+    pass
