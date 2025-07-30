@@ -1,0 +1,178 @@
+Metadata-Version: 2.4
+Name: certbot-dns-dynu-dev
+Version: 0.0.9
+Summary: Updated Dynu DNS Authenticator plugin for Certbot
+Home-page: https://github.com/BigThunderSR/certbot-dns-dynu-dev
+Download-URL: https://github.com/BigThunderSR/certbot-dns-dynu-dev/archive/refs/tags/0.0.9.tar.gz
+Author: Updated by BigThunderSR; original author Bikramjeet Sing,
+License: Apache License 2.0
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Plugins
+Classifier: Intended Audience :: System Administrators
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Internet :: WWW/HTTP
+Classifier: Topic :: Security
+Classifier: Topic :: System :: Installation/Setup
+Classifier: Topic :: System :: Networking
+Classifier: Topic :: System :: Systems Administration
+Classifier: Topic :: Utilities
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: acme>3.0.0
+Requires-Dist: certbot>3.0.0
+Requires-Dist: dns-lexicon>3.0.0
+Requires-Dist: tldextract>=5.0.0
+Requires-Dist: dnspython
+Requires-Dist: mock
+Requires-Dist: setuptools>=68.0.0
+Requires-Dist: requests
+Dynamic: author
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: download-url
+Dynamic: home-page
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# certbot-dns-dynu-dev
+
+[![CodeQL](https://github.com/BigThunderSR/certbot-dns-dynu-dev/actions/workflows/github-code-scanning/codeql/badge.svg?style=plastic)](https://github.com/BigThunderSR/certbot-dns-dynu-dev/actions/workflows/github-code-scanning/codeql)
+[![Dependabot Updates](https://github.com/BigThunderSR/certbot-dns-dynu-dev/actions/workflows/dependabot/dependabot-updates/badge.svg?style=plastic)](https://github.com/BigThunderSR/certbot-dns-dynu-dev/actions/workflows/dependabot/dependabot-updates)
+[![Python Lint and Test](https://github.com/BigThunderSR/certbot-dns-dynu-dev/actions/workflows/python-lint-test.yml/badge.svg?style=plastic)](https://github.com/BigThunderSR/certbot-dns-dynu-dev/actions/workflows/python-lint-test.yml)
+[![Upload Python Package](https://github.com/BigThunderSR/certbot-dns-dynu-dev/actions/workflows/python-publish.yml/badge.svg?style=plastic)](https://github.com/BigThunderSR/certbot-dns-dynu-dev/actions/workflows/python-publish.yml)
+[![PyPI - Version](https://img.shields.io/pypi/v/certbot-dns-dynu-dev?style=plastic&labelColor=yellow&color=blue)](https://pypi.org/project/certbot-dns-dynu-dev/)
+
+Updated Dynu DNS Authenticator plugin for [Certbot](https://certbot.eff.org/).
+
+This plugin is built from the ground up and follows the development style and life-cycle
+of other `certbot-dns-*` plugins found in the
+[Official Certbot Repository](https://github.com/certbot/certbot).
+
+This fork was created because the pull request [Add support for Dynu DNS API](https://github.com/bikram990/certbot-dns-dynu/pull/7) was not being merged in the upstream project by the original author. It has since been merged in the upstream project. However, this fork has been updated for currency and compatibility with the latest versions of Python and Certbot.
+
+This fork is also being used in the Home Assistant Let's Encrypt add-on via <https://github.com/home-assistant/addons/pull/3556>
+
+## Installation
+
+```bash
+pip install --upgrade certbot
+pip install certbot-dns-dynu-dev
+```
+
+## Verify
+
+```bash
+certbot plugins --text
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+* dns-dynu
+Description: Obtain certificates using a DNS TXT record with Dynu DNS.
+Entry point: dns-dynu = certbot_dns_dynu_dev.dns_dynu:Authenticator
+
+...
+...
+```
+
+## Configuration
+
+The credentials file e.g. `~/dynu-credentials.ini` should look like this:
+
+```ini
+dns_dynu_auth_token = AbCbASsd!@34
+```
+
+## Usage
+
+```bash
+# Obtain a certificate using the Dynu DNS authenticator
+# If certbot is in PATH:
+certbot certonly \
+    --authenticator dns-dynu \
+    --dns-dynu-credentials ~/dynu-credentials.ini \
+    -d your-domain.com
+
+# If certbot is not in PATH (e.g., installed via pip in user environment):
+python run_certbot.py certonly \
+    --authenticator dns-dynu \
+    --dns-dynu-credentials ~/dynu-credentials.ini \
+    -d your-domain.com
+
+# For subdomain certificates (the main fix provided by this plugin):
+python run_certbot.py certonly \
+    --authenticator dns-dynu \
+    --dns-dynu-credentials ~/dynu-credentials.ini \
+    -d my.domain.com \
+    -d api.my.domain.com
+```
+
+**Note**: If you get "Command 'certbot' not found" or "No module named certbot.\_\_main\_\_", use the provided `run_certbot.py` wrapper script instead of the direct `certbot` command.
+
+### Subdomain Support
+
+This plugin specifically fixes subdomain certificate issues by implementing intelligent DNS zone fallback:
+
+- `my.domain.com` → Creates `_acme-challenge.my` in `domain.com` zone
+- `api.my.domain.com` → Creates `_acme-challenge.api.my` in `domain.com` zone
+- `domain.com` → Creates `_acme-challenge` directly in `domain.com` zone
+
+## FAQ
+
+### Why is the plugin name so long?
+
+This follows the upstream nomenclature: `certbot-dns-<dns-provider>`.
+
+### Why do I have to use `:` as a separator in the name? Why are the configuration file parameters unusual?
+
+This is a limitation of the Certbot interface towards _third-party_ plugins.
+
+For details read the discussions:
+
+- <https://github.com/certbot/certbot/issues/6504#issuecomment-473462138>
+- <https://github.com/certbot/certbot/issues/6040>
+- <https://github.com/certbot/certbot/issues/4351>
+- <https://github.com/certbot/certbot/pull/6372>
+
+## Development
+
+Create a virtualenv, install the plugin (`editable` mode), spawn the environment and run the test:
+
+```bash
+virtualenv -p python3 .venv
+source .venv/bin/activate
+pip install -e .
+python ./certbot_dns_dynu_dev/dns_dynu_test.py
+```
+
+## License
+
+Copyright ©️ 2023 - 2025 [BigThunderSR](https://github.com/BigThunderSR)
+
+Original Copyright (c) 2021 [Bikramjeet Singh](https://github.com/bikram990)
+
+## Credits
+
+[PowerDNS](https://github.com/pan-net-security/certbot-dns-powerdns)
+
+[dns-lexicon](https://github.com/AnalogJ/lexicon)
+
+## Helpful Links
+
+- [DNS Plugin list](https://certbot.eff.org/docs/using.html?highlight=dns#dns-plugins)
+
+- [acme.sh](https://github.com/acmesh-official/acme.sh)
+
+- [dynu with acme.sh](https://gist.github.com/tavinus/15ea64c50ac5fb7cea918e7786c94a95)
+
+- [dynu api](https://www.dynu.com/Support/API)
