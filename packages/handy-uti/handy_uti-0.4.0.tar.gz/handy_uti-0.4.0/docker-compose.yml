@@ -1,0 +1,15 @@
+services:
+  streamlit-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8211:8211"
+    environment:
+      - STREAMLIT_SERVER_PORT=8211
+      - STREAMLIT_SERVER_HEADLESS=true
+    volumes:
+      - .:/app
+      - /app/.venv # Exclude virtual environment from volume mount
+    working_dir: /app
+    restart: unless-stopped
