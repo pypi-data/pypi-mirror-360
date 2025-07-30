@@ -1,0 +1,128 @@
+Metadata-Version: 2.4
+Name: haitch
+Version: 0.12.0
+Summary: simplify your HTML building.
+Project-URL: Homepage, https://sr.ht/~loges/haitch
+Project-URL: Source, https://git.sr.ht/~loges/haitch
+Project-URL: Issues, https://todo.sr.ht/~loges/haitch
+Author-email: Logan Connolly <me@loganconnolly.com>
+License-Expression: BSD-3-Clause
+License-File: LICENSE.txt
+Classifier: Development Status :: 4 - Beta
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Python: >=3.8
+Requires-Dist: typing-extensions
+Description-Content-Type: text/markdown
+
+<img width="200px" src="https://git.sr.ht/~loges/haitch/blob/master/docs/img/logo.svg" alt='haitch logo'>
+
+_simplify your HTML building._
+
+[![builds.sr.ht status](https://builds.sr.ht/~loges/haitch.svg)](https://builds.sr.ht/~loges/haitch?)
+[![PyPI - Version](https://img.shields.io/pypi/v/haitch.svg)](https://pypi.org/project/haitch)
+
+# haitch
+
+> alternative pronunciation for the letter "H"
+
+My goal is to make writing HTML as fun as writing Python.
+
+## Features
+
+- Lazily build HTML elements.
+- 100% test and type coverage.
+- No dependencies.
+- Documentation for common elements.
+
+## Quickstart
+
+Install `haitch` using pip:
+
+```console
+$ pip install haitch
+```
+
+Importing the package like so, allows you to build any element you like:
+
+```python
+import haitch as H
+
+# Render known `h1` tag.
+print(H.h1("Hello, world"))
+# <h1>Hello, world</h1>
+
+# Render custom `foo` tag (useful for web components).
+print(H.foo("Hello, world"))
+# <foo>Hello, world!</foo>
+
+# Fetch emails from data store.
+emails = ["jane@aol.com", "bob@example.com", "mark@mail.org"]
+
+# Build an ordered list of emails with ".com" domains.
+email_list = H.ol(class_="emails")(
+    H.li(H.a(href=f"mailto:{email}")(email))
+    for email in sorted(emails)
+    if email.endswith(".com")
+)
+
+print(email_list)
+# <ol class="email-list">
+#   <li>
+#     <a href="mailto:bob@example.com">bob@example.com</a>
+#   </li>
+#   <li>
+#     <a href="mailto:jane@aol.com">jane@aol.com</a>
+#   </li>
+# </ol>
+```
+
+**Note:** printed output above is prettified for readability, but the actual
+output is minified.
+
+## Motivation
+
+Inspired by the [htbuilder](https://github.com/tvst/htbuilder) library as an
+alternative to templating. The library met most of my needs, but lacked type
+annotations and documentation for HTML elements and attributes. This made me
+consistently context switch between the [MDN
+docs](https://developer.mozilla.org/en-US/docs/Web/HTML) and my editor. This
+library attempts to solve this problem by bringing the HTML spec to where you
+program.
+
+## Non-goals
+
+The following features will _not_ be supported:
+
+- **Deprecated elements and attributes**: if you want to use them, you can since
+`haitch` supports generic elements and attributes. However, I am not going to
+write the annotations and documentation for them.
+- **100% input validation**: this library is meant to assist the developer to
+write valid HTML with the help of type annotations and documentation. In the
+end, it is up to the developer and browser to verify that the input is of the
+correct type. So for example, I will not add any validation to make sure that a
+`<col>` element is directly nested inside of a `<colgroup>` element or that the
+`span` attribute for the `<col>` element is a positive integer.
+
+## Releases
+
+This library tries to adhere to [semantic versioning](https://semver.org/) and
+keeps a [changelog](./CHANGELOG.md).
+
+## Examples
+
+These repositories should help you integrate `haitch` into your web application:
+
+- [FastAPI minimal example](https://git.sr.ht/~loges/haitch-example-fastapi)
+- [Django minimal example](https://git.sr.ht/~loges/haitch-example-django)
+
+## License
+
+`haitch` is distributed under the terms of the
+[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html) license.
