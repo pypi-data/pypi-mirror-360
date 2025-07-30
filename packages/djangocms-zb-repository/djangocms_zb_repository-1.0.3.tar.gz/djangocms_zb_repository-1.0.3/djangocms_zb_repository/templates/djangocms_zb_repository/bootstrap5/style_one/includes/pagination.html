@@ -1,0 +1,59 @@
+{# Template para el manejo de la paginación #}
+{% load i18n cms_tags %}
+{% if paginator.num_pages > 1 %}
+    <div class="paginate-file-repository mt-4">
+        <div class="d-flex justify-content-center">
+            <ul class="pagination">
+                {% if files.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" 
+                           href="?page={{ files.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}#file-style-one" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}    
+                {% for page in paginator.page_range %}
+                    {% if forloop.last and page != files.number and paginator.num_pages > 4 %}
+                        {% if files.next_page_number != paginator.num_pages%}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ files.number | add:1}}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}#file-style-one">...</a>
+                        </li>
+                        {% endif %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{paginator.num_pages}}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}#file-style-one">{{paginator.num_pages}}</a>
+                    </li>
+                    {% endif %}
+                    {% if page == files.number and page > 4 %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page | add:-1 }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}#file-style-one">...</a>
+                    </li>
+                    {% endif %}
+                    {% if page < 4 or page == files.number %}
+                    <li class="page-item {% if page == files.number %}active{% endif %}">
+                        <a class="page-link" href="?page={{ page }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}#file-style-one">{{ page }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                {% if files.has_next %}
+                     <li class="page-item">
+                         <a class="page-link" href="?page={{ files.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}#file-style-one" aria-label="Next">
+                             <span aria-hidden="true">&raquo;</span>
+                         </a>
+                    </li>               
+                {% else %}
+                    <li class="page-item disabled">
+                         <a class="page-link" href="#" aria-label="Next">
+                             <span aria-hidden="true">&raquo;</span>
+                         </a>
+                    </li> 
+                {% endif %}    
+            </ul>
+        </div>       
+    </div>
+{% endif %}

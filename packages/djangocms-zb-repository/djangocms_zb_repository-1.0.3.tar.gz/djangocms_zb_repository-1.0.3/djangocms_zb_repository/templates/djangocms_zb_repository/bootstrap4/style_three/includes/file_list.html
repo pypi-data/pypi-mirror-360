@@ -1,0 +1,51 @@
+{% load i18n cms_tags zb_tags %}
+{# Template del listado de archivos #}
+
+{% for file in files %}
+    <div class="pos-f-t">
+        <div class="collapse border" id="navbarToggleExternalContent-{{ file.id }}">
+            <div class="p-4">
+                <div class="{{ file.file_extended.published|yesno:",text-danger" }}">
+                    <p>{{ file.description }}</p>
+                </div>
+                <div class="text-center my-3">
+                    <a href="{{ file.file_url }}" target="{{ instance.target }}" class="btn btn-info text-white">
+                        <i class="{{ file.icon_class }}"></i> {% trans 'Download.' %}
+                    </a>
+                </div>
+                {% if request.toolbar.edit_mode_active and perms.zb_repository.change_file and  perms.zb_repository.change_fileextended %}
+                    <div class="d-flex justify-content-end">
+                        {% render_model_block file %}
+                            <button class="btn btn-info mx-2"><i class="fa-light fa-file-pen"></i></button>
+                        {% endrender_model_block %}
+                        <form action="" method="post">
+                            {% csrf_token %}
+                            <label for="file_id"></label>
+                            <input type="hidden" name="file_id" id="file_id" value="{{ file.id }}">
+                            <button class="btn {{ file.file_extended.published|yesno:"btn-danger,btn-info" }}">
+                                <i class="fa-light {{ file.file_extended.published|yesno:"fa-file-slash,fa-file-check" }}"></i>
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <nav class="navbar navbar-dark bg-info nav-repository-style-three">
+            <button class="navbar-toggler" type="button" data-toggle="collapse"
+                    data-target="#navbarToggleExternalContent-{{ file.id }}"
+                    aria-controls="navbarToggleExternalContent-{{ file.id }}" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <h6>{{ file.file_extended.title }}</h6>
+        </nav>
+    </div>
+    {% if request.GET.search %}
+        {% zb_concat instance.category "|" as category_replace %}
+        <p class="text-black-50">{% trans "Category" %}: {{ file.file_extended.category|stringformat:"s"|zb_replace:category_replace|slice:"3:" }}</p>
+    {% else %}
+        <div class="mb-3"></div>
+    {% endif %}
+{% endfor %}
+{% zb_concat "djangocms_zb_repository/" instance.template "/includes/pagination.html" as template %}
+{% include template %}

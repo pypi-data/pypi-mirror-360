@@ -1,0 +1,47 @@
+{% load i18n cms_tags zb_tags %}
+{# Template del listado de archivos #}
+{% for file in files %}
+    <div class="card mb-3 shadow-sm bg-white">
+        <div class="card-header" style="background-color: #E9F7EF; border: none;">
+            <h6 class="card-title font-weight-bold {{ file.file_extended.published|yesno:",text-danger" }}"
+                style="margin-bottom: 0 !important; color: #069169">{{ file.file_extended.title }}</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-10 d-flex align-items-center">
+                    <p class="card-text {{ file.file_extended.published|yesno:",text-danger" }}">{{ file.description }}</p>
+                </div>
+                <div class="col-12 col-sm-12 col-md-2 text-center d-flex justify-content-center align-items-center">
+                    <a href="{{ file.file_url }}" target="{{ instance.target }}">
+                        <i class="{{ file.icon_class }} fa-3x"
+                           style="color: {{ file.file_extended.published|yesno:'#069169,red' }}"></i>
+                    </a>
+                </div>
+
+                {% if request.toolbar.edit_mode_active and perms.zb_repository.change_file and  perms.zb_repository.change_fileextended %}
+                    <div class="position-absolute d-flex justify-content-end" style="top: 0; right: 0">
+                        {% render_model_block file %}
+                            <button class="btn btn-info"><i class="fa-light fa-file-pen"></i></button>
+                        {% endrender_model_block %}
+                        <form action="" method="post">
+                            {% csrf_token %}
+                            <label for="file_id"></label>
+                            <input type="hidden" name="file_id" id="file_id" value="{{ file.id }}">
+                            <button class="btn {{ file.file_extended.published|yesno:"btn-danger,btn-info" }}">
+                                <i class="fa-light {{ file.file_extended.published|yesno:"fa-file-slash,fa-file-check" }}"></i>
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% if request.GET.search %}
+            {% zb_concat instance.category "|" as category_replace %}
+            <div class="card-footer text-black-50" style="background-color: #E9F7EF; border: none;">
+                {% trans "Category" %}: {{ file.file_extended.category|stringformat:"s"|zb_replace:category_replace|slice:"3:" }}
+            </div>
+        {% endif %}
+    </div>
+{% endfor %}
+{% zb_concat "djangocms_zb_repository/" instance.template "/includes/pagination.html" as template %}
+{% include template %}

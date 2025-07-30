@@ -1,0 +1,58 @@
+{% load i18n cms_tags zb_tags %}
+{# Template del listado de archivos #}
+{% for file in files %}
+    <div style="display: flex; justify-content: space-between; margin-top: 1rem; margin-bottom: 1rem">
+        <section style="padding-right: 2rem">
+            <a href="{{ file.file_url }}" target="_blank"
+               {% if not file.file_extended.published %}style="color: #dc3545;"{% endif %}>
+                {{ file.file_extended.title }}
+            </a>
+            <p>{{ file.description }}</p>
+        </section>
+        <section style="flex-direction: column; display: flex; justify-content: center; justify-items: center">
+            {% if request.toolbar.edit_mode_active and perms.zb_repository.change_file and  perms.zb_repository.change_fileextended %}
+                {% render_model_block file %}
+                    <button style="border-radius: 5px; padding: 5px;
+                        background: #fff; border: 1px solid #ddd; color: #555; margin: 2px"
+                    >
+                        {% trans 'Edit' %}
+                    </button>
+                {% endrender_model_block %}
+                {% if file.file_extended.published %}
+                    <form action="" method="post">
+                        {% csrf_token %}
+                        <label for="file_id"></label>
+                        <input type="hidden" name="file_id" id="file_id" value="{{ file.id }}">
+                        <button style="border-radius: 5px; padding: 5px;
+                        background: #dc3545; border: 1px solid #dc3545; color: #fff; margin: 2px"
+                        >
+                            {% trans 'Unpublish' %}
+                        </button>
+                    </form>
+                {% else %}
+                    <form action="" method="post">
+                        {% csrf_token %}
+                        <label for="file_id"></label>
+                        <input type="hidden" name="file_id" id="file_id" value="{{ file.id }}">
+                        <button style="border-radius: 5px; padding: 5px;
+                        background: #fff; border: 1px solid #ddd; color: #555; margin: 2px;"
+                        >
+                            {% trans 'Publish' %}
+                        </button>
+                    </form>
+                {% endif %}
+            {% endif %}
+        </section>
+    </div>
+    {% if request.GET.search %}
+        {% zb_concat instance.category "|" as category_replace %}
+        <p>{% trans "Category" %}: {{ file.file_extended.category|stringformat:"s"|zb_replace:category_replace|slice:"3:" }}</p>
+    {% endif %}
+    {% if not forloop.last %}
+        <hr>
+    {% endif %}
+{% endfor %}
+<div style="margin: 3rem 0">
+    {% zb_concat "djangocms_zb_repository/" instance.template "/includes/pagination.html" as template %}
+    {% include template %}
+</div>

@@ -1,0 +1,66 @@
+{% load i18n cms_tags zb_tags %}
+{# Template de las subcategorias #}
+<div id="zb-{{ category.uuid }}" class="accordion-collapse collapse
+    {% zb_query_filter category.category_set.all published=True order="name" as category_published %}
+    {% for category in category_published %}
+        {% if request.GET.category == category.id|stringformat:"i" %}
+            show
+        {% else %}
+            {% zb_query_filter category.category_set.all published=True order="name" as category_published %}
+            {% for baby in category_published %}
+                {% if request.GET.category == baby.id|stringformat:"i" %}
+                    show
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endfor %}"
+     aria-label="Contenedor del ítem {{ category.name }}">
+    <div class="card-body card-body-repository-style-one">
+        {% if category.has_children %}
+            <div class="accordion">
+                {% zb_query_filter category.category_set.all published=True order="name" as category_published %}
+                {% for category in category_published %}
+                    <div class="card card-repository-style-one">
+                        <div class="card-header card-header-repository-style-one" id="heading{{ category.id }}">
+                            {% if category.has_children %}
+                                <h5 class="ps-{{ category.level }}">
+                                    <a id="btn_{{ category.id }}"
+                                       class="btn btn-link w-100 d-flex justify-content-between font-weight-normal text-start"
+                                       data-bs-toggle="collapse"
+                                       data-bs-target="#zb-{{ category.uuid }}"
+                                       aria-expanded="true"
+                                       aria-controls="zb-{{ category.uuid }}">
+                                        {{ parent_cons }}.{{ forloop.counter }} {{ category.name }}
+                                        {% if request.toolbar.edit_mode_active and perms.zb_repository.change_category %}
+                                            {% render_model_block category %}
+                                                <button class="btn btn-info"><i class="fa-light fa-pen-to-square"></i>
+                                                </button>
+                                            {% endrender_model_block %}
+                                        {% endif %}
+                                        <div id="rotate" class="icon-gov fal fa-angle-down"></div>
+                                    </a>
+                                </h5>
+                            {% else %}
+                                <h5 class="ps-{{ category.level }}">
+                                    <a href="?category={{ category.id }}#file-style-one"
+                                       class="btn btn-link w-100 d-flex justify-content-between font-weight-normal text-start {% if request.GET.category == category.id|stringformat:"i" %}selected{% endif %}">
+                                        {{ parent_cons }}.{{ forloop.counter }} {{ category.name }}
+                                        {% if request.toolbar.edit_mode_active and perms.zb_repository.change_category %}
+                                            {% render_model_block category %}
+                                                <button class="btn btn-info"><i class="fa-light fa-pen-to-square"></i>
+                                                </button>
+                                            {% endrender_model_block %}
+                                        {% endif %}
+                                    </a>
+                                </h5>
+                            {% endif %}
+                        </div>
+                        {% zb_concat "djangocms_zb_repository/" instance.template "/includes/category.html" as template %}
+                        {% zb_concat parent_cons "." forloop.counter as cons %}
+                        {% include template with parent_cons=cons %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>

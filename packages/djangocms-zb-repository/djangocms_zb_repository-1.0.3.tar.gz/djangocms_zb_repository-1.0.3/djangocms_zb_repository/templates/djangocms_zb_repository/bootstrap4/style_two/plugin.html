@@ -1,0 +1,156 @@
+{# Template principal del plugin #}
+{% extends "djangocms_zb_repository/base.html" %}
+{% load i18n cms_tags zb_tags %}
+{% block content %}
+    <div class="text-center mb-4">
+        <h1>
+            {% if instance.category.has_files %}
+                <a href="?category={{ instance.category.id }}#file-style-two"
+                        {% if request.GET.category == instance.category.id|stringformat:"i" %}
+                   class="selected"
+                        {% endif %}
+                        {% if not request.GET.category %}
+                   class="selected"
+                        {% endif %}
+                >
+                    {{ instance.category.name }}
+                </a>
+            {% else %}
+                {{ instance.category.name }}
+            {% endif %}
+            {% if request.toolbar.edit_mode_active and perms.zb_repository.change_category %}
+                {% render_model_block instance.category %}
+                    <button class="btn btn-info"><i class="fa-light fa-pen-to-square"></i></button>
+                {% endrender_model_block %}
+            {% endif %}
+        </h1>
+    </div>
+    {# Formulario de busqueda #}
+    <div class="d-flex flex-row-reverse bd-highlight mb-3">
+        <form action="#file-style-two" method="GET" class="form-inline">
+            <div class="form-group mb-2">
+                <label for="search" class="sr-only">{% trans 'Search' %}</label>
+                <input type="text" placeholder="{% trans 'Search...' %}" name="search" id="search"
+                       value="{{ request.GET.search }}" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary mb-2">{% trans 'Search' %}</button>
+        </form>
+    </div>
+    <a id="file-style-two"></a>
+    <p class="zb-breadcrumb">{{ full_category_name }}</p>
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-3 zb-category-b4-style-two">
+            {# Category Column #}
+            {% if request.toolbar.edit_mode_active and perms.zb_repository.add_category %}
+                <div class="mb-2">
+                    {% render_model_add_block category_model %}
+                        <button class="btn btn-info render-add-btn"><i class="fa-light fa-square-plus"></i></button>
+                    {% endrender_model_add_block %}
+                </div>
+            {% endif %}
+            {# Category Menu #}
+            {# Categories Principal Queryset #}
+            {% if categories %}
+                <div class="accordion">
+                    {% for category in categories %}
+                        <div class="card card-repository-style-one">
+                            <div class="card-header card-header-repository-style-one" id="heading{{ category.id }}">
+                                {% if category.has_children %}
+                                    <h5>
+                                        <a id="btn_{{ category.id }}"
+                                           class="btn btn-link w-100 d-flex justify-content-between font-weight-normal text-left"
+                                           data-toggle="collapse"
+                                           data-target="#zb-{{ category.uuid }}"
+                                           aria-controls="zb-{{ category.uuid }}">
+                                            {{ forloop.counter }} {{ category.name }}
+                                            {% if request.toolbar.edit_mode_active and perms.zb_repository.change_category %}
+                                                {% render_model_block category %}
+                                                    <button class="btn btn-info"><i
+                                                            class="fa-light fa-pen-to-square"></i></button>
+                                                {% endrender_model_block %}
+                                            {% endif %}
+                                            <div id="rotate" class="icon-gov fal fa-angle-down"></div>
+                                        </a>
+                                    </h5>
+                                {% else %}
+                                    <h5>
+                                        <a href="?category={{ category.id }}#file-style-two"
+                                           class="btn btn-link w-100 d-flex justify-content-between font-weight-normal text-left {% if request.GET.category == category.id|stringformat:"i" %}selected{% endif %}">
+                                            {{ forloop.counter }} {{ category.name }}
+                                            {% if request.toolbar.edit_mode_active and perms.zb_repository.change_category %}
+                                                {% render_model_block category %}
+                                                    <button class="btn btn-info"><i
+                                                            class="fa-light fa-pen-to-square"></i></button>
+                                                {% endrender_model_block %}
+                                            {% endif %}
+                                        </a>
+                                    </h5>
+                                {% endif %}
+                            </div>
+                            {# Include Template Child Categories #}
+                            {% zb_concat "djangocms_zb_repository/" instance.template "/includes/category.html" as template %}
+                            {% include template with parent_cons=forloop.counter %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-12 col-sm-12 col-md-9 mt-4 mt-md-0 zb-file-b4-style-two">
+            {# File Column #}
+            {% if request.toolbar.edit_mode_active and perms.zb_repository.add_file and  perms.zb_repository.add_fileextended %}
+                <div class="mb-2">
+                    {% render_model_add_block file_model %}
+                        <button class="btn btn-info render-add-btn"><i class="fa-light fa-file-plus"></i></button>
+                    {% endrender_model_add_block %}
+                </div>
+            {% endif %}
+            {# Message search #}
+            {% if request.GET.search %}
+                <div class="alert {{ files|yesno:"alert-primary, alert-danger" }}" role="alert">
+                    {% trans 'Search results for' %} "{{ request.GET.search }}".
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endif %}
+            {# Include Template File List #}
+            {% if files %}
+                {% zb_concat "djangocms_zb_repository/" instance.template "/includes/file_list.html" as template %}
+                {% include template %}
+            {% else %}
+                {% if not request.GET.search %}
+                    <h6>{% trans 'Select a category with files.' %}</h6>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% comment %}
+    {{ instance.category }}
+    {{ instance.pagination }} #Number of items per page
+    {{ instance.target }}
+    {{ files }}
+    {{ categories }}
+    # files list variables:
+    {{ file_extended }} object
+    {{ description }}
+    {{ file_url }}
+    # file_extended list variables:
+    {{ title }}
+    {{ category }} object
+    {{ published }}
+    # categories list variables:
+    {{ name }}
+    {{ parent }}
+    {{ published }}
+    {{ category_set }}
+    # pagination list variables:
+    {{ info_publications.has_previous }}
+    {{ info_publications.has_next }}
+    {{ info_publications.previous_page_number }}
+    {{ info_publications.next_page_number }}
+    {{ info_publications.number }}
+    {{ paginator.page_range }}
+    {{ paginator.num_pages }}
+{% endcomment %}

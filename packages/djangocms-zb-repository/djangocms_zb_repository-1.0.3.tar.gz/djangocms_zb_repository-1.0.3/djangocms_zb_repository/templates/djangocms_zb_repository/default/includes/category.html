@@ -1,0 +1,25 @@
+{% load i18n cms_tags zb_tags %}
+{# Template de las subcategorias #}
+{% if category.has_children %}
+    <ul>
+        {% zb_query_filter category.category_set.all published=True order="name" as category_all %}
+        {% for category in category_all %}
+            <li>
+                <a href="?category={{ category.id }}#file-default"
+                        {% if request.GET.category == category.id|stringformat:"i" %} class="select" {% endif %}>
+                    {{ parent_cons }}.{{ forloop.counter }} {{ category.name }}
+                </a>
+                {% if request.toolbar.edit_mode_active and perms.zb_repository.change_category %}
+                    {% render_model_icon category %}
+                {% endif %}
+                {% zb_concat "djangocms_zb_repository/" instance.template "/includes/category.html" as template %}
+                {% zb_concat parent_cons "." forloop.counter as cons %}
+                {% include template  with parent_cons=cons %}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    </li>
+{% endif %}
+
+
