@@ -1,0 +1,21 @@
+import polars as pl
+
+from orca_studio.parse.common import extract_table_lines, find_section_starts
+
+TABLE_HEADER = "VIBRATIONAL FREQUENCIES"
+DATA_OFFSET = 5
+
+
+def vibrational_frequencies(lines: list[str]) -> pl.DataFrame:
+    section_idx = find_section_starts(lines, TABLE_HEADER)[0]
+    table = extract_table_lines(lines, section_idx + DATA_OFFSET)
+
+    data = []
+    for row in table:
+        tokens = row.strip().replace(":", "").split()
+        row_data = dict(
+            mode=int(tokens[0]),
+            freq=float(tokens[1]),
+        )
+        data.append(row_data)
+    return pl.DataFrame(data)
