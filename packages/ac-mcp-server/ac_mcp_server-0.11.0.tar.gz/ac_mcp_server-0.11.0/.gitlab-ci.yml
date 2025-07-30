@@ -1,0 +1,77 @@
+variables:
+  UV_VERSION: 0.7.2
+  UV_CACHE_DIR: .uv-cache
+  UV_SYSTEM_PYTHON: 1
+
+stages:
+  - test
+  - publish
+
+pytest:
+  stage: test
+  image: docker.app-us1.com/python:3.13
+  cache:
+    - key:
+        files:
+          - uv.lock
+      paths:
+        - $UV_CACHE_DIR
+  script:
+    - apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+    - curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh
+    - export PATH="/root/.local/bin/:$PATH"
+    - uv sync --all-extras
+    - uv run pytest --cov=. tests --cov-report xml:coverage.xml --cov-report term:skip-covered --junitxml=junit.xml
+  coverage: /^TOTAL.*\s+(\d+\%)$/
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+      junit: junit.xml
+
+publish-to-testpypi-manual:
+  stage: publish
+  image: docker.app-us1.com/python:3.13
+  when: manual
+  except:
+    - main
+  script:
+    - |
+      if ./scripts/check_version_changed.sh; then
+        echo "Version has changed, proceeding with PyPI publication..."
+        apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git
+        curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh
+        export PATH="/root/.local/bin/:$PATH"
+        chmod +x scripts/check_version_changed.sh
+        echo "Manual TestPyPI publication requested..."
+        uv sync
+        uv build
+        uv publish --index testpypi --token $TESTPYPI_TOKEN
+        echo "Successfully published to TestPyPI"
+      else
+        echo "Version has not changed, skipping TestPyPI publication"
+      fi
+
+publish-to-pypi-manual:
+  stage: publish
+  image: docker.app-us1.com/python:3.13
+  when: manual
+  script:
+    - |
+      if ./scripts/check_version_changed.sh; then
+        echo "Version has changed, proceeding with PyPI publication..."
+        apt-get update && apt-get install -y --no-install-recommends curl ca-certificates git
+        curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh
+        export PATH="/root/.local/bin/:$PATH"
+        chmod +x scripts/check_version_changed.sh
+        echo "Manual PyPI publication requested..."
+        uv sync
+        uv build
+        uv publish --token $PYPI_TOKEN
+        echo "Successfully published to PyPI"
+      else
+        echo "Version has not changed, skipping PyPI publication"
+      fi
+  only:
+    - main
