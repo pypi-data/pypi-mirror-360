@@ -1,0 +1,55 @@
+# NB: All this setuptools stuff took about 1000 hours to figure out so never delete this.
+[build-system]
+requires = ["setuptools==68.0.0"] # version used by Brazil's Python3PBuildTool as of 2025.07.02
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "klr-lang"
+version = "0.0.12"
+authors = [
+  {name = "Paul Govereau", email = "govereau@amazon.com"},
+  {name = "Sean McLaughlin", email = "seanmcl@amazon.com"},
+]
+description = "Intermediate langauge for tensor compilers"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+keywords = ["trainium", "tpu", "pallas", "triton", "gpu"]
+
+# Note, dependencies here are "abstract" while the same
+# lines in requirements.txt are "pinned".
+# https://stackoverflow.com/questions/74508024/is-requirements-txt-still-needed-when-using-pyproject-toml
+# For now we'll just keep both, but maybe we can drop one or the
+# other. requirements.txt is nice to have for installing
+# deps from GitHub Actions.
+dependencies = [
+  "numpy",
+]
+requires-python = ">= 3.9, < 3.13"
+
+[project.urls]
+Repository = "https://github.com/leanprover/KLR"
+
+[tool.pytest.ini_options]
+pythonpath = "." # Needed for tests to pass
+testpaths = [
+  "test",
+]
+
+[tool.setuptools]
+packages = ["klr"]
+
+[project.scripts]
+klr = "klr._cli:run_klr"
+klr-gather = "klr._cli:gather"
+
+[tool.cibuildwheel]
+# Skip unsupported python versions as well as 32-bit platforms, which are not supported anymore.
+skip = "pp* *-win32 *-manylinux_i686 *-musllinux_*"
+# Let's use a more recent version of the manylinux image for more modern compilers
+
+# Build fails without this when we updated to Lean 4.16.0
+#    auditwheel: error: cannot repair "/tmp/cibuildwheel/built_wheel/klr_lang-0.0.7-cp38-cp38-linux_x86_64.whl" to "manylinux2014_x86_64" ABI because of the presence of too-recent versioned symbols. You'll need to compile the wheel on an older toolchain.
+# https://github.com/pypa/cibuildwheel/issues/1982
+# https://github.com/Blosc/python-blosc2/blob/99525d3141ac802e60b3d7bea4dabd1f2ae92b8f/pyproject.toml#L54-L55
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
