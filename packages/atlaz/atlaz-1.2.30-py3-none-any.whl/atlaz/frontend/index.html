@@ -1,0 +1,86 @@
+<!-- atlaz/frontend/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Atlaz File Viewer</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/themes/prism.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/layout-styling.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/components.css">
+    
+</head>
+<body>
+    <div class="container">
+        <h1>Atlaz Code Generator</h1>
+        <div class="main-content">
+            <!-- Top Content: Left and Right Panels -->
+            <div class="top-content">
+                <!-- Left Panel: Directory Tree -->
+                <aside class="left-panel">
+                    <div id="directory-tree"></div>
+                </aside>
+
+                <!-- Right Panel: User Input, Explanation, Actions -->
+                <section class="right-panel">
+                    <div class="user-input-section">
+                        <input type="text" id="api-key-input" placeholder="Enter API Key here..." required>
+                        <select id="llm-provider-dropdown">
+                            <option value="gemini">Gemini</option>
+                            <option value="openai">OpenAI</option>
+                            <option value="azure-openai">Azure OpenAI</option>
+                        </select>
+                        <input type="text" id="llm-model-input" placeholder="Enter LLM Model here..." required>
+                    </div>
+
+                    <div id="message-section">
+                        <form id="message-form">
+                            <textarea id="message-input" placeholder="Type your instruction here..."></textarea>
+                            <button type="submit">Send</button>
+                        </form>
+                    </div>
+
+                    <!-- Explanation Section styled as a collapsible panel -->
+                    <details id="explanation-section" class="collapsible-explanation">
+                        <summary>Explanation</summary>
+                        <div id="explanation-content">
+                            <pre id="explanation-text"></pre>
+                        </div>
+                    </details>
+
+                    <div class="actions">
+                        <button id="apply-button" class="nice-button">Apply</button>
+                        <button id="reject-button" class="nice-button">Reject</button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Bottom Content: File Contents -->
+            <div class="bottom-content">
+                <div id="files-container">
+                    <div id="created-files"></div>
+                    <div id="file-pairs"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LOADING OVERLAY -->
+        <div id="loading-overlay" style="display: none;">
+            <div class="spinner"></div>
+            <div class="loading-text">Generating code, please wait...</div>
+        </div>
+    </div>
+
+    <!-- Prism & Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-python.min.js"></script>
+
+    <!-- Your custom scripts -->
+    <script src="scripts/messageForm.js"></script>
+    <script src="scripts/fileViewer.js"></script>
+    <script src="scripts/directoryTree.js"></script>
+    <script src="scripts/buttonHandlers.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/diff@5.0.0/dist/diff.min.js"></script>
+</body>
+</html>
