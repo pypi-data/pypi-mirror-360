@@ -1,0 +1,15 @@
+{% for policy in resources -%}
+resource "aws_iam_policy" "{{ policy.PolicyName | tf_resource_name }}" {
+  name        = "{{ policy.PolicyName }}"
+  path        = "{{ policy.Path }}"
+  description = "{{ policy.Description | default('') }}"
+
+  policy = <<POLICY
+{{ policy.PolicyDocument }}
+POLICY
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

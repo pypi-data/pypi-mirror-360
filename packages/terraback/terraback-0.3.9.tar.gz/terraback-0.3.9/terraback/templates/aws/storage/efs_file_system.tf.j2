@@ -1,0 +1,57 @@
+{% for fs in resources -%}
+resource "aws_efs_file_system" "{{ fs.name_sanitized }}" {
+  {%  if fs.get('creation_token_formatted') %}
+  creation_token = "{{ fs.creation_token_formatted }}"
+  {%  endif -%}
+
+  performance_mode = "{{ fs.performance_mode_lowercase }}"
+  throughput_mode  = "{{ fs.throughput_mode_lowercase }}"
+
+  {%  if fs.get('ProvisionedThroughputInMibps') %}
+  provisioned_throughput_in_mibps = {{ fs.ProvisionedThroughputInMibps }}
+  {%  endif -%}
+
+  encrypted = {{ fs.is_encrypted | lower }}
+
+  {%  if fs.get('KmsKeyId') %}
+  kms_key_id = "{{ fs.KmsKeyId }}"
+  {%  endif -%}
+
+  {%  if fs.is_one_zone and fs.get('availability_zone_name') %}
+  availability_zone_name = "{{ fs.availability_zone_name }}"
+  {%  endif -%}
+
+  {%  if fs.get('tags_formatted') %}
+  tags = {
+    {%- for key, value in fs.get('tags_formatted', {}).items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{%  if fs.get('file_system_policy') %}
+resource "aws_efs_file_system_policy" "{{ fs.name_sanitized }}" {
+  file_system_id = aws_efs_file_system.{{ fs.name_sanitized }}.id
+  policy         = jsonencode({{ fs.file_system_policy | safe }})
+}
+{%  endif -%}
+
+{%  if fs.get('backup_policy') and fs.backup_policy == 'ENABLED' %}
+resource "aws_efs_backup_policy" "{{ fs.name_sanitized }}" {
+  file_system_id = aws_efs_file_system.{{ fs.name_sanitized }}.id
+
+  backup_policy {
+    status = "ENABLED"
+  }
+}
+{%  endif -%}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

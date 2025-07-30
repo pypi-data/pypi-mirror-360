@@ -1,0 +1,66 @@
+{% for queue in resources -%}
+resource "aws_sqs_queue" "{{ queue.name_sanitized }}" {
+  name = "{{ queue.QueueName }}"
+
+  {%  if queue.is_fifo %}
+  fifo_queue = true
+  {%  if queue.content_based_deduplication is defined %}
+  content_based_deduplication = {{ queue.content_based_deduplication | lower }}
+  {%  endif -%}
+  {%  if queue.get('deduplication_scope') %}
+  deduplication_scope = "{{ queue.deduplication_scope }}"
+  {%  endif -%}
+  {%  if queue.get('fifo_throughput_limit') %}
+  fifo_throughput_limit = "{{ queue.fifo_throughput_limit }}"
+  {%  endif -%}
+  {%  endif -%}
+
+  {%  if queue.visibility_timeout is defined and queue.visibility_timeout is not none %}
+  visibility_timeout_seconds = {{ queue.visibility_timeout }}
+  {%  endif -%}
+  {%  if queue.message_retention_period is defined and queue.message_retention_period is not none %}
+  message_retention_seconds  = {{ queue.message_retention_period }}
+  {%  endif -%}
+  {%  if queue.max_message_size is defined and queue.max_message_size is not none %}
+  max_message_size          = {{ queue.max_message_size }}
+  {%  endif -%}
+  {%  if queue.delay_seconds is defined and queue.delay_seconds is not none %}
+  delay_seconds             = {{ queue.delay_seconds }}
+  {%  endif -%}
+  {%  if queue.receive_wait_time is defined and queue.receive_wait_time is not none %}
+  receive_wait_time_seconds = {{ queue.receive_wait_time }}
+  {%  endif -%}
+
+  {%  if queue.get('redrive_policy_formatted') and queue.redrive_policy_formatted.get('deadLetterTargetArn') %}
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = "{{ queue.redrive_policy_formatted.deadLetterTargetArn }}"
+    maxReceiveCount     = {{ queue.redrive_policy_formatted.get('maxReceiveCount', 3) }}
+  })
+  {%  endif -%}
+
+  {%  if queue.get('kms_master_key_id') %}
+  kms_master_key_id                 = "{{ queue.kms_master_key_id }}"
+  {%  if queue.kms_data_key_reuse_period is defined and queue.kms_data_key_reuse_period is not none %}
+  kms_data_key_reuse_period_seconds = {{ queue.kms_data_key_reuse_period }}
+  {%  endif -%}
+  {%  endif -%}
+
+  {%  if queue.get('policy') %}
+  policy = <<POLICY
+{{ queue.policy }}
+POLICY
+  {%  endif -%}
+
+  {%  if queue.get('tags_formatted') %}
+  tags = {
+    {%- for key, value in queue.tags_formatted.items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

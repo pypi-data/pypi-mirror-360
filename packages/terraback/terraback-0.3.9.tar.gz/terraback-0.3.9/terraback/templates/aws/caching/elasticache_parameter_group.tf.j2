@@ -1,0 +1,29 @@
+{% for pg in resources -%}
+resource "aws_elasticache_parameter_group" "{{ pg.name_sanitized }}" {
+  family = "{{ pg.CacheParameterGroupFamily }}"
+  name   = "{{ pg.CacheParameterGroupName }}"
+
+  {%  if pg.get('Description') %}
+  description = "{{ pg.Description }}"
+  {%  endif -%}
+
+  {%- for param in pg.get('parameters_formatted', []) %}
+  parameter {
+    name  = "{{ param.name }}"
+    value = "{{ param.value }}"
+  }
+  {%- endfor %}
+
+  {%  if pg.get('tags_formatted') %}
+  tags = {
+    {%- for key, value in pg.get('tags_formatted', {}).items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

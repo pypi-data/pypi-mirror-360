@@ -1,0 +1,57 @@
+{% import "common/macros.j2" as macros %}
+{% for instance in resources -%}
+resource "google_compute_instance" "{{ instance.name_sanitized }}" {
+  name         = "{{ instance.name }}"
+  project      = "{{ instance.project }}"
+  zone         = "{{ instance.zone }}"
+  machine_type = "{{ instance.machine_type }}"
+
+  {%  if instance.tags %}
+  tags = {{ instance.tags | tojson }}
+  {%  endif -%}
+
+  {%  if instance.boot_disk %}
+  boot_disk {
+    source      = "{{ instance.boot_disk.source }}"
+    auto_delete = {{ instance.boot_disk.auto_delete | lower }}
+    device_name = "{{ instance.boot_disk.device_name }}"
+  }
+  {%  endif -%}
+
+  {%- for disk in instance.attached_disks %}
+  attached_disk {
+    source      = "{{ disk.source }}"
+    device_name = "{{ disk.device_name }}"
+    mode        = "READ_WRITE"
+  }
+  {%- endfor %}
+
+  {%- for nic in instance.network_interfaces %}
+  network_interface {
+    {%  if nic.subnetwork %}
+    subnetwork = "{{ nic.subnetwork }}"
+    {%- else %}
+    network = "{{ nic.network }}"
+    {%  endif -%}
+
+    {%- for ac in nic.access_configs %}
+    access_config {
+      nat_ip = "{{ ac.nat_ip }}"
+      // Ephemeral IP
+    }
+    {%- endfor %}
+  }
+  {%- endfor %}
+
+{{ macros.render_map('metadata', instance.metadata, indent=2) }}
+  
+{{ macros.render_map('labels', instance.labels, indent=2) }}
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

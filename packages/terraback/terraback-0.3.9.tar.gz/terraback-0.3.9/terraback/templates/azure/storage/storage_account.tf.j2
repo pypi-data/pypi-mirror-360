@@ -1,0 +1,21 @@
+{% for item in items -%}
+resource "azurerm_storage_account" "{{ item.name | replace('.', '-') }}" {
+  name                     = "{{ item.name }}"
+  resource_group_name      = "{{ item.resource_group_name }}"
+  location                 = "{{ item.location }}"
+  account_tier             = "{{ item.account_tier }}"
+  account_replication_type = "{{ item.account_replication_type }}"
+
+  {%  if item.tags %}
+  tags = {
+    {%- for key, value in item.tags.items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

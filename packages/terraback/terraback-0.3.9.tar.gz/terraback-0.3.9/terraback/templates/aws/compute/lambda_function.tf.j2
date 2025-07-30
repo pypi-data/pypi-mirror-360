@@ -1,0 +1,98 @@
+{% for func in resources -%}
+resource "aws_lambda_function" "{{ func.FunctionName | terraform_name }}" {
+  function_name = "{{ func.FunctionName }}"
+  role          = "{{ func.Role }}"
+  handler       = "{{ func.Handler }}"
+  runtime       = "{{ func.Runtime }}"
+  timeout       = {{ func.Timeout | safe_int }}
+  memory_size   = {{ func.MemorySize | safe_int }}
+
+  # Deploy from S3 bucket (recommended) or placeholder zip
+  {%  if func.get('Code') and func.Code.get('S3Bucket') %}
+  s3_bucket     = "{{ func.Code.S3Bucket }}"
+  s3_key        = "{{ func.Code.S3Key }}"
+  {%  if func.Code.get('S3ObjectVersion') %}
+  s3_object_version = "{{ func.Code.S3ObjectVersion }}"
+  {%  endif %}
+  {%- else %}
+  # Placeholder deployment - update with actual code
+  filename         = "${path.module}/placeholder.zip"
+  source_code_hash = "placeholder-hash"
+  {%  endif %}
+
+  {%  if func.get('Description') and func.Description | has_value %}
+  description   = "{{ func.Description | escape_quotes }}"
+  {%  endif %}
+
+  {%  if func.get('Environment') and func.Environment.get('Variables') and func.Environment.Variables | has_value %}
+  environment {
+    variables = {
+      {%- for key, value in func.Environment.Variables.items() %}
+      "{{ key }}" = "{{ value | escape_quotes | replace('\n', '\\n') | replace('\r', '\\r') }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    }
+  }
+  {%  endif %}
+
+  {%  if func.get('VpcConfig') and func.VpcConfig.get('SubnetIds') and func.VpcConfig.SubnetIds | has_value %}
+  vpc_config {
+    subnet_ids         = [
+      {%- for subnet_id in func.VpcConfig.SubnetIds %}
+      "{{ subnet_id }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    security_group_ids = [
+      {%- for sg_id in func.VpcConfig.get('SecurityGroupIds', []) %}
+      "{{ sg_id }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+  }
+  {%  endif %}
+
+  {%  if func.get('DeadLetterConfig') and func.DeadLetterConfig.get('TargetArn') %}
+  dead_letter_config {
+    target_arn = "{{ func.DeadLetterConfig.TargetArn }}"
+  }
+  {%  endif %}
+
+  {%  if func.get('TracingConfig') and func.TracingConfig.get('Mode') %}
+  tracing_config {
+    mode = "{{ func.TracingConfig.Mode }}"
+  }
+  {%  endif %}
+
+  {%  if func.get('Layers') and func.Layers | has_value %}
+  layers = [
+    {%- for layer_arn in func.Layers %}
+    "{{ layer_arn }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif %}
+
+  {%  if func.get('ReservedConcurrentExecutions') is defined and func.ReservedConcurrentExecutions is not none %}
+  reserved_concurrent_executions = {{ func.ReservedConcurrentExecutions | safe_int }}
+  {%  endif %}
+
+  {%  if func.get('Tags') and func.Tags | has_value %}
+  tags = {
+    {%- for key, value in func.get('Tags', {}).items() %}
+    "{{ key }}" = "{{ value | escape_quotes }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif %}
+
+  lifecycle {
+    ignore_changes = [
+      filename,
+      source_code_hash,
+    ]
+  }
+}
+
+# TODO: Create placeholder.zip file or update function with actual code
+# Run: echo 'def lambda_handler(event, context): return "Hello"' > lambda_function.py && zip placeholder.zip lambda_function.py
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

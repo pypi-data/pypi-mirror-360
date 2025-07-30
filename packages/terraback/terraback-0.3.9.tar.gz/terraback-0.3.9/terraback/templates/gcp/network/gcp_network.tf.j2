@@ -1,0 +1,20 @@
+{% for network in resources -%}
+resource "google_compute_network" "{{ network.name_sanitized }}" {
+  name                    = "{{ network.name }}"
+  project                 = "{{ network.project }}"
+  {%  if network.description %}
+  description             = "{{ network.description }}"
+  {%  endif -%}
+  auto_create_subnetworks = {{ network.auto_create_subnetworks | lower }}
+  routing_mode            = "{{ network.routing_mode }}"
+  mtu                     = {{ network.mtu }}
+  
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

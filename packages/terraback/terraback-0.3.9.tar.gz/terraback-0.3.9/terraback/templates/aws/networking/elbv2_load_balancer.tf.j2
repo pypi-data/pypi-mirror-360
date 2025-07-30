@@ -1,0 +1,116 @@
+{% for lb in resources -%}
+resource "aws_lb" "{{ lb.name_sanitized }}" {
+  name               = "{{ lb.LoadBalancerName }}"
+  internal           = {{ lb.Scheme == 'internal' | lower }}
+  load_balancer_type = "{{ lb.Type }}"
+
+  {%  if lb.Type == 'application' and lb.get('SecurityGroups') %}
+  security_groups    = [
+    {%- for sg in lb.SecurityGroups %}
+    "{{ sg }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if lb.get('subnet_mappings') and lb.Type in ['network', 'gateway'] %}
+  {%- for mapping in lb.subnet_mappings %}
+  subnet_mapping {
+    subnet_id = "{{ mapping.subnet_id }}"
+    {%  if mapping.get('allocation_id') %}
+    allocation_id = "{{ mapping.allocation_id }}"
+    {%  endif -%}
+    {%  if mapping.get('private_ipv4_address') %}
+    private_ipv4_address = "{{ mapping.private_ipv4_address }}"
+    {%  endif -%}
+    {%  if mapping.get('ipv6_address') %}
+    ipv6_address = "{{ mapping.ipv6_address }}"
+    {%  endif -%}
+  }
+  {%- endfor %}
+  {%- else %}
+  subnets            = [
+    {%- for subnet in lb.AvailabilityZones %}
+    "{{ subnet.SubnetId }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if lb.get('Attributes', {}).get('deletion_protection.enabled') %}
+  enable_deletion_protection = {{ lb.Attributes['deletion_protection.enabled'] | lower }}
+  {%  endif -%}
+
+  {%  if lb.Type == 'application' %}
+  {%  if lb.get('Attributes', {}).get('routing.http2.enabled') %}
+  enable_http2 = {{ lb.Attributes['routing.http2.enabled'] | lower }}
+  {%  endif -%}
+
+  {%  if lb.get('Attributes', {}).get('routing.http.drop_invalid_header_fields.enabled') %}
+  drop_invalid_header_fields = {{ lb.Attributes['routing.http.drop_invalid_header_fields.enabled'] | lower }}
+  {%  endif -%}
+
+  {%  if lb.get('Attributes', {}).get('routing.http.xff_client_port.enabled') %}
+  enable_xff_client_port = {{ lb.Attributes['routing.http.xff_client_port.enabled'] | lower }}
+  {%  endif -%}
+
+  {%  if lb.get('Attributes', {}).get('routing.http.preserve_host_header.enabled') %}
+  preserve_host_header = {{ lb.Attributes['routing.http.preserve_host_header.enabled'] | lower }}
+  {%  endif -%}
+
+  {%  if lb.get('Attributes', {}).get('routing.http.xff_header_processing.mode') %}
+  xff_header_processing_mode = "{{ lb.Attributes['routing.http.xff_header_processing.mode'] }}"
+  {%  endif -%}
+
+  {%  if lb.get('Attributes', {}).get('waf.fail_open.enabled') %}
+  enable_waf_fail_open = {{ lb.Attributes['waf.fail_open.enabled'] | lower }}
+  {%  endif -%}
+
+  {%  if lb.get('Attributes', {}).get('idle_timeout.timeout_seconds') is defined and lb.Attributes['idle_timeout.timeout_seconds'] is not none %}
+  idle_timeout = {{ lb.Attributes['idle_timeout.timeout_seconds'] }}
+  {%  endif -%}
+  {%  endif -%}
+
+  {%  if lb.Type == 'network' or lb.Type == 'gateway' %}
+  {%  if lb.get('Attributes', {}).get('load_balancing.cross_zone.enabled') %}
+  enable_cross_zone_load_balancing = {{ lb.Attributes['load_balancing.cross_zone.enabled'] | lower }}
+  {%  endif -%}
+  {%  endif -%}
+
+  {%  if lb.get('Attributes', {}).get('access_logs.s3.enabled') == 'true' %}
+  access_logs {
+    enabled = true
+    bucket  = "{{ lb.Attributes.get('access_logs.s3.bucket', '') }}"
+    {%  if lb.Attributes.get('access_logs.s3.prefix') %}
+    prefix  = "{{ lb.Attributes['access_logs.s3.prefix'] }}"
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  {%  if lb.get('CustomerOwnedIpv4Pool') %}
+  customer_owned_ipv4_pool = "{{ lb.CustomerOwnedIpv4Pool }}"
+  {%  endif -%}
+
+  {%  if lb.get('IpAddressType') %}
+  ip_address_type = "{{ lb.IpAddressType }}"
+  {%  endif -%}
+
+  {%  if lb.get('Attributes', {}).get('client_keep_alive.seconds') is defined and lb.Attributes['client_keep_alive.seconds'] is not none %}
+  client_keep_alive = {{ lb.Attributes['client_keep_alive.seconds'] }}
+  {%  endif -%}
+
+  {%  if lb.get('Tags') %}
+  tags = {
+    {%- for tag in lb.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

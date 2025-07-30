@@ -1,0 +1,39 @@
+{% for zone in resources -%}
+{%- set zone_name = zone.Name | terraform_name -%}
+{%- if not zone_name or zone_name == "unnamed_resource" -%}
+{%- set zone_name = zone.Id | strip_id_prefix | terraform_name -%}
+{%- endif -%}
+resource "aws_route53_zone" "{{ zone_name }}" {
+  name    = "{{ zone.Name }}"
+  comment = "{{ zone.Config.Comment | default('') | escape_quotes }}"
+
+  {%  if zone.Config.PrivateZone %}
+  {%- for vpc in zone.VPCs %}
+  vpc {
+    vpc_id     = "{{ vpc.VPCId }}"
+    vpc_region = "{{ vpc.VPCRegion }}"
+  }
+  {%- endfor %}
+  {%  endif %}
+
+  {%  if zone.get('DelegationSetId') and zone.DelegationSetId | has_value %}
+  delegation_set_id = "{{ zone.DelegationSetId }}"
+  {%  endif %}
+
+  {%  if zone.get('Tags') and zone.Tags | has_value %}
+  tags = {
+    {%- for tag in zone.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif %}
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

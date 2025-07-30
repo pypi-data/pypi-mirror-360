@@ -1,0 +1,43 @@
+{% for ap in resources -%}
+resource "aws_efs_access_point" "{{ ap.name_sanitized }}" {
+  file_system_id = "{{ ap.FileSystemId }}"
+
+  {%  if ap.get('posix_user_formatted') %}
+  posix_user {
+    uid = {{ ap.posix_user_formatted.uid }}
+    gid = {{ ap.posix_user_formatted.gid }}
+    {%  if ap.posix_user_formatted.get('secondary_gids') %}
+    secondary_gids = [
+      {%- for gid in ap.posix_user_formatted.secondary_gids %}
+      {{ gid }}{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  root_directory {
+    path = "{{ ap.root_directory_formatted.path }}"
+
+    {%  if ap.root_directory_formatted.get('creation_info') %}
+    creation_info {
+      owner_uid   = {{ ap.root_directory_formatted.creation_info.owner_uid }}
+      owner_gid   = {{ ap.root_directory_formatted.creation_info.owner_gid }}
+      permissions = "{{ ap.root_directory_formatted.creation_info.permissions }}"
+    }
+    {%  endif -%}
+  }
+
+  {%  if ap.get('tags_formatted') %}
+  tags = {
+    {%- for key, value in ap.get('tags_formatted', {}).items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

@@ -1,0 +1,146 @@
+{% for window in resources -%}
+resource "aws_ssm_maintenance_window" "{{ window.name_sanitized }}" {
+  name        = "{{ window.Name }}"
+  {%  if window.Description %}
+  description = "{{ window.Description }}"
+  {%  endif -%}
+
+  schedule          = "{{ window.Schedule }}"
+  duration          = {{ window.Duration }}
+  cutoff            = {{ window.Cutoff }}
+
+  {%  if window.ScheduleTimezone %}
+  schedule_timezone = "{{ window.ScheduleTimezone }}"
+  {%  endif -%}
+
+  {%  if window.ScheduleOffset %}
+  schedule_offset = {{ window.ScheduleOffset }}
+  {%  endif -%}
+
+  allow_unassociated_targets = {{ window.AllowUnassociatedTargets | lower }}
+  enabled                    = {{ window.Enabled | lower }}
+
+  {%  if window.StartDate %}
+  start_date = "{{ window.StartDate }}"
+  {%  endif -%}
+
+  {%  if window.EndDate %}
+  end_date = "{{ window.EndDate }}"
+  {%  endif -%}
+
+  {%  if window.tags_formatted %}
+  tags = {
+    {%- for key, value in window.tags_formatted.items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{%  if window.targets_formatted %}
+{%- for target in window.targets_formatted %}
+resource "aws_ssm_maintenance_window_target" "{{ window.name_sanitized }}_target_{{ loop.index }}" {
+  window_id     = aws_ssm_maintenance_window.{{ window.name_sanitized }}.id
+  name          = "{{ target.Name }}"
+  {%  if target.Description %}
+  description   = "{{ target.Description }}"
+  {%  endif -%}
+  resource_type = "{{ target.ResourceType }}"
+
+  {%- for t in target.Targets %}
+  targets {
+    key = "{{ t.Key }}"
+    values = {{ t.Values | tojson }}
+  }
+  {%- endfor %}
+
+  {%  if target.OwnerInformation %}
+  owner_information = "{{ target.OwnerInformation }}"
+  {%  endif -%}
+}
+{%- endfor %}
+{%  endif -%}
+
+{%  if window.tasks_formatted %}
+{%- for task in window.tasks_formatted %}
+resource "aws_ssm_maintenance_window_task" "{{ window.name_sanitized }}_task_{{ loop.index }}" {
+  window_id        = aws_ssm_maintenance_window.{{ window.name_sanitized }}.id
+  {%  if task.Name %}
+  name             = "{{ task.Name }}"
+  {%  endif -%}
+  {%  if task.Description %}
+  description      = "{{ task.Description }}"
+  {%  endif -%}
+  task_type        = "{{ task.Type }}"
+  task_arn         = "{{ task.TaskArn }}"
+  {%  if task.ServiceRoleArn %}
+  service_role_arn = "{{ task.ServiceRoleArn }}"
+  {%  endif -%}
+  priority         = {{ task.Priority }}
+
+  {%  if task.MaxConcurrency %}
+  max_concurrency  = "{{ task.MaxConcurrency }}"
+  {%  endif -%}
+  {%  if task.MaxErrors %}
+  max_errors       = "{{ task.MaxErrors }}"
+  {%  endif -%}
+
+  {%  if task.CutoffBehavior %}
+  cutoff_behavior  = "{{ task.CutoffBehavior }}"
+  {%  endif -%}
+
+  {%  if task.Targets %}
+  {%- for target in task.Targets %}
+  targets {
+    key = "{{ target.Key }}"
+    values = {{ target.Values | tojson }}
+  }
+  {%- endfor %}
+  {%  endif -%}
+
+  {%  if task.TaskParameters %}
+  task_invocation_parameters {
+    {%  if task.Type == 'RUN_COMMAND' %}
+    run_command_parameters {
+      {%- for param_name, param_value in task.TaskParameters.items() %}
+      parameter {
+        name = "{{ param_name }}"
+        values = ["{{ param_value }}"]
+      }
+      {%- endfor %}
+    }
+    {%- elif task.Type == 'AUTOMATION' %}
+    automation_parameters {
+      {%- for param_name, param_value in task.TaskParameters.items() %}
+      parameter {
+        name = "{{ param_name }}"
+        values = ["{{ param_value }}"]
+      }
+      {%- endfor %}
+    }
+    {%- elif task.Type == 'STEP_FUNCTIONS' %}
+    step_functions_parameters {
+      {%  if task.TaskParameters.get('Input') %}
+      input = "{{ task.TaskParameters.Input }}"
+      {%  endif -%}
+      {%  if task.TaskParameters.get('Name') %}
+      name = "{{ task.TaskParameters.Name }}"
+      {%  endif -%}
+    }
+    {%- elif task.Type == 'LAMBDA' %}
+    lambda_parameters {
+      {%  if task.TaskParameters.get('Payload') %}
+      payload = "{{ task.TaskParameters.Payload }}"
+      {%  endif -%}
+    }
+    {%  endif -%}
+  }
+  {%  endif -%}
+}
+{%- endfor %}
+{%  endif -%}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

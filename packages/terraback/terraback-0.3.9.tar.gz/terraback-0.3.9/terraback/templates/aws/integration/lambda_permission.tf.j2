@@ -1,0 +1,20 @@
+{% for perm in resources -%}
+resource "aws_lambda_permission" "{{ perm.function_name | tf_resource_name }}_{{ loop.index }}" {
+  statement_id  = "{{ perm.statement_id }}"
+  action        = "lambda:InvokeFunction"
+  function_name = "{{ perm.function_name }}"
+  principal     = "apigateway.amazonaws.com"
+
+  {%  if perm.get('rest_api_id') %}
+  source_arn = "arn:aws:execute-api:*:*:{{ perm.rest_api_id }}/*/*/*"
+  {%  endif -%}
+
+  {%  if perm.get('source_account') %}
+  source_account = "{{ perm.source_account }}"
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

@@ -1,0 +1,12 @@
+{% for method in resources -%}
+resource "aws_api_gateway_method" "{{ method.rest_api_id }}_{{ method.resource_id }}_{{ method.http_method | lower }}" {
+  rest_api_id   = "{{ method.rest_api_id }}"
+  resource_id   = "{{ method.resource_id }}"
+  http_method   = "{{ method.http_method }}"
+  authorization = "{{ method.authorizationType }}"
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

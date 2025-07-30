@@ -1,0 +1,212 @@
+{% for rule in resources -%}
+resource "aws_lb_listener_rule" "{{ rule.name_sanitized }}" {
+  listener_arn = "{{ rule.ListenerArn }}"
+
+  {%  if rule.get('priority_value') and rule.priority_value != 'default' %}
+  priority = {{ rule.priority_value }}
+  {%  endif -%}
+
+  {%- for action in rule.get('actions_formatted', []) %}
+  action {
+    type = "{{ action.type }}"
+    {%  if action.get('order') is defined and action.order is not none %}
+    order = {{ action.order }}
+    {%  endif -%}
+
+    {%  if action.get('target_group_arn') %}
+    target_group_arn = "{{ action.target_group_arn }}"
+    {%  endif -%}
+
+    {%  if action.get('forward_config') %}
+    forward {
+      {%- for target_group in action.forward_config.get('TargetGroups', []) %}
+      target_group {
+        arn = "{{ target_group.TargetGroupArn }}"
+        {%  if target_group.get('Weight') is defined and target_group.Weight is not none %}
+        weight = {{ target_group.Weight }}
+        {%  endif -%}
+      }
+      {%- endfor %}
+
+      {%  if action.forward_config.get('TargetGroupStickinessConfig') %}
+      stickiness {
+        enabled  = {{ action.forward_config.TargetGroupStickinessConfig.get('Enabled', false) | lower }}
+        {%  if action.forward_config.TargetGroupStickinessConfig.get('DurationSeconds') is defined and action.forward_config.TargetGroupStickinessConfig.DurationSeconds is not none %}
+        duration = {{ action.forward_config.TargetGroupStickinessConfig.DurationSeconds }}
+        {%  endif -%}
+      }
+      {%  endif -%}
+    }
+    {%  endif -%}
+
+    {%  if action.get('redirect_config') %}
+    redirect {
+      {%  if action.redirect_config.get('Protocol') %}
+      protocol = "{{ action.redirect_config.Protocol }}"
+      {%  endif -%}
+      {%  if action.redirect_config.get('Port') %}
+      port = "{{ action.redirect_config.Port }}"
+      {%  endif -%}
+      {%  if action.redirect_config.get('Host') %}
+      host = "{{ action.redirect_config.Host }}"
+      {%  endif -%}
+      {%  if action.redirect_config.get('Path') %}
+      path = "{{ action.redirect_config.Path }}"
+      {%  endif -%}
+      {%  if action.redirect_config.get('Query') %}
+      query = "{{ action.redirect_config.Query }}"
+      {%  endif -%}
+      status_code = "{{ action.redirect_config.StatusCode }}"
+    }
+    {%  endif -%}
+
+    {%  if action.get('fixed_response_config') %}
+    fixed_response {
+      content_type = "{{ action.fixed_response_config.ContentType }}"
+      {%  if action.fixed_response_config.get('MessageBody') %}
+      message_body = "{{ action.fixed_response_config.MessageBody }}"
+      {%  endif -%}
+      status_code = "{{ action.fixed_response_config.StatusCode }}"
+    }
+    {%  endif -%}
+
+    {%  if action.get('authenticate_cognito_config') %}
+    authenticate_cognito {
+      user_pool_arn       = "{{ action.authenticate_cognito_config.UserPoolArn }}"
+      user_pool_client_id = "{{ action.authenticate_cognito_config.UserPoolClientId }}"
+      user_pool_domain    = "{{ action.authenticate_cognito_config.UserPoolDomain }}"
+
+      {%  if action.authenticate_cognito_config.get('AuthenticationRequestExtraParams') %}
+      authentication_request_extra_params = {
+        {%- for key, value in action.authenticate_cognito_config.AuthenticationRequestExtraParams.items() %}
+        "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+        {%- endfor %}
+      }
+      {%  endif -%}
+
+      {%  if action.authenticate_cognito_config.get('OnUnauthenticatedRequest') %}
+      on_unauthenticated_request = "{{ action.authenticate_cognito_config.OnUnauthenticatedRequest }}"
+      {%  endif -%}
+
+      {%  if action.authenticate_cognito_config.get('Scope') %}
+      scope = "{{ action.authenticate_cognito_config.Scope }}"
+      {%  endif -%}
+
+      {%  if action.authenticate_cognito_config.get('SessionCookieName') %}
+      session_cookie_name = "{{ action.authenticate_cognito_config.SessionCookieName }}"
+      {%  endif -%}
+
+      {%  if action.authenticate_cognito_config.get('SessionTimeout') is defined and action.authenticate_cognito_config.SessionTimeout is not none %}
+      session_timeout = {{ action.authenticate_cognito_config.SessionTimeout }}
+      {%  endif -%}
+    }
+    {%  endif -%}
+
+    {%  if action.get('authenticate_oidc_config') %}
+    authenticate_oidc {
+      authorization_endpoint = "{{ action.authenticate_oidc_config.AuthorizationEndpoint }}"
+      client_id              = "{{ action.authenticate_oidc_config.ClientId }}"
+      client_secret          = "{{ action.authenticate_oidc_config.ClientSecret }}"
+      issuer                 = "{{ action.authenticate_oidc_config.Issuer }}"
+      token_endpoint         = "{{ action.authenticate_oidc_config.TokenEndpoint }}"
+      user_info_endpoint     = "{{ action.authenticate_oidc_config.UserInfoEndpoint }}"
+
+      {%  if action.authenticate_oidc_config.get('AuthenticationRequestExtraParams') %}
+      authentication_request_extra_params = {
+        {%- for key, value in action.authenticate_oidc_config.AuthenticationRequestExtraParams.items() %}
+        "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+        {%- endfor %}
+      }
+      {%  endif -%}
+
+      {%  if action.authenticate_oidc_config.get('OnUnauthenticatedRequest') %}
+      on_unauthenticated_request = "{{ action.authenticate_oidc_config.OnUnauthenticatedRequest }}"
+      {%  endif -%}
+
+      {%  if action.authenticate_oidc_config.get('Scope') %}
+      scope = "{{ action.authenticate_oidc_config.Scope }}"
+      {%  endif -%}
+
+      {%  if action.authenticate_oidc_config.get('SessionCookieName') %}
+      session_cookie_name = "{{ action.authenticate_oidc_config.SessionCookieName }}"
+      {%  endif -%}
+
+      {%  if action.authenticate_oidc_config.get('SessionTimeout') is defined and action.authenticate_oidc_config.SessionTimeout is not none %}
+      session_timeout = {{ action.authenticate_oidc_config.SessionTimeout }}
+      {%  endif -%}
+    }
+    {%  endif -%}
+  }
+  {%- endfor %}
+
+  {%- for condition in rule.get('conditions_formatted', []) %}
+  condition {
+    {%  if condition.get('host_header_config') %}
+    host_header {
+      values = [
+        {%- for value in condition.host_header_config.Values %}
+        "{{ value }}"{{ "," if not loop.last }}
+        {%- endfor %}
+      ]
+    }
+    {%  endif -%}
+
+    {%  if condition.get('path_pattern_config') %}
+    path_pattern {
+      values = [
+        {%- for value in condition.path_pattern_config.Values %}
+        "{{ value }}"{{ "," if not loop.last }}
+        {%- endfor %}
+      ]
+    }
+    {%  endif -%}
+
+    {%  if condition.get('http_header_config') %}
+    http_header {
+      http_header_name = "{{ condition.http_header_config.HttpHeaderName }}"
+      values = [
+        {%- for value in condition.http_header_config.Values %}
+        "{{ value }}"{{ "," if not loop.last }}
+        {%- endfor %}
+      ]
+    }
+    {%  endif -%}
+
+    {%  if condition.get('query_string_config') %}
+    query_string {
+      {%- for qs in condition.query_string_config.Values %}
+      {%  if qs.get('Key') %}
+      key = "{{ qs.Key }}"
+      {%  endif -%}
+      value = "{{ qs.Value }}"
+      {%- endfor %}
+    }
+    {%  endif -%}
+
+    {%  if condition.get('http_request_method_config') %}
+    http_request_method {
+      values = [
+        {%- for value in condition.http_request_method_config.Values %}
+        "{{ value }}"{{ "," if not loop.last }}
+        {%- endfor %}
+      ]
+    }
+    {%  endif -%}
+
+    {%  if condition.get('source_ip_config') %}
+    source_ip {
+      values = [
+        {%- for value in condition.source_ip_config.Values %}
+        "{{ value }}"{{ "," if not loop.last }}
+        {%- endfor %}
+      ]
+    }
+    {%  endif -%}
+  }
+  {%- endfor %}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

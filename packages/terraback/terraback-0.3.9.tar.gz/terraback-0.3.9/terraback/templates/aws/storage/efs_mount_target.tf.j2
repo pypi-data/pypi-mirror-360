@@ -1,0 +1,22 @@
+{% for mt in resources -%}
+resource "aws_efs_mount_target" "{{ mt.name_sanitized }}" {
+  file_system_id = "{{ mt.FileSystemId }}"
+  subnet_id      = "{{ mt.SubnetId }}"
+
+  {%  if mt.get('IpAddress') %}
+  ip_address = "{{ mt.IpAddress }}"
+  {%  endif -%}
+
+  {%  if mt.get('SecurityGroups') %}
+  security_groups = [
+    {%- for sg in mt.SecurityGroups %}
+    "{{ sg }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

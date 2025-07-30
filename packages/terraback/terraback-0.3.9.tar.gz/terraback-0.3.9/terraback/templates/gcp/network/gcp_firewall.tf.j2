@@ -1,0 +1,72 @@
+{% for firewall in resources -%}
+resource "google_compute_firewall" "{{ firewall.name_sanitized }}" {
+  name     = "{{ firewall.name }}"
+  project  = "{{ firewall.project }}"
+  network  = "{{ firewall.network }}"
+  {%  if firewall.description %}
+  description = "{{ firewall.description }}"
+  {%  endif -%}
+
+  direction = "{{ firewall.direction }}"
+  priority  = {{ firewall.priority }}
+  {%  if firewall.disabled %}
+  disabled  = true
+  {%  endif -%}
+
+  {%  if firewall.source_ranges %}
+  source_ranges = {{ firewall.source_ranges | tojson }}
+  {%  endif -%}
+
+  {%  if firewall.source_tags %}
+  source_tags = {{ firewall.source_tags | tojson }}
+  {%  endif -%}
+
+  {%  if firewall.source_service_accounts %}
+  source_service_accounts = {{ firewall.source_service_accounts | tojson }}
+  {%  endif -%}
+
+  {%  if firewall.destination_ranges %}
+  destination_ranges = {{ firewall.destination_ranges | tojson }}
+  {%  endif -%}
+
+  {%  if firewall.target_tags %}
+  target_tags = {{ firewall.target_tags | tojson }}
+  {%  endif -%}
+
+  {%  if firewall.target_service_accounts %}
+  target_service_accounts = {{ firewall.target_service_accounts | tojson }}
+  {%  endif -%}
+
+  {%- for rule in firewall.allow %}
+  allow {
+    protocol = "{{ rule.protocol }}"
+    {%  if rule.ports %}
+    ports    = {{ rule.ports | tojson }}
+    {%  endif -%}
+  }
+  {%- endfor %}
+
+  {%- for rule in firewall.deny %}
+  deny {
+    protocol = "{{ rule.protocol }}"
+    {%  if rule.ports %}
+    ports    = {{ rule.ports | tojson }}
+    {%  endif -%}
+  }
+  {%- endfor %}
+
+  {%  if firewall.enable_logging %}
+  log_config {
+    metadata = "INCLUDE_ALL_METADATA"
+  }
+  {%  endif -%}
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

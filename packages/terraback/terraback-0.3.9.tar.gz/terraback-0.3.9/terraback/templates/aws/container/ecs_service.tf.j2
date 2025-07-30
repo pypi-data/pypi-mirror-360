@@ -1,0 +1,156 @@
+{% for service in resources -%}
+resource "aws_ecs_service" "{{ service.cluster_name_sanitized }}_{{ service.name_sanitized }}" {
+  name            = "{{ service.serviceName }}"
+  cluster         = "{{ service.clusterName }}"
+  task_definition = "{{ service.taskDefinition }}"
+
+  {%  if service.get('desiredCount') is defined and service.desiredCount is not none %}
+  desired_count = {{ service.desiredCount }}
+  {%  endif -%}
+
+  {%  if service.get('launchType') %}
+  launch_type = "{{ service.launchType }}"
+  {%  endif -%}
+
+  {%  if service.get('platformVersion') %}
+  platform_version = "{{ service.platformVersion }}"
+  {%  endif -%}
+
+  {%  if service.get('schedulingStrategy') %}
+  scheduling_strategy = "{{ service.schedulingStrategy }}"
+  {%  endif -%}
+
+  {%  if service.get('healthCheckGracePeriodSeconds') is defined and service.healthCheckGracePeriodSeconds is not none %}
+  health_check_grace_period_seconds = {{ service.healthCheckGracePeriodSeconds }}
+  {%  endif -%}
+
+  {%  if service.get('enableExecuteCommand') is defined %}
+  enable_execute_command = {{ service.enableExecuteCommand | lower }}
+  {%  endif -%}
+
+  {%  if service.get('enableECSManagedTags') is defined %}
+  enable_ecs_managed_tags = {{ service.enableECSManagedTags | lower }}
+  {%  endif -%}
+
+  {%  if service.get('propagateTags') %}
+  propagate_tags = "{{ service.propagateTags }}"
+  {%  endif -%}
+
+  {%  if service.get('capacity_provider_strategy_formatted') %}
+  {%- for strategy in service.capacity_provider_strategy_formatted %}
+  capacity_provider_strategy {
+    capacity_provider = "{{ strategy.capacity_provider }}"
+    {%  if strategy.weight is defined and strategy.weight is not none and strategy.weight > 0 %}
+    weight            = {{ strategy.weight }}
+    {%  endif -%}
+    {%  if strategy.base is defined and strategy.base is not none and strategy.base > 0 %}
+    base              = {{ strategy.base }}
+    {%  endif -%}
+  }
+  {%- endfor %}
+  {%  endif -%}
+
+  {%  if service.get('deploymentConfiguration') %}
+  deployment_configuration {
+    {%  if service.deploymentConfiguration.get('maximumPercent') is defined and service.deploymentConfiguration.maximumPercent is not none %}
+    maximum_percent = {{ service.deploymentConfiguration.maximumPercent }}
+    {%  endif -%}
+    {%  if service.deploymentConfiguration.get('minimumHealthyPercent') is defined and service.deploymentConfiguration.minimumHealthyPercent is not none %}
+    minimum_healthy_percent = {{ service.deploymentConfiguration.minimumHealthyPercent }}
+    {%  endif -%}
+
+    {%  if service.deploymentConfiguration.get('deploymentCircuitBreaker') %}
+    deployment_circuit_breaker {
+      enable   = {{ service.deploymentConfiguration.deploymentCircuitBreaker.enable | lower }}
+      rollback = {{ service.deploymentConfiguration.deploymentCircuitBreaker.rollback | lower }}
+    }
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  {%  if service.get('network_config_formatted') and service.network_config_formatted.get('subnets') %}
+  network_configuration {
+    subnets = [
+      {%- for subnet in service.network_config_formatted.subnets %}
+      "{{ subnet }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {%  if service.network_config_formatted.get('security_groups') %}
+    security_groups = [
+      {%- for sg in service.network_config_formatted.security_groups %}
+      "{{ sg }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {%  endif -%}
+    assign_public_ip = {{ service.network_config_formatted.assign_public_ip | lower }}
+  }
+  {%  endif -%}
+
+  {%- for lb in service.get('load_balancers_formatted', []) %}
+  load_balancer {
+    {%  if lb.get('target_group_arn') %}
+    target_group_arn = "{{ lb.target_group_arn }}"
+    {%  endif -%}
+    {%  if lb.get('load_balancer_name') %}
+    load_balancer_name = "{{ lb.load_balancer_name }}"
+    {%  endif -%}
+    container_name   = "{{ lb.container_name }}"
+    container_port   = {{ lb.container_port }}
+  }
+  {%- endfor %}
+
+  {%- for registry in service.get('service_registries_formatted', []) %}
+  service_registries {
+    registry_arn = "{{ registry.registry_arn }}"
+    {%  if registry.get('port') is defined and registry.port is not none %}
+    port = {{ registry.port }}
+    {%  endif -%}
+    {%  if registry.get('container_name') %}
+    container_name = "{{ registry.container_name }}"
+    {%  endif -%}
+    {%  if registry.get('container_port') is defined and registry.container_port is not none %}
+    container_port = {{ registry.container_port }}
+    {%  endif -%}
+  }
+  {%- endfor %}
+
+  {%- for constraint in service.get('placement_constraints_formatted', []) %}
+  placement_constraints {
+    type = "{{ constraint.type }}"
+    {%  if constraint.get('expression') %}
+    expression = "{{ constraint.expression }}"
+    {%  endif -%}
+  }
+  {%- endfor %}
+
+  {%- for strategy in service.get('placement_strategy_formatted', []) %}
+  ordered_placement_strategy {
+    type = "{{ strategy.type }}"
+    {%  if strategy.get('field') %}
+    field = "{{ strategy.field }}"
+    {%  endif -%}
+  }
+  {%- endfor %}
+
+  {%  if service.get('tags') %}
+  tags = {
+    {%- for tag in service.get('tags', []) %}
+    "{{ tag.key }}" = "{{ tag.value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  wait_for_steady_state = false
+
+  lifecycle {
+    ignore_changes = [
+      task_definition,
+      desired_count,
+    ]
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}
