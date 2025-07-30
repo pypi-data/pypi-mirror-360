@@ -1,0 +1,117 @@
+Metadata-Version: 2.3
+Name: datarobot-moderations
+Version: 11.1.19
+Summary: DataRobot Monitoring and Moderation framework
+License: DataRobot Tool and Utility Agreement
+Author: DataRobot
+Author-email: support@datarobot.com
+Requires-Python: >=3.10,<3.13
+Classifier: License :: Other/Proprietary License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Dist: aiohttp (>=3.9.5)
+Requires-Dist: asyncio (>=3.4.3)
+Requires-Dist: backoff (>=2.2.1)
+Requires-Dist: datarobot (>=3.6.0)
+Requires-Dist: datarobot-predict (>=1.9.6)
+Requires-Dist: deepeval (==2.7.9)
+Requires-Dist: langchain (>=0.1.12)
+Requires-Dist: langchain-nvidia-ai-endpoints (>=0.3.9)
+Requires-Dist: langchain-openai (>=0.1.7)
+Requires-Dist: llama-index (>=0.12.9)
+Requires-Dist: llama-index-embeddings-azure-openai (>=0.1.6)
+Requires-Dist: llama-index-llms-bedrock-converse (>=0.1.6)
+Requires-Dist: llama-index-llms-fireworks (>=0.1.5)
+Requires-Dist: llama-index-llms-langchain (>=0.1.3)
+Requires-Dist: llama-index-llms-vertex (>=0.1.5)
+Requires-Dist: nemoguardrails (>=0.9.0)
+Requires-Dist: nest-asyncio (>=1.6.0)
+Requires-Dist: numpy (>=1.25.0)
+Requires-Dist: openai (>=1.14.3)
+Requires-Dist: opentelemetry-api (>=1.16.0)
+Requires-Dist: opentelemetry-sdk (>=1.16.0)
+Requires-Dist: pandas (>=2.0.3)
+Requires-Dist: ragas (>=0.2.15)
+Requires-Dist: rouge-score (>=0.1.2)
+Requires-Dist: tiktoken (>=0.5.1)
+Requires-Dist: trafaret (>=2.1.1)
+Description-Content-Type: text/markdown
+
+# DataRobot Moderations library
+
+This library enforces the intervention in the prompt and response texts as per the
+guard configuration set by the user.
+
+The library accepts the guard configuration in the yaml format and the input prompts
+and outputs the dataframe with the details like:
+- should the prompt be blocked
+- should the completion be blocked
+- metric values obtained from the model guards
+- is the prompt or response modifed as per the modifier guard configuration
+
+
+## Architecture
+
+The library is architected in a way that it wraps around the typical LLM prediction method.
+The library will first run the pre-score guards - the guards that will evaluate prompts and
+enforce moderation if necessary.  All the prompts that were not moderated by the library are
+forwarded to the actual LLM to get their respective completions.  The library then evaluates
+these completions using post-score guards and enforces intervention on them.
+
+![](pics/img.png)
+
+## How to build it?
+
+The repository uses `poetry` to manage the build process and a wheel can be built using:
+```
+make clean
+make
+```
+
+## How to use it?
+
+A wheel file generated or downloaded can be installed with pip and will pull its
+dependencies as well.
+```
+pip3 install datarobot-moderations
+```
+
+### With [DRUM](https://github.com/datarobot/datarobot-user-models)
+As described above the library nicely wraps DRUM's `score` method for pre and post score
+guards.  Hence, in case of DRUM, the user simply runs her custom model using `drum score`
+and can avail the moderation library features.
+
+```
+pip3 install datarobot-drum
+drum score --verbose --logging-level info --code-dir ./ --input ./input.csv --target-type textgeneration --runtime-params-file values.yaml
+```
+Please refer to the DRUM documentation on [how to define custom inference model](https://github.com/datarobot/datarobot-user-models?tab=readme-ov-file#custom-inference-models-reference-)
+which will walk you through how to assemble custom inference model to how to [test it locally](https://github.com/datarobot/datarobot-user-models/blob/master/DEFINE-INFERENCE-MODEL.md#test_inference_model_drum) using `drum score` method
+
+### Standalone use
+
+However, moderation library is not tightly coupled with DRUM and we are actively working
+towards using this library in non-DRUM use case.  [run.py](./run.py) is an example on how
+to use this library in a stand alone way.  This example uses Azure OpenAI service to get
+LLM completions.
+
+```
+export AZURE_OPENAI_API_KEY=<your-azure-openai-api-key>
+python run.py --config ./moderation_config.yaml --input ./input.csv --azure-openai-api-base <azure-openai-base-url> --score
+```
+
+This will output the response dataframe with bunch of information indicating which prompts
+and responses were blocked / reported, why they are blocked / reported etc
+
+[run.py](./run.py) also has an example on how to use this library to moderate the chat
+interface.  It also uses Azure OpenAI service to get chat completions:
+
+```
+export AZURE_OPENAI_API_KEY=<your-azure-openai-api-key>
+python run.py --config ./moderation_config.yaml --input ./input_chat.csv --azure-openai-api-base <azure-openai-base-url> --chat
+```
+
+It will output the conversation with LLM line by line.
+
