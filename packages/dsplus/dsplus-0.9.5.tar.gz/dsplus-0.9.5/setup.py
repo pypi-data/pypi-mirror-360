@@ -1,0 +1,46 @@
+from setuptools import setup, find_packages
+from dsplus.__init__ import __version__
+
+setup(
+    name='dsplus',
+    version=__version__,
+    author='Prashana Bajracharya',
+    author_email='pajracharya713@gmail.com',
+    description='Helper functions for data science applications',
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
+    # author=httpimport.__author__,
+    # license='MIT',
+    # url=httpimport.__github__,
+    # py_modules=['dsplus'],
+    packages=find_packages(),
+    install_requires=[
+        'numpy',
+        'pandas',
+        'statsmodels',
+        'scipy',
+        'plotly',
+        'geopandas',
+        'shapely',
+        'rasterio',
+        'rioxarray',
+        'rasterstats',
+        'xarray',
+    ],
+    classifiers=[
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
+        'License :: OSI Approved :: MIT License',
+        'Development Status :: 4 - Beta',
+        # 'Operating System :: OS Independent',
+    ],
+    python_requires='>=3.10',
+    keywords=[
+        'data science',
+        'pandas',
+        'geopandas',
+        ],
+)
