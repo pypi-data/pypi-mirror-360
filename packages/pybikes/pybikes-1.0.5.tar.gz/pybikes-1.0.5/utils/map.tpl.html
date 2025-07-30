@@ -1,0 +1,588 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src='https://unpkg.com/maplibre-gl@%5E2.4/dist/maplibre-gl.js'></script>
+    <link href='https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css' rel='stylesheet' />
+    <script src='https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js'></script>
+    <style>
+
+      body {
+          font-family: system-ui;
+      }
+
+      div.container {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-flow: column wrap;
+      }
+      div#map {
+        height: 100%;
+        border-radius: 8px;
+        width: 50%;
+      }
+
+      div#sidebar {
+          height: 100%;
+          margin: 0;
+          padding: 10px;
+          width: 50%;
+          box-sizing: border-box;
+      }
+
+      div#systems {
+          height: 45%;
+          overflow: scroll;
+      }
+
+      div#systems ul li {
+          padding: 3px 5px;
+          border-radius: 3px;
+          background-color: #EEE;
+      }
+
+      div#systems a {
+          text-decoration: none;
+          color: inherit;
+      }
+
+      div#systems a:hover {
+          text-decoration: none;
+          color: inherit;
+      }
+
+
+      div#systems .hulls {
+          display: none;
+      }
+
+      div#systems .hulls.visible {
+          display: block;
+      }
+
+      div#systems .hulls li {
+          padding: 3px 8px;
+          border-radius: 4px;
+          cursor: pointer;
+          border: solid 1px #444;
+      }
+
+      div#systems .hulls li:hover {
+          background-color: #444;
+          color: #EEE;
+          border-color: transparent;
+      }
+
+      div#systems .hulls li.stE {
+          color: #f54f4f;
+          border-color: #f54f4f;
+      }
+
+      div#systems .hulls li.stE:hover {
+          color: #FFF;
+          background-color: #f54f4f;
+      }
+
+
+      div#controls {
+
+      }
+
+      div#console {
+          height: 50%;
+          overflow: scroll;
+          background-color: rgba(0,0,0,0.1);
+          color: #444;
+          font-size: 1.2em;
+          font-weight: 600;
+          position: relative;
+      }
+
+      div#console pre {
+          margin: 1em;
+      }
+
+      ul { margin: 0; padding: 0; }
+      ul li { display: inline-block; margin: 10px; }
+
+      div#console a.close {
+          font-family: monospace;
+          position: absolute;
+          top: 0px; right: 0px;
+          display: none;
+      }
+
+      div#console a.close.visible {
+          display: block;
+      }
+
+      div#controls div.control {
+          display: flex;
+          gap: 10px;
+      }
+
+      div#controls div.control input[type=range] {
+          flex-grow: 4;
+      }
+
+      div#controls div.control input[type=number] {
+          flex-shrink: 4;
+      }
+
+
+    </style>
+    <script type="application/json" id="allthethings">{{json.dumps(geojson)}} </script>
+  </head>
+  <body>
+    <div class='container'>
+        <div id='map'></div>
+        <div id='sidebar'>
+            <div id='systems'>
+            {% for system in systems %}
+                {% for cls in system.classes %}
+                <h1>{{system.name}}</h1>
+                    <ul>
+                    {% for instance in cls.instances %}
+                    <li>
+                    <a href='#' class='instance-link' data-tag='{{instance.tag}}'>
+                        {{format_outcome(instance.report.outcome)}}
+                        {{instance.tag}}
+                        {% if instance.report.user_properties %}
+                            ({{len(stations(instance.report.user_properties[0].geojson.features))}})
+                            ({{len(vehicles(instance.report.user_properties[0].geojson.features))}})
+                        {% else %}
+                            (error)
+                        {% endif %}
+                    </a>
+                    {% if instance.report.user_properties %}
+                    <a href="#" class='list-hulls' data-tag='{{instance.tag}}'>[+]</a>
+                    <div class='hulls' data-tag='{{instance.tag}}'><ul></ul></div>
+                    {% endif %}
+                    </li>
+                    {% endfor %}
+                    </ul>
+                {% endfor %}
+            {% endfor %}
+            </div>
+            <div id='controls'>
+                <div class='control'>
+                    <input type="checkbox" id='toggleStations' checked/>
+                    <label for="toggleStations">Stations</label>
+                    <input type="checkbox" id='toggleVehicles' checked/>
+                    <label for="toggleVehicles">Vehicles</label>
+                </div>
+                <div class='control'>
+                    <label for="hullEdge">Hull Edge</label>
+                    <input type='number' id='hullEdge' min=0 value=2000 /> m
+                    <input type='range' id='hullEdgeR' min=0 max=50000 value=2000 step=100 />
+                </div>
+                <div class='control'>
+                    <label for="hullBuffer">Hull Buffer</label>
+                    <input type='number' id='hullBuffer' min=0 value=500 /> m
+                    <input type='range' id='hullBufferR' min=0 max=100000 value=500 step=100 />
+                </div>
+            </div>
+            <div id='console'>
+                <a href='#' class='close'>[x]</a>
+                <pre id='theconsole'></pre>
+            </div>
+        </div>
+    </div>
+    <script>
+
+        const groupBy = (x,f)=>x.reduce((a,b,i)=>((a[f(b,i,x)]||=[]).push(b),a),{});
+        let allthethings = JSON.parse(document.getElementById('allthethings').innerHTML);
+        let last_selected
+        let anchored_event
+
+        let edge_d = document.querySelector('input#hullEdge').value
+        let buffer_d = document.querySelector('input#hullBuffer').value
+
+        const removeAnchor = () => {
+            anchored_event = null
+            last_selected = null
+            document.querySelector('div#console a.close').classList.remove('visible')
+            map.removeFeatureState({source: 'stations'})
+            document.getElementById('theconsole').innerHTML = ''
+        }
+
+        const debugElem = (elem) => {
+            var data = ""
+            var std = elem.properties
+            var traceback
+
+            if (std.extra && typeof std.extra === 'string') {
+                // nested properties get stringified in mapbox-gl
+                std.extra = JSON.parse(std.extra)
+            }
+
+            if (std.traceback) {
+                traceback = std.traceback
+                delete std.traceback
+            }
+
+            data += '\n' + JSON.stringify(std, (k, v) => v, 2) + '\n'
+
+            if (traceback) data += '\n==== Traceback ====\n\n' + traceback + '\n'
+
+            if (elem.id !== undefined)
+                map.setFeatureState({source: elem.source, id: elem.id}, {selected: true})
+
+            return data
+        }
+
+        const debugZone = ({point, lngLat}) => {
+            // XXX Hack
+            if (point == undefined && lngLat !== undefined) {
+                if (lngLat.length && lngLat.length == 2)
+                    lngLat = {lng: lngLat[0], lat: lngLat[1]}
+                point = map.project(lngLat)
+
+                // Wait for map project to finish any shit
+                setTimeout(() => {
+                    debugZone({point: point, lngLat: lngLat})
+                }, 100)
+
+                return
+            }
+
+            // Set `bbox` as 5px reactangle area around clicked point.
+            const bbox = [
+                [point.x - 5, point.y - 5],
+                [point.x + 5, point.y + 5]
+            ]
+            const selectedFeatures = map.queryRenderedFeatures(bbox, {
+                layers: ['stations', 'networks', 'vehicles']
+            });
+
+            const selHull = map.queryRenderedFeatures(bbox, {
+                layers: ['hulls'],
+            })
+
+            let data = "";
+
+            data += `LatLng: ${lngLat.lat.toFixed(4)}, ${lngLat.lng.toFixed(4)}\n`
+
+            if (selHull.length > 0) {
+                const hullBbox = turf.bbox(selHull[0]).map(d => d.toFixed(4));
+
+                data += `Zone: ${selHull[0].properties.tag}\n`
+                data += `bbox: [[${hullBbox[1]}, ${hullBbox[0]}], [${hullBbox[3]}, ${hullBbox[2]}]]\n`
+            }
+
+            map.removeFeatureState({source: 'stations'})
+            map.removeFeatureState({source: 'vehicles'})
+
+            if (selectedFeatures.length) {
+                selectedFeatures.forEach(elem => data+=debugElem(elem))
+                last_selected = selectedFeatures
+            } else if (last_selected) {
+                last_selected.forEach(elem => data+=debugElem(elem))
+            }
+
+            document.getElementById('theconsole').innerHTML = data;
+        }
+
+        const getHulls = (edge_d, buffer_d) => {
+            return {
+            'type': 'FeatureCollection',
+            'features': Object.entries(groupBy(stations.features,elem => elem.properties.tag)).map(
+                    ([tag, features]) => {
+                        var hull = turf.concave(
+                            {'type': 'FeatureCollection', 'features': features}, {maxEdge: edge_d, units: 'meters'}
+                        )
+                        if (hull) {
+                            hull.properties = {'tag': tag}
+                            hull = turf.buffer(hull, buffer_d, {units: 'meters', steps: 8})
+                        }
+                        return hull;
+                    }
+                ).filter(n => n)
+            }}
+
+
+        const hullE = (name, coords, hull) => {
+            let elem = document.createElement("li")
+            elem.className = 'hullE'
+            let bbox = turf.bbox(turf.polygon(coords))
+            elem.addEventListener('click', () => {
+                map.fitBounds(bbox, fitBoundsOptions['stations'])
+                removeAnchor()
+                debugZone({lngLat: map.getCenter()})
+            })
+            elem.append(name)
+
+            return elem
+        }
+
+        const listHulls = (hulls) => {
+            hulls.forEach( (hull) => {
+                const tag = hull.properties.tag
+                const target = document.querySelector('.hulls[data-tag="' + tag + '"] ul')
+                let cont = document.createElement('ul')
+                switch(hull.geometry.type) {
+                    case 'Polygon':
+                        cont.append(hullE('Hull #1', hull.geometry.coordinates, hull))
+                        break;
+                    case 'MultiPolygon':
+                        hull.geometry.coordinates.forEach((h, idx) => {
+                            cont.append(hullE('Hull #' + idx, h, hull))
+                        })
+                        break;
+                }
+                // find elements outside of hull and list them
+                let sts = stations.features.filter((f) => {return f.properties.tag == tag})
+                let nsts = sts.filter((f) => ! turf.booleanPointInPolygon(f, hull))
+
+                nsts.forEach((e, idx) => {
+                    let stE = document.createElement('li')
+                    stE.className = 'stE'
+                    stE.append('Station #' + idx)
+                    stE.addEventListener('click', (ev) => {
+                        map.setCenter({lng: e.geometry.coordinates[0], lat: e.geometry.coordinates[1]})
+                        map.setZoom(13)
+                        removeAnchor()
+                        debugZone({lngLat: e.geometry.coordinates})
+                    })
+                    cont.append(stE)
+                })
+
+                target.replaceWith(cont)
+            })
+        }
+
+        let stations = {
+            'type': 'FeatureCollection',
+            'features': allthethings.features.filter(elem => elem.properties.type == 'station'),
+        }
+
+        let vehicles = {
+            'type': 'FeatureCollection',
+            'features': allthethings.features.filter(elem => elem.properties.type == 'vehicle'),
+        }
+
+        let networks = {
+            'type': 'FeatureCollection',
+            'features': allthethings.features.filter(elem => elem.properties.type == 'network'),
+        }
+
+        let hulls = getHulls(edge_d, buffer_d)
+        listHulls(hulls.features)
+
+        let fitBoundsOptions = {
+          'networks': {
+            duration: 0,
+            padding: { top: 25, left: 100, bottom: 25, right: 75 }
+          },
+          'stations': {
+              duration: 0,
+              maxZoom: 16,
+              padding: { top: 25, bottom: 25, right: 25, left: 25 }
+          },
+        }
+
+        let map = new maplibregl.Map({
+          container: 'map',
+          style: 'https://tiles.citybik.es/styles/basic-preview/style.json',
+          center: [5, 24],
+          zoom: 2,
+        });
+
+        let events = {
+            hull_changed: ({...args}) => {
+                return new CustomEvent("hull_changed", {detail: args})
+            },
+        }
+
+        const layers = {
+            networks: {
+                id: 'networks',
+                type: 'circle',
+                source: 'networks',
+                paint: {
+                    'circle-radius': [
+                        // XXX Maybe tune these
+                        'interpolate', ['linear'], ['zoom'],
+                        0, 2,
+                        5, 5,
+                        10, 10
+                    ],
+                    'circle-color': [
+                        'match',
+                        ['get', 'outcome'],
+                        'failed', '#E33033',
+                        '#009933',
+                    ],
+                }
+            },
+            stations: {
+                id: 'stations',
+                type: 'circle',
+                source: 'stations',
+                paint: {
+                    'circle-radius': [
+                        'let', 'selected',
+                            ['case', ['boolean', ['feature-state', 'selected'], false], 2, 1],
+                        [
+                          // XXX Maybe tune these
+                          'interpolate', ['linear'], ['zoom'],
+                          8,    ['*', ['var', 'selected'], 0.5 ] ,
+                          10,   ['*', ['var', 'selected'], 2   ] ,
+                          12,   ['*', ['var', 'selected'], 4   ] ,
+                          15,   ['*', ['var', 'selected'], 8   ] ,
+                          22,   ['*', ['var', 'selected'], 40  ] ,
+                        ]
+                    ],
+                    'circle-color': [
+                        'match',
+                        ['get', 'status'],
+                        'green', '#009933',
+                        'yellow', '#FFB43F',
+                        'red', '#E33033',
+                        'rgba(84, 7, 91, 0.7)',
+                    ],
+                }
+            },
+            vehicles: {
+                id: 'vehicles',
+                type: 'circle',
+                source: 'vehicles',
+                paint: {
+                    'circle-radius': [
+                        'let', 'selected',
+                            ['case', ['boolean', ['feature-state', 'selected'], false], 2, 1],
+                        [
+                          // XXX Maybe tune these
+                          'interpolate', ['linear'], ['zoom'],
+                          8,    ['*', ['var', 'selected'], 0.5 ] ,
+                          10,   ['*', ['var', 'selected'], 2   ] ,
+                          12,   ['*', ['var', 'selected'], 4   ] ,
+                          15,   ['*', ['var', 'selected'], 8   ] ,
+                          22,   ['*', ['var', 'selected'], 40  ] ,
+                        ]
+                    ],
+                    'circle-color': 'rgba(190, 7, 200, 0.7)',
+                }
+            },
+            hulls: {
+              id: 'hulls',
+              type: 'fill',
+              source: 'hulls',
+              layout: {},
+              paint: {
+                "fill-color": '#444444',
+                "fill-opacity": 0.2,
+              }
+            },
+        }
+
+        map.on('load', function() {
+            map.addSource('stations', {'type': 'geojson', data: stations, generateId: true});
+            map.addSource('vehicles', {'type': 'geojson', data: vehicles, generateId: true});
+            map.addSource('networks', {'type': 'geojson', data: networks});
+            map.addSource('hulls', {'type': 'geojson', data: hulls});
+            map.addLayer(layers.networks)
+            map.addLayer(layers.stations)
+            map.addLayer(layers.vehicles)
+            map.addLayer(layers.hulls)
+            map.on('mousemove', (e) => {
+                if (anchored_event) return
+                debugZone(e)
+            })
+
+            map.on('click', (e) => {
+                // Anchor event
+                anchored_event = e
+                debugZone(e)
+                document.querySelector('div#console a.close').classList.add('visible')
+            })
+
+            map.on('contextmenu', removeAnchor)
+        });
+
+        document.querySelectorAll('a.instance-link').forEach(link => {
+            link.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                const tag = ev.target.dataset.tag
+
+                const f_networks = networks.features.filter(elem => elem.properties.tag == tag)
+                const f_stations = stations.features.filter(elem => elem.properties.tag == tag)
+                const features = [].concat(
+                    f_networks,
+                    f_stations,
+                    hulls.features.filter(elem => elem.properties.tag == tag),
+                )
+
+                const bbox = turf.bbox({'type': 'FeatureCollection', 'features': features})
+                map.fitBounds(bbox, fitBoundsOptions['stations'])
+                removeAnchor()
+                debugZone({lngLat: f_networks[0].geometry.coordinates})
+            })
+        })
+
+        document.querySelectorAll('a.list-hulls').forEach(link => {
+            link.addEventListener('click', (ev) => {
+                const tag = ev.target.dataset.tag
+                let hullsC = document.querySelector('.hulls[data-tag="' + tag +'"]')
+                hullsC.classList.toggle('visible')
+
+                if (hullsC.classList.contains('visible')) {
+                    link.textContent = '[-]'
+                } else {
+                    link.textContent = '[+]'
+                }
+            })
+        })
+
+        document.querySelector('input#hullEdge').addEventListener('input', e => {
+            document.dispatchEvent(events.hull_changed({edge: e.target.value, buffer: buffer_d}))
+        })
+
+        document.querySelector('input#hullBuffer').addEventListener('input', e => {
+            document.dispatchEvent(events.hull_changed({edge: edge_d, buffer: e.target.value}))
+        })
+
+        document.querySelector('input#hullEdgeR').addEventListener('input', e => {
+            document.dispatchEvent(events.hull_changed({edge: e.target.value, buffer: buffer_d}))
+        })
+
+        document.querySelector('input#hullBufferR').addEventListener('input', e => {
+            document.dispatchEvent(events.hull_changed({edge: edge_d, buffer: e.target.value}))
+        })
+
+        document.querySelector('div#console a.close').addEventListener('click', removeAnchor)
+
+        document.addEventListener("hull_changed", (e) => {
+            edge_d = e.detail.edge
+            buffer_d = e.detail.buffer
+
+            document.querySelector('input#hullEdge').value = edge_d
+            document.querySelector('input#hullEdgeR').value = edge_d
+            document.querySelector('input#hullBuffer').value = buffer_d
+            document.querySelector('input#hullBufferR').vaue = buffer_d
+
+            hulls = getHulls(edge_d, buffer_d)
+            map.getSource('hulls').setData(hulls)
+            listHulls(hulls.features)
+        })
+
+        document.querySelectorAll('a.list-hulls').forEach( (elem) => {
+            elem.addEventListener("click", (e) => {
+                console.log(e.target.dataset.tag)
+            })
+        })
+
+        document.querySelector('input#toggleStations').addEventListener('change', e => {
+            const checked = e.target.checked
+            map.setLayoutProperty('stations', 'visibility', checked ? 'visible' : 'none')
+        })
+
+        document.querySelector('input#toggleVehicles').addEventListener('change', e => {
+            const checked = e.target.checked
+            map.setLayoutProperty('vehicles', 'visibility', checked ? 'visible' : 'none')
+        })
+    </script>
+  </body>
+</html>
