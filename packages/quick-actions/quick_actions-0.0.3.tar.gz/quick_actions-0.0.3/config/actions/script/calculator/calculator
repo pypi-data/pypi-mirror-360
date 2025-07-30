@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+
+strip_equals() {
+    local input="$1"
+    local remaining
+
+    case "$input" in
+        =*)
+            remaining="${input#=}"  # Strip leading '='
+            # Strip leading whitespace (spaces/tabs)
+            remaining="${remaining#"${remaining%%[![:space:]]*}"}"
+            ;;
+        *)
+            remaining="$input"  # No '=' prefix, return as-is
+            ;;
+    esac
+
+    echo "$remaining"  # Output the result
+}
+
+calculator() {
+  local problem="$1"
+  answer=$(qalc "$problem" )
+
+  # history=$(cat "$HISTORY_FILE") 
+  history=$(tail -n $(("$MAX_HISTORY_LINES"-1)) "$HISTORY_FILE")
+  echo -e "$answer\n------------History---------------\n$history"  | wofi --dmenu
+
+  echo "$answer\n$history" > "$HISTORY_FILE"
+}
+
+
+# Ensure the history file exists
+touch "$HISTORY_FILE"
+
+if [ $# -gt 0 ]; then
+    problem="$@"
+else
+    history=$(cat "$HISTORY_FILE")
+    problem=$(echo -e $history | wofi --dmenu --prompt="Write Expression" --height=50% --width=75% )
+fi
+
+calculator "$problem"
