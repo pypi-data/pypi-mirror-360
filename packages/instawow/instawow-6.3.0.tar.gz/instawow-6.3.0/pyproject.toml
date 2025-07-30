@@ -1,0 +1,163 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+dynamic = [
+  "version",
+]
+name = "instawow"
+requires-python = ">= 3.12"
+description = "World of Warcraft add-on manager"
+readme = "README.rst"
+license = "GPL-3.0-or-later"
+authors = [{ name = "layday", email = "layday@protonmail.com" }]
+urls."homepage" = "http://github.com/layday/instawow"
+
+dependencies = [
+  "aiohttp >= 3.11.16",
+  "aiohttp-client-cache >= 0.12.4",
+  "attrs >= 24.2.0",
+  "cattrs >= 24.1.0",
+  "click >= 8.2",
+  "diskcache >= 5.6.3",
+  "loguru >= 0.7.3",
+  "multidict >= 6.5.0",
+  "packaging >= 24.1",
+  "pluggy >= 1.5.0",
+  "prompt-toolkit >= 3.0.47",
+  "rapidfuzz >= 3.12.2",
+  "truststore >= 0.10.1",
+  "typing-extensions >= 4.12.2",
+  "wcwidth >= 0.2.13",
+  "yarl >= 1.18.3",
+]
+
+[project.entry-points."instawow.plugins"]
+"instawow-weakaura-updater" = "instawow_weakaura_updater._plugin"
+
+[project.scripts]
+"instawow" = "instawow.cli:main"
+
+[tool.hatch.build.targets.sdist]
+only-include = [
+  "/src",
+  "/instawow-weakaura-updater/src",
+  "/tests",
+]
+exclude = [
+  ".gitignore",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+  "/src/instawow",
+  "/instawow-weakaura-updater/src/instawow_weakaura_updater",
+]
+
+[tool.hatch.version]
+source = "vcs"
+
+[dependency-groups]
+dev = [
+  "basedpyright",
+  { include-group = "test" },
+  { include-group = "typing" },
+]
+format = [
+  "ruff",
+]
+freeze-gui = [
+  "briefcase",
+]
+lint = [
+  { include-group = "format" },
+]
+test = [
+  "anyio",
+  "coverage[toml]",
+  "pytest",
+  "pytest-xdist",
+]
+typing = [
+  "diskcache-stubs",
+  "wcwidth-stubs",
+]
+
+[tool.ruff]
+line-length = 99
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint]
+select = [
+  "ASYNC", # flake8-async
+  "B0",    # flake8-bugbear (without opinionated rules)
+  "C4",    # flake8-comprehensions
+  "DTZ",   # flake8-datetimez
+  "E",     # pycodestyle
+  "F",     # pyflakes
+  "I",     # isort
+  "PGH",   # pygrep-hooks
+  "PIE",   # flake8-pie
+  "PT",    # flake8-pytest-style
+  "RUF",   # ruff
+  "TRY",   # tryceratops
+  "UP",    # pyupgrade
+  "W",     # pycodestyle
+  "YTT",   # flake8-2020
+]
+ignore = [
+  "E501",   # pycodestyle: line-too-long
+  "TRY003", # tryceratops: raise-vanilla-args
+  "UP038",  # pyupgrade: non-pep604-isinstance - DEPRECATED
+]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+  "instawow",
+  "instawow_weakaura_updater",
+]
+required-imports = [
+  "from __future__ import annotations",
+]
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = true
+
+[tool.coverage.run]
+source_pkgs = [
+  "instawow",
+  "instawow_weakaura_updater",
+]
+parallel = true
+branch = true
+dynamic_context = "test_function"
+disable_warnings = [
+  "no-sysmon",
+]
+
+[tool.coverage.paths]
+"instawow" = ["src/instawow", "**/instawow"]
+"instawow_weakaura_updater" = [
+  "instawow-weakaura-updater/src/instawow_weakaura_updater",
+  "**/instawow_weakaura_updater",
+]
+
+[tool.coverage.report]
+exclude_also = [
+  "@overload",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+xfail_strict = true
+filterwarnings = [
+  "error",
+  "ignore:'_UnionGenericAlias' is deprecated and slated for removal in Python 3.17",
+]
+addopts = ["-ra", "--strict-config", "--strict-markers"]
+log_cli_level = "INFO"
