@@ -1,0 +1,113 @@
+Metadata-Version: 2.4
+Name: certbot-dns-aliyun-next
+Version: 1.0.3
+Summary: 阿里云DNS插件，用于Certbot的DNS-01验证，支持泛域名，支持python3.6及以上(更低版本没测试，不保证可行)
+Home-page: https://github.com/tiyee/certbot-dns-aliyun-next
+Author: tiyee
+Author-email: tiyee@live.com
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Plugins
+Classifier: Intended Audience :: System Administrators
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Internet :: WWW/HTTP
+Classifier: Topic :: Security
+Classifier: Topic :: System :: Installation/Setup
+Classifier: Topic :: System :: Networking
+Classifier: Topic :: System :: Systems Administration
+Classifier: Topic :: Utilities
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: certbot>=3.0.0
+Requires-Dist: zope
+Requires-Dist: alibabacloud-alidns20150109>=3.0.0
+Requires-Dist: alibabacloud-tea-openapi>=0.3.0
+Requires-Dist: alibabacloud-tea-util>=0.3.0
+Requires-Dist: alibabacloud-endpoint-util>=0.0.3
+Requires-Dist: setuptools>=60.0.0
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# Certbot DNS 阿里云插件
+
+这是一个用于 Certbot 的阿里云 DNS 插件，支持通过阿里云 DNS API 进行 DNS-01 验证来获取 SSL 证书。支持泛域名。
+
+## 功能特性
+
+- 支持通过阿里云DNS API自动管理DNS记录
+- 支持泛域名
+- 支持certbot 3+ 版本(更低没测试)
+- 兼容 Python 3.6+ 版本
+- 支持 DNS-01 验证方式
+- 自动清理临时DNS记录
+- 完善的错误处理和日志记录
+
+## 安装
+
+### 从 PyPI 安装
+
+```bash
+
+pip3 install certbot-dns-aliyun-next
+
+```
+
+## 配置文件
+
+
+```ini
+dns_aliyun_next_access_key_id = ??
+dns_aliyun_next_access_key_secret = ??
+dns_aliyun_next_region_id = cn-hangzhou
+
+```
+
+修改配置文件权限(假如文件是~/aliyun.ini)
+
+`chmod 600 ~/aliyun.ini`
+
+
+## 运行
+
+```bash
+
+certbot certonly  \
+  --authenticator dns-aliyun-next \
+  --dns-aliyun-next-credentials ~/aliyun.ini  \
+  --dns-aliyun-next-propagation-seconds 30 \
+  -d "*.example.com" \
+  -d "example.com"
+
+```
+
+
+## 阿里云权限配置
+
+确保您的阿里云AccessKey具有以下权限：
+
+AliyunDNSFullAccess 或自定义权限策略包含：
+
+* alidns:AddDomainRecord
+* alidns:DeleteDomainRecord
+* alidns:DescribeDomainRecords
+* alidns:UpdateDomainRecord
+
