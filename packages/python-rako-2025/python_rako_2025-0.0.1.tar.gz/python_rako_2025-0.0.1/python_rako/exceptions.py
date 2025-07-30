@@ -1,0 +1,2 @@
+class RakoBridgeError(Exception):
+    pass
