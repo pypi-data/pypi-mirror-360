@@ -1,0 +1,193 @@
+"""Fetch and merge the student repo"""
+
+import os
+import git
+import datetime
+from typing import Union
+
+import urnc
+from urnc.logger import dbg, error, warn, log
+
+
+def get_upstream_changes(repo: git.Repo) -> list[str]:
+    branch_name = repo.active_branch
+    changes = repo.git.diff(f"..origin/{branch_name}", "--name-status").split("\n")
+    return changes
+
+
+def get_upstream_deleted(repo: git.Repo) -> list[str]:
+    changes = get_upstream_changes(repo)
+    files = []
+    for change in changes:
+        parts = change.split("\t", 1)
+        if len(parts) != 2:
+            continue
+        [ctype, file] = change.split("\t", 1)
+        if ctype == "D":
+            files.append(file)
+    return files
+
+
+def get_upstream_added(repo: git.Repo) -> list[str]:
+    changes = get_upstream_changes(repo)
+    files = []
+    for change in changes:
+        parts = change.split("\t", 1)
+        if len(parts) != 2:
+            continue
+        [ctype, file] = parts
+        if ctype == "A":
+            files.append(file)
+    return files
+
+
+def reset_deleted_files(repo: git.Repo) -> None:
+    branch = repo.active_branch
+    deleted_files = repo.git.ls_files("--deleted").split("\n")
+    deleted_upstream = get_upstream_deleted(repo)
+    for filename in deleted_files:
+        if not filename:
+            continue
+        if filename in deleted_upstream:
+            repo.git.checkout("HEAD", "--", filename)
+        else:
+            dbg(f"Restoring deleted file {filename}")
+            repo.git.checkout(f"origin/{branch}", "--", filename)
+
+
+def rename_file_with_timestamp(path: str) -> None:
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    (folder, filename) = os.path.split(path)
+    (basename, ext) = os.path.splitext(filename)
+    new_filename = f"{basename}_{timestamp}{ext}"
+    new_path = os.path.join(folder, new_filename)
+    warn(
+        f"Renaming {path} to {new_path}, to avoid merge conflict with local untracked files."
+    )
+    os.rename(path, new_path)
+
+
+def rename_local_untracked(repo: git.Repo) -> None:
+    added_files = get_upstream_added(repo)
+    for filename in added_files:
+        if not filename:
+            continue
+        path = os.path.join(repo.working_dir, filename)
+        if os.path.exists(path):
+            rename_file_with_timestamp(path)
+
+
+def merge(repo: git.Repo) -> None:
+    branch = repo.active_branch
+    remote_branch = f"origin/{branch}"
+    try:
+        repo.git.merge("-Xours", remote_branch)
+    except git.GitCommandError as err:
+        if "CONFLICT (modify/delete)" in str(err):
+            warn(
+                "Found a CONFLICT (modify/delete). Keeping the local file by commiting."
+            )
+            repo.git.commit("-am", "Resolve CONFLICT (modify/delete)", "--allow-empty")
+            return
+        error("!!!THIS SHOULD NOT HAPPEN!!!")
+        error("Failed to merge. Error:")
+        error(str(err))
+        return
+
+
+def get_repo(git_url: Union[str, None], output: Union[str, None], branch: str, depth: int) -> Union[git.Repo, None]:
+    if not git_url:
+        try:
+            repo = git.Repo(os.getcwd(), search_parent_directories=True)
+            return repo
+        except Exception:
+            error("Failed to pull: no git_url given and not in a git repo")
+            return None
+    folder_name: str = output if output is not None else urnc.util.git_folder_name(git_url)
+    if not os.path.exists(folder_name):
+        log(f"{folder_name} does not exists. Cloning repo {git_url}")
+        try:
+            git.Repo.clone_from(git_url, folder_name, branch=branch, depth=depth)
+            log("Cloned successfully.")
+            return None
+        except Exception as err:
+            error("Failed to clone repo. Error:")
+            error(str(err))
+            return None
+    try:
+        repo = git.Repo(folder_name)
+        if git_url.replace("\\", "/") != repo.remote().url:
+            error(f"Remote url {repo.remote().url} of folder {folder_name} does not match {git_url}")
+            return None
+        return repo
+    except Exception as err:
+        error(f"Failed to pull: {folder_name} exists but is not a git repo")
+        error(str(err))
+        return None
+
+
+def pull(git_url: Union[str, None], output: Union[str, None], branch: str, depth: int) -> None:
+    """
+    Pull (or clone) a remote git repository and try to automatically merge local changes.
+    This is essentially a wrapper around git pull and git merge -Xours.
+
+    Args:
+        git_url (str): The URL of the git repository to pull.
+        output (str): The name of the output folder.
+        branch (str): The branch to pull.
+        depth (int): The depth for git fetch.
+
+    Returns:
+        None
+
+    Raises:
+        Does not raise any exceptions, but logs errors and warnings.
+        This is required because this function may be called from a jupyter postStart hook,
+        and exception would prevent the notebook from starting.
+    """
+    repo = get_repo(git_url, output, branch, depth)
+    if not repo:
+        return
+    log("Fetching changes...")
+    repo.remote().fetch()
+    log("Checking for local untracked files")
+    rename_local_untracked(repo)
+    log("Restoring locally deleted files")
+    reset_deleted_files(repo)
+    log("Unstaging all changes")
+    repo.git.reset("--mixed")
+    urnc.util.ensure_git_identity(repo)
+    if repo.is_dirty():
+        log("Repo is dirty. Commiting....")
+        repo.git.commit("-am", "Automatic commit by urnc", "--allow-empty")
+        log("Created new commit")
+    log("Merging from remote...")
+    merge(repo)
+    urnc.util.release_locks(repo)
+    log("Done.")
+
+
+def clone(git_url: Union[str, None], output: Union[str, None], branch: str, depth: int) -> None:
+    """
+    Pull (or clone) a remote git repository, but only do a fast-forward pull.
+
+    Args:
+        git_url (str): The URL of the git repository to pull.
+        output (str): The name of the output folder.
+        branch (str): The branch to pull.
+        depth (int): The depth for git fetch.
+
+    Returns:
+        None
+
+    Raises:
+        Does not raise any exceptions, but logs errors and warnings.
+        This is required because this function may be called from a jupyter postStart hook,
+        and exception would prevent the notebook from starting.
+    """
+    repo = get_repo(git_url, output, branch, depth)
+    if not repo:
+        return
+    log("Pulling...")
+    repo.git.pull("--ff-only")
+    log("Done")
