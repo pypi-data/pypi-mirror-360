@@ -1,0 +1,137 @@
+Metadata-Version: 2.4
+Name: treebeardhq
+Version: 0.4.11.dev2
+Summary: The Treebeard Python SDK
+Project-URL: Homepage, https://github.com/treebeardhq/sdk-python
+Project-URL: Bug Tracker, https://github.com/treebeardhq/sdk-python/issues
+Author-email: George Mayer <george@treebeardhq.com>
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.8
+Requires-Dist: termcolor>=2.0.0
+Provides-Extra: dev
+Requires-Dist: black>=23.0.0; extra == 'dev'
+Requires-Dist: build>=1.2.2; extra == 'dev'
+Requires-Dist: freezegun>=1.5.2; extra == 'dev'
+Requires-Dist: mypy>=1.0.0; extra == 'dev'
+Requires-Dist: pytest-cov>=4.0.0; extra == 'dev'
+Requires-Dist: pytest>=7.0.0; extra == 'dev'
+Requires-Dist: ruff>=0.0.290; extra == 'dev'
+Provides-Extra: test
+Requires-Dist: pytest-cov>=4.0.0; extra == 'test'
+Requires-Dist: pytest-mock>=3.0.0; extra == 'test'
+Requires-Dist: pytest>=7.0.0; extra == 'test'
+Description-Content-Type: text/markdown
+
+# Treebeard
+
+Treebeard is a Python library for efficient log forwarding with support for trace contexts and batched logging.
+
+## Installation
+
+```bash
+pip install treebeardhq
+```
+
+## Quick Start
+
+```python
+from treebeardhq import Treebeard, Log
+
+# Initialize Treebeard with your API key
+Treebeard.init(
+    api_key="your-api-key",
+    endpoint="https://your-logging-endpoint.com/logs"
+)
+# Start a trace context
+trace_id = Log.start("image-processing")
+
+try:
+    # Log different severity levels with optional metadata
+    Log.info("Starting image processing", image_format="PNG")
+
+    # Some business logic here...
+
+    Log.debug("Image validation", data={"dimensions": [1920, 1080], "color_space": "RGB"})
+
+    # More logic...
+
+    Log.info("Image processed successfully", output_size_kb=256)
+
+except Exception as e:
+    Log.error("Processing failed", error=str(e))
+
+finally:
+    # End the trace context
+    Log.end()
+```
+
+## Logging Levels
+
+Treebeard supports multiple logging levels:
+
+```python
+Log.debug("Debug information")
+Log.info("General information")
+Log.warning("Warning message")
+Log.error("Error message")
+```
+
+## Adding Context Data
+
+You can add metadata to your logs in two ways:
+
+```python
+)
+
+# Using keyword arguments
+Log.info("User action",
+    user_id="123",
+    action="login",
+    ip="192.168.1.1"
+)
+```
+
+## Trace Contexts
+
+Trace contexts help you group related logs together:
+
+```python
+# Start a new trace context
+trace_id = Log.start("payment-processing")
+
+# All logs within this context will include the trace ID
+Log.info("Processing payment")
+Log.debug("Validating card details")
+
+# End the trace context when done
+Log.end()
+```
+
+## Configuration Options
+
+When initializing Treebeard, you can configure several options:
+
+```python
+Treebeard.init(
+    api_key="your-api-key",
+    endpoint="https://your-logging-endpoint.com/logs",
+    debug_mode=True,  # Enable debug output
+    batch_size=100,   # Max logs per batch
+    batch_age=5.0,    # Max seconds before sending a batch
+    threading_mode="thread"  # 'thread', 'eventlet', or 'gevent'
+)
+```
+
+## Thread Safety
+
+Treebeard is thread-safe and supports different threading modes:
+
+- Standard Python threading (default)
+- Eventlet
+- Gevent
+
+## License
+
+MIT License - see LICENSE file for details.
