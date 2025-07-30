@@ -1,0 +1,61 @@
+name: Deploy AWS Lambda with Serverless
+
+on:
+  push:
+    branches:
+      - main
+      - prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Replace Git Token in requirements.txt
+      run: |
+        echo "🔧 Substituindo token no requirements.txt..."
+        sed -i 's|git+https://\${GIT_TOKEN}@github.com/LuizHenrique78/utilities.git|git+https://${{ secrets.GIT_TOKEN }}@github.com/LuizHenrique78/utilities.git|g' requirements.txt
+
+    - name: Setup Node.js (para Serverless Framework)
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install Serverless Framework
+      run: npm install -g serverless@3
+
+    - name: Install Serverless Python Requirements plugin
+      run: serverless plugin install -n serverless-python-requirements
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Set ENVIRONMENT variable
+      id: env_setup
+      run: |
+        if [[ "${{ github.ref_name }}" == "prod" ]]; then
+          echo "ENVIRONMENT=prod" >> $GITHUB_ENV
+        else
+          echo "ENVIRONMENT=test" >> $GITHUB_ENV
+        fi
+
+    - name: Deploy with Serverless
+      env:
+        GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+        ENVIRONMENT: ${{ env.ENVIRONMENT }}
+      run: |
+        export GIT_TOKEN=$GITHUB_TOKEN
+        echo "🌍 Ambiente selecionado: $ENVIRONMENT"
+        serverless deploy --stage $ENVIRONMENT 
