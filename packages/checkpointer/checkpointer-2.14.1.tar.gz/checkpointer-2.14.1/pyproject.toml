@@ -1,0 +1,62 @@
+[project]
+name = "checkpointer"
+version = "2.14.1"
+requires-python = ">=3.11"
+dependencies = []
+authors = [
+  {name = "Hampus Hallman"}
+]
+description = "checkpointer adds code-aware caching to Python functions, maintaining correctness and speeding up execution as your code changes."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE", "ATTRIBUTION.md"]
+classifiers = [
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+keywords = [
+  "data processing",
+  "data analysis",
+  "cache",
+  "caching",
+  "memoization",
+  "performance",
+  "invalidation",
+  "optimization",
+  "hashing",
+  "workflow",
+  "async",
+  "fast",
+]
+
+[project.urls]
+Repository = "https://github.com/Reddan/checkpointer.git"
+
+[dependency-groups]
+dev = [
+  "numpy>=2.2.1",
+  "omg>=1.3.6",
+  "poethepoet>=0.30.0",
+  "pytest>=8.3.5",
+  "pytest-asyncio>=0.26.0",
+  "rich>=14.0.0",
+  "torch>=2.6.0",
+]
+
+[tool.poe.tasks]
+tests = "pytest checkpointer/**/test_*.py"
+tests-debug = "poe tests -s"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["checkpointer", "checkpointer.storages"]
+
+[tool.hatch.build]
+exclude = ["test_*.py"]
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "session"
