@@ -1,0 +1,68 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+#requires = ["setuptools", "wheel"]
+#build-backend = "setuptools.build_meta"
+
+[project]
+name = "debcr"
+version = "0.1.0"
+#dynamic = ["version"]
+description = "Image enhancement framework for light microscopy data using deep learning."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9,<3.12"
+keywords = [
+    "image processing", "image restoration", "image enhancement", "deep learning",
+    "BCR", "BCR-Net", "m-rBCR",
+    "denoising", "deblurring", "deconvolution",
+    "confocal microscopy", "widefield microscopy",
+    "fluorescence microscopy", "light microscopy"
+]
+authors = [
+{ name="Artsemi Yushkevich" },
+{ name="Rui Li" },
+{ name="Mikhail Kudryashev" },
+{ name="Artur Yakimovich" }
+]
+maintainers = [{ name = "Artsemi Yushkevich" }]
+urls = { homepage = "https://github.com/DeBCR/DeBCR" }
+
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: GPU :: NVIDIA CUDA :: 11.7",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Image Processing"
+]
+
+dependencies = [
+    "numpy==1.23.5",
+    "natsort",
+    "matplotlib",
+    "scikit-image",
+    "tifffile",
+    "PyYAML"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pip",
+    "setuptools"
+]
+tf-cpu = [ "tensorflow-cpu==2.11" ]
+tf-gpu = [ "tensorflow-gpu==2.11" ]
+
+[tool.poetry]
+packages = [
+    { include = "debcr", from = "src" },
+]
+
+#[tool.setuptools]
+#packages = { find = { where = ["src"] } }
+
+#[tool.setuptools.dynamic]
+#version = {attr = "debcr.__init__.__version__"}
