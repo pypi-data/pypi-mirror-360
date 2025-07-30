@@ -1,0 +1,32 @@
+# Simple configuration using select statement instead of complex query
+
+source:
+  type: postgresql
+  host: localhost
+  port: 5432
+  database: source_db
+  username: source_user
+  password: source_password
+  watermark:
+    column: updated_at
+    type: timestamp
+    initial_value: "2024-01-01 00:00:00"
+  # Simple select statement - framework will add WHERE and ORDER BY clauses
+  select: "SELECT id, name, email, updated_at FROM users"
+
+destination:
+  type: postgresql
+  host: localhost
+  port: 5432
+  database: dest_db
+  username: dest_user
+  password: dest_password
+  table: users
+
+sync:
+  mode: continuous
+  interval_seconds: 30
+  batch_size: 1000
+  watermark_table: sync_watermark
+  error_retry_attempts: 3
+  error_retry_delay: 5

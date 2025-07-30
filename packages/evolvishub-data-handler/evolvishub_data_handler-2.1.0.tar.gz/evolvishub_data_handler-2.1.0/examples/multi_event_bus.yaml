@@ -1,0 +1,179 @@
+# Multi-Destination Event Bus CDC Configuration
+# This configuration streams data to multiple event buses simultaneously
+
+name: ecommerce_event_streaming
+description: Stream ecommerce data to multiple event buses for real-time processing
+
+# Global settings for real-time streaming
+global_sync:
+  mode: continuous
+  interval_seconds: 10  # Very frequent for real-time
+  batch_size: 100
+
+# Source-destination mappings to different event buses
+mappings:
+  # Orders to Kafka
+  - name: orders_to_kafka
+    description: Stream order events to Kafka for order processing
+    enabled: true
+    
+    source:
+      type: postgresql
+      host: localhost
+      port: 5432
+      database: ecommerce
+      username: postgres
+      password: password
+      table: orders
+      
+    destination:
+      type: kafka
+      host: localhost
+      port: 9092
+      database: kafka_cluster
+      table: order_events
+      key_field: order_id
+      compression_type: gzip
+      
+    watermark:
+      column: updated_at
+      type: timestamp
+
+  # Customers to Pulsar
+  - name: customers_to_pulsar
+    description: Stream customer events to Pulsar for analytics
+    enabled: true
+    
+    source:
+      type: postgresql
+      host: localhost
+      port: 5432
+      database: ecommerce
+      username: postgres
+      password: password
+      table: customers
+      
+    destination:
+      type: pulsar
+      host: localhost
+      port: 6650
+      database: public/default
+      table: persistent://public/default/customer_events
+      subscription_name: analytics_subscription
+      compression_type: LZ4
+      
+    watermark:
+      column: updated_at
+      type: timestamp
+
+  # Products to Redis Streams
+  - name: products_to_redis
+    description: Stream product updates to Redis for caching
+    enabled: true
+    
+    source:
+      type: postgresql
+      host: localhost
+      port: 5432
+      database: ecommerce
+      username: postgres
+      password: password
+      table: products
+      
+    destination:
+      type: redis_streams
+      host: localhost
+      port: 6379
+      database: 0
+      table: product_updates
+      consumer_group: cache_updater
+      max_length: 10000
+      
+    watermark:
+      column: updated_at
+      type: timestamp
+
+  # Inventory to RabbitMQ
+  - name: inventory_to_rabbitmq
+    description: Stream inventory changes to RabbitMQ for notifications
+    enabled: true
+    
+    source:
+      type: postgresql
+      host: localhost
+      port: 5432
+      database: ecommerce
+      username: postgres
+      password: password
+      table: inventory
+      
+    destination:
+      type: rabbitmq
+      host: localhost
+      port: 5672
+      database: /
+      table: inventory_updates
+      username: guest
+      password: guest
+      exchange: inventory_exchange
+      exchange_type: topic
+      routing_key: inventory.updates
+      
+    watermark:
+      column: updated_at
+      type: timestamp
+      
+    # Custom query to only sync low stock items
+    custom_query: |
+      SELECT 
+        product_id,
+        current_stock,
+        reserved_stock,
+        available_stock,
+        low_stock_threshold,
+        updated_at
+      FROM inventory 
+      WHERE updated_at > %(last_sync)s
+        AND available_stock <= low_stock_threshold
+      ORDER BY updated_at
+
+  # User Activity to Multiple Destinations
+  - name: user_activity_to_kafka
+    description: Stream user activity to Kafka for real-time analytics
+    enabled: true
+    
+    source:
+      type: postgresql
+      host: localhost
+      port: 5432
+      database: ecommerce
+      username: postgres
+      password: password
+      table: user_activity_log
+      
+    destination:
+      type: kafka
+      host: localhost
+      port: 9092
+      database: kafka_cluster
+      table: user_activity_events
+      key_field: user_id
+      
+    watermark:
+      column: activity_timestamp
+      type: timestamp
+      
+    # More frequent sync for user activity
+    sync:
+      mode: continuous
+      interval_seconds: 5
+      batch_size: 50
+
+# Execution settings
+parallel_execution: true
+max_workers: 4  # One worker per event bus type
+stop_on_error: false
+
+# Monitoring and logging
+enable_monitoring: true
+log_level: INFO

@@ -1,0 +1,137 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evolvishub-data-handler"
+version = "2.1.0"
+description = "A Change Data Capture (CDC) library for data synchronization"
+readme = "README.md"
+authors = [
+    {name = "EvolvisHub", email = "info@evolvishub.com"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.0",
+    "mysql-connector-python>=8.0.0",
+    "pymssql>=2.2.0",
+    "oracledb>=1.0.0",
+    "pymongo>=4.0.0",
+    "boto3>=1.26.0",
+    "google-cloud-storage>=2.0.0",
+    "azure-storage-blob>=12.0.0",
+    "pandas>=2.0.0",
+    "pyarrow>=12.0.0",
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0.0",
+    "python-dotenv>=1.0.0",
+    "loguru>=0.7.0",
+    "croniter>=1.3.0",
+    "click>=8.0.0",
+    "pytz>=2023.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.0.0",
+    "mypy>=1.0.0",
+    "flake8>=6.0.0",
+    "pre-commit>=3.0.0",
+    "flake8-docstrings>=1.7.0",
+    "flake8-bugbear>=23.0.0",
+    "flake8-comprehensions>=3.12.0",
+    "flake8-simplify>=0.20.0",
+    "types-all>=1.0.0",
+    "types-pydantic>=2.0.0",
+    "types-sqlalchemy>=2.0.0",
+    "types-boto3>=1.0.0",
+    "types-pymongo>=4.0.0",
+    "types-pandas>=2.0.0",
+]
+docs = [
+    "sphinx>=7.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "sphinx-autodoc-typehints>=1.0.0",
+]
+
+[project.scripts]
+evolvishub-cdc = "evolvishub_data_handler.cli:main"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["pandas.*", "numpy.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=evolvishub_data_handler --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["evolvishub_data_handler"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "pass",
+    "raise ImportError",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py38"
+select = ["E", "F", "B", "I", "N", "UP", "PL", "RUF"]
+ignore = ["E501"]
+
+[tool.ruff.isort]
+known-first-party = ["evolvishub_data_handler"] 
