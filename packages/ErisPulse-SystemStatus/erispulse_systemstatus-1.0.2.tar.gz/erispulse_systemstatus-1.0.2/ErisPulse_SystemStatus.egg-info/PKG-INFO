@@ -1,0 +1,77 @@
+Metadata-Version: 2.4
+Name: ErisPulse-SystemStatus
+Version: 1.0.2
+Summary: 获取系统内存、CPU、硬盘占用
+Author-email: ShanFish <your@email.com>
+License-Expression: MIT
+Project-URL: homepage, https://github.com/shanfishapp/ErisPulse-SystemStatus
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: psutil
+Requires-Dist: ErisPulse-ServerStatusMonitor
+
+# SystemStatus
+快速获取你的系统信息、CPU状态、内存状态和硬盘状态
+> ⚠️**注意**
+> 本模块仅仅返回信息，并不会真实使用适配器发送消息。您可能需要单独配置发送消息后才能使用。
+
+### 使用
+~~~py
+status = sdk.SystemStatus.get()
+# 在这里处理你发送消息的逻辑
+~~~
+
+### 返回值
+返回值是一个字典类型，您可以直接调用。
+示例Json：
+~~~json
+{
+    "system": {
+        "type": "Linux",
+        "version": "Ubuntu 24.04 (noble)"
+    },
+    "memory": {
+        "total": 937,
+        "used": 401,
+        "usage": "42.80%"
+    },
+    "cpu": {
+        "cores": 1,
+        "threads": 1,
+        "usage": "1.0%"
+    },
+    "env": {
+        "erispulse": "1.2.4",
+        "python": "3.12.3"
+    },
+    "disk": {
+        "total": "28.89GB",
+        "used": "6.02GB",
+        "usage": "20.84%"
+    }
+}
+~~~
+### 字段详解
+| 字段名称         | 类型       | 用途                  |
+|:----------------:|:----------:|:---------------------:|
+| **system**       | `dict`     | 系统基础信息          |
+| **system.type**  | `str`      | 操作系统类型          |
+| **system.version** | `str`    | 系统版本号            |
+| **memory**       | `dict`     | 内存使用情况          |
+| **memory.total** | `int`      | 内存总量(MB)          |
+| **memory.used**  | `int`      | 已用内存(MB)          |
+| **memory.usage** | `str`      | 内存使用率(%)         |
+| **cpu**          | `dict`     | CPU使用情况           |
+| **cpu.cores**    | `int`      | CPU物理核心数         |
+| **cpu.threads**  | `int`      | CPU逻辑线程数         |
+| **cpu.usage**    | `str`      | CPU使用率(%)          |
+| **disk**         | `dict`     | 磁盘使用情况          |
+| **disk.total**   | `int`      | 磁盘总容量(GB)        |
+| **disk.used**    | `int`      | 已用磁盘空间(GB)      |
+| **disk.usage**   | `str`      | 磁盘使用率(%)         |
+
+
+## 参考链接
+
+- [ErisPulse 主库](https://github.com/ErisPulse/ErisPulse/)  
+- [ErisPulse 模块源](https://github.com/ErisPulse/ErisPulse-ModuleRepo)
