@@ -1,0 +1,153 @@
+name: Lint Build and Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+jobs:
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: install deps
+      run: sudo apt install build-essential cmake libeigen3-dev libcurl4-openssl-dev libtins-dev libpcap-dev libpng-dev libglfw3-dev libflatbuffers-dev libgtest-dev libceres-dev libtbb-dev robin-map-dev
+    - name: install python
+      run: sudo apt install python3 python3-pip
+    - name: install python-deps one
+      run: cd python && python3 setup.py egg_info && pip3 install `grep -v '^\[' src/*.egg-info/requires.txt`
+    - name: install python-deps
+      run: pip3 install mypy==1.13.0 flake8 clang-format==14.0.0
+    - name: cpp-lint
+      run: ./clang-linting.sh
+    - name: python-lint
+      run: cd python && mypy ./src ./tests ../tests/hil ../tests/integration && flake8
+  linux-2204-build:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: install deps
+      run: sudo apt install build-essential cmake libeigen3-dev libcurl4-openssl-dev libtins-dev libpcap-dev libpng-dev libglfw3-dev libflatbuffers-dev libgtest-dev clang-format libssl-dev libceres-dev libtbb-dev robin-map-dev
+    - name: cmake configure
+      run: cmake . -B build -DBUILD_TESTING=ON -DBUILD_EXAMPLES=ON
+    - name: cmake build
+      run: cmake --build build -j4
+    - name: run tests
+      run: cd build/ && ctest -j4 --output-on-failure
+  linux-2404-build:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: install deps
+      run: sudo apt install build-essential cmake libeigen3-dev libcurl4-openssl-dev libtins-dev libpcap-dev libpng-dev libglfw3-dev libflatbuffers-dev libgtest-dev clang-format libssl-dev libceres-dev libtbb-dev robin-map-dev
+    - name: cmake configure
+      run: cmake . -B build -DBUILD_TESTING=ON -DBUILD_EXAMPLES=ON
+    - name: cmake build
+      run: cmake --build build -j4
+    - name: run tests
+      run: cd build/ && ctest -j4 --output-on-failure
+  linux-python-build-2204:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: install python
+      run: sudo apt install python3 python3-pip
+    - name: install deps
+      run: sudo apt install build-essential cmake libeigen3-dev libcurl4-openssl-dev libtins-dev libpcap-dev libpng-dev libglfw3-dev libflatbuffers-dev libssl-dev libceres-dev libtbb-dev robin-map-dev
+    - name: install python-deps
+      run: pip3 install pytest pytest-xdist
+    - name: build python
+      run: cd python && sudo python3 -m pip install -e .[test]
+    - name: run tests
+      run: cd python/tests && pytest -n4
+  linux-python-build-2404:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: install python
+      run: sudo apt install python3 python3-pip
+    - name: install deps
+      run: sudo apt install build-essential cmake libeigen3-dev libcurl4-openssl-dev libtins-dev libpcap-dev libpng-dev libglfw3-dev libflatbuffers-dev libssl-dev python3-venv libceres-dev libtbb-dev robin-map-dev
+    - name: setup venv
+      run: python3 -m venv venv
+    - name: Activate virtual environment
+      run: |
+        echo PATH=${GITHUB_WORKSPACE}/venv/bin:$PATH >> $GITHUB_ENV
+        echo VIRTUAL_ENV=${GITHUB_WORKSPACE}/venv >> $GITHUB_ENV
+        ls ${GITHUB_WORKSPACE}/venv
+    - name: install python-deps
+      run: |
+        which pip3
+        pip3 install pytest pytest-xdist
+    - name: build python
+      run: cd python && python3 -m pip install -e .[test]
+    - name: run tests
+      run: cd python/tests && python3 -m pytest -n4
+  windows-build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: vcpkg build
+      uses: johnwason/vcpkg-action@v6
+      id: vcpkg
+      with:
+        manifest-dir: ${{ github.workspace }}
+        triplet: x64-windows
+        token: ${{ github.token }}
+        github-binarycache: true
+        revision: 2024.11.16
+    - name: cmake configure
+      run: cmake . -B build -DBUILD_TESTING=ON -DBUILD_EXAMPLES=ON -DCMAKE_TOOLCHAIN_FILE=D:/a/ouster-sdk/ouster-sdk/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
+    - name: cmake build
+      run: cmake --build build -j4
+    - name: run tests
+      run: cd build/ && ctest -j4 -C Debug --output-on-failure
+  windows-python-build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: seanmiddleditch/gha-setup-ninja@master
+    - uses: ilammy/msvc-dev-cmd@v1
+    - name: vcpkg build
+      uses: johnwason/vcpkg-action@v6
+      id: vcpkg
+      with:
+        manifest-dir: ${{ github.workspace }}
+        triplet: x64-windows
+        token: ${{ github.token }}
+        github-binarycache: true
+        revision: 2024.11.16
+    - name: install python-deps
+      run: pip3 install pytest pytest-xdist
+    - name: build python
+      run: cd python && python3 -m pip install -e .[test]
+      env:
+        OUSTER_SDK_CMAKE_ARGS: '-DCMAKE_TOOLCHAIN_FILE=D:/a/ouster-sdk/ouster-sdk/vcpkg/scripts/buildsystems/vcpkg.cmake'
+    - name: run tests
+      run: cd python/tests && pytest -n3
+  mac-build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: install deps
+      run: brew install cmake pkg-config eigen curl libtins glfw flatbuffers googletest ceres-solver robin-map
+    - name: cmake configure
+      run: cmake . -B build -DBUILD_TESTING=ON -DBUILD_EXAMPLES=ON
+    - name: cmake build
+      run: cmake --build build -j3
+    - name: run tests
+      run: cd build/ && ctest -j3 --output-on-failure
+  mac-python-build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: install deps
+      run: brew install cmake pkg-config eigen curl libtins glfw flatbuffers ceres-solver robin-map
+    - name: install python-deps
+      run: python3.12 -m pip install pytest pytest-xdist --break-system-packages
+    - name: build python
+      run: cd python && python3.12 -m pip install -e .[test] --break-system-packages
+    - name: set netparams
+      run: sudo sysctl -w net.inet.udp.maxdgram=65535
+    - name: run tests
+      run: cd python/tests && python3.12 -m pytest -n3
