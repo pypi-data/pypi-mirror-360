@@ -1,0 +1,102 @@
+.TH "ramalama-rag 1" 
+.nh
+.ad l
+
+.SH NAME
+.PP
+ramalama\-rag \- generate and convert Retrieval Augmented Generation (RAG) data from provided documents into an OCI Image
+
+.SH SYNOPSIS
+.PP
+\fBramalama rag\fP [options] [path ...] image
+
+.SH DESCRIPTION
+.PP
+Generate RAG data from provided documents and convert into an OCI Image. This command uses a specific container image containing the docling
+tool to convert the specified content into a RAG vector database. If the image does not exists locally RamaLama will pull the image
+down and launch a container to process the data.
+
+.PP
+NOTE: this command does not work without a container engine.
+
+.PP
+positional arguments:
+
+.PP
+\fIPATH\fP    Files/Directory containing PDF, DOCX, PPTX, XLSX, HTML,
+        AsciiDoc \& Markdown formatted files to be processed.
+        Can be specified multiple times.
+
+.PP
+\fIIMAGE\fP   OCI Image name to contain processed rag data
+
+.SH OPTIONS
+.SS \fB\-\-env\fP=
+.PP
+Set environment variables inside of the container.
+
+.PP
+This option allows arbitrary environment variables that are available for the
+process to be launched inside of the container. If an environment variable is
+specified without a value, the container engine checks the host environment
+for a value and set the variable only if it is set on the host.
+
+.SS \fB\-\-help\fP, \fB\-h\fP
+.PP
+Print usage message
+
+.SS \fB\-\-network\fP=\fInone\fP
+.PP
+sets the configuration for network namespaces when handling RUN instructions
+
+.SS \fB\-\-ocr\fP
+.PP
+Sets the Docling OCR flag. OCR stands for Optical Character Recognition and is used to extract text from images within PDFs converting it into raw text that an LLM can understand. This feature is useful if the PDF's one is converting has a lot of embedded images with text. This process uses a great amount of RAM so the default is false.
+
+.SS \fB\-\-pull\fP=\fIpolicy\fP
+.PP
+Pull image policy. The default is \fBmissing\fP\&.
+
+.RS
+.IP \(bu 2
+\fBalways\fP: Always pull the image and throw an error if the pull fails.
+.IP \(bu 2
+\fBmissing\fP: Only pull the image when it does not exist in the local containers storage. Throw an error if no image is found and the pull fails.
+.IP \(bu 2
+\fBnever\fP: Never pull the image but use the one from the local containers storage. Throw an error when no image is found.
+.IP \(bu 2
+\fBnewer\fP: Pull if the image on the registry is newer than the one in the local containers storage. An image is considered to be newer when the digests are different. Comparing the time stamps is prone to errors. Pull errors are suppressed if a local image was found.
+
+.RE
+
+.SH EXAMPLES
+.PP
+.RS
+
+.nf
+\&./bin/ramalama rag ./README.md https://github.com/containers/podman/blob/main/README.md quay.io/rhatdan/myrag
+100% |███████████████████████████████████████████████████████|  114.00 KB/    0.00 B 922.89 KB/s   59m 59s
+Building quay.io/ramalama/myrag...
+adding vectordb...
+c857ebc65c641084b34e39b740fdb6a2d9d2d97be320e6aa9439ed0ab8780fe0
+
+.fi
+.RE
+
+.PP
+.RS
+
+.nf
+ramalama rag \-\-ocr README.md https://mysight.edu/document quay.io/rhatdan/myrag
+
+.fi
+.RE
+
+.SH SEE ALSO
+.PP
+\fBramalama(1)\fP
+
+.SH HISTORY
+.PP
+Dec 2024, Originally compiled by Dan Walsh 
+\[la]dwalsh@redhat.com\[ra]
