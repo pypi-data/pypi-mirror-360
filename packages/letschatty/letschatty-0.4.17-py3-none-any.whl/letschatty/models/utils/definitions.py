@@ -1,0 +1,24 @@
+from enum import StrEnum
+
+class Area(StrEnum):
+    WAITING_AGENT = "WAITING AGENT"
+    WITH_AGENT = "WITH AGENT"
+    ARCHIVED = "ARCHIVED"
+    BLOCKED = "BLOCKED"
+    INBOX = "INBOX"
+
+    @classmethod
+    def list_all(cls) -> list[str]:
+        return [area.value for area in cls]
+
+frontend_areas_to_backend_areas = {
+    "esperando agente": Area.WAITING_AGENT,
+    "asignar a agente": Area.WITH_AGENT,
+    "con agente": Area.WITH_AGENT,
+    "archivados": Area.ARCHIVED
+}
+backend_areas_to_frontend_areas = {
+    Area.WAITING_AGENT: "esperando agente",
+    Area.WITH_AGENT: "con agente",
+    Area.ARCHIVED: "archivados"
+}
