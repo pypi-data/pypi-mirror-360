@@ -1,0 +1,1 @@
+import{u,h as s}from"./index-6uM3C9QJ.js";function o(){const e=u(),r=s(()=>["Resellers","SuperAdmins"].includes(e.authUser.role)),t=s(()=>["Resellers","SuperAdmins"].includes(e.authUser.role));return{canSetRole:r,canAddDomain:t}}export{o as u};

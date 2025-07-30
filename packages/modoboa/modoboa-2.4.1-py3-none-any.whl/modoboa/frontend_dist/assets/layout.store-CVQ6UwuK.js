@@ -1,0 +1,1 @@
+import{M as a,g as s}from"./index-6uM3C9QJ.js";const r=a("layout",()=>{const e=s([]),t=s(!1);function n(u){e.value=u}async function o(){e.value=[],t.value=!1}return{leftMenuItems:e,compactLeftMenu:t,setLeftMenuItems:n,$reset:o}});export{r as u};
