@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+
+# Define function ...
+def return_media_duration(
+    fname,
+    /,
+    *,
+            cwd = None,
+          debug = __debug__,
+      ensureNFC = True,
+    ffprobePath = None,
+       playlist = -1,
+        timeout = 60.0,
+):
+    # Import standard modules ...
+    import shutil
+
+    # Import sub-functions ...
+    from .__ffprobe__ import __ffprobe__
+    from .ffprobe import ffprobe
+
+    # **************************************************************************
+
+    # Try to find the paths if the user did not provide them ...
+    if ffprobePath is None:
+        ffprobePath = shutil.which("ffprobe")
+    assert ffprobePath is not None, "\"ffprobe\" is not installed"
+
+    # **************************************************************************
+
+    # Make sure that this fname/playlist combination is in the global dictionary ...
+    if fname not in __ffprobe__:
+        __ffprobe__[fname] = {}
+    if playlist not in __ffprobe__[fname]:
+        if debug:
+            print(f"INFO: Running ffprobe(\"{fname}\", {playlist:d}) ...")
+        __ffprobe__[fname][playlist] = ffprobe(
+            fname,
+                    cwd = cwd,
+              ensureNFC = ensureNFC,
+            ffprobePath = ffprobePath,
+               playlist = playlist,
+                timeout = timeout,
+        )
+
+    # Return duration ...
+    form = __ffprobe__[fname][playlist]["format"]
+    dur = -1.0                                                                  # [s]
+    if "duration" in form:
+        dur = float(form["duration"])                                           # [s]
+    return dur
