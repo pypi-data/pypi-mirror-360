@@ -1,0 +1,18 @@
+services:
+  python_runner:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      args:
+        DOCKER_REGISTRY: "${DOCKER_REGISTRY:-docker.io}"
+    image: ${DOCKER_REGISTRY:-docker.io}/agentrun_plus_python_runner:latest
+    container_name: python_runner
+    volumes:
+      - code_execution_volume:/home/pythonuser
+    pids_limit: 10
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - OPENBLAS_NUM_THREADS=1 # this specifically for a numpy bug. See: https://github.com/Jonathan-Adly/AgentRun/issues/7#issue-2306842471
+volumes:
+  code_execution_volume:
