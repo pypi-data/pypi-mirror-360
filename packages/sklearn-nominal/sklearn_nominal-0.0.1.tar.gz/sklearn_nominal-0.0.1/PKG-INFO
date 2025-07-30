@@ -1,0 +1,105 @@
+Metadata-Version: 2.4
+Name: sklearn_nominal
+Version: 0.0.1
+Summary: Extra models for scikit-learn w/ built-in support for nominal attributes
+Project-URL: Homepage, https://github.com/facundoq/sklearn_nominal
+Project-URL: Bug Reports, https://github.com/facundoq/sklearn_nominal/issues
+Project-URL: Source, https://github.com/facundoq/sklearn_nominal
+Author-email: Facundo Manuel Quiroga <{first_name}{last_name_initial}@gmail.com>
+License-File: LICENSE
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: MacOS
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX
+Classifier: Operating System :: Unix
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.12
+Requires-Dist: cairosvg>=2.7.1
+Requires-Dist: data-science-types>=0.2.23
+Requires-Dist: graphviz>=0.20.3
+Requires-Dist: matplotlib>=3.10.0
+Requires-Dist: numpy>=2.2.0
+Requires-Dist: pandas>=2.2.3
+Requires-Dist: pandas[pyarrow]>=2.2.3
+Requires-Dist: pyarrow>=19.0.1
+Requires-Dist: pygraphviz>=1.14
+Requires-Dist: scikit-learn>=1.6.1
+Provides-Extra: export
+Description-Content-Type: text/markdown
+
+# sklearn_nominal
+Extra models for scikit-learn, including Decision/Regression Trees with support for nominal values
+
+
+## Exporting to svg/png/pdf
+To export tree graphs to those formats, you need `pygraphviz` (and in the future, possibly other dependencies). To install those dependencies, use:
+
+````
+pip install sklearn_nominal[export]
+````
+
+Before that, make sure to install `graphviz` (with headers) and `cairo`. In Ubuntu 24.04:
+
+````
+sudo apt install libgraphviz-dev graphviz cairosvg 
+````
+
+
+## Developing sklearn_nominal
+
+We use [uv](https://docs.astral.sh/uv/) for project management.
+
+### First run
+
+Install deps:
+````
+uv sync --dev --extra export
+````
+
+Install pre-commit hooks
+````
+uv run pre-commit install
+````
+
+````
+uv tool install poethepoet
+````
+
+### Running pre commit hooks
+
+````
+pre-commit run --all-files
+````
+### Install PoeThePoet task runner
+
+
+
+### Running tests, linter, formatter
+
+````
+poe lint
+poe format
+poe test
+````
+
+### Updating docs
+
+````
+poe docs
+````
+
+### Running benchmarks
+
+````
+uv run benchmark/benchmark_openml.py
+````
+
+
+### Publishing to pipy
+Via github:
+````
+#(after pushing a version you want to publish)
+git tag v[version]
+git push --tags
+````
