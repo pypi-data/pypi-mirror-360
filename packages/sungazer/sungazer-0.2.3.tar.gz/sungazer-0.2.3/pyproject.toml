@@ -1,0 +1,189 @@
+[project]
+name = "sungazer"
+version = "0.2.3"
+authors = [
+    {name = "Christopher Malek", email = "cmalek@placodermi.org"},
+]
+maintainers = [
+    {name = "Christopher Malek", email = "cmalek@placodermi.org"},
+]
+requires-python = ">= 3.10"
+description = "An API client that reads data from the internal network of a SunPower PVS6 monitoring device."
+readme = "README.md"
+keywords = ["aws"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Framework :: Pydantic",
+    "Framework :: Pydantic :: 2",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "pydantic >= 2.9.0",
+  "click >= 8.0",
+  "httpx>=0.28.1",
+  "rich>=14.0.0",
+]
+
+[dependency-groups]
+dev = [
+  "bumpversion == 0.5.3",
+  "ipython >= 8.36.0",
+]
+docs = [
+  "sphinx<7",
+  "sphinx_rtd_theme == 2.0.0",
+  "sphinxcontrib-images >= 0.9.4",
+  "autodoc-pydantic>=2.0.0",
+  "setuptools>=75.1.0",
+]
+build = [
+  "build>=1.2.2.post1",
+]
+test = [
+  "pytest >= 7.4.0",
+  "pytest-cov >= 4.1.0",
+  "pytest-mock >= 3.10.0",
+  "pytest-xdist >= 3.4.0",
+  "pytest-benchmark >= 3.4.1",
+]
+
+[project.urls]
+Documentation = "https://sungazer.readthedocs.io/en/latest/"
+Source = "https://github.com/cmalek/sungazer"
+Issues = "https://github.com/cmalek/botocraft/issues"
+
+[project.scripts]
+sungazer = "sungazer.cli.main:cli"
+
+[build-system]
+requires = [
+  "setuptools >= 48",
+  "wheel >= 0.29.0",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.uv]
+python-preference = "only-system"
+default-groups = ["docs", "build", "test"]
+
+[tool.setuptools]
+# ...
+# By default, include-package-data is true in pyproject.toml, so you do
+# NOT have to specify this line.
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.mypy]
+plugins = "pydantic.mypy"
+exclude = "^build"
+
+[[tool.mypy.overrides]]
+module = "sphinx_rtd_theme.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pytest.*"
+ignore_missing_imports = true
+
+[tool.ruff]
+# Same as Black.
+line-length = 88
+indent-width = 4
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    #### modules
+    "ANN", # flake8-annotations
+    "COM", # flake8-commas
+    "C90", # mccabe complexity
+    "DJ",  # django
+    "EXE", # flake8-executable
+    "T10", # debugger
+    "TID", # flake8-tidy-imports
+
+    #### specific rules
+    "D100",   # ignore missing docs
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D106",
+    "D107",
+    "D200",
+    "D203",
+    "D205",
+    "D212",
+    "D400",
+    "D401",
+    "D415",
+    "E402",   # false positives for local imports
+    "S603",   # ignore subprocess calls that do not check return code
+    "S607",   # ignore subprocess programs that are not absolute paths
+    "TRY003", # external messages in exceptions are too verbose
+    "T201",   # ignore print statements
+    "TD002",
+    "TD003",
+    "FIX002", # too verbose descriptions of todos
+    "SIM102", # combine nested ifs
+    "UP006",  # stop bugging me about modern type hints
+    "FBT001", # stop bugging me about booleans in function signatures
+    "FBT002", # stop bugging me about booleans in function signatures
+    "N818",   # stop bugging me about not ending my exceptions with "Error"
+    "FA100",  # stop bugging me about old-style Optional
+    "UP035",  # stop bugging me about modern type hints
+    "S101",   # stop bugging me about asserts
+    "N802",   # stop bugging me about camelCase names -- AWS uses camelCase
+    "N815",   # stop bugging me about camelCase names -- AWS uses camelCase
+    "PLR2004", # stop bugging me about magic numbers
+    "PLR0913", # stop bugging me about too many arguments
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["SIM300"]
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doctests are all supported.
+#
+# This is currently disabled by default, but it is planned for this
+# to be opt-out in the future.
+docstring-code-format = false
+
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+#
+# This only has an effect when the `docstring-code-format` setting is
+# enabled.
+docstring-code-line-length = "dynamic"
