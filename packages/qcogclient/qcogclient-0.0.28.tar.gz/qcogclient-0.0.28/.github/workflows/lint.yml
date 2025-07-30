@@ -1,0 +1,26 @@
+name: Lint
+
+on:
+    push:
+
+
+jobs:
+    lint:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Setup Python
+              uses: actions/setup-python@v4
+              with:
+                python-version: 3.12
+            - name: Install UV
+              uses: astral-sh/setup-uv@v6
+              with:
+                version: latest
+
+            - name: Format and lint
+              run: |
+                uv run --dev ./scripts/format.sh && \
+                    uv run --dev ./scripts/lint.sh && \
+                    uv run --dev ./scripts/test.sh

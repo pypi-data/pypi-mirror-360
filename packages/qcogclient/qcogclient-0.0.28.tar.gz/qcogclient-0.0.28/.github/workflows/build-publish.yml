@@ -1,0 +1,41 @@
+name: Build and Publish
+
+permissions:
+  id-token: write   # This is required for requesting the JWT
+  contents: read    # This is required for actions/checkout
+
+on:
+    release:
+        types:
+            - published
+
+jobs:
+    build-publish:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Python
+              uses: actions/setup-python@v3
+              with:
+                python-version: 3.12
+
+            - name: Setup UV
+              uses: astral-sh/setup-uv@v6
+              with:
+                version: latest
+
+            - name: Run Tests
+              run: |
+                uv run --dev ./scripts/test.sh
+
+            - name: Build Package
+              run: |
+                uv build
+
+            - name: Publish Package
+              run: |
+                uv publish
+
+

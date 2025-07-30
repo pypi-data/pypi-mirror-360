@@ -1,0 +1,7 @@
+INIT_CLIENT_PATCH = "qcogclient.qcog._initializer.init_client"
+SET_API_KEY_PATCH = "qcogclient.qcog.events.set_api_key"
+API_KEY_ATTRIBUTE_PATCH = "qcogclient.qcog.admin.AdminClient.api_key"
+ADMIN_SET_API_KEY_PATCH = "qcogclient.qcog.admin.set_api_key"
+ADMIN_CLEAR_API_KEY_PATCH = "qcogclient.qcog.admin.clear_api_key"
+ADMIN_CLEAR_STORE_PATCH = "qcogclient.qcog.admin.clear_store"
+INITIALIZER_STORE_GET_PATCH = "qcogclient.qcog._initializer.get"
