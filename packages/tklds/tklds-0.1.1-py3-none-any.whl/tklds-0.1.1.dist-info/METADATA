@@ -1,0 +1,169 @@
+Metadata-Version: 2.4
+Name: tklds
+Version: 0.1.1
+Summary: Tenokonda Low Discrepancy Sequences
+Author: tenokonda
+Author-email: Ilya Manyakin <ilya@tenokonda.com>, Andres Oliva Denis <andres@tenokonda.com>, Gregory Kell <gregory@tenokonda.com>, Adrien Papaioannou <adrien@tenokonda.com>
+License: BSD 3-Clause License
+        
+        Copyright (c) 2024, TENOKONDA LTD
+        
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+        
+        1. Redistributions of source code must retain the above copyright notice, this
+           list of conditions and the following disclaimer.
+        
+        2. Redistributions in binary form must reproduce the above copyright notice,
+           this list of conditions and the following disclaimer in the documentation
+           and/or other materials provided with the distribution.
+        
+        3. Neither the name of the copyright holder nor the names of its
+           contributors may be used to endorse or promote products derived from
+           this software without specific prior written permission.
+        
+        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+        AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+        FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+        DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+        SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+        CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+        OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+        OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+        
+Project-URL: Homepage, https://github.com/tenokonda/tklds
+Project-URL: Issues, https://github.com/tenokonda/tklds/issues
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/x-rst
+License-File: LICENSE
+Requires-Dist: numpy>=1.23.5
+Requires-Dist: pandas>=1.5.3
+Requires-Dist: scipy>=1.8.1
+Requires-Dist: sympy>=1.12
+Requires-Dist: tqdm>=4.65.0
+Dynamic: author
+Dynamic: license-file
+
+tklds
+=================
+
+In this repository, we present the 'tkrg-a-ap5' direction numbers for generating Sobol sequences satisfying properties
+A and A' as well as a comprehensive set of benchmark test functions from literature that can be used for evaluating low
+discrepancy sequence quality. The repository accompanies the paper:
+
+`On the generation of direction numbers for Sobol Sequences and the application to Quasi Monte Carlo Methods
+<https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5283131>`_
+
+The set of direction numbers :code:`tkrg-a-ap5` satisfying property A for all 50,000 dimensions and A' for five adjacent
+dimensions can be found in :code:`tklds/direction_numbers/tkrgsobol_a_ap5_50000`
+
+Quasi Monte Carlo Methods
+==========================
+
+Monte Carlo methods lie at the heart of many numeric computing tasks ranging from modelling how high velocity ions
+impinge on an atomic lattice to the pricing of a financial instruments such as stocks and options. While being generic
+and scaling independently of problem dimension, practical applications of Monte-Carlo suffers from the slow convergence
+rate imposed by the O(N-1/2) for N samples, thus requiring large numbers of simulations to achieve a desired level of
+accuracy. Quasi-Monte Carlo integration replaces the pseudo-random sequences with deterministic 'low discrepancy'
+sequences having greater uniformity and produce error convergence rates of order O(N-1) to O(N-3/2) on suitable problem
+types. While the asymptotically faster convergence rates of QMC methods may at first be appealing, the use of QMC and
+low discrepancy sequences carry with them a set of caveats and pathologies that if not addressed are likely to lead to
+incorrect results when applied in practice.
+
+Installing
+==========
+
+Install the project from pypi using :code:`pip install tklds`
+
+or by cloning this repository and pip installing them:
+
+Install the requirements using :code:`python -m pip install -r requirements.txt`
+
+Install the project by calling :code:`python -m pip install tklds` from the current folder.
+
+Quickstart
+===========
+
+To generate uniform floating point values in the range [0,1] use the following snippet:
+
+>>> from tklds.interface.generators import generate_lds_rvs
+>>> from tklds.constant import SequenceNum
+>>> u = generate_lds_rvs(sequence=SequenceNum.TKRG_A_AP5, n=1024, d=5, skip=0)
+
+Here we generate a total of :code:`n=1024` points with each point having :code:`d=5` dimensions using the
+sequence generated by the :code:`sequence_name=tkrg-a-ap5` direction numbers, without skipping the first point
+(:code:`skip=0`).
+
+Examples
+=========
+
+Some examples can be found in the `<notebooks>`_ folder:
+
+* **Integral benchmark test functions**: `notebooks/02_integral.ipynb <https://github.com/TENOKONDA/tklds/blob/main/notebooks/02_integral.ipynb>`_
+
+* **Spurious variance**: `notebooks/05_spurious_variance.ipynb <https://github.com/TENOKONDA/tklds/blob/main/notebooks/05_spurious_variance.ipynb>`_
+
+* **Brownian motion**: `notebooks/06_brownian_motion.ipynb <https://github.com/TENOKONDA/tklds/blob/main/notebooks/06_brownian_motion.ipynb>`_
+
+* **Sobol random generator**: `notebooks/07_sobol_engine_examples.ipynb <https://github.com/TENOKONDA/tklds/blob/main/notebooks/07_sobol_engine_examples.ipynb>`_
+
+
+Direction Numbers
+==================
+
+Folder :code:`tklds/direction_numbers` contains the direction numbers used to initialize the Sobol sequences
+
+
+tkrgsobol_a_ap5_50000
+----------------------
+
+This set of direction numbers has 50,000 dimensions, satisfying:
+    * Property A for all dimensions
+    * Property A' for 5 adjacent dimensions
+
+For further details on their generation and the properties A and A' see:
+
+`On the generation of direction numbers for Sobol Sequences and the application to Quasi Monte Carlo Methods <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5283131>`_.
+
+new-joe-kuo-6.21201
+--------------------
+
+These contain 21,201 dimensions. Their generation is described in:
+
+S. Joe and F. Y. Kuo, Constructing Sobol sequences with better two-dimensional projections, SIAM J. Sci. Comput. 30, 2635-2654 (2008).
+
+Further details about these direction numbers and an alternative download source is available at:
+
+https://web.maths.unsw.edu.au/~fkuo/sobol/index.html
+
+[Direct download: https://web.maths.unsw.edu.au/~fkuo/sobol/new-joe-kuo-6.21201 ]
+
+File format
+===========
+
+Both files follow the same format, the columns of the file:
+
+* **d** - the **index** of the dimension. Note that the smallest value is 2, as the first dimension is implicit.
+* **s** - the **degree** of the primitive polynomial
+* **a** - the **primitive polynomial coefficients** represented in terms of an integer value
+* **m_i** - the **direction numbers** of the dimension
+
+For a description of the terms and underlying theory of low discrepancy sequences consult the publication:.
+
+`On the generation of direction numbers for Sobol Sequences and the application to Quasi Monte Carlo Methods <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5283131>`_.
+
+
+Citation
+========
+
+If you use this codebase, please cite our work using the following reference:
+
+.. code-block:: RST
+
+    Oliva Denis, Andres and Kell, Gregory and Manyakin, Ilya and Papaioannou, Adrien,
+    On the Generation of Direction Numbers for Sobol Sequences and their Application to Quasi Monte Carlo Methods
+    (June 02, 2025). Available at SSRN: https://ssrn.com/abstract=5283131 or http://dx.doi.org/10.2139/ssrn.5283131
