@@ -1,0 +1,139 @@
+Metadata-Version: 2.3
+Name: leximpact-dotations-back
+Version: 4.0.0
+Summary: Simulating annual State grants to the French administrative divisions
+License: AGPL-3.0-or-later
+Author: LexImpact
+Author-email: leximpact@assemblee-nationale.fr
+Requires-Python: >=3.9,<3.12
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Legal Industry
+Classifier: Intended Audience :: Other Audience
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Dist: fastapi (>=0.111.0,<0.112.0)
+Requires-Dist: openfisca-france-dotations-locales (>=4.0.0,<5.0.0)
+Requires-Dist: pandas (>=2.2.2,<3.0.0)
+Project-URL: Repository, https://git.leximpact.dev/leximpact/simulateur-dotations-communes/leximpact-dotations-back
+Description-Content-Type: text/markdown
+
+# leximpact-dotations-back
+
+Ce dépôt est dédié aux calculs des dotations de l'État aux territoires. Il propose une API web répondant en particulier aux besoins de l'interface définie dans le dépôt [leximpact-dotations-ui](https://git.leximpact.dev/leximpact/simulateur-dotations-communes/leximpact-dotations-ui).
+
+## Pré-requis
+
+Ce dépôt requiert le [langage Python](https://www.python.org) dans sa version `3.11`. Il utilise le gestionnaire de dépendances et de paquetage [Poetry](https://python-poetry.org).
+
+### Gestion de versions de Python multiples avec `pyenv`
+
+Si votre environnement local dispose déjà d'autres versions de Python, vous pouvez définir une version Python propre à ce dépôt avec [pyenv](https://github.com/pyenv/pyenv).  
+
+Les commandes sont alors `pyenv install 3.11` suivie de `pyenv local 3.11`.
+
+Pour relier la version du langage choisie à l'environnement isolé que créera Poetry, exécuter la commande suivante dans un terminal Shell : 
+```shell
+poetry env use python3.11
+```
+
+## Installer `leximpact-dotations-back`
+
+Vérifier que la version de Python associée à Poetry est bien la version attendue :
+```shell
+poetry run python --version
+# résultat attendu : Python 3.11.x
+```
+
+Pour installer les dépendances de ce dépôt, exécuter la commande suivante dans un terminal Shell : 
+```shell
+poetry install
+```
+
+Ceci créera un environnement virtuel.  
+Si l'on souhaite voir l'environnement actif, celui-ci est indiqué parmi les environnements existants. Cette commande permet de les lister :
+```shell
+poetry env list
+```
+
+## Exécuter `leximpact-dotations-back` en local
+
+Exécuter `leximpact-dotations-back` revient à exécuter son API web grâce à la commande suivante :
+```shell
+# mode développement
+poetry run fastapi dev leximpact_dotations_back/main.py
+
+# mode production
+poetry run fastapi run leximpact_dotations_back/main.py
+```
+
+L'API est alors disponible à l'adresse locale suivante : `http://127.0.0.1:8000`
+Sa documentation est automatiquement générée et accessible à l'adresse : `http://127.0.0.1:8000/docs`
+
+## Exécuter les tests
+
+Pour vérifier les résultats des tests unitaires, exécuter la commande suivante :
+```shell
+poetry run pytest
+```
+
+Il est possible d'afficher les résultats de `print` avec l'option `-s`. Exemple sur un fichier de test :
+```shell
+poetry run pytest tests/2022/test_criteres_2022_2024.py -s
+```
+
+Par ailleurs, les traces de `leximpact_dotations_back` sont gérées avec la librairie [logging](https://docs.python.org/3.11/library/logging.html). Si l'on souhaite les afficher durant l'exécution des tests, exécuterles alors cette commande (ici pour les messages de niveau `DEBUG`) :
+```shell
+poetry run pytest --log-cli-level=DEBUG
+```
+
+Pour les tests d'API web, se référer au [README_API](./README_API.md).
+
+## Ajuster le style du code
+
+Vérifier le style du code avec [flake8](https://flake8.pycqa.org) : 
+```shell
+poetry run flake8
+```
+
+Ou vérifier le style du code que vous avez ajouté avec : 
+```shell
+poetry run flake8 `git ls-files | grep "\.py"`
+```
+
+Et le corriger automatiquement dans le répertoire courant et récursivement dans son contenu avec : 
+```shell
+poetry run autopep8 .
+```
+
+La récursivité de cette commande n'est effective que lorsqu'elle est configuée pour [autopep8](https://pypi.org/project/autopep8/) dans le fichier `pyproject.toml`.
+
+## Données
+
+La Direction générale des collectivités locales (DGCL), publie en donnée ouverte les critères de répartition des dotations. Ces données évoluent annuellement.
+
+### Données DGCL 2023 et 2024
+
+Pour le calcul des dotations de l'année 2024, `leximpact-dotations-back` utilise le fichier `criteres_repartition_2024.csv`. Celui-ci est obtenu selon les étapes suivantes : 
+1. le fichier des critères pour la catégorie des communes `criteres_repartition_csv.php.xlsx` est téléchargé sur le [site officiel](http://www.dotations-dgcl.interieur.gouv.fr/consultation/criteres_repartition.php),
+2. le fichier est renommé pour indiquer l'année en `criteres_repartition_csv_2024.php.xlsx` 
+3. puis ce fichier `.xlsx` est ouvert dans un tableur (LibreOffice), 
+4. l'onglet `Critères de répartition` est sauvegardé en tant que `.csv` sous `data/raw/criteres_repartition_2024_raw.csv` (UTF-8 pour l'encodage, virgule pour les délimitations, double guillemet pour les chaînes de caractères)
+5. `criteres_repartition_2024_raw.csv` est ensuite lu pour produire le fichier final `criteres_repartition_2024.csv` grâce à la commande suivante :
+    ```shell
+    poetry run python data/raw/data_cleanup.py 2024
+    ```
+
+De même pour 2023 où l'on remplace `2024` par `2023`.
+
+### Données INSEE 2024
+
+Pour l'initialisation du calcul sur la DCN on emploie les données de l'INSEE, communes depuis 1943 : [COG millésime 2024](https://www.insee.fr/fr/information/7766585) > `Communes depuis 1943` > Téléchargement du CSV.
+
+On obtient alors `v_commune_depuis_1943.csv` que l'on renomme en `insee_commune_depuis_1943.csv`
+
