@@ -1,0 +1,232 @@
+{% extends "_base.html" %}
+
+{% block title %}Solr Helper - Suche{% endblock %}
+
+{% block content %}
+<div class="p-8">
+        <div class="max-w-xl mx-auto card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h1 class="card-title mb-4">Solr Record Suche</h1>
+            <form hx-post="/api/search"
+                  hx-target="#search-results"
+                  hx-swap="innerHTML"
+                  hx-indicator="#search-loading"
+                  class="space-y-4">
+                <!-- Suchtyp-Auswahl -->
+                <fieldset class="fieldset">
+                    <legend class="fieldset-legend">Suchtyp</legend>
+                    <div class="join join-vertical w-full">
+                        <input type="radio" name="search_type" value="id" id="search_id" class="btn join-item" aria-label="ID-Suche" checked>
+                        <input type="radio" name="search_type" value="text" id="search_text" class="btn join-item" aria-label="Text-Suche">
+                    </div>
+                </fieldset>
+
+                <!-- Feldauswahl (nur bei Textsuche sichtbar) -->
+                <fieldset class="fieldset" id="field_selection" style="display: none;" x-data="fieldSelector()">
+                    <label class="label" for="search_field_input">
+                        <span class="label-text">Suchfeld auswählen:</span>
+                    </label>
+                    <div class="dropdown dropdown-open w-full" :class="{ 'dropdown-open': showDropdown }">
+                        <input type="text"
+                               id="search_field_input"
+                               x-model="searchTerm"
+                               @input="filterFields()"
+                               @focus="showDropdown = true"
+                               @blur="setTimeout(() => showDropdown = false, 200)"
+                               placeholder="Feldname eingeben oder auswählen (erforderlich)..."
+                               class="input input-bordered w-full"
+                               autocomplete="off">
+
+                        <!-- Hidden field für Form-Submit -->
+                        <input type="hidden" name="search_field" x-model="selectedField">
+
+                        <!-- Dropdown-Liste -->
+                        <div x-show="showDropdown && filteredFields.length > 0"
+                             class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-full max-h-60 overflow-y-auto z-50">
+                            <template x-for="field in filteredFields" :key="field.name">
+                                <li>
+                                    <a @click="selectField(field)"
+                                       class="text-sm"
+                                       x-text="field.displayName"></a>
+                                </li>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Ausgewähltes Feld anzeigen -->
+                    <div x-show="selectedField" class="mt-2">
+                        <span class="badge badge-primary badge-sm" x-text="'Ausgewählt: ' + selectedField"></span>
+                        <button type="button" @click="clearSelection()" class="btn btn-ghost btn-xs ml-2">✕</button>
+                    </div>
+                </fieldset>
+
+                <!-- Suchfeld -->
+                <fieldset class="fieldset">
+                    <label class="label" for="search_query" id="search_label">
+                        <span class="label-text">Suche nach {{ unique_key_field }}:</span>
+                    </label>
+                    <input type="text" id="search_query" name="search_query" required class="input input-bordered w-full" placeholder="Suchbegriff eingeben...">
+                </fieldset>
+
+                <div class="card-actions justify-end">
+                    <button type="submit"
+                            id="search-button"
+                            class="btn btn-primary"
+                            hx-indicator="#search-loading"
+                            disabled>
+                        <span id="search-loading" class="loading loading-spinner loading-sm htmx-indicator"></span>
+                        Suchen
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Container für HTMX Suchergebnisse -->
+    <div id="search-results" class="mt-6"></div>
+    </div>
+
+    <script>
+        // JavaScript für dynamische UI-Änderungen und Validierung
+        document.addEventListener('DOMContentLoaded', function() {
+            const idRadio = document.getElementById('search_id');
+            const textRadio = document.getElementById('search_text');
+            const label = document.querySelector('#search_label .label-text');
+            const input = document.getElementById('search_query');
+            const fieldSelection = document.getElementById('field_selection');
+            const searchButton = document.getElementById('search-button');
+
+            function updateUI() {
+                if (idRadio.checked) {
+                    // ID-Suche
+                    label.textContent = 'Suche nach {{ unique_key_field }}:';
+                    input.placeholder = '{{ unique_key_field }} eingeben...';
+                    fieldSelection.style.display = 'none';
+                } else {
+                    // Textsuche
+                    fieldSelection.style.display = 'block';
+                    label.textContent = 'Textsuche (Feld erforderlich):';
+                    input.placeholder = 'Suchbegriff eingeben...';
+                }
+                validateForm();
+            }
+
+            function validateForm() {
+                const query = input.value.trim();
+                let isValid = false;
+
+                if (idRadio.checked) {
+                    // ID-Suche: Nur Suchbegriff erforderlich
+                    isValid = query.length > 0;
+                } else {
+                    // Textsuche: Suchbegriff UND Feld erforderlich
+                    const fieldInput = document.querySelector('input[name="search_field"]');
+                    const selectedField = fieldInput ? fieldInput.value.trim() : '';
+                    isValid = query.length > 0 && selectedField.length > 0;
+                }
+
+                searchButton.disabled = !isValid;
+
+                // Visuelles Feedback
+                if (isValid) {
+                    searchButton.classList.remove('btn-disabled');
+                } else {
+                    searchButton.classList.add('btn-disabled');
+                }
+            }
+
+            // Initial setup
+            updateUI();
+
+            // Event listeners
+            idRadio.addEventListener('change', updateUI);
+            textRadio.addEventListener('change', updateUI);
+            input.addEventListener('input', validateForm);
+
+            // Überwache Änderungen am versteckten Feld-Input (Alpine.js)
+            const observer = new MutationObserver(validateForm);
+            const fieldInput = document.querySelector('input[name="search_field"]');
+            if (fieldInput) {
+                observer.observe(fieldInput, { attributes: true, attributeFilter: ['value'] });
+                fieldInput.addEventListener('input', validateForm);
+            }
+        });
+
+        // Alpine.js Component für Field Selector
+        function fieldSelector() {
+            return {
+                searchTerm: '',
+                selectedField: '',
+                showDropdown: false,
+                allFields: [
+                    {% for field in indexed_fields %}
+                    {
+                        name: '{{ field.name }}',
+                        displayName: '{{ field.name }}{% if field.get('dynamic') %} (dynamisch){% endif %} - {{ field.type }}{% if field.multiValued %} (mehrwertig){% endif %}',
+                        type: '{{ field.type }}'
+                    }{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                filteredFields: [],
+
+                init() {
+                    this.filteredFields = this.allFields;
+                },
+
+                filterFields() {
+                    if (!this.searchTerm.trim()) {
+                        this.filteredFields = this.allFields;
+                        this.showDropdown = true;
+                        return;
+                    }
+
+                    const term = this.searchTerm.toLowerCase();
+                    this.filteredFields = this.allFields.filter(field =>
+                        field.name.toLowerCase().includes(term) ||
+                        field.displayName.toLowerCase().includes(term)
+                    );
+                    this.showDropdown = true;
+                },
+
+                selectField(field) {
+                    this.selectedField = field.name;
+                    this.searchTerm = field.name;
+                    this.showDropdown = false;
+
+                    // Update das Label und triggere Validierung
+                    this.updateSearchLabel();
+                    this.triggerValidation();
+                },
+
+                clearSelection() {
+                    this.selectedField = '';
+                    this.searchTerm = '';
+                    this.filteredFields = this.allFields;
+                    this.updateSearchLabel();
+                    this.triggerValidation();
+                },
+
+                triggerValidation() {
+                    // Triggere die Validierung im Haupt-JavaScript
+                    setTimeout(() => {
+                        const event = new Event('input', { bubbles: true });
+                        const fieldInput = document.querySelector('input[name="search_field"]');
+                        if (fieldInput) {
+                            fieldInput.dispatchEvent(event);
+                        }
+                    }, 10);
+                },
+
+                updateSearchLabel() {
+                    const label = document.querySelector('#search_label .label-text');
+                    if (this.selectedField) {
+                        label.textContent = `Suche in Feld "${this.selectedField}":`;
+                    } else {
+                        label.textContent = 'Textsuche (Feld erforderlich):';
+                    }
+                }
+            }
+        }
+    </script>
+</div>
+{% endblock %}
