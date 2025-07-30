@@ -1,0 +1,319 @@
+=======
+CHANGES
+=======
+
+3.13.2 (2025-07-04)
+-------------------
+
+- bugfix: fix str/newstr convertion if it should be unicode. Otherwise
+  zope.traversing AbsoluteURL is broken with python 2
+
+
+3.13.1 (2025-06-26)
+-------------------
+
+- use mongodb 3.6.23 version
+
+
+3.13.0 (2025-06-25)
+-------------------
+
+- make m01.mongo compatible with pymongo 3.13.0
+
+- migration: python 2.7/3 release
+
+
+3.3.5 (2024-01-09)
+------------------
+
+- bugfix: adjust MONGODB_TLS_CERTIFICATE_SELECTOR setup. Was incorrect using
+  the MONGODB_TLS_ALLOW_INVALID_HOSTNAME option.
+
+- added hook for fix datetime now method. Use hook for setup created and
+  modified date. This allows us to setup a date hook used for a complex testing
+  setup.
+
+
+3.3.4 (2021-03-26)
+------------------
+
+- bugfix: removed _version and ICreatedModified from IMongoSubObject interface.
+  _version, modified and create are not allways relevant for sub objects beacuse
+  this information is available in the parent object. Feel free to suport this
+  additional information in your own implementation.
+
+
+3.3.3 (2021-03-23)
+------------------
+
+- feature: implemented MongoSubObject object and a MongoSubObjectProperty. The
+  MongoSubObjectProperty provides a converter and factory and can get used for
+  apply an object as attribute. This allows to traverse the object within the attriute name. Compared to the MongoObject whcih stores the data in an own
+  collection, the MongoSubobject implementation stores it's data in the
+  parent object.
+
+
+3.3.2 (2021-01-14)
+------------------
+
+- added TLS options for pymongo client setup
+
+- bugfix: fix order method in MongoItemsData compare with set. The existing
+  implementation was using pop with values instead of indexes for validate
+  the new order names.
+
+- added tests for bugfix
+
+
+3.3.1 (2020-04-22)
+------------------
+
+- bugfix: register MongoListData class and allow interface IMongoListData.
+  This allows to access the internal implementation like a simply built in
+  type. Note: the object property using this implementation is still protected.
+  We just let our instance act like a buit in simply python type.
+
+
+3.3.0 (2018-02-04)
+------------------
+
+- use new p01.env package for pymongo client environment setup
+
+
+3.2.3 (2018-02-04)
+------------------
+
+- bugfix: removed FakeMongoConnectionPool from mongo client testing setup
+
+- set MONGODB_CONNECT to False as default because client setup takes too long
+  for testing setup. Add MONGODB_CONNECT to your os environment if you need
+  to connect on application startup.
+
+
+3.2.2 (2018-01-29)
+------------------
+
+- bugfix: fix timeout milli seconds and MONGODB_REVOCATION_LIST attr usage
+
+
+3.2.1 (2018-01-29)
+------------------
+
+- bugfix: multiply MONGODB_SERVER_SELECTION_TIMEOUT with 1000because it's used
+  as milli seconds
+
+
+3.2.0 (2018-01-29)
+------------------
+
+- feature: implemented pymongo client setup based on enviroment variables and
+  default settings.py file
+
+
+3.1.0 (2017-01-22)
+------------------
+
+- bugfix: make sure we override existing mongodb values with None if None is
+  given as value in python object. Previous versions didn't override existing values with None. The new implementation will use the default schema value
+  as mongodb value even if default is None. Note, this will break existing
+  test output.
+
+- bugfix: fix performance test setup, conditional include ZODB for performance
+  tests. Supported with extras_require in setup.py.
+
+
+3.0.0 (2015-11-11)
+------------------
+
+- Use 3.0.0 as package version and reflect pymongo > 3.0.0 compatibility.
+
+- feature: change internal doFind, doInsert and doRemove methods, remove old
+  method arguments like safe etc..
+
+- feature: reflect changes in pymongo > 3.0.0. Replace disconnect with close
+  method like the MongoClient does.
+
+- removed MongoConnectionPool, replace them with MongoClient in your code. There
+  is no need for a thread safe connection pool since pymongo is thread safe.
+  Also replace MongoConnection with MongoClient in your test code.
+
+- switch from m01.mongofake to m01.fake including pymongo >= 3.0.0 support
+
+- remove write_concern options in mapping base class. The MongoClient should
+  define the right write concern.
+
+
+1.0.0 (2015-03-17)
+------------------
+
+- improve AttributeError handling on object setup. Additional catch ValueError
+  and zope.interface.Invalid and raise AttributeError with detailed attribute
+  and value information
+
+
+0.11.1 (2014-04-10)
+-------------------
+
+- feature: changed mongo client max_pool_size value from 10MB to 100MB which
+  reflects changes in pymongo >= 2.6.
+
+
+0.11.0 (2013-1-23)
+-------------------
+
+- implement GeoPoint used for 2dsphere geo location indexes. Also provide a
+  MongoGeoPointProperty which is able to create such GeoPoint items.
+
+
+0.10.2 (2013-01-04)
+-------------------
+
+- support _m_insert_write_concern, _m_update_write_concern,
+  _m_remove_write_concern in MongoObject
+
+
+0.10.1 (2012-12-19)
+-------------------
+
+- feature: implemented MongoDatetime schema field supporting timezone info
+  attribute (tzinfo=UTC).
+
+
+0.10.0 (2012-12-16)
+-------------------
+
+- switch from Connection to MongoClient recommended since pymongo 2.4. Replaced
+  safe with write concern options. By default pymongo will now use safe writes.
+
+- use MongoClient as factory in MongoConnectionPool. We didn't rename the class
+  MongoConnectionPool, we will keep them as is. We also don't rename the
+  IMongoConnectionPool interface.
+
+- replaced _m_safe_insert, _m_safe_update, _m_safe_remove with
+  _m_insert_write_concern, _m_update_write_concern, _m_remove_write_concern.
+  This new mapping base class options are an empty dict and can get replaced
+  with the new write concern settings. The default empty dict will force to
+  use the write concern defined in the connection.
+
+
+0.9.0 (2012-12-10)
+------------------
+
+- use m01.mongofake for fake mongodb, collection and friends
+
+
+0.8.0 (2012-11-18)
+------------------
+
+- bugfix: add missing security declaration for dump data
+
+- switch to bson import
+
+- reflect changes in test output based on pymongo 2.3
+
+- remove p01.i18n package dependency
+
+- improve, prevent mark items as changed for same values
+
+- improve sort, support key or list as sortName and allow to skip sortOrder if
+  sortName is given
+
+- added MANIFEST.in file
+
+
+0.7.0 (2012-05-22)
+------------------
+
+- bugfix: FakeCollection.remove: use find to find documents
+
+- preserve order by using SON for query filter and dump methods
+
+- implemented m01.mongo.dictify which can recoursive replace all bson.son.SON
+  with plain dict instances.
+
+
+0.6.2 (2012-03-12)
+------------------
+
+- bugfix: left out a method
+
+
+0.6.1 (2012-03-12)
+------------------
+
+- bugfix: return self in FakeMongoConnection __call__method. This let's an
+  instance act similar then the original pymongo Connection class __init__
+  method.
+
+- feature: Add `sort` parameter for FakeMongoConnection.find()
+
+0.6.0 (2012-01-17)
+------------------
+
+- bugfix: During a query, if a spec key is missing from the doc, the doc is
+  always ignored.
+
+- bugfix: correctly generate an object id in UTC. It was relying on GMT+1
+  (i.e. Roger's timezone).
+
+- bugfix: allow to use None as MongoDateProperty value
+
+- bugfix: set __parent__ in MongoSubItem __init__ method if given
+
+- implemented _m_initialized as a marker for find out when we need to trace
+  changed attributes
+
+- implemented clear method in MongoListData and MongoItemsData which allows to
+  remove sequence items at once wihout to pop each item from the sequence
+
+- improve MongoObject implementation, implemented _field which stores the
+  parent field name which the MongoObject is stored at. Also adjsut the
+  MongoObjectProperty and support backward compatibility by apply the previous
+  stored __name__ as _field if not given. This new _field and __name__
+  separation allos us to use explicit names e.g. the _id or custom names which
+  we can use for traversing to a MongoObject via traverser or other container
+  like implementations.
+
+- Implemented __getattr__ in FakeCollection. This allows to get a sub
+  collection like in pymongo which is a part of the gridfs concept.
+
+
+0.5.5 (2011-10-14)
+------------------
+
+- Implement filtering with dot notation
+
+
+0.5.4 (2011-09-27)
+------------------
+
+- Fix: a real mongo DB accepts tuple as the `fields` parameter of `find`.
+
+
+0.5.3 (2011-09-20)
+------------------
+
+- Fix minimum filtering expressions (Albertas)
+
+
+0.5.2 (2011-09-19)
+------------------
+
+- Added minimum filtering expressions (Albertas)
+
+- moved created and modified to an own interface called ICreatedModified
+
+- implemented simple and generic initial geo location support
+
+
+0.5.1 (2011-09-09)
+------------------
+
+- fix performance test
+- Added database_names and collection_names
+
+
+0.5.0 (2011-08-19)
+------------------
+
+- initial release

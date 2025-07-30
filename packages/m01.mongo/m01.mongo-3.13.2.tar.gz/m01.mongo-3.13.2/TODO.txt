@@ -1,0 +1,109 @@
+====
+TODO
+====
+
+- include test for setup/apply values
+
+  - make sure we remove existing values in mongodb if we set a value to
+    non boolean value (None, u'', 0, False etc.)
+
+    - save anything, except field.missing_value
+
+    - also save any @property value ( we can't lookup the missing and default
+      field value)
+
+    - test each use case for any field with different combination of setup
+
+      - missing_value
+
+      - default
+
+      - required
+
+  - use better error message, use self.__class__.__name__ for object and let
+    the user know which object fails. Or better use self.__repr__ for identify
+    self
+
+- rename container.txt test to usecase.txt
+
+- add new container.txt test setup useing container and item objects
+
+- fix performance script setup
+
+  - remove ZODB from performance test setup
+
+
+documentation
+-------------
+
+- REAME.txt
+
+  - add overview and explain the concepts
+
+    - explain relation based on mapping and traversal pattern
+
+    - explain zope.schema
+
+    - explain dumpNames, slipNames
+
+
+
+  - describe helper concepts
+
+    - cache key
+
+    - collection
+
+  - testing.txt
+
+    - renomarlizer
+
+    - explain helper components from
+
+      - m01.fake
+
+      - m01.stub
+
+
+testing
+-------
+
+- implement security policy tests
+
+
+- implement integration tests, see MongoIntegrationTestMixin in testing.py
+
+
+improvements
+------------
+
+- transaction abort
+
+  - improve transaction abort
+
+    - cache original data in setup method and revert them on transaction abort
+      for already commited items.
+
+    - make this option optional because if will double the used ram
+
+
+- improve MongoObject transaction handling
+
+  - dump object data in transaction begin if object
+
+  - use data dump in doInsert and doUpdate methods
+
+
+- savepoint
+
+  - support savepoint
+
+    - implement a savepoint mongodb database
+
+    - store items wrapped with a savepoint item which knows the items
+      database and collection etc.
+
+    - destroy saved item and free memory
+
+    - commit items from savepoint to the right database/collection on commit
+      based on the savepoint item information

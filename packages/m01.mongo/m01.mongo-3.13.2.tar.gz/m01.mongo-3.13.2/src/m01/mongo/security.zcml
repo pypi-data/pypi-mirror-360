@@ -1,0 +1,79 @@
+<configure 
+    xmlns="http://namespaces.zope.org/zope"
+    i18n_domain="p01">
+
+  <!-- IPrincipalPermissionManager -->
+  <class class=".security.PrincipalPermissionManager">
+    <require
+        permission="zope.Security"
+        attributes="grantPermissionToPrincipal denyPermissionToPrincipal
+                    unsetPermissionForPrincipal"
+        />
+    <allow
+        interface="zope.securitypolicy.interfaces.IPrincipalPermissionMap"
+        />
+  </class>
+
+  <adapter
+      factory=".security.PrincipalPermissionManager"
+      provides="zope.securitypolicy.interfaces.IPrincipalPermissionManager"
+      for=".interfaces.ISecurityAware"
+      trusted="true"
+      />
+
+
+  <!-- IRolePermissionManager -->
+  <class class=".security.RolePermissionManager">
+    <require
+        permission="zope.Security"
+        attributes="grantPermissionToRole denyPermissionToRole
+                    unsetPermissionFromRole"
+        />
+    <allow
+        interface="zope.securitypolicy.interfaces.IRolePermissionMap"
+        />
+  </class>
+
+  <adapter
+      factory=".security.RolePermissionManager"
+      provides="zope.securitypolicy.interfaces.IRolePermissionManager"
+      for=".interfaces.ISecurityAware"
+      trusted="true"
+      />
+
+
+  <!-- IPrincipalRoleManager -->
+  <class class=".security.PrincipalRoleManager">
+    <require
+        permission="zope.Security"
+        attributes="assignRoleToPrincipal removeRoleFromPrincipal
+                    unsetRoleForPrincipal"
+        />
+    <allow
+        interface="zope.securitypolicy.interfaces.IPrincipalRoleMap"
+        />
+  </class>
+
+  <adapter
+      factory=".security.PrincipalRoleManager"
+      provides="zope.securitypolicy.interfaces.IPrincipalRoleManager"
+      for=".interfaces.ISecurityAware"
+      trusted="true"
+      />
+
+
+  <!-- IPrincipalRoleManager -->
+  <class class=".security.GrantInfoAdapter">
+    <allow
+        interface="zope.securitypolicy.interfaces.IGrantInfo"
+        />
+  </class>
+
+  <adapter
+      factory=".security.GrantInfoAdapter"
+      provides="zope.securitypolicy.interfaces.IGrantInfo"
+      for=".interfaces.ISecurityAware"
+      trusted="true"
+      />
+
+</configure>
