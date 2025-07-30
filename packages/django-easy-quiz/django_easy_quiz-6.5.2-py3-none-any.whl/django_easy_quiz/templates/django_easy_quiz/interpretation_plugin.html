@@ -1,0 +1,18 @@
+{% load i18n %}
+<section class="quiz-plugin">
+  <{{ instance.title_level }} class="quiz-title">
+  {{ instance.quiz.name }}
+</{{ instance.title_level }}>
+{% if instance.short_description %}
+  <p class="quiz-description">
+    {{ instance.short_description }}
+  </p>
+{% endif %}
+{% if instance.quiz %}
+  <a class="quiz-launch-button" href="{% url 'interpretation_quiz' instance.quiz.id %}">{% if instance.button_text %}{{ instance.button_text }}{% else %}{% trans "Launch the quiz" %}{% endif %}</a>
+{% elif user.is_staff %}
+  <p style="padding: 15px; border: 3px red dotted">
+    {% translate "(admin only) No interpretation quiz selected, can't display quiz link." %}
+  </p>
+{% endif %}
+</section>
