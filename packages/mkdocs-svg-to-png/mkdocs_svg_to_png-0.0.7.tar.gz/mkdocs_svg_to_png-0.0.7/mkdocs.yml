@@ -1,0 +1,51 @@
+site_name: MkDocs SVG to PNG Plugin
+site_url: https://nuitsjp.github.io/mkdocs-svg-to-png/
+repo_url: https://github.com/nuitsjp/mkdocs-svg-to-png
+
+theme:
+  name: material
+  language: ja
+
+extra_css:
+  - stylesheets/pdf-fixes.css
+
+extra_javascript:
+  - https://unpkg.com/mermaid/dist/mermaid.min.js
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+        - name: svg
+          class: svg
+  - pymdownx.highlight
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - mermaid-to-image:
+      # 環境変数ENABLE_PDF_EXPORTが設定されている場合のみプラグインを有効化
+      enabled_if_env: ENABLE_PDF_EXPORT
+  - svg-to-png:
+      enabled_if_env: ENABLE_PDF_EXPORT
+  - to-pdf:
+      enabled_if_env: ENABLE_PDF_EXPORT
+      cover_subtitle: 'MkDocs Mermaid to Image'
+      toc_title: 目次
+      toc_level: 3
+      output_path: MkDocs-Mermaid-to-Image.pdf
+
+nav:
+  - Home: index.md
+  - Mermaidテスト: test-mermaid.md
+  - Architecture: architecture.md
+  - Usage: usage.md
+  - Appendix:
+      - Claude Cheat Sheet: appendix/claude-cheat-sheet.md
+      - Mermaid CLI: appendix/mermaid-cli.md
+      - MkDocs Architecture: appendix/mkdocs-architecture.md
+      - Release Strategy: appendix/release-strategy.md
