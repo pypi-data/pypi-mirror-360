@@ -1,0 +1,176 @@
+[tool.poetry]
+name = "adxp-sdk"
+version = "0.1.11-beta1"
+description = "SDK for AIX Platform"
+authors = ["AIX Enterprise"]
+license = "Proprietary"
+packages = [
+  { include = "adxp_sdk" },
+]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.ruff]
+target-version = "py310"
+
+line-length = 120
+indent-width = 4
+
+select = [
+    "YTT", #flake8-2020
+    "ANN", #flake8-annotations
+    "ASYNC", #flake8-async
+    "S", #flake8-bandit
+    "BLE", #flake8-blind-except
+    "FBT", #flake8-boolean-trap
+    "B", #flake8-bugbear
+    "A", #flake8-builtins
+    "COM", #flake8-commas
+    "C4", #flake8-comprehensions
+    "CPY", #flake8-copyright
+    "DTZ", #flake8-datetimez
+    "T10", #flake8-debugger
+    "DJ", #flake8-django
+    "EM", #flake8-errmsg
+    "EXE", #flake8-executable
+    "INT", #flake8-gettext
+    "ISC", #flake8-implicit-str-concat
+    "ICN", #flake8-import-conventions
+    "LOG", #flake8-logging
+    "G", #flake8-logging-format
+    "INP", #flake8-no-pep420
+    "PIE", #flake8-pie
+    "T20", #flake8-print
+    "PT", #flake8-pytest-style
+    "Q", #flake8-quotes
+    "RSE", #flake8-raise
+    "RET", #flake8-return
+    "SLF", #flake8-self
+    "SIM", #flake8-simplify
+    "SLOT", #flake8-slots
+    "TID", #flake8-tidy-imports
+    "TD", #flake8-todos
+    "TRIO", #flake8-trio
+    "TCH", #flake8-type-checking
+    "PTH", #flake8-use-pathlib
+    "FLY", #flynt 
+    "C90", #mccabe
+    "PD", #pandas-vet
+    "N", #pep8-naming
+    "PERF", #perflint
+    "TRY", #tryceratops
+    "E", #pycodestyle
+    "W",   # pycodestyle
+    "F", #pyflakes
+    "I",   # isort
+    "FA", #flake8-future-annotations
+    "PGH", # pygrep-hooks
+    "RUF", # ruff-specific rules
+    "PL",  # pylint
+    "UP",  # pyupgrade
+    "D", #pydocstyle
+]
+
+ignore = [
+    "ANN101",  # missing-type-self
+    "D100",    # public module
+    "D101",    # public class
+    "D102",    # public method
+    "D103",    # public function
+    "D104",    # public package
+    "D105",    # magic methods
+    "D106",    # nested class
+    "D107",    # init
+    "D202",    # blank lines after function docstring
+    "D203",    # blank line before class docstring
+    "D213",    # Multi-line docstring summary should start at the second line
+    "D401",    # Imperative mood
+    "D402",    # First line should not be the function's signature
+]
+exclude = [
+    "migrations",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    ".next",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+]
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+docstring-code-format = false
+
+[tool.poetry.dependencies]
+dotenv = "^0.9.9"
+python = "^3.10"
+pydantic = {extras = ["email"], version = ">=2.0,<2.11.0"}
+langchain = "^0.3.0"
+langserve = {extras = ["all"], version = "^0.3.0"}
+autologging = "^1.3.2"
+fastapi = "^0.115.12"
+sse-starlette = "<2.0.0"
+gunicorn = "^23.0.0"
+uvicorn = "^0.30.6"
+python-multipart = "^0.0.9"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.2"
+black = "^24.4.2"
+flake8 = "^7.1.0"
+isort = "^5.13.2"
+coverage = "^7.6.0"
+mypy = "^1.11.1"
+pre-commit = "^3.8.0"
+
+
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+include = '\.pyi?$'
+exclude = '''
+/(
+      .git          # root of the project
+    | venv
+    | build
+    | dist
+  )/
+'''
+
+[tool.flake8]
+show-source = true
+exclude = [
+  ".git",
+  ".gitignore",
+  "*.py[co]",
+  "__pycache__",
+  "venv",
+  ".env.*",
+  "build",
+  "dist"
+  ]
+ignore = ["E501", "W503", "F401"]
+#E501: line too long
+#W503: line break occurred before binary operator
+extend-ignore = "E203"
+max-complexity = 10
+max-line-length = 88
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
