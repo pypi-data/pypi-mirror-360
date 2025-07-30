@@ -1,0 +1,215 @@
+# Testing add strategy
+-
+  input:
+    args:
+      - "update"
+      - "--add"
+      - "add.map"
+    stdin: "symbol.in"
+  output:
+    file:
+    stdout: "sanity_add.stdout"
+    warnings:
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "--add"
+      - "--final"
+      - "add.map"
+    stdin: "symbol.in"
+  output:
+    file:
+    stdout: "add_final.stdout"
+    warnings:
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "--add"
+      - "--out"
+      - "add.map"
+      - "add.map"
+    stdin: "symbol.in"
+  output:
+    file: "add.outfile"
+    stdout: "add.stdout"
+    warnings:
+      - "Overwriting existing file 'add.map'"
+      - "Given paths in '--out' and 'file' are the same."
+      - "Moving 'add.map' to 'add.map.old'."
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "--add"
+      - "add_present.map"
+    stdin: "symbol.in"
+  output:
+    file:
+    stdout: "add_present.stdout"
+    warnings:
+      - "The symbol 'symbol' is already present in a previous version. \
+        Keep the previous implementation to not break ABI."
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "--add"
+      - "base.map"
+    stdin: "empty.in"
+  output:
+    file:
+    stdout: "empty.stdout"
+    warnings:
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "--add"
+      - "duplicated_symbol.map"
+    stdin: "symbol.in"
+  output:
+    file:
+    stdout: "duplicated_symbol.stdout"
+    warnings:
+      - "Duplicates found in release 'DUPLICATED_1_0_0':"
+      - "    global:"
+      - "        duplicated"
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "--add"
+      - "add_with_wildcard.map"
+    stdin: "symbol.in"
+  output:
+    file:
+    stdout: "add_with_wildcard.stdout"
+    warnings:
+      - "WITH_WILDCARD_1_0_0 contains the '*' wildcard in global scope. \
+        It is probably exporting symbols it should not."
+      - "The '*' wildcard was found in more than one place:"
+      - "    WITH_WILDCARD_1_0_0: in 'global'"
+      - "    WITH_WILDCARD_1_0_0: in 'local'"
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "--add"
+      - "--dry"
+      - "-i"
+      - "dry.in"
+      - "-o"
+      - "dry.in"
+      - "base.map"
+    stdin: "dry.in"
+  output:
+    file: "dry.outfile"
+    stdout: "dry.stdout"
+    warnings:
+      - "Overwriting existing file 'dry.in'"
+      - "Given paths in '--out' and '--in' are the same."
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "--add"
+      - "-r"
+      - "EXISTING_1_0_0"
+      - "update_existing.map"
+    stdin: "symbol.in"
+  output:
+    file:
+    stdout: "update_existing.stdout"
+    warnings:
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "--add"
+      - "-r"
+      - "EXISTING_1_0_0"
+      - "update_released.map"
+    stdin: "symbol.in"
+  output:
+    file:
+    stdout: "update_released.stdout"
+    warnings:
+    errors:
+      - "Released releases cannot be modified. Abort."
+    exceptions:
+      - "Released releases cannot be modified. Abort."
+-
+  input:
+    args:
+      - "update"
+      - "--add"
+      - "--final"
+      - "-r"
+      - "EXISTING_1_0_0"
+      - "update_existing.map"
+    stdin: "symbol.in"
+  output:
+    file:
+    stdout: "update_existing_final.stdout"
+    warnings:
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "--add"
+      - "split.map"
+    stdin: "symbol.in"
+  output:
+    file:
+    stdout: "split.stdout"
+    warnings:
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "--add"
+      - "missing_global.map"
+    stdin: "symbol.in"
+  output:
+    file:
+    stdout: "missing_global.stdout"
+    warnings:
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "--add"
+      - "add_10.map"
+    stdin: "symbol.in"
+  output:
+    file:
+    stdout: "add_10.stdout"
+    warnings:
+    errors:
+    exceptions:

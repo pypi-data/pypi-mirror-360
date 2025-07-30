@@ -1,0 +1,116 @@
+# Testing symbols strategy
+-
+  input:
+    args:
+      - "update"
+      - "symbols.map"
+    stdin: "symbols.in"
+  output:
+    file:
+    stdout: "symbols_sanity.stdout"
+    warnings:
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "--final"
+      - "symbols.map"
+    stdin: "symbols.in"
+  output:
+    file:
+    stdout: "symbols_final.stdout"
+    warnings:
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "--out"
+      - "symbols.map"
+      - "symbols.map"
+    stdin: "symbols.in"
+  output:
+    file: "symbols.out"
+    stdout: "symbols.stdout"
+    warnings:
+      - "Overwriting existing file 'symbols.map'"
+      - "Given paths in '--out' and 'file' are the same."
+      - "Moving 'symbols.map' to 'symbols.map.old'."
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "-r"
+      - "EXISTING_1_0_0"
+      - "update_existing.map"
+    stdin: "update_existing.in"
+  output:
+    file:
+    stdout: "update_existing.stdout"
+    warnings:
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "-r"
+      - "EXISTING_1_0_0"
+      - "update_released.map"
+    stdin: "update_released.in"
+  output:
+    file:
+    stdout: "update_released.stdout"
+    warnings:
+    errors:
+      - "Released releases cannot be modified. Abort."
+    exceptions:
+      - "Released releases cannot be modified. Abort."
+-
+  input:
+    args:
+      - "update"
+      - "-r"
+      - "WITH_RELEASE_INFO_1_0_0"
+      - "base.map"
+    stdin: "with_release_info.in"
+  output:
+    file:
+    stdout: "with_release_info.stdout"
+    warnings:
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "-r"
+      - "WITH_RELEASE_INFO_1_0_0"
+      - "--allow-abi-break"
+      - "base.map"
+    stdin: "symbol.in"
+  output:
+    file:
+    stdout: "with_release_abi_break.stdout"
+    warnings:
+    errors:
+    exceptions:
+-
+  input:
+    args:
+      - "update"
+      - "-o"
+      - "update_no_changes.map"
+      - "base.map"
+    stdin: "one_symbol.in"
+  output:
+    file:
+    stdout: "update_no_changes.stdout"
+    warnings:
+    errors:
+    exceptions:
