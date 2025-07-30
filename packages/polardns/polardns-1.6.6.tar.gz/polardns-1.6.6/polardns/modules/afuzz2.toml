@@ -1,0 +1,76 @@
+[module]
+name = "afuzz2"
+type = "feature"
+info = "Many Bogus A Records and Legit A Record"
+short = "Send multiple A records with injected byte in the hostname"
+category = "Fuzzing"
+records = "A"
+desc = '''
+This module is designed to respond with multiple bogus and illegitimate A records, followed by a legitimate A record as the final answer.
+
+Similar to the [afuzz1] module, this module injects a single incremental byte into the middle of the hostname in each A record (in the ANSWER section). The final record, however, is a proper A record that correctly answers the query.
+
+This setup forces the resolver or DNS client to parse through all the illegitimate and malformed records before arriving at the correct answer.
+'''
+format = '''
+**`afuzz2.<NUMBER>.yourdomain.com`**
+
+Where:
+
+- The **`<NUMBER>`** parameter specifies how many bogus A records should appear before the correct A record in the DNS response.
+'''
+seealso = "afuzz1, afuzz2"
+
+[[module.example]]
+description = "In this example, we request to generate 10 bogus A records, each with an injected byte in the hostname. The final (11th) A record contains the correct answer to the query:"
+command = "dig afuzz2.10.yourdomain.com @127.0.0.1"
+
+[[module.example]]
+description = "In this example, we request to generate 256 bogus A records, each containing an injection byte in the hostname. The injected byte ranges from a NULL byte (`\\000`) to `\\255`. The final (257th) A record provides the correct answer to our query:"
+command = "dig afuzz2.256.yourdomain.com @127.0.0.1"
+
+[[module.example]]
+description = "Like other features, you can append anything to the feature name to avoid receiving cached responses from the target DNS resolver. This forces the target resolver to actively communicate with our PolarDNS server instead of responding with cached answers. Using a random number is the most effective strategy:"
+command = "dig afuzz2${RANDOM}.10.yourdomain.com @127.0.0.1"
+
+[module.code]
+python = '''
+if req.first_subdomain.startswith("afuzz2"):
+   # Send many A records with a slightly distorted name. In the end, provide the correct one also
+   # af<01>zz2.yourdomain.com   A   6.6.6.1
+   # af<02>zz2.yourdomain.com   A   6.6.6.2
+   # af<03>zz2.yourdomain.com   A   6.6.6.3
+   # ...
+   # af<fe>zz2.yourdomain.com   A   6.6.6.254
+   # af<ff>zz2.yourdomain.com   A   6.6.6.255
+   # afuzz2.yourdomain.com   A   1.2.3.4
+   answers = 1
+   if req.subdomains[1].isnumeric():
+      answers = min(int(req.subdomains[1]), 256)
+   ### DNS header #######
+   buffer = prep_dns_header(b'\x84\x00', req.QURR, answers+1, 0, 0)
+   ### QUESTION SECTION ########
+   if resp.noq: buffer += convDom2Bin(req.full_domain_20) + req.type_bin + req.class_bin
+   ### ANSWER SECTION ########
+   #for b in range(1, 255):
+   tmpdom = convDom2Bin(req.full_domain_20)
+   # multiple bad A
+   for b in range(1, answers+1):
+       newip = "6.6.6." + str(b-1)
+       newdom = tmpdom[0:3]
+       newdom += struct.pack(">B", b-1)
+       newdom += tmpdom[4:]
+       buffer += newdom + getTypeBin("A") + getClassBin("IN")
+       buffer += struct.pack(">L", resp.TTL)           ## TTL
+       buffer += struct.pack(">H", 4)                  ## Data length
+       buffer += socket.inet_aton(newip)               ## IP
+   # good A
+   buffer += convDom2Bin(req.full_domain_20) + req.type_bin + req.class_bin
+   buffer += struct.pack(">L", resp.TTL)            ## TTL
+   buffer += struct.pack(">H", 4)                   ## Data length
+   buffer += socket.inet_aton("2.3.4.5")            ## IP
+   # log and send
+   log("%d bogus A records + legit A record" % (answers))
+   send_buf(self, buffer)
+   #####################################################################
+'''
