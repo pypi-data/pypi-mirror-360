@@ -1,0 +1,235 @@
+Metadata-Version: 2.4
+Name: sky-ceiling-projector
+Version: 1.0.0
+Summary: A realistic sky ceiling projector with weather effects, celestial objects, and enhanced starfield
+Home-page: https://github.com/yourusername/sky-ceiling-projector
+Author: Sky Projector Team
+Author-email: Sky Projector Team <your-email@example.com>
+Maintainer-email: Sky Projector Team <your-email@example.com>
+License: MIT
+Project-URL: Homepage, https://github.com/yourusername/sky-ceiling-projector
+Project-URL: Documentation, https://github.com/yourusername/sky-ceiling-projector#readme
+Project-URL: Repository, https://github.com/yourusername/sky-ceiling-projector.git
+Project-URL: Bug Reports, https://github.com/yourusername/sky-ceiling-projector/issues
+Project-URL: Changelog, https://github.com/yourusername/sky-ceiling-projector/blob/main/CHANGELOG.md
+Keywords: astronomy,projector,ceiling,sky,weather,stars,moon,planets,pygame,raspberry-pi
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: Topic :: Multimedia :: Graphics :: Presentation
+Classifier: Topic :: Scientific/Engineering :: Astronomy
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Operating System :: OS Independent
+Classifier: Environment :: X11 Applications
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pygame>=2.0.0
+Requires-Dist: requests>=2.25.0
+Requires-Dist: numpy>=1.20.0
+Requires-Dist: pytz>=2021.1
+Provides-Extra: enhanced
+Requires-Dist: geopy>=2.0.0; extra == "enhanced"
+Requires-Dist: timezonefinder>=6.0.0; extra == "enhanced"
+Provides-Extra: dev
+Requires-Dist: pytest>=6.0; extra == "dev"
+Requires-Dist: black>=21.0; extra == "dev"
+Requires-Dist: flake8>=3.8; extra == "dev"
+Requires-Dist: build>=0.7.0; extra == "dev"
+Requires-Dist: twine>=3.4.0; extra == "dev"
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+## **live-ceiling – Bring the Real-Time Sky Indoors**
+
+update: You can now install this using `pip install sky-ceiling-projector`!
+
+Live-ceiling turns a Raspberry Pi Zero 2 W and any HDMI projector into a miniature planetarium that shows a weather-accurate, time-accurate sky for **any city in the world**—complete with stars, Moon phases, planets, shooting stars, clouds, rain, snow, lightning, and smooth colour transitions when you “fly” to another location. All data comes from free, no-key public APIs, so the setup can run indefinitely with nothing more than Wi-Fi.
+
+## **✨ Key Features**
+ 
+
+* **Real-time sky gradient** that matches local dawn, day, sunset, dusk and night.
+
+* **Accurate weather effects** powered by Open-Meteo’s Geocoding and Forecast APIs—no API key required. [open-meteo.com](https://open-meteo.com/en/docs/geocoding-api?utm_source=chatgpt.com)[open-meteo.com](https://open-meteo.com/en/docs?utm_source=chatgpt.com)[open-meteo.com](https://open-meteo.com/?utm_source=chatgpt.com)
+
+* **Detailed celestial objects**: variable stars, red/blue giants, Milky Way band, realistic Moon with pre-generated craters, Sun with sunspots, planets, satellites and meteor showers.
+
+* **Weather-sensitive particles** for rain, drizzle, snow and fog, plus branching lightning during thunderstorms.
+
+* **Demo-mode “world tour”** that cycles through famous cities on a timer (or on key-press) with a 5-second cross-fade.
+
+* **Optimised for Raspberry Pi Zero 2 W** (quad-core 1 GHz, 512 MB RAM) so it runs smoothly at 1080p/30 FPS. [datasheets.raspberrypi.com](https://datasheets.raspberrypi.com/rpizero2/raspberry-pi-zero-2-w-product-brief.pdf?utm_source=chatgpt.com)[wired.com](https://www.wired.com/story/raspberry-pi-zero-2-w-review?utm_source=chatgpt.com)
+
+* **Pygame full-screen output** with double-buffering and hardware surfaces for tear-free projection. [stackoverflow.com](https://stackoverflow.com/questions/74986624/how-to-toggle-fullscreen-mode-in-pygame?utm_source=chatgpt.com)
+
+* **Zero-cost libraries** only: `pygame`, `numpy`, `requests`, `geopy`, `timezonefinder`, and `pytz`.
+
+---
+
+## **🛠️ Bill of Materials**
+
+| Item | Notes |
+| ----- | ----- |
+| **Raspberry Pi Zero 2 W** | Any Pi works, but Zero 2 W is the smallest that can sustain 30 FPS. [datasheets.raspberrypi.com](https://datasheets.raspberrypi.com/rpizero2/raspberry-pi-zero-2-w-product-brief.pdf?utm_source=chatgpt.com) |
+| micro-SD card (16 GB \+) | Flash the latest Raspberry Pi OS Lite. |
+| Official Pi Zero camera/power adapter kit **or** 5 V/2 A USB power | The projector’s USB-A port usually provides enough current. |
+| **HDMI cable (micro-HDMI → HDMI)** | Connects Pi to projector. Basic passive cables work. [fromdev.com](https://www.fromdev.com/2025/05/how-to-connect-raspberry-pi-to-a-projector.html?utm_source=chatgpt.com) |
+| Any **HDMI projector** (720p–1080p) | Short-throw or ceiling-mounted mini projectors work best. |
+| Wi-Fi connection | Required only for live weather; sky still renders offline. |
+
+**Tip:** If your projector only has VGA, use an inexpensive HDMI→VGA adapter and enable `hdmi_safe=1` in `/boot/config.txt`. [ask.tvsbook.com](https://ask.tvsbook.com/56763.1/?utm_source=chatgpt.com)
+
+---
+
+## **📦 Software Requirements**
+
+| Package | Install command | Purpose |
+| ----- | ----- | ----- |
+| Python 3.7 \+ | `sudo apt install python3 python3-pip` | Interpreter |
+| **pygame ≥ 2.1** | `sudo pip3 install pygame` | Rendering layer on Pi. [github.com](https://github.com/pygame/pygame/issues/3687?utm_source=chatgpt.com) |
+| numpy, requests | `pip3 install numpy requests` | Math & HTTP |
+| geopy | `pip3 install geopy` | Fallback geocoder. [gis.stackexchange.com](https://gis.stackexchange.com/questions/293615/user-agent-argument-in-nominatim-in-geopy?utm_source=chatgpt.com) |
+| timezonefinder, pytz | `pip3 install timezonefinder pytz` | Local-time conversion. [pypi.org](https://pypi.org/project/timezonefinder/?utm_source=chatgpt.com) |
+
+---
+
+## **🔧 Installation**
+
+bash  
+CopyEdit  
+`# 1. Flash Raspberry Pi OS (Lite or Desktop) to SD and boot.`  
+`# 2. Enable SSH & Wi-Fi using raspi-config if needed.`  
+`sudo apt update && sudo apt upgrade -y`
+
+`# 3. Install SDL dependencies for pygame`  
+`sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libfreetype6-dev libatlas-base-dev -y`
+
+`# 4. Clone the repo`  
+`git clone https://github.com/your-user/live-ceiling.git`  
+`cd live-ceiling`
+
+`# 5. Install Python deps`  
+`pip3 install -r requirements.txt`
+
+`# 6. (Optional) Test pygame opens in full-screen`  
+`python3 - << 'PY'`  
+`import pygame, sys`  
+`pygame.init(); pygame.display.set_mode((0,0), pygame.FULLSCREEN); pygame.time.wait(2000); sys.exit()`  
+`PY`
+
+If the screen stays black after step 6, verify HDMI-0 is enabled and the projector is on the correct input. [raspberrypi.stackexchange.com](https://raspberrypi.stackexchange.com/questions/85570/hdmi-projector-doesnt-detect-my-pi?utm_source=chatgpt.com)
+
+---
+
+## **🚀 Running the Projector**
+
+bash  
+CopyEdit  
+`# Basic: simulate current sky over Paris`  
+`python3 live-ceiling.py --location "Paris, France"`
+
+`# High-performance preset for 480 p pico-projectors`  
+`python3 live-ceiling.py --preset performance --location "Tokyo, Japan"`
+
+`# Demo mode: world tour every 5 min`  
+`python3 live-ceiling.py --cycle-cities --cycle-interval 300`
+
+### **Keyboard Controls**
+
+| Key | Action |
+| ----- | ----- |
+| **ESC** | Quit |
+| **I** | Toggle info overlay |
+| **D** | Debug mode (cycles weather) |
+| **R** | Regenerate starfield |
+| **SPACE** | Trigger lightning (only if weather \= thunderstorm) |
+| **N** | Next city (demo mode) |
+
+---
+
+## **⚙️ Configuration & Customisation**
+
+| Flag | Default | Description |
+| ----- | ----- | ----- |
+| `--preset` | `balanced` | `performance` (≤ 15 fps), `balanced` (default), `quality` (\> 20 fps on Pi 4\) |
+| `--location` | *required* | City or “City, State/ISO-Country”. Uses Open-Meteo geocoder. [open-meteo.com](https://open-meteo.com/en/docs/geocoding-api?utm_source=chatgpt.com) |
+| `--cycle-cities` & `--cycle-interval` | – | Rotate through a curated list of major cities. |
+| `--no-info` | off | Hide FPS, weather and location overlay. |
+
+To add your own city list, edit `WORLD_CITIES` in the script.
+
+---
+
+## **🏎️ Performance Tips**
+
+* Run headless Raspberry Pi OS Lite to free RAM.
+
+* Use the `performance` preset for 720 p or lower projectors; it halves star and particle counts.
+
+* Disable glow effects by setting `"enable_glow": False` inside `QUALITY_SETTINGS`.
+
+* To force 30 FPS, add `pygame.time.Clock().tick(30)` inside the main loop (already set).
+
+* For multiple projectors, add an HDMI splitter; the Pi outputs the same frame to all displays. [reddit.com](https://www.reddit.com/r/projectors/comments/190weyw/how_do_i_actually_connect_my_raspberry_pi_to/?utm_source=chatgpt.com)
+
+---
+
+## **🩻 How It Works (Quick Tech Peek)**
+
+| Component | Library/API | Notes |
+| ----- | ----- | ----- |
+| Geocoding | Open-Meteo Geocoding (primary) → Geopy \+ Nominatim fallback | No key, fast, returns local timezone. [open-meteo.com](https://open-meteo.com/en/docs/geocoding-api?utm_source=chatgpt.com)[gis.stackexchange.com](https://gis.stackexchange.com/questions/293615/user-agent-argument-in-nominatim-in-geopy?utm_source=chatgpt.com) |
+| Weather | Open-Meteo “current\_weather” endpoint | Supplies `weather_code`, `cloud_cover`, temperature, wind. [open-meteo.com](https://open-meteo.com/en/docs?utm_source=chatgpt.com) |
+| Local time | TimezoneFinder \+ pytz for offline TZ lookup | Works without internet after first run. [pypi.org](https://pypi.org/project/timezonefinder/?utm_source=chatgpt.com) |
+| Rendering | Pygame 2 HW surfaces, double buffer | Full-screen toggle example: see StackOverflow. [stackoverflow.com](https://stackoverflow.com/questions/74986624/how-to-toggle-fullscreen-mode-in-pygame?utm_source=chatgpt.com) |
+| Hardware | Pi Zero 2 W (quad-core A53 @ 1 GHz, 512 MB RAM) | Small, silent, $15. [datasheets.raspberrypi.com](https://datasheets.raspberrypi.com/rpizero2/raspberry-pi-zero-2-w-product-brief.pdf?utm_source=chatgpt.com)[wired.com](https://www.wired.com/story/raspberry-pi-zero-2-w-review?utm_source=chatgpt.com) |
+| Display | HDMI out to projector | Any modern HDMI projector or TV works. [fromdev.com](https://www.fromdev.com/2025/05/how-to-connect-raspberry-pi-to-a-projector.html?utm_source=chatgpt.com) |
+
+APIs are free for non-commercial use; Open-Meteo imposes reasonable request rate limits (60 calls/min). [open-meteo.com](https://open-meteo.com/?utm_source=chatgpt.com)
+
+---
+
+## **🐛 Troubleshooting**
+
+| Symptom | Fix |
+| ----- | ----- |
+| Black screen on boot | Ensure projector input is HDMI \#; add `hdmi_safe=1` in `/boot/config.txt` if using adapters. [ask.tvsbook.com](https://ask.tvsbook.com/56763.1/?utm_source=chatgpt.com) |
+| “pygame.error: No available video device” | Run with a screen attached or set `export SDL_VIDEODRIVER=fbcon`. |
+| Weather always “Loading…” | Check internet; Open-Meteo requires outbound HTTPS port 443\. |
+| Wrong local time | Disable Wi-Fi power save (`iw dev wlan0 set power_save off`) and verify TZ in `raspi-config`. |
+| Frame-rate dips below 20 FPS | Switch to `--preset performance`, close other processes, lower resolution to 720 p in `/boot/config.txt`. |
+
+---
+
+## **🤝 Acknowledgements**
+
+* **Open-Meteo** – free weather & geocoding APIs. [open-meteo.com](https://open-meteo.com/en/docs/geocoding-api?utm_source=chatgpt.com)[open-meteo.com](https://open-meteo.com/en/docs?utm_source=chatgpt.com)[open-meteo.com](https://open-meteo.com/?utm_source=chatgpt.com)
+
+* **Pygame** – SDL-based cross-platform game library. [github.com](https://github.com/pygame/pygame/issues/3687?utm_source=chatgpt.com)
+
+* **Geopy / Nominatim (OSM)** – geocoding fallback. [gis.stackexchange.com](https://gis.stackexchange.com/questions/293615/user-agent-argument-in-nominatim-in-geopy?utm_source=chatgpt.com)
+
+* **TimezoneFinder & pytz** – offline timezone look-ups. [pypi.org](https://pypi.org/project/timezonefinder/?utm_source=chatgpt.com)
+
+* **Raspberry Pi Foundation** for the Pi Zero 2 W hardware. [datasheets.raspberrypi.com](https://datasheets.raspberrypi.com/rpizero2/raspberry-pi-zero-2-w-product-brief.pdf?utm_source=chatgpt.com)
+
+---
+
+## **📄 License**
+
+This project is licensed under the MIT License (see `LICENSE`).
+
+
+
+Happy sky-gazing\! 🌌
+
+
+
