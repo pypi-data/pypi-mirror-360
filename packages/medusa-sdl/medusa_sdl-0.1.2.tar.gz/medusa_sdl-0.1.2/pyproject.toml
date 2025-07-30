@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=80.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "medusa-sdl"
+version = "0.1.2"
+description = "MEDUSA: Modular, Expandable Discovery and Understanding Synthesis Apparatus"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+
+authors = [
+  { name="Han Hao", email="hann.hao@utoronto.ca" },
+  { name="Felix Strieth-Kalthoff", email="f.striethkalthoff@utoronto.com" },
+  # Add any other authors
+]
+
+
+keywords = ["chemistry", "synthesis", "laboratory", "automation", "medusa", "scientific", "engineering"]
+
+requires-python = ">=3.10"
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    #"License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+urls = { Homepage = "https://gitlab.com/aspuru-guzik-group/self-driving-lab/instruments/themachine-pycontrol" }
+
+dependencies = [
+  "networkx",
+  "matplotlib",
+  "flask",
+  "pyserial",
+  "matterlab_serial_device",
+]
+
+[project.optional-dependencies]
+pumps     = ["matterlab_pumps"]
+valves    = ["matterlab_valves"]
+hotplates = ["matterlab_hotplates"]
+relays    = ["matterlab_relays"]
+shakers   = ["matterlab_shakers"]
+all       = ["matterlab_pumps", "matterlab_valves", "matterlab_hotplates", "matterlab_relays", "matterlab_shakers"]
+
+[project.entry-points."medusa.devices"]
+Vessel = "medusa.core.vessel:Vessel"
+
+[tool.setuptools]
+package-dir = {"" = "src", "examples" = "."}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"medusa.frontend" = ["static/**/*"] 
+"medusa.defaults" = ["*.json"]
+"examples" = ["*.py", "*.json"]

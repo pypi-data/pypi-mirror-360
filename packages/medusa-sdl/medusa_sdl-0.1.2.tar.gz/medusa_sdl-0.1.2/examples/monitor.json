@@ -1,0 +1,173 @@
+{
+  "nodes": [
+    {
+      "type": "TecanXCPump",
+      "name": "Pump",
+      "settings": {
+        "com_port": "COM4",
+        "address": 0,
+        "syringe_volume": 0.001,
+        "num_valve_port": 12,
+        "init_valve": 7,
+        "out_valve": 12
+      }
+    },
+    {
+      "type": "Vessel",
+      "name": "Gas Reservoir Vessel",
+      "settings": {
+        "max_volume": 1000000,
+        "current_volume": 1000000,
+        "addable": false,
+        "removable": true,
+        "content": ""
+      }
+    },
+    {
+      "type": "Vessel",
+      "name": "Waste Vessel",
+      "settings": {
+        "max_volume": 1000,
+        "current_volume": 0,
+        "addable": true,
+        "removable": false,
+        "content": ""
+      }
+    },
+    {
+      "type": "RunzeSelectionValve",
+      "name": "Valve",
+      "settings": {
+        "com_port": "COM3",
+        "address": 2,
+        "num_port": 10
+      }
+    },
+    {
+      "type": "Vessel",
+      "name": "Vial1",
+      "settings": {
+        "max_volume": 2,
+        "current_volume": 0,
+        "addable": true,
+        "removable": true,
+        "content": ""
+      }
+    },
+    {
+      "type": "Vessel",
+      "name": "Vial2",
+      "settings": {
+        "max_volume": 2,
+        "current_volume": 0,
+        "addable": true,
+        "removable": true,
+        "content": ""
+      }
+    },
+    {
+      "type": "Vessel",
+      "name": "Vial10",
+      "settings": {
+        "max_volume": 2,
+        "current_volume": 0,
+        "addable": true,
+        "removable": true,
+        "content": ""
+      }
+    },
+    {
+      "type": "Vessel",
+      "name": "ACN",
+      "settings": {
+        "max_volume": 1000,
+        "current_volume": 1000,
+        "addable": true,
+        "removable": true,
+        "content": ""
+      }
+    },
+    {
+      "type": "Vessel",
+      "name": "Reaction",
+      "settings": {
+        "max_volume": 8,
+        "current_volume": 0,
+        "addable": true,
+        "removable": true,
+        "content": ""
+      }
+    },
+    {
+      "type": "IKAHotplate",
+      "name": "Hotplate",
+      "settings": {
+        "com_port": "COM7",
+        "max_temp": 120,
+        "max_rpm": 1000
+      }
+    }
+  ],
+  "links": [
+    {
+      "type": "gas",
+      "source": "Pump",
+      "source_port": 7,
+      "target": "Gas Reservoir Vessel"
+    },
+    {
+      "type": "volumetric",
+      "source": "Pump",
+      "source_port": 12,
+      "target": "Waste Vessel"
+    },
+    {
+      "type": "volumetric",
+      "source": "Pump",
+      "source_port": 10,
+      "target": "Valve"
+    },
+    {
+      "type": "volumetric",
+      "source": "Valve",
+      "source_port": 1,
+      "target": "Vial1"
+    },
+    {
+      "type": "volumetric",
+      "source": "Valve",
+      "source_port": 2,
+      "target": "Vial2"
+    },
+    {
+      "type": "volumetric",
+      "source": "Valve",
+      "source_port": 10,
+      "target": "Vial10"
+    },
+    {
+      "type": "volumetric",
+      "source": "Pump",
+      "source_port": 6,
+      "target": "ACN"
+    },
+    {
+      "type": "volumetric",
+      "source": "Pump",
+      "source_port": 2,
+      "target": "Reaction"
+    },
+    {
+      "type": "gas",
+      "source": "Reaction",
+      "source_port": 0,
+      "target": "Gas Reservoir Vessel"
+    },
+    {
+      "type": "thermal",
+      "source": "Hotplate",
+      "source_port": 0,
+      "target": "Reaction"
+    }
+  ]
+}
