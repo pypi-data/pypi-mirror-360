@@ -1,0 +1,533 @@
+#ifndef GuardIntegrands_472696f050a50e3f5017ab5ecdab564bv1_3
+#define GuardIntegrands_472696f050a50e3f5017ab5ecdab564bv1_3
+#define USING_DUNE_PYTHON 1
+#include <config.h>
+#include <dune/alugrid/dgf.hh>
+#include <dune/alugrid/grid.hh>
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+#include <dune/fem/gridpart/filter/simple.hh>
+#include <dune/fem/gridpart/filteredgridpart.hh>
+#include <dune/fempy/py/gridview.hh>
+#include <dune/python/grid/gridview.hh>
+#include <dune/python/grid/hierarchical.hh>
+#include <cmath>
+#include <tuple>
+#include <dune/python/pybind11/pybind11.h>
+#include <dune/python/pybind11/extensions.h>
+#include <dune/fempy/py/grid/gridpart.hh>
+#include <dune/fempy/geometry/edgelength.hh>
+#include <dune/fempy/function/virtualizedgridfunction.hh>
+#include <dune/fempy/function/simplegridfunction.hh>
+#include <dune/fem/misc/gridfunctionview.hh>
+#include <dune/fempy/py/integrands.hh>
+
+namespace Integrands_472696f050a50e3f5017ab5ecdab564bv1_3
+{
+
+
+
+
+  // Integrands
+  // ----------
+
+  template< class GridPart, class Coeffbndproj, class Coeffextproj, class Coeffsdfprojfull, class Coeffphidomain, class CoeffsdfprojfullA >
+  struct Integrands
+  {
+    typedef GridPart GridPartType;
+    typedef typename GridPartType::GridViewType GridView;
+    typedef typename GridView::ctype ctype;
+    typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
+    typedef typename GridPartType::IntersectionType IntersectionType;
+    typedef typename EntityType::Geometry Geometry;
+    typedef typename Geometry::GlobalCoordinate GlobalCoordinateType;
+    typedef Dune::Fem::IntersectionSide Side;
+    typedef double Conepsilon;
+    typedef std::tuple< std::shared_ptr< Conepsilon > > ConstantTupleType;
+    template< std::size_t i >
+    using ConstantsRangeType = typename std::tuple_element_t< i, ConstantTupleType >::element_type;
+    typedef std::tuple< Dune::Fem::GridFunctionSpace< GridPartType, Dune::FieldVector< double, 2 > >, Dune::Fem::GridFunctionSpace< GridPartType, Dune::FieldVector< double, 2 > >, Dune::Fem::GridFunctionSpace< GridPartType, Dune::FieldVector< double, 1 > >, Dune::Fem::GridFunctionSpace< GridPartType, Dune::FieldVector< double, 1 > >, Dune::Fem::GridFunctionSpace< GridPartType, Dune::FieldVector< double, 1 > > > CoefficientFunctionSpaceTupleType;
+    typedef std::tuple< Coeffbndproj, Coeffextproj, Coeffsdfprojfull, Coeffphidomain, CoeffsdfprojfullA > CoefficientTupleType;
+    template< std::size_t i >
+    using CoefficientFunctionSpaceType = std::tuple_element_t< i, CoefficientFunctionSpaceTupleType >;
+    template< std::size_t i >
+    using CoefficientRangeType = typename CoefficientFunctionSpaceType< i >::RangeType;
+    template< std::size_t i >
+    using CoefficientJacobianRangeType = typename CoefficientFunctionSpaceType< i >::JacobianRangeType;
+    static constexpr bool gridPartValid = Dune::Fem::checkGridPartValid<GridPartType,Dune::Fem::ConstLocalFunction<Coeffbndproj>>() && Dune::Fem::checkGridPartValid<GridPartType,Dune::Fem::ConstLocalFunction<Coeffextproj>>() && Dune::Fem::checkGridPartValid<GridPartType,Dune::Fem::ConstLocalFunction<Coeffsdfprojfull>>() && Dune::Fem::checkGridPartValid<GridPartType,Dune::Fem::ConstLocalFunction<Coeffphidomain>>() && Dune::Fem::checkGridPartValid<GridPartType,Dune::Fem::ConstLocalFunction<CoeffsdfprojfullA>>();
+    template< std::size_t i >
+    using CoefficientType = std::tuple_element_t< i, CoefficientTupleType >;
+    template< std::size_t i >
+    using ConstantType = typename std::tuple_element_t< i, ConstantTupleType >::element_type;
+
+    Integrands ( const Coeffbndproj &coeffbndproj, const Coeffextproj &coeffextproj, const Coeffsdfprojfull &coeffsdfprojfull, const Coeffphidomain &coeffphidomain, const CoeffsdfprojfullA &coeffsdfprojfullA, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+      : coefficients_( Dune::Fem::ConstLocalFunction< Coeffbndproj >( coeffbndproj ), Dune::Fem::ConstLocalFunction< Coeffextproj >( coeffextproj ), Dune::Fem::ConstLocalFunction< Coeffsdfprojfull >( coeffsdfprojfull ), Dune::Fem::ConstLocalFunction< Coeffphidomain >( coeffphidomain ), Dune::Fem::ConstLocalFunction< CoeffsdfprojfullA >( coeffsdfprojfullA ) )
+    {
+      std::get< 0 >( constants_ ) = std::make_shared< Conepsilon >( (Conepsilon(0)) );
+    }
+
+    bool init ( const EntityType &entity )
+    {
+      entity_ = entity;
+      std::get< 0 >( coefficients_ ).bind( this->entity() );
+      std::get< 1 >( coefficients_ ).bind( this->entity() );
+      std::get< 2 >( coefficients_ ).bind( this->entity() );
+      std::get< 3 >( coefficients_ ).bind( this->entity() );
+      std::get< 4 >( coefficients_ ).bind( this->entity() );
+      return true;
+    }
+
+    void unbind ()
+    {
+      std::get< 0 >( coefficients_ ).unbind();
+      std::get< 1 >( coefficients_ ).unbind();
+      std::get< 2 >( coefficients_ ).unbind();
+      std::get< 3 >( coefficients_ ).unbind();
+      std::get< 4 >( coefficients_ ).unbind();
+    }
+
+    bool init ( const IntersectionType &intersection )
+    {
+      intersection_ = intersection;
+      return (intersection.boundary() && init( intersection.inside() ));
+    }
+    typedef std::tuple< Dune::FieldVector< double, 1 >, Dune::FieldMatrix< double, 1, 2 > > DomainValueType;
+    typedef std::tuple< Dune::FieldVector< double, 1 >, Dune::FieldMatrix< double, 1, 2 > > RangeValueType;
+    static constexpr bool _nonlinear = false;
+
+    bool nonlinear () const
+    {
+      return _nonlinear;
+    }
+
+    template< class Point >
+    RangeValueType interior ( const Point &x, const DomainValueType &u ) const
+    {
+      using std::pow;
+      using std::sin;
+      double tmp0 = constant< 0 >();
+      const auto tmp1 = std::pow( tmp0, 2 );
+      typename CoefficientFunctionSpaceType< 3 >::RangeType tmp2 = evaluateCoefficient< 3 >( x );
+      const auto tmp3 = -1 * tmp2[ 0 ];
+      const auto tmp4 = 1 + tmp3;
+      const auto tmp5 = std::pow( tmp4, 2 );
+      typename CoefficientFunctionSpaceType< 4 >::RangeType tmp6 = evaluateCoefficient< 4 >( x );
+      const auto tmp7 = 1e-10 + tmp6[ 0 ];
+      typename CoefficientFunctionSpaceType< 0 >::RangeType tmp8 = evaluateCoefficient< 0 >( x );
+      const auto tmp9 = 3.141592653589793 * tmp8[ 1 ];
+      const auto tmp10 = std::sin( tmp9 );
+      const auto tmp11 = 3.141592653589793 * tmp8[ 0 ];
+      const auto tmp12 = std::sin( tmp11 );
+      const auto tmp13 = tmp12 * tmp10;
+      const auto tmp14 = -1 * tmp13;
+      const auto tmp15 = std::get< 0 >( u );
+      const auto tmp16 = tmp15[ 0 ] + tmp14;
+      const auto tmp17 = tmp6[ 0 ] * tmp16;
+      const auto tmp18 = tmp17 / tmp7;
+      const auto tmp19 = tmp18 * tmp5;
+      const auto tmp20 = tmp19 / tmp1;
+      const auto tmp21 = -1 * tmp20;
+      const auto tmp22 = 3 * tmp21;
+      typename CoefficientFunctionSpaceType< 1 >::RangeType tmp23 = evaluateCoefficient< 1 >( x );
+      const auto tmp24 = -1 * tmp23[ 0 ];
+      const auto tmp25 = 3 * tmp24;
+      const auto tmp26 = -1 * tmp18;
+      const auto tmp27 = 2 * tmp15[ 0 ];
+      const auto tmp28 = tmp27 + tmp26;
+      const auto tmp29 = tmp28 * tmp25;
+      const auto tmp30 = tmp2[ 0 ] * tmp29;
+      typename CoefficientFunctionSpaceType< 3 >::JacobianRangeType tmp31 = jacobianCoefficient< 3 >( x );
+      const auto tmp32 = (tmp31[ 0 ])[ 1 ] * tmp30;
+      const auto tmp33 = 3 * tmp23[ 1 ];
+      const auto tmp34 = tmp28 * tmp33;
+      const auto tmp35 = tmp2[ 0 ] * tmp34;
+      const auto tmp36 = (tmp31[ 0 ])[ 0 ] * tmp35;
+      const auto tmp37 = tmp36 + tmp32;
+      const auto tmp38 = tmp37 + tmp22;
+      const auto tmp39 = -1 * tmp38;
+      const auto tmp40 = (tmp31[ 0 ])[ 1 ] * tmp18;
+      const auto tmp41 = tmp23[ 1 ] * tmp23[ 1 ];
+      const auto tmp42 = tmp23[ 0 ] * tmp23[ 0 ];
+      const auto tmp43 = tmp42 + tmp41;
+      const auto tmp44 = 0.05 * tmp43;
+      const auto tmp45 = -1 * tmp44;
+      const auto tmp46 = 0.1 + tmp45;
+      const auto tmp47 = tmp46 * tmp40;
+      const auto tmp48 = (tmp31[ 0 ])[ 1 ] * tmp47;
+      const auto tmp49 = (tmp31[ 0 ])[ 0 ] * tmp18;
+      const auto tmp50 = tmp46 * tmp49;
+      const auto tmp51 = (tmp31[ 0 ])[ 0 ] * tmp50;
+      const auto tmp52 = tmp51 + tmp48;
+      const auto tmp53 = tmp52 / 4;
+      const auto tmp54 = tmp40 / tmp2[ 0 ];
+      const auto tmp55 = std::get< 1 >( u );
+      const auto tmp56 = (tmp55[ 0 ])[ 1 ] + tmp54;
+      const auto tmp57 = tmp46 * tmp56;
+      const auto tmp58 = 2 * tmp2[ 0 ];
+      const auto tmp59 = tmp58 * tmp57;
+      const auto tmp60 = (tmp31[ 0 ])[ 1 ] * tmp59;
+      const auto tmp61 = tmp49 / tmp2[ 0 ];
+      const auto tmp62 = (tmp55[ 0 ])[ 0 ] + tmp61;
+      const auto tmp63 = tmp46 * tmp62;
+      const auto tmp64 = tmp58 * tmp63;
+      const auto tmp65 = (tmp31[ 0 ])[ 0 ] * tmp64;
+      const auto tmp66 = tmp65 + tmp60;
+      const auto tmp67 = tmp66 + tmp53;
+      const auto tmp68 = -1 * tmp67;
+      const auto tmp69 = std::pow( tmp2[ 0 ], 2 );
+      const auto tmp70 = 0.01 * tmp15[ 0 ];
+      const auto tmp71 = -1 * tmp70;
+      const auto tmp72 = -1 * tmp43;
+      const auto tmp73 = 1 + tmp72;
+      const auto tmp74 = 0.1 * tmp73;
+      const auto tmp75 = tmp74 + tmp71;
+      const auto tmp76 = tmp75 * tmp69;
+      const auto tmp77 = 0.1 * tmp21;
+      const auto tmp78 = tmp77 + tmp76;
+      const auto tmp79 = tmp78 + tmp68;
+      const auto tmp80 = -1 * tmp79;
+      const auto tmp81 = tmp80 + tmp39;
+      const auto tmp82 = tmp63 * tmp69;
+      const auto tmp83 = tmp15[ 0 ] * tmp33;
+      const auto tmp84 = tmp83 * tmp69;
+      const auto tmp85 = -1 * tmp84;
+      const auto tmp86 = tmp85 + tmp82;
+      const auto tmp87 = tmp57 * tmp69;
+      const auto tmp88 = tmp15[ 0 ] * tmp25;
+      const auto tmp89 = tmp88 * tmp69;
+      const auto tmp90 = -1 * tmp89;
+      const auto tmp91 = tmp90 + tmp87;
+      return RangeValueType{ { tmp81 }, { { tmp86, tmp91 } } };
+    }
+
+    template< class Point >
+    auto linearizedInterior ( const Point &x, const DomainValueType &u ) const
+    {
+      using std::pow;
+      double tmp0 = constant< 0 >();
+      const auto tmp1 = std::pow( tmp0, 2 );
+      typename CoefficientFunctionSpaceType< 3 >::RangeType tmp2 = evaluateCoefficient< 3 >( x );
+      const auto tmp3 = -1 * tmp2[ 0 ];
+      const auto tmp4 = 1 + tmp3;
+      const auto tmp5 = std::pow( tmp4, 2 );
+      typename CoefficientFunctionSpaceType< 4 >::RangeType tmp6 = evaluateCoefficient< 4 >( x );
+      const auto tmp7 = 1e-10 + tmp6[ 0 ];
+      const auto tmp8 = tmp6[ 0 ] / tmp7;
+      const auto tmp9 = tmp8 * tmp5;
+      const auto tmp10 = tmp9 / tmp1;
+      const auto tmp11 = -1 * tmp10;
+      const auto tmp12 = 3 * tmp11;
+      typename CoefficientFunctionSpaceType< 1 >::RangeType tmp13 = evaluateCoefficient< 1 >( x );
+      const auto tmp14 = -1 * tmp13[ 0 ];
+      const auto tmp15 = 3 * tmp14;
+      const auto tmp16 = -1 * tmp8;
+      const auto tmp17 = 2 + tmp16;
+      const auto tmp18 = tmp17 * tmp15;
+      const auto tmp19 = tmp2[ 0 ] * tmp18;
+      typename CoefficientFunctionSpaceType< 3 >::JacobianRangeType tmp20 = jacobianCoefficient< 3 >( x );
+      const auto tmp21 = (tmp20[ 0 ])[ 1 ] * tmp19;
+      const auto tmp22 = 3 * tmp13[ 1 ];
+      const auto tmp23 = tmp17 * tmp22;
+      const auto tmp24 = tmp2[ 0 ] * tmp23;
+      const auto tmp25 = (tmp20[ 0 ])[ 0 ] * tmp24;
+      const auto tmp26 = tmp25 + tmp21;
+      const auto tmp27 = tmp26 + tmp12;
+      const auto tmp28 = -1 * tmp27;
+      const auto tmp29 = (tmp20[ 0 ])[ 1 ] * tmp8;
+      const auto tmp30 = tmp13[ 1 ] * tmp13[ 1 ];
+      const auto tmp31 = tmp13[ 0 ] * tmp13[ 0 ];
+      const auto tmp32 = tmp31 + tmp30;
+      const auto tmp33 = 0.05 * tmp32;
+      const auto tmp34 = -1 * tmp33;
+      const auto tmp35 = 0.1 + tmp34;
+      const auto tmp36 = tmp35 * tmp29;
+      const auto tmp37 = (tmp20[ 0 ])[ 1 ] * tmp36;
+      const auto tmp38 = (tmp20[ 0 ])[ 0 ] * tmp8;
+      const auto tmp39 = tmp35 * tmp38;
+      const auto tmp40 = (tmp20[ 0 ])[ 0 ] * tmp39;
+      const auto tmp41 = tmp40 + tmp37;
+      const auto tmp42 = tmp41 / 4;
+      const auto tmp43 = tmp29 / tmp2[ 0 ];
+      const auto tmp44 = tmp35 * tmp43;
+      const auto tmp45 = 2 * tmp2[ 0 ];
+      const auto tmp46 = tmp45 * tmp44;
+      const auto tmp47 = (tmp20[ 0 ])[ 1 ] * tmp46;
+      const auto tmp48 = tmp38 / tmp2[ 0 ];
+      const auto tmp49 = tmp35 * tmp48;
+      const auto tmp50 = tmp45 * tmp49;
+      const auto tmp51 = (tmp20[ 0 ])[ 0 ] * tmp50;
+      const auto tmp52 = tmp51 + tmp47;
+      const auto tmp53 = tmp52 + tmp42;
+      const auto tmp54 = -1 * tmp53;
+      const auto tmp55 = std::pow( tmp2[ 0 ], 2 );
+      const auto tmp56 = -0.01 * tmp55;
+      const auto tmp57 = 0.1 * tmp11;
+      const auto tmp58 = tmp57 + tmp56;
+      const auto tmp59 = tmp58 + tmp54;
+      const auto tmp60 = -1 * tmp59;
+      const auto tmp61 = tmp60 + tmp28;
+      const auto tmp62 = tmp35 * tmp45;
+      const auto tmp63 = (tmp20[ 0 ])[ 0 ] * tmp62;
+      const auto tmp64 = -1 * tmp63;
+      const auto tmp65 = -1 * tmp64;
+      const auto tmp66 = (tmp20[ 0 ])[ 1 ] * tmp62;
+      const auto tmp67 = -1 * tmp66;
+      const auto tmp68 = -1 * tmp67;
+      const auto tmp69 = tmp49 * tmp55;
+      const auto tmp70 = tmp22 * tmp55;
+      const auto tmp71 = -1 * tmp70;
+      const auto tmp72 = tmp71 + tmp69;
+      const auto tmp73 = tmp44 * tmp55;
+      const auto tmp74 = tmp15 * tmp55;
+      const auto tmp75 = -1 * tmp74;
+      const auto tmp76 = tmp75 + tmp73;
+      const auto tmp77 = tmp35 * tmp55;
+      return [ tmp61, tmp65, tmp68, tmp72, tmp76, tmp77 ] ( const DomainValueType &phi ) {
+          return RangeValueType{ { (tmp61 * (std::get< 0 >( phi ))[ 0 ] + tmp65 * ((std::get< 1 >( phi ))[ 0 ])[ 0 ]) + tmp68 * ((std::get< 1 >( phi ))[ 0 ])[ 1 ] }, { { tmp72 * (std::get< 0 >( phi ))[ 0 ] + tmp77 * ((std::get< 1 >( phi ))[ 0 ])[ 0 ], tmp76 * (std::get< 0 >( phi ))[ 0 ] + tmp77 * ((std::get< 1 >( phi ))[ 0 ])[ 1 ] } } };
+        };
+    }
+    typedef Dune::FieldVector< double, 1 >  RRangeType;
+    typedef Dune::FieldMatrix< double, 1, GridPartType::dimension >  RJacobianRangeType;
+    typedef Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType > BoundaryIdProviderType;
+    typedef std::array<int,1> DirichletComponentType;
+
+    bool hasDirichletBoundary () const
+    {
+      return true;
+    }
+
+    bool isDirichletIntersection ( const IntersectionType &intersection, DirichletComponentType &dirichletComponent ) const
+    {
+      const int bndId = BoundaryIdProviderType::boundaryId( intersection );
+      {
+        std::fill( dirichletComponent.begin(), dirichletComponent.end(), bndId );
+      }
+      switch( bndId )
+      {
+      default:
+        {
+          int domainId;
+          {
+              using std::max;
+              using std::min;
+              using std::sqrt;
+              auto tmp0 = intersection.geometry().center( );
+              const auto tmp1 = tmp0[ 1 ] * tmp0[ 1 ];
+              const auto tmp2 = tmp0[ 0 ] * tmp0[ 0 ];
+              const auto tmp3 = tmp2 + tmp1;
+              const auto tmp4 = 1e-10 + tmp3;
+              const auto tmp5 = std::sqrt( tmp4 );
+              const auto tmp6 = -1.4 + tmp5;
+              const auto tmp7 = 1 + tmp0[ 0 ];
+              const auto tmp8 = tmp7 * tmp7;
+              const auto tmp9 = tmp1 + tmp8;
+              const auto tmp10 = 1e-10 + tmp9;
+              const auto tmp11 = std::sqrt( tmp10 );
+              const auto tmp12 = -0.5 + tmp11;
+              const auto tmp13 = -1 + tmp0[ 0 ];
+              const auto tmp14 = tmp13 * tmp13;
+              const auto tmp15 = tmp1 + tmp14;
+              const auto tmp16 = 1e-10 + tmp15;
+              const auto tmp17 = std::sqrt( tmp16 );
+              const auto tmp18 = -0.5 + tmp17;
+              const auto tmp19 = 0.8 + tmp0[ 1 ];
+              const auto tmp20 = tmp19 * tmp19;
+              const auto tmp21 = tmp2 + tmp20;
+              const auto tmp22 = 1e-10 + tmp21;
+              const auto tmp23 = std::sqrt( tmp22 );
+              const auto tmp24 = -0.5 + tmp23;
+              const auto tmp25 = -1 * tmp24;
+              const auto tmp26 = -0.8 + tmp0[ 1 ];
+              const auto tmp27 = tmp26 * tmp26;
+              const auto tmp28 = tmp2 + tmp27;
+              const auto tmp29 = 1e-10 + tmp28;
+              const auto tmp30 = std::sqrt( tmp29 );
+              const auto tmp31 = -0.5 + tmp30;
+              const auto tmp32 = -1 * tmp31;
+              const auto tmp33 = -1 + tmp5;
+              const auto tmp34 = std::max( tmp33, tmp32 );
+              const auto tmp35 = std::max( tmp34, tmp25 );
+              const auto tmp36 = std::min( tmp35, tmp18 );
+              const auto tmp37 = std::min( tmp36, tmp12 );
+              const auto tmp38 = std::max( tmp37, tmp6 );
+              domainId = (tmp38 <= 0.0 ? 1 : 0.0) < 0.5;
+              if (domainId)
+              {
+                std::fill( dirichletComponent.begin(), dirichletComponent.end(), 2 );
+                return true;
+              }
+          }
+          return false;
+        }
+      }
+    }
+
+    template< class Point >
+    void dirichlet ( int bndId, const Point &x, RRangeType &result ) const
+    {
+      switch( bndId )
+      {
+      case 2:
+        {
+          using std::sin;
+          typename CoefficientFunctionSpaceType< 2 >::RangeType tmp0 = evaluateCoefficient< 2 >( x );
+          const auto tmp1 = 1e-10 + tmp0[ 0 ];
+          typename CoefficientFunctionSpaceType< 0 >::RangeType tmp2 = evaluateCoefficient< 0 >( x );
+          const auto tmp3 = 3.141592653589793 * tmp2[ 1 ];
+          const auto tmp4 = std::sin( tmp3 );
+          const auto tmp5 = 3.141592653589793 * tmp2[ 0 ];
+          const auto tmp6 = std::sin( tmp5 );
+          const auto tmp7 = tmp6 * tmp4;
+          const auto tmp8 = -1 * tmp7;
+          const auto tmp9 = tmp0[ 0 ] * tmp8;
+          const auto tmp10 = tmp9 / tmp1;
+          const auto tmp11 = -1 * tmp10;
+          result[ 0 ] = tmp11;
+        }
+        break;
+      default:
+        {
+          result = RRangeType( 0 );
+        }
+      }
+    }
+
+    template< class Point >
+    void dDirichlet ( int bndId, const Point &x, RJacobianRangeType &result ) const
+    {
+      switch( bndId )
+      {
+      case 2:
+        {
+          using std::cos;
+          using std::sin;
+          typename CoefficientFunctionSpaceType< 2 >::RangeType tmp0 = evaluateCoefficient< 2 >( x );
+          const auto tmp1 = 1e-10 + tmp0[ 0 ];
+          typename CoefficientFunctionSpaceType< 0 >::RangeType tmp2 = evaluateCoefficient< 0 >( x );
+          const auto tmp3 = 3.141592653589793 * tmp2[ 1 ];
+          const auto tmp4 = std::sin( tmp3 );
+          const auto tmp5 = 3.141592653589793 * tmp2[ 0 ];
+          const auto tmp6 = std::sin( tmp5 );
+          const auto tmp7 = tmp6 * tmp4;
+          const auto tmp8 = -1 * tmp7;
+          const auto tmp9 = tmp0[ 0 ] * tmp8;
+          const auto tmp10 = tmp9 / tmp1;
+          typename CoefficientFunctionSpaceType< 2 >::JacobianRangeType tmp11 = jacobianCoefficient< 2 >( x );
+          const auto tmp12 = (tmp11[ 0 ])[ 0 ] * tmp10;
+          const auto tmp13 = -1 * tmp12;
+          const auto tmp14 = (tmp11[ 0 ])[ 0 ] * tmp8;
+          const auto tmp15 = std::cos( tmp5 );
+          typename CoefficientFunctionSpaceType< 0 >::JacobianRangeType tmp16 = jacobianCoefficient< 0 >( x );
+          const auto tmp17 = 3.141592653589793 * (tmp16[ 0 ])[ 0 ];
+          const auto tmp18 = tmp17 * tmp15;
+          const auto tmp19 = tmp18 * tmp4;
+          const auto tmp20 = std::cos( tmp3 );
+          const auto tmp21 = 3.141592653589793 * (tmp16[ 1 ])[ 0 ];
+          const auto tmp22 = tmp21 * tmp20;
+          const auto tmp23 = tmp22 * tmp6;
+          const auto tmp24 = tmp23 + tmp19;
+          const auto tmp25 = -1 * tmp24;
+          const auto tmp26 = tmp0[ 0 ] * tmp25;
+          const auto tmp27 = tmp26 + tmp14;
+          const auto tmp28 = tmp27 + tmp13;
+          const auto tmp29 = tmp28 / tmp1;
+          const auto tmp30 = -1 * tmp29;
+          const auto tmp31 = (tmp11[ 0 ])[ 1 ] * tmp10;
+          const auto tmp32 = -1 * tmp31;
+          const auto tmp33 = (tmp11[ 0 ])[ 1 ] * tmp8;
+          const auto tmp34 = 3.141592653589793 * (tmp16[ 0 ])[ 1 ];
+          const auto tmp35 = tmp34 * tmp15;
+          const auto tmp36 = tmp35 * tmp4;
+          const auto tmp37 = 3.141592653589793 * (tmp16[ 1 ])[ 1 ];
+          const auto tmp38 = tmp37 * tmp20;
+          const auto tmp39 = tmp38 * tmp6;
+          const auto tmp40 = tmp39 + tmp36;
+          const auto tmp41 = -1 * tmp40;
+          const auto tmp42 = tmp0[ 0 ] * tmp41;
+          const auto tmp43 = tmp42 + tmp33;
+          const auto tmp44 = tmp43 + tmp32;
+          const auto tmp45 = tmp44 / tmp1;
+          const auto tmp46 = -1 * tmp45;
+          (result[ 0 ])[ 0 ] = tmp30;
+          (result[ 0 ])[ 1 ] = tmp46;
+        }
+        break;
+      default:
+        {
+          result = RJacobianRangeType( 0 );
+        }
+      }
+    }
+
+    template< std::size_t i >
+    const ConstantType< i > &constant () const
+    {
+      return *std::get< i >( constants_ );
+    }
+
+    template< std::size_t i >
+    ConstantType< i > &constant ()
+    {
+      return *std::get< i >( constants_ );
+    }
+
+    const Conepsilon &conepsilon () const
+    {
+      return *std::get< 0 >( constants_ );
+    }
+
+    Conepsilon &conepsilon ()
+    {
+      return *std::get< 0 >( constants_ );
+    }
+
+    const EntityType &entity () const
+    {
+      return entity_;
+    }
+
+    template< std::size_t i, class Point >
+    typename CoefficientFunctionSpaceType< i >::RangeType evaluateCoefficient ( const Point &x ) const
+    {
+      typename CoefficientFunctionSpaceType< i >::RangeType result;
+      std::get< i >( coefficients_ ).evaluate( x, result );;
+      return result;
+    }
+
+    template< std::size_t i, class Point >
+    typename CoefficientFunctionSpaceType< i >::JacobianRangeType jacobianCoefficient ( const Point &x ) const
+    {
+      typename CoefficientFunctionSpaceType< i >::JacobianRangeType result;
+      std::get< i >( coefficients_ ).jacobian( x, result );;
+      return result;
+    }
+
+    template< std::size_t i, class Point >
+    typename CoefficientFunctionSpaceType< i >::HessianRangeType hessianCoefficient ( const Point &x ) const
+    {
+      typename CoefficientFunctionSpaceType< i >::HessianRangeType result;
+      std::get< i >( coefficients_ ).hessian( x, result );;
+      return result;
+    }
+    EntityType entity_;
+    IntersectionType intersection_;
+    ConstantTupleType constants_;
+    std::tuple< Dune::Fem::ConstLocalFunction< Coeffbndproj >, Dune::Fem::ConstLocalFunction< Coeffextproj >, Dune::Fem::ConstLocalFunction< Coeffsdfprojfull >, Dune::Fem::ConstLocalFunction< Coeffphidomain >, Dune::Fem::ConstLocalFunction< CoeffsdfprojfullA > > coefficients_;
+  };
+
+} // namespace Integrands_472696f050a50e3f5017ab5ecdab564bv1_3
+
+PYBIND11_MODULE( integrands_472696f050a50e3f5017ab5ecdab564bv1_3_a524c1196983e65de1c06d7d6afdeb44, module )
+{
+  typedef typename Dune::FemPy::GridPart< Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true > > GridPart;
+  typedef Integrands_472696f050a50e3f5017ab5ecdab564bv1_3::Integrands< GridPart, Dune::FemPy::VirtualizedGridFunction< Dune::FemPy::GridPart<Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true >>, Dune::FieldVector< double, 2 > >, Dune::FemPy::VirtualizedGridFunction< Dune::FemPy::GridPart<Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true >>, Dune::FieldVector< double, 2 > >, Dune::FemPy::VirtualizedGridFunction< Dune::FemPy::GridPart<Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true >>, Dune::FieldVector< double, 1 > >, Dune::FemPy::VirtualizedGridFunction< Dune::FemPy::GridPart<Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true >>, Dune::FieldVector< double, 1 > >, Dune::FemPy::VirtualizedGridFunction< Dune::FemPy::GridPart<Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true >>, Dune::FieldVector< double, 1 > > > Integrands;
+  if constexpr( Integrands::gridPartValid )
+  {
+      auto cls = Dune::Python::insertClass<Integrands>(module,"Integrands",Dune::Python::GenerateTypeName("Integrands_472696f050a50e3f5017ab5ecdab564bv1_3::Integrands< GridPart, Dune::FemPy::VirtualizedGridFunction< Dune::FemPy::GridPart<Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true >>, Dune::FieldVector< double, 2 > >, Dune::FemPy::VirtualizedGridFunction< Dune::FemPy::GridPart<Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true >>, Dune::FieldVector< double, 2 > >, Dune::FemPy::VirtualizedGridFunction< Dune::FemPy::GridPart<Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true >>, Dune::FieldVector< double, 1 > >, Dune::FemPy::VirtualizedGridFunction< Dune::FemPy::GridPart<Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true >>, Dune::FieldVector< double, 1 > >, Dune::FemPy::VirtualizedGridFunction< Dune::FemPy::GridPart<Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true >>, Dune::FieldVector< double, 1 > > >"), Dune::Python::IncludeFiles({"python/dune/generated/integrands_472696f050a50e3f5017ab5ecdab564bv1_3_a524c1196983e65de1c06d7d6afdeb44.cc"})).first;
+      Dune::FemPy::registerIntegrands< Integrands >( module, cls );
+      cls.def( pybind11::init( [] ( const Dune::FemPy::VirtualizedGridFunction< Dune::FemPy::GridPart<Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true >>, Dune::FieldVector< double, 2 > > &coeffbndproj, const Dune::FemPy::VirtualizedGridFunction< Dune::FemPy::GridPart<Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true >>, Dune::FieldVector< double, 2 > > &coeffextproj, const Dune::FemPy::VirtualizedGridFunction< Dune::FemPy::GridPart<Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true >>, Dune::FieldVector< double, 1 > > &coeffsdfprojfull, const Dune::FemPy::VirtualizedGridFunction< Dune::FemPy::GridPart<Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true >>, Dune::FieldVector< double, 1 > > &coeffphidomain, const Dune::FemPy::VirtualizedGridFunction< Dune::FemPy::GridPart<Dune::Fem::FilteredGridPart< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > >, Dune::Fem::SimpleFilter< Dune::FemPy::GridPart< Dune::Fem::AdaptiveLeafGridPart< Dune::ALUGrid< 2, 2, Dune::simplex > > > >, true >>, Dune::FieldVector< double, 1 > > &coeffsdfprojfullA ) { return new Integrands( coeffbndproj, coeffextproj, coeffsdfprojfull, coeffphidomain, coeffsdfprojfullA ); } ), pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 4 >(), pybind11::keep_alive< 1, 5 >(), pybind11::keep_alive< 1, 6 >() );
+      cls.def_property( "epsilon", [] ( Integrands &self ) -> Integrands::Conepsilon { return self.conepsilon(); }, [] ( Integrands &self, const Integrands::Conepsilon &v ) { self.conepsilon() = v; } );
+      cls.def_property_readonly( "virtualized", [] ( Integrands& ) -> bool { return true;});
+      cls.def_property_readonly( "hasDirichletBoundary", [] ( Integrands& ) -> bool { return true;});
+  }
+}
+#endif // GuardIntegrands_472696f050a50e3f5017ab5ecdab564bv1_3
