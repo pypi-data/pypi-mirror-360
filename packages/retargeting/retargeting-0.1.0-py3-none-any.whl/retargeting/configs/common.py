@@ -1,0 +1,157 @@
+from retargeting.typing import HandType, RobotType
+
+HAND_JOINT_GROUPS = {
+    HandType.FOURIER_6DOF: [
+        "pinky_proximal_joint",
+        "ring_proximal_joint",
+        "middle_proximal_joint",
+        "index_proximal_joint",
+        "thumb_proximal_pitch_joint",
+        "thumb_proximal_yaw_joint",
+    ],
+    HandType.FOURIER_12DOF: [
+        "index_intermediate_joint",
+        "index_proximal_joint",
+        "index_metacarpal_joint",
+        "middle_intermediate_joint",
+        "middle_proximal_joint",
+        "ring_intermediate_joint",
+        "ring_proximal_joint",
+        "pinky_intermediate_joint",
+        "pinky_proximal_joint",
+        "thumb_distal_joint",
+        "thumb_proximal_pitch_joint",
+        "thumb_proximal_yaw_joint",
+    ],
+    HandType.INSPIRE: [
+        "pinky_proximal_joint",
+        "ring_proximal_joint",
+        "middle_proximal_joint",
+        "index_proximal_joint",
+        "thumb_proximal_pitch_joint",
+        "thumb_proximal_yaw_joint",
+    ],
+}
+
+ROBOT_JOINT_GROUPS = {
+    RobotType.GR1T1: {
+        "left_leg": [
+            "left_hip_roll_joint",
+            "left_hip_yaw_joint",
+            "left_hip_pitch_joint",
+            "left_knee_pitch_joint",
+            "left_ankle_pitch_joint",
+            "left_ankle_roll_joint",
+        ],
+        "right_leg": [
+            "right_hip_roll_joint",
+            "right_hip_yaw_joint",
+            "right_hip_pitch_joint",
+            "right_knee_pitch_joint",
+            "right_ankle_pitch_joint",
+            "right_ankle_roll_joint",
+        ],
+        "waist": ["waist_yaw_joint", "waist_pitch_joint", "waist_roll_joint"],
+        "head": ["head_yaw_joint", "head_roll_joint", "head_pitch_joint"],
+        "left_arm": [
+            "left_shoulder_pitch_joint",
+            "left_shoulder_roll_joint",
+            "left_shoulder_yaw_joint",
+            "left_elbow_pitch_joint",
+            "left_wrist_yaw_joint",
+            "left_wrist_roll_joint",
+            "left_wrist_pitch_joint",
+        ],
+        "right_arm": [
+            "right_shoulder_pitch_joint",
+            "right_shoulder_roll_joint",
+            "right_shoulder_yaw_joint",
+            "right_elbow_pitch_joint",
+            "right_wrist_yaw_joint",
+            "right_wrist_roll_joint",
+            "right_wrist_pitch_joint",
+        ],
+    },
+    RobotType.GR1T2: {
+        "left_leg": [
+            "left_hip_roll_joint",
+            "left_hip_yaw_joint",
+            "left_hip_pitch_joint",
+            "left_knee_pitch_joint",
+            "left_ankle_pitch_joint",
+            "left_ankle_roll_joint",
+        ],
+        "right_leg": [
+            "right_hip_roll_joint",
+            "right_hip_yaw_joint",
+            "right_hip_pitch_joint",
+            "right_knee_pitch_joint",
+            "right_ankle_pitch_joint",
+            "right_ankle_roll_joint",
+        ],
+        "waist": ["waist_yaw_joint", "waist_pitch_joint", "waist_roll_joint"],
+        "head": ["head_pitch_joint", "head_roll_joint", "head_yaw_joint"],
+        "left_arm": [
+            "left_shoulder_pitch_joint",
+            "left_shoulder_roll_joint",
+            "left_shoulder_yaw_joint",
+            "left_elbow_pitch_joint",
+            "left_wrist_yaw_joint",
+            "left_wrist_roll_joint",
+            "left_wrist_pitch_joint",
+        ],
+        "right_arm": [
+            "right_shoulder_pitch_joint",
+            "right_shoulder_roll_joint",
+            "right_shoulder_yaw_joint",
+            "right_elbow_pitch_joint",
+            "right_wrist_yaw_joint",
+            "right_wrist_roll_joint",
+            "right_wrist_pitch_joint",
+        ],
+    },
+    RobotType.GR2T2: {
+        "left_leg": [
+            "left_hip_pitch_joint",
+            "left_hip_roll_joint",
+            "left_hip_yaw_joint",
+            "left_knee_pitch_joint",
+            "left_ankle_roll_joint",
+            "left_ankle_pitch_joint",
+        ],
+        "right_leg": [
+            "right_hip_pitch_joint",
+            "right_hip_roll_joint",
+            "right_hip_yaw_joint",
+            "right_knee_pitch_joint",
+            "right_ankle_roll_joint",
+            "right_ankle_pitch_joint",
+        ],
+        "waist": ["waist_yaw_joint"],
+        "head": ["head_yaw_joint", "head_pitch_joint"],
+        "left_arm": [
+            "left_shoulder_pitch_joint",
+            "left_shoulder_roll_joint",
+            "left_shoulder_yaw_joint",
+            "left_elbow_pitch_joint",
+            "left_wrist_yaw_joint",
+            "left_wrist_pitch_joint",
+            "left_wrist_roll_joint",
+        ],
+        "right_arm": [
+            "right_shoulder_pitch_joint",
+            "right_shoulder_roll_joint",
+            "right_shoulder_yaw_joint",
+            "right_elbow_pitch_joint",
+            "right_wrist_yaw_joint",
+            "right_wrist_pitch_joint",
+            "right_wrist_roll_joint",
+        ],
+    },
+}
+
+ROBOT_JOINT_GROUPS.update(
+    {
+        RobotType.GR2T2D: ROBOT_JOINT_GROUPS[RobotType.GR2T2],
+    }
+)
