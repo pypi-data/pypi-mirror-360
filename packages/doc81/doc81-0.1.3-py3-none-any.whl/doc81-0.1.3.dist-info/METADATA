@@ -1,0 +1,141 @@
+Metadata-Version: 2.4
+Name: doc81
+Version: 0.1.3
+Summary: A tool to help you write better documentation
+License-File: LICENSE
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Documentation
+Classifier: Topic :: Documentation :: Sphinx
+Classifier: Topic :: Software Development :: Documentation
+Requires-Python: >=3.10
+Requires-Dist: fastapi>=0.115.14
+Requires-Dist: fastmcp>=2.9.2
+Requires-Dist: litellm>=1.73.6
+Requires-Dist: mistune>=3.1.3
+Requires-Dist: psycopg2-binary>=2.9.10
+Requires-Dist: pydantic-settings>=2.10.1
+Requires-Dist: pydantic>=2.11.7
+Requires-Dist: python-frontmatter>=1.1.0
+Requires-Dist: sqlalchemy>=2.0.41
+Requires-Dist: typer>=0.16.0
+Description-Content-Type: text/markdown
+
+# Doc81 🚀
+
+Doc81 is a developer document template platform that helps you create, manage, and use document templates proven by many experts. It provides both a local mode for working with templates on your filesystem and a server mode for accessing templates out there.
+
+## Features
+
+- Your Document -> Scalable Document Template in 2s
+- Find appropriate document templates on demand
+- MCP (Model Control Protocol) integration for AI assistant compatibility
+- API server for general usage
+
+## Installation
+
+### Prerequisites
+
+- Python 3.10+
+- pip or pipenv
+
+### Quick Start
+
+#### MCP (recommended)
+##### Cursor (default)
+1. setup MCP
+
+```
+> uvx --with doc81 doc81-mcp-cli setup
+```
+
+This command add .cursor/rules/doc81.mdc.
+This prompt will guide cursor how to ask and do the work for you.
+
+2. add MCP
+```json
+// mcp.json`
+{
+    "mcpServers": {
+        "doc81": {
+            "command": "uvx",
+            "args": [
+                "--from",
+                "doc81",
+                "doc81-mcp"
+            ],
+            "env": {
+                "DOC81_PROMPT_DIR": "<your local prompt directory>"
+            }
+        },
+    }
+}
+```
+
+See [Configuration](#configuration) for details.
+
+3. Use the cursorrule to generate document based on the template.
+
+```
+// cursor ask/agent
+> Help me write a runbook in @your-new-doc.md
+
+cursor: List template (function call)
+cursor: Get template (function call)
+
+Let me copy the runbook template to your-new-doc.md. ...
+```
+
+## Usage
+
+### Creating Templates
+
+Templates are markdown files with frontmatter metadata. Create a template file with the following structure:
+
+```markdown
+---
+name: Template Name
+description: Template description
+tags: [tag1, tag2]
+---
+# Your Template Content
+
+Content goes here...
+```
+
+#### MCP API
+
+Doc81 integrates with MCP for AI assistant compatibility:
+
+- `list_templates` - Lists all available templates
+- `get_template(path_or_ref)` - Gets a specific template by path or reference
+
+## Configuration
+
+Doc81 can be configured using environment variables:
+
+- `DOC81_ENV` - Environment (dev/prod, default: dev)
+- `DOC81_MODE` - Mode (local/server, default: local)
+- `DOC81_PROMPT_DIR` - Directory containing templates (default: project's prompts directory)
+
+## Development
+
+### Testing
+
+```bash
+uv run python -m pytest tests/
+```
+
+## License
+
+[License - MIT](./LICENSE)
+
+<!-- ## Contributing
+
+[Your contribution guidelines] -->
