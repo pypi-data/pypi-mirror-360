@@ -1,0 +1,71 @@
+---
+dependency:
+  name: shell
+  enabled: true
+  command: path/to/command --flag1 subcommand --flag2
+  options:
+    ignore-certs: true
+    ignore-errors: true
+  env:
+    FOO: bar
+
+driver:
+  name: default
+  options:
+    managed: false
+    login_cmd_template: ...
+    ansible_connection_options:
+      ansible_connection: ssh
+
+log: true
+
+platforms:
+  - name: ubi8
+    hostname: ubi8
+    children: [] # list of strings
+    unknown_property_foo: bar # unknown properties should be allowed for drivers
+    groups:
+      - ubi8
+    # vagrant ones
+    box: foo/bar
+
+  - name: ubi7
+    hostname: ubi7
+    children: ["ubi8"]
+    groups:
+      - ubi7
+
+provisioner:
+  playbooks:
+    prepare: prepare.yml
+  inventory:
+    hosts:
+      all:
+        hosts:
+          ubi8:
+            ansible_python_interpreter: /usr/bin/python3
+      ubi7:
+        selinux: permissive
+      ubi8:
+        selinux: enforced
+  name: ansible
+  log: true
+  env:
+    ANSIBLE_STDOUT_CALLBACK: yaml
+  config_options:
+    defaults:
+      fact_caching: jsonfile
+      fact_caching_connection: /tmp/molecule/facts
+
+scenario:
+  test_sequence:
+    - destroy
+    - create
+    - prepare
+    - converge
+    - check
+    - verify
+    - destroy
+
+verifier:
+  name: testinfra

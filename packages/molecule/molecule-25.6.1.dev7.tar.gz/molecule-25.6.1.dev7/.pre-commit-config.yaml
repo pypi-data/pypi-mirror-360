@@ -1,0 +1,145 @@
+---
+ci:
+  # format compatible with commitlint
+  autoupdate_commit_msg: "chore: pre-commit autoupdate"
+  autoupdate_schedule: monthly
+  autofix_commit_msg: "chore: auto fixes from pre-commit.com hooks"
+  skip:
+    # https://github.com/pre-commit-ci/issues/issues/55
+    - pip-compile
+default_language_version:
+  python: python3.10 # minimal we support officially for consistent results
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: debug-statements
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/asottile/add-trailing-comma.git
+    rev: v3.2.0
+    hooks:
+      - id: add-trailing-comma
+
+  - repo: https://github.com/Lucas-C/pre-commit-hooks.git
+    rev: v1.5.5
+    hooks:
+      - id: remove-tabs
+        exclude: >
+          (?x)^(
+            .config/pydoclint-baseline.txt
+          )$
+
+  - repo: https://github.com/pycontribs/mirrors-prettier
+    rev: v3.6.2
+    hooks:
+      - id: prettier
+        always_run: true
+        additional_dependencies:
+          - prettier
+          - prettier-plugin-toml
+          - prettier-plugin-sort-json
+
+  - repo: https://github.com/pappasam/toml-sort
+    rev: v0.24.2
+    hooks:
+      - id: toml-sort-fix
+
+  - repo: https://github.com/tox-dev/tox-ini-fmt
+    rev: 1.5.0
+    hooks:
+      - id: tox-ini-fmt
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.12
+    hooks:
+      - id: ruff
+        entry: sh -c 'ruff check --fix --force-exclude && ruff format --force-exclude'
+  - repo: https://github.com/streetsidesoftware/cspell-cli
+    rev: v9.1.0
+    hooks:
+      - id: cspell
+        name: Spell check with cspell
+
+  - repo: https://github.com/jsh9/pydoclint
+    rev: "0.6.7"
+    hooks:
+      - id: pydoclint
+        # This allows automatic reduction of the baseline file when needed.
+        entry: sh -ec "pydoclint . && pydoclint --generate-baseline=1 ."
+        pass_filenames: false
+
+  - repo: https://github.com/pycqa/pylint.git
+    rev: v3.3.7
+    hooks:
+      - id: pylint
+        args:
+          - --output-format=colorized
+        additional_dependencies:
+          - ansible-compat>=25.1.4
+          - click
+          - click-help-colors
+          - enrich>=1.2.7
+          - filelock
+          - jsonschema
+          - pexpect
+          - pytest-mock
+          - pytest-testinfra
+          - wcmatch
+
+  - repo: https://github.com/pre-commit/mirrors-mypy.git
+    rev: v1.16.1
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - ansible-compat>=25.1.4
+          - click
+          - click-help-colors
+          - enrich
+          - pytest
+          - pytest-mock
+          - rich
+          - types-pyyaml
+          - types-filelock
+          - types-jsonschema
+          - types-pexpect
+          - types-setuptools
+          - wcmatch
+        # Override default pre-commit '--ignore-missing-imports'
+        args: [--strict]
+
+  # Keep last due to being considerably slower than the others:
+  - repo: local
+    hooks:
+      - id: pip-compile-upgrade
+        # To run it execute: `pre-commit run pip-compile-upgrade --hook-stage manual`
+        name: Upgrade constraints files and requirements
+        files: ^(pyproject\.toml|.config/.*)$
+        always_run: true
+        language: python
+        entry: python3 -m uv pip compile -q --all-extras --output-file=.config/constraints.txt pyproject.toml --upgrade
+        pass_filenames: false
+        stages:
+          - manual
+        additional_dependencies:
+          - uv>=0.5.21
+      - id: pip-compile
+        name: "pip-compile: check constraints files and requirements"
+        always_run: true
+        files: ^(pyproject\.toml|\.config/.*)$
+        language: python
+        entry: python3 -m uv pip compile --refresh --all-extras --output-file=.config/constraints.txt pyproject.toml
+        pass_filenames: false
+        additional_dependencies:
+          - uv>=0.5.21
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v25.6.1
+    hooks:
+      - id: ansible-lint
+        stages: [manual]
