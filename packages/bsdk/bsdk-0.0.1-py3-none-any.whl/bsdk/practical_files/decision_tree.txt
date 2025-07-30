@@ -1,0 +1,27 @@
+# Practical 7: Decision Tree Classifier
+
+from sklearn.datasets import load_iris
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn import tree
+from sklearn.metrics import accuracy_score,confusion_matrix
+from sklearn.ensemble import RandomForestClassifier
+
+ds = load_iris()
+x = ds.data
+y = ds.target
+
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.2, random_state=42)
+
+dt = DecisionTreeClassifier()
+dt.fit(xtrain, ytrain)
+tree.plot_tree(dt)
+predictions = dt.predict(xtest)
+accuracy_score(ytest, predictions)
+confusion_matrix(ytest, predictions)
+
+rf=RandomForestClassifier(n_estimators=50)
+rf.fit(xtrain,ytrain)
+
+predictions2=rf.predict(xtest)
+accuracy_score(ytest,predictions2)
