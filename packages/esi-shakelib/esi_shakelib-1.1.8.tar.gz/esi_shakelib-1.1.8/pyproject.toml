@@ -1,0 +1,77 @@
+[build-system]
+requires = [
+    "setuptools>=61.0",
+    "wheel",
+    "setuptools_scm[toml]>=3.4",]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+
+[project]
+name = "esi-shakelib"
+dynamic = ["version"]
+description = "USGS Earthquake Impact Library for ShakeMap"
+authors = [
+    {name = "Bruce Worden", email="cbworden@contractor.usgs.gov"},
+    {name = "Eric Thompson", email="emthompsone@usgs.gov"},
+    {name = "Mike Hearne", email="mhearne@usgs.gov"},
+]
+license = {file = "LICENSE.md"}
+readme = "README.md"
+requires-python = ">=3.9"
+
+# Requirements:
+dependencies = [
+    "esi-core>=1.2.1",
+    "esi-utils-colors>=1.0.3",
+    "esi-utils-rupture>=1.0.7",
+    "esi-utils-vectors>=1.0.2",
+    "esi-utils-gmice>=1.0.1",
+    "importlib-resources",
+    "mapio>=0.8.8",
+    "cartopy>=0.22.0",
+    "gmpacket>=0.1.6",
+    "matplotlib>=3.8.0",
+    "numpy>=1.21,<2.0",
+    "openquake.engine==3.23.1",
+    "numba",
+    "alpha-shapes>=1.0.0",
+    "pandas>=2.1.1",
+    "scipy>=1.11.2",
+    "shapely>=2.0.1",
+    "scikit-image>=0.21.0",
+    "usgs-strec>=2.2.8",
+    "dill",
+]
+
+[project.optional-dependencies]
+dev = [
+    "build>=0.7.0",
+    "black>=21",
+    "flake8>=3.9",
+    "ipython>=7.26",
+]
+test = [
+    "pytest>=6.2",
+    "pytest-cov>=2.12",
+]
+build = [
+    "build",
+    "packaging>=24.2",
+    "twine",
+    "check-wheel-contents",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["esi_shakelib*"]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+esi_shakelib = [
+    "conversions/imc/data/*",
+]
+
