@@ -1,0 +1,38 @@
+# 上传项目到PyPI的完整流程
+
+1. **准备pyproject.toml文件**
+   - 确保包名称唯一（我们使用了`yby6-parse-video`）
+   - 包含必要的元数据（版本、描述、依赖等）
+
+2. **安装必要工具**
+   ```
+   pip install build twine
+   ```
+
+3. **构建分发包**
+   ```
+   python -m build --sdist --wheel --outdir dist/
+   ```
+
+4. **上传到PyPI**
+   ```
+   python -m twine upload dist/*
+   ```
+   或使用配置文件：
+   ```
+   python -m twine upload --config-file .pypirc dist/*
+   ```
+   或直接指定凭据：
+   ```
+   python -m twine upload --username __token__ --password "你的token" dist/*
+   ```
+
+5. **注意事项**
+   - 确保包名称在PyPI上未被占用
+   - .pypirc文件应放在用户主目录且格式正确
+   - 清理旧的构建文件可使用：`rm -rf dist/ build/ *.egg-info/`
+
+成功上传后，您的包可通过pip安装：
+```
+pip install yby6-parse-video
+``` 

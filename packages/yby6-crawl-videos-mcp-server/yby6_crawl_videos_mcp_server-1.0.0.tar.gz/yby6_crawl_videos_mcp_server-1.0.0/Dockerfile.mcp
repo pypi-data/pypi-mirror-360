@@ -1,0 +1,28 @@
+# 使用 Python 官方镜像作为基础镜像
+FROM python:3.11-slim
+
+# 设置工作目录
+WORKDIR /app
+
+# 1. 先只复制 requirements.txt 分步 COPY，利用 Docker 缓存
+COPY ./requirements.txt /app/
+
+# 2. 安装依赖（只要 requirements.txt 没变，这一步就会用缓存）
+RUN pip install --no-cache-dir -v -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 3. 再复制其它代码
+COPY ./parser /app/parser
+COPY ./templates /app/templates
+COPY ./utils /app/utils
+COPY ./mcp_server.py /app/
+COPY ./mcp_config.json /app/
+COPY ./generate_token.py /app/
+COPY ./verify_token.py /app/
+COPY ./keys /app/keys
+COPY ./token.txt /app/token.txt
+
+# 暴露 MCP 服务的端口
+EXPOSE 8637
+
+# 启动 MCP 服务 外部传递参数 例如：--transport http --host 0.0.0.0 --port 8637
+CMD ["python", "mcp_server.py", "--transport", "sse", "--host", "0.0.0.0", "--port", "8637"]
