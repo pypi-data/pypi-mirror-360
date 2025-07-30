@@ -1,0 +1,91 @@
+Metadata-Version: 2.1
+Name: orchestra-toolkit
+Version: 24.2.69
+Summary: A python client to interract with Orchestra systems
+Author: LEDR Technologies inc.
+Author-email: support@ledr.io
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Internet
+Classifier: License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)
+Classifier: Development Status :: 4 - Beta
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: tabulate
+Requires-Dist: treelib
+Requires-Dist: typing-extensions
+
+
+# What is it?
+
+A client to connect to an Orchestra system, or any Avial-complient knowledge host.  
+Orchestra is an opinionated distribution of [AvesTerra](https://avesterra.georgetown.edu/) which comes with a lot of extra convenience.  
+Orchestra allows for the orchestration of knowledge in a distributed hypergraph
+
+Orchestra documentation can be found at https://docs.ledr.io/
+
+# Installation
+
+```
+$ pip install orchestra-toolkit
+```
+
+# Example
+
+```py
+import os
+import avesterra as av
+
+av.initialize("localhost", "/AvesTerra/Certificates/")
+auth_str = os.environ["AUTH"]  # Should be a UUID string
+auth = av.AvAuthorization(auth_str)
+
+entity = av.create_entity(name="Test entity", key="test_entity", authorization=auth)
+print(f"Created entity {entity}")
+
+items = av.get_registry_entries(av.AvEntity(0, 0, 2), auth)
+
+print(f"Taxonomy registry has {len(items)} entries:")
+for name, key, entity in items.values():
+    print(f"\t{name:<25}[{key + ']':<25}{entity}")
+
+# Output:
+# Taxonomy registry has 34 entries:
+#    AvesTerra Taxonomy       [AvesTerra]               <0|0|100042>
+#    Action Taxonomy          [Action]                  <0|0|100043>
+#    Adapter Taxonomy         [Adapter]                 <0|0|100044>
+#    Aspect Taxonomy          [Aspect]                  <0|0|100045>
+#    Attribute Taxonomy       [Attribute]               <0|0|100046>
+#    Category Taxonomy        [Category]                <0|0|100047>
+#    Class Taxonomy           [Class]                   <0|0|100048>
+#    Condition Taxonomy       [Condition]               <0|0|100049>
+#    Constant Taxonomy        [Constant]                <0|0|100050>
+#    Context Taxonomy         [Context]                 <0|0|100051>
+#    Error Taxonomy           [Error]                   <0|0|100052>
+#    Event Taxonomy           [Event]                   <0|0|100053>
+#    Format Taxonomy          [Format]                  <0|0|100054>
+#    Goal Taxonomy            [Goal]                    <0|0|100055>
+#    Installation Taxonomy    [Installation]            <0|0|100056>
+#    Language Taxonomy        [Language]                <0|0|100057>
+#    Locutor Taxonomy         [Locutor]                 <0|0|100058>
+#    Match Taxonomy           [Match]                   <0|0|100059>
+#    Method Taxonomy          [Method]                  <0|0|100060>
+#    Mode Taxonomy            [Mode]                    <0|0|100061>
+#    Model Taxonomy           [Model]                   <0|0|100062>
+#    Notice Taxonomy          [Notice]                  <0|0|100063>
+#    Operator Taxonomy        [Operator]                <0|0|100064>
+#    Pattern Taxonomy         [Pattern]                 <0|0|100065>
+#    Percept Taxonomy         [Percept]                 <0|0|100066>
+#    Permission Taxonomy      [Permission]              <0|0|100067>
+#    Platform Taxonomy        [Platform]                <0|0|100068>
+#    Prefix Taxonomy          [Prefix]                  <0|0|100069>
+#    Scheme Taxonomy          [Scheme]                  <0|0|100070>
+#    State Taxonomy           [State]                   <0|0|100071>
+#    Tag Taxonomy             [Tag]                     <0|0|100072>
+#    Taxon Taxonomy           [Taxon]                   <0|0|100073>
+#    Template Taxonomy        [Template]                <0|0|100074>
+#    Unit Taxonomy            [Unit]                    <0|0|100075>
+```
+
