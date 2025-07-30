@@ -1,0 +1,48 @@
+[project]
+name = "avysignal"
+version = "0.1.0"
+description = "This project contains utilities for avalanche detection using seismic and infrasound data."
+readme = "README.md"
+authors = [
+    { name = "Patrick Düggelin", email = "patrick.dueggelin@slf.ch" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "obspy>=1.4.2",
+    "pydantic>=2.11.7",
+]
+
+[project.optional-dependencies]
+beamforming = [
+    "torch>=2.7.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pandas>=2.3.0",
+    "psutil>=7.0.0",
+    "pyinstrument>=5.0.2",
+    "ruff>=0.12.0",
+    "scipy>=1.15.3",
+]
+
+beamforming = [
+    "avysignal[beamforming]",
+]
+
+[tool.uv]
+default-groups = "all"
+
+
+[tool.hatch.build]
+include = [
+  "src/avysignal/resources/**/*"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/avysignal"]
+
