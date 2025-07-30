@@ -1,0 +1,1 @@
+from .MemoryDiagnosticTool import MDT_process
