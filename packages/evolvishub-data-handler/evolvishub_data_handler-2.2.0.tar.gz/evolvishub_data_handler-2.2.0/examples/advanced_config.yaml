@@ -1,0 +1,74 @@
+# Advanced configuration example with custom queries and cron scheduling
+
+source:
+  type: postgresql
+  host: localhost
+  port: 5432
+  database: source_db
+  username: source_user
+  password: source_password
+  watermark:
+    column: updated_at
+    type: timestamp
+    initial_value: "1970-01-01 00:00:00"
+  # Custom query with complex logic
+  query: >
+    SELECT 
+      id,
+      name,
+      email,
+      updated_at,
+      created_at,
+      CASE
+        WHEN deleted_at IS NOT NULL THEN 'delete'
+        WHEN updated_at > :last_sync THEN 'update'
+        ELSE 'insert'
+      END as operation,
+      -- Additional computed fields
+      EXTRACT(EPOCH FROM updated_at) as updated_timestamp,
+      CASE 
+        WHEN email LIKE '%@company.com' THEN 'internal'
+        ELSE 'external'
+      END as user_type
+    FROM users
+    WHERE (updated_at > :last_sync OR :last_sync IS NULL)
+      AND status = 'active'
+    ORDER BY updated_at
+    LIMIT :batch_size
+
+destination:
+  type: postgresql
+  host: localhost
+  port: 5432
+  database: dest_db
+  username: dest_user
+  password: dest_password
+  table: users_sync
+  watermark:
+    column: updated_at
+    type: timestamp
+
+sync:
+  mode: cron
+  cron_expression: "0 */2 * * *"  # Every 2 hours
+  timezone: "America/New_York"
+  batch_size: 500
+  watermark_table: sync_watermark
+  error_retry_attempts: 5
+  error_retry_delay: 10
+
+tables:
+  - users
+  - orders
+  - products
+
+exclude_tables:
+  - temp_users
+  - backup_users
+
+include_schemas:
+  - public
+
+exclude_schemas:
+  - temp
+  - backup

@@ -1,0 +1,49 @@
+source:
+  type: postgresql
+  host: localhost
+  port: 5432
+  database: source_db
+  user: source_user
+  password: source_password
+  watermark:
+    column: updated_at
+    type: timestamp
+    initial_value: "1970-01-01 00:00:00"
+  query: >
+    SELECT 
+      id,
+      name,
+      email,
+      updated_at,
+      CASE
+        WHEN deleted_at IS NOT NULL THEN 'delete'
+        WHEN updated_at > :last_sync THEN 'update'
+        ELSE 'insert'
+      END as operation
+    FROM users
+    WHERE updated_at > :last_sync
+      OR deleted_at > :last_sync
+      OR :last_sync IS NULL
+
+destination:
+  type: postgresql
+  host: localhost
+  port: 5432
+  database: dest_db
+  user: dest_user
+  password: dest_password
+  table: users
+  watermark:
+    column: updated_at
+    type: timestamp
+
+sync:
+  interval: 60  # seconds
+  batch_size: 1000
+  error_retry: 3
+  max_retries: 5
+  retry_delay: 5  # seconds
+  watermark_table: sync_watermark
+
+log_level: INFO
+log_file: cdc.log 

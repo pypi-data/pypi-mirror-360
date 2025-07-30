@@ -1,0 +1,44 @@
+source:
+  type: file
+  file_path: "data/source/orders.csv"
+  table: orders
+  watermark:
+    column: updated_at
+    type: timestamp
+    initial_value: "2024-01-01T00:00:00Z"
+
+destination:
+  type: postgresql
+  host: localhost
+  port: 5432
+  database: target_db
+  username: postgres
+  password: postgres
+  table: orders
+  watermark:
+    column: updated_at
+    type: timestamp
+    initial_value: "2024-01-01T00:00:00Z"
+
+sync:
+  batch_size: 1000
+  interval_seconds: 60
+  watermark_table: sync_watermark
+  error_retry_attempts: 3
+  error_retry_delay: 5
+
+tables:
+  - orders
+  - customers
+  - products
+
+exclude_tables:
+  - temp_orders
+  - backup_orders
+
+include_schemas:
+  - public
+
+exclude_schemas:
+  - temp
+  - backup 

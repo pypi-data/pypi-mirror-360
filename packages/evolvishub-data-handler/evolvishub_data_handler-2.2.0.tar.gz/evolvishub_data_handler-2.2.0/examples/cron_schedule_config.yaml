@@ -1,0 +1,38 @@
+# Configuration for various cron scheduling examples
+
+source:
+  type: postgresql
+  host: localhost
+  port: 5432
+  database: source_db
+  username: source_user
+  password: source_password
+  table: orders
+  watermark:
+    column: updated_at
+    type: timestamp
+    initial_value: "2024-01-01 00:00:00"
+
+destination:
+  type: postgresql
+  host: localhost
+  port: 5432
+  database: dest_db
+  username: dest_user
+  password: dest_password
+  table: orders
+
+sync:
+  mode: cron
+  # Examples of different cron expressions:
+  # "0 9 * * 1-5"     # Every weekday at 9 AM
+  # "0 */6 * * *"     # Every 6 hours
+  # "30 2 * * 0"      # Every Sunday at 2:30 AM
+  # "0 0 1 * *"       # First day of every month at midnight
+  # "0 8,12,16 * * *" # At 8 AM, 12 PM, and 4 PM every day
+  cron_expression: "0 */4 * * *"  # Every 4 hours
+  timezone: "UTC"
+  batch_size: 2000
+  watermark_table: sync_watermark
+  error_retry_attempts: 3
+  error_retry_delay: 5

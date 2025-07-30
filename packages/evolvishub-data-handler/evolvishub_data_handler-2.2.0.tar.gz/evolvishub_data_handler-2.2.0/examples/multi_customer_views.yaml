@@ -1,0 +1,217 @@
+# Multi-Source Customer Analytics CDC Configuration
+# This configuration syncs 5 customer views to different destination tables
+
+name: customer_analytics_sync
+description: Sync customer analytics views from source DB to data warehouse
+
+# Global settings applied to all mappings (can be overridden per mapping)
+global_sync:
+  mode: continuous
+  interval_seconds: 300  # 5 minutes
+  batch_size: 1000
+  
+global_plugins:
+  transformers:
+    - name: data_quality_check
+      enabled: true
+  middleware:
+    - name: performance_monitor
+      enabled: true
+
+# Source-destination mappings
+mappings:
+  # Customer Demographics View
+  - name: customer_demographics
+    description: Customer demographic information
+    enabled: true
+    
+    source:
+      type: postgresql
+      host: source-db.company.com
+      port: 5432
+      database: customer_analytics
+      username: analytics_user
+      password: analytics_password
+      table: vw_customer_demographics
+      
+    destination:
+      type: postgresql
+      host: warehouse-db.company.com
+      port: 5432
+      database: data_warehouse
+      username: warehouse_user
+      password: warehouse_password
+      table: dim_customer_demographics
+      
+    watermark:
+      column: last_updated
+      type: timestamp
+      
+    column_mapping:
+      customer_id: customer_key
+      birth_date: date_of_birth
+      registration_date: customer_since
+      
+    exclude_columns:
+      - internal_notes
+      - temp_field
+
+  # Customer Purchase Behavior View
+  - name: purchase_behavior
+    description: Customer purchase patterns and behavior
+    enabled: true
+    
+    source:
+      type: postgresql
+      host: source-db.company.com
+      port: 5432
+      database: customer_analytics
+      username: analytics_user
+      password: analytics_password
+      table: vw_customer_purchase_behavior
+      
+    destination:
+      type: postgresql
+      host: warehouse-db.company.com
+      port: 5432
+      database: data_warehouse
+      username: warehouse_user
+      password: warehouse_password
+      table: fact_customer_behavior
+      
+    watermark:
+      column: analysis_date
+      type: timestamp
+      
+    custom_query: |
+      SELECT 
+        customer_id,
+        total_purchases,
+        avg_order_value,
+        last_purchase_date,
+        customer_segment,
+        analysis_date
+      FROM vw_customer_purchase_behavior 
+      WHERE analysis_date > %(last_sync)s
+      ORDER BY analysis_date
+
+  # Customer Geographic Distribution
+  - name: geographic_distribution
+    description: Customer geographic distribution data
+    enabled: true
+    
+    source:
+      type: postgresql
+      host: source-db.company.com
+      port: 5432
+      database: customer_analytics
+      username: analytics_user
+      password: analytics_password
+      table: vw_customer_geography
+      
+    destination:
+      type: postgresql
+      host: warehouse-db.company.com
+      port: 5432
+      database: data_warehouse
+      username: warehouse_user
+      password: warehouse_password
+      table: dim_customer_geography
+      
+    watermark:
+      column: updated_at
+      type: timestamp
+      
+    # Override global sync settings for this mapping
+    sync:
+      mode: continuous
+      interval_seconds: 600  # 10 minutes - less frequent
+      batch_size: 500
+
+  # Customer Engagement Metrics
+  - name: engagement_metrics
+    description: Customer engagement and activity metrics
+    enabled: true
+    
+    source:
+      type: postgresql
+      host: source-db.company.com
+      port: 5432
+      database: customer_analytics
+      username: analytics_user
+      password: analytics_password
+      table: vw_customer_engagement
+      
+    destination:
+      type: postgresql
+      host: warehouse-db.company.com
+      port: 5432
+      database: data_warehouse
+      username: warehouse_user
+      password: warehouse_password
+      table: fact_customer_engagement
+      
+    watermark:
+      column: metric_date
+      type: timestamp
+      
+    column_mapping:
+      customer_id: customer_key
+      email_opens: email_open_count
+      website_visits: web_visit_count
+      app_sessions: mobile_session_count
+
+  # Customer Lifetime Value
+  - name: lifetime_value
+    description: Customer lifetime value calculations
+    enabled: true
+    
+    source:
+      type: postgresql
+      host: source-db.company.com
+      port: 5432
+      database: customer_analytics
+      username: analytics_user
+      password: analytics_password
+      table: vw_customer_ltv
+      
+    destination:
+      type: postgresql
+      host: warehouse-db.company.com
+      port: 5432
+      database: data_warehouse
+      username: warehouse_user
+      password: warehouse_password
+      table: fact_customer_ltv
+      
+    watermark:
+      column: calculation_date
+      type: timestamp
+      
+    # Override sync settings - least frequent
+    sync:
+      mode: continuous
+      interval_seconds: 1800  # 30 minutes
+      batch_size: 200
+      
+    custom_query: |
+      SELECT 
+        customer_id,
+        current_ltv,
+        predicted_ltv,
+        ltv_segment,
+        calculation_date,
+        model_version
+      FROM vw_customer_ltv 
+      WHERE calculation_date > %(last_sync)s
+        AND model_version = 'v2.1'
+      ORDER BY calculation_date
+
+# Execution settings
+parallel_execution: true
+max_workers: 3
+stop_on_error: false
+
+# Monitoring and logging
+enable_monitoring: true
+log_level: INFO
