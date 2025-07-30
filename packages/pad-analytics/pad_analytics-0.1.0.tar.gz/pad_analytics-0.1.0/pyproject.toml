@@ -1,0 +1,100 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pad-analytics"
+version = "0.1.0"
+description = "Python tools for analyzing Paper Analytical Devices (PADs) to detect and quantify pharmaceutical compounds through colorimetric analysis"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Priscila Saboia Moreira", email = "pmoreira@nd.edu"},
+]
+keywords = ["paper analytical device", "PAD", "colorimetric analysis", "pharmaceutical quality", "drug detection", "machine learning", "diagnostics"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Healthcare Industry",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9", 
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "keras>=2.14.0,<2.16.0",  # Note: Keras 2.x has known vulnerabilities, upgrade to 3.9.0+ when possible
+    "tensorflow>=2.14.1,<2.16.0",  # 2.14.1+ fixes CVE-2023-38546, CVE-2023-38545
+    "pandas>=1.3.0",
+    "numpy>=1.21.0,<2.0.0",
+    "scikit-learn>=0.24.0",
+    "matplotlib>=3.3.0",
+    "seaborn>=0.11.0",
+    "requests>=2.32.2",  # 2.32.2+ fixes CVE-2024-35195
+    "pillow>=8.0.0",
+    "opencv-python>=4.5.0",
+    "ipywidgets>=7.6.0",
+    "importlib_resources>=1.3.0; python_version<'3.9'",  # For resource file access on older Python
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov>=2.0",
+    "pytest-mock>=3.0",
+    "black>=21.0",
+    "flake8>=3.9",
+    "mypy>=0.910",
+    "safety>=1.10.0",
+    "bandit>=1.7.0",
+    "build>=0.8.0",
+    "twine>=4.0.0",
+]
+notebooks = [
+    "jupyter>=1.0.0",
+    "notebook>=6.0.0",
+    "ipykernel>=6.0.0",
+]
+
+[project.scripts]
+pad-analytics = "pad_analytics.padanalytics:main"
+
+[project.urls]
+Homepage = "https://padproject.nd.edu"
+Documentation = "https://pad.crc.nd.edu/docs"
+Repository = "https://github.com/PaperAnalyticalDeviceND/pad-analytics"
+Issues = "https://github.com/PaperAnalyticalDeviceND/pad-analytics/issues"
+"Source Code" = "https://github.com/PaperAnalyticalDeviceND/pad-analytics"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["pad_analytics*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.csv", "*.json", "py.typed"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311']
+
+[tool.flake8]
+max-line-length = 120
+extend-ignore = ["E203", "W503", "F403", "F405", "E402", "F401", "F841", "E266", "E401", "W291", "W292", "W293", "E722", "F811", "F821", "E501", "E712"]
+exclude = [".git", "__pycache__", "build", "dist"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
