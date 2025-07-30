@@ -1,0 +1,51 @@
+default_language_version:
+  python: python3.10
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.2.0
+    hooks:
+      - id: no-commit-to-branch
+        args: ['--branch', 'master']
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.2.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/regebro/pyroma
+    rev: '4.2'
+    hooks:
+      - id: pyroma
+        name: Check packaging
+        args: [--min=9, .]
+        additional_dependencies: ["setuptools_scm[toml]>=6.2"]
+
+  - repo: https://github.com/google/yapf
+    rev: v0.40.2
+    hooks:
+      - id: yapf
+        name: Format code
+        additional_dependencies: ["toml>=0.10.2"]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: Sort imports
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        name: Check PEP8
+
+  - repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.283
+    hooks:
+      - id: pyright
+        name: pyright
+        entry: env PYRIGHT_PYTHON_GLOBAL_NODE=0 env PYRIGHT_PYTHON_ENV_DIR=.nodeenv pyright -p precommit-pyrightconfig.json  # yamllint disable-line
+        require_serial: true
+        pass_filenames: false
+        files: '.*\.py'
