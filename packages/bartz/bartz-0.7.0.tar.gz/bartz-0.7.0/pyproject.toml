@@ -1,0 +1,250 @@
+# bartz/pyproject.toml
+#
+# Copyright (c) 2024-2025, Giacomo Petrillo
+#
+# This file is part of bartz.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+[build-system]
+requires = ["uv_build>=0.7.3,<0.8.0"]
+build-backend = "uv_build"
+
+[project]
+name = "bartz"
+version = "0.7.0"
+description = "Super-fast BART (Bayesian Additive Regression Trees) in Python"
+authors = [
+    {name = "Giacomo Petrillo", email = "info@giacomopetrillo.com"},
+]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "equinox>=0.12.2",
+    "jax>=0.5.3",
+    "jaxtyping>=0.3.2",
+    "numpy>=1.25.2",
+    "scipy>=1.11.4",
+]
+
+[project.urls]
+Homepage = "https://github.com/Gattocrucco/bartz"
+Documentation = "https://gattocrucco.github.io/bartz/docs-dev"
+Issues = "https://github.com/Gattocrucco/bartz/issues"
+
+[dependency-groups]
+only-local = [
+    "appnope>=0.1.4",
+    "ipython>=8.36.0",
+    "matplotlib>=3.10.3",
+    "matplotlib-label-lines>=0.8.1",
+    "pre-commit>=4.2.0",
+    "pydoclint>=0.6.6",
+    "ruff>=0.11.9",
+    "scikit-learn>=1.6.1",
+    "tomli>=2.2.1",
+    "virtualenv>=20.31.2",
+    "xgboost>=3.0.0",
+]
+ci = [
+    "asv>=0.6.4",
+    "coverage>=7.8.0",
+    "myst-parser>=4.0.1",
+    "packaging>=25.0",
+    "polars[pandas,pyarrow]>=1.29.0",
+    "pytest>=8.3.5",
+    "pytest-timeout>=2.4.0",
+    "sphinx>=8.1.3",
+    "sphinx-autodoc-typehints>=3.0.1",
+]
+
+[tool.pytest.ini_options]
+cache_dir = "config/pytest_cache"
+testpaths = ["tests"]
+addopts = [
+    "-r xXfE",
+    "--pdbcls=IPython.terminal.debugger:TerminalPdb",
+    "--durations=3",
+    "--verbose",
+    "--import-mode=importlib",
+]
+timeout = 256
+timeout_method = "thread"  # when jax hangs, signals do not work
+
+[tool.coverage.run]
+branch = true
+source = ["bartz"]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.coverage.html]
+show_contexts = true
+directory = "_site/coverage"
+
+[tool.coverage.paths]
+# the first path in each list must be the source directory in the machine that's
+# generating the coverage report
+
+github = [
+    '/home/runner/work/bartz/bartz/src/bartz/',
+    '/Users/runner/work/bartz/bartz/src/bartz/',
+    'D:\a\bartz\bartz\src\bartz\',
+    '/Library/Frameworks/Python.framework/Versions/*/lib/python*/site-packages/bartz/',
+    '/Users/runner/hostedtoolcache/Python/*/*/lib/python*/site-packages/bartz/',
+    '/opt/hostedtoolcache/Python/*/*/lib/python*/site-packages/bartz/',
+    'C:\hostedtoolcache\windows\Python\*\*\Lib\site-packages\bartz\',
+]
+
+local = [
+    'src/bartz/',
+    '/home/runner/work/bartz/bartz/src/bartz/',
+    '/Users/runner/work/bartz/bartz/src/bartz/',
+    'D:\a\bartz\bartz\src\bartz\',
+    '/Library/Frameworks/Python.framework/Versions/*/lib/python*/site-packages/bartz/',
+    '/Users/runner/hostedtoolcache/Python/*/*/lib/python*/site-packages/bartz/',
+    '/opt/hostedtoolcache/Python/*/*/lib/python*/site-packages/bartz/',
+    'C:\hostedtoolcache\windows\Python\*\*\Lib\site-packages\bartz\',
+]
+
+[tool.ruff]
+exclude = [".asv", "*.ipynb"]
+cache-dir = "config/ruff_cache"
+
+[tool.ruff.format]
+quote-style = "single"
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
+
+[tool.ruff.lint]
+select = [
+    "ERA",  # eradicate
+    "S", # flake8-bandit
+    "BLE", # flake8-blind-except
+    "B", # bugbear
+    "A", # flake8-builtins
+    "C4", # flake8-comprehensions
+    "CPY", # flake8-copyright
+    "DTZ", # flake8-datetimez
+    "T10", # flake8-debugger
+    "EM", # flake8-errmsg
+    "EXE", # flake8-executable
+    "FIX", # flake8-fixme
+    "ISC", # flake8-implicit-str-concat
+    "INP", # flake8-no-pep420
+    "PIE", # flake8-pie
+    "T20", # flake8-print
+    "PT", # flake8-pytest-style
+    "RSE", # flake8-raise
+    "RET", # flake8-return
+    "SLF", # flake8-self
+    "SIM", # flake8-simplify
+    "TID", # flake8-tidy-imports
+    "ARG", # flake8-unused-arguments
+    "PTH", # flake8-use-pathlib
+    "FLY", # flynt
+    "I", # isort
+    "C90", # mccabe
+    "NPY", # NumPy-specific rules
+    "PERF", # Perflint
+    "W", # pycodestyle Warning
+    "F", # pyflakes
+    "D", # pydocstyle
+    "PGH", # pygrep-hooks
+    "PLC", # Pylint Convention
+    "PLE", # Pylint Error
+    "PLR", # Pylint Refactor
+    "PLW", # Pyling Warning
+    "UP", # pyupgrade
+    "FURB", # refurb
+    "RUF", # Ruff-specific rules
+    "TRY", # tryceratops
+]
+ignore = [
+    "B028",  # warn with stacklevel = 2
+    "C408",  # Unnecessary `dict()` call (rewrite as a literal), it's too convenient for kwargs
+    "D105",  # Missing docstring in magic method
+    "F722",  # Syntax error in forward annotation. I ignore this because jaxtyping uses strings for shapes instead of for deferred annotations.
+    "PIE790",  # Unnecessary ... or pass. Ignored because sometimes I use ... as sentinel to tell the rest of ruff and pyright that an implementation is a stub.
+    "PLR0913",  # Too many arguments in function definition. Maybe I should do something about this?
+    "PLR2004",  # Magic value used in comparison, consider replacing `*` with a constant variable
+    "RET505",  # Unnecessary `{branch}` after `return` statement. I ignore this because I like to keep branches for readability.
+    "RET506",  # Unnecessary `else` after `raise` statement. I ignore this because I like to keep branches for readability.
+    "S101",  # Use of `assert` detected. Too annoying.
+    "S603",  # `subprocess` call: check for execution of untrusted input. Too many false positives.
+    "SIM108",  # SIM108 Use ternary operator `*` instead of `if`-`else`-block, I find blocks more readable
+    "UP037",  # Remove quotes from type annotation. Ignore because jaxtyping.
+]
+
+[tool.ruff.lint.per-file-ignores]
+"{config/*,docs/*}" = [
+    "D100",  # Missing docstring in public module
+    "D101",  # Missing docstring in public class
+    "D102",  # Missing docstring in public method
+    "D103",  # Missing docstring in public function
+    "D104",  # Missing docstring in public package
+    "INP001",  # File * is part of an implicit namespace package. Add an `__init__.py`.
+]
+"src/bartz/_version.py" = [
+    "CPY001",  # Missing copyright notice at top of file
+]
+"{config/*,docs/*,tests/*}" = [
+    "T201",  # `print` found
+]
+"{tests/*,benchmarks/*}" = [
+    "SLF001",  # Private member accessed: `*`
+    "TID253",  # `{module}` is banned at the module level
+]
+"docs/conf.py" = [
+    "S607",  # Starting a process with a partial executable path. Ignored because for a build script it makes more sense to use PATH.
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.flake8-copyright]
+min-file-size = 1
+
+[tool.ruff.lint.flake8-tidy-imports]
+banned-module-level-imports = ["bartz.debug"]
+ban-relative-imports = "all"
+
+[tool.pydoclint]
+baseline = "config/pydoclint-baseline.txt"
+auto-regenerate-baseline = false
+# auto-regenerate = false because in pre-commit pydoclint does not see the
+# unmodified files, thinks those errors are gone, and removes them from the
+# baseline.
+arg-type-hints-in-signature = true
+arg-type-hints-in-docstring = false
+check-return-types = false
+check-yield-types = false
+treat-property-methods-as-class-attributes = true
+check-style-mismatch = true
+show-filenames-in-every-violation-message = true
+check-class-attributes = false
+# do not check class attributes because in dataclasses I document them as
+# init parameters because they are duplicated otherwise.
+
+[tool.uv]
+python-downloads = "never"
+python-preference = "only-system"
