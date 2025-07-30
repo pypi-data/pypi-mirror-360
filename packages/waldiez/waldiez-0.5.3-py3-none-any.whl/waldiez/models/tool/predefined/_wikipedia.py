@@ -1,0 +1,130 @@
+# SPDX-License-Identifier: Apache-2.0.
+# Copyright (c) 2024 - 2025 Waldiez and contributors.
+"""Predefined Wikipedia search tool for Waldiez."""
+
+from typing import Any
+
+from ._config import PredefinedToolConfig
+from .protocol import PredefinedTool
+
+
+class WikipediaSearchToolImpl(PredefinedTool):
+    """Wikipedia search tool for Waldiez."""
+
+    required_secrets: list[str] = []
+    kwargs_types: dict[str, type] = {
+        "language": str,
+        "top_k": int,
+        "verbose": bool,
+    }
+    required_kwargs: dict[str, type] = {}
+
+    @property
+    def name(self) -> str:
+        """Tool name."""
+        return "wikipedia_search"
+
+    @property
+    def description(self) -> str:
+        """Tool description."""
+        return "Search Wikipedia for a given query."
+
+    @property
+    def kwargs(self) -> dict[str, Any]:
+        """Keyword arguments for the tool, used for initialization."""
+        return {
+            "language": "en",
+            "top_k": 3,
+            "verbose": False,
+        }
+
+    @property
+    def requirements(self) -> list[str]:
+        """Python requirements for the tool."""
+        return ["ag2[wikipedia, openai]"]
+
+    @property
+    def tags(self) -> list[str]:
+        """Tags for the tool, used for categorization."""
+        return ["wikipedia", "search", "knowledge", "reference"]
+
+    @property
+    def tool_imports(self) -> list[str]:
+        """Imports required for the tool implementation."""
+        return [
+            "from autogen.tools.experimental import WikipediaQueryRunTool",
+            "from autogen.tools.experimental import WikipediaPageLoadTool",
+        ]
+
+    def validate_secrets(self, secrets: dict[str, str]) -> list[str]:
+        """Validate secrets and return list of missing required ones.
+
+        Parameters
+        ----------
+        secrets : dict[str, str]
+            Dictionary of secrets/environment variables.
+
+        Returns
+        -------
+        list[str]
+            List of missing required secrets.
+        """
+        return []
+
+    def validate_kwargs(self, kwargs: dict[str, Any]) -> list[str]:
+        """Validate keyword arguments and return list of missing required ones.
+
+        Parameters
+        ----------
+        kwargs : dict[str, Any]
+            Dictionary of keyword arguments.
+
+        Returns
+        -------
+        list[str]
+            List of missing required keyword arguments.
+        """
+        for key, _ in self.kwargs.items():
+            if key in kwargs:
+                type_of = self.required_kwargs.get(key, str)
+                try:
+                    casted = type_of(kwargs[key])
+                    if key in self.kwargs:
+                        self.kwargs[key] = casted
+                except Exception:  # pylint: disable=broad-except
+                    pass
+        return []
+
+    def get_content(
+        self,
+        secrets: dict[str, str],
+    ) -> str:
+        """Get the content of the tool.
+
+        Parameters
+        ----------
+        secrets : dict[str, str]
+            Dictionary of secrets/environment variables.
+
+        Returns
+        -------
+        str
+            Content of the tool.
+        """
+        content = f"{self.name} = WikipediaQueryRunTool(\n"
+        for key, value in self.kwargs.items():
+            content += f"    {key}={value!r},\n"
+        content += ")\n"
+        return content
+
+
+WikipediaSearchTool = WikipediaSearchToolImpl()
+WikipediaSearchConfig = PredefinedToolConfig(
+    name=WikipediaSearchTool.name,
+    description=WikipediaSearchTool.description,
+    required_secrets=WikipediaSearchTool.required_secrets,
+    required_kwargs=WikipediaSearchTool.required_kwargs,
+    requirements=WikipediaSearchTool.requirements,
+    tags=WikipediaSearchTool.tags,
+    implementation=WikipediaSearchTool,
+)
