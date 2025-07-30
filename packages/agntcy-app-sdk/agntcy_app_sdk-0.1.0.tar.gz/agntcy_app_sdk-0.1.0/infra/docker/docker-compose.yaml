@@ -1,0 +1,34 @@
+x-default-logging: &logging
+  driver: "json-file"
+  options:
+    max-size: "5m"
+    max-file: "2"
+
+services:
+  nats:
+    image: nats:latest
+    container_name: nats
+    ports:
+      - "4222:4222"
+      - "4223:4223"
+      - "6222:6222"
+      - "8222:8222"
+    logging: *logging
+
+  slim:
+    image: ghcr.io/agntcy/slim:latest
+    container_name: slim-dataplane
+    ports:
+      - "46357:46357"
+    environment:
+      - PASSWORD=${SLIM_GATEWAY_PASSWORD:-dummy_password}
+      - CONFIG_PATH=/config.yaml
+    volumes:
+      - ./configs/slim/server-config.yaml:/config.yaml
+    command: ["/slim", "--config", "/config.yaml"]
+    networks:
+      - gateway
+
+networks:
+  gateway:
+    driver: bridge
