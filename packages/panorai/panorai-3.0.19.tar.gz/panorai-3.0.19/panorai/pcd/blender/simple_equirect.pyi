@@ -1,0 +1,9 @@
+from .base_blender import BaseBlender as BaseBlender
+from panorai.data.gnomonic_image import GnomonicFace as GnomonicFace
+from panorai.pcd.data import PCD as PCD
+from panorai.pcd.handler import PCDHandler as PCDHandler
+
+class SimpleEquirectBlender(BaseBlender):
+    def __init__(self, eq_shape=(512, 1024), min_radius: float = 0.0, max_radius: float = 20.0) -> None: ...
+    def process_faceset(self, faceset, model, grad_threshold: float = 0.1, feather_exp: float = 1.0): ...
+    def accumulate(self, radius_map, color_map, weight_map, valid_mask) -> None: ...
