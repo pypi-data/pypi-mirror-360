@@ -1,0 +1,22 @@
+{% for api in resources -%}
+resource "aws_api_gateway_rest_api" "{{ api.name | tf_resource_name }}" {
+  name        = "{{ api.name }}"
+  description = "{{ api.description | default('') }}"
+
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+
+  {%  if api.get('tags') %}
+  tags = {
+    {%- for key, value in api.get('tags', {}).items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

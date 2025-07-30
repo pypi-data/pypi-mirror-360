@@ -1,0 +1,101 @@
+{% for bucket in resources -%}
+resource "google_storage_bucket" "{{ bucket.name_sanitized }}" {
+  name          = "{{ bucket.name }}"
+  project       = "{{ bucket.project }}"
+  location      = "{{ bucket.location }}"
+  storage_class = "{{ bucket.storage_class }}"
+
+  {%  if bucket.uniform_bucket_level_access_enabled %}
+  uniform_bucket_level_access = true
+  {%  endif -%}
+
+  {%  if bucket.public_access_prevention != "inherited" %}
+  public_access_prevention = "{{ bucket.public_access_prevention }}"
+  {%  endif -%}
+
+  {%  if bucket.versioning_enabled %}
+  versioning {
+    enabled = true
+  }
+  {%  endif -%}
+
+  {%- for rule in bucket.lifecycle_rules %}
+  lifecycle_rule {
+    condition {
+      {%  if rule.condition.age is defined %}
+      age = {{ rule.condition.age }}
+      {%  endif -%}
+      {%  if rule.condition.created_before %}
+      created_before = "{{ rule.condition.created_before }}"
+      {%  endif -%}
+      {%  if rule.condition.is_live is defined %}
+      is_live = {{ rule.condition.is_live | lower }}
+      {%  endif -%}
+      {%  if rule.condition.matches_storage_class %}
+      matches_storage_class = {{ rule.condition.matches_storage_class | tojson }}
+      {%  endif -%}
+      {%  if rule.condition.num_newer_versions is defined %}
+      num_newer_versions = {{ rule.condition.num_newer_versions }}
+      {%  endif -%}
+    }
+    action {
+      type = "{{ rule.action.type }}"
+      {%  if rule.action.storage_class %}
+      storage_class = "{{ rule.action.storage_class }}"
+      {%  endif -%}
+    }
+  }
+  {%- endfor %}
+
+  {%- for cors_rule in bucket.cors %}
+  cors {
+    origin          = {{ cors_rule.origins | tojson }}
+    method          = {{ cors_rule.methods | tojson }}
+    response_header = {{ cors_rule.response_headers | tojson }}
+    max_age_seconds = {{ cors_rule.max_age_seconds }}
+  }
+  {%- endfor %}
+
+  {%  if bucket.retention_policy %}
+  retention_policy {
+    retention_period = {{ bucket.retention_policy.retention_period }}
+    {%  if bucket.retention_policy.is_locked %}
+    is_locked = true
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  {%  if bucket.default_kms_key_name %}
+  encryption {
+    default_kms_key_name = "{{ bucket.default_kms_key_name }}"
+  }
+  {%  endif -%}
+
+  {%  if bucket.website %}
+  website {
+    {%  if bucket.website.main_page_suffix %}
+    main_page_suffix = "{{ bucket.website.main_page_suffix }}"
+    {%  endif -%}
+    {%  if bucket.website.not_found_page %}
+    not_found_page = "{{ bucket.website.not_found_page }}"
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  {%  if bucket.labels %}
+  labels = {
+    {%- for key, value in bucket.labels.items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

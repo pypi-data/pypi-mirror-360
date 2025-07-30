@@ -1,0 +1,98 @@
+{% for nic in resources -%}
+resource "azurerm_network_interface" "{{ nic.name_sanitized }}" {
+  name                = "{{ nic.name }}"
+  location            = "{{ nic.location }}"
+  resource_group_name = "{{ nic.resource_group_name }}"
+
+  {%  if nic.dns_servers %}
+  dns_servers = {{ nic.dns_servers | tojson }}
+  {%  endif -%}
+
+  {%  if nic.enable_ip_forwarding is not none %}
+  enable_ip_forwarding = {{ nic.enable_ip_forwarding | lower }}
+  {%  endif -%}
+
+  {%  if nic.enable_accelerated_networking is not none %}
+  enable_accelerated_networking = {{ nic.enable_accelerated_networking | lower }}
+  {%  endif -%}
+
+  {%  if nic.internal_dns_name_label %}
+  internal_dns_name_label = "{{ nic.internal_dns_name_label }}"
+  {%  endif -%}
+
+  {%- for ip_config in nic.ip_configuration %}
+  ip_configuration {
+    name                          = "{{ ip_config.name }}"
+    subnet_id                     = "{{ ip_config.subnet_id }}"
+    private_ip_address_allocation = "{{ ip_config.private_ip_address_allocation }}"
+    {%  if ip_config.private_ip_address %}
+    private_ip_address            = "{{ ip_config.private_ip_address }}"
+    {%  endif -%}
+    {%  if ip_config.public_ip_address_id %}
+    public_ip_address_id          = "{{ ip_config.public_ip_address_id }}"
+    {%  endif -%}
+    primary                       = {{ ip_config.primary | lower }}
+    {%  if ip_config.private_ip_address_version %}
+    private_ip_address_version    = "{{ ip_config.private_ip_address_version }}"
+    {%  endif -%}
+  }
+  {%- endfor %}
+
+  {%  if nic.tags %}
+  tags = {
+    {%- for key, value in nic.tags.items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{%  if nic.network_security_group_id %}
+resource "azurerm_network_interface_security_group_association" "{{ nic.name_sanitized }}_nsg" {
+  network_interface_id      = azurerm_network_interface.{{ nic.name_sanitized }}.id
+  network_security_group_id = "{{ nic.network_security_group_id }}"
+}
+{%  endif -%}
+
+{%  if nic.ip_configuration %}
+{%- for ip_config in nic.ip_configuration %}
+{%  if ip_config.application_gateway_backend_address_pool_ids %}
+{%- for pool_id in ip_config.application_gateway_backend_address_pool_ids %}
+resource "azurerm_network_interface_application_gateway_backend_address_pool_association" "{{ nic.name_sanitized }}_{{ loop.index }}" {
+  network_interface_id    = azurerm_network_interface.{{ nic.name_sanitized }}.id
+  ip_configuration_name   = "{{ ip_config.name }}"
+  backend_address_pool_id = "{{ pool_id }}"
+}
+{%- endfor %}
+{%  endif -%}
+
+{%  if ip_config.load_balancer_backend_address_pool_ids %}
+{%- for pool_id in ip_config.load_balancer_backend_address_pool_ids %}
+resource "azurerm_network_interface_backend_address_pool_association" "{{ nic.name_sanitized }}_lb_{{ loop.index }}" {
+  network_interface_id    = azurerm_network_interface.{{ nic.name_sanitized }}.id
+  ip_configuration_name   = "{{ ip_config.name }}"
+  backend_address_pool_id = "{{ pool_id }}"
+}
+{%- endfor %}
+{%  endif -%}
+
+{%  if ip_config.load_balancer_inbound_nat_rule_ids %}
+{%- for rule_id in ip_config.load_balancer_inbound_nat_rule_ids %}
+resource "azurerm_network_interface_nat_rule_association" "{{ nic.name_sanitized }}_nat_{{ loop.index }}" {
+  network_interface_id  = azurerm_network_interface.{{ nic.name_sanitized }}.id
+  ip_configuration_name = "{{ ip_config.name }}"
+  nat_rule_id           = "{{ rule_id }}"
+}
+{%- endfor %}
+{%  endif -%}
+{%- endfor %}
+{%  endif -%}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

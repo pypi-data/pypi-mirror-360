@@ -1,0 +1,32 @@
+{% for policy in resources -%}
+{%  if policy.is_custom %}
+resource "aws_lb_ssl_negotiation_policy" "{{ policy.name_sanitized }}" {
+  name          = "{{ policy.Name }}"
+  load_balancer = "{{ policy.LoadBalancerName }}"
+
+  {%- for cipher in policy.ciphers_formatted %}
+  attribute {
+    name  = "{{ cipher.name }}"
+    value = "true"
+  }
+  {%- endfor %}
+
+  {%- for protocol in policy.supported_protocols_formatted %}
+  attribute {
+    name  = "Protocol-{{ protocol }}"
+    value = "true"
+  }
+  {%- endfor %}
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+{%- else %}
+# Predefined SSL policy: {{ policy.Name }} (currently in use: {{ policy.is_in_use }})
+{%  endif -%}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

@@ -1,0 +1,33 @@
+{# Common macros for Terraform templates #}
+
+{% macro render_tags(tags, indent=2) -%}
+{{ render_map('tags', tags, indent) }}
+{%- endmacro %}
+
+{% macro render_map(name, data, indent=2) -%}
+{% if data -%}
+{{ ' ' * indent }}{{ name }} = {
+{%- for key, value in data.items() %}
+{{ ' ' * (indent + 2) }}"{{ key }}" = "{{ value | replace('"', '\\"') }}"{{ ',' if not loop.last }}
+{%- endfor %}
+{{ ' ' * indent }}}
+{%- endif %}
+{%- endmacro %}
+
+{% macro render_list(items, indent=2) -%}
+[
+{%- for item in items %}
+{{ ' ' * (indent + 2) }}"{{ item }}"{{ ',' if not loop.last }}
+{%- endfor %}
+{{ ' ' * indent }}]
+{%- endmacro %}
+
+{% macro render_tag_list(tag_list, indent=2, key_attr='Key', value_attr='Value') -%}
+{% if tag_list -%}
+{{ ' ' * indent }}tags = {
+{%- for tag in tag_list %}
+{{ ' ' * (indent + 2) }}"{{ tag[key_attr] }}" = "{{ tag[value_attr] | replace('"', '\\"') }}"{{ ',' if not loop.last }}
+{%- endfor %}
+{{ ' ' * indent }}}
+{%- endif %}
+{%- endmacro %}

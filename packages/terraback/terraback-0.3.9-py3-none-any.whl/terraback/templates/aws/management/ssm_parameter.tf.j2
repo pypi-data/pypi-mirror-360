@@ -1,0 +1,57 @@
+{% for parameter in resources -%}
+resource "aws_ssm_parameter" "{{ parameter.name_sanitized }}" {
+  name = "{{ parameter.Name }}"
+  type = "{{ parameter.Type }}"
+
+  {%  if parameter.Type != 'SecureString' and parameter.get('Value') %}
+  value = "{{ parameter.Value | replace('"', '\\"') }}"
+  {%- else %}
+  value = "placeholder_secure_value"
+  {%  endif -%}
+
+  {%  if parameter.get('Description') %}
+  description = "{{ parameter.Description }}"
+  {%  endif -%}
+
+  {%  if parameter.get('KeyId') and parameter.is_secure %}
+  key_id = "{{ parameter.KeyId }}"
+  {%  endif -%}
+
+  {%  if parameter.get('AllowedPattern') %}
+  allowed_pattern = "{{ parameter.AllowedPattern }}"
+  {%  endif -%}
+
+  tier = "{{ parameter.Tier }}"
+
+  {%  if parameter.get('DataType') and parameter.DataType != 'text' %}
+  data_type = "{{ parameter.DataType }}"
+  {%  endif -%}
+
+  {%  if parameter.get('tags_formatted') or parameter.category or parameter.Tier %}
+  tags = {
+    {%- for key, value in parameter.get('tags_formatted', {}).items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+    {%  if parameter.get('tags_formatted') and (parameter.category or parameter.Tier) %},{% endif -%}
+    {%  if parameter.category %}
+    "ParameterCategory" = "{{ parameter.category }}"{{ "," if parameter.Tier }}
+    {%  endif -%}
+    {%  if parameter.Tier %}
+    "ParameterTier" = "{{ parameter.Tier }}"
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  {%  if parameter.is_secure %}
+  lifecycle {
+    ignore_changes = [
+      value,
+    ]
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

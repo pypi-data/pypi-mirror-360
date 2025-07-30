@@ -1,0 +1,22 @@
+{% for key_pair in resources -%}
+resource "aws_key_pair" "{{ key_pair.KeyName | tf_resource_name }}" {
+  key_name = "{{ key_pair.KeyName }}"
+  
+  # IMPORTANT: Replace this with the actual public key content
+  # You can read from a file: public_key = file("~/.ssh/id_rsa.pub")
+  # Or specify directly: public_key = "ssh-rsa AAAAB3NzaC1yc2E..."
+  public_key = file("~/.ssh/{{ key_pair.KeyName }}.pub")
+
+  {%  if key_pair.get('Tags') %}
+  tags = {
+    {%- for tag in key_pair.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

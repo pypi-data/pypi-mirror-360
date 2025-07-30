@@ -1,0 +1,37 @@
+{% for sub in resources -%}
+resource "aws_sns_topic_subscription" "{{ sub.name_sanitized | tf_resource_name }}" {
+  topic_arn = "{{ sub.TopicArn }}"
+  protocol  = "{{ sub.Protocol }}"
+  endpoint  = "{{ sub.Endpoint }}"
+
+  {%  if sub.get('subscription_role_arn') %}
+  subscription_role_arn = "{{ sub.subscription_role_arn }}"
+  {%  endif -%}
+
+  {%  if sub.get('raw_message_delivery') is defined and sub.raw_message_delivery is not none %}
+  raw_message_delivery = {{ sub.raw_message_delivery | lower }}
+  {%  endif -%}
+
+  {%  if sub.get('filter_policy') %}
+  filter_policy = jsonencode({{ sub.filter_policy | tojson }})
+  {%  endif -%}
+
+  {%  if sub.get('filter_policy_scope') and sub.filter_policy_scope != "MessageAttributes" %}
+  filter_policy_scope = "{{ sub.filter_policy_scope }}"
+  {%  endif -%}
+
+  {%  if sub.get('delivery_policy') %}
+  delivery_policy = jsonencode({{ sub.delivery_policy | tojson }})
+  {%  endif -%}
+
+  {%  if sub.get('redrive_policy') %}
+  redrive_policy = jsonencode({{ sub.redrive_policy | tojson }})
+  {%  endif -%}
+
+  # Note: confirmation_was_authenticated is a read-only attribute and cannot be set
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

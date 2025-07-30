@@ -1,0 +1,26 @@
+{% for sg in resources -%}
+resource "aws_elasticache_subnet_group" "{{ sg.name_sanitized }}" {
+  name       = "{{ sg.CacheSubnetGroupName }}"
+  subnet_ids = [
+    {%- for subnet_id in sg.get('subnet_ids', []) %}
+    "{{ subnet_id }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+
+  {%  if sg.get('CacheSubnetGroupDescription') %}
+  description = "{{ sg.CacheSubnetGroupDescription }}"
+  {%  endif -%}
+
+  {%  if sg.get('tags_formatted') %}
+  tags = {
+    {%- for key, value in sg.get('tags_formatted', {}).items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

@@ -1,0 +1,82 @@
+{% for policy in resources -%}
+resource "aws_autoscaling_policy" "{{ policy.name_sanitized }}" {
+  name                   = "{{ policy.PolicyName }}"
+  autoscaling_group_name = "{{ policy.AutoScalingGroupName }}"
+  policy_type            = "{{ policy.PolicyType }}"
+
+  {%  if policy.get('AdjustmentType') %}
+  adjustment_type = "{{ policy.AdjustmentType }}"
+  {%  endif -%}
+
+  {%  if policy.get('ScalingAdjustment') is defined %}
+  scaling_adjustment = {{ policy.ScalingAdjustment }}
+  {%  endif -%}
+
+  {%  if policy.get('Cooldown') %}
+  cooldown = {{ policy.Cooldown }}
+  {%  endif -%}
+
+  {%  if policy.get('MinAdjustmentMagnitude') %}
+  min_adjustment_magnitude = {{ policy.MinAdjustmentMagnitude }}
+  {%  endif -%}
+
+  {%  if policy.get('MetricAggregationType') %}
+  metric_aggregation_type = "{{ policy.MetricAggregationType }}"
+  {%  endif -%}
+
+  {%  if policy.get('EstimatedInstanceWarmup') %}
+  estimated_instance_warmup = {{ policy.EstimatedInstanceWarmup }}
+  {%  endif -%}
+
+  {%- for step in policy.get('StepAdjustmentsFormatted', []) %}
+  step_adjustment {
+    {%  if step.get('MetricIntervalLowerBound') is defined %}
+    metric_interval_lower_bound = {{ step.MetricIntervalLowerBound }}
+    {%  endif -%}
+    {%  if step.get('MetricIntervalUpperBound') is defined %}
+    metric_interval_upper_bound = {{ step.MetricIntervalUpperBound }}
+    {%  endif -%}
+    scaling_adjustment = {{ step.ScalingAdjustment }}
+  }
+  {%- endfor %}
+
+  {%  if policy.get('TargetTrackingFormatted') %}
+  target_tracking_configuration {
+    target_value = {{ policy.TargetTrackingFormatted.TargetValue }}
+    disable_scale_in = {{ policy.TargetTrackingFormatted.DisableScaleIn | lower }}
+
+    {%  if policy.TargetTrackingFormatted.get('PredefinedMetricSpecification') %}
+    predefined_metric_specification {
+      predefined_metric_type = "{{ policy.TargetTrackingFormatted.PredefinedMetricSpecification.PredefinedMetricType }}"
+      {%  if policy.TargetTrackingFormatted.PredefinedMetricSpecification.get('ResourceLabel') %}
+      resource_label = "{{ policy.TargetTrackingFormatted.PredefinedMetricSpecification.ResourceLabel }}"
+      {%  endif -%}
+    }
+    {%  endif -%}
+
+    {%  if policy.TargetTrackingFormatted.get('CustomizedMetricSpecification') %}
+    customized_metric_specification {
+      metric_name = "{{ policy.TargetTrackingFormatted.CustomizedMetricSpecification.MetricName }}"
+      namespace   = "{{ policy.TargetTrackingFormatted.CustomizedMetricSpecification.Namespace }}"
+      statistic   = "{{ policy.TargetTrackingFormatted.CustomizedMetricSpecification.Statistic }}"
+
+      {%  if policy.TargetTrackingFormatted.CustomizedMetricSpecification.get('Unit') %}
+      unit = "{{ policy.TargetTrackingFormatted.CustomizedMetricSpecification.Unit }}"
+      {%  endif -%}
+
+      {%- for dimension in policy.TargetTrackingFormatted.CustomizedMetricSpecification.get('Dimensions', []) %}
+      metric_dimension {
+        name  = "{{ dimension.Name }}"
+        value = "{{ dimension.Value }}"
+      }
+      {%- endfor %}
+    }
+    {%  endif -%}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

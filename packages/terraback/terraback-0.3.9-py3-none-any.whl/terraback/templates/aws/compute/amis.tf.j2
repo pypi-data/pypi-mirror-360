@@ -1,0 +1,21 @@
+{% for ami in resources -%}
+resource "aws_ami" "{{ ami.ImageId | strip_id_prefix | tf_resource_name }}" {
+  name                = "{{ ami.Name }}"
+  description         = "{{ ami.Description | default('') }}"
+  architecture        = "{{ ami.Architecture }}"
+  root_device_name    = "{{ ami.RootDeviceName }}"
+  virtualization_type = "{{ ami.VirtualizationType }}"
+
+  {%  if ami.get('Tags') %}
+  tags = {
+    {%- for tag in ami.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

@@ -1,0 +1,50 @@
+{% for subnet in resources -%}
+resource "google_compute_subnetwork" "{{ subnet.name_sanitized }}" {
+  name          = "{{ subnet.name }}"
+  project       = "{{ subnet.project }}"
+  region        = "{{ subnet.region }}"
+  network       = "{{ subnet.network }}"
+  ip_cidr_range = "{{ subnet.ip_cidr_range }}"
+  {%  if subnet.description %}
+  description   = "{{ subnet.description }}"
+  {%  endif -%}
+
+  {%  if subnet.purpose != "PRIVATE" %}
+  purpose       = "{{ subnet.purpose }}"
+  {%  endif -%}
+
+  {%  if subnet.private_ip_google_access %}
+  private_ip_google_access = true
+  {%  endif -%}
+
+  {%  if subnet.stack_type != "IPV4_ONLY" %}
+  stack_type    = "{{ subnet.stack_type }}"
+  {%  endif -%}
+
+  {%- for secondary_range in subnet.secondary_ip_ranges %}
+  secondary_ip_range {
+    range_name    = "{{ secondary_range.range_name }}"
+    ip_cidr_range = "{{ secondary_range.ip_cidr_range }}"
+  }
+  {%- endfor %}
+
+  {%  if subnet.enable_flow_logs and subnet.log_config %}
+  log_config {
+    aggregation_interval = "{{ subnet.log_config.aggregation_interval }}"
+    flow_sampling        = {{ subnet.log_config.flow_sampling }}
+    metadata             = "{{ subnet.log_config.metadata }}"
+    {%  if subnet.log_config.metadata_fields %}
+    metadata_fields      = {{ subnet.log_config.metadata_fields | tojson }}
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

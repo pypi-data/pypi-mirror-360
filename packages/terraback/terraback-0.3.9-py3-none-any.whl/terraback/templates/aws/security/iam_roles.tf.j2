@@ -1,0 +1,32 @@
+{% for role in resources -%}
+resource "aws_iam_role" "{{ role.RoleName | tf_resource_name }}" {
+  name = "{{ role.RoleName }}"
+  path = "{{ role.Path }}"
+
+  assume_role_policy = jsonencode({{ role.AssumeRolePolicyDocument | tojson }})
+
+  {% if role.get('Description') -%}
+  description = "{{ role.Description | replace('"', '\\"') }}"
+  {% endif -%}
+
+  {% if role.get('MaxSessionDuration') -%}
+  max_session_duration = {{ role.MaxSessionDuration }}
+  {% endif -%}
+
+  {% if role.get('PermissionsBoundary') -%}
+  permissions_boundary = "{{ role.PermissionsBoundary }}"
+  {% endif -%}
+
+  {% if role.get('Tags') -%}
+  tags = {
+    {%- for tag in role.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value | replace('"', '\\"') }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {% endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif %}
+{%- endfor %}

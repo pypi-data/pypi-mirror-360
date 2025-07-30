@@ -1,0 +1,104 @@
+{% for disk in resources -%}
+resource "azurerm_managed_disk" "{{ disk.name_sanitized }}" {
+  name                 = "{{ disk.name }}"
+  location             = "{{ disk.location }}"
+  resource_group_name  = "{{ disk.resource_group_name }}"
+  storage_account_type = "{{ disk.storage_account_type }}"
+
+  {%  if disk.create_option %}
+  create_option        = "{{ disk.create_option }}"
+  {%  endif -%}
+
+  {%  if disk.disk_size_gb %}
+  disk_size_gb         = {{ disk.disk_size_gb }}
+  {%  endif -%}
+
+  {%  if disk.source_uri %}
+  source_uri           = "{{ disk.source_uri }}"
+  {%  endif -%}
+
+  {%  if disk.source_resource_id %}
+  source_resource_id   = "{{ disk.source_resource_id }}"
+  {%  endif -%}
+
+  {%  if disk.image_reference_id %}
+  image_reference_id   = "{{ disk.image_reference_id }}"
+  {%  endif -%}
+
+  {%  if disk.os_type %}
+  os_type              = "{{ disk.os_type }}"
+  {%  endif -%}
+
+  {%  if disk.hyper_v_generation %}
+  hyper_v_generation   = "{{ disk.hyper_v_generation }}"
+  {%  endif -%}
+
+  {%  if disk.zones %}
+  zones                = {{ disk.zones | tojson }}
+  {%  endif -%}
+
+  {%  if disk.disk_iops_read_write %}
+  disk_iops_read_write = {{ disk.disk_iops_read_write }}
+  {%  endif -%}
+
+  {%  if disk.disk_mbps_read_write %}
+  disk_mbps_read_write = {{ disk.disk_mbps_read_write }}
+  {%  endif -%}
+
+  {%  if disk.tier %}
+  tier                 = "{{ disk.tier }}"
+  {%  endif -%}
+
+  {%  if disk.disk_access_id %}
+  disk_access_id       = "{{ disk.disk_access_id }}"
+  {%  endif -%}
+
+  {%  if disk.network_access_policy %}
+  network_access_policy = "{{ disk.network_access_policy }}"
+  {%  endif -%}
+
+  {%  if disk.bursting_enabled is not none %}
+  enable_bursting      = {{ disk.bursting_enabled | lower }}
+  {%  endif -%}
+
+  {%  if disk.disk_encryption_set_id %}
+  disk_encryption_set_id = "{{ disk.disk_encryption_set_id }}"
+  {%  endif -%}
+
+  {%  if disk.encryption_settings %}
+  encryption_settings {
+    enabled = {{ disk.encryption_settings.enabled | lower }}
+
+    {%  if disk.encryption_settings.disk_encryption_key %}
+    disk_encryption_key {
+      secret_url      = "{{ disk.encryption_settings.disk_encryption_key.secret_url }}"
+      source_vault_id = "{{ disk.encryption_settings.disk_encryption_key.source_vault_id }}"
+    }
+    {%  endif -%}
+
+    {%  if disk.encryption_settings.key_encryption_key %}
+    key_encryption_key {
+      key_url         = "{{ disk.encryption_settings.key_encryption_key.key_url }}"
+      source_vault_id = "{{ disk.encryption_settings.key_encryption_key.source_vault_id }}"
+    }
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  {%  if disk.tags %}
+  tags = {
+    {%- for key, value in disk.tags.items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

@@ -1,0 +1,136 @@
+{% for alarm in resources -%}
+{%  if alarm.get('AlarmType') == 'CompositeAlarm' %}
+resource "aws_cloudwatch_composite_alarm" "{{ alarm.name_sanitized }}" {
+  alarm_name        = "{{ alarm.AlarmName }}"
+  alarm_description = "{{ alarm.get('AlarmDescription', '') | escape_quotes }}"
+  alarm_rule        = "{{ alarm.AlarmRule | escape_quotes }}"
+
+  {%  if alarm.get('ActionsEnabled') is defined %}
+  actions_enabled = {{ alarm.ActionsEnabled | lower }}
+  {%  endif %}
+
+  {%  if alarm.get('AlarmActions') and alarm.AlarmActions | has_value %}
+  alarm_actions = [
+    {%- for action in alarm.AlarmActions %}
+    "{{ action }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif %}
+
+  {%  if alarm.get('OKActions') and alarm.OKActions | has_value %}
+  ok_actions = [
+    {%- for action in alarm.OKActions %}
+    "{{ action }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif %}
+
+  {%  if alarm.get('InsufficientDataActions') and alarm.InsufficientDataActions | has_value %}
+  insufficient_data_actions = [
+    {%- for action in alarm.InsufficientDataActions %}
+    "{{ action }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif %}
+
+  {%  if alarm.get('Tags') and alarm.Tags | has_value %}
+  tags = {
+    {%- for tag in alarm.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value | escape_quotes }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif %}
+}
+{%- else %}
+resource "aws_cloudwatch_metric_alarm" "{{ alarm.name_sanitized }}" {
+  alarm_name          = "{{ alarm.AlarmName }}"
+  alarm_description   = "{{ alarm.get('AlarmDescription', '') | escape_quotes }}"
+  
+  {%  if alarm.get('MetricName') and alarm.MetricName | has_value %}
+  metric_name         = "{{ alarm.MetricName }}"
+  {%  endif %}
+  {%  if alarm.get('Namespace') and alarm.Namespace | has_value %}
+  namespace           = "{{ alarm.Namespace }}"
+  {%  endif %}
+  {%  if alarm.get('Statistic') and alarm.Statistic | has_value %}
+  statistic           = "{{ alarm.Statistic }}"
+  {%  endif %}
+  {%  if alarm.get('ExtendedStatistic') and alarm.ExtendedStatistic | has_value %}
+  extended_statistic  = "{{ alarm.ExtendedStatistic }}"
+  {%  endif %}
+  
+  period              = {{ alarm.get('Period', 300) | safe_int }}
+  evaluation_periods  = {{ alarm.get('EvaluationPeriods', 1) | safe_int }}
+  
+  {%  if alarm.get('Threshold') is defined and alarm.Threshold is not none %}
+  threshold           = {{ alarm.Threshold }}
+  {%  endif %}
+  
+  comparison_operator = "{{ alarm.get('ComparisonOperator', 'GreaterThanThreshold') }}"
+
+  {%  if alarm.get('ActionsEnabled') is defined %}
+  actions_enabled = {{ alarm.ActionsEnabled | lower }}
+  {%  endif %}
+
+  {%  if alarm.get('AlarmActions') and alarm.AlarmActions | has_value %}
+  alarm_actions = [
+    {%- for action in alarm.AlarmActions %}
+    "{{ action }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif %}
+
+  {%  if alarm.get('OKActions') and alarm.OKActions | has_value %}
+  ok_actions = [
+    {%- for action in alarm.OKActions %}
+    "{{ action }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif %}
+
+  {%  if alarm.get('InsufficientDataActions') and alarm.InsufficientDataActions | has_value %}
+  insufficient_data_actions = [
+    {%- for action in alarm.InsufficientDataActions %}
+    "{{ action }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif %}
+
+  {%  if alarm.get('Dimensions') and alarm.Dimensions | has_value %}
+  dimensions = {
+    {%- for dimension in alarm.Dimensions %}
+    "{{ dimension.Name }}" = "{{ dimension.Value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif %}
+
+  {%  if alarm.get('Unit') and alarm.Unit | has_value %}
+  unit = "{{ alarm.Unit }}"
+  {%  endif %}
+
+  {%  if alarm.get('DatapointsToAlarm') is defined and alarm.DatapointsToAlarm is not none %}
+  datapoints_to_alarm = {{ alarm.DatapointsToAlarm | safe_int }}
+  {%  endif %}
+
+  {%  if alarm.get('TreatMissingData') and alarm.TreatMissingData | has_value %}
+  treat_missing_data = "{{ alarm.TreatMissingData }}"
+  {%  endif %}
+
+  {%  if alarm.get('EvaluateLowSampleCountPercentile') and alarm.EvaluateLowSampleCountPercentile | has_value %}
+  evaluate_low_sample_count_percentiles = "{{ alarm.EvaluateLowSampleCountPercentile }}"
+  {%  endif %}
+
+  {%  if alarm.get('Tags') and alarm.Tags | has_value %}
+  tags = {
+    {%- for tag in alarm.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value | escape_quotes }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif %}
+}
+{%  endif %}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

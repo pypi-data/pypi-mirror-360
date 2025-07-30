@@ -1,0 +1,133 @@
+{% import "common/macros.j2" as macros %}
+{% for vm in resources -%}
+{%- set is_windows = vm.os_type and vm.os_type.lower() == 'windows' -%}
+{%- set resource_type = 'azurerm_windows_virtual_machine' if is_windows else 'azurerm_linux_virtual_machine' -%}
+
+resource "{{ resource_type }}" "{{ vm.name_sanitized }}" {
+  name                = "{{ vm.name }}"
+  location            = "{{ vm.location }}"
+  resource_group_name = "{{ vm.resource_group_name }}"
+  size                = "{{ vm.size }}"
+  admin_username      = "{{ vm.admin_username }}"
+  {%  if vm.computer_name %}
+  computer_name       = "{{ vm.computer_name }}"
+{%  endif -%}
+  {%  if vm.availability_set_id %}
+  availability_set_id = "{{ vm.availability_set_id }}"
+{%  endif -%}
+  {%  if vm.zone %}
+  zone                = "{{ vm.zone }}"
+  {%  endif -%}
+  {%  if vm.license_type %}
+  license_type        = "{{ vm.license_type }}"
+  {%  endif -%}
+  {%  if vm.priority %}
+  priority            = "{{ vm.priority }}"
+  {%  endif -%}
+  {%  if vm.eviction_policy %}
+  eviction_policy     = "{{ vm.eviction_policy }}"
+  {%  endif -%}
+
+  network_interface_ids = [
+    {%- for nic_id in vm.network_interface_ids %}
+    "{{ nic_id }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+
+  os_disk {
+    name                 = "{{ vm.os_disk.name }}"
+    caching              = "{{ vm.os_disk.caching }}"
+    storage_account_type = "{{ vm.os_disk.storage_account_type }}"
+    {%  if vm.os_disk.disk_size_gb %}
+    disk_size_gb         = {{ vm.os_disk.disk_size_gb }}
+    {%  endif -%}
+  }
+
+  {%  if vm.source_image_id %}
+  source_image_id = "{{ vm.source_image_id }}"
+  {%- elif vm.source_image_reference %}
+  source_image_reference {
+    publisher = "{{ vm.source_image_reference.publisher }}"
+    offer     = "{{ vm.source_image_reference.offer }}"
+    sku       = "{{ vm.source_image_reference.sku }}"
+    version   = "{{ vm.source_image_reference.version }}"
+  }
+  {%  endif -%}
+
+  {%  if is_windows %}
+  admin_password = "ChangeMe123!"
+
+  {%  if vm.enable_automatic_updates is not none %}
+  enable_automatic_updates = {{ vm.enable_automatic_updates | lower }}
+  {%  endif -%}
+  {%  if vm.timezone %}
+  timezone = "{{ vm.timezone }}"
+  {%  endif -%}
+  {%  if vm.provision_vm_agent is not none %}
+  provision_vm_agent = {{ vm.provision_vm_agent | lower }}
+  {%  endif -%}
+
+  {%- else %}
+  disable_password_authentication = true
+
+  {%  if vm.admin_ssh_keys %}
+  {%- for ssh_key in vm.admin_ssh_keys %}
+  admin_ssh_key {
+    username   = "{{ ssh_key.username or vm.admin_username }}"
+    public_key = "{{ ssh_key.public_key }}"
+  }
+  {%- endfor %}
+  {%- else %}
+  admin_ssh_key {
+    username   = "{{ vm.admin_username }}"
+    public_key = file("~/.ssh/id_rsa.pub")
+  }
+  {%  endif -%}
+  {%  endif -%}
+
+  {%  if vm.boot_diagnostics %}
+  boot_diagnostics {
+    {%  if vm.boot_diagnostics.storage_account_uri %}
+    storage_account_uri = "{{ vm.boot_diagnostics.storage_account_uri }}"
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  {%  if vm.identity %}
+  identity {
+    type = "{{ vm.identity.type }}"
+    {%  if vm.identity.identity_ids %}
+    identity_ids = [
+      {%- for id in vm.identity.identity_ids %}
+      "{{ id }}"{{ "," if not loop.last }}
+      {%- endfor %}
+  ]
+    {%  endif -%}
+}
+    {%  endif -%}
+  
+{{ macros.render_tags(vm.tags, indent=2) }}
+
+  lifecycle {
+    prevent_destroy = true
+    {%  if is_windows %}
+    ignore_changes = [admin_password]
+    {%  endif -%}
+  }
+}
+
+{%  if vm.data_disks %}
+{%- for disk in vm.data_disks %}
+resource "azurerm_virtual_machine_data_disk_attachment" "{{ vm.name_sanitized }}_disk_{{ disk.lun }}" {
+  managed_disk_id    = azurerm_managed_disk.{{ disk.name.replace('-', '_').replace('.', '_').lower() }}.id
+  virtual_machine_id = {{ resource_type }}.{{ vm.name_sanitized }}.id
+  lun                = {{ disk.lun }}
+  caching            = "{{ disk.caching }}"
+}
+{%- endfor %}
+{%  endif -%}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

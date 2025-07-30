@@ -1,0 +1,163 @@
+{% for dist in resources -%}
+{%- set config = dist.DistributionConfigFormatted -%}
+resource "aws_cloudfront_distribution" "{{ dist.name_sanitized }}" {
+  comment = "{{ config.get('Comment', '') | escape_quotes }}"
+
+  {%  if config.get('aliases_formatted') and config.aliases_formatted | has_value %}
+  aliases = [
+    {%- for alias in config.aliases_formatted %}
+    "{{ alias }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif %}
+
+  default_root_object = "{{ config.get('DefaultRootObject', '') }}"
+  enabled             = {{ config.get('Enabled', true) | lower }}
+  is_ipv6_enabled     = {{ config.get('IsIPV6Enabled', true) | lower }}
+  price_class         = "{{ config.get('PriceClass', 'PriceClass_All') }}"
+
+  {%  if config.get('web_acl_id') and config.web_acl_id | has_value %}
+  web_acl_id = "{{ config.web_acl_id }}"
+  {%  endif %}
+
+  {%- for origin in config.get('origins_formatted', []) %}
+  origin {
+    domain_name = "{{ origin.domain_name }}"
+    origin_id   = "{{ origin.origin_id }}"
+
+    {%  if origin.get('origin_path') and origin.origin_path | has_value %}
+    origin_path = "{{ origin.origin_path }}"
+    {%  endif %}
+
+    connection_attempts = {{ origin.get('connection_attempts', 3) | safe_int }}
+    connection_timeout  = {{ origin.get('connection_timeout', 10) | safe_int }}
+
+    {%  if origin.get('origin_access_control_id') and origin.origin_access_control_id | has_value %}
+    origin_access_control_id = "{{ origin.origin_access_control_id }}"
+    {%  endif %}
+
+    {%  if origin.get('s3_origin_config') %}
+    s3_origin_config {
+      origin_access_identity = "{{ origin.s3_origin_config.get('OriginAccessIdentity', '') }}"
+    }
+    {%  endif %}
+
+    {%  if origin.get('custom_origin_config') %}
+    custom_origin_config {
+      http_port                = {{ origin.custom_origin_config.get('HTTPPort', 80) | safe_int }}
+      https_port               = {{ origin.custom_origin_config.get('HTTPSPort', 443) | safe_int }}
+      origin_protocol_policy   = "{{ origin.custom_origin_config.get('OriginProtocolPolicy', 'https-only') }}"
+      origin_ssl_protocols     = [
+        {%- for protocol in origin.custom_origin_config.get('OriginSslProtocols', {}).get('Items', ['TLSv1.2']) %}
+        "{{ protocol }}"{{ "," if not loop.last }}
+        {%- endfor %}
+      ]
+      origin_read_timeout      = {{ origin.custom_origin_config.get('OriginReadTimeout', 30) | safe_int }}
+      origin_keepalive_timeout = {{ origin.custom_origin_config.get('OriginKeepaliveTimeout', 5) | safe_int }}
+    }
+    {%  endif %}
+
+    {%  if origin.get('origin_shield') and origin.origin_shield.get('Enabled') %}
+    origin_shield {
+      enabled              = true
+      origin_shield_region = "{{ origin.origin_shield.OriginShieldRegion }}"
+    }
+    {%  endif %}
+  }
+  {%- endfor %}
+
+  {%- set default_behavior = config.get('default_cache_behavior_formatted', {}) %}
+  default_cache_behavior {
+    target_origin_id       = "{{ default_behavior.get('target_origin_id') }}"
+    viewer_protocol_policy = "{{ default_behavior.get('viewer_protocol_policy', 'redirect-to-https') }}"
+
+    allowed_methods = [
+      {%- for method in default_behavior.get('allowed_methods', ['GET', 'HEAD']) %}
+      "{{ method }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    cached_methods = [
+      {%- for method in default_behavior.get('cached_methods', ['GET', 'HEAD']) %}
+      "{{ method }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+
+    compress = {{ default_behavior.get('compress', false) | lower }}
+
+    {%  if default_behavior.get('cache_policy_id') and default_behavior.cache_policy_id | has_value %}
+    cache_policy_id = "{{ default_behavior.cache_policy_id }}"
+    {%  endif %}
+
+    {%  if default_behavior.get('origin_request_policy_id') and default_behavior.origin_request_policy_id | has_value %}
+    origin_request_policy_id = "{{ default_behavior.origin_request_policy_id }}"
+    {%  endif %}
+
+    {%  if default_behavior.get('response_headers_policy_id') and default_behavior.response_headers_policy_id | has_value %}
+    response_headers_policy_id = "{{ default_behavior.response_headers_policy_id }}"
+    {%  endif %}
+
+    {%  if not default_behavior.get('cache_policy_id') and default_behavior.get('forwarded_values') %}
+    min_ttl     = {{ default_behavior.get('min_ttl', 0) | safe_int }}
+    default_ttl = {{ default_behavior.get('default_ttl', 86400) | safe_int }}
+    max_ttl     = {{ default_behavior.get('max_ttl', 31536000) | safe_int }}
+    
+    forwarded_values {
+      query_string = {{ default_behavior.forwarded_values.get('QueryString', false) | lower }}
+
+      {%  if default_behavior.forwarded_values.get('Headers') and default_behavior.forwarded_values.Headers.get('Items') %}
+      headers = [
+        {%- for header in default_behavior.forwarded_values.Headers.Items %}
+        "{{ header }}"{{ "," if not loop.last }}
+        {%- endfor %}
+      ]
+      {%  endif %}
+
+      cookies {
+        forward = "{{ default_behavior.forwarded_values.get('Cookies', {}).get('Forward', 'none') }}"
+        {%  if default_behavior.forwarded_values.get('Cookies', {}).get('WhitelistedNames', {}).get('Items') %}
+        whitelisted_names = [
+          {%- for cookie in default_behavior.forwarded_values.Cookies.WhitelistedNames.Items %}
+          "{{ cookie }}"{{ "," if not loop.last }}
+          {%- endfor %}
+        ]
+        {%  endif %}
+      }
+
+      {%  if default_behavior.forwarded_values.get('QueryStringCacheKeys', {}).get('Items') %}
+      query_string_cache_keys = [
+        {%- for key in default_behavior.forwarded_values.QueryStringCacheKeys.Items %}
+        "{{ key }}"{{ "," if not loop.last }}
+        {%- endfor %}
+      ]
+      {%  endif %}
+    }
+    {%  endif %}
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+
+  {%  if config.get('tags_formatted') and config.tags_formatted | has_value %}
+  tags = {
+    {%- for key, value in config.get('tags_formatted', {}).items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif %}
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

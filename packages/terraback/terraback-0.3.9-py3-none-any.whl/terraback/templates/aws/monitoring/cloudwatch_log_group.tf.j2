@@ -1,0 +1,29 @@
+{% for log_group in resources -%}
+resource "aws_cloudwatch_log_group" "{{ log_group.logGroupName | tf_resource_name }}" {
+  name = "{{ log_group.logGroupName }}"
+
+  {%  if log_group.get('retentionInDays') %}
+  retention_in_days = {{ log_group.retentionInDays }}
+  {%  endif -%}
+
+  {%  if log_group.get('kmsKeyId') %}
+  kms_key_id = "{{ log_group.kmsKeyId }}"
+  {%  endif -%}
+
+  {%  if log_group.get('logGroupClass') %}
+  log_group_class = "{{ log_group.logGroupClass }}"
+  {%  endif -%}
+
+  {%  if log_group.get('tags') %}
+  tags = {
+    {%- for key, value in log_group.get('tags', {}).items() %}
+    "{{ key }}" = "{{ value | replace('"', '\\"') }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

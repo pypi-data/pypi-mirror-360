@@ -1,0 +1,68 @@
+{% import "common/macros.j2" as macros %}
+{% for template in resources -%}
+resource "aws_launch_template" "{{ template.name_sanitized }}" {
+  name_prefix   = "{{ template.launch_template_name }}-"
+  description   = "Launch template imported from AWS"
+  
+  {%  if template.image_id %}
+  image_id      = "{{ template.image_id }}"
+  {%  endif -%}
+  
+  {%  if template.instance_type %}
+  instance_type = "{{ template.instance_type }}"
+  {%  endif -%}
+  
+  {%  if template.key_name %}
+  key_name      = "{{ template.key_name }}"
+  {%  endif -%}
+  
+  {%  if template.security_groups_ids %}
+  vpc_security_group_ids = {{ macros.render_list(template.security_groups_ids, indent=2) }}
+  {%  endif -%}
+  
+  {%  if template.user_data %}
+  user_data = base64encode(<<-EOF
+{{ template.user_data | replace('\n', '\n  ') }}
+  EOF
+  )
+  {%  endif -%}
+  
+  {%  if template.iam_instance_profile %}
+  iam_instance_profile {
+    name = "{{ template.iam_instance_profile }}"
+  }
+  {%  endif -%}
+  
+  {%  if template.ebs_optimized %}
+  ebs_optimized = true
+  {%  endif -%}
+  
+  monitoring {
+    enabled = {{ 'true' if template.monitoring_enabled else 'false' }}
+  }
+  
+  {%  if template.subnet_id %}
+  network_interfaces {
+    associate_public_ip_address = true
+    subnet_id                   = "{{ template.subnet_id }}"
+    delete_on_termination       = true
+    {%  if template.security_groups_ids %}
+    security_groups = {{ macros.render_list(template.security_groups_ids, indent=4) }}
+    {%  endif -%}
+  }
+  {%  endif -%}
+  
+  {%  if template.tags %}
+  tag_specifications {
+    resource_type = "instance"
+{{ macros.render_tag_list(template.tags, indent=4) }}
+  }
+  
+{{ macros.render_tag_list(template.tags, indent=2) }}
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

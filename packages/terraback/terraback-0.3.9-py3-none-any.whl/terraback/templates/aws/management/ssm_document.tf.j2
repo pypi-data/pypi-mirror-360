@@ -1,0 +1,35 @@
+{% for doc in resources -%}
+resource "aws_ssm_document" "{{ doc.name_sanitized }}" {
+  name            = "{{ doc.Name }}"
+  document_type   = "{{ doc.DocumentType }}"
+  document_format = "{{ doc.DocumentFormat }}"
+
+  content = <<DOC
+{{ doc.Content }}
+DOC
+
+  {%  if doc.get('Description') %}
+  description = "{{ doc.Description }}"
+  {%  endif -%}
+
+  {%  if doc.get('TargetType') %}
+  target_type = "{{ doc.TargetType }}"
+  {%  endif -%}
+
+  {%  if doc.get('VersionName') %}
+  version_name = "{{ doc.VersionName }}"
+  {%  endif -%}
+
+  {%  if doc.get('tags_formatted') %}
+  tags = {
+    {%- for key, value in doc.tags_formatted.items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

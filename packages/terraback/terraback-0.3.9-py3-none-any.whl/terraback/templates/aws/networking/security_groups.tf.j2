@@ -1,0 +1,117 @@
+{% for sg in resources -%}
+resource "aws_security_group" "{{ sg.GroupId | strip_id_prefix | tf_resource_name }}" {
+  name        = "{{ sg.GroupName }}"
+  description = "{{ sg.Description | escape_quotes }}"
+  {% if sg.get('VpcId') %}
+  vpc_id      = "{{ sg.VpcId }}"
+  {% endif -%}
+
+  {% if sg.get('Tags') %}
+  tags = {
+    {%- for tag in sg.Tags %}
+    "{{ tag.Key }}" = "{{ tag.Value | escape_quotes }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {% endif -%}
+
+  {%- for rule in sg.get('IpPermissions', []) %}
+  ingress {
+    {% if rule.get('FromPort') is not none and rule.get('ToPort') is not none %}
+    from_port   = {{ rule.FromPort }}
+    to_port     = {{ rule.ToPort }}
+    {% elif rule.IpProtocol == '-1' %}
+    from_port   = 0
+    to_port     = 0
+    {% else %}
+    from_port   = 0
+    to_port     = 65535
+    {% endif -%}
+    protocol    = "{{ rule.IpProtocol }}"
+
+    {% if rule.get('UserIdGroupPairs') %}
+    security_groups = [
+      {%- for pair in rule.UserIdGroupPairs %}
+      "{{ pair.GroupId }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    {% if rule.get('IpRanges') %}
+    cidr_blocks = [
+      {%- for cidr in rule.IpRanges %}
+      "{{ cidr.CidrIp }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    {% if rule.get('Ipv6Ranges') %}
+    ipv6_cidr_blocks = [
+      {%- for cidr in rule.Ipv6Ranges %}
+      "{{ cidr.CidrIpv6 }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    {% if rule.get('PrefixListIds') %}
+    prefix_list_ids = [
+      {%- for pl in rule.PrefixListIds %}
+      "{{ pl.PrefixListId }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    {% if rule.get('Description') %}
+    description = "{{ rule.Description | escape_quotes }}"
+    {% endif -%}
+  }
+  {%- endfor %}
+
+  {%- for rule in sg.get('IpPermissionsEgress', []) %}
+  egress {
+    {% if rule.get('FromPort') is not none and rule.get('ToPort') is not none %}
+    from_port   = {{ rule.FromPort }}
+    to_port     = {{ rule.ToPort }}
+    {% elif rule.IpProtocol == '-1' %}
+    from_port   = 0
+    to_port     = 0
+    {% else %}
+    from_port   = 0
+    to_port     = 65535
+    {% endif -%}
+    protocol    = "{{ rule.IpProtocol }}"
+
+    {% if rule.get('UserIdGroupPairs') %}
+    security_groups = [
+      {%- for pair in rule.UserIdGroupPairs %}
+      "{{ pair.GroupId }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    {% if rule.get('IpRanges') %}
+    cidr_blocks = [
+      {%- for cidr in rule.IpRanges %}
+      "{{ cidr.CidrIp }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    {% if rule.get('Ipv6Ranges') %}
+    ipv6_cidr_blocks = [
+      {%- for cidr in rule.Ipv6Ranges %}
+      "{{ cidr.CidrIpv6 }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    {% if rule.get('PrefixListIds') %}
+    prefix_list_ids = [
+      {%- for pl in rule.PrefixListIds %}
+      "{{ pl.PrefixListId }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {% endif -%}
+    {% if rule.get('Description') %}
+    description = "{{ rule.Description | escape_quotes }}"
+    {% endif -%}
+  }
+  {%- endfor %}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

@@ -1,0 +1,60 @@
+{% for nsg in resources -%}
+resource "azurerm_network_security_group" "{{ nsg.name_sanitized }}" {
+  name                = "{{ nsg.name }}"
+  location            = "{{ nsg.location }}"
+  resource_group_name = "{{ nsg.resource_group_name }}"
+
+  {%  if nsg.security_rules %}
+  {%- for rule in nsg.security_rules %}
+  security_rule {
+    name                       = "{{ rule.name }}"
+    priority                   = {{ rule.priority }}
+    direction                  = "{{ rule.direction }}"
+    access                     = "{{ rule.access }}"
+    protocol                   = "{{ rule.protocol }}"
+    source_port_range          = "{{ rule.source_port_range or '*' }}"
+    {%  if rule.source_port_ranges %}
+    source_port_ranges         = {{ rule.source_port_ranges | tojson }}
+    {%  endif -%}
+    destination_port_range     = "{{ rule.destination_port_range or '*' }}"
+    {%  if rule.destination_port_ranges %}
+    destination_port_ranges    = {{ rule.destination_port_ranges | tojson }}
+    {%  endif -%}
+    source_address_prefix      = "{{ rule.source_address_prefix or '*' }}"
+    {%  if rule.source_address_prefixes %}
+    source_address_prefixes    = {{ rule.source_address_prefixes | tojson }}
+    {%  endif -%}
+    destination_address_prefix = "{{ rule.destination_address_prefix or '*' }}"
+    {%  if rule.destination_address_prefixes %}
+    destination_address_prefixes = {{ rule.destination_address_prefixes | tojson }}
+    {%  endif -%}
+    {%  if rule.source_application_security_group_ids %}
+    source_application_security_group_ids = {{ rule.source_application_security_group_ids | tojson }}
+    {%  endif -%}
+    {%  if rule.destination_application_security_group_ids %}
+    destination_application_security_group_ids = {{ rule.destination_application_security_group_ids | tojson }}
+    {%  endif -%}
+    {%  if rule.description %}
+    description                = "{{ rule.description }}"
+    {%  endif -%}
+  }
+  {%- endfor %}
+  {%  endif -%}
+
+  {%  if nsg.tags %}
+  tags = {
+    {%- for key, value in nsg.tags.items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

@@ -1,0 +1,71 @@
+{% for cluster in resources -%}
+resource "aws_elasticache_cluster" "{{ cluster.name_sanitized }}" {
+  cluster_id           = "{{ cluster.CacheClusterId }}"
+  engine               = "redis"
+  node_type            = "{{ cluster.CacheNodeType }}"
+  num_cache_nodes      = {{ cluster.get('NumCacheNodes', 1) }}
+
+  {%  if cluster.get('EngineVersion') %}
+  engine_version       = "{{ cluster.EngineVersion }}"
+  {%  endif -%}
+
+  port                 = {{ cluster.get('Port', 6379) }}
+
+  {%  if cluster.get('cache_parameter_group_name') %}
+  parameter_group_name = "{{ cluster.cache_parameter_group_name }}"
+  {%  endif -%}
+
+  {%  if cluster.get('CacheSubnetGroupName') %}
+  subnet_group_name    = "{{ cluster.CacheSubnetGroupName }}"
+  {%  endif -%}
+
+  {%  if cluster.get('security_group_ids') %}
+  security_group_ids   = [
+    {%- for sg_id in cluster.security_group_ids %}
+    "{{ sg_id }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if cluster.get('PreferredAvailabilityZone') %}
+  availability_zone    = "{{ cluster.PreferredAvailabilityZone }}"
+  {%  endif -%}
+
+  {%  if cluster.get('PreferredMaintenanceWindow') %}
+  maintenance_window   = "{{ cluster.PreferredMaintenanceWindow }}"
+  {%  endif -%}
+
+  {%  if cluster.get('SnapshotRetentionLimit') %}
+  snapshot_retention_limit = {{ cluster.SnapshotRetentionLimit }}
+  {%  endif -%}
+
+  {%  if cluster.get('SnapshotWindow') %}
+  snapshot_window      = "{{ cluster.SnapshotWindow }}"
+  {%  endif -%}
+
+  {%  if cluster.get('notification_topic_arn') %}
+  notification_topic_arn = "{{ cluster.notification_topic_arn }}"
+  {%  endif -%}
+
+  {%- for log_config in cluster.get('log_delivery_configurations_formatted', []) %}
+  log_delivery_configuration {
+    destination      = "{{ log_config.destination_details.get('CloudWatchLogsDetails', {}).get('LogGroup') or log_config.destination_details.get('KinesisFirehoseDetails', {}).get('DeliveryStream') }}"
+    destination_type = "{{ log_config.destination_type }}"
+    log_format       = "{{ log_config.log_format }}"
+    log_type         = "{{ log_config.log_type }}"
+  }
+  {%- endfor %}
+
+  {%  if cluster.get('tags_formatted') %}
+  tags = {
+    {%- for key, value in cluster.get('tags_formatted', {}).items() %}
+    "{{ key }}" = "{{ value }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

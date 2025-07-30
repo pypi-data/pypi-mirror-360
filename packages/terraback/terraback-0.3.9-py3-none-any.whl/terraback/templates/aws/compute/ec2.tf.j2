@@ -1,0 +1,88 @@
+{% for instance in resources -%}
+resource "aws_instance" "{{ instance.InstanceId | strip_id_prefix | tf_resource_name }}" {
+  ami           = "{{ instance.ImageId }}"
+  instance_type = "{{ instance.InstanceType }}"
+
+  {%  if instance.get('SubnetId') %}
+  subnet_id = "{{ instance.SubnetId }}"
+  {%  endif -%}
+
+  {%  if instance.get('SecurityGroups') %}
+  vpc_security_group_ids = [
+    {%- for sg in instance.SecurityGroups %}
+    "{{ sg.GroupId }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  ]
+  {%  endif -%}
+
+  {%  if instance.get('PublicIpAddress') is not none %}
+  associate_public_ip_address = {{ (instance.get('PublicIpAddress') is not none) | lower }}
+  {%  endif -%}
+
+  {%  if instance.get('KeyName') %}
+  key_name = "{{ instance.KeyName }}"
+  {%  endif -%}
+
+  {%  if instance.get('IamInstanceProfile') %}
+  iam_instance_profile = "{{ instance.IamInstanceProfile.Arn.split('/')[-1] if instance.IamInstanceProfile.get('Arn') else instance.IamInstanceProfile.get('Id', '') }}"
+  {%  endif -%}
+
+  {%  if instance.get('Tags') %}
+  tags = {
+    {%- for tag in instance.get('Tags', []) %}
+    "{{ tag.Key }}" = "{{ tag.Value | replace('"', '\\"') }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%  endif -%}
+
+  {%  if instance.get('DisableApiTermination') is not none %}
+  disable_api_termination = {{ instance.get('DisableApiTermination', false) | lower }}
+  {%  endif -%}
+
+  {%  if instance.get('Placement') and instance.Placement.get('AvailabilityZone') %}
+  availability_zone = "{{ instance.Placement.AvailabilityZone }}"
+  {%  endif -%}
+
+  {%  if instance.get('Placement') and instance.Placement.get('Tenancy') and instance.Placement.Tenancy != 'default' %}
+  tenancy = "{{ instance.Placement.Tenancy }}"
+  {%  endif -%}
+
+  {%  if instance.get('Placement') and instance.Placement.get('HostId') %}
+  host_id = "{{ instance.Placement.HostId }}"
+  {%  endif -%}
+
+  {%  if instance.get('EbsOptimized') is not none %}
+  ebs_optimized = {{ instance.EbsOptimized | lower }}
+  {%  endif -%}
+
+  {%  if instance.get('Monitoring') and instance.Monitoring.get('State') == 'enabled' %}
+  monitoring = true
+  {%  endif -%}
+
+  {%  if instance.get('CpuOptions') %}
+  cpu_options {
+    {%  if instance.CpuOptions.get('CoreCount') %}
+    core_count = {{ instance.CpuOptions.CoreCount }}
+    {%  endif -%}
+    {%  if instance.CpuOptions.get('ThreadsPerCore') %}
+    threads_per_core = {{ instance.CpuOptions.ThreadsPerCore }}
+    {%  endif -%}
+  }
+  {%  endif -%}
+
+  {%  if instance.get('HibernationOptions') and instance.HibernationOptions.get('Configured') %}
+  hibernation = {{ instance.HibernationOptions.Configured | lower }}
+  {%  endif -%}
+
+  lifecycle {
+    ignore_changes = [
+      ami,
+      user_data,
+    ]
+  }
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

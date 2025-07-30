@@ -1,0 +1,11 @@
+{% for stage in resources -%}
+resource "aws_api_gateway_stage" "{{ stage.restApiId }}_{{ stage.stageName }}" {
+  deployment_id = "{{ stage.deploymentId }}"
+  rest_api_id   = "{{ stage.restApiId }}"
+  stage_name    = "{{ stage.stageName }}"
+}
+
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}

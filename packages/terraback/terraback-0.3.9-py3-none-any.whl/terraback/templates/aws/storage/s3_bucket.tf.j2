@@ -1,0 +1,280 @@
+{% for bucket in resources -%}
+{%- set bucket_name_sanitized = bucket.Name | tf_resource_name -%}
+{%- if bucket.Name and bucket_name_sanitized and bucket_name_sanitized != "unnamed_resource" -%}
+
+# S3 Bucket: {{ bucket.Name }}
+resource "aws_s3_bucket" "{{ bucket_name_sanitized }}" {
+  bucket = "{{ bucket.Name }}"
+
+  {%- if bucket.get('Tags') and bucket.Tags | has_value %}
+  tags = {
+    {%- for tag in bucket.Tags %}
+    "{{ tag.Key }}" = "{{ tag.Value | escape_quotes }}"{{ "," if not loop.last }}
+    {%- endfor %}
+  }
+  {%- endif %}
+}
+
+{%- if bucket.get('Versioning') and bucket.Versioning.get('Status') == 'Enabled' %}
+resource "aws_s3_bucket_versioning" "{{ bucket_name_sanitized }}" {
+  bucket = aws_s3_bucket.{{ bucket_name_sanitized }}.id
+  
+  versioning_configuration {
+    status = "{{ bucket.Versioning.Status }}"
+  }
+}
+{%- endif %}
+
+{%- if bucket.get('PublicAccessBlock') %}
+resource "aws_s3_bucket_public_access_block" "{{ bucket_name_sanitized }}" {
+  bucket = aws_s3_bucket.{{ bucket_name_sanitized }}.id
+
+  block_public_acls       = {{ bucket.PublicAccessBlock.get('BlockPublicAcls', false) | tf_bool }}
+  block_public_policy     = {{ bucket.PublicAccessBlock.get('BlockPublicPolicy', false) | tf_bool }}
+  ignore_public_acls      = {{ bucket.PublicAccessBlock.get('IgnorePublicAcls', false) | tf_bool }}
+  restrict_public_buckets = {{ bucket.PublicAccessBlock.get('RestrictPublicBuckets', false) | tf_bool }}
+}
+{%- endif %}
+
+{%- if bucket.get('ServerSideEncryptionConfiguration') and bucket.ServerSideEncryptionConfiguration.get('Rules') | has_value %}
+resource "aws_s3_bucket_server_side_encryption_configuration" "{{ bucket_name_sanitized }}" {
+  bucket = aws_s3_bucket.{{ bucket_name_sanitized }}.id
+
+  {%- for rule in bucket.ServerSideEncryptionConfiguration.Rules %}
+  rule {
+    {%- if rule.get('ApplyServerSideEncryptionByDefault') %}
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "{{ rule.ApplyServerSideEncryptionByDefault.SSEAlgorithm }}"
+      {%- if rule.ApplyServerSideEncryptionByDefault.get('KMSMasterKeyID') %}
+      kms_master_key_id = "{{ rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID }}"
+      {%- endif %}
+    }
+    {%- endif %}
+    
+    {%- if rule.get('BucketKeyEnabled') is defined %}
+    bucket_key_enabled = {{ rule.BucketKeyEnabled | tf_bool }}
+    {%- endif %}
+  }
+  {%- endfor %}
+}
+{%- endif %}
+
+{%- if bucket.get('LifecycleConfiguration') and bucket.LifecycleConfiguration.get('Rules') | has_value %}
+resource "aws_s3_bucket_lifecycle_configuration" "{{ bucket_name_sanitized }}" {
+  bucket = aws_s3_bucket.{{ bucket_name_sanitized }}.id
+
+  {%- for rule in bucket.LifecycleConfiguration.Rules %}
+  rule {
+    id     = "{{ rule.get('ID', 'rule-' + loop.index|string) }}"
+    status = "{{ rule.Status }}"
+
+    {%- if rule.get('Filter') %}
+    {%- if rule.Filter.get('Prefix') %}
+    filter {
+      prefix = "{{ rule.Filter.Prefix }}"
+    }
+    {%- elif rule.Filter.get('Tag') %}
+    filter {
+      tag {
+        key   = "{{ rule.Filter.Tag.Key }}"
+        value = "{{ rule.Filter.Tag.Value }}"
+      }
+    }
+    {%- endif %}
+    {%- endif %}
+
+    {%- if rule.get('Expiration') %}
+    expiration {
+      {%- if rule.Expiration.get('Days') %}
+      days = {{ rule.Expiration.Days | safe_int }}
+      {%- endif %}
+      {%- if rule.Expiration.get('Date') %}
+      date = "{{ rule.Expiration.Date }}"
+      {%- endif %}
+      {%- if rule.Expiration.get('ExpiredObjectDeleteMarker') is defined %}
+      expired_object_delete_marker = {{ rule.Expiration.ExpiredObjectDeleteMarker | tf_bool }}
+      {%- endif %}
+    }
+    {%- endif %}
+
+    {%- for transition in rule.get('Transitions', []) %}
+    transition {
+      {%- if transition.get('Days') %}
+      days = {{ transition.Days | safe_int }}
+      {%- endif %}
+      {%- if transition.get('Date') %}
+      date = "{{ transition.Date }}"
+      {%- endif %}
+      storage_class = "{{ transition.StorageClass }}"
+    }
+    {%- endfor %}
+  }
+  {%- endfor %}
+}
+{%- endif %}
+
+{%- if bucket.get('NotificationConfiguration') and (
+      bucket.NotificationConfiguration.get('LambdaConfigurations') | has_value or
+      bucket.NotificationConfiguration.get('TopicConfigurations') | has_value or
+      bucket.NotificationConfiguration.get('QueueConfigurations') | has_value
+    ) %}
+resource "aws_s3_bucket_notification" "{{ bucket_name_sanitized }}" {
+  bucket = aws_s3_bucket.{{ bucket_name_sanitized }}.id
+
+  {%- for config in bucket.NotificationConfiguration.get('LambdaConfigurations', []) %}
+  lambda_function {
+    lambda_function_arn = "{{ config.LambdaFunctionArn }}"
+    events              = [
+      {%- for event in config.Events %}
+      "{{ event }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {%- if config.get('Filter') and config.Filter.get('Key') and config.Filter.Key.get('FilterRules') | has_value %}
+    {%- set filter_rule = config.Filter.Key.FilterRules[0] %}
+    {%- if filter_rule.get('Name') == 'prefix' %}
+    filter_prefix = "{{ filter_rule.get('Value', '') }}"
+    {%- elif filter_rule.get('Name') == 'suffix' %}
+    filter_suffix = "{{ filter_rule.get('Value', '') }}"
+    {%- endif %}
+    {%- endif %}
+  }
+  {%- endfor %}
+
+  {%- for config in bucket.NotificationConfiguration.get('TopicConfigurations', []) %}
+  topic {
+    topic_arn = "{{ config.TopicArn }}"
+    events    = [
+      {%- for event in config.Events %}
+      "{{ event }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {%- if config.get('Filter') and config.Filter.get('Key') and config.Filter.Key.get('FilterRules') | has_value %}
+    {%- set filter_rule = config.Filter.Key.FilterRules[0] %}
+    {%- if filter_rule.get('Name') == 'prefix' %}
+    filter_prefix = "{{ filter_rule.get('Value', '') }}"
+    {%- elif filter_rule.get('Name') == 'suffix' %}
+    filter_suffix = "{{ filter_rule.get('Value', '') }}"
+    {%- endif %}
+    {%- endif %}
+  }
+  {%- endfor %}
+
+  {%- for config in bucket.NotificationConfiguration.get('QueueConfigurations', []) %}
+  queue {
+    queue_arn = "{{ config.QueueArn }}"
+    events    = [
+      {%- for event in config.Events %}
+      "{{ event }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {%- if config.get('Filter') and config.Filter.get('Key') and config.Filter.Key.get('FilterRules') | has_value %}
+    {%- set filter_rule = config.Filter.Key.FilterRules[0] %}
+    {%- if filter_rule.get('Name') == 'prefix' %}
+    filter_prefix = "{{ filter_rule.get('Value', '') }}"
+    {%- elif filter_rule.get('Name') == 'suffix' %}
+    filter_suffix = "{{ filter_rule.get('Value', '') }}"
+    {%- endif %}
+    {%- endif %}
+  }
+  {%- endfor %}
+}
+{%- endif %}
+
+{%- if bucket.get('WebsiteConfiguration') %}
+resource "aws_s3_bucket_website_configuration" "{{ bucket_name_sanitized }}" {
+  bucket = aws_s3_bucket.{{ bucket_name_sanitized }}.id
+
+  {%- if bucket.WebsiteConfiguration.get('IndexDocument') %}
+  index_document {
+    suffix = "{{ bucket.WebsiteConfiguration.IndexDocument.Suffix }}"
+  }
+  {%- endif %}
+
+  {%- if bucket.WebsiteConfiguration.get('ErrorDocument') %}
+  error_document {
+    key = "{{ bucket.WebsiteConfiguration.ErrorDocument.Key }}"
+  }
+  {%- endif %}
+
+  {%- for rule in bucket.WebsiteConfiguration.get('RoutingRules', []) %}
+  routing_rule {
+    {%- if rule.get('Condition') %}
+    condition {
+      {%- if rule.Condition.get('KeyPrefixEquals') %}
+      key_prefix_equals = "{{ rule.Condition.KeyPrefixEquals }}"
+      {%- endif %}
+      {%- if rule.Condition.get('HttpErrorCodeReturnedEquals') %}
+      http_error_code_returned_equals = "{{ rule.Condition.HttpErrorCodeReturnedEquals }}"
+      {%- endif %}
+    }
+    {%- endif %}
+
+    redirect {
+      {%- if rule.Redirect.get('Protocol') %}
+      protocol = "{{ rule.Redirect.Protocol }}"
+      {%- endif %}
+      {%- if rule.Redirect.get('HostName') %}
+      host_name = "{{ rule.Redirect.HostName }}"
+      {%- endif %}
+      {%- if rule.Redirect.get('ReplaceKeyPrefixWith') %}
+      replace_key_prefix_with = "{{ rule.Redirect.ReplaceKeyPrefixWith }}"
+      {%- endif %}
+      {%- if rule.Redirect.get('ReplaceKeyWith') %}
+      replace_key_with = "{{ rule.Redirect.ReplaceKeyWith }}"
+      {%- endif %}
+      {%- if rule.Redirect.get('HttpRedirectCode') %}
+      http_redirect_code = "{{ rule.Redirect.HttpRedirectCode }}"
+      {%- endif %}
+    }
+  }
+  {%- endfor %}
+}
+{%- endif %}
+
+{%- if bucket.get('CorsConfiguration') and bucket.CorsConfiguration.get('CorsRules') | has_value %}
+resource "aws_s3_bucket_cors_configuration" "{{ bucket_name_sanitized }}" {
+  bucket = aws_s3_bucket.{{ bucket_name_sanitized }}.id
+
+  {%- for rule in bucket.CorsConfiguration.CorsRules %}
+  cors_rule {
+    {%- if rule.get('AllowedHeaders') %}
+    allowed_headers = [
+      {%- for header in rule.AllowedHeaders %}
+      "{{ header }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {%- endif %}
+
+    allowed_methods = [
+      {%- for method in rule.AllowedMethods %}
+      "{{ method }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+
+    allowed_origins = [
+      {%- for origin in rule.AllowedOrigins %}
+      "{{ origin }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+
+    {%- if rule.get('ExposeHeaders') %}
+    expose_headers = [
+      {%- for header in rule.ExposeHeaders %}
+      "{{ header }}"{{ "," if not loop.last }}
+      {%- endfor %}
+    ]
+    {%- endif %}
+
+    {%- if rule.get('MaxAgeSeconds') %}
+    max_age_seconds = {{ rule.MaxAgeSeconds | safe_int }}
+    {%- endif %}
+  }
+  {%- endfor %}
+}
+{%- endif %}
+
+{%- endif -%}
+{% if not loop.last %}
+
+{% endif -%}
+{%- endfor %}
